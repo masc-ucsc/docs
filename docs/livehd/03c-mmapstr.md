@@ -5,7 +5,7 @@ mmap_lib::str is the LiveHD string class. There are several reasons to have a cu
 * LiveHD uses lots of strings, and they are mmap persistent for speed reasons.
   The strings are backup in a mmap, since the mmap locations change at reload
 and run-time there is no pointer stability.
-* LiveHD string usage allows to optimize for common patters. E.g: append/remove
+* LiveHD string usage allows to optimize for common patterns. E.g: append/remove
   beginning of the string is more frequent than the end. Also, the most common
 operator is the comparator for hash map search.
 
