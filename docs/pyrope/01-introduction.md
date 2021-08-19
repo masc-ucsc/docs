@@ -7,15 +7,21 @@
 Pyrope is a modern hardware description language, with these focus points:
 
 * Fast parallel and incremental elaboration. 
+* Modern and concise language
+* Avoiding hardware specific artifacts
+    - Allows hierarchical [calls](00-hwdesign.md#hierarchy-calls)
+    - Support [pipelining](00-hwdesign.md#pipelining) constructs
+    - No mismatch [simulation vs synthesis](00-hwdesign.md#simulation-vs-synthesis)
+    - Single [reset](00-hwdesign.md#reset) mechanism
+    - Avoid [non-blocking](00-hwdesign.md#non-blocking-assignments) assignments
+    - Checks on [invalid code](00-hwdesign.md#invalid-code)
+    - Random on [multi value logic](00-hwdesign.md#multi-value-logic) when doing control flow
+* Zero cost abstraction
 * Help hardware verification:
-    - Powerful synthesizable type system
+    - Powerful type system
     - Hot-Reload support, powerful assertions
     - Allows Pyrope 2 Verilog, edit Verilog, Verilog 2 Pyrope, edit Pyrope...
     - Static checks as long as they not produce false positives
-* Modern and concise language
-    - Avoiding hardware specific artifacts
-    - Synthesis and simulation must be equal and deterministic
-    - Zero cost abstraction
 
 
 ## Hello World
@@ -71,7 +77,7 @@ Populate the Pyrope code
 
           puts "trying gcd({},{})", $value1, $value2
 
-          step 1 // advance 1 clock
+          step // advance 1 clock
 
           $load_values = false // deactivate load
 

@@ -155,3 +155,36 @@ z = repipe (a=x,b=in1) to 0  // try to create a combinational path
 z = repipe (x        ) to 2  // repipeline mul3 to have 2 stages
 ```
 
+## Future improvements
+
+Pipelining is one of the concepts that add extra complexity to HDLs, and it is a research topic what is the best approach, as such this section
+summarizes a couple of potential paths for future Pyrope development.
+
+
+### Liam constructs
+
+In most HDLs loops have to be compile time unrolled, in earlier version of
+Pyrope[^liam] allowed for extra keywords to create an actor model and create
+state machines were each loop iteration will be executed in a cycle.
+
+
+```
+while some_condition) {
+
+  step   // next cycle starts here
+}
+```
+
+Fluid constructs:
+
+* `variable?` check if `variable` valid bit is set
+* `variable!` check if `variable` has a fluid backpressure
+* `keep` do not consume variable on use
+* `step` stop the cycle here, continue next cycle after the yield statement
+
+
+[^liam]: Liam: An Actor Based Programming Model for HDLs, Haven Skinner, Rafael
+T. Possignolo, and Jose Renau. 15th ACM-IEEE International Conference on Formal
+Methods and Models for System Design (MEMOCODE), October 2017. 
+
+### Liam constructs

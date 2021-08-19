@@ -29,7 +29,10 @@ markdown_extensions:
   - pymdownx.arithmatex:
       generic: true
   - def_list
+  - toc:
+      permalink: true
   - admonition
+  - footnotes
   - pymdownx.details
   - pymdownx.tabbed
   - pymdownx.superfences:
