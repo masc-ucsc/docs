@@ -11,3 +11,7 @@ To serve the document (open local browser to see edits at localhost:8000)
 ```
 mkdocs serve
 ```
+
+```
+mkdocs gh-deploy --force
+```
