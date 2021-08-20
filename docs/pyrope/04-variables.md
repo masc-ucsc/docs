@@ -262,35 +262,42 @@ widely expected precedence.
 | 5          | logical     | and, or, implies |
 
 
-To reduce the number of parenthesis and increase the visual/structural
-organization, the newlines behave like inserting a parenthesis after the
-statement and the end of the line.
-
 ```
 assert (x or !y) == (x or (!y) == (x or not y)
 assert (3*5+5) == ((3*5) + 5) == 3*5 + 5
 
 a = x1 or x2==x3 // same as b = x1 or (x2==x3)
-b = 3 & 4 * 4    // compile error: use explicit precendence between '&' and '*'
+b = 3 & 4 * 4    // compile error: use parenthesis for explicit precedence
 c = 3
   & 4 * 4
-  & 5 + 3        // OK, same as b = 3 & (4*4) & (5+3)
+  & 5 + 3        // compile error: use parenthesis for explicit precedence
+c2 = 3
+  & (4 * 4)
+  & (5 + 3)      // OK
+
 d = 3 + 3 - 5    // OK, same result right-left
 
-// e = 1 | (5) & (6) // precendence problem even with newlines
 e = 1
   | 5
-  & 6           // compile error: use explicit precendence between '&' and '|'
+  & 6           // compile error: use parenthesis for explicit precedence
 
-f = 1 & 4
-  | 1 + 5
-  | 1           // OK, same as (1&4) | (1+5) | (1)
+f = (1 & 4)
+  | (1 + 5)
+  | 1
 
 g = 1 + 3
   * 1 + 2
-  + 5           // OK, same as (1+3) * (1+2) + (5)
+  + 5           // OK, but not nice
 
-h = x or y and z// compile error: use explicit precedence between 'or' and 'and'
+g1= 1 + (3 * 1)
+  + 2
+  + 5           // OK 
+
+g2= (1 + 3)
+  * (1 + 2)
+  + 5           // OK 
+
+h = x or y and z// compile error: use parenthesis for explicit precedence
 
 i = a == 3 <= b == d
 assert i == (a==3 and 3<=b and b == d)

@@ -1,4 +1,4 @@
-# Getting started
+# Usage
 
 This is a high level description of how to use LiveHD.
 

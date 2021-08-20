@@ -1,31 +1,39 @@
 # LGraph 
 
-!!!WARNING
-   This document is not updated to the latest changes
+!!! Warning
+    LiveHD is beta under active development and we keep improving the
+    API. Semantic versioning is a 0.+, significant API changes are expect.
 
-LGraph is the graph-based data structure used inside LiveHD. Together with
-LNAST, it is one of the key data structures.
+
 
 The LGraph can be built directly with passes like Yosys, or through LNAST to
 LGraph translations. The LNAST builds a gated-SSA which is translated to
 LGraph. Understanding the LGraph is needed if you want to build a LiveHD pass.
 
+
+LGraph is a graph or netlist where each vertex is called a node, and it has a
+cell type and a set of input/output pins.
+
+
 ## LGraph API
 
-A single LGraph represents a single netlist module. LGraph is composed of nodes,
-node pins, edges and tables of attributes. An LGraph node is affiliated with a
-node type and each type defines different amounts of input and output node pins.
-For example, a node can have 3 input ports and 2 output pins. Each of the
-input/output pins can have many edges to other graph nodes. Every node pin has
-an affiliated node pid. In the code, every node_pin has a `Port_ID`.
+A single LGraph represents a single netlist module. LGraph is composed of
+nodes, node pins, edges, cell types, and tables of attributes. An LGraph node
+is affiliated with a cell node type and each type defines different amounts of input
+and output node pins. For example, a node can have 3 input ports and 2 output
+pins. Each of the input/output pins can have many edges to other graph nodes.
+Every node pin has an affiliated node pid. In the code, every node_pin has a
+`Port_ID`.
 
-A pair of driver pin and sink pin constitutes an edge. In the
-following API example, an edge is connected from a driver pin (pid1) to a sink
-pin (pid3). The bitwidth of the driver pin determines the edge bitwidth.
+
+A pair of driver pin and sink pin constitutes an edge. In the following API
+example, an edge is connected from a driver pin (pid1) to a sink pin (pid3).
+The bitwidth of the driver pin determines the edge bitwidth.
+
 
 ### Node, Node_pin, and Edge Construction
 
-- create node
+- create a node without associated type (edges can not be created until a type is associated)
 
 ```cpp
 new_node = lg->create_node()
@@ -64,14 +72,8 @@ sink_pin = new_node.setup_sink_pin()
 - setup driver pin for pin_x of a node
 
 ```cpp
-driver_pin = new_node.setup_driver_pin(pid)
+driver_pin = new_node.setup_driver_pin("some_name")
 //note: when you know the pid, same as sink_pin
-```
-
-- get the pid value of a node_pin object
-
-```cpp
-node_pin.get_pid()
 ```
 
 - add an edge between driver_pin and sink_pin
@@ -192,7 +194,7 @@ tools could automatically achieve global design optimization or analysis by
 leveraging the LGraph hierarchical traversal feature.
 
 ```cpp
-for (const auto &node:lg->forward_hier()) {...}
+for (const auto &node:lg->forward(true)) {...}
 ```
 
 ### Edge Iterators
@@ -245,60 +247,86 @@ attribute table. An example of hierarchical attribute is wire-delay.
 node_pin.set_delay(float delay);
 ```
 
-## LGraph Node Type Semantics
+## LGraph Node Cell Semantics
 
-For each LGraph node, there is a specific semantic. This section explains the
+For each LGraph node, there is a specific cell type. This section explains the
 operation to perform for each node. It includes a precise way to compute the
 maximum and minimum value for the output.
 
-In LGraph, the cells operate like having unlimited precision with signed
-numbers. Most HDLs focus on unsigned, but LiveHD handles the superset (sign and
-unlimited precision). The precision is reduced only explicitly with few
-operations like and-gate with masks or Shifts. In LGraph, an unsigned value is
-a value that can not be negative.
+
+In LGraph, the cell types operate like having unlimited precision with signed
+numbers. Most HDL IRs have a type for signed inputs and another for unsigned.
+LiveHD handles the superset (sign and unlimited precision) with a single node.
+In LGraph, an unsigned value is signed value that is always positive. This
+simplifies the mixing and conversions which simplifies the passes. The drawback
+is that the export may have to convert back to signed/unsigned for some
+languages like Verilog.
+
+
+Maybe even more important is that all the LGraph cell types generate the same
+result if the input is sign-extended. This has implications, for example a
+typical HDL IR type like "concat" does not exist because the result is
+dependent on the inputs size. This has the advantage of simplifying the
+decisions of when to drop bits in a value. It also makes it easier to guarantee
+no loss of precision. Any drop of precision requires explicit handling with
+operations like and-gate with masks or Shifts. 
+
 
 The document also explains corner cases in relationship to Verilog and how to
 convert to/from Verilog semantics. These are corner cases to deal with sign and
 precision. Each HDL may have different semantics, the Verilog is to showcase
-the specifics.
+the specifics because it is a popular HDL.
 
-In general the nodes have a single output with the exception of complex nodes
-like subgraphs or memories. Ntypes with single output, have 'Y' as output. The
-inputs are single characters 'A', 'B'... For most inputs, there can be many
-drivers. E.g: a single Sum cell can do `Y=3+20+a0+a3` where `A_{0} = 3`, `A_{1} = 20`, `A_{2} = a0`, and `A_{3} = a3`.
 
-If an input can not have multiple drivers, a lower case name is used ('a',
-'b'...). E.g: the right shift cell is `Y=a>>b` because only one driver can
-connect to 'a' and 'b'.
+All the cell types are in `core/cell.hpp`. The type enumerate is called
+`Ntype`. In general the nodes have a single output with the exception of
+complex nodes like subgraphs or memories. The inputs is a string in lower case
+or upper case. Upper case ('A') means that many edges (or output drivers) can
+connect to the same node input or sink pin, lower case ('a') means that only a
+driver can connect to the input or sink pin.
+
+
+Each cell type can be called directly with Pyrope using a low level RTL syntax.
+This is useful for debugging not for general use as it can result in less
+efficient LNAST code.
+
+An example of a multi-driver sink pin is the `sum` cell which can do `Y=3+20+a0+a3`
+where `A_{0} = 3`, `A_{1} = 20`, `A_{2} = a0`, and `A_{3} = a3`. Another way to
+represent in valid Pyrope RTL syntax is:
+
+```
+Y = __sum(A=(3,20,a0,a3))
+```
+
+An example if single driver sink pin is the `sra` cell which can do `Y=20>>3`.
+It is lower case because only one driver pin can connect to 'a' and 'b'. Another way
+to represent a valid Pyrope RTL syntax is:
+
+```
+Y = __sra(a=20,b=3)
+```
 
 The section includes description on how to compute the maximum (`max`) and
 minimum (`min`) allowed result range. This is used by the bitwidth inference
 pass. To ease the explanation, a `sign` value means that the result may be
 negative (`a.sign == a.min<0`). `known` is true if the result sign is known
-(`a.known == a.max<0 or a.min>=0`), either positive or negative (`neg == a.max<0`). The cells explanation also requires the to compute the bit mask
+(`a.known == a.max<0 or a.min>=0`), either positive or negative (`neg ==
+a.max<0`). The cells explanation also requires the to compute the bit mask
 (`a.mask == (1<<a.bits)-1`).
 
-For any value (`a`), the number of bits required (`bits`) is `a.bits = log2(absmax(a.max,a.min))+a.sign?1:0`.
+For any value (`a`), the number of bits required (`bits`) is `a.bits = log2(absmax(a.max,a.min))+1`.
 
-### Sum_op
+### Sum
 
-Addition and substraction node is a single node that performs 2-complement
-additions and substractions with unlimited precision.
+Addition and substraction node is a single cell Ntype that performs
+2-complement additions and substractions with unlimited precision.
 
-```{.graph .center caption="Sum LGraph Node."}
-digraph Sum {
-    rankdir=LR;
-    size="1,0.5"
-
-    node [shape = circle]; Sum;
-    node [shape = point ]; q0
-    node [shape = point ]; q1
-    node [shape = point ]; q
-
-    q0 -> Sum [ label ="A" ];
-    q1 -> Sum [ label ="B" ];
-    Sum  -> q [ label = "Y" ];
-}
+``` mermaid
+graph LR
+    cell  --Y--> c(fa:fa-spinner)
+    a(fa:fa-spinner) --A--> cell[Sum]:::cell
+    b(fa:fa-spinner) --B--> cell
+    classDef cell stroke-width:3px
 ```
 
 If the inputs do not have the same size, they are extended (sign or unsigned)
