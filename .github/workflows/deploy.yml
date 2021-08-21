@@ -18,6 +18,8 @@ jobs:
 
       - run: pip install mkdocs-material
 
+      - run: pip install mkdocs-pymdownx-material-extras mkdocs-redirects mkdocs-minify-plugin mkdocs-mermaid2-plugin
+
       - run: mkdocs gh-deploy --force
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
