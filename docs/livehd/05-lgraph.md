@@ -15,7 +15,7 @@ LGraph is a graph or netlist where each vertex is called a node, and it has a
 cell type and a set of input/output pins.
 
 
-## LGraph API
+## API
 
 A single LGraph represents a single netlist module. LGraph is composed of
 nodes, node pins, edges, cell types, and tables of attributes. An LGraph node
@@ -211,7 +211,7 @@ And for output edges:
 for (const auto &out_edge : node.out_edges()) {...}
 ```
 
-## LGraph Attribute Design
+## Attribute Design
 
 Design attribute stands for the characteristic given to a LGraph node or node
 pin. For instance, the characteristic of a node name and node physical
@@ -234,7 +234,7 @@ attribute table.
 node.set_name(std::string_view name);
 ```
 
-### Hierarchical Attribute
+### Hierarchical attribute
 
 LGraph also support hierarchical attribute. It is achieved by using a tree data
 structure to record the design hierarchy. In LGraph, every graph has a unique
@@ -247,7 +247,7 @@ attribute table. An example of hierarchical attribute is wire-delay.
 node_pin.set_delay(float delay);
 ```
 
-## LGraph Node Cell Semantics
+## Cell type
 
 For each LGraph node, there is a specific cell type. This section explains the
 operation to perform for each node. It includes a precise way to compute the
@@ -950,15 +950,10 @@ Y = VAL&..&VAL ; RED= &Y
 
 The sign can not be backward propagated because Pick_Op removes the sign no matter the input sign.
 
-# Generate PDF
-
-pandoc --pdf-engine=xelatex --toc -N GitHub-use.md lgraph.md --mathjax --filter pandoc-graphviz.py -o ~/tmp/pp.pdf
-https://github.com/Wandmalfarbe/pandoc-latex-template
-https://pianomanfrazier.com/post/write-a-book-with-markdown/
 
 #### To be continued ...
 
-## LGraph Optimization
+## Optimization
 
 Not all the nodes have the same complexity overhead. When performing peephole
 optimization is possible to trade one set of nodes for others. In general,
