@@ -329,32 +329,51 @@ graph LR
     classDef cell stroke-width:3px
 ```
 
-If the inputs do not have the same size, they are extended (sign or unsigned)
-to all have the same length.
+If the inputs do not have the same size, they are sign extended to all have the
+same length.
 
-#### Forward Propagation
+**Forward Propagation**
 
-- $Y = \sum_{i=0}^{\infty} A_{i} - \sum_{i=0}^{\infty} B_{i}$
-- $Y.max = \sum_{i=0}^{\infty} A_{i}.max - \sum_{i=0}^{\infty} B_{i}.min$
-- $Y.min = \sum_{i=0}^{\infty} A_{i}.min - \sum_{i=0}^{\infty} B_{i}.max$
+- Value:
+```
+%Y = A.reduce('+') - B.reduce('+')
+```
+- Max/min:
+```
+%max = 0
+%min = 0
+for a in A {
+  %max += A.max
+  %min += A.min
+}
+for b in B {
+  %max -= b.min
+  %min -= b.max
+}
+```
 
-#### Backward Propagation
+**Backward Propagation**
 
-Backward propagation is possible when all the inputs but one are known. If all
-the inputs have known size. The algorithm can check and look for the inputs
-that have more precision than needed and reduce the max/min backwards.
+Backward propagation is possible when all the inputs but ONE are known. The
+algorithm can check and look for the inputs that have more precision than
+needed and reduce the max/min backwards.
 
-For example, if and all the inputs but one A ($A_{0}$) are known:
+For example, if and all the inputs but one A are known (max/min has the max/min
+computed for all the inputs but the unknown one)
 
-- $A_{0}.max = Y.max - \sum{i=1}^{\infty} A_{i}.min + \sum_{i=0}^{\infty} B_{i}.max$
-- $A_{0}.min = Y.min - \sum{i=1}^{\infty} A_{i}.max + \sum_{i=0}^{\infty} B_{i}.min$
+```
+A_{unknown}.max = Y.max - max 
+A_{unknown}.min = Y.min - min 
+```
 
-If and all the inputs but one B ($B_{0}$) are known:
+If the unknow is in port `B`:
 
-- $B_{0}.max = \sum{i=0}^{\infty} A_{i}.max - \sum_{i=1}^{\infty} B_{i}.min - Y.min$
-- $B_{0}.min = \sum{i=0}^{\infty} A_{i}.min - \sum_{i=1}^{\infty} B_{i}.max - Y.max$
+```
+B_{unknown}.max = min - T.min
+B_{unknown}.min = max - Y.max
+```
 
-#### Verilog Considerations
+**Verilog Considerations**
 
 In Verilog, the addition is unsigned if any of the inputs is unsigned. If any
 input is unsigned. all the inputs will be "unsigned extended" to match the
@@ -379,36 +398,23 @@ c = 5b01111 + 5b0001 // this is the Verilog semantics by matching size
 c == -16 (!!)
 ```
 
-Since the operation is commutative. A Sum(a,b) can have these options:
-
-## | size | A_sign | B_sign | Operation |
-
-| a==b | S | S | EQ(a,b) |
-| a==b | S | U | EQ(a,b) |
-| a==b | U | S | EQ(a,b) |
-| a==b | U | U | EQ(a,b) |
-| a< b | S | S | LT(a,b) |
-| a< b | S | U | LT(a,Tposs(b)) |
-| a< b | U | S | LT(Tposs(a),b) |
-| a< b | U | U | LT(Tposs(a),Tposs(b)) |
-
 The Verilog addition/substraction output can have more bits than the inputs.
-This is the same as in LGraph Sum. Nevertheless, Verilog requires to specify
+This is the same as in LGraph `Sum`. Nevertheless, Verilog requires to specify
 the bits for all the input/outputs. This means that whenever Verilog drops
-precision an AND gate must be added. In the following examples only the 'g' and
-'h' variables needed.
+precision an AND gate must be added (or a SEXT for signed output). In the
+following examples only the 'g' and 'h' variables needed.
 
 ```verilog
   wire [7:0] a;
   wire [7:0] b;
   wire [6:0] c;
-  wire [8:0] f = a + b; // f = Sum(a,b)  // a same size as b
-  wire [8:0] f = a + c; // f = Sum(a,Tposs(c))
-  wire [7:0] g = a + b; // g = And(Sum(a,b),0x7F)
-  wire [6:0] h = a + b; // h = And(Sum(a,b),0x3F)
+  wire [8:0] f = a + b; // f = __sum(a,b)  // a same size as b
+  wire [8:0] f = a + c; // f = __sum(a,__get_mask(c,-1))
+  wire [7:0] g = a + b; // g = __and(__sum(a,b),0x7F)
+  wire [6:0] h = a + b; // h = __and(__sum(a,b),0x3F)
 ```
 
-#### Peephole Optimizations
+**Peephole Optimizations**
 
 - `Y = x-0+0+...` becomes `Y = x+...`
 - `Y = x-x+...` becomes `Y = ...`
@@ -417,76 +423,82 @@ precision an AND gate must be added. In the following examples only the 'g' and
 - `Y = (~x)+1+...` becomes `Y = ...-x`
 - `Y = a + (b<<n)` becomes `Y = {(a>>n)+b, a&n.mask}`
 - `Y = a - (b<<n)` becomes `Y = {(a>>n)-b, a&n.mask}`
-- If every x,y... lower bit is zero `Y=x+y+...` becomes Y=((x>>1)+(y>>1)+..)<<1
+- If every x,y... lower bit is zero `Y=x+y+...` becomes `Y=((x>>1)+(y>>1)+..)<<1`
 
-### Ntype_op::Mult
 
-Multiply operator. There is no Prod_Op that combines multiplication and
-division because unlike in Sum_Op, in integer operations the order matters
-(unlimited precision decimals may combine)
-(`a*(b/c) != (a*b)/c`).
+### Mult
 
-```{.graph .center caption="Ntype_op::Mult LGraph Node."}
-digraph Mult {
-    rankdir=LR;
-    size="1,0.5"
+Multiply operator. There is no cell type that combines multiplication and
+division because unlike in `Sum`. The reason is that with integers the order of multiplication/division changes
+the result even with unlimited precision integers (`a*(b/c) != (a*b)/c`).
 
-    node [shape = circle]; Mult;
-    node [shape = point ]; q0
-    node [shape = point ]; q
+``` mermaid
+graph LR
+    cell  --Y--> c(fa:fa-spinner)
+    a(fa:fa-spinner) --A--> cell[Mult]:::cell
+    classDef cell stroke-width:3px
+```
 
-    q0 -> Mult [ label ="A" ];
-    Mult  -> q [ label = "Y" ];
+**Forward Propagation**
+
+- Value:
+```
+Y = A.reduce('*')
+```
+- Max/min:
+```
+var tmax = 1
+vat tmin = 1
+var sign  = 0
+for i in A {
+  tmax *= maxabs(A.max, A.min)
+  tmin *= minabs(A.max, A.min)
+  known = false                when min<0 and max>0
+  sign += 1                    when max<0
+}
+if know { // sign is know
+  if sign & 1 { // negative
+    %max = -tmin
+    %min = -tmax
+  }else{
+    %max = tmax
+    %min = tmin
+  }
+}else{
+  %max =  tmax
+  %min = -tmax
 }
 ```
 
-#### Forward Propagation
 
-- $Y = \prod_{i=0}^{\infty} A_{i}$
-- $Tmax = \prod_{i=0}^{\infty} \text{maxabs}(A_{i}.max, A_{i}.min)$
-- $Tmin = \prod_{i=0}^{\infty} \text{minabs}(A_{i}.max, A_{i}.min)$
-- $neg  = \prod_{i=0}^{\infty} A_{i}.sign$
-- $known = \forall_{i=0}^{\infty} A_{i}.known$
-
-- $Y.max = \begin{cases} -Tmin &      neg  \land known \\
-                          Tmax & \text{otherwise} \end{cases}$
-
-- $Y.min = \begin{cases}  Tmin & \overline{neg}  \land known \\
-                         -Tmax & \text{otherwise} \end{cases}$
-
-When the result sign is not known, the max/min is conservatively computed.
-
-#### Backward Propagation
+**Backward Propagation**
 
 If only one input is missing, it is possible to infer the max/min from the
-output and the other inputs. As usual, if all the inputs and outputs are known,
-it is possible to backward propagate to further constraint the inputs.
+output and the other inputs. Like in the `sum` case, if all the inputs but one
+and the output is known, it is possible to backward propagate to further
+constraint the unknown input.
 
-- $Tmax = \frac{\prod_{i=1}^{\infty} \text{maxabs}(A_{i}.max, A_{i}.min)}{Y.min}$
-- $Tmin = \frac{\prod_{i=1}^{\infty} \text{minabs}(A_{i}.max, A_{i}.min)}{Y.max}$
-- $neg  = Y.sign \times \prod_{i=1}^{\infty} A_{i}.sign$
-- $known = Y.known \land \forall_{i=1}^{\infty} A_{i}.known$
-- $A_{0}.max = \begin{cases} -Tmin &      neg  \land known \\
-                              Tmax & \text{otherwise} \end{cases}$
-- $A_{0}.min = \begin{cases}  Tmin & \overline{neg}  \land known \\
-                             -Tmax & \text{otherwise} \end{cases}$
+```
+A_{unknown}.max = Y.max / A.min
+A_{unknown}.min = Y.min / A.max
+```
 
-### Verilog Considerations
+**Verilog Considerations**
 
-Unlike the Sum_Op, the Verilog 2 LiveHD translation does not need to extend the
-inputs to have matching sizes. Multiplying/dividing signed and unsigned
-numbers has the same result. The bit representation is the same if the result
-was signed or unsigned.
+Unlike the `Sum`, the Verilog 2 LiveHD translation does not need to extend the
+inputs to have matching sizes. Multiplying/dividing signed and unsigned numbers
+has the same result. The bit representation is the same if the result was
+signed or unsigned.
 
 LiveHD mult node result (Y) number of bits can be more efficient than in
 Verilog. E.g: if the max value of A0 is 3 (2 bits) and A1 is 5 (3bits). If the
 result is unsigned, the maximum result is 15 (4 bits). In Verilog, the result
 will always be 5 bits. If the Verilog result was to an unsigned variable.
-Either all the inputs were unsigned, or there should pass to an Ntype_op::Tposs to
+Either all the inputs were unsigned, or there should pass to an `get_mask` to
 force the MSB as positive. This extra bit will be simplified but it will notify
 LGraph that the output is to be treated as unsigned.
 
-#### Peephole Optimizations
+**Peephole Optimizations**
 
 - `Y = a*1*...` becomes `Y=a*...`
 - `Y = a*0*...` becomes `Y=0`
@@ -494,48 +506,51 @@ LGraph that the output is to be treated as unsigned.
 - `Y = (power2a+power2b)*...` becomes `tmp=... ; Y = (tmp+tmp<<power2b)<<(power2a-power2b)` when power2a>power2b
 - `Y = (power2a-power2b)*...` becomes `tmp=... ; Y = (tmp-tmp<<power2b)<<(power2a-power2b)` when power2a>power2b
 
-### Div_op
+### Div
 
-Division operator. The division operation is quite similar to the inverse of the multiplication, but a key difference is that only one driver is allowed for each input ('a' vs 'A').
+Division operator. The division operation is quite similar to the inverse of
+the multiplication, but a key difference is that only one driver is allowed for
+each input ('a' vs 'A').
 
-```{.graph .center caption="Division LGraph Node."}
-digraph Div {
-    rankdir=LR;
-    size="1,0.5"
+``` mermaid
+graph LR
+    cell  --Y--> c(fa:fa-spinner)
+    a(fa:fa-spinner) --a--> cell[Div]:::cell
+    b(fa:fa-spinner) --b--> cell
+    classDef cell stroke-width:3px
+```
 
-    node [shape = circle]; Div;
-    node [shape = point ]; q0
-    node [shape = point ]; q1
-    node [shape = point ]; q
+**Forward Propagation**
 
-    q0 -> Div [ label ="a" ];
-    q1 -> Div [ label ="b" ];
-    Div  -> q [ label = "Y" ];
+- Value:
+```
+Y = a/b
+```
+- Max/min:
+```
+%max = a.max/b.min
+%min = a.min/b.max
+
+for i in a.max,a.min {
+  for j in b.max,b.min {
+     next        when j == 0
+     tmp = i / j
+     %max = tmp   when tmp > max
+     %min = tmp   when tmp < min
+  }
 }
 ```
 
-#### Forward Propagation
-
-- $Y = \frac{a}{b}$
-- $Tmax = \frac{\text{maxabs}(a.max,a.min)}{\text{minabs}(b.max,b.min)}$
-- $Tmin = \frac{\text{minabs}(a.max,a.min)}{\text{maxabs}(b.max,b.min)}$
-- $known = a.known \land \b.known$
-- $neg   = a.sign \times b.sign$
-- $Y.max = \begin{cases} -Tmin &      neg  \land known \\
-                          Tmax & \text{otherwise} \end{cases}$
-- $Y.min = \begin{cases}  Tmin & \overline{neg}  \land known \\
-                         -Tmax & \text{otherwise} \end{cases}$
-
-#### Backward Propagation
+**Backward Propagation**
 
 The backward propagation from the division can extracted from the forward
 propagation. It is a simpler case of multiplication backward propagation.
 
-### Verilog Considerations
+**Verilog Considerations**
 
 The same considerations as in the multiplication should be applied.
 
-#### Peephole Optimizations
+**Peephole Optimizations**
 
 - `Y = a/1` becomes `Y=a`
 - `Y = 0/b` becomes `Y=0`
@@ -547,7 +562,7 @@ The same considerations as in the multiplication should be applied.
 - `Y=(a*(((1<<(a.bits+2)))/b+1))>>(a.bits+2)` If a sign is not `known`. Then `Y
 - = Y.neg? (~Y_unsigned+1):Y_unsigned`
 
-#### Modulo
+### Modulo (how to model)
 
 There is no mod cell (Ntype_op::Mod) in LGraph. The reason is that a modulo
 different from a power of 2 is very rare in hardware. If the language supports
@@ -575,40 +590,41 @@ The add optimization should reduce it to:
 y = a & n.mask
 ```
 
-### Not_op
+### Not
 
 Bitwise Not operator
 
-```{.graph .center caption="Not LGraph Node."}
-digraph Not {
-    rankdir=LR;
-    size="1,0.5"
-
-    node [shape = circle]; Not;
-    node [shape = point ]; q0
-    node [shape = point ]; q
-
-    q0 -> Not [ label ="a" ];
-    Not  -> q [ label = "Y" ];
-}
+``` mermaid
+graph LR
+    cell  --Y--> c(fa:fa-spinner)
+    a(fa:fa-spinner) --a--> cell[Div]:::cell
+    classDef cell stroke-width:3px
 ```
 
-#### Forward Propagation
+**Forward Propagation**
 
-- $Y = \text{bitwise-not}(\text{a})$
-- $Y.max = \text{max}(~a.max,~a.min)$
-- $Y.min = \text{min}(~a.max,~a.min)$
+- Value:
+```
+Y = ~a
+```
+- Max/min:
+```
+%max = max(~a.max,~a.min)
+%min = min(~a.max,~a.min)
+```
 
-#### Backward Propagation
+**Backward Propagation**
 
-- $a.max = \text{max}(~Y.max,~Y.min)$
-- $a.min = \text{min}(~Y.max,~Y.min)$
+```
+a.max = max(~Y.max,~Y.min)
+a.min = min(~Y.max,~Y.min)
+```
 
-### Verilog Considerations
+*Verilog Considerations**
 
 Same semantics as verilog
 
-#### Peephole Optimizations
+**Peephole Optimizations**
 
 No optimizations by itself, it has a single input. Other operations like Sum_Op can optimize when combined with Not_Op.
 
@@ -720,6 +736,18 @@ created by simply negating one of the LGraph comparators. `GT = ~LE`, `LT = ~GE`
 #### Other Considerations
 
 Verilog treats all the inputs as unsigned if any of them is unsigned. LGraph treats all the inputs as signed all the time.
+
+| size | A | B | Operation |
+|------|---|---|-----------|
+| a==b | S | S | EQ(a,b) |
+| a==b | S | U | EQ(a,b) |
+| a==b | U | S | EQ(a,b) |
+| a==b | U | U | EQ(a,b) |
+| a< b | S | S | LT(a,b) |
+| a< b | S | U | LT(a,Tposs(b)) |
+| a< b | U | S | LT(Tposs(a),b) |
+| a< b | U | U | LT(Tposs(a),Tposs(b)) |
+
 
 ### SHL_op
 
