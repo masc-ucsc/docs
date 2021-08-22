@@ -96,4 +96,4 @@ Make sure to have enough memory (4+GB at least)
 
 ## Next Steps
 
-To start using LiveHD, check out [Usage](./Usage.md). If you're interested in working on LiveHD, refer to [Develop](./Develop.md).
+To start using LiveHD, check out [Usage](02-usage.md). If you're interested in working on LiveHD, refer to [Creating a pass](11-pass.md).

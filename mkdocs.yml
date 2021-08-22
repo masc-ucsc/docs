@@ -1,7 +1,7 @@
 site_name: LiveHD and Pyrope
 
 repo_url: https://github.com/masc-ucsc/livehd
-edit_url: https://github.com/masc-ucsc/docs/edit/main/docs
+  # edit_url: https://github.com/masc-ucsc/docs/edit/main/docs
 
 remote_branch: gh-pages
 

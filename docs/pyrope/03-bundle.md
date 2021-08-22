@@ -53,3 +53,60 @@ assert v has 2
 assert !(v has 3)
 ```
 
+## Everything is a bundle
+
+In Pyrope all the variables are bundles, just a bundle of size 1. As such, it is possible
+to have this code:
+
+```
+a = 3              // bundle of 1 element which is 3
+b = a.0.0          // get first element which is 3 (a bundle too)
+assert b == a == 3
+c = (3)            // bundle of 1 element which is 3
+assert a == c
+```
+
+## Attributes/Fields
+
+
+A bundle can have named fields like `counter`, but when the field starts with 2
+underscores, it is an attribute to be passed to the compiler flow. 
+
+Attributes for individual bundle entries:
+
+* `__max`: sets the maximum value allowed
+* `__min`: sets the minimum value allowed
+* `__ubits`: Number of bits and set as unsigned
+* `__sbits`: Number of bits and set as signed
+
+Attributes for multiple bundle entries:
+
+* `__size`: number of bundle sub-entries
+* `__init`: default initialization value (zero by default)
+* `__rnd`: generate a random bundle
+* `__do`: code block passed
+* `__else`: else code block passed
+
+
+Some syntax sugar on the language creates wrappers around the attributes, but
+they can be accessed directly. When types are used, a more traditional syntax
+wrapper for max/min/ubits/sbits is created.
+
+
+The programmer could create custom attributes but then a LiveHD compiler pass
+to deal with the new attribute is needed to handle based on their specific
+semantic. To understand the potential Pyrope syntax, this is a hypothetical
+`__poison` attribute that marks bundles.
+
+```
+bad.a        = 3
+bad.b        = 4
+bad.__poison = true
+
+b = bad.b
+c = 3
+
+assert  b.__poison
+assert !c.__poison
+```
+

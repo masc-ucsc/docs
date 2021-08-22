@@ -74,18 +74,18 @@ are mixed.
 
 ``` mermaid
 graph LR
-    in1[in1] --a--> m0(mul3 cycle 0)
-    in2[in2] --b--> m0
+  in1[in1] --a--> m0(mul3 cycle 0)
+  in2[in2] --b--> m0
 
-    m0 --> m1(mul3 cycle 1)
-    m1 --> m2(mul3 cycle 2)
-    
-    in1  --> in1_0(flop cycle 0)
-    in1_0--> in1_1(flop cycle 1)
-    in1_1--> in1_2(flop cycle 2)
-    in1_2--a--> a0[add1 cycle 0]
-    m2 --b--> a0
-    a0 --> out[out]
+  m0 --> m1(mul3 cycle 1)
+  m1 --> m2(mul3 cycle 2)
+  
+  in1  --> in1_0(flop cycle 0)
+  in1_0--> in1_1(flop cycle 1)
+  in1_1--> in1_2(flop cycle 2)
+  in1_2--a--> a0[add1 cycle 0]
+  m2 --b--> a0
+  a0 --> out[out]
 ```
 
 It is possible to balance the pipeline stages explicitly, the issue is that it is error prone because it requires to know exactly

@@ -552,3 +552,46 @@ creates new inputs `$` or outputs `%` in the current module. These do not need
 to be in the function declaration list.
 
 
+## Operator overloading
+
+There is no operator overload in Pyrope. `+` always adds Numbers, `++`
+always concatenates a Bundle or a String, `[]` always indexes a bundle.
+
+The only thing that looks like operator overload (but it is not) is the `=`
+because it can be used to initialize objects.
+
+```
+var f1:XXX = 3,2
+var f2:XXX = XXX(3,2)
+Var f3:XXX
+
+f3 = 3,2
+assert f3 == f2 == f1
+```
+
+
+Encapsulation can be achieved with methods, but to have a more familiar getter/setter
+syntax, it is possible to create a bundle where the initialization is the setter
+and the default method is the getter.
+
+
+```
+type some_obj = (
+  ,_field:string
+  ,direct:u30
+  ,enc.initialization = {mut |x| _field = x }  // setter
+  ,enc = {|| self._field }                     // getter
+  ,initialization = {|a,b|
+    self._field = a
+    self.direct = b
+  }
+)
+
+var x:some_obj = "hello", 3
+
+assert x.direct == "hello"
+assert x.enc()  == 3
+x.enc = 5
+assert x.enc()  == 5
+```
+

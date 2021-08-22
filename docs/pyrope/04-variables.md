@@ -1,8 +1,9 @@
 # Variables and types
 
 A variable is an instance of a given type. The type may be inferred from use.
-The basic types are Number, String, Boolean, Functions, and Bundles.  All the
-types are build around these basic types.
+The basic types are Boolean, Function, Number, Range, and String. All those
+types can be combined with Bundles. All the complex types are build around
+these types.
 
 
 ## Mutable/Immutable
@@ -47,6 +48,95 @@ mut a.bar = 3
 set a.foo ++= (c=4)
 assert a.foo.c == 4
 ```
+
+## Basic types
+
+### Boolean
+
+A boolean is a number that can be `0` or `-1` but when mixed with other types a typecast
+must be used.
+
+```
+b = true
+c = 3
+
+if c    {}     // compile error, 'c' is not a boolean expression
+if c!=0 {}     // OK
+
+d = b or false // OK
+e = c or false // compile error, 'c' is not a boolean
+
+assert (int(true)  + 1) == 0  // explicity typecast
+assert (int(false) + 1) == 1  // explicity typecast
+assert bool(33) or false      // explicity typecast
+```
+
+### Function
+
+Functions have several options (see [Functions](06-functions.md)), but from a
+high level they provide a sequence of statements and they have a bundle for
+input and a bundle for output. Functions also can capture values from function
+declaration.
+
+### Number
+
+Numbers have unlimited precision and they are always signed. Type constrains 
+can enforce a subset of numbers
+
+```
+var a:int      // any value, no constrain
+var b:unsigned // only positive values
+var c:u13      // only from 0 to 1<<13
+```
+
+### Range
+
+Ranges are very useful in hardware description languages to select bits, but
+they are integrated all over the language.
+
+The are 3 ways to specify a closed range:
+
+* `first..=last`: Range from first to last element, both included
+* `first..<last`: Range from first to last, but last element is not included
+* `first..+size`: Range from first to `first+size`. Since there are `size`
+  elements, it is equivalent to write `first..<(first+last)`.
+
+When used inside selectors (`[range]`) the ranges can be open (no first/last specified)
+or use negative numbers. The negative number is to specify distance from last.
+
+* `[first..<-val]` is the same as `[first..<(last-val+1)]`. The advantage is that the `last` or 
+size in the bundle does not need to be known.
+* `[first..]` is the same as `[first..=-1]`.
+
+```
+a = (1,2,3)
+assert a[..] == (1,2,3)
+assert a[1..] == (2,3)
+assert a[..=1] == (1,2)
+assert a[..<2] == (1,2)
+assert a[1..<10] == (2,3)
+b = 0b0110_1001
+assert b@[1..]        == 0b0110_100
+assert b@[1..=-1]     == 0b0110_100
+assert b@[1..=-2]     == 0b0110_100  // unsigned result from bit selector
+assert b@sext[1..=-2] == 0sb110_100 
+assert b@[1..=-3]     == 0sb10_100
+assert b@[1..<-3]     == 0b0_100
+```
+
+### String
+
+Strings are also Numbers encoded using the ASCII sequence, but to perform arithmetic
+operations a typecast must be used. The string encoding assigns the lower bits
+to the first characters in the string, each character has 8 bits associated.
+
+```
+a = 'cad' // a is 0x61, c is 0x63, and d is 0x64
+b = 0x64_61_63
+assert a == string(b)  // typecast number to string
+assert int(a) == b     // typecast string to number
+```
+
 
 ## Variable modifiers
 

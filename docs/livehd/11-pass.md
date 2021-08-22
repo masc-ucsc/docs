@@ -18,7 +18,7 @@ The typical is to have these files:
 
 * pass/XXX/pass_XXX.[cpp|hpp]: C++ and Header file to interface with lgshell
 * pass/XXX/XXX.[cpp|hpp]: C++ file to perform the pass over a Lgraph or LNAST API
-* pass/XXX/BUILD: the [Bazel](bazel.md) build configuration file
+* pass/XXX/BUILD: the [Bazel](10-bazel.md) build configuration file
 * pass/XXX/tests/XXX_test.cpp: A google test checking the pass
 
 
