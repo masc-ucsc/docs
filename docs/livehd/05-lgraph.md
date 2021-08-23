@@ -816,10 +816,11 @@ reduce xor is a chain of XORs.
 Inputs - a, mask
 Get_mask (a, mask)
 Functionality - Output contains only those bits a[i], for which mask[i] = 1, other bits a[i] for which mask[i] = 0, are dropped.
-mask is interpreted as a signed number and sign extended to the size of a, if required.
-// Check - if a is signed, actually a should never be extended so, sign should not matter, mask is signed and sign extended
-eg - Get_mask (0b11000011, 0sb10101010) = osb1001 // a's sign does not matter, mask is signed, output in lgraph is always inferred as signed by default
-     Get_mask (0b11110000, 0sb00001111) = 0sb0000
+a & mask are interpreted as signed numbers and sign extended to the size of the other, if required.
+eg - Get_mask (0sb11000011, 0sb10101010) = 0sb1001 
+     Get_mask (0sb11110000, 0sb00001111) = 0sb0000
+     Get_mask (0sb0011, 0sb10) = 0sb001
+     Get_mask (0sb10, 0sb1010) = 0sb11
 
 ### Set_mask_op
 
