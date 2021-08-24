@@ -20,6 +20,8 @@ jobs:
 
       - run: pip install mkdocs-pymdownx-material-extras mkdocs-redirects mkdocs-minify-plugin mkdocs-mermaid2-plugin
 
-      - run: mkdocs gh-deploy --force
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: mkdocs build
+
+      - run: find ./site -name "*.html" -exec sed -i -E 's#<a href="https:\/\/github.com\/masc-ucsc\/livehd\/edit\/master\/(.*)"#<a href="https://github.com/masc-ucsc/docs/edit/main/\1"#g' {} +
+
+      - run: ghp-import --no-jekyll --push --force --no-history --branch=gh-pages ./site
