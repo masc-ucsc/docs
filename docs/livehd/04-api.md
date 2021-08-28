@@ -17,30 +17,27 @@ While LNAST could be seen as a high level API with control flow information,
 LGraph is a lower level graph API where many LNAST high level constructs are
 simplified.
 
-
 There is a division of functionality between LNAST and LGraph:
 
+- LNAST: Language Neutral AST, the high level tree based representation/API
+    + Bundles:
+         - Flatten fields (only flat attributes passed to LGraph)
+         - Find IOs (inputs and outputs). Populate the sub_node accordingly.
+         - Detect as array if legal bundle index.
+    + Constant propagation (comptime decision)
+    + Linear time compiler passes (dead code elimination, constant folding) but not complex (GVN, SAT...)
+    + Lgraph creation
+         - Inline small LNASTs
+         - Partition too large LGraphs
+    + Type checking 
+    + Unroll `for` and `while` loops 
 
-- LNAST: Anything that is comptime, or should become comptime after enough inlining
-    + for and while loops 
-    + type declaration 
-    + bundle fields
-    + Find the "super set" of IOs (inputs and outputs). Populate the sub_node accordingly.
-    + No hierarchy concept. It has a "flatten" and a callee/caller concept.
-    + LNAST virtually flattens if for/while/type/bundles can not  be decided locally at LNAST time.
-    + Inline small LNASTs (no LG for trivial LNAST unless a "directive" is set)
-
-- LGraph: Hierarchy, bitwidth, attributes, punch
-    + Handling attributes
-    + Bitwidth
-    + cross hierarchy optimization without flattening
-    + synthesis
-    + Finishes bundles (attributes)
-
-- Both LNAST and LGraph can:
-    + Copy/constant optimizations
-    + Must understand bundles
-
-
-
+- LGraph: Live Graph, the low level graph/netlist level based representation/API
+    + Attributes
+         - Bitwidth
+         - Debug flag
+    + Complex optimizations
+         - cprop (Peephole, constant folding, ...)
+         - lecopt, Logic Equivalence based optimizations
+         - synthesis
 

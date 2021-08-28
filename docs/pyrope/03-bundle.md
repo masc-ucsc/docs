@@ -66,6 +66,29 @@ c = (3)            // bundle of 1 element which is 3
 assert a == c
 ```
 
+## Bundle vs Arrays
+
+Bundles need to know all the fields at compile time. The only exception is for
+ordered fields.  This is an array, and as such the index to the bundle can be
+unknown at compile time.
+
+```
+bund1 = (0,1,2,3,4) // ordered and can be used as an array
+
+set bund2.foo.0.xx   = 1
+set bund2.foo[2].xx  = 2
+set bund2.foo[33].xx = 3
+set bund2.foo.4.xx   = 4
+set bund2.foo.[r].xx = 5
+set bund2.bar        = 6
+```
+
+In the previous example `bund1` is an ordered, known at compile time, bundle.
+`bund2.foo` is also an ordered array because all the indexes are numbers. Even
+if `r` is not know at compile time, `bund2.foo` is treated as an array. The
+`bund2` is not a valid array because some of the fields are not ordered and
+there are more than one field.
+
 ## Attributes/Fields
 
 
