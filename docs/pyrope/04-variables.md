@@ -337,11 +337,11 @@ programmer should explicitly indicate the precedence. The exception is for
 widely expected precedence.
 
 * Unary operators (not,!,~,?) bind stronger than binary operators (+,++,-,*...)
-* Always left-to-right evaluation.
 * Comparators can be chained (a==c<=d) same as (a==c and c<=d)
 * mult/div precedence is only against +,- operators.
 * Parenthesis can be avoided when a expression only has variables (no function
   calls) and the left-to-right has the same result as right-to-left.
+* Always left-to-right evaluation (only matter with mutable functions).
 
 | Priority | Category | Main operators in category |
 |:-----------:|:-----------:|-------------:|
