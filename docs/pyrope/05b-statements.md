@@ -43,6 +43,9 @@ for mut i in bund {
 assert bund == (2,3,4,5)
 ```
 
+```
+break and continue
+```
 
 ## match
 
@@ -63,7 +66,6 @@ match x {
 // It is equivalent to:
 unique if x == 1      { puts "always true" }
 elif x in (2,3)       { puts "never"       }
-elif x == 1 and foo   { puts "never"       }
 else                  { assert false       }
 ```
 
@@ -103,6 +105,12 @@ f4 = ring($d, f3)
 ```
 
 ## test
+
+## debug
+
+## step
+
+## return
 
 ## fail
 
