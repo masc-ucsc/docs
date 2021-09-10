@@ -161,7 +161,7 @@ assert a_2.x == 4
 
 To access the bundle contents, there are two keywords:
 
-* `self` provides access to the upper level in the bundle.
+* `self` provides access to the upper level in the bundle. Method that modify the upper level bundle must be mutable (`{mut |...}`)
 * `super` provides the method before it was redefined.
 
 ```

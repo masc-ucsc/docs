@@ -352,7 +352,7 @@ type ct=(
 type dt=(
   ,var d:u32
   ,var c:string
-  ,let init = {|x:at| self.d = x.d ; self.c = x.c }
+  ,let init = {mut |x:at| self.d = x.d ; self.c = x.c }
   ) // different order
 
 var b:bt=(c="hello", d=10000)
