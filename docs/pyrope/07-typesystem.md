@@ -227,9 +227,9 @@ The union of types is the way to implement enums in Pyrope:
     ,init = {mut |x| self.color:u24 = x }
  )
 
- type Red2:Rgb  = 0x0xff0000
- type Green2    = Rgb(0x0x00ff00) // alternative syntax
- type Blue2:Rgb = Rgb(0x0x0000ff) // alternative redundant syntax
+ type Red2:Rgb  = 0xff0000
+ type Green2    = Rgb(0x00ff00) // alternative syntax
+ type Blue2:Rgb = Rgb(0x0000ff) // alternative redundant syntax
  type color2 = Red2 or Green2 or Blue2
 
  var x:color1 = RED1 // only in local module
