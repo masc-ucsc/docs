@@ -137,14 +137,6 @@ This functionality allows to parallelize the parsing and elaboration in Pyrope. 
 multi-line comments is always a good idea.
 
 
-Pyrope has a very restricted/shallow operator precedence that forces to use parenthesis more frequently than other languages.  The
-new line is a visual break that behaves like adding a open/close parenthesis after the first operator and the end of the line.
-
-```
-a = 1 - 4  // same as: a = (1 - 4)
-  * 1 + 4  // same as:   * (1 + 4)
-  * 2 * 3  // same as:   * (2 * 3)
-```
 
 ### Identifiers
 
