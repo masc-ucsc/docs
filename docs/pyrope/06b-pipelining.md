@@ -155,6 +155,11 @@ z = repipe (a=x,b=in1) to 0  // try to create a combinational path
 z = repipe (x        ) to 2  // repipeline mul3 to have 2 stages
 ```
 
+!!! Observation
+
+    The explicit `v#[-cycles]` inserts flops and access the result `cycles` before. This same syntax
+    can be used with assertions similar to the Verilog `$past(v, cycles)`.
+
 ## Future improvements
 
 Pipelining is one of the concepts that add extra complexity to HDLs, and it is a research topic what is the best approach, as such this section

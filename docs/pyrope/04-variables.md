@@ -393,3 +393,103 @@ i = a == 3 <= b == d
 assert i == (a==3 and 3<=b and b == d)
 ```
 
+## Everything is a bundle
+
+In Pyrope everything is a bundle, and it has some implications that this section tries to clarify.
+
+
+A bundle starts with `(` and finishes with `)`. In most languages, the parenthesis have two
+meanings, operation precedence and/or tuple/bundle/record. In Pyrope, since a single element
+is a bundle too, the parenthesis always means a bundle.
+
+
+A code like `(1+(2),4)` can be read as "Create a bundle of two entries. The
+first entry is the result of the addition of `1` (which is a bundle of 1) and a
+bundle that has `2` as unique entry. The second entry in the bundle is `4`".
+
+The entries in a bundle are separated by comma (`,`). Extra commas do not add meaning.
+
+```
+a = (1,2)   // bundle of 2 entries, 1 and 2
+b = (1)     // bundle of 1 entry, 1
+c = 1       // bundle of 1 entry, 1
+d = (,,1,,) // bundle of 1 entry, 1
+assert a.0 == b.0 == c.0 == d.0
+assert a!=b
+assert b == c == d
+```
+
+
+Bundles are used in many places:
+
+* The inputs for a function are in `$` bundle. E.g: `total = $.a + $[3]`
+* The outputs for a function are in the `%` bundle. E.g: `%.out1 = 3` or `%sum = 4`
+* The arguments for a call function are a bundle. E.g: `fcall(1,2)`
+* The return of a function call is always a bundle. E.g: `foo = fcall()`
+* The index for a selector `[...]` is a bundle. As syntax sugar, the bundle parenthesis can be omitted. E.g: `foo@[0,2,3]`
+* The type declaration are a bundle. E.g: `type x = (f=1,var b:string)`
+
+The bundle entries can be mutable/immutable and named/unnamed. By default
+variables are immutable, and by default bundle entries follow the top variable
+definition. The entry can be changed with the `var` and `let` keyword. The
+`type` declaration is an immutable variable type.
+
+To declare a named entry the default is `lhs = var` which follows the default
+bundle entry type. Again, the `var` and `let` keyword can be added to change
+it.
+
+```
+b = 3
+a = (b:u8, 4)
+assert a == (3:u8, 4)
+
+var f = (b=3, let e=5)
+f.b = 4             // OK
+f.e = 10            // compile error, `f.e` is immutable
+
+let x = (1,2)
+x[0] = 3            // compile error, 'x' is immutable
+var y = (1, let 3)
+y[0] = 100          // OK
+y[1] = 101          // compile error, `y[1]` is immutable
+```
+
+## Optional bundle parenthesis
+
+Parenthesis mark the beginning and the end of a bundle. Those parenthesis can
+be avoided for unnamed bundles in some cases:
+
+* When doing a simple function call after an assignment (`=`, `:=`, `=#`) or at the beginning of a line.
+* When used inside a selector `[...]`.
+* When used after an `in` operator followed by a `{` like in a `for` and `match` statements.
+* For the inputs in a match statement
+* When the function types only has inputs.
+
+```
+fcall 1,2         // same as: fcall(1,2)
+x = fcall 1,2     // same as: x = fcall(1,2)
+b = xx[1,2]       // same as: xx[(1,2)]
+
+for a in 1,2,3 {  // same as: for a in (1,2,3) {
+}
+y = match z {    
+  in 1,2 { 4 }    // same as: in (1,2) { 4 }
+  else { 5 }
+}
+y2 = match 1,z {  // same as: y2 = match (1,z) {
+}
+
+fun = {|a,b|      // same as: fun = {|(a,b)|
+} 
+```
+
+A named bundle parenthesis can be omitted on the left hand side of an assignment. This is
+to mutate or declare multiple variables at once. 
+
+```
+var a=0
+var b=1
+
+a,b = (2,3)
+assert a==2 and b==3
+```

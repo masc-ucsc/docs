@@ -33,8 +33,8 @@ The difference between a function and a normal scope is the lambda definition en
     * `debug`   : function is for debugging, not side effects in non-debug statements
     * `mut`     : function is a method that can modify variables using `self`.
 * META are a list of type identifiers or type definitions.
-* CAPTURE has the list of capture variables for the function. If no capture is provided, no variable
-can be captured. 
+* CAPTURE has the list of capture variables for the function. If no capture is provided, any local variable
+can be captured. An empty list (`[]`), means no captures allowed.
 * INPUT has a list of inputs allowed with optional types. If no input is provided, the `$` bundle is used as input.
 * OUTPUT has a list of outputs allowed with optional types. If no output is provided, the `%` bundle is used as output.
 * COND is the condition under which this statement is valid.
@@ -121,7 +121,7 @@ a=div(3  , 4  , 3)         // compile error, div has 2 inputs
 b=div(a=8, b=4)            // OK, 2
 c=div a=8, b=4             // OK, 2
 d=(a=8).div(b=2)           // OK, 4
-e=(a=8).div b=2            // compile error, parenthesis is needed for function calls
+e=(a=8).div b=2            // compile error, parenthes needed for function call
 
 h=div2(8, 4, 3)            // OK, 2 (3rd arg is not used)
 i=8.div2(4,3)              // OK, 2 (3rd arg is not used)

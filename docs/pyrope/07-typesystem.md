@@ -102,8 +102,8 @@ All the elements in the type expression are treated as "type of". E.g: `type x
 type a1 = u32       // type a1 = :u32 is also valid syntax
 type a2 = int(max=33,min=-5)
 type a3 = (
-    ,name:string
-    ,age:u8
+    ,var name:string
+    ,var age:u8
     )
 
 type b1 = a1 or  a2 // same as type b1 = -5..<4G
@@ -117,9 +117,9 @@ The puts command understands types.
 ```
 type at=33..   // number bigger than 32
 type bt=(
-  ,c:string
-  ,d=100
-  ,initial = {|| self.c = $ }
+  ,var c:string
+  ,var d=100
+  ,let init = {|| self.c = $ }
 )
 
 var a:at=40
@@ -153,32 +153,94 @@ assert   big does :(d:u20)
 assert !(big does :(d:u40))
 ```
 
+## Bundle concatenation
+
+Bundles are the basic building block for complex types, fields can be added
+and bundles which allows to create more complex types.
+
+There are three main ways to add fields to a bundle: `set`, `++`, and `...`.
+
+The `set` directly adds a field at a time over a given bundle. The bundle must
+be mutable (`var`) and the `set` must be used to index the new field. The `mut`
+is not enough because it checks that the field already exists. The `set` allows
+to mutate and/or add a new field.
+
+
+The `++` concatenates two bundles. Bundles can be in three categories (just
+ordered, just named, or ordered/named). `++` will preserve the category of both
+input bundles have the same category. When mixing categories, it will create an
+ordered bundle. The order for the just named bundle will be the lexicographical
+order or the named fields. This means that `++` will create a just named bundle only if both input
+bundles are just named. If the same named field name exists in both bundles,
+only one of the bundle fields (the right hand side one) is used. The field
+position is recomputed based on the relative order.
+
+
+The `...` also concatenates, but it is an "inline concatenate". Since it
+inlines a bundle in an ordered bundle, the result is always an ordered bundle.
+The only difference with `++` is that it triggers a compile error if the same
+named entry already exists.
+
+```
+var base1 = (mut a, mut b)  // ordered and named
+var base2 = (mut c, mut d)  // ordered and named
+var ordered = (33,44)       // just ordered
+
+var named
+set named.y = 1
+set named.a = 2             // directly add mut fields
+
+var x = base1 ++ base2
+assert x equals (mut a,mut b,mut c,mut d)
+assert x not equals base2 ++ base1 // (c,d,a,b)
+
+assert x equals (...base1, ...base2)
+
+assert (1,3,5) == (...(1,3), 5)
+assert (1,3,5) == (1, ...3, 5)
+assert (1,3,5) == 1 ++ 3 ++ 5
+assert (1,3,5) == 1 ++ (3, 5)
+assert (1,3,5) == (...(1, 3, 5))
+
+var y = base1 ++ base1      // same bundle twice!!
+assert y equals base1
+
+e1 = (...base1, ...base1) // compile error, redefined 'a' and 'b' field
+e2 = base1 ++ named       // compile error, can not join ordered and unordered
+e3 = (...base1, ...named) // compile error, named is not an ordered bundle
+e4 = (...named, mut z)    // compile error, named is not an ordered bundle
+
+var z1 = (a=100, y=200, z=300)    //ordered and named
+assert z1 equals named ++ (mut z) // (mut z) is ordered and named
+var z2 = (z=100, a=100, y=200)    //ordered and named
+assert z2 equals (mut z) ++ named
+```
+
 ## Enums with types
 
 The union of types is the way to implement enums in Pyrope:
 
 ```
- type color = RED or BLUE or GREEN // enum just a unique ID
+ type color1 = RED1 or BLUE1 or GREEN1 // enum just a unique ID
 
  type Rgb = (
-    ,color:u24
-    ,initial = {|x| self.color = x }
+    ,init = {mut |x| self.color:u24 = x }
  )
 
- type Red   = Rgb(0x0xff0000)
- type Green = Rgb(0x0x00ff00)
- type Blue  = Rgb(0x0x0000ff)
- type color2 = Red or Green or Blue
+ type Red2:Rgb  = 0x0xff0000
+ type Green2    = Rgb(0x0x00ff00) // alternative syntax
+ type Blue2:Rgb = Rgb(0x0x0000ff) // alternative redundant syntax
+ type color2 = Red2 or Green2 or Blue2
 
- var x:color = RED // only in local module
+ var x:color1 = RED1 // only in local module
 
- if x does RED {   // in this case "x does RED" is the same as "x equals RED"
-   puts "color:{}\n", :x // prints "color:RED"
+ if x does RED1 { // "x does RED1" is the same as "x equals RED1"
+   puts "color1:{}\n", :x // prints "color1:RED1"
  }
 
- var y:color2 = Red
- if y does Red { // in this case "y does RED" is the same as "y equals RED"
-   // prints "color:Red c1:Red(color=0xff0000) c2:0xff0000"
+ var y:color2 = Red2
+ if y does Red2 { // in this case "y does RED" is the same as "y equals RED"
+   // prints "color:Red2 c1:Red2(color=0xff0000) c2:0xff0000"
    puts "color:{} c1:{} c2:{}\n", :y, y, y.color 
  }
 ```
@@ -284,13 +346,13 @@ fields match and field can be automatically typecasted without loss of precision
 type at=(c:string,d:u32)
 type bt=(c:string:d:u100)
 type ct=(
-  ,d:u32
-  ,c:string
+  ,var d:u32
+  ,var c:string
   ) // different order
 type dt=(
-  ,d:u32
-  ,c:string
-  ,initial = {|x:at| self.d = x.d ; self.c = x.c }
+  ,var d:u32
+  ,var c:string
+  ,let init = {|x:at| self.d = x.d ; self.c = x.c }
   ) // different order
 
 var b:bt=(c="hello", d=10000)
@@ -306,27 +368,27 @@ d = a // OK, call intitial to type cast
 ```
 
 
-## Traits and mixins
+## Traits and mixin
 
-There is no object inheritance in Pyrope, but bundles allow to build mixins and composition with traits.
+There is no object inheritance in Pyrope, but bundles allow to build mixin and composition with traits.
 
 A mixin is when an object or class can add methods and the parent object can access them. In several languages
 there are different constructs to build them (E.g: an include inside a class in Ruby). Since Pyrope bundles
-are not immutable, new methods can be added like in mixins.
+are not immutable, new methods can be added like in mixin.
 
 ```
 type Say_mixin = (
-  ,say = {|s| puts s }
+  ,let say = {|s| puts s }
 )
 
 type Say_hi_mixin = (
-  ,say_hi  = {|| self.say("hi {}", self.name)
-  ,say_bye = {|| self.say("bye {}", self.name)
+  ,let say_hi  = {|| self.say("hi {}", self.name)
+  ,let say_bye = {|| self.say("bye {}", self.name)
 )
 
 type User = (
-  ,name:string
-  ,initial = {mut |n| self.name = n }
+  ,var name:string
+  ,let init = {mut |n| self.name = n }
 )
 
 type Mixing_all = Say_mixin ++ Say_hi_mixin ++ User
@@ -335,13 +397,42 @@ var a:Mixing_all("Julius Caesar")
 a.say_hi() 
 ```
 
-Mixins are very expressive but allow to redefine methods. If two bundles have
+Mixin are very expressive by allowing to redefine methods. If two bundles have
 the same field a bundle with the concatenated values will be created. This is
 likely an error with basic types but useful to handle explicit method overload.
-This could be error prone and in many cases it may be fine just to use the
-trait construction. The `implements` keyword checks that the new type
-implements the functionality undefined and allows to use methods defined. This
-is effectively a mixin with checks that some methods should be implemented.
+
+
+In a way, mixin just adds methods from two bundles to create a new bundle. In
+programming languages with object oriented programming (OOP) there are many
+keywords (`virtual`, `final`, `override`, `static`...) to constrain how methods can be
+updated/changed. In Pyrope, the `let` and `var` keywords can be added to any bundle
+field. The `let` makes the entry immutable when applied to a method, it behaves like
+a `final` keyword in most languages.
+
+
+There are also two ways to concatenate bundles in Pyrope. `bun1 ++ bun2` and
+`(...bun1, ...bun2)`. The difference is that `++` concatenates and replaces any
+not `let` field. The `...` concatenates and but triggers a compile error if the
+same field appears twice.
+
+
+An issue with mixin is when more than one bundle has the `init` method. If the
+bundles are concatenated with `...` and error is triggered, if the bundles are
+concatenated with `++` the methods are overrided when declared with `var`.
+Neither is the expected solution.  A smaller issue with mixins is that
+`comptime assert X implements Y` should be inserted when implementing an
+interface.
+
+
+Without supporting OOP, but providing a more familiar abstract or trait
+interface, Pyrope provides the `implements` keyword. It checks that the new
+type implements the functionality undefined and allows to use methods defined,
+and creates a wrapper to the init method calling both init methods if needed. 
+
+HERE (same call order as swifth/rust/scala??)
+
+This is effectively a mixin with checks that some methods should be
+implemented.
 
 ```
 type Shape = (
@@ -352,7 +443,7 @@ type Shape = (
 
 type Circle implements Shape = (
   ,rad:i32
-  ,initial = {mut || self.name = "circle" }
+  ,init = {mut || self.name = "circle" }
   ,area = {|() -> :i32   |
      let pi = import "math.pi"
      return pi * self.rad * self.rad
@@ -447,18 +538,24 @@ _fun3   = {|a| ... }
 
 ```
 // file: src/user.prp
-a = import "my_fun.*fun*"
-a.fun1(a=1,b=2)           // OK
-a.another(a=1=2)          // compile error, 'anoter' is not an imported function
-a._fun3(a=1=2)            // OK but not nice
+a = import "my_fun/*fun*"
+a.fun1(a=1,b=2)         // OK
+a.another(a=1=2)        // compile error, 'another' is not an imported function
+a._fun3(a=1=2)          // OK but not nice
 ```
 
 The import statement uses a shell like file globbing with an optional "project".
-If the project is not provided, the current project is used. Globbing is not
-allowed on the project name.
 
 * `*` matches zero or more characters
 * `?` matches exactly one character
+
+The globbing starts at the current directory, and keeps trying upper
+directories until it reaches the project root. Directories named `code` or
+`src` are skipped. No need to add them in globbing pattern. It stops the search
+on the first hit. If no hit happens, a compile error is generated. This allows
+to have specialized libraries per subproject. For example xx/yy/zz can use a
+different library version than xx/bb/cc if the library is provided by yy, or
+use a default one from the xx directory.
 
 ```
 a = import "prj1/file?/*something*"
@@ -470,7 +567,7 @@ d = import "prj2/file3"      // import the functions from project prj2 and file3
 
 Many languages have a "using" or "import" or "include" command that includes
 all the imported functions/variables to the current scope. Pyrope does not
-allow that, but it is possible to use mixins to add the imported functionality
+allow that, but it is possible to use mixin to add the imported functionality
 to a bundle.
 
 ```
@@ -487,52 +584,65 @@ var x:Number = 3
 
 The `punch` statement allows to access variables from other modules. It can be
 seen as an `import` but only applicable to read/write variables instead of
-functions.  There is another significant difference with `import`, while import
-goes through projects and files, `punch` goes through the instantiation
-hierarchy to find a matching variable.
+functions. In some systems it is known as soft connections.
+
+Maybe the best way to understand the `punch` is to see the differences with the `import`:
+
+* variables vs functions
+  + `punch` connects variables (inputs,outputs,registers) which create wires between functions/modules. 
+  + `import` brings or copies functions.
+* Instantiation vs File hierarchy
+  + `punch` traverses the instantiation hierarchy to find matches.
+  + `import` traverses the file/directory hierarchy to find matches.
+* Succcess vs Failure
+  + `punch` keeps going to find all the matches, and it is possible to have a zero matches
+  + `import` stops at the first match, and a compile error is generated if there is no match.
+* Regex vs Globbing
+  + `punch` uses a more powerful regex to match instance hierarchy.
+  + `import` uses a simple globbing to match file/function names.
 
 
-The `punch` statement has a regex syntax, not file globbing like in `import`. There can be
-many matches for a given regex, it will return all the matches in an ordered bundle.
+The instantiation hierarchy looks like a tree with a root at the top function.
+Given a instantiation hierarchy, the tree traversal starts by visiting all the
+children, then the parents.  The traversal is similar to a post-order tree
+traversal, but not the same. The post-order traversal visits a tree node once
+all the children are visited. The `punch` traversal visits a tree node once all
+the children AND niblings (niece of nephews from siblings) are visited.
 
 
-Given a tree hierarchy, the traversal starts by visiting all the children, then
-the parents.  The traversal is similar to a post-order tree traversal, but not
-the same. The post-order traversal visits a tree node once all the children are
-visited. The `punch` traversal visits a tree node once all the children AND
-niblings (niece of nephews from siblings) are visited.
-
-
-For example, given this tree hierarchy. If the punch is called from 1.2.1 node,
+For example, given this tree hierarchy. If the punch is called from `1/2/1` node,
 it will visit nodes in this order:
 
 ```
-            +── 1.2.1.3.1   // 5th
-            |── 1.2.1.3.2   // 4th
-        +── 1.2.1.1         // 3th
-        ├── 1.2.1.2         // 2nd
-        |── 1.2.1.3         // 1st
-    +── 1.2.1               // START <--
-    |   +── 1.3.1.1         // 7th
-    |   |── 1.3.1.2         // 8th
-    ├── 1.3.1               // 9th
-    ├── 1.3.2               // 10th
-    ├── 1.3.3               // 11th
-    │   -── 1.4.2.1         // 12th
-    |   |── 1.4.3.1         // 13th
-    ├── 1.4.1               // 14th
-    ├── 1.4.2               // 15th
-    ├── 1.4.3               // 16th
-+── 1.1                     // 17th
-├── 1.2                     // 20th
-├── 1.3                     // 21st
-├── 1.4                     // 22nd
+            +── 1/2/1/3/1   // 5th
+            |── 1/2/1/3/2   // 4th
+        +── 1/2/1/1         // 3th
+        ├── 1/2/1/2         // 2nd
+        |── 1/2/1/3         // 1st
+    +── 1/2/1               // START <--
+    |   +── 1/3/1/1         // 7th
+    |   |── 1/3/1/2         // 8th
+    ├── 1/3/1               // 9th
+    ├── 1/3/2               // 10th
+    ├── 1/3/3               // 11th
+    │   -── 1/4/2/1         // 12th
+    |   |── 1/4/3/1         // 13th
+    ├── 1/4/1               // 14th
+    ├── 1/4/2               // 15th
+    ├── 1/4/3               // 16th
++── 1/1                     // 17th
+├── 1/2                     // 20th
+├── 1/3                     // 21st
+├── 1/4                     // 22nd
 | 1                         // LAST
 ```
 
 `punch` connects to inputs (`$`), outputs (`%`), and registers (`#`). The
-modifier does not need to be included in the search. The regex can include tree
-hierarchy. E.g:
+modifier (`$`,`%`,`#`) does not need to be included in the search. As a result
+of connecting through the hierarchy instantiation, the `punch` command will add
+input/outputs through the hierarchy, The left hand side can be an input (`$`)
+or an output (`%`). An input indicates intention to read, and output intention
+to modify the destination.  The regex can include tree hierarchy. E.g:
 
 ```
 %a = punch "module1/mod2/foo"
@@ -546,10 +656,6 @@ hierarchy. E.g:
 $c = punch "bar/some_output"
 $d = punch "bar/some_register"
 ```
-
-The result of the punch has either a `$` or `%`. The reason is that the punch
-creates new inputs `$` or outputs `%` in the current module. These do not need
-to be in the function declaration list.
 
 
 ## Operator overloading
@@ -579,9 +685,9 @@ and the default method is the getter.
 type some_obj = (
   ,_field:string
   ,direct:u30
-  ,enc.initialization = {mut |x| _field = x }  // setter
+  ,enc.init = {mut |x| _field = x }  // setter
   ,enc = {|| self._field }                     // getter
-  ,initialization = {|a,b|
+  ,init = {|a,b|
     self._field = a
     self.direct = b
   }
