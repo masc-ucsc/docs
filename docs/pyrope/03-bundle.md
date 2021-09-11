@@ -79,7 +79,7 @@ set bund2.foo.0.xx   = 1
 set bund2.foo[2].xx  = 2
 set bund2.foo[33].xx = 3
 set bund2.foo.4.xx   = 4
-set bund2.foo.[r].xx = 5
+set bund2.foo[r].xx  = 5
 set bund2.bar        = 6
 ```
 

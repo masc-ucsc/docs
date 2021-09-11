@@ -27,7 +27,7 @@ Pyrope is a modern hardware description language, with these focus points:
 ## Hello World
 
 Create a directory for the project:
-```
+```bash
 $ mkdir hello
 $ cd hello
 $ mkdir src
@@ -43,7 +43,7 @@ test "quite empty" {
 ```
 
 Run
-```
+```bash
 $prp test
 ```
 
@@ -57,7 +57,7 @@ Populate the Pyrope code
 
 === "Pyrope"
 
-    ```coffescript linenums="1"
+    ```pyrope linenums="1"
     // src/gcd.prp
     if $load_values {
       #x = $value1
@@ -88,7 +88,8 @@ Populate the Pyrope code
         }
       }
     }
-    
+    ```
+    ```c++
     // src/my_cpp_gcd.cpp
     void my_gcd_cpp(const Lbundle &inp, Lbundle &out) {
       auto [x,ok1] = inp.get_const("v1");
@@ -179,7 +180,7 @@ Populate the Pyrope code
 
 
 Run
-```
+```bash
 $prp test gcd
 ```
 

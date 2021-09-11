@@ -24,8 +24,8 @@ expression before the closing `}`.
 
 The difference between a function and a normal scope is the lambda definition enclosed between pipes (`|`).
 
-```
-[ATTRIBUTES] | [META] [CAPTURE] [INPUT] [-> OUTPUT] [where COND] |
+```txt
+[ATTRIBUTES] | [CAPTURE] [INPUT] [-> OUTPUT] [where COND] |
 ```
 
 * ATTRIBUTES are optional method modifiers like:
@@ -45,8 +45,8 @@ add = {|a,b,c| a+b+c }            // constrain inputs to a,b,c
 add = {|(a,b,c)| a+b+c }          // same
 add = {|a:u32,b:s3,c| a+b+c }     // constrain some input types
 add = {|(a,b,c) -> :u32| a+b+c }  // constrain result to u32
-add = {|(a,b,c) -> res| a+b+c }   // constrain result to be named res
-add = {|<T>(a:T,b:T,c:T)| a+b+c } // constrain inputs to have same type
+add = {|(a,b,c) -> (res)| a+b+c } // constrain result to be named res
+add = {|(a:T,b:T,c:T)| a+b+c }    // constrain inputs to have same type
 
 x = 2
 add2 = {|[x](a)| x + a }           // capture x
@@ -78,7 +78,7 @@ Like any function, the input/outputs can be constrained or left to be inferred.
 
 ```
 // file: src/mycall_with_def.prp
-|(a,b) -> (d:u12)|
+|(a,b) -> (d:u12)|  // not a compile error if beginning of the file
 
 %d = a + $a + $b // a or $a the same due to function definition
 ```
@@ -114,25 +114,25 @@ concatenated, but in UFCS the it is added as first argument.
 
 
 ```
-div  = {|a,b| a / $b }     // named input bundle
-div2 = {|| $0 / $1 }       // unnamed input bundle
+div  = {|a,b| a / $b }   // named input bundle
+div2 = {|| $0 / $1 }     // unnamed input bundle
 
-a=div(3  , 4  , 3)         // compile error, div has 2 inputs
-b=div(a=8, b=4)            // OK, 2
-c=div a=8, b=4             // OK, 2
-d=(a=8).div(b=2)           // OK, 4
-e=(a=8).div b=2            // compile error, parenthes needed for function call
+a=div(3  , 4  , 3)       // compile error, div has 2 inputs
+b=div(a=8, b=4)          // OK, 2
+c=div a=8, b=4           // compile error, parenthesis needed for complex call
+d=(a=8).div(b=2)         // OK, 4
+e=(a=8).div b=2          // compile error, parenthesis needed for complex call
 
-h=div2(8, 4, 3)            // OK, 2 (3rd arg is not used)
-i=8.div2(4,3)              // OK, 2 (3rd arg is not used)
+h=div2(8, 4, 3)          // OK, 2 (3rd arg is not used)
+i=8.div2(4,3)            // OK, same as div2(8,4,2)
 
-j=(8,4)  |> div2           // OK, 2
-k=(4)    |> div2 8         // OK, 2
-l=(4,33) |> div2(8)        // OK, 2
-m=4      |> div2 8         // OK, 2
+j=(8,4)  |> div2         // OK, 2, same as div2(8,4)
+k=(4)    |> div2 8       // OK, 2, same as div2(8,4)
+l=(4,33) |> div2(8)      // OK, 2, same as div2(8,4,33)
+m=4      |> div2 8       // OK, 2, same as div2(8,4)
 
-n=div2((8,4), 3)           // compile error: (8,4)/3 is undefined
-o=(8,4).div2(1)            // compile error: (8,4)/1 is undefined
+n=div2((8,4), 3)         // compile error: (8,4)/3 is undefined
+o=(8,4).div2(1)          // compile error: (8,4)/1 is undefined
 ```
 
 ## Methods
@@ -191,13 +191,13 @@ type top = (
 
 var a3:top
 
-assert a3.top_fun does {||}
+assert a3.top_fun does :{||}
 assert a3.top_fun.size == 1
 
-assert a3.top_fun does {||}
+assert a3.top_fun does :{||}
 assert a3.top_fun.size == 1
 
-assert a3.fun does {||}
+assert a3.fun does :{||}
 assert a3.fun.size == 3  // explicit overload
 assert a3.fun[0]() == 33
 assert a3.fun[1]() == 2

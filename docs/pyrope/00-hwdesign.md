@@ -237,7 +237,7 @@ a software programmer may expect:
 
 === "Problematic code"
 
-    ```
+    ```pyrope
     var result
     if some_opcode {
       result = do_division(a,b)
@@ -248,7 +248,7 @@ a software programmer may expect:
 
 === "HLS possible solution"
 
-    ```
+    ```pyrope
     var result
     result1 = do_division(enable=some_opcode, a,b)
     result2 = do_multiplication(enable=!some_opcodea,b)
@@ -301,14 +301,14 @@ is not what would be expected in a normal software API.
 
 === "Problematic code"
 
-    ```
+    ```pyrope
     c = mul(a,b)
     assert c == a * b // assert fails!!
     ```
 
 === "HLS possible solution"
 
-    ```
+    ```pyrope
     c = mul(a,b)
     assert c == a#[-1] * b#[-1] // read last cycle #[-1] a and b
     ```
@@ -339,7 +339,7 @@ affect simulation.
 
 === "Problematic code"
 
-    ```
+    ```verilog
     initial begin // initial code may not be used in synthesis
        c = 3;
     end
@@ -351,7 +351,7 @@ affect simulation.
 
 === "HLS possible solution"
 
-    ```
+    ```verilog
     // Do allow simulation code to have side-effects to synthesis code
     // Any directive should affect simulation AND synthesis (not one or the other)
 
@@ -383,7 +383,7 @@ Some differences between reset and software initialization:
 
 === "Problematic code"
 
-    ```
+    ```verilog
     initial begin
        d = 1;
     end
@@ -395,7 +395,7 @@ Some differences between reset and software initialization:
 
 === "HLS possible solution"
 
-    ```
+    ```verilog
     // Just use the reset flop values to initialize contents
 
     always @(posedge clk) begin
@@ -424,7 +424,7 @@ scheduled update.
 
 === "Problematic code"
 
-    ```
+    ```verilog
     counter <- counter + 1  // non-blocking assignment
     tmp     <- counter + 2  // non-blocking assignment
     assert tmp == (counter+1) // this may FAIL!
@@ -432,12 +432,11 @@ scheduled update.
 
 === "HLS possible solution"
 
-    ```
+    ```pyrope
     // Do not use non-blocking
     counter = counter + 1  // blocking assignment
     tmp     = counter + 2  // blocking assignment
     assert tmp == (counter+1) // this never fails
-
     ```
 
 !!! Artifact
@@ -504,7 +503,7 @@ There are 3 main solutions categories:
 
 === "Problematic code"
 
-    ```
+    ```verilog
     x = 0b?   // a ? state
     if x {
        puts "x is never true"
@@ -515,7 +514,7 @@ There are 3 main solutions categories:
 
 === "HLS possible solution"
 
-    ```
+    ```verilog
     // there is no agreement on the community, but possible solutions:
     x = 0b? // (1): compile error
     if x {  // (2): randomly pick 1 or 0

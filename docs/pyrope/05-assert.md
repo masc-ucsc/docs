@@ -16,7 +16,7 @@ There are 4 main methods:
   space. It only affects the verify command. The restrict command accepts a list of conditions to restrict
 
 
-```
+```pyrope
 a = 3
 assert a == 3          // checked at runtime (or compile time)
 comptime assert a == 3 // checked at compile time
@@ -24,7 +24,7 @@ comptime assert a == 3 // checked at compile time
 verify a < 4           // checked at runtime and verification
 assume b > 3           // may optimize and perform a runtime check
 
-restrict foo < 1, foo >3 {
+restrict "cond1" when foo < 1 and foo >3 {
    verify bar == 4  // only checked at verification, restricting conditions
 }
 ```
@@ -32,7 +32,7 @@ restrict foo < 1, foo >3 {
 To guard an assertion for being checked unless some condition happens, you can use the `when/unless` statement modifier
 or the `implies` logic. All the verification statements (`assert`, `assume`, `verify`) can have an error message.
 
-```
+```pyrope
 a = 0
 if cond {
   a = 3

@@ -127,10 +127,10 @@ statement.
 
 ```
 a = 1
-  + 3          // 1st stmt
-(b,c) = (1,3)  // 2nd stmt
-d = 1 +
-    3          // compile error
+  + 3         // 1st stmt
+b,c = (1,3)   // 2nd stmt
+d = 1 +       // compile error
+    3         // compile error
 ```
 
 This functionality allows to parallelize the parsing and elaboration in Pyrope.  Also, makes the code more readable. Avoiding
@@ -178,9 +178,9 @@ This example will print "hello world" even though there are 2 puts/prints in dif
 
 ```
 // src/file1.prp
-puts order=2, " world"
+puts(order=2, " world")
 // src/file2.prp
-print order=1, "hello"
+print(order=1, "hello")
 ```
 
 The available puts/print arguments:

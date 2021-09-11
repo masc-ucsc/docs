@@ -6,8 +6,8 @@ fundamental feature that must be used in hardware but not in software designs.
 To illustrate the confusion/complication the following example illustrates a multiplier that takes 3 cycles and an adder that
 takes 1 cycle to complete, and the conceptual problems of integrating them:
 
-```
-|(in1,in2) -> (out)|
+```pyrope
+|(in1,in2) -> (out)|  // compile error unless first line of file
 
 add1 = {|a,b| // 1 cycle add
   #reg = a+b
@@ -38,7 +38,7 @@ graph LR
 
     m0 --> m1(mul3 cycle 1)
     m1 --> m2(mul3 cycle 2)
-    
+
     in1--a--> a0[add1 cycle 1]
     m2 --b--> a0
     a0 --> out[out]
@@ -70,7 +70,7 @@ let x =# mul3(in1, in2)     // OK
 
 The previous code will check the assumptions in pipelining. It is likely that the designer wanted to implement a multiply-add.  As
 such, the input to the adder should be from the same cycle as the multiplied started to operate. Otherwise, values across cycles
-are mixed. 
+are mixed.
 
 ``` mermaid
 graph LR
@@ -79,7 +79,7 @@ graph LR
 
   m0 --> m1(mul3 cycle 1)
   m1 --> m2(mul3 cycle 2)
-  
+
   in1  --> in1_0(flop cycle 0)
   in1_0--> in1_1(flop cycle 1)
   in1_1--> in1_2(flop cycle 2)
@@ -106,7 +106,7 @@ automatically like when there are loops, an error is generated and an explicit s
     ```
     x =# mul3(in1, in2)
     z = repipe  (a=x,b=in1)  // add flops to match x and in1
-    %out =# add1(z))  
+    %out =# add1(z)
 
     assert z.a == x // x is not repipelined
     assert z.b == in1#[-3]
@@ -174,7 +174,7 @@ state machines were each loop iteration will be executed in a cycle.
 
 
 ```
-while some_condition) {
+while some_condition {
 
   step   // next cycle starts here
 }
@@ -190,6 +190,6 @@ Fluid constructs:
 
 [^liam]: Liam: An Actor Based Programming Model for HDLs, Haven Skinner, Rafael
 T. Possignolo, and Jose Renau. 15th ACM-IEEE International Conference on Formal
-Methods and Models for System Design (MEMOCODE), October 2017. 
+Methods and Models for System Design (MEMOCODE), October 2017.
 
 ### Liam constructs

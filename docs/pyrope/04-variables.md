@@ -27,7 +27,7 @@ mut b  = 5     // OK
     b += 1     // OK, OP= assumes mutable
 mut b += 1     // OK, mut is not needed in this case
 
-var c=(x=1,let b=2, mut d=3) // mut d is redundant
+var c=(x=1,let b=2, var d=3) // mut d is redundant
 mut c.x   = 3  // OK
 mut x.foo = 2  // compile error, bundle 'x' does not have field 'foo'
 set x.foo = 3  // OK
@@ -110,7 +110,7 @@ size in the bundle does not need to be known.
 
 ```
 a = (1,2,3)
-assert a[..] == (1,2,3)
+assert a[0..] == (1,2,3)
 assert a[1..] == (2,3)
 assert a[..=1] == (1,2)
 assert a[..<2] == (1,2)
@@ -353,7 +353,7 @@ widely expected precedence.
 
 
 ```
-assert (x or !y) == (x or (!y) == (x or not y)
+assert (x or !y) == (x or (!y)) == (x or not y)
 assert (3*5+5) == ((3*5) + 5) == 3*5 + 5
 
 a = x1 or x2==x3 // same as b = x1 or (x2==x3)

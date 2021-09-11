@@ -182,19 +182,19 @@ The only difference with `++` is that it triggers a compile error if the same
 named entry already exists.
 
 ```
-var base1 = (mut a, mut b)  // ordered and named
-var base2 = (mut c, mut d)  // ordered and named
+var base1 = (var a, var b)  // ordered and named
+var base2 = (var c, var d)  // ordered and named
 var ordered = (33,44)       // just ordered
 
 var named
 set named.y = 1
-set named.a = 2             // directly add mut fields
+set named.a = 2             // directly add var fields
 
 var x = base1 ++ base2
-assert x equals (mut a,mut b,mut c,mut d)
-assert x not equals base2 ++ base1 // (c,d,a,b)
+assert x equals :(var a,var b,var c,var d)
+assert x not equals :(base2 ++ base1) // (c,d,a,b)
 
-assert x equals (...base1, ...base2)
+assert x equals :(...base1, ...base2)
 
 assert (1,3,5) == (...(1,3), 5)
 assert (1,3,5) == (1, ...3, 5)
@@ -208,12 +208,14 @@ assert y equals base1
 e1 = (...base1, ...base1) // compile error, redefined 'a' and 'b' field
 e2 = base1 ++ named       // compile error, can not join ordered and unordered
 e3 = (...base1, ...named) // compile error, named is not an ordered bundle
-e4 = (...named, mut z)    // compile error, named is not an ordered bundle
+e4 = (...named, var z)    // compile error, named is not an ordered bundle
 
 var z1 = (a=100, y=200, z=300)    //ordered and named
-assert z1 equals named ++ (mut z) // (mut z) is ordered and named
+let tmp1 = named ++ (var z)       // (var z) is ordered and named
+assert z1 equals :tmp1
 var z2 = (z=100, a=100, y=200)    //ordered and named
-assert z2 equals (mut z) ++ named
+let tmp2 = (var z) ++ named
+assert z2 equals tmp2
 ```
 
 ## Enums with types
@@ -344,7 +346,7 @@ fields match and field can be automatically typecasted without loss of precision
 
 ```
 type at=(c:string,d:u32)
-type bt=(c:string:d:u100)
+type bt=(c:string,d:u100)
 type ct=(
   ,var d:u32
   ,var c:string
@@ -352,7 +354,7 @@ type ct=(
 type dt=(
   ,var d:u32
   ,var c:string
-  ,let init = {mut |x:at| self.d = x.d ; self.c = x.c }
+  ,let init = {mut |(x:at)| self.d = x.d ; self.c = x.c }
   ) // different order
 
 var b:bt=(c="hello", d=10000)
@@ -382,8 +384,8 @@ type Say_mixin = (
 )
 
 type Say_hi_mixin = (
-  ,let say_hi  = {|| self.say("hi {}", self.name)
-  ,let say_bye = {|| self.say("bye {}", self.name)
+  ,let say_hi  = {|| self.say("hi {}", self.name) }
+  ,let say_bye = {|| self.say("bye {}", self.name) }
 )
 
 type User = (
@@ -530,18 +532,18 @@ and hence allowed.
 
 ```
 // file: src/my_fun.prp
-fun1    = {|a,b| ... }
-fun2    = {|a| ... }
-another = {|a| ... }
-_fun3   = {|a| ... }
+fun1    = {|a,b|  }
+fun2    = {|a|  }
+another = {|a|  }
+_fun3   = {|a|  }
 ```
 
 ```
 // file: src/user.prp
 a = import "my_fun/*fun*"
 a.fun1(a=1,b=2)         // OK
-a.another(a=1=2)        // compile error, 'another' is not an imported function
-a._fun3(a=1=2)          // OK but not nice
+a.another(a=1,2)        // compile error, 'another' is not an imported function
+a._fun3(a=1,2)          // OK but not nice
 ```
 
 The import statement uses a shell like file globbing with an optional "project".
@@ -613,7 +615,7 @@ the children AND niblings (niece of nephews from siblings) are visited.
 For example, given this tree hierarchy. If the punch is called from `1/2/1` node,
 it will visit nodes in this order:
 
-```
+```txt
             +── 1/2/1/3/1   // 5th
             |── 1/2/1/3/2   // 4th
         +── 1/2/1/1         // 3th
