@@ -127,9 +127,9 @@ h=div2(8, 4, 3)          // OK, 2 (3rd arg is not used)
 i=8.div2(4,3)            // OK, same as div2(8,4,2)
 
 j=(8,4)  |> div2         // OK, 2, same as div2(8,4)
-k=(4)    |> div2 8       // OK, 2, same as div2(8,4)
+k=(4)    |> div2(8)      // OK, 2, same as div2(8,4)
 l=(4,33) |> div2(8)      // OK, 2, same as div2(8,4,33)
-m=4      |> div2 8       // OK, 2, same as div2(8,4)
+m=4      |> div2 8       // compile error, parenthesis needed for complex call
 
 n=div2((8,4), 3)         // compile error: (8,4)/3 is undefined
 o=(8,4).div2(1)          // compile error: (8,4)/1 is undefined
