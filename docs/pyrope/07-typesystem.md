@@ -269,7 +269,7 @@ Pyrope code can set or access the bitwidth pass results for each variable.
 * `__sbits`: the number of bits to represent the value
 * `__ubits`: the number of bits. The variable must be always positive or a compile error.
 
-```
+```pyrope
 var val:u8 // designer constraints a to be between 0 and 255
 val = 3    // val has 3 bits (0sb011 all the numbers are signed)
 
@@ -281,11 +281,28 @@ assert val == 240
 val := 0x1F0       // Drop bits from 0x1F0 to fit in maximum 'val' allowed bits
 assert val == 240
 
-val = u8(0x1F0)    // Adjust val to the maximum value if overflow
-assert val == 255
+val = u8(0x1F0)    // same
+assert val == 0xF0
 
-val = :val(0x1F0)  // Adjust val to the maximum value if overflow
-assert val == 255
+val = :val(0x1F0)  // same
+assert val == 0xF0
+```
+
+External libraries could be created to handle saturated operations. E.g:
+
+```pyrope
+saturated = {||
+  if $1 > $0.__max {
+    return $0.__max
+  }elif $1 < $0.__min{
+    return $0.__min
+  }else{
+    return $1
+  }
+}
+  
+var v:u8
+v = v.saturated(1+300)  // 255
 ```
 
 Pyrope leverages LiveHD bitwidth pass [stephenson_bitwidth] to compute the maximum and minimum
@@ -639,24 +656,29 @@ it will visit nodes in this order:
 | 1                         // LAST
 ```
 
-`punch` connects to inputs (`$`), outputs (`%`), and registers (`#`). The
-modifier (`$`,`%`,`#`) does not need to be included in the search. As a result
-of connecting through the hierarchy instantiation, the `punch` command will add
-input/outputs through the hierarchy, The left hand side can be an input (`$`)
-or an output (`%`). An input indicates intention to read, and output intention
-to modify the destination.  The regex can include tree hierarchy. E.g:
+There are two variations of the `punch` command, one that creates inputs to the
+current module (`punch_from`) and the other that creates outputs (`punch_to`).
+`punch_from` can connect to any flop or module output, `punch_to` can only
+connect to undriven nets in flops or inputs.
+
+The modifier (`$`,`%`,`#`) does not need to be included in the search. As a
+result of connecting through the hierarchy instantiation, the `punch` command
+will add input/outputs through the hierarchy, The left hand side can be an
+input (`$`) for `punch_from`, an output (`%`) for `punch_to`. In both cases, it
+can be a local variable but effectively it will show in the input or output
+bundle. The regex can include tree hierarchy. E.g:
 
 ```
-%a = punch "module1/mod2/foo"
+%a = punch_to "module1/mod2/foo"
 
-%b = punch "uart_addr" // any module that has an input $uart_addr
+%b = punch_to "uart_addr" // any module that has an input $uart_addr
 %b[0] = 0x100
 %b[1] = 0x200
 
-%b = punch "foo.*/uart_addr" // modules named foo.* that have uart_addr as input
+%b = punch_to "foo.*/uart_addr" // modules named foo.* that have uart_addr as input
 
-$c = punch "bar/some_output"
-$d = punch "bar/some_register"
+$c = punch_from "bar/some_output"
+$d = punch_from "bar/some_register"
 ```
 
 

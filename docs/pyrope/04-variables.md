@@ -459,7 +459,7 @@ y[1] = 101          // compile error, `y[1]` is immutable
 Parenthesis mark the beginning and the end of a bundle. Those parenthesis can
 be avoided for unnamed bundles in some cases:
 
-* When doing a simple function call after an assignment (`=`, `:=`, `=#`) or at the beginning of a line.
+* When doing a simple function call after an assignment or at the beginning of a line.
 * When used inside a selector `[...]`.
 * When used after an `in` operator followed by a `{` like in a `for` and `match` statements.
 * For the inputs in a match statement

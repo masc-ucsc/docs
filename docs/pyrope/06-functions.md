@@ -54,7 +54,7 @@ add2 = {|[foo=x](a)| foo + a }     // capture x but rename to something else
 
 y = (
   ,val:u32 = 1
-  ,inc1 = {mut|| self.val := self.val + 1 } // mut allows to change bundle
+  ,inc1 = {mut|| self.val = u32(self.val + 1) } // mut allows to change bundle
 )
 
 my_log = {debug||
