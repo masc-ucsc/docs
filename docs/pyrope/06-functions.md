@@ -43,7 +43,7 @@ can be captured. An empty list (`[]`), means no captures allowed.
 add = {|| $a+$b+$c }              // no IO specified
 add = {|a,b,c| a+b+c }            // constrain inputs to a,b,c
 add = {|(a,b,c)| a+b+c }          // same
-add = {|a:u32,b:s3,c| a+b+c }     // constrain some input types
+add = {|(a:u32,b:s3,c)| a+b+c }   // constrain some input types
 add = {|(a,b,c) -> :u32| a+b+c }  // constrain result to u32
 add = {|(a,b,c) -> (res)| a+b+c } // constrain result to be named res
 add = {|(a:T,b:T,c:T)| a+b+c }    // constrain inputs to have same type
@@ -54,10 +54,10 @@ add2 = {|[foo=x](a)| foo + a }     // capture x but rename to something else
 
 y = (
   ,val:u32 = 1
-  ,inc1 = {mut|| self.val = u32(self.val + 1) } // mut allows to change bundle
+  ,inc1 = {|mut| self.val = u32(self.val + 1) } // mut allows to change bundle
 )
 
-my_log = {debug||
+my_log = {|debug|
   print "loging:"
   for i in $ {
     print " {}", i
@@ -143,7 +143,7 @@ the bundle in the first argument and adding an extra return for the self object.
 ```
 var a_1 = (
   ,x:u10
-  ,fun = {mut |x| 
+  ,fun = {|mut x| 
     assert $.__size == 2 // self and x
     self.a = x 
   }
@@ -161,7 +161,7 @@ assert a_2.x == 4
 
 To access the bundle contents, there are two keywords:
 
-* `self` provides access to the upper level in the bundle. The method that modifies the upper level bundle must be mutable (`{mut |...}`).
+* `self` provides access to the upper level in the bundle. The method that modifies the upper level bundle must be mutable (`{|mut ...}`).
 * `super` provides the method before it was redefined.
 
 ```

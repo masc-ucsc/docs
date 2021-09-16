@@ -226,7 +226,7 @@ The union of types is the way to implement enums in Pyrope:
  type color1 = RED1 or BLUE1 or GREEN1 // enum just a unique ID
 
  type Rgb = (
-    ,init = {mut |x| self.color:u24 = x }
+    ,init = {|mut x| self.color:u24 = x }
  )
 
  type Red2:Rgb  = 0xff0000
@@ -371,7 +371,7 @@ type ct=(
 type dt=(
   ,var d:u32
   ,var c:string
-  ,let init = {mut |(x:at)| self.d = x.d ; self.c = x.c }
+  ,let init = {|mut (x:at)| self.d = x.d ; self.c = x.c }
   ) // different order
 
 var b:bt=(c="hello", d=10000)
@@ -407,7 +407,7 @@ type Say_hi_mixin = (
 
 type User = (
   ,var name:string
-  ,let init = {mut |n| self.name = n }
+  ,let init = {|mut n| self.name = n }
 )
 
 type Mixing_all = Say_mixin ++ Say_hi_mixin ++ User
@@ -456,18 +456,18 @@ implemented.
 ```
 type Shape = (
   ,name:string
-  ,area          = {   |(     ) -> :i32 |}
-  ,increase_size = {mut|(_:i12) -> ()   |}
+  ,area          = {|    (     ) -> :i32 |}
+  ,increase_size = {|mut (_:i12) -> ()   |}
 )
 
 type Circle implements Shape = (
   ,rad:i32
-  ,init = {mut || self.name = "circle" }
+  ,init = {|mut | self.name = "circle" }
   ,area = {|() -> :i32   |
      let pi = import "math.pi"
      return pi * self.rad * self.rad
   }
-  ,increase_size = {mut|(_:i12) -> ()| self.rad *= $1 }
+  ,increase_size = {|mut (_:i12) -> ()| self.rad *= $1 }
 )
 ```
 
@@ -482,7 +482,7 @@ type Circle = (
      let pi = import "math.pi"
      return pi * self.rad * self.rad
   }
-  ,increase_size = {mut|(_:i12) -> ()| self.rad *= $1 }
+  ,increase_size = {|mut (_:i12) -> ()| self.rad *= $1 }
 )
 comptime assert Circle does Shape
 ```
@@ -709,7 +709,7 @@ and the default method is the getter.
 type some_obj = (
   ,_field:string
   ,direct:u30
-  ,enc.init = {mut |x| _field = x }  // setter
+  ,enc.init = {|mut x| _field = x }  // setter
   ,enc = {|| self._field }                     // getter
   ,init = {|a,b|
     self._field = a
