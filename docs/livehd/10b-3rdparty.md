@@ -53,7 +53,7 @@ The previous steps should compile before you attempt to integrate LiveHD to next
 
 Then, you need to clone and compile LiveHD. If you clone and compile parallel to nextpnr
 
-```
+```bash
 git clone https://github.com/masc-ucsc/livehd.git
 cd livehd
 bazel build -c dbg //main:all  # You could use -c opt for faster/optimized compilation
@@ -66,7 +66,7 @@ ln -s livehd/bazel-livehd
 Then, we need to copy the bazel gcc build instructions and combine with the nextpnr build
 
 Copy this to a file called `pp`:
-```
+```patch
 --- livehd.params	2021-09-25 17:47:36.656724997 -0700
 +++ livehd.params	2021-09-25 17:40:24.365650808 -0700
 @@ -1,16 +1,17 @@
@@ -99,8 +99,20 @@ cp livehd/bazel-bin/main/lgshell-2.params livehd.params
 patch <pp
 ```
 
+This example uses `extra.cpp` as a sample LiveHD call inside nextpnr. The `extra.cpp` contents:
+
+```c++
+#include "lgraph.hpp"
+
+void some_func() {
+  Lgraph *lg = Lgraph::open("lgdb","top");
+
+  lg->dump();
+}
+```
+
 Then you need to add the `@livehd.params` to the end of the `nextpnr-ice40` link step. A way to get the command line
-is to use the `VERBOSE=1` option from cmake generated makefiles.
+is to use the `VERBOSE=1` option.
 
 ```
 rm -f nextpnr-ice40
@@ -116,5 +128,4 @@ You can check that the new binary includes liveHD with something like:
 ```
 nm nextpnr-ice40 | grep -i Lgraph
 ```
-
 
