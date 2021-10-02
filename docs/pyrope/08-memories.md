@@ -62,7 +62,7 @@ a stone similar to a Ruby, uses the same `size` keyword as Ruby, but it has the
 double underscore for the attribute (`__size`).
 
 ```
-#mem1 = (__size=16,__init=0:i16) // 16bit memory initialized to 0 with type i16
+#mem1 = (__size=16,__init=i8(0)) // 16bit memory initialized to 0 with type i8
 #mem2 = (__init=nil)             // infer size, initialized to nil
 #mem3 = (__init=0sb?)            // infer size, 0sb? initialized
 #mem4 = (__size=13)              // 13 entries size, initialized to zero
@@ -87,7 +87,7 @@ b = (
   ,__size=4
   ,__init=:(
     ,__size=8
-    ,__init=13:u8
+    ,__init=u8(13)
   )
 )
 assert b[2][7] == 13
@@ -95,22 +95,77 @@ assert b[2][10]      // compile error, '10' is out of bound access for 'b[2]'
 ```
 
 Since the previous syntax is a bit low level, a syntax sugar equivalent
-functionality is provided by the Pyrope for simple regular arrays. In this
-example, `#mem1`, `#mem2`, and `#mem3` are identical.
+functionality is provided by the Pyrope for simple regular arrays.
 
-```
-var #mem1:[4][8] = 0:u5
-var #mem2:(_size=4, __init=(__size=8,__init=0:u5)
-var #mem3:( 
-  ,(0:u5, 0:u5, 0:u5, 0:u5, 0:u5, 0:u5, 0:u5, 0:u5)
-  ,(0:u5, 0:u5, 0:u5, 0:u5, 0:u5, 0:u5, 0:u5, 0:u5)
-  ,(0:u5, 0:u5, 0:u5, 0:u5, 0:u5, 0:u5, 0:u5, 0:u5)
-  ,(0:u5, 0:u5, 0:u5, 0:u5, 0:u5, 0:u5, 0:u5, 0:u5)
-)
-            
-```
 
-## RTL instantiation
+=== "Pyrope array syntax"
+    ```
+    var #mem:u5[4][8] = 0
+    ```
+
+=== "Explicit LiveHD interface"
+    ```
+    var #mem:(__size=4, __init=(__size=8,__init=u5(0))
+    ```
+
+=== "Explicit initialization"
+    ```
+    var #mem:( 
+      ,(u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0))
+      ,(u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0))
+      ,(u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0))
+      ,(u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0))
+    )
+                
+    ```
+
+## Sync Memories
+
+Pyrope asynchronous memories provide the result of the read address and update
+their contents on the same cycle. This means that traditional SRAM arrays can
+not be directly used. Most SRAM arrays either flop the inputs or flop the
+outputs (sense amplifiers). This document calls synchronous memories the
+memories that either have a flop input or an output.
+
+There are two ways in Pyrope to instantiate more traditional synchronous
+memories. Either use async memories with flopped inputs or do a directly RTL
+instantiation.
+
+
+### Flop the inputs or outputs
+
+When either the inputs or the output of the asynchronous memory access is
+directly connected to a flop, the flow can recognize the memory as a
+synchronous memory.
+
+
+To illustrate the point, a typical decode stage from an in-order CPU
+
+=== "Flop the inputs"
+    ```
+    var #rf:i64[32]
+
+    var #a:(addr1:u5, addr2:u5)
+
+    %data_rs1 = #rf[#a.addr1]
+    %data_rs2 = #rf[#a.addr2]
+
+    #a = ($insn[8..=11], $insn[0..=4])
+    ```
+
+=== "Flop the outputs"
+    ```
+    var #rf:i64[32]
+
+    var #a:(data1:i64, data2:i64)
+
+    %data_rs1 = #a.data1
+    %data_rs2 = #a.data2
+
+    #a = (#rf[$insn[8..=11]], #rf[$insn[0..=4]])
+    ```
+
+### RTL instantiation
 
 Multi cycle memories can not use the array syntax. Pyrope allows for a direct
 call to LiveHD cells with the RTL instantiation, as such the memories can be
@@ -131,7 +186,7 @@ mem.latency = (1, 1, 1)
 mem.wensize = 1 // we bit (no write mask)
 mem.rdport  = (-1,1,0) // 0 WR, !=0 -> RD
 
-res = __memory(mem)
+res =# __memory(mem)
 
 %q0 = res.0
 %q1 = res.1
