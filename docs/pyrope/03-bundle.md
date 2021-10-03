@@ -105,7 +105,7 @@ Attributes for individual bundle entries:
 Attributes for multiple bundle entries:
 
 * `__size`: number of bundle sub-entries
-* `__init`: default initialization value (zero by default)
+* `__initial`: default initialization value (zero by default)
 * `__rnd`: generate a random bundle
 * `__do`: code block passed
 * `__else`: else code block passed

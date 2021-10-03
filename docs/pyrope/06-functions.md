@@ -31,7 +31,7 @@ The difference between a function and a normal scope is the lambda definition en
 * ATTRIBUTES are optional method modifiers like:
     * `comptime`: function should be computed at compile time
     * `debug`   : function is for debugging, not side effects in non-debug statements
-    * `mut`     : function is a method that can modify variables using `self`.
+    * `mut`     : function is has an output that it is a copy of the first input argument. This is typically a method that can modify the parent bundle.
 * META are a list of type identifiers or type definitions.
 * CAPTURE has the list of capture variables for the function. If no capture is provided, any local variable
 can be captured. An empty list (`[]`), means no captures allowed.
@@ -91,21 +91,20 @@ assume %d < 4K
 
 ## Arguments
 
-Function calls have a bundle as input and another bundle as output. As such,
-bundles can be named, ordered or both. `$` is the input bundle, and `%` is the
-output bundle. This implies:
+Function calls only pass by value, there is no pass by reference like in most
+languages.  A function is a code block that has an input bundle (`$`) performs
+some statements and returns an output bundle (`%`). Since bundles can be named,
+ordered or both, these are some implications:
 
 * Arguments can be named. E.g: `fcall(a=2,b=3)`
 * There can be many return values. E.g: `return (a=3,b=5)`
-* Inputs can be accessed with the bundle. E.g: `return $1 + 2`
-
+* Inputs can be accessed with the bundle. E.g: `return $1 + $.arg_2 + $arg3`
 
 There are several rules on how to handle function arguments.
 
 * Calls uses the Uniform Function Call Syntax (UFCS). `(a,b).f(x,y) == f((a,b),x,y)`
 * Pipe |> concatenated inputs: `(a,b) |> f(x,y) == f(x,y,a,b)`
 * No parenthesis after newline or a variable assignment: `a = f(x,y)` is the same as `a = f x,y`
-
 
 Pyrope uses a uniform function call syntax (UFCS) like other languages like Nim
 or D but it can be different from the order in other languages. Notice the
@@ -137,74 +136,110 @@ o=(8,4).div2(1)          // compile error: (8,4)/1 is undefined
 
 ## Methods
 
-A method is a function associated to a bundle. The method names behave like capturing
-the bundle in the first argument and adding an extra return for the self object.
+Pyrope has functions that only pass arguments by value. This presents a problem
+if we implement a typical method. A method is a function associated to a bundle
+which we call the parent bundle. The method can access the parent bundle fields
+and potentially mutate some of them. To be consistent with the UFCS syntax, the
+bundle is passed as the first argument in the input bundle. This works directly
+when the method does not update or mutate the bundle contents. To allow updates
+the first argument in the output bundle is the parent bundle. To indicate the
+existence of the output parent bundle, the function is declared with the `mut`
+keyword.
+
+
+To make the code more consistent with existing languages Pyrope has the `self`
+keyword that corresponds to the first entry in the input bundle or the first
+element of the output bundle when the method is declared with the `mut`
+keyword.
 
 ```
 var a_1 = (
   ,x:u10
   ,fun = {|mut x| 
     assert $.__size == 2 // self and x
-    self.a = x 
+    self.x = x 
+    assert %.__size == 2 // due to the mut keyword
+    assert %.self.x == x
   }
 )
 
 a_1.fun(3)
 assert a_1.x == 3
 
-fun2 = {|(x,self)| self.a = x ; return self }
+fun2 = {|mut (self, x)| self.x = x }
 a_2 = a_1.fun2(4)
 assert a_1.x == 3
 assert a_2.x == 4
 ```
 
+Due to the UFCS and the `self` keyword methods can be attached to bundles, but there
+is a higher precedence if the bundle has a locally declared method.
 
-To access the bundle contents, there are two keywords:
+```
+var a = 33
 
-* `self` provides access to the upper level in the bundle. The method that modifies the upper level bundle must be mutable (`{|mut ...}`).
+foo = {|| self - 1 }
+
+x = foo(a)
+assert x == 32 and a == 33
+
+y = a.foo()
+assert y == 32 and a == 33
+
+a.foo = {|| self + 1 }
+
+z = a.foo()
+assert z == 34 and a == 33
+
+mut_foo = {|mut| self -= 1}
+mx = mut_foo(a)
+assert mx == 32 and a == 33  // output is mutabled not input
+
+a.mut_foo()  // same as: a = mut_foo(a)
+assert a == 32
+
+a.mut_foo = {|mut| self += 100}
+a.mut_foo() // same as: a = a.mut_foo(a)
+assert a == 132
+```
+
+Methods allow to access parent bundle fields, but they can override previous methods. To handle
+the override, Pyrope has the `super` keyword:
+
+* `self` access the input bundle first argument or the output bundle first
+  argument when the method is declared mutable (`{|mut ...}`).
 * `super` provides the method before it was redefined.
 
 ```
 type base1 = (
-  ,fun = {||
-    a = super() // nothing after when called
-    assert a == nil
-    1 
-  }
+  ,fun = {|| 1 }
 )
 type base2 = (
   ,fun = {|| 
-    a = super()
+    a = super
     assert a == 1
     2 
   }
 )
 
-type top = (
+type top = base1 ++ base2 ++ (
   ,top_fun = {|| 4 }
   ,fun = {||
-    a = super()
+    a = super()          // same as a = super
     assert a == 2
     return 33
   }
-) ++ base2 ++ base1
+)
 
 var a3:top
 
 assert a3.top_fun does :{||}
-assert a3.top_fun.size == 1
-
-assert a3.top_fun does :{||}
+assert a3.top_fun() == 4
 assert a3.top_fun.size == 1
 
 assert a3.fun does :{||}
-assert a3.fun.size == 3  // explicit overload
-assert a3.fun[0]() == 33
-assert a3.fun[1]() == 2
-assert a3.fun[2]() == 1
+assert a3.fun.size == 1
 assert a3.fun()    == 33
-
-assert a3.fun() == 33
 
 var a1:base1
 var a2:base2

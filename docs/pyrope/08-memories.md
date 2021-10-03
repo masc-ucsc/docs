@@ -21,21 +21,28 @@ The flow directly supports arrays/memories in two ways:
 
 ## Async memories or arrays
 
+In this document asynchronous memories, async memories for short, have the same
+API that arrays. The difference between arrays and async memories is that the
+async memories preserve the array contents across cycles while the array
+contents is cleared at the end of each cycle.
+
+
 In Pyrope, an async memory has 1 cycle to write a value and 0 cycles to read.
 The memory has forwarding by default which makes it behave like a 0 cycle
-read/write. From a traditional programmer, this memory looks like an array.
+read/write. From a traditional programmer, this memory looks like an array
+persistence across cycles.
 
 
-Pyrope async memories behave like a non-hardware programmer will expect in an
-array.  This means that values are initialized and there is forwarding enabled.
-It is possible to have different options of async memories, but those should
-use the RTL interface.
+Pyrope async memories behave like what a "traditional software programmer" will
+expect in an array.  This means that values are initialized and there is
+forwarding enabled.  It is possible to have different options of async
+memories, but those should use the RTL interface.
 
 
-The bundles allow ordered unnamed accessed, this is in-fact an async memory or
-an array. The async memories behave like arrays but there is a small
-difference, the persistence of state between clock cycles. To be persistent
-across clock cycles, the same flop modifier is applied (`#`).
+The bundles allow ordered unnamed accessed, this is in-fact an array. The async
+memories behave like arrays but there is a small difference, the persistence of
+state between clock cycles. To be persistent across clock cycles, the same flop
+modifier is applied (`#`).
 
 In most cases, the arrays and async memories can be inferred automatically. The
 maximum/minimum value on the index effectively sets the size, and the default
@@ -56,26 +63,21 @@ some_result  = array[index2+3]
 
 The previous example, the compiler infers that the bundle at most has 127 entries.
 
-Looking at multiple programming languages, the 3 most common keywords to query
-for the size of an array are `count`, `length`, `len`, or `size`. Pyrope being
-a stone similar to a Ruby, uses the same `size` keyword as Ruby, but it has the
-double underscore for the attribute (`__size`).
+There are several constructs to declare arrays or async memories:
 
 ```
-#mem1 = (__size=16,__init=i8(0)) // 16bit memory initialized to 0 with type i8
-#mem2 = (__init=nil)             // infer size, initialized to nil
-#mem3 = (__init=0sb?)            // infer size, 0sb? initialized
-#mem4 = (__size=13)              // 13 entries size, initialized to zero
+var #mem1:i8[16] = 3                // 16bit memory initialized to 3 with type i8
+var #mem2:i8[16]                    // 16bit memory initialized to 0 with type i8
+var #mem3:[] = 0sb?                 // infer size and type, 0sb? initialized
+var #mem4:[13]                      // 13 entries size, initialized to zero
 ```
-
-
 
 Pyrope allows slicing of bundles and hence arrays.
 
 ```
-x1 = name[first..<last]  // from first to last, last not included
-x2 = name[first..=last]  // from first to last, last included
-x3 = name[first..+size]  // from first to first+size, first+size. not included
+x1 = array[first..<last]  // from first to last, last not included
+x2 = array[first..=last]  // from first to last, last included
+x3 = array[first..+size]  // from first to first+size, first+size. not included
 ```
 
 Since bundles are multi-dimensional, arrays or async memories are multi-dimensional too.
@@ -83,29 +85,27 @@ Since bundles are multi-dimensional, arrays or async memories are multi-dimensio
 ```
 a[3][4] = 1
 
-b = (
-  ,__size=4
-  ,__init=:(
-    ,__size=8
-    ,__init=u8(13)
-  )
-)
+var b:u8[4][8] = 13
+
 assert b[2][7] == 13
 assert b[2][10]      // compile error, '10' is out of bound access for 'b[2]'
 ```
 
-Since the previous syntax is a bit low level, a syntax sugar equivalent
-functionality is provided by the Pyrope for simple regular arrays.
-
+It is possible to initialize the async memory with an array. The initialization
+on async memories happens whenever `reset` is set on the system. Notice that
+the memories reset value must be a `comptime` or a compilation error will be
+triggered.
 
 === "Pyrope array syntax"
     ```
-    var #mem:u5[4][8] = 0
-    ```
-
-=== "Explicit LiveHD interface"
-    ```
-    var #mem:(__size=4, __init=(__size=8,__init=u5(0))
+    var #mem1:u5[4][8] = 0
+    var reset_value:u5[3][8]  // only used during reset, implicit comptime
+    for i in 0..<3 {
+      for j in 0..<8 {
+        reset_value[i][j] = j
+      }
+    }
+    var #mem2 = reset_value   // infer async mem u5[3][8]
     ```
 
 === "Explicit initialization"
@@ -116,7 +116,11 @@ functionality is provided by the Pyrope for simple regular arrays.
       ,(u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0))
       ,(u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0))
     )
-                
+    var #mem2:( 
+      ,(u5(0), u5(1), u5(2), u5(3), u5(4), u5(5), u5(6), u5(7))
+      ,(u5(0), u5(1), u5(2), u5(3), u5(4), u5(5), u5(6), u5(7))
+      ,(u5(0), u5(1), u5(2), u5(3), u5(4), u5(5), u5(6), u5(7))
+    )
     ```
 
 ## Sync Memories
@@ -128,18 +132,21 @@ outputs (sense amplifiers). This document calls synchronous memories the
 memories that either have a flop input or an output.
 
 There are two ways in Pyrope to instantiate more traditional synchronous
-memories. Either use async memories with flopped inputs or do a directly RTL
-instantiation.
+memories. Either use async memories with flopped inputs/outputs or do a
+directly RTL instantiation.
 
 
 ### Flop the inputs or outputs
 
 When either the inputs or the output of the asynchronous memory access is
 directly connected to a flop, the flow can recognize the memory as a
-synchronous memory.
+synchronous memory. A further constrain is that only single dimension memories.
+Multi-dimensional memories or memories with partial updates need to use the
+RTL instantiation.
 
 
-To illustrate the point, a typical decode stage from an in-order CPU
+To illustrate the point of simple single dimensional synchronous memories, this
+is a typical decode stage from an in-order CPU:
 
 === "Flop the inputs"
     ```
@@ -167,9 +174,13 @@ To illustrate the point, a typical decode stage from an in-order CPU
 
 ### RTL instantiation
 
-Multi cycle memories can not use the array syntax. Pyrope allows for a direct
-call to LiveHD cells with the RTL instantiation, as such the memories can be
-created directly.
+There are several constrains and additional options to synchronous memories
+that the async memory interface can not provide: multi-dimension, partial updates,
+negative edge clock...
+
+
+Pyrope allows for a direct call to LiveHD cells with the RTL instantiation, as
+such the memories can be created directly.
 
 ```
 // A 2rd+1wr memory (RF type)

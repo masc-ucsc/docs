@@ -119,7 +119,7 @@ type at=33..   // number bigger than 32
 type bt=(
   ,var c:string
   ,var d=100
-  ,let init = {|| self.c = $ }
+  ,let set = {|mut| self.c = $[1..] } // skip first argument which is the `self`
 )
 
 var a:at=40
@@ -226,7 +226,8 @@ The union of types is the way to implement enums in Pyrope:
  type color1 = RED1 or BLUE1 or GREEN1 // enum just a unique ID
 
  type Rgb = (
-    ,init = {|mut x| self.color:u24 = x }
+    ,let color:u24
+    ,set = {|mut self,x| self.color = x:u24 }
  )
 
  type Red2:Rgb  = 0xff0000
@@ -371,7 +372,7 @@ type ct=(
 type dt=(
   ,var d:u32
   ,var c:string
-  ,let init = {|mut (x:at)| self.d = x.d ; self.c = x.c }
+  ,let set = {|mut (self,x:at)| self.d = x.d ; self.c = x.c }
   ) // different order
 
 var b:bt=(c="hello", d=10000)
@@ -407,7 +408,7 @@ type Say_hi_mixin = (
 
 type User = (
   ,var name:string
-  ,let init = {|mut n| self.name = n }
+  ,let set = {|mut (self,n:string)| self.name = n }
 )
 
 type Mixing_all = Say_mixin ++ Say_hi_mixin ++ User
@@ -435,7 +436,7 @@ not `let` field. The `...` concatenates and but triggers a compile error if the
 same field appears twice.
 
 
-An issue with mixin is when more than one bundle has the `init` method. If the
+An issue with mixin is when more than one bundle has the `set` method. If the
 bundles are concatenated with `...` and error is triggered, if the bundles are
 concatenated with `++` the methods are overrided when declared with `var`.
 Neither is the expected solution.  A smaller issue with mixins is that
@@ -445,10 +446,8 @@ interface.
 
 Without supporting OOP, but providing a more familiar abstract or trait
 interface, Pyrope provides the `implements` keyword. It checks that the new
-type implements the functionality undefined and allows to use methods defined,
-and creates a wrapper to the init method calling both init methods if needed. 
-
-HERE (same call order as swifth/rust/scala??)
+type implements the functionality undefined and allows to use methods defined.
+The constructor (`set`) can call the parent constructor with the `super` keyword.
 
 This is effectively a mixin with checks that some methods should be
 implemented.
@@ -456,33 +455,34 @@ implemented.
 ```
 type Shape = (
   ,name:string
-  ,area          = {|    (     ) -> :i32 |}
-  ,increase_size = {|mut (_:i12) -> ()   |}
+  ,area          = {|    (self,     )->:i32  |}
+  ,increase_size = {|mut (self,_:i12)->(self)|} // same as {|mut| assert $1:i12}
+  ,set           = {|mut name| self.name = name }
 )
 
 type Circle implements Shape = (
   ,rad:i32
-  ,init = {|mut | self.name = "circle" }
-  ,area = {|() -> :i32   |
+  ,set = {|mut | super("circle") }
+  ,area = {|(self) -> :i32   |
      let pi = import "math.pi"
      return pi * self.rad * self.rad
   }
-  ,increase_size = {|mut (_:i12) -> ()| self.rad *= $1 }
+  ,increase_size = {|mut (self,_:i12)| self.rad *= $1 }
 )
 ```
 
-Like most typechecks, the `implement` can be translated for a `comptime
+Like most type checks, the `implement` can be translated for a `comptime
 assert`. An equivalent "Circle" functionality:
 
 ```
 type Circle = (
   ,rad:i32
   ,name = "Circle"
-  ,area = {|() -> :i32|
+  ,area = {|(self) -> :i32|
      let pi = import "math.pi"
      return pi * self.rad * self.rad
   }
-  ,increase_size = {|mut (_:i12) -> ()| self.rad *= $1 }
+  ,increase_size = {|mut (self,_:i12)| self.rad *= $1 }
 )
 comptime assert Circle does Shape
 ```
@@ -687,6 +687,9 @@ $d = punch_from "bar/some_register"
 There is no operator overload in Pyrope. `+` always adds Numbers, `++`
 always concatenates a Bundle or a String, `[]` always indexes a bundle.
 
+
+## Getter/Setter
+
 The only thing that looks like operator overload (but it is not) is the `=`
 because it can be used to initialize objects.
 
@@ -700,28 +703,31 @@ assert f3 == f2 == f1
 ```
 
 
-Encapsulation can be achieved with methods, but to have a more familiar getter/setter
-syntax, it is possible to create a bundle where the initialization is the setter
-and the default method is the getter.
+Encapsulation can be achieved with methods, but to have a more familiar
+getter/setter syntax, it is possible to create a bundle where the
+initialization is the setter (`set`) and the default method is the getter
+(`get`). 
 
 
 ```
 type some_obj = (
-  ,_field:string
-  ,direct:u30
-  ,enc.init = {|mut x| _field = x }  // setter
-  ,enc = {|| self._field }                     // getter
-  ,init = {|a,b|
-    self._field = a
-    self.direct = b
+  ,a1:string
+  ,a2 = (
+    ,get={|| self._val + 100 }       // getter
+    ,_val:u32                        // hidden field
+    ,set={|mut x| self._val = x+1 }  // setter
+  )
+  ,set = {|mut a,b|
+    self.a1      = a
+    self.a2._val = b
   }
 )
 
 var x:some_obj = "hello", 3
 
-assert x.direct == "hello"
-assert x.enc()  == 3
-x.enc = 5
-assert x.enc()  == 5
+assert x.a1 == "hello"
+assert x.a2 == 103
+x.a2 = 5
+assert x.a2.get == 106
 ```
 
