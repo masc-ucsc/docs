@@ -276,38 +276,80 @@ y = x + 1    // compile error: 'x' is a boolean, '1' is not
 
 ### Reduce and bit selection operators
 
-The reduce operators and bit selection share a common syntax `@op[selection]`
-where there can be different operators (op) and/or bit selection.
+The reduce operators and bit selection share a common syntax `variable@op[selection]`
+where there can be different operators (op) and/or bit selection. The selection
+can be a close range like `1..<=4` or `(1,4,6)` or an open range like `3..`.
+Internally, the open range is converted to a close range based on the variable
+size.
 
-The valid operators:
+
+Reduce and bit selection operators:
 * `|`: or-reduce.
 * `&`: and-reduce.
 * `^`: xor-reduce or parity check.
 * `+`: pop-count.
-* `sext`: Sign extend select bits.
-* `zext`: Zero sign extend select bits.
+* `sext`: Sign extend selected bits.
+* `zext`: Zero sign extend selected bits.
+
+The or/and/xor reduce have a single bit signed result (not boolean). This means
+that the result can be 0 (`0sb0`) or -1 (`0sb1`). pop-count and `zext` have an
+always positive result. `sext` is a sign-extended, so it can be positive or
+negative.
 
 If no operator is provided, a `zext` is used. The bit selection without
 operator can also be used on the left hand side to update a set of bits.
-The bit selector.
 
-The or/and/xor reduce have a single bit signed output (not boolean). This means
-that the result can be 0 (`0sb0`) or -1 (`0sb1`).
+
+The or-reduce and and-reduce are always size insensitive. This means that to
+perform the reduction it is not needed to know the number of bits. It could
+pick more or less bits and the result is the same. E.g: 0sb111 or 0sb111111
+have the same and/or-reduce. This is the reason why both can work with open and
+close ranges.
+
+
+This is not the case for the xor-reduce and pop-count. These two operations are
+size insensitive for positive numbers but sensitive for negative numbers. E.g:
+pop-count of 0sb111 is different than 0sb111111. When the variable is negative
+a close range must be used. Alternatively, a `zext` must be used to select
+bits accordingly. E.g: `var@[0..=3]@+[]` does a `zext` and the positive result
+is passed to the pop-count. The compiler could infer the size and compute, but
+it is considered non-intuitive for programmers.
+
 
 ```
-x = 0b10110
-y = 0s10110
+x = 0b1_0110   // positive
+y = 0s1_0110   // negative
 assert x@[0,2] == 0b10
-assert y@[100,200]     == 0b11 and x@[100,200]     == 0
-assert y@sext[100,200] ==   -1 and x@sext[100,200] == 0
+assert y@[100,200]       == 0b11   and x@[100,200]       == 0
+assert y@sext[0,100,200] == 0sb110 and x@sext[1,100,200] == 0b001
 assert x@|[] == -1 
 assert x@&[0,1] == 0
-assert x@+[] == 3 and y@+[] == 3
+assert x@+[0..=5] == x@+[0..<100] == 3
+assert y@+[0..=5]  // compile error, 'y' can be negative
+assert y@[]@+[] == 3
+assert y@[0..=5]@+[] == 3
+assert y@[0..=6]@+[] == 4
 
 var z     = 0b0110
 mut z@[0] = 1    // same as mut z@[0] = -1 
 assert z == 0b0111
 mut z@[0] = 0b11 // compile error, '0b11` overflows the maximum allowed value of `z@[0]`
+```
+
+
+Another important characteristic of the bit selection is that the order of the
+bits on the selection do not affect the result. Internally, it is a bitmask
+which has no order. For the `zext` and `sext` the same order as the input
+variable is respected. This means that `var@[1,2] == var@[2,1]`. As a result,
+the bit selection can not be use to transpose bits. A bundle must be used for
+such operation.
+
+```
+var = 0b10
+assert var@[0,1] == var@[1,2] == var@[] == var@[0..=1] == var@[..=1] == 0b10
+
+trans = (var[1], var[0])@[]
+assert trans == 1
 ```
 
 ### Operator with bundles
