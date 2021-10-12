@@ -284,6 +284,7 @@ size.
 
 
 Reduce and bit selection operators:
+
 * `|`: or-reduce.
 * `&`: and-reduce.
 * `^`: xor-reduce or parity check.
@@ -304,7 +305,7 @@ The or-reduce and and-reduce are always size insensitive. This means that to
 perform the reduction it is not needed to know the number of bits. It could
 pick more or less bits and the result is the same. E.g: 0sb111 or 0sb111111
 have the same and/or-reduce. This is the reason why both can work with open and
-close ranges.
+close ranges. 
 
 
 This is not the case for the xor-reduce and pop-count. These two operations are
@@ -336,6 +337,12 @@ assert z == 0b0111
 mut z@[0] = 0b11 // compile error, '0b11` overflows the maximum allowed value of `z@[0]`
 ```
 
+!!!Note
+    It is important to remember that in Pyrope all the operations use signed
+    numbers. This means that an and-reduce over any positive number is always going
+    to be zero because the most significant bit is zero, E.g: `0xFF@&[] == 0`. In
+    some cases, a close range will be needed if the intention is to ignore sign.
+    E.g: `0xFF@&[0..<8] == -1`.
 
 Another important characteristic of the bit selection is that the order of the
 bits on the selection do not affect the result. Internally, it is a bitmask
