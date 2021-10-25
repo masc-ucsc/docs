@@ -15,8 +15,11 @@ All the functions are lambdas that must passed as arguments or assigned to a giv
 variables or functions.
 
 ```
-just_3 = {   3 } // just scope, not even a lambda is generated
-just_4 = {|| 4 } // function that returns 4
+a_3      = {   3 } // just scope, not a lambda. Scope is evaluate now
+a_lambda = {|| 4 } // lambda or function, when just_4 is called 4 is returned
+assert a_3 equals 3
+assert a_lambda equals {|| }
+assert a_lambda == 4          // calls to eval the lambda
 ```
 
 The simplest function resembles a scope with at `{` followed by a sequence of statements where the last statement can be an

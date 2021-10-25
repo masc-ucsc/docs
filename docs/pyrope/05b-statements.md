@@ -1,7 +1,7 @@
 
 # Statements
 
-## if
+## Conditional (`if`/`elif`/`else`)
 
 
 Pyrope uses a typical `if`, `elif`, `else` sequence found in most languages.
@@ -24,7 +24,54 @@ var x
 if a { x = 3 } else { x = 4 }
 ```
 
-## for
+## Unique parallel conditional (`match`)
+
+The `match` statement is similar to a chain of unique if/elif, like the
+`unique` if/elif sequence, one of the options in the match must be true. The
+difference is that one of the entries must be truth or an error is generated.
+This makes the `match` statement a replacement for the common "unique parallel
+case" Verilog directive.
+
+
+In addition to functionality, the syntax is different to avoid redundancy.
+`match` joins the match expression with the beginning of the match entry must
+form a valid expression.
+
+```
+x = 1
+match x {
+  == 1            { puts "always true" }
+  in 2,3          { puts "never"       }
+}
+// It is equivalent to:
+unique if x == 1  { puts "always true" }
+elif x in (2,3)   { puts "never"       }
+else              { assert false       }
+```
+
+Like the `if`, it can also be used as an expression.
+
+## Gate statements (`when`/`unless`)
+
+Simple statement like assignments, variable/type definitions, and function
+calls can be gated or not executed with a `when` or `unless` statement. This is
+similar to an `if` statement, but the difference is that the statement is in
+the current scope, not creating a new scope.
+
+```
+var a = 3
+a += 1 when false             // never executes 
+assert a == 3
+assert a == 1000 when a > 10  // assert never executed either
+```
+
+Complex assignments like `a |> b(1) |> c` can not be gated because it is not
+clear if the gated applies to the last call or the whole pipeline sequence.
+Similarly, gating ifs/match statements does not make much sense. As a result,
+`when`/`unless` can only be applied to assignments, function calls, and scope
+control statements (`return`, `break`, `continue`).
+
+## Loop (`for`)
 
 The `for` iterates over the first level elements in a bundle or the values in a
 range.  In all the cases, the number of loop iterations must be known at
@@ -70,46 +117,64 @@ var c = for i in 0..<5 { i }
 assert c == (0,1,2,3,4)
 ```
 
-## match
+## Scope control (`break`, `continue`, `return`)
 
-The `match` statement is similar to a chain of unique if/elif. Unlike in the
-if/elif sequence, one of the options in the match must be true, and like the
-unique, there should be no overlap.
+Pyrope has scopes and lambdas. The scopes are used by statements like `for` and
+`if`, the lambdas are assigned to variables or passes as arguments. A `return`
+statement exits or terminates the current lambda. The `break` statement exists or
+terminates the current scope. If the scope was used by another statement, the `break`
+exists the associated scope.
 
 
-Joining the match expression with the beginning of the match entry must form a
-valid expression.
+The `continue` starts to evaluate the current scope. When used in a `for`
+statement, the `continue` will perform the next loop iteration. In other
+statements, the statement will be re-evaluated and re-execute potentially
+creating a loop condition.
 
 ```
-x = 1
-match x {
-  == 1   { puts "always true" }
-  in 2,3 { puts "never"       }
+var total
+for a in 1..=10 {
+  continue when a == 2
+  total ++= a
+  break when a == 3      // exit for scope
 }
-// It is equivalent to:
-unique if x == 1      { puts "always true" }
-elif x in (2,3)       { puts "never"       }
-else                  { assert false       }
+assert total == (1,3)
+
+a = 3
+var total2
+if a>0 {
+  total2 ++= a
+  break when a == 2  // exit if scope
+  a = a - 1
+  continue
+  assert false       // never executed
+}
+assert total2 == (3,2)
 ```
 
-Like the `if`, it can also be used as an expression.
-
-## when/unless
-
-Simple statement like assignments, variable/type definitions, and function
-calls can be gated or not executed with a `when` or `unless` statement.
+In addition, the three statements can have a bundle. This is only useful when
+the statements are used in an expression.
 
 ```
-var a = 3
-a += 1 when false             // never executes 
-assert a == 3
-assert a == 1000 when a > 10  // assert never executed either
+total = for i in 1..=9 {
+  continue i+10 when i < 3
+  break    i+20 when i > 5
+}
+assert total == (11, 12, 3, 4, 5, 26)
+
+v = if total[0] == 11 {
+  break 4 
+  assert false
+} else { 
+  0 
+}
+assert v == 4
 ```
 
-Complex assignments like `a |> b(1) |> c` can not be gated because it is not
-clear if the gated applies to the last call or the whole pipeline sequence.
-Similarly, gating ifs/match statements does not make much sense.
-
+A scope has a `break` when the last statement in the scope is an expression. If
+the return value is not the last expression in the scope, the `break` statement
+should be used. Notice that a `return` statement will exit the lambda not the
+current scope.
 
 ## defer
 
@@ -120,7 +185,7 @@ any loop in connecting blocks.
 
 ```
 var c = 10
-b = c defer
+defer b = c
 assert b == 33
 c += 20
 c += 3
@@ -128,7 +193,7 @@ c += 3
 
 To connect `ring` function calls in a loop.
 ```
-f1 = ring($a, f4) defer
+defer f1 = ring($a, f4)
 f2 = ring($b, f1)
 f3 = ring($c, f2)
 f4 = ring($d, f3)
@@ -155,12 +220,62 @@ In all the cases, the statements inside the code block can not have any effect o
 
 ## debug/comptime
 
+## Delay to next cycle (`step`/`yield`)
+
+Both `step` and `yield` break down the program in the statements before and after. The
+statements after the `step`/`yield` statement will be executed in future cycles.
+
+The difference is that `step` has the number of cycles to wait, and the `yield` has the condition
+that must be satisfied to continue. In a way, both build a small state machine.
 
 
-## step
+=== "`step`"
 
-## return
+    ```
+    a = 1 + $input
+    puts "printed every cycle input={}", a
+    step 1
+    puts "also every cycle a={}",a  // printed on cycle later
+    ```
 
+=== "custom FSM version"
+
+    ```
+    a = 1 + $input
+    puts "printed every cycle input={}", a
+
+    if #step_cycle {
+      puts "also every cycle a={}",#step_a
+    }
+    #step_a      = a
+    #step_cycle  = true
+    ```
+
+The `yield` has a slightly different FSM with a supporting FIFO structure.
+Unlike the `step`, the `yield` is potentially unconstrained. This is why the
+`yield` must also provide the  maximum  number of outstanding waiting
+conditions.
+
+=== "`yield`"
+
+    ```
+    total = 3
+    yield 5, a_cond  // wait until a_cond is true
+    assert total == 3 and a_cond
+    ```
+
+=== "custom FSM version"
+
+    ```
+    total = 3
+    if a_cond {
+      local_total = #fifo.pop()
+      assert local_total == 3
+    }
+    #fifo.push(total)
+    ```
+
+Currently, the `yield` and `step` statements can not be used in loop constructs.
 
 ## try
 
