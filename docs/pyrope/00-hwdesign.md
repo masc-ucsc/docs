@@ -57,8 +57,8 @@ to be executed by one or more Von Neumann CPUs.
 
 [^1]: Multi-threaded CPUs are just an array of Von Neumann machines.
 
-## Optimization knobs
 
+## Optimization knobs
 
 Programming hardware and software is all about solving a problem to meet some
 performance/power/cost constrains using the available resources. The difference
@@ -530,5 +530,53 @@ There are 3 main solutions categories:
 !!! Artifact
 
     HDLs can operate over non-binary logic
+
+
+## Simpler HDL constructs
+
+Not everything is harder in HDLs when compared with typical programming
+languages. These are some differences that can make the HDLs simpler:
+
+
+### Unlimited precision
+
+
+High performance software must adjust to the hardware and as such, there are
+several integer types (int, short, long).  The result is that the programmer
+tends to be careful with overflows and type conversion. This is not a problem
+in hardware. If a 113 bits adder is needed, it can be synthesized. If only an 7
+bits adder is needed, the synthesis can create the smaller adder too.
+
+Some HLS may have different integer sizes, but it is either a "strange" design decision
+or just as a type check so that no unnecessary hardware is generated.
+
+
+### No pointers
+
+Memory and pointer management is a big issue in most languages. Either garbage
+collect, manual, or alternative approaches.  Since there is no global memory,
+there are no memory to manage. Maybe even more important, there is no need for
+pointers. This avoid another set of problems like null dereferencing.
+
+
+### Pass by value
+
+Most software languages support to pass function arguments either by value or
+reference. This is done to avoid copying the object that may reside in memory.
+Again, HLS have no memory, therefore it is not as problematic. 
+
+Most HDLs only support passing by value. This is not a drawback but avoid
+another source of bugs without the cost overhead that it will represent in a
+Vonn Neumann machine.
+
+
+### No recursion
+
+Most HDLs support recursion at compile time, but not at runtime. The reason is
+that there is no "stack memory". It is possible to support run-time recursion
+if the depth is bound, but it would be "strange" because of the potentially
+large combinational path.  Only manageable with retiming. As a result, most
+HDLs do not support runtime recursion.
+
 
 
