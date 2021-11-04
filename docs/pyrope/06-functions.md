@@ -107,7 +107,7 @@ There are several rules on how to handle function arguments.
 
 * Calls uses the Uniform Function Call Syntax (UFCS). `(a,b).f(x,y) == f((a,b),x,y)`
 * Pipe |> concatenated inputs: `(a,b) |> f(x,y) == f(x,y,a,b)`
-* No parenthesis after newline or a variable assignment: `a = f(x,y)` is the same as `a = f x,y`
+* Function calls with arguments do not need parenthesis after newline or a variable assignment: `a = f(x,y)` is the same as `a = f x,y`
 
 Pyrope uses a uniform function call syntax (UFCS) like other languages like Nim
 or D but it can be different from the order in other languages. Notice the
@@ -151,9 +151,10 @@ keyword.
 
 
 To make the code more consistent with existing languages Pyrope has the `self`
-keyword that corresponds to the first entry in the input bundle or the first
-element of the output bundle when the method is declared with the `mut`
-keyword.
+keyword. Any function can declare the first input as `self` variable. In methods,
+the first argument is implicit, but it is possible to explicitly set it too. It
+corresponds to the first entry in the input bundle or the first element of the
+output bundle when the method is declared with the `mut` keyword.
 
 ```
 var a_1 = (
@@ -249,4 +250,110 @@ var a2:base2
 assert a1.fun() == 1
 assert a2.fun() == 2
 ```
+
+## Function call order
+
+
+There are several ways to define functions, and there is a call order. First,
+it tries to find an entry in the bundle that matches the function call. If it
+does not exist, it looks for methods in the current function. It is not
+possible to define custom methods per scope.
+
+
+```
+type T1 = (
+  ,a:u32  // implicit a=0 initialization
+)
+
+inc = {|mut (self:T1)| self.a = u32(self.a+1) }
+
+var x:T1
+inc(x)
+assert x.a == 1
+x.inc()
+assert x.a == 2
+
+type T2 = T1 ++ (
+  ,inc = {|mut (self:T2)| self.a = u32(self.a+2) }
+)
+
+var y:T2
+assert y.a==0
+inc(y)
+assert y.a==1
+y.inc()
+assert y.a==3
+```
+
+
+Functions and methods can constrain the inputs and input types.
+Unconstrained input types allow for more freedom and potential
+variable number of arguments generics, but it can be error prone.
+
+=== "unconstrained function declaration"
+    ```
+    foo = {|| puts "fun.foo" }
+    a = (
+      ,foo = {||
+         bar = {|| puts "bar" }
+         puts "mem.foo"
+         return bar=bar
+      )
+    )
+    b = 3
+
+    puts "start"
+    b.foo     // compile error: parenthesis needed
+    b.foo()   // prints "fun.foo"
+    a.foo     // compile error: parenthesis needed (no arguments passed)
+    a.foo()   // prints "mem.foo"
+    a.foo 3   // prints "mem.foo", arg passed (but not used by foo)
+    a.foo(3)  // prints "mem.foo", arg passed (but not used by foo)
+    x = a.foo // Nothing printed, just lambda in x
+    y = x()   // prints "foo"
+    y()       // prints "bar"
+    z = y     // nothing printed
+
+    a.foo.bar()   // prints "bar", passes a.foo as argument to bar
+    a.foo().bar() // prints "mem.foo" (foo gets a) and then "bar" (has no input)
+
+    b.foo().bar() // compile error, no bar method
+    foo()         // prints "fun.foo"
+    b.foo()       // prints "fun.foo"
+    ```
+
+=== "constrained function declaration"
+
+    ```
+    foo = {|(self)| puts "fun.foo" }  // explicit self
+    a = (
+      ,foo = {|()|                    // implicit self 
+         bar = {|()| puts "bar" }
+         puts "mem.foo"
+         return bar=bar
+      )
+    )
+    b = 3
+
+    puts "start"
+    b.foo     // compile error: parenthesis needed
+    b.foo()   // prints "fun.foo"
+    a.foo     // compile error: parenthesis needed (no arguments passed)
+    a.foo()   // prints "mem.foo"
+    a.foo 3   // compile error
+    a.foo(3)  // compile error
+    x = a.foo // Nothing printed, just lambda in x
+    y = x()   // prints "foo"
+    y()       // prints "bar"
+    z = y     // nothing printed
+
+    a.foo.bar()   // compile error
+    a.foo().bar() // prints "mem.foo" and then "bar"
+
+    b.foo().bar() // compile error, no bar method
+    foo()         // compile error
+    b.foo()       // prints "fun.foo"
+    ```
+
+
 

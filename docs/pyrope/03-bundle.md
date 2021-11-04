@@ -95,20 +95,17 @@ there are more than one field.
 A bundle can have named fields like `counter`, but when the field starts with 2
 underscores, it is an attribute to be passed to the compiler flow. 
 
-Attributes for individual bundle entries:
+Attributes for basic types, usually simple variables or bundle entries:
 
 * `__max`: sets the maximum value allowed
 * `__min`: sets the minimum value allowed
-* `__ubits`: Number of bits and set as unsigned
-* `__sbits`: Number of bits and set as signed
+* `__ubits`: Maximum number of bits to represent the unsigned value. The number must be positive or zero
+* `__sbits`: Maximum number of bits, and the number can be negative
 
-Attributes for multiple bundle entries:
+Some attributes apply for basic types and/or any type of bundle:
 
 * `__size`: number of bundle sub-entries
-* `__initial`: default initialization value (zero by default)
 * `__rnd`: generate a random bundle
-* `__do`: code block passed
-* `__else`: else code block passed
 
 
 Some syntax sugar on the language creates wrappers around the attributes, but

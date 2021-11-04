@@ -89,7 +89,8 @@ Pyrope type constructs:
 * `a:b` is equivalent to `a does b` or `comptime assert a does b` check.
 * `:b` returns the "type of" `b` when used in an expression.
 * `a equals b`: Checks that `a does b` and `b does a`. Effectively checking
-  that they have the same type.
+  that they have the same type. Notice that this is not like checking for
+  logical equivalence, just type equivalence.
 
 
 While `var` statement declares a new variable instance which can also have an
@@ -126,6 +127,23 @@ var a:at=40
 var v:bt="hello"
 puts "a:{} type:{} or {}", a, :a, at  // a:40 type:Number(33..) or Number(33..)
 puts "b:{} type:{}", b, :b  // b:(c="hello",d=100) type:(c:string,d=100)"
+```
+
+
+Both `does` and `equals` operate over types. This means that the values in the entries
+are ignored. This is what makes `equals` different from `==`. As a result 
+different functionality functions could be `equals`. To see if two functions
+are the same a `==` must be used. For functions, the `equals` just checks the function
+argument types.
+
+
+```
+a = {|| return 1 }
+b = {|| return 2 }
+assert a equals {|| }
+assert a != b
+assert a equals b
+assert a not equals {|(x)| return 1 } // different arguments
 ```
 
 
@@ -217,6 +235,8 @@ var z2 = (z=100, a=100, y=200)    //ordered and named
 let tmp2 = (var z) ++ named
 assert z2 equals tmp2
 ```
+
+
 
 ## Enums with types
 
@@ -492,7 +512,8 @@ comptime assert Circle does Shape
 Pyrope has types and functions. There is also function overloading, but unlike
 most languages it has explicit function overloading.  With explicit, the
 programmer sets an ordered list of methods, and the first that satisfies the
-type check is called.
+type check is called. The check to decide if a function satisfies is `does`. Specifically, 
+it checks if the function definition argument types  do the calling argument.
 
 ```
 bool_to_string = {|(b:boolean) -> :string| if b { "true" } else { "false" } }
@@ -500,6 +521,17 @@ int_to_string  = {|(b:int)     -> :string| }
 
 to_string = bool_to_string ++ int_to_string
 let s = to_string(3)
+```
+
+Since functions allow instrospect, the previous `to_string(3)` call approximately behaves like:
+
+```
+for i in to_string {
+  if i.inputs does 3 {
+    i(3)
+    break
+  }
+}
 ```
 
 Liquid types or logically qualified types further constraint some types. In a
@@ -527,6 +559,44 @@ assert $bar.__sbits > 40   // bar has more than 40 bits
 result = my_add($foo,$foo) // calls default_adder
 result = my_add($bar,$bar) // calls fast_csa
 result = my_add($foo,1)    // calls add_plus_one
+```
+
+## Instrospection
+
+Instrospection is possible for bundles.
+
+```
+a = (b=1,c:u32=2)
+var b = a
+b.c=100
+
+assert a equals b 
+assert a.size == 2
+assert a['b'] == 1
+assert a['c'] equals u32
+
+assert   a has 'c'
+assert !(a has 'foo')
+```
+
+Function definitions allocate a bundle, which allows to instrospect the
+function but not to change the functionality. Functions have 3 fields `inputs`,
+`outputs`, `where`. The `where` is a function that always returns true if unset
+at declaration.
+
+```
+fun = {|(a,b=2) -> (c) where a>10| c = a + b }
+assert fun.inputs equals (a,b)
+assert fun.outputs equals (c)
+assert fun.where(a=200) and !fun.where(a=1)
+```
+
+This means that function overloading behaves like this:
+
+```
+let x = fun(bundle)
+
+let x = for i in fun { break i(bundle) when (i.inputs does bundle) and i.where(bundle) }
 ```
 
 ## Global variables
