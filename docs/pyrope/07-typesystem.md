@@ -577,6 +577,10 @@ assert a['c'] equals u32
 
 assert   a has 'c'
 assert !(a has 'foo')
+
+assert a.__id == 'a'
+assert a.0.__id == ':0:b' and a.b.__id == ':0:b'
+assert a.1.__id == ':1:c' and a.c.__id == ':1:c'
 ```
 
 Function definitions allocate a bundle, which allows to instrospect the
@@ -598,6 +602,33 @@ let x = fun(bundle)
 
 let x = for i in fun { break i(bundle) when (i.inputs does bundle) and i.where(bundle) }
 ```
+
+
+There are several uses for instrospection, but for example it is possible to build a
+function that returns a randomly mutated bundles.
+
+```
+randomize = debug {|(self)|
+  rnd = import "prp/rnd"
+  for mut i in self {
+    if i equals :int {
+      i = rnd.between(i.__max,i.__min)
+    }elif i equals :boolean {
+      i = rnd.boolean()
+    }
+  }
+  return self
+}
+
+x = (a=1,b=true,c="hello")
+y = x.randomize()
+
+assert x.a==1 and x.b==true and x.c=="hello"
+cover  y.a!=1
+cover  y.b!=true
+assert y.c=="hello"
+```
+
 
 ## Global variables
 

@@ -105,7 +105,7 @@ Attributes for basic types, usually simple variables or bundle entries:
 Some attributes apply for basic types and/or any type of bundle:
 
 * `__size`: number of bundle sub-entries
-* `__rnd`: generate a random bundle
+* `__id`: get field name
 
 
 Some syntax sugar on the language creates wrappers around the attributes, but

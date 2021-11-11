@@ -178,13 +178,15 @@ current scope.
 
 ## defer
 
-A `defer` keyword can be added at the end of simple assignments or function
-calls. This keyword effectively means that the statement right hand side reads
-the last values from the end of the cycle. This is needed if we need to have
-any loop in connecting blocks.
+A `defer` keyword can be added before assignments or function calls. This
+keyword effectively means that the statement right hand side reads the last
+values from the end of the cycle. This is needed if we need to have any loop in
+connecting blocks. It is also useful for delaying assertion checks to the end
+of the function.
 
 ```
 var c = 10
+defer assert b == 33    // behaves like a postcondition
 defer b = c
 assert b == 33
 c += 20
