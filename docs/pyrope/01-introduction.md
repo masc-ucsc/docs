@@ -6,7 +6,7 @@
 
 Pyrope is a modern hardware description language, with these focus points:
 
-* Fast parallel and incremental elaboration. 
+* Fast parallel and incremental elaboration 
 * Modern and concise language
 * Avoiding hardware specific artifacts
     - Allows hierarchical [calls](00-hwdesign.md#hierarchy-calls)
@@ -22,7 +22,11 @@ Pyrope is a modern hardware description language, with these focus points:
     - Hot-Reload support, powerful assertions
     - Allows Pyrope 2 Verilog, edit Verilog, Verilog 2 Pyrope, edit Pyrope...
     - Static checks as long as they not produce false positives
-
+    - Constructs to support pipelining
+* Some features not common in other HDLs
+    - Synthesizable object system with runtime polymorphism
+    - Immutable objects
+    - Global type inference
 
 ## Hello World
 
@@ -37,7 +41,7 @@ Populate the Pyrope code
 
 `src/hello.prp`
 ```
-test "quite empty" {
+test "my first test" {
   puts "hello world"
 }
 ```
@@ -57,51 +61,51 @@ Populate the Pyrope code
 
 === "Pyrope"
 
+    src/gcd.prp:
     ```pyrope linenums="1"
-    // src/gcd.prp
-    if $load_values {
-      #x = $value1
-      #y = $value2
-    }else{
-      #x = if #x > #y { #x - #y } else { #y - #x }
-      %z = #x
-      %v = #y == 0
+    {|<T>(a:T,b:T,e)->(v:T,z)|
+      reg x,y
+      if e {
+        x = a
+        y = b
+      }else{
+        x = if x > y { x - y } else { y - x }
+        z = x
+        v = y == 0
+      }
     }
 
     test "16bits gcd" {
       for i in 1..=100 {
         for j in 1..=100 {
-          $value1      = i
-          $value2      = j
-          $load_values = true
-
-          puts "trying gcd({},{})", $value1, $value2
+          a = i
+          b = j
+          e = true
 
           step // advance 1 clock
+          $e = false // deactivate load
 
-          $load_values = false // deactivate load
+          waitfor v
 
-          waitfor %z == true
-
-          puts "result is {}", %v
-          assert %v == __my_cpp_gcd(v1=$value1, v2=$value2)
+          puts "result is {}", z
+          assert z == __my_cpp_gcd(v1=a, v2=b)
         }
       }
     }
     ```
-    ```c++
-    // src/my_cpp_gcd.cpp
-    void my_gcd_cpp(const Lbundle &inp, Lbundle &out) {
-      auto [x,ok1] = inp.get_const("v1");
-      auto [y,ok2] = inp.get_const("v2");
 
-      assert(ok1 && ok2); // both must be defined
+    src/my_cpp_gcd.cpp
+    ```c++ linenums="30"
+    void my_gcd_cpp(const Lbundle &inp, Lbundle &out) {
+      assert(inp.has_const("v1") && inp.has_const("v2"));
+
+      auto x = inp.get_const("v1");
+      auto y = inp.get_const("v2");
 
       while (y > 0) {
         if (x > y) {
           x -= y
-        }
-        else {
+        }else{
           y -= x
         }
       }
@@ -149,7 +153,6 @@ Populate the Pyrope code
       io.z := x
       io.v := y === UInt(0)
     }
-
 
     class InterpreterUsageSpec extends FlatSpec with Matchers {
 

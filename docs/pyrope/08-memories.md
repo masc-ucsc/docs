@@ -227,3 +227,33 @@ Multi cycle memories are pipelined elements, and such using them requires to use
 and the same rules as pipeline flops apply (See [pipelining](06b-pipelining.md)).
 
 
+## Multidimensional arrays
+
+
+Pyrope supports multi-dimensional arrays, it is possible to slice the array by
+dimension. The entries are in a row-major order.
+
+
+```
+var d2:[2][2] = ((1,2),(3,4))
+assert d2[0][0] == 1 and d2[0][1] == 2 and d2[1][0] == 3 and d2[1][1] == 4
+
+assert d2[0] == (1,2) and d2[1] == (2,3)
+```
+
+The `for` iterator goes over each entry of the bundle/array. If a matrix, it
+does in row-major order. This allows to build a simple function to flatten
+multi-dimensional arrays.
+
+```
+let flatten = {|arr|
+  var res
+  for i in arr {
+    res ++= i
+  }
+  return res
+}
+
+assert flatten(d2) == (1,2,3,4)
+assert flatten((((1),2),3),4) == (1,2,3,4)
+```

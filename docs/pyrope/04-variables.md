@@ -1,64 +1,103 @@
 # Variables and types
 
 A variable is an instance of a given type. The type may be inferred from use.
-The basic types are Boolean, Function, Number, Range, and String. All those
+The basic types are Boolean, Function, Integer, Range, and String. All those
 types can be combined with Bundles. All the complex types are build around
 these types.
 
 
 ## Mutable/Immutable
 
-Variables are immutable by default and bundle fields are mutable by default.
-There are 3 keywords to handle mutability:
+Variables first use or declaration must indicate the mutability intention
+(`var`) or immutability (`let`).
 
-* `var` is used to declare mutable variables.
-* `let` is used to declare immutable variables.
-* `mut` is used to modify mutable variables. The `mut` keyword is not needed when there is a op= assignment.
-* `set` is used to potentially add new fields to a mutable bundle.
+* `var` is used to declare mutable variables. Following statements can overwrite the variable.
+* `let` is used to declare immutable variables. Following statements can not modify the contents
+    with the exception of object constructors (setter).
 
 ```
-a  = 3
-a  = 4         // compile error, 'a' is immutable
-a += 1         // compile error, 'a' is immutable
+a  = 3         // compile error, no previous let or var
 
 var b  = 3
-mut b  = 5     // OK
-    b  = 5     // compile error, 'b' is already declared as mutable
-    b += 1     // OK, OP= assumes mutable
-mut b += 1     // OK, mut is not needed in this case
+b  = 5     // OK
+b += 1     // OK, OP= assumes mutable
 
-var c=(x=1,let b=2, var d=3) // mut d is redundant
-mut c.x   = 3  // OK
-mut x.foo = 2  // compile error, bundle 'x' does not have field 'foo'
-set x.foo = 3  // OK
-mut c.b   = 10 // compile error, 'c.b' is immutable
+var c=(x=1,let b=2, var d=3)
+c.x   = 3  // OK, x inherited the 'var' declaration
+x.foo = 2  // compile error, tuple 'x' does not have field 'foo'
+c.b   = 10 // compile error, 'c.b' is immutable
+c.d   = 30 // OK, d was already var type
 
-let d=(x=1, let y=2)
-mut d.x   = 2  // OK
-set d.foo = 3  // compile error, bundle 'd' is immutable
-mut d.y   = 4  // compile error, 'd.y' is immutable
+let d=(x=1, let y=2, var z=3)
+d.x   = 2  // compile error: x inherits the 'let' declaration
+d.foo = 3  // compile error, tuple 'd' does not have field foo'
+d.z   = 4  // compile error, 'd.z' is immutable
 ```
 
-Bundles can be mutable. This means that fields and subfields can be added with
-successive statements.
+Tuples fields (not contents) are immutable, but it is possible to construct new
+tuples with the `++` (concatenate), `...` (inplace insert), and `--` (remove)
+keywords:
 
 ```
-var a.foo = (a=1,b=2)
-mut a.bar = 3
-set a.foo ++= (c=4)
-assert a.foo.c == 4
+var a=(a=1,b=2)
+var b=(c=3)
+
+var ccat1 = a ++ b
+assert ccat1 == (a=1,b=2,c=3)
+assert ccat1 == (1,2,3)
+
+var ccat2 = a ++ (b=20)
+assert ccat2 == (a=1,b=(2,20),c=3)
+assert ccat2 == (1,(2,20),3)
+
+var join1 = (...a,...b)
+assert join1 == (a=1,b=2,c=3)
+assert join1 == (1,2,3)
+
+var join2 = (...a,...(b=20)) // compile error, 'b' already exists
+
+var ext1 = a -- b            // compile error, 'c' does not exist in 'a'
+var ext2 = a -- (3)          // compile error, -- uses named tuple entries
+var ext3 = a -- (a=30)       // value is ignored in replacement
+assert ext3 == (b=2)
 ```
 
 ## Basic types
 
-### Boolean
+Pyrope has 5 basic types:
 
-A boolean is a number that can be `0` or `-1` but when mixed with other types a typecast
-must be used.
+* `boolean`: either `true` or `false`
+* `function`: A method/function
+* `integer`: which is signed integer of unlimited precision
+* `range`: A one hot encoding of values `1..=3 == 0b1110`
+* `string`: which is a sequence of characters
+
+
+All the types with the exception of the function can be converted back and
+forth to integer.
+
+
+### Integer or `int`
+
+Integers have unlimited precision and they are always signed. Type constrains 
+can enforce a subset like unsigned or ranges.
 
 ```
-b = true
-c = 3
+var a:int          // any value, no constrain
+var b:unsigned     // only positive values
+var c:u13          // only from 0 to 1<<13
+var d:int(20..=30) // only values from 20 to 30
+var e:int(-1,0)    // 1 bit integer: -1 or 0
+```
+### Boolean
+
+A boolean is either `true` or `false`. Booleans can not mix with integers in
+expressions unless there is an explicit typecast (`false=0` and `true=-1`) or
+the integer is a 1 bit signed integer (0 and -1).
+
+```
+let b = true
+let c = 3
 
 if c    {}     // compile error, 'c' is not a boolean expression
 if c!=0 {}     // OK
@@ -66,9 +105,13 @@ if c!=0 {}     // OK
 d = b or false // OK
 e = c or false // compile error, 'c' is not a boolean
 
+let e = -1
+if e { // OK e is a 1 bit signed value
+}
+
 assert (int(true)  + 1) == 0  // explicity typecast
 assert (int(false) + 1) == 1  // explicity typecast
-assert bool(33) or false      // explicity typecast
+assert boolean(33) or false   // explicity typecast
 ```
 
 ### Function
@@ -78,21 +121,14 @@ high level they provide a sequence of statements and they have a bundle for
 input and a bundle for output. Functions also can capture values from function
 declaration.
 
-### Number
-
-Numbers have unlimited precision and they are always signed. Type constrains 
-can enforce a subset of numbers
-
-```
-var a:int      // any value, no constrain
-var b:unsigned // only positive values
-var c:u13      // only from 0 to 1<<13
-```
 
 ### Range
 
 Ranges are very useful in hardware description languages to select bits, but
-they are integrated all over the language.
+they are integrated all over the language. It is a type by itself that can be
+converted to an single Integer. The range can also be seen as a one hot
+encoding of a set of integers.
+
 
 The are 3 ways to specify a closed range:
 
@@ -109,56 +145,44 @@ size in the bundle does not need to be known.
 * `[first..]` is the same as `[first..=-1]`.
 
 ```
-a = (1,2,3)
+let a = (1,2,3)
 assert a[0..] == (1,2,3)
 assert a[1..] == (2,3)
 assert a[..=1] == (1,2)
 assert a[..<2] == (1,2)
 assert a[1..<10] == (2,3)
-b = 0b0110_1001
+
+let b = 0b0110_1001
 assert b@[1..]        == 0b0110_100
 assert b@[1..=-1]     == 0b0110_100
 assert b@[1..=-2]     == 0b0110_100  // unsigned result from bit selector
 assert b@sext[1..=-2] == 0sb110_100 
 assert b@[1..=-3]     == 0sb10_100
 assert b@[1..<-3]     == 0b0_100
+
+let c = 1..=3
+assert int(c) == 0b1110
+assert range(0b01_1100) == 2..=4
 ```
 
 ### String
 
-Strings are also Numbers encoded using the ASCII sequence, but to perform arithmetic
+Strings are also Integers encoded using the ASCII sequence, but to perform arithmetic
 operations a typecast must be used. The string encoding assigns the lower bits
 to the first characters in the string, each character has 8 bits associated.
 
 ```
-a = 'cad' // a is 0x61, c is 0x63, and d is 0x64
+a = 'cad'              // c is 0x63, a is 0x61, and d is 0x64
 b = 0x64_61_63
 assert a == string(b)  // typecast number to string
 assert int(a) == b     // typecast string to number
 ```
 
-
-## Variable modifiers
-
-The first character[s] in the variable modify/indicate the behavior:
-
-* `$`: for inputs, all the inputs are immutable. E.g: `$inp`
-* `%`: for outputs, all the outputs are mutable. E.g: `%out`
-* `#`: for registers, all the registers are mutable. E.g: `#reg`
-* `_`: for private variables. It is a recommendation, not enforced by the compiler.
-
-```
-%out = #counter
-if $enable {
-  #counter = (#counter + 1) & 0xFF
-}
-```
-
 ## comptime
 
-Pyrope borrows the `comptime` keyword and functionality from Zig. Variables, or expressions,
-can be declared compile time constants or `comptime`. This means that the value must be 
-constant at compile time or an error is generated.
+Pyrope borrows the `comptime` keyword and functionality from Zig. Any statement
+can be declared compile time constants or `comptime`. This means that the value
+must be constant at compile time or an error is generated.
 
 ```
 let comptime a = 1     // obviously comptime
@@ -167,6 +191,8 @@ let comptime c = $rand // compile error, 'c' can not be computed at compile time
 ```
 
 The `comptime` directive considers values propagated across modules.
+
+HERE
 
 ## debug
 

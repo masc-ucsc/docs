@@ -31,7 +31,7 @@ AST, which is a high-level IR on both front/back-end of LGraph. LNAST helps to
 bridge different HDLs and HLS into LiveHD and is useful for HDLs/C++ code
 generation.
 
-![LiveHD overall flow](../../assets/images/livehd.svg)
+![LiveHD overall flow](../assets/images/livehd.svg)
 
 
 
