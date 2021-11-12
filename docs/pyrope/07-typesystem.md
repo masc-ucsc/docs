@@ -7,24 +7,28 @@ specified.
 
 
 Most HDLs do not have modern type systems, but they could benefit like in other
-software domains. Additionally, in hardware it makes sense to have different
-implementations that adjust for performance/constrains like size, area,
-FPGA/ASIC. Type systems could help on these areas.
+software domains. Unlike software, in hardware we do not need to have many integer
+size because hardware can implement any size. This simplifies the type system
+allowing unlimited precision integers but it needs a bitwidth inference mechanism.
+
+
+Additionally, in hardware it makes sense to have different implementations that
+adjust for performance/constrains like size, area, FPGA/ASIC. Type systems
+could help on these areas.
 
 
 ## Types vs `comptime assert`
 
 Pyrope has support for different types of assertions (`assert`, `comptime
-assert`, `assume`, `comptime assume`, `verify`).  The type system checks, not
+assert`, `assume`, `comptime assume`, `verify`). The type system checks, not
 the function overloading, can be translated to a set of `comptime assert`
-statements. Pyrope type checks can be translated to compile time assertion
-checks, but the type related language syntax makes it more readable/familiar
-with programmers.
+statements. In theory, a programmer could type the asserts, but the type
+related language syntax makes it more readable/familiar with programmers.
 
 
 To understand the type check, it is useful to see an equivalent `comptime assert`
-translation. Each variable can have a type attached once. Each time that the
-variable is modified a `comptime assert` statement could check that the variable is
+translation. Each variable can have a type attached. Each time that the
+variable is written a `comptime assert` statement could check that the variable is
 compatible with the assigned type. From a practical perspective, the Pyrope
 type system works this way when variables are modified.
 
@@ -35,9 +39,9 @@ type system works this way when variables are modified.
 
     var a:u32
 
-    mut a += 1
+    a += 1
 
-    mut a = b // fails type check
+    a = b // fails type check
     ```
 
 === "Snippet with comptime assert"
@@ -47,9 +51,9 @@ type system works this way when variables are modified.
 
 
 
-    mut a += 1
+    a += 1
     comptime assert a does u32
-    mut a = b 
+    a = b 
     comptime assert a does u32 // fails type check
     ```
 
@@ -62,8 +66,8 @@ var a:type1
 if $runtime {
   var b:type2
 
-  a = yyy      // comptime assert $runtime implies yyy does :type1
-  b = xxx      // comptime assert $runtime implies xxx does :type2
+  a = yyy      // comptime assert $runtime implies (yyy does :type1)
+  b = xxx      // comptime assert $runtime implies (xxx does :type2)
 }
 
 a = zzz        // comptime assert zzz does :type1
@@ -71,23 +75,32 @@ a = zzz        // comptime assert zzz does :type1
 
 ## Building types
 
-Each variable can be a basic type like String, Boolean, Number, or a bundle. In
-addition, each variable can have a set of constrains from the type system. 
+Each variable can be a basic type like String, Boolean, Integer, or a tuple. In
+addition, each variable can have a set of constrains from the type system. The
+difference between a variable and a type is that types are not affected by the
+values.
 
+```
+type t1 = (a:int=1, b:string)
+type t2 = (a:int=100, b:string)
+var  v1 = (a=33, b="hello")
+
+comptime assert t1 equals t2
+comptime assert t1 equals v1
+```
 
 Although it is possible to declare just the `comptime assert` for type checks,
 the recommendation is to use the explicit Pyrope type syntax because it is more
 readable and easier to optimize.
 
 
-Pyrope type constructs:
+Pyrope type system constructs:
 
 * `type` keyword allows to declare types.
 * `a does b`: Checks 'a' is a superset or equal to 'b'. In the future, the
   unicode character "\u02287" could be used as an alternative to `does` (`a`
 &#8839 `b`);
 * `a:b` is equivalent to `a does b` or `comptime assert a does b` check.
-* `:b` returns the "type of" `b` when used in an expression.
 * `a equals b`: Checks that `a does b` and `b does a`. Effectively checking
   that they have the same type. Notice that this is not like checking for
   logical equivalence, just type equivalence.
@@ -97,18 +110,18 @@ While `var` statement declares a new variable instance which can also have an
 associated type, the `type` statement declares a type without any instance.
 The `type` keyword also allows for expressions to build more complex types.
 All the elements in the type expression are treated as "type of". E.g: `type x
-= a or 1..=3` is equivalent to write `type x = :a or :(1..=3)` 
+= a or 1..=3`.
 
 ```
-type a1 = u32       // type a1 = :u32 is also valid syntax
-type a2 = int(max=33,min=-5)
+type a1 = u32                 // same as 'type a1:u32'
+type a2 = int(max=33,min=-5)  // same as 'type a2:int(-5,33)'
 type a3 = (
     ,var name:string
     ,var age:u8
     )
 
-type b1 = a1 or  a2 // same as type b1 = -5..<4G
-type b2 = a1 and a2 // same as type b2 = 0..=33
+type b1 = a1 or  a2           // same as 'type b1:int(-5..<4G)
+type b2 = a1 and a2           // same as 'type b2:int( 0..=33)
 
 type b3 = a1 or a3  // compile error: unclear how to combine type 'a1' and 'a2'
 ```
@@ -116,25 +129,25 @@ type b3 = a1 or a3  // compile error: unclear how to combine type 'a1' and 'a2'
 The puts command understands types.
 
 ```
-type at=33..   // number bigger than 32
+type at:int=33..     // number bigger than 32
 type bt=(
   ,var c:string
   ,var d=100
-  ,let set = {|mut| self.c = $[1..] } // skip first argument which is the `self`
+  ,let set = {|(self)->(self)| self.c = $[1..] } // skip first argument (self)
 )
 
 var a:at=40
 var v:bt="hello"
-puts "a:{} type:{} or {}", a, :a, at  // a:40 type:Number(33..) or Number(33..)
-puts "b:{} type:{}", b, :b  // b:(c="hello",d=100) type:(c:string,d=100)"
+puts "a:{} or {}", a, at // a:40 or 33
+puts "b:{}", b           // b:(c="hello",d=100)
 ```
 
 
-Both `does` and `equals` operate over types. This means that the values in the entries
-are ignored. This is what makes `equals` different from `==`. As a result 
-different functionality functions could be `equals`. To see if two functions
-are the same a `==` must be used. For functions, the `equals` just checks the function
-argument types.
+Both `does` and `equals` operate over types. This means that the values in the
+entries are ignored. This is what makes `equals` different from `==`. As a
+result different functionality functions could be `equals`. To see if two
+functions are the same a `==` must be used. For functions, the `equals` just
+checks the function argument types.
 
 
 ```
@@ -163,56 +176,52 @@ assert !(y does z)
 assert !(y does x)
 assert !(z does x)
 
-type big = x or y or z or :(d:u33)
+type big = x or y or z or (d:u33)
 assert   big does x
 assert   big does y
 assert   big does z
-assert   big does :(d:u20)
-assert !(big does :(d:u40))
+assert   big does (d:u20)
+assert !(big does (d:u40))
 ```
 
-## Bundle concatenation
+## Tuple concatenation
 
-Bundles are the basic building block for complex types, fields can be added
-and bundles which allows to create more complex types.
-
-There are three main ways to add fields to a bundle: `set`, `++`, and `...`.
-
-The `set` directly adds a field at a time over a given bundle. The bundle must
-be mutable (`var`) and the `set` must be used to index the new field. The `mut`
-is not enough because it checks that the field already exists. The `set` allows
-to mutate and/or add a new field.
+Tuples are the basic building block for complex types. Tuple fields are
+immutable but there are operators to create new tuples out of existing tuples.
+There are three main ways to add fields to a bundle: `++`, `--`, and `...`.
 
 
-The `++` concatenates two bundles. Bundles can be in three categories (just
-ordered, just named, or ordered/named). `++` will preserve the category of both
-input bundles have the same category. When mixing categories, it will create an
-ordered bundle. The order for the just named bundle will be the lexicographical
-order or the named fields. This means that `++` will create a just named bundle only if both input
-bundles are just named. If the same named field name exists in both bundles,
-only one of the bundle fields (the right hand side one) is used. The field
-position is recomputed based on the relative order.
+The `a ++ b` concatenates two tuples. If the same field exists in both tuples,
+the resulting field will have a tuple with the entries of `a` and `b`.
+
+```
+assert ((1,a=2,c=3) ++ (a=20,33,e=30,4)) == (1,a=(2,20),c=3,33,e=30,4)
+```
 
 
-The `...` also concatenates, but it is an "inline concatenate". Since it
-inlines a bundle in an ordered bundle, the result is always an ordered bundle.
-The only difference with `++` is that it triggers a compile error if the same
-named entry already exists.
+The `a -- b` creates a new tuple directly removes a field at a time over a
+given bundle. If a `b` field does not exist in `a` a compile error is generated.
+
+```
+assert ((a=1,b=2) -- (a=100)) == (b=2)
+var c = (a=1) -- (d=1)   // compile error, field 'd' not found in '(a=1)'
+```
+
+
+The `...` also concatenates, but it is an "inline concatenate".  The only
+difference with `++` is that it triggers a compile error if the same named
+entry already exists.
 
 ```
 var base1 = (var a, var b)  // ordered and named
 var base2 = (var c, var d)  // ordered and named
-var ordered = (33,44)       // just ordered
-
-var named
-set named.y = 1
-set named.a = 2             // directly add var fields
+var ordered = (33,44)       // unnamed
 
 var x = base1 ++ base2
-assert x equals :(var a,var b,var c,var d)
-assert x not equals :(base2 ++ base1) // (c,d,a,b)
+assert x equals (var a,var b,var c,var d)
+assert x not equals (base2 ++ base1) // (c,d,a,b)
 
-assert x equals :(...base1, ...base2)
+assert x equals (...base1, ...base2)
 
 assert (1,3,5) == (...(1,3), 5)
 assert (1,3,5) == (1, ...3, 5)
@@ -220,23 +229,9 @@ assert (1,3,5) == 1 ++ 3 ++ 5
 assert (1,3,5) == 1 ++ (3, 5)
 assert (1,3,5) == (...(1, 3, 5))
 
-var y = base1 ++ base1      // same bundle twice!!
-assert y equals base1
-
-e1 = (...base1, ...base1) // compile error, redefined 'a' and 'b' field
-e2 = base1 ++ named       // compile error, can not join ordered and unordered
-e3 = (...base1, ...named) // compile error, named is not an ordered bundle
-e4 = (...named, var z)    // compile error, named is not an ordered bundle
-
-var z1 = (a=100, y=200, z=300)    //ordered and named
-let tmp1 = named ++ (var z)       // (var z) is ordered and named
-assert z1 equals :tmp1
-var z2 = (z=100, a=100, y=200)    //ordered and named
-let tmp2 = (var z) ++ named
-assert z2 equals tmp2
+var y = base1 ++ base1    // same bundle twice!!
+assert y equals base1     // same because there were no data in field
 ```
-
-
 
 ## Enums with types
 
@@ -244,10 +239,19 @@ The union of types is the way to implement enums in Pyrope:
 
 ```
  type color1 = RED1 or BLUE1 or GREEN1 // enum just a unique ID
+ var x:color1 = RED1 // only in local module
 
+ if x does RED1 { // "x does RED1" is the same as "x equals RED1"
+   puts "color1:{}\n", x // prints "color1:RED1"
+ }
+```
+
+An alternative syntax with a type for it.
+
+```
  type Rgb = (
     ,let color:u24
-    ,set = {|mut self,x| self.color = x:u24 }
+    ,let set = {|(self,x)->(self)| self.color = x:u24 }
  )
 
  type Red2:Rgb  = 0xff0000
@@ -255,24 +259,17 @@ The union of types is the way to implement enums in Pyrope:
  type Blue2:Rgb = Rgb(0x0000ff) // alternative redundant syntax
  type color2 = Red2 or Green2 or Blue2
 
- var x:color1 = RED1 // only in local module
-
- if x does RED1 { // "x does RED1" is the same as "x equals RED1"
-   puts "color1:{}\n", :x // prints "color1:RED1"
- }
-
  var y:color2 = Red2
  if y does Red2 { // in this case "y does RED" is the same as "y equals RED"
-   // prints "color:Red2 c1:Red2(color=0xff0000) c2:0xff0000"
-   puts "color:{} c1:{} c2:{}\n", :y, y, y.color 
+   // prints "c1:Red2(color=0xff0000) c2:0xff0000"
+   puts "c1:{} c2:{}\n", y, y.color 
  }
 ```
 
+## Bitwidth
 
-## Bitwidth for numbers
-
-Number basic type can be constrained based on the maximum and minimum value
-(not by number of bits).
+Integers can be constrained based on the maximum and minimum value (not by
+number of bits).
 
 Pyrope automatically infers the maximum and minimum value for each numeric
 variable. If a variable width can not be inferred, the compiler generates a
