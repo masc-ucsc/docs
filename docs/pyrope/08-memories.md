@@ -1,7 +1,8 @@
 # Memories
 
-A significant effort of hardware design revolves around memories. Unlike Von Neumann models, the memories
-must be explicitly managed. Some list of concerns when designing memories in ASIC/FPGAs:
+A significant effort of hardware design revolves around memories. Unlike Von
+Neumann models, the memories must be explicitly managed. Some list of concerns
+when designing memories in ASIC/FPGAs:
 
 * Reads and Writes may have different number of cycles to take effect
 * Reset does not initialize memory contents
@@ -10,8 +11,9 @@ must be explicitly managed. Some list of concerns when designing memories in ASI
 * FPGA memories tend to have their own set of constrains too
 * Logic around memories like BIST has to be added before fabrication
 
-This constrains the language, it is difficult to have a typical vector/memory provided by the language
-that handles all these cases. Instead the complex memories are managed by the Pyrope standard library.
+These constrains the language, it is difficult to have a typical vector/memory
+provided by the language that handles all these cases. Instead the complex
+memories are managed by the Pyrope standard library.
 
 
 The flow directly supports arrays/memories in two ways:
@@ -21,8 +23,8 @@ The flow directly supports arrays/memories in two ways:
 
 ## Async memories or arrays
 
-In this document asynchronous memories, async memories for short, have the same
-API that arrays. The difference between arrays and async memories is that the
+Asynchronous memories, async memories for short, have the same Pyrope tuple
+interface. The difference between tuples/arrays and async memories is that the
 async memories preserve the array contents across cycles while the array
 contents is cleared at the end of each cycle.
 
@@ -34,15 +36,19 @@ persistence across cycles.
 
 
 Pyrope async memories behave like what a "traditional software programmer" will
-expect in an array.  This means that values are initialized and there is
-forwarding enabled.  It is possible to have different options of async
-memories, but those should use the RTL interface.
+expect in an array. This means that values are initialized and there is
+forwarding enabled. This is not what a "traditional hardware programmer" will expect.
+In languages like CHISEL there is no forwarding or initialization. In Pyrope is
+possible to have different options of async memories, but those should use the
+RTL interface.
 
 
-The bundles allow ordered unnamed accessed, this is in-fact an array. The async
-memories behave like arrays but there is a small difference, the persistence of
-state between clock cycles. To be persistent across clock cycles, the same flop
-modifier is applied (`#`).
+The async memories behave like tuples/arrays but there is a small difference,
+the persistence of state between clock cycles. To be persistent across clock
+cycles, this is achieved with a `reg` declaration. When a variable is declared
+with `var` the contents is lost at the end of the cycle, when declared with
+`reg` the contents is preserved across cycles.
+
 
 In most cases, the arrays and async memories can be inferred automatically. The
 maximum/minimum value on the index effectively sets the size, and the default

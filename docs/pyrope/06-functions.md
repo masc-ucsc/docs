@@ -1,48 +1,78 @@
 # Functions and methods
 
 
-Hardware description languages specify a tree-like structure of modules or functions. Usually, there is a top module that
-instantiates several sub-modules. The difference between module and function is mostly what is visible/left after synthesis. We
-call module any a function call is left visible in the generated netlist as a separate entity. If a function is inlined in the
-caller module, we do not call it module. By this definition, a function is a super-set of modules.
+Hardware description languages specify a tree-like structure of modules or
+functions. Usually, there is a top module that instantiates several
+sub-modules. The difference between module and function is mostly what is
+visible/left after synthesis. We call module any function call left visible in
+the generated netlist as a separate entity. If a function is inlined in the
+caller module, we do not call it module. By this definition, a function is a
+super-set of modules.
+
+
+Functions also can be classified in three cathegories based on the outputs:
+pure combinational, synchronous combinational, and pipelined:
+
++ A pure combinational output does not use a clock and all the outputs are as a
+  combinational result of the inputs. 
+
++ A synchronous output uses some register or memory to keep state across
+  functions but the output is still combinational as a result of inputs and/or
+  internal registers. 
+
++ A pipelined output does not have any combinational path to any of the inputs
+  that does not pass through a register or memory.
+
 
 !!!Note
     Pyrope only supports a restricted amount of recursion. Recursion is only allowed when it can be unrolled at compile time.
 
 ## Function definition
 
-All the functions are lambdas that must passed as arguments or assigned to a given variable. There is no global scope for
-variables or functions.
+All the functions are lambdas that must passed as arguments or assigned to a
+given variable. There is no global scope for variables or functions.
 
 ```
-a_3      = {   3 } // just scope, not a lambda. Scope is evaluate now
-a_lambda = {|| 4 } // lambda or function, when just_4 is called 4 is returned
+a_3   = {   3 } // just scope, not a function. Scope is evaluate now
+a_fun = {|| 4 } // function, when just_4 is called 4 is returned
+
+let x = a_3()             // compile error, explicit call not posible in scope
+let x = a_fun()           // OK, explicit call
+
 assert a_3 equals 3
-assert a_lambda equals {|| }
-assert a_lambda == 4          // calls to eval the lambda
+assert a_fun equals {|| }
+assert a_fun() == 4       // calls to eval the function
 ```
 
-The simplest function resembles a scope with at `{` followed by a sequence of statements where the last statement can be an
-expression before the closing `}`.
+The simplest function resembles a scope with at `{` followed by a sequence of
+statements where the last statement can be an expression before the closing
+`}`.
 
-The difference between a function and a normal scope is the lambda definition enclosed between pipes (`|`).
+The difference between a function and a normal scope is the function definition
+enclosed between pipes (`|`).
 
 ```txt
 [ATTRIBUTES] | [CAPTURE] [INPUT] [-> OUTPUT] [where COND] |
 ```
 
-* ATTRIBUTES are optional method modifiers like:
-    * `comptime`: function should be computed at compile time
-    * `debug`   : function is for debugging, not side effects in non-debug statements
-    * `mut`     : function is has an output that it is a copy of the first input argument. This is typically a method that can modify the parent bundle.
-* META are a list of type identifiers or type definitions.
-* CAPTURE has the list of capture variables for the function. If no capture is provided, any local variable
-can be captured. An empty list (`[]`), means no captures allowed.
-* INPUT has a list of inputs allowed with optional types. If no input is provided, the `$` bundle is used as input.
-* OUTPUT has a list of outputs allowed with optional types. If no output is provided, the `%` bundle is used as output.
-* COND is the condition under which this statement is valid.
++ ATTRIBUTES are optional method modifiers like:
+    - `comptime`: function should be computed at compile time
+    - `debug`   : function is for debugging, not side effects in non-debug statements
+
++ META are a list of type identifiers or type definitions.
+
++ CAPTURE has the list of capture variables for the function. If no capture is
+  provided, any local variable can be captured. An empty list (`[]`), means no
+  captures allowed.
+
++ INPUT has a list of inputs allowed with optional types. If no input is provided, the `$` bundle is used as input.
+
++ OUTPUT has a list of outputs allowed with optional types. If no output is provided, the `%` bundle is used as output.
+
++ COND is the condition under which this statement is valid.
 
 ```
+var add
 add = {|| $a+$b+$c }              // no IO specified
 add = {|a,b,c| a+b+c }            // constrain inputs to a,b,c
 add = {|(a,b,c)| a+b+c }          // same
@@ -52,15 +82,18 @@ add = {|(a,b,c) -> (res)| a+b+c } // constrain result to be named res
 add = {|(a:T,b:T,c:T)| a+b+c }    // constrain inputs to have same type
 
 x = 2
-add2 = {|[x](a)| x + a }           // capture x
-add2 = {|[foo=x](a)| foo + a }     // capture x but rename to something else
+var add2
+add2 = {|       (a)|   x + a }    // implicit capture x
+add2 = {|[x    ](a)|   x + a }    // explicit capture x
+add2 = {|[     ](a)|   x + a }    // compile error, undefined 'x'
+add2 = {|[foo=x](a)| foo + a }    // capture x but rename to something else
 
-y = (
+var y = (
   ,val:u32 = 1
-  ,inc1 = {|mut| self.val = u32(self.val + 1) } // mut allows to change bundle
+  ,inc1 = {|(self)->(self)| self.val = u32(self.val + 1) }
 )
 
-my_log = {|debug|
+let my_log = {|debug|
   print "loging:"
   for i in $ {
     print " {}", i
@@ -69,6 +102,24 @@ my_log = {|debug|
 }
 
 my_log a, false, x+1
+```
+
+## Implicit input/output tuple
+
+The inputs and outputs on the current function can have an associated variable
+with the function definition, but it is always possible to access the inputs
+and outputs with the input tuple ($) and the output tuple (%). This allows
+variable size arguments and simpler code for small code snippets.
+
+```
+let fun = {|(in1,in2)->(out1,out2)
+  assert in1 == $.in1 and in2 == $.in2
+
+  out1 = in1 + $in1
+  out2 = out1 + in2 + $in2
+
+  assert out1 == $.out1 and out2 == $.out2
+}
 ```
 
 ## Implicit function per file
@@ -95,9 +146,8 @@ assume %d < 4K
 ## Arguments
 
 Function calls only pass by value, there is no pass by reference like in most
-languages.  A function is a code block that has an input bundle (`$`) performs
-some statements and returns an output bundle (`%`). Since bundles can be named,
-ordered or both, these are some implications:
+languages.  A function is a code block that has an input tuple (`$`) performs
+some statements and returns an output tuple (`%`). 
 
 * Arguments can be named. E.g: `fcall(a=2,b=3)`
 * There can be many return values. E.g: `return (a=3,b=5)`
@@ -105,15 +155,14 @@ ordered or both, these are some implications:
 
 There are several rules on how to handle function arguments.
 
-* Calls uses the Uniform Function Call Syntax (UFCS). `(a,b).f(x,y) == f((a,b),x,y)`
+* Calls use the Uniform Function Call Syntax (UFCS). `(a,b).f(x,y) == f((a,b),x,y)`
 * Pipe |> concatenated inputs: `(a,b) |> f(x,y) == f(x,y,a,b)`
 * Function calls with arguments do not need parenthesis after newline or a variable assignment: `a = f(x,y)` is the same as `a = f x,y`
 
-Pyrope uses a uniform function call syntax (UFCS) like other languages like Nim
-or D but it can be different from the order in other languages. Notice the
+Pyrope uses a uniform function call syntax (UFCS) like other languages (Nim or
+D) but it can be different from the order in other languages. Notice the
 different order in UFCS vs pipe, and also that in pipe the argument tuple is
 concatenated, but in UFCS the it is added as first argument.
-
 
 ```
 div  = {|a,b| a / $b }   // named input bundle
@@ -137,29 +186,21 @@ n=div2((8,4), 3)         // compile error: (8,4)/3 is undefined
 o=(8,4).div2(1)          // compile error: (8,4)/1 is undefined
 ```
 
+
+
 ## Methods
 
-Pyrope has functions that only pass arguments by value. This presents a problem
-if we implement a typical method. A method is a function associated to a bundle
-which we call the parent bundle. The method can access the parent bundle fields
-and potentially mutate some of them. To be consistent with the UFCS syntax, the
-bundle is passed as the first argument in the input bundle. This works directly
-when the method does not update or mutate the bundle contents. To allow updates
-the first argument in the output bundle is the parent bundle. To indicate the
-existence of the output parent bundle, the function is declared with the `mut`
-keyword.
-
-
-To make the code more consistent with existing languages Pyrope has the `self`
-keyword. Any function can declare the first input as `self` variable. In methods,
-the first argument is implicit, but it is possible to explicitly set it too. It
-corresponds to the first entry in the input bundle or the first element of the
-output bundle when the method is declared with the `mut` keyword.
+Pyrope functions only pass arguments by value. This looks like a problem if we
+implement a typical method. A method is a function associated to a tuple.  The
+method can access the parent bundle fields and potentially update some of them.
+To be consistent with the UFCS syntax, the tuple is passed as an input the
+first argument (`self`). This works directly when the method does not update or
+mutate the bundle contents. To allow updates the an output should have `self`.
 
 ```
 var a_1 = (
   ,x:u10
-  ,fun = {|mut x| 
+  ,let fun = {|(self,x)->(self)| 
     assert $.__size == 2 // self and x
     self.x = x 
     assert %.__size == 2 // due to the mut keyword
@@ -170,70 +211,71 @@ var a_1 = (
 a_1.fun(3)
 assert a_1.x == 3
 
-fun2 = {|mut (self, x)| self.x = x }
+fun2 = {|(self, x)->(self)| self.x = x }
 a_2 = a_1.fun2(4)
 assert a_1.x == 3
 assert a_2.x == 4
 ```
 
-Due to the UFCS and the `self` keyword methods can be attached to bundles, but there
-is a higher precedence if the bundle has a locally declared method.
+A difference a method and a UFCS call is that the method has higher priority to
+match.
+
 
 ```
-var a = 33
+var counter = (
+  ,var val:i32
+  ,let inc = {|(self, v)->(self) self.var += v }
+)
 
-foo = {|| self - 1 }
+assert counter.val == 0
+counter.inc(3)
+assert counter.val == 3
 
-x = foo(a)
-assert x == 32 and a == 33
+let inc = {|(self, v)->(self) self.var *= v } // NOT INC but multiply
+counter.inc(2)
+assert counter.val == 5
 
-y = a.foo()
-assert y == 32 and a == 33
+let mul = inc
+counter = counter.mul(2)   // call the new mul method with UFCS
+assert counter.val == 10
 
-a.foo = {|| self + 1 }
+let other = counter.mul(2) // UFCS no self update return
+assert counter.val == 10
+assert other.val   == 20
 
-z = a.foo()
-assert z == 34 and a == 33
-
-mut_foo = {|mut| self -= 1}
-mx = mut_foo(a)
-assert mx == 32 and a == 33  // output is mutabled not input
-
-a.mut_foo()  // same as: a = mut_foo(a)
-assert a == 32
-
-a.mut_foo = {|mut| self += 100}
-a.mut_foo() // same as: a = a.mut_foo(a)
-assert a == 132
+mul(counter, 2) // also legal, but no self update
+assert counter.val == 20
 ```
 
-Methods allow to access parent bundle fields, but they can override previous methods. To handle
-the override, Pyrope has the `super` keyword:
+Methods can access the tuple fields, it can also access the method previously
+declared before override. To handle the override, Pyrope has the `super` keyword:
 
-* `self` access the input bundle first argument or the output bundle first
-  argument when the method is declared mutable (`{|mut ...}`).
-* `super` provides the method before it was redefined.
+* `self` is an input and/or output but also a reserved word. It could be a
+  tuple first input argument or the first output argument
+
+* `super` provides access to the method before it was redefined
+
 
 ```
 type base1 = (
-  ,fun = {|| 1 }
+  ,var fun = {|| 1 }
 )
 type base2 = (
-  ,fun = {|| 
+  ,var fun = {|| 
     a = super
     assert a == 1
-    2 
+    2                    // last statement expression does not need a return
   }
 )
 
-type top = base1 ++ base2 ++ (
-  ,top_fun = {|| 4 }
-  ,fun = {||
+type top = (
+  ,let top_fun = {|| 4 }
+  ,var fun = {||
     a = super()          // same as a = super
     assert a == 2
     return 33
   }
-)
+) ++ base2 ++ base1
 
 var a3:top
 
@@ -242,16 +284,46 @@ assert a3.top_fun() == 4
 assert a3.top_fun.size == 1
 
 assert a3.fun does :{||}
-assert a3.fun.size == 1
+assert a3.fun.size == 3
 assert a3.fun()    == 33
 
 var a1:base1
 var a2:base2
 assert a1.fun() == 1
 assert a2.fun() == 2
+assert a1.fun.size == 1
+assert a2.fun.size == 1
 ```
 
+
 ## Function call order
+
+
+A functions can be added to an unamed tuple. Those functions can have different
+number of arguments. When calling the tuple, the first function that matches
+the number or aguments is called. The function call order also considers types,
+this is addressed in the [07-typesystem](07-typesystem.md) section.
+
+
+```
+var fun_list = {|(a,b)| return a+b}
+fun_list ++= {|(a,b,c)| return a+b+c }
+fun_list ++= {|(a,b,c,d)| return a+b+c+d }
+
+assert fun_list.size()
+
+assert fun_list(1,2) == 3
+assert fun_list(1,2,4) == 7
+assert fun_list(1,2,4,5) == 12
+assert fun_list(1,2,4,5,6) == 18 // compile error, no function with 5 args
+
+
+fun_list ++= {|(a,b)| return 100}
+assert fun_list(1,2) == 3
+
+fun_list = {|(a,b)| return 200} ++ fun_list
+assert fun_list(1,2) == 200
+```
 
 
 There are several ways to define functions, and there is a call order. First,

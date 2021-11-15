@@ -13,12 +13,12 @@ The `if` sequence can be used in expressions too.
 
 ```
 a = unique if cond == 1 {
-  300
-}elif cond == 2 {
-  400
-}else{
-  500
-}
+    300
+  }elif cond == 2 {
+    400
+  }else{
+    500
+  }
 
 var x
 if a { x = 3 } else { x = 4 }
@@ -51,18 +51,29 @@ else              { assert false       }
 
 Like the `if`, it can also be used as an expression.
 
+```
+var hot = match x {
+    == 0b001 { a }
+    == 0b010 { b }
+    == 0b100 { c }
+  }
+```
+
 ## Gate statements (`when`/`unless`)
 
 Simple statement like assignments, variable/type definitions, and function
 calls can be gated or not executed with a `when` or `unless` statement. This is
 similar to an `if` statement, but the difference is that the statement is in
-the current scope, not creating a new scope.
+the current scope, not creating a new scope. This allows cleaner more compact
+syntax.
 
 ```
 var a = 3
 a += 1 when false             // never executes 
 assert a == 3
 assert a == 1000 when a > 10  // assert never executed either
+
+return 3 when some_condition
 ```
 
 Complex assignments like `a |> b(1) |> c` can not be gated because it is not
@@ -71,9 +82,10 @@ Similarly, gating ifs/match statements does not make much sense. As a result,
 `when`/`unless` can only be applied to assignments, function calls, and scope
 control statements (`return`, `break`, `continue`).
 
+
 ## Loop (`for`)
 
-The `for` iterates over the first level elements in a bundle or the values in a
+The `for` iterates over the first level elements in a tuple or the values in a
 range.  In all the cases, the number of loop iterations must be known at
 compile time. The loop exit condition can not be run-time data dependent.
 
@@ -100,14 +112,13 @@ assert bund == (2,3,4,5)
 b = (a=1,b=3,c=5,7,11)
 
 for i,index,key in b {
-   assert i==1  implies (index==0 and key == 'a')
-   assert i==3  implies (index==1 and key == 'b')
-   assert i==5  implies (index==2 and key == 'c')
-   assert i==7  implies (index==3 and key == '' )
-   assert i==11 implies (index==4 and key == '' )
+  assert i==1  implies (index==0 and key == 'a')
+  assert i==3  implies (index==1 and key == 'b')
+  assert i==5  implies (index==2 and key == 'c')
+  assert i==7  implies (index==3 and key == '' )
+  assert i==11 implies (index==4 and key == '' )
 }
 ```
-
 
 The `for` can also be used in an expression which allows to build
 comprehensions to initialize arrays.
@@ -117,10 +128,47 @@ var c = for i in 0..<5 { i }
 assert c == (0,1,2,3,4)
 ```
 
-## Scope control (`break`, `continue`, `return`)
+## Scopes
 
-Pyrope has scopes and lambdas. The scopes are used by statements like `for` and
-`if`, the lambdas are assigned to variables or passes as arguments. A `return`
+
+Scopes are delimited by `{` and `}`. Pyrope has scopes and lambdas. The scopes
+are used by statements like `for` and `if`, the lambdas are function
+declarations.
+
+
+Scopes allow to declara new variables. New variable declaration inside the
+scope are not visible outside it. Variable declaration shadowing is not allowed
+and a compiler error is generated.
+
+
+Expressions can have multiple scopes, but they can not have side effects.
+
+```
+{
+  var x=1
+  var z
+  {
+    z = 10
+    var x             // compile error, `x` shadows an upper scope
+
+  }
+  assert z == 10 
+}
+let zz = x            // compile error, `x` is out of scope
+
+var yy = {let x=3 ; 33/3} + 1
+assert yy == 12
+let xx = {yy=1 ; 33}  // compile error, 'yy' has side effects
+
+if {let a=1+yy; 13<a} {
+
+}
+```
+
+### Scope control (`break`, `continue`, `return`)
+
+
+A `return`
 statement exits or terminates the current lambda. The `break` statement exists or
 terminates the current scope. If the scope was used by another statement, the `break`
 exists the associated scope.
@@ -152,7 +200,7 @@ if a>0 {
 assert total2 == (3,2)
 ```
 
-In addition, the three statements can have a bundle. This is only useful when
+In addition, the three statements can have a tuple. This is only useful when
 the statements are used in an expression.
 
 ```

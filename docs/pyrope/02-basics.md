@@ -9,11 +9,12 @@ Comments begin with `//`, there are no multi-line comments
 a = 3 // another comment
 ```
 
-## Basic Constants
+## Constants
 
 ### Integers
 
-Pyrope has unlimited precision signed integers.
+Pyrope has unlimited precision signed integers. Any literal starting with a
+digit is a likely integer constant.
 
 ```
 0xF_a_0 // 4000 in hexa. Underscores have no meaning
@@ -33,7 +34,7 @@ assert 1g == 1G == 1024*1024*1024
 ```
 
 Several hardware languages support unknown bits (`?`) or high-impedance (`z`). Pyrope
-aims at being compatible with synthesizable Verilog, as such such values are also supported in
+aims at being compatible with synthesizable Verilog, as such `?` is also supported in
 the binary encoding.
 
 ```
@@ -41,19 +42,27 @@ the binary encoding.
 0sb?            // 0 or -1 in decimal
 0b?0            // 0 or 2 in decimal
 0sb0?0          // 0 or 2 in decimal
-0b0?_1??0z_??z0 // valid value
 ```
 
-Like in many HDLs, Pyrope has unknowns `?`. The x-propagation is a source of complexity in most hardware models. Pyrope has x or
-`?` to be compatible with Verilog existing designs. The advise is not to use x besides `match` statement pattern matching. It is
-much better to use the default value (zero or empty string), but sometimes it is easier to use `nil` when converting Verilog code
-to Pyrope code. The `nil` means that the numeric value is invalid. If any operation is performed with nil, the result is an
-assertion failure. The only thing allowed to do with nil is to copy it. While the `nil` behaves like an invalid value, the `0sb?`
-behaves like an unknown value that still can be used in arithmetic operations. E.g: `0sb? | 0` is `0` but `nil | 0` is `nil`.
+The Verilog high impedance `z` is not supported. A `bus` construct must be used instead.
+
+Like in many HDLs, Pyrope has unknowns `?`. The x-propagation is a source of
+complexity in most hardware models. Pyrope has `x` or `?` to be compatible with
+Verilog existing designs. The advise is not to use `x` besides `match` statement
+pattern matching. It is much better to use the default value (zero or empty
+string), but sometimes it is easier to use `nil` when converting Verilog code
+to Pyrope code. The `nil` means that the numeric value is invalid. If any
+operation is performed with `nil`, the result is an assertion failure. The only
+thing allowed to do with nil is to copy it. While the `nil` behaves like an
+invalid value, the `0sb?` behaves like an unknown value that still can be used
+in arithmetic operations. E.g: `0sb? | 0` is `0` but `nil | 0` is an error.
 
 
-Notice that `nil` is a state in the integer basic type, it is not a new type by itself, it does not represent invalid pointer, but 
-rather invalid integer.
+Notice that `nil` is a state in the integer basic type, it is not a new type by
+itself, it does not represent invalid pointer, but rather invalid integer. Also
+important is that the compiler will guarantee that all the `nil` are eliminated
+at compile time or a compile error is generated.
+
 
 ```
 a = 0sb? & 0 // OK, result is 0
@@ -63,7 +72,7 @@ b = nil  & 0 // Error
 ### Strings
 
 Pyrope accepts single line strings with single quote (`'`) or double quote
-(`"`).  Single quote only has `\'` as escape character. double quote supports
+(`"`).  Single quote only has `\'` as escape character, double quote supports
 extra escape sequences.
 
 ```
@@ -91,12 +100,13 @@ assert b == 0x7F
 
 A Pyrope std library could provide a better interface in the future like
 `a.to_i()`, but fields that start with double underscore are reserved to
-interact with the LiveHD compiler or call the C++ provided library.
+interact with the compiler or call the C++ provided library.
+
 
 ### Unique identifiers
 
 When an identifier uses an all upper case (E.g: `ALL_CAPS`). Pyrope assigns a
-unique identifer for each upper case constant. The value is unique and not
+unique identifier for each upper case constant. The value is unique and not
 visible, but it can be used to index tuples or to compare equality. The
 identifier scope is the whole Pyrope file.
 
@@ -107,8 +117,7 @@ assert a!=b
 val[ONE] = true
 ```
 
-## newlines and spaces
-
+## Newlines and spaces
 
 Spaces do not have meaning but new lines do. Several programming languages like
 Python use indentation level (spaces) to know the parsing meaning of
@@ -134,12 +143,11 @@ d = 1 +       // compile error
 This functionality allows to parallelize the parsing and elaboration in Pyrope.
 More important, it makes the code more readable, by looking at the beginning of
 the line, it is possible to know if it is a new statement or a continuation of
-the last one.
-
+the last one. It also helps to standarize the code format by allowing only one
+style.
 
 
 ### Identifiers
-
 
 An identifier is any non reserved keyword that starts with an underscore or an
 alphabetic character.  Since Pyrope is designer to support any synthesizable
@@ -196,7 +204,7 @@ The available puts/print arguments:
 
 The expression evaluation order is important if the elements in the expression
 can have side effects. Pyrope does not allow expressions to have side effects
-with the exception of `debug` statements and DPI calls like `puts`.
+with the exception of `debug` statements like `puts`.
 
 
 As a reference languages like C++11 do not have a defined order of evaluation
@@ -212,14 +220,16 @@ In Pascal, there is an `and/or` and `and_then/or_else` (conditional). In Rust
 
 
 Pyrope is more restrictive because it wants to be a fully defined determistic
-independent of implementation.
+independent of implementation. Pyrope is deterministic in the synthesizable
+but not in the `debug` statements. To illustrate the point/difference, and how
+to handle it, it is useful to see a Verilog example.
 
 
-Popular hardware languages like Verilog are not consistent. E.g: this Verilog
-sequence evaluates differently in VCS and Icarus Verilog. In Pyrope, the same
-can happen because `puts` is not considered a side-effect in the simulation
-result. The reason why some methods may be called is dependent on the
-optimization (in this case, `testing(1)` got optimized away by vcs).
+The following Verilog sequence evaluates differently in VCS and Icarus Verilog.
+In Pyrope, the same can happen because `puts` is not considered a side-effect
+in the simulation result. The reason why some methods may be called is
+dependent on the optimization (in this case, `testing(1)` got optimized away by
+vcs).
 
 
 ```
@@ -281,17 +291,17 @@ end
     test4
     ```
 
-If order is needed and a function call can have side-effects, the statement
-must be broken down in several statements, or the `and_then` and `or_else`
-operations must be used.
+If order is needed and a function call can have `debug` side-effects or real
+side-effects, the statement must be broken down in several statements, or the
+`and_then` and `or_else` operations must be used.
 
 
 === "Incorrect code with side-effects"
     ```
-    var r1 = fcall1() or  fcall2()  // compile error
+    var r1 = fcall1() or  fcall2()  // compile error, or non-determistic debug
 
 
-    var r2 = fcall1() and fcall2()  // compile error
+    var r2 = fcall1() and fcall2()  // compile error, or non-determistic debug
 
 
     var r3 = fcall1() +   fcall2()  // compile error
@@ -301,7 +311,7 @@ operations must be used.
 === "Alternative 1"
     ```
     var r1 = fcall1()
-    r1 or= fcall2() unless r1
+    r1 = fcall2() unless r1
 
     var r2 = fcall1()
     r2 = fcall2() when r2

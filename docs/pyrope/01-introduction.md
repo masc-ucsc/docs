@@ -22,11 +22,6 @@ Pyrope is a modern hardware description language, with these focus points:
     - Hot-Reload support, powerful assertions
     - Allows Pyrope 2 Verilog, edit Verilog, Verilog 2 Pyrope, edit Pyrope...
     - Static checks as long as they not produce false positives
-    - Constructs to support pipelining
-* Some features not common in other HDLs
-    - Synthesizable object system with runtime polymorphism
-    - Immutable objects
-    - Global type inference
 
 ## Hello World
 
@@ -187,28 +182,32 @@ Run
 $prp test gcd
 ```
 
-The `gcd.prp` includes the top level module (`gcd`) and the unit test. To understand the differences
-with alternative HDLs, the same GCD with CHISEL:
+The `gcd.prp` includes the top level module (`gcd`) and the unit test. 
 
 
-Some of the visible differences:
+* Some Pyrope features not common in other HDLs (CHISEL):
 
-* Pyrope has global type inference. The gcd.prp file doe not specify any size. The size
-is inferred from instantiation, in this case the test.
-* Pyrope has special variable markers: $ is for inputs, % for outputs, and # for registers.
-* CHISEL is a DSL. E.g: the `=` are SCALA, the `===` is generated HDL. The GCDCalculator is
-a SCALA program, and the GCD is a generated CHISEL module.
+    - Pyrope is not a DSL. Most modern HDLs like CHISEL, pyMTL, pyRTL, CλaSH
+      are DSL cases. In this cases, there is a host language (SCALA, or Python,
+      or Haskell) that must be executed. The result of the execution is the hardware
+      description which can be Verilog or some internal IR like FIRRTL in CHISEL. 
+      The advantage of the DSL is that it can leverage the existing language to
+      have a nice hardware generator. The disadvantage is that there are 2 languages
+      at once, the DSL and the host language, and that it is difficult to do
+      incremental because the generated executable from host language must be
+      executed to generate the design.
 
 
-Some not so visible differences:
+    - Global type inference. In the gcd example, the input/outputs are
+      inferred.
 
-Pyrope is not a DSL. There are several DSL Hardware Description Languages (HDL)
-like CHISEL, pyMTL, pyRTL, CλaSH. In all the DSL cases, there is a host
-language (SCALA, or Python, or Haskell) that must be executed. The result of
-the execution is the hardware description which can be Verilog or some internal
-IR like FIRRTL in CHISEL. The advantage of the DSL is that it can leverage the
-existing language to have a nice hardware generator. The disadvantage is that
-there are 2 languages at once, the DSL and the host language, and that it is
-difficult to do incremental because the generated executable from host language
-must be executed to generate the design.
+    - Synthesizable object system with runtime polymorphism
+
+    - Immutable objects
+
+* Some Pyrope features not common in other languages
+
+    - No object references, only pass by value
+
+    - Pipelining support
 

@@ -28,14 +28,7 @@ assert a['0.c']  == 2
 assert a['0.1']  == 2
 assert a.0.c     == 2
 assert a.0.1     == 2
-assert a[':0:r1'].1    == 2 // indicate position with :num:
-assert a[':0:r1.1']    == 2
-assert a[':0:r1.:1:c'] == 2
 ```
-
-Ordered and named fields also can use `:position:key` to indicate the position
-and key. If either mismatches a compilation error is triggered.
-
 
 There is introspection to check for an existing field with the `has` operator.
 
@@ -49,22 +42,70 @@ assert !(a has 1)
 
 ## Everything is a Tuple
 
-In Pyrope all the variables are tuples, just a tuple of size 1. As such, it is possible
-to have this code:
+In Pyrope everything is a Tuple, and it has some implications that this
+section tries to clarify.
+
+
+A tuple starts with `(` and finishes with `)`. In most languages, the
+parenthesis have two meanings, operation precedence and/or tuple/record.
+In Pyrope, since a single element is a tuple too, the parenthesis always means
+a tuple.
+
+
+A code like `(1+(2),4)` can be read as "Create a tuple of two entries. The
+first entry is the result of the addition of `1` (which is a tuple of 1) and a
+tuple that has `2` as unique entry. The second entry in the tuple is `4`".
+
+The tuple entries are separated by comma (`,`). Extra commas do not add meaning.
 
 ```
-let a = 3              // tuple of 1 element which is 3
-let b = a.0.0          // get first element which is 3 (a tuple too)
-assert b == a == 3
-let c = (3)            // tuple of 1 element which is 3
-assert a == c
+a = (1,2)   // tuple of 2 entries, 1 and 2
+b = (1)     // tuple of 1 entry, 1
+c = 1       // tuple of 1 entry, 1
+d = (,,1,,) // tuple of 1 entry, 1
+assert a.0 == b.0 == c.0 == d.0
+assert a!=b
+assert b == c == d
+```
+
+
+Tuples are used in many places:
+
+* The inputs for a function are in `$` tuple. E.g: `total = $.a + $[3]`
+* The outputs for a function are in the `%` tuple. E.g: `%.out1 = 3` or `%sum = 4`
+* The arguments for a call function are a tuple. E.g: `fcall(1,2)`
+* The return of a function call is always a tuple. E.g: `foo = fcall()`
+* The index for a selector `[...]` is a tuple. As syntax sugar, the tuple parenthesis can be omitted. E.g: `foo@[0,2,3]`
+* The complex type declaration are a tuple. E.g: `type x = (f=1,var b:string)`
+
+The tuple entries can be mutable/immutable and named/unnamed. By default
+variables are immutable, and by default tuple entries follow the top variable
+definition. The entry can be changed with the `var` and `let` keyword. The
+`type` declaration is an immutable variable type.
+
+To declare a named entry the default is `lhs = var` which follows the default
+tuple entry type. Again, the `var` and `let` keyword can be added to change
+it.
+
+```
+b = 3
+a = (b:u8, 4)
+assert a == (3:u8, 4)
+
+var f = (b=3, let e=5)
+f.b = 4             // OK
+f.e = 10            // compile error, `f.e` is immutable
+
+let x = (1,2)
+x[0] = 3            // compile error, 'x' is immutable
+var y = (1, let 3)
+y[0] = 100          // OK
+y[1] = 101          // compile error, `y[1]` is immutable
 ```
 
 ## Tuples vs Arrays
 
-Tuples are ordered, as such it is possible to use them as arrays. The index may
-not be known at compile time. If an out-of-bounds access is performed, either a
-compile or simulation error is triggered.
+Tuples are ordered, as such it is possible to use them as arrays. 
 
 ```
 var bund1 = (0,1,2,3,4) // ordered and can be used as an array
@@ -76,6 +117,42 @@ assert bund2[2][0] == (10,20)
 assert bund2[2][0][1] == 20
 assert bund2[2][1] == 30
 ```
+
+Pyrope tries to be compatible with synthesizable Verilog. In Verilog, when an
+out of bounds access is performed in a packed array (unpacked arrays are not
+synthesizable), or an index has unknown bits (`?`), a runtime warning can be
+generated and the result is an unknown (`0sb?`). Notice that this is a
+pessimistic assumption because maybe all the entries have the same value when
+the index has unknowns.
+
+
+The Pyrope compile will trigger compile errors for out of bound access. It is not
+possible to create an array index that may perform an out of bounds access.
+
+```
+var array = (0,1,2)       // size 3, not 4
+tmp = array[3]            // compile error, out of bounds access
+var index = 2
+if runtime {
+  index = 4
+}
+// Index can be 2 or 4
+
+var res1 = array[index]   // compile error, out of bounds access 
+
+var res2 = 0sb?           // Possible code to be compatible with Verilog
+if index<3 {
+  res = array[index]      // OK
+}
+```
+
+Pyrope compiler will allow an index of an array/tuple with unknowns or invalid.
+If the index is a `nil` a simulation error is generated. If the index has
+unknown bits `?` but the compiler can not know, the result will have unknowns
+(see [internals](10-internals.md) for more details). Notice that the only way
+to have unknowns is that somewhere else a variable or a memory was explicitly
+initialized with unknowns. The default initialization in Pyrope is 0, not
+unknown like Verilog.
 
 
 ## Attributes/Fields
@@ -114,5 +191,49 @@ bad.b.__poison = true
 let b = bad.b
 
 assert  b.__poison and b==4
+```
+
+## Optional tuple parenthesis
+
+Parenthesis mark the beginning and the end of a tuple. Those parenthesis can
+be avoided for unnamed tuple in some cases:
+
+* When doing a simple function call after an assignment or at the beginning of a line.
+* When used inside a selector `[...]`.
+* When used after an `in` operator followed by a `{` like in a `for` and `match` statements.
+* For the inputs in a match statement
+* When the function types only has inputs.
+
+```
+fcall 1,2         // same as: fcall(1,2)
+x = fcall 1,2     // same as: x = fcall(1,2)
+b = xx[1,2]       // same as: xx[(1,2)]
+
+for a in 1,2,3 {  // same as: for a in (1,2,3) {
+}
+y = match z {    
+  in 1,2 { 4 }    // same as: in (1,2) { 4 }
+  else { 5 }
+}
+y2 = match 1,z {  // same as: y2 = match (1,z) {
+}
+
+fun = {|a,b|      // same as: fun = {|(a,b)|
+} 
+```
+
+A named tuple parenthesis can be omitted on the left hand side of an assignment. This is
+to mutate or declare multiple variables at once. 
+
+```
+var a=0
+var b=1
+
+a,b = (2,3)
+assert a==2 and b==3
+
+var c,d = 1        // compile error, 2 entry tuple in lhs
+var c,d = (1,2)
+assert c == 1 and d == 2
 ```
 

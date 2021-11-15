@@ -2,7 +2,7 @@
 
 A variable is an instance of a given type. The type may be inferred from use.
 The basic types are Boolean, Function, Integer, Range, and String. All those
-types can be combined with Bundles. All the complex types are build around
+types can be combined with tuples. All the complex types are build around
 these types.
 
 
@@ -117,8 +117,8 @@ assert boolean(33) or false   // explicity typecast
 ### Function
 
 Functions have several options (see [Functions](06-functions.md)), but from a
-high level they provide a sequence of statements and they have a bundle for
-input and a bundle for output. Functions also can capture values from function
+high level they provide a sequence of statements and they have a tuple for
+input and a tuple for output. Functions also can capture values from function
 declaration.
 
 
@@ -141,7 +141,7 @@ When used inside selectors (`[range]`) the ranges can be open (no first/last spe
 or use negative numbers. The negative number is to specify distance from last.
 
 * `[first..<-val]` is the same as `[first..<(last-val+1)]`. The advantage is that the `last` or 
-size in the bundle does not need to be known.
+size in the tuple can be unknown.
 * `[first..]` is the same as `[first..=-1]`.
 
 ```
@@ -192,13 +192,11 @@ let comptime c = $rand // compile error, 'c' can not be computed at compile time
 
 The `comptime` directive considers values propagated across modules.
 
-HERE
-
 ## debug
 
-In software and more commonly in hardware, it is common to have extra statements
-to debug the code. These statements can be more than plain assertions, they can also
-include code.
+In software and more commonly in hardware, it is common to have extra
+statements to debug the code. These statements can be more than plain
+assertions, they can also include code.
 
 The `debug` attribute marks a mutable or immutable variable. At synthesis, all
 the statements that use a `debug` can be removed. `debug` variables can read
@@ -247,7 +245,7 @@ The basic type keywords provided by Pyrope:
 * `i<num>`: an integer 2s complement number with a maximum value of $2^{\texttt{num}-1}-1$ and a minimum of $-2^{\texttt{num}}$.
 
 
-Each bundle is has a type, either implicit or explicit, and as such it can be
+Each tuple is has a type, either implicit or explicit, and as such it can be
 used to declared a new type. The `type` keywords guarantees that a variable is
 just a type and not an instance.
 
@@ -273,31 +271,35 @@ All the operators work over signed integers.
 
 ### Unary operators
 
-* `!` or `not` logical negation
-* `~` bitwise negation
-* `-` arithmetic negation
+* `!a` or `not a` logical negation
+* `~a` bitwise negation
+* `-a` arithmetic negation
 
-### Binary operators
+### Binary Integer operators
 
-* `+` addition
-* `-` substraction
-* `*` multiplication
-* `/` division
-* `and` logical and
-* `or` logical or
-* `implies` logical implication
-* `&` bitwise and
-* `|` bitwise or
-* `^` bitwise or
-* `>>` shift right
-* `<<` shift left
+* `a + b` addition
+* `a - b` substraction
+* `a * b` multiplication
+* `a / b` division
+* `a & b` bitwise and
+* `a | b` bitwise or
+* `a ^ b` bitwise xor
+* `a >> b` shift right
+* `a << b` shift left
 
-Most operations behave as expected when applied to signed unlimited precision integers. Logical
-and arithmetic operations can not be mixed.
+### Binary Boolean operators
+
+* `a and b` logical and
+* `a or b` logical or
+* `a implies b` logical implication
+
+
+Most operations behave as expected when applied to signed unlimited precision
+integers. Logical and arithmetic operations can not be mixed.
 
 ```
-x = a and b
-y = x + 1    // compile error: 'x' is a boolean, '1' is not
+let x = a and b
+let y = x + 1    // compile error: 'x' is a boolean, '1' is not
 ```
 
 ### Reduce and bit selection operators
@@ -374,7 +376,7 @@ Another important characteristic of the bit selection is that the order of the
 bits on the selection do not affect the result. Internally, it is a bitmask
 which has no order. For the `zext` and `sext` the same order as the input
 variable is respected. This means that `var@[1,2] == var@[2,1]`. As a result,
-the bit selection can not be use to transpose bits. A bundle must be used for
+the bit selection can not be use to transpose bits. A tuple must be used for
 such operation.
 
 ```
@@ -385,24 +387,26 @@ trans = (var[1], var[0])@[]
 assert trans == 1
 ```
 
-### Operator with bundles
+### Operator with Tuples
 
-There are some operators that can also have bundles as input and/or outputs.
+There are some operators that can also have tuples as input and/or outputs.
 
-* `++` concatenate two bundles
-* `<<` shift left. The bundle can be in the right hand side
-* `has` checks if a bundle has a field.
+* `a ++ b` concatenate two tuples
+* `(,...b)` inplace insert `b`
+* `a -- b` remove tuple entries `b` from `a`
+* `a << b` shift left. `b` can be a tuple
+* `a has b` checks if `a` tuple has the `b` field
+* `a union b` union of tuples. The unicode character "\u222a"could be used as an alternative (`a` &#8746; `b`)
+* `a intersection b` intersection of tuples. The unicode character "\u2229" could be used as an alternative (`a` &#8745; `b`)
 
-The `<<` allows to have multiple values provided by a bundle on the right hand side or amount. This is useful
-to create one-hot encodings.
+The `<<` allows to have multiple values provided by a tuple on the right hand
+side or amount. This is useful to create one-hot encodings.
 
 ```
-y = (a=1,b=2) ++ (c=3)
-assert y == (a=1,b=2,c=3)
-assert y has 'a' and y has 'c'
+assert (a=1,b=2) ++ (c=3    ) == (a=1    ,b=2,c=3)
+assert (a=1,b=2) ++ (a=3,c=4) == (a=(1,3),b=2,c=4)
 
-x = 1<<(1,4,3)
-assert x == 0b01_1010
+assert 1<<(1,4,3) == 0b01_1010
 ```
 
 ## Precedence
@@ -468,103 +472,3 @@ i = a == 3 <= b == d
 assert i == (a==3 and 3<=b and b == d)
 ```
 
-## Everything is a bundle
-
-In Pyrope everything is a bundle, and it has some implications that this section tries to clarify.
-
-
-A bundle starts with `(` and finishes with `)`. In most languages, the parenthesis have two
-meanings, operation precedence and/or tuple/bundle/record. In Pyrope, since a single element
-is a bundle too, the parenthesis always means a bundle.
-
-
-A code like `(1+(2),4)` can be read as "Create a bundle of two entries. The
-first entry is the result of the addition of `1` (which is a bundle of 1) and a
-bundle that has `2` as unique entry. The second entry in the bundle is `4`".
-
-The entries in a bundle are separated by comma (`,`). Extra commas do not add meaning.
-
-```
-a = (1,2)   // bundle of 2 entries, 1 and 2
-b = (1)     // bundle of 1 entry, 1
-c = 1       // bundle of 1 entry, 1
-d = (,,1,,) // bundle of 1 entry, 1
-assert a.0 == b.0 == c.0 == d.0
-assert a!=b
-assert b == c == d
-```
-
-
-Bundles are used in many places:
-
-* The inputs for a function are in `$` bundle. E.g: `total = $.a + $[3]`
-* The outputs for a function are in the `%` bundle. E.g: `%.out1 = 3` or `%sum = 4`
-* The arguments for a call function are a bundle. E.g: `fcall(1,2)`
-* The return of a function call is always a bundle. E.g: `foo = fcall()`
-* The index for a selector `[...]` is a bundle. As syntax sugar, the bundle parenthesis can be omitted. E.g: `foo@[0,2,3]`
-* The type declaration are a bundle. E.g: `type x = (f=1,var b:string)`
-
-The bundle entries can be mutable/immutable and named/unnamed. By default
-variables are immutable, and by default bundle entries follow the top variable
-definition. The entry can be changed with the `var` and `let` keyword. The
-`type` declaration is an immutable variable type.
-
-To declare a named entry the default is `lhs = var` which follows the default
-bundle entry type. Again, the `var` and `let` keyword can be added to change
-it.
-
-```
-b = 3
-a = (b:u8, 4)
-assert a == (3:u8, 4)
-
-var f = (b=3, let e=5)
-f.b = 4             // OK
-f.e = 10            // compile error, `f.e` is immutable
-
-let x = (1,2)
-x[0] = 3            // compile error, 'x' is immutable
-var y = (1, let 3)
-y[0] = 100          // OK
-y[1] = 101          // compile error, `y[1]` is immutable
-```
-
-## Optional bundle parenthesis
-
-Parenthesis mark the beginning and the end of a bundle. Those parenthesis can
-be avoided for unnamed bundles in some cases:
-
-* When doing a simple function call after an assignment or at the beginning of a line.
-* When used inside a selector `[...]`.
-* When used after an `in` operator followed by a `{` like in a `for` and `match` statements.
-* For the inputs in a match statement
-* When the function types only has inputs.
-
-```
-fcall 1,2         // same as: fcall(1,2)
-x = fcall 1,2     // same as: x = fcall(1,2)
-b = xx[1,2]       // same as: xx[(1,2)]
-
-for a in 1,2,3 {  // same as: for a in (1,2,3) {
-}
-y = match z {    
-  in 1,2 { 4 }    // same as: in (1,2) { 4 }
-  else { 5 }
-}
-y2 = match 1,z {  // same as: y2 = match (1,z) {
-}
-
-fun = {|a,b|      // same as: fun = {|(a,b)|
-} 
-```
-
-A named bundle parenthesis can be omitted on the left hand side of an assignment. This is
-to mutate or declare multiple variables at once. 
-
-```
-var a=0
-var b=1
-
-a,b = (2,3)
-assert a==2 and b==3
-```

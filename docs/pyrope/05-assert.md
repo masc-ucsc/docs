@@ -1,7 +1,7 @@
 # Assertions
 
-Assertions are consider debug statements. This means that they can not have side effects
-on non-debug statements.
+Assertions are consider debug statements. This means that they can not have
+side effects on non-debug statements.
 
 Pyrope supports a syntax close to Verilog for assertions. The language is
 designed to have 3 levels of assertion checking: simulation runtime,
@@ -9,11 +9,18 @@ compilation time, and formal verification time.
 
 There are 4 main methods: 
 
-* `assert`: The condition should be true at runtime. If `comptime assert`, the condition must be true at compile time.
-* `assume`: Similar to assert, but allows the tool to simplify code based on it (it has optimization side-effects). 
-* `verify`: Similar to assert, but it is potentially slow to check, so checked at runtime or verification step.
+* `assert`: The condition should be true at runtime. If `comptime assert`, the
+  condition must be true at compile time.
+
+* `assume`: Similar to assert, but allows the tool to simplify code based on it
+  (it has optimization side-effects). 
+
+* `verify`: Similar to assert, but it is potentially slow to check, so checked
+  at runtime or verification step.
+
 * `restrict`: Constraints or restricts beyond to check a subset of the valid
-  space. It only affects the verify command. The restrict command accepts a list of conditions to restrict
+  space. It only affects the verify command. The restrict command accepts a
+  list of conditions to restrict
 
 
 ```pyrope
@@ -29,8 +36,10 @@ restrict "cond1" when foo < 1 and foo >3 {
 }
 ```
 
-To guard an assertion for being checked unless some condition happens, you can use the `when/unless` statement modifier
-or the `implies` logic. All the verification statements (`assert`, `assume`, `verify`) can have an error message.
+To guard an assertion for being checked unless some condition happens, you can
+use the `when/unless` statement modifier or the `implies` logic. All the
+verification statements (`assert`, `assume`, `verify`) can have an error
+message.
 
 ```pyrope
 a = 0
@@ -43,8 +52,8 @@ verify a == 0, "the same error" unless cond
 ```
 
 The recommendation is to write as many `assert` and `assume` as possible. If
-something can not happen, writing the `assume` has the advantage of allowing the
-synthesis tool to generate more efficient code.
+something can not happen, writing the `assume` has the advantage of allowing
+the synthesis tool to generate more efficient code.
 
 In a way, most type checks have equivalent `comptime assert` checks.
 
@@ -58,10 +67,13 @@ during testing.
 There are two directives `cover` and `covercase`. The names are similar to the
 System Verilog `coverpoint` and `covergroup` but the meaning is not the same.
 
-* `cover cond [, message]` the boolean expression `cond` must evaluate true sometime during the verification
-or the tool can prove that it is true at compile time.
-* `covercase grp, cond [,message]` is very similar to cover but it has a `grp` group. There can be one or more
-cover for a given group. The extra check is that one of the `cond` in the cover case must be true each time. 
+* `cover cond [, message]` the boolean expression `cond` must evaluate true
+  sometime during the verification or the tool can prove that it is true at
+  compile time.
+
+* `covercase grp, cond [,message]` is very similar to cover but it has a `grp`
+  group. There can be one or more cover for a given group. The extra check is
+  that one of the `cond` in the cover case must be true each time. 
 
 
 ```pyrope

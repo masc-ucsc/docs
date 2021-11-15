@@ -1,9 +1,9 @@
 # Type system
 
-Type systems are quite similar to sets. A main difference is that type systems
-may not be as accurate as a set system, and it may not allow the same
-expressiveness because some type of set properties may not be allowed to be
-specified. 
+Type system assign types for each variable (type synthesis) and check that each
+variable use/expression respect the allowed types (type check). Additionally, a
+language can also use the type synthesis results to implement polymorphism.
+
 
 
 Most HDLs do not have modern type systems, but they could benefit like in other
@@ -640,15 +640,18 @@ The `punch` statement allows to access variables from other files/functions. The
 
 ### import
 
-Each file can have several functions in addition to itself. All the functions
-are visible to the `import` statement, but it is a good etiquette not to import
-functions that start with underscore, but sometimes it is useful for debugging,
-and hence allowed.
+
+`import` keyword allows to access functions not defined in the current file.
+Any call to a module or function requires a prior `import` statement.
+
 
 ```
 // file: src/my_fun.prp
 fun1    = {|a,b|  }
-fun2    = {|a|  }
+fun2    = {|a|
+     inside = {|| }
+  }
+}
 another = {|a|  }
 _fun3   = {|a|  }
 ```
@@ -659,7 +662,13 @@ a = import "my_fun/*fun*"
 a.fun1(a=1,b=2)         // OK
 a.another(a=1,2)        // compile error, 'another' is not an imported function
 a._fun3(a=1,2)          // OK but not nice
+a.fun2.inside()         // compile error, `inside` is not in top scope
 ```
+
+All the functions at the top scope of a file are visible to the `import`
+statement, but it is a good etiquette not to import functions that start with
+underscore, but sometimes it is useful for debugging, and hence allowed.
+
 
 The import statement uses a shell like file globbing with an optional "project".
 
@@ -681,7 +690,6 @@ c = import "file2"           // import the functions from local file2
 d = import "prj2/file3"      // import the functions from project prj2 and file3
 ```
 
-
 Many languages have a "using" or "import" or "include" command that includes
 all the imported functions/variables to the current scope. Pyrope does not
 allow that, but it is possible to use mixin to add the imported functionality
@@ -696,6 +704,14 @@ type Number = b ++ a // patch the default Number class
 var x:Number = 3
 ```
 
+#### Import properties
+
+* The `import` statement must be assigned to a variable.
+* The `import` statement can use a typical file globbing that traverses directories to find a match
+  or the project root.
+* Imported only allows to import top level defined functions. This means that
+  nested functions can not be imported, and that imported functions can not be
+  re-imported.
 
 ### punch
 
