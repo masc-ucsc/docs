@@ -48,7 +48,7 @@ The Verilog high impedance `z` is not supported. A `bus` construct must be used 
 
 Like in many HDLs, Pyrope has unknowns `?`. The x-propagation is a source of
 complexity in most hardware models. Pyrope has `x` or `?` to be compatible with
-Verilog existing designs. The advise is not to use `x` besides `match` statement
+Verilog existing designs. The advice is not to use `x` besides `match` statement
 pattern matching. It is much better to use the default value (zero or empty
 string), but sometimes it is easier to use `nil` when converting Verilog code
 to Pyrope code. The `nil` means that the numeric value is invalid. If any
@@ -59,7 +59,7 @@ in arithmetic operations. E.g: `0sb? | 0` is `0` but `nil | 0` is an error.
 
 
 Notice that `nil` is a state in the integer basic type, it is not a new type by
-itself, it does not represent invalid pointer, but rather invalid integer. Also
+itself, it does not represent an invalid pointer, but rather an invalid integer. Also
 important is that the compiler will guarantee that all the `nil` are eliminated
 at compile time or a compile error is generated.
 
@@ -71,8 +71,8 @@ b = nil  & 0 // Error
 
 ### Strings
 
-Pyrope accepts single line strings with single quote (`'`) or double quote
-(`"`).  Single quote only has `\'` as escape character, double quote supports
+Pyrope accepts single line strings with a single quote (`'`) or double quote
+(`"`).  Single quote only has `\'` as an escape character, double quote supports
 extra escape sequences.
 
 ```
@@ -99,7 +99,7 @@ assert b == 0x7F
 ```
 
 A Pyrope std library could provide a better interface in the future like
-`a.to_i()`, but fields that start with double underscore are reserved to
+`a.to_i()`, but fields that start with a double underscore are reserved to
 interact with the compiler or call the C++ provided library.
 
 
@@ -121,7 +121,7 @@ val[ONE] = true
 
 Spaces do not have meaning but new lines do. Several programming languages like
 Python use indentation level (spaces) to know the parsing meaning of
-expressions. In Pyrope, spaces do not have meaning, but new lines affect the
+expressions. In Pyrope, spaces do not have meaning, but newlines affect the
 operator precedence and multi line statements.
 
 
@@ -129,7 +129,7 @@ By looking at the first character after a new line, it is possible to know if
 the rest of the line belongs to the previous statement or it is a new
 statement.
 
-If the line starts with a alphanumeric (`[a-z0-9]`) value or an open
+If the line starts with an alphanumeric (`[a-z0-9]`) value or an open
 parenthesis (`(`), the rest of the line belongs to a new statement.
 
 ```
@@ -140,18 +140,18 @@ d = 1 +       // compile error
     3         // compile error
 ```
 
-This functionality allows to parallelize the parsing and elaboration in Pyrope.
+This functionality allows parallelizing the parsing and elaboration in Pyrope.
 More important, it makes the code more readable, by looking at the beginning of
 the line, it is possible to know if it is a new statement or a continuation of
-the last one. It also helps to standarize the code format by allowing only one
+the last one. It also helps to standardize the code format by allowing only one
 style.
 
 
 ### Identifiers
 
-An identifier is any non reserved keyword that starts with an underscore or an
+An identifier is any non-reserved keyword that starts with an underscore or an
 alphabetic character.  Since Pyrope is designer to support any synthesizable
-Verilog automatic translation, the any sequence of characters between \` can
+Verilog automatic translation, any sequence of characters between \` can
 form a valid identifier. This is needed because Verilog has the \\ that builds
 identifiers with special characters. The \` has the same escape sequence as
 strings with \".
@@ -164,7 +164,7 @@ strings with \".
 ## Semicolons
 
 Semicolons are not needed to separate statements. In Pyrope, a semicolon (`;`)
-has exactly the same meaning as a newline. Sometimes it is possible to add
+has the same meaning as a newline. Sometimes it is possible to add
 semicolons to separate statements. Since newlines affect the meaning of the
 program, a semicolon can do too.
 
@@ -175,7 +175,7 @@ a = 1 ; b = 2
 ## Printing
 
 Printing messages is useful for debugging. `puts` prints a message and the string
-is formatted using the c++20 fmt format. There is an implicit new line printed.
+is formatted using the c++20 fmt format. There is an implicit newline printed.
 The same without a newline can be achieved with print.
 
 ```
@@ -204,10 +204,10 @@ The available puts/print arguments:
 
 The expression evaluation order is important if the elements in the expression
 can have side effects. Pyrope does not allow expressions to have side effects
-with the exception of `debug` statements like `puts`.
+except `debug` statements like `puts`.
 
 
-As a reference languages like C++11 do not have a defined order of evaluation
+As reference languages like C++11 do not have a defined order of evaluation
 for all types of expressions. Calling `call1() + call2()` is not defined.
 Either `call1()` first or `call2()` first.
 
@@ -219,7 +219,7 @@ In Pascal, there is an `and/or` and `and_then/or_else` (conditional). In Rust
 `&/|` and `&&/||` (conditional). In Kotlin `&&/||` and `and/or` (conditional).
 
 
-Pyrope is more restrictive because it wants to be a fully defined determistic
+Pyrope is more restrictive because it wants to be a fully defined deterministic
 independent of implementation. Pyrope is deterministic in the synthesizable
 but not in the `debug` statements. To illustrate the point/difference, and how
 to handle it, it is useful to see a Verilog example.
@@ -264,7 +264,7 @@ end
 === "Icarus output"
     ```
     test called with  1
-    test called with  2
+    est called with  2
     test2
     test called with  3
     test3
@@ -291,8 +291,8 @@ end
     test4
     ```
 
-If order is needed and a function call can have `debug` side-effects or real
-side-effects, the statement must be broken down in several statements, or the
+If an order is needed and a function call can have `debug` side-effects or real
+side-effects, the statement must be broken down into several statements, or the
 `and_then` and `or_else` operations must be used.
 
 

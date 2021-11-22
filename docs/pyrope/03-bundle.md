@@ -40,6 +40,19 @@ assert a has 0
 assert !(a has 1)
 ```
 
+Tuple named fields can have a default type and or contents:
+
+```
+let val = 4
+let x = (
+  ,field1=1         // field1 with implicit type and 1 value
+  ,field2:string    // field2 with explicit type and "" default value
+  ,field3:int = 3   // field3 with explicit type and 3 value
+  ,field4:          // field4 without type or default value
+  ,val              // unnamed field with value `val` (4)
+)
+```
+
 ## Everything is a Tuple
 
 In Pyrope everything is a Tuple, and it has some implications that this
@@ -47,14 +60,14 @@ section tries to clarify.
 
 
 A tuple starts with `(` and finishes with `)`. In most languages, the
-parenthesis have two meanings, operation precedence and/or tuple/record.
+parentheses have two meanings, operation precedence and/or tuple/record.
 In Pyrope, since a single element is a tuple too, the parenthesis always means
 a tuple.
 
 
 A code like `(1+(2),4)` can be read as "Create a tuple of two entries. The
 first entry is the result of the addition of `1` (which is a tuple of 1) and a
-tuple that has `2` as unique entry. The second entry in the tuple is `4`".
+tuple that has `2` as a unique entry. The second entry in the tuple is `4`".
 
 The tuple entries are separated by comma (`,`). Extra commas do not add meaning.
 
@@ -80,11 +93,11 @@ Tuples are used in many places:
 
 The tuple entries can be mutable/immutable and named/unnamed. By default
 variables are immutable, and by default tuple entries follow the top variable
-definition. The entry can be changed with the `var` and `let` keyword. The
+definition. The entry can be changed with the `var` and `let` keywords. The
 `type` declaration is an immutable variable type.
 
 To declare a named entry the default is `lhs = var` which follows the default
-tuple entry type. Again, the `var` and `let` keyword can be added to change
+tuple entry type. Again, the `var` and `let` keywords can be added to change
 it.
 
 ```
@@ -105,7 +118,7 @@ y[1] = 101          // compile error, `y[1]` is immutable
 
 ## Tuples vs Arrays
 
-Tuples are ordered, as such it is possible to use them as arrays. 
+Tuples are ordered, as such, it is possible to use them as arrays. 
 
 ```
 var bund1 = (0,1,2,3,4) // ordered and can be used as an array
@@ -119,14 +132,14 @@ assert bund2[2][1] == 30
 ```
 
 Pyrope tries to be compatible with synthesizable Verilog. In Verilog, when an
-out of bounds access is performed in a packed array (unpacked arrays are not
+out of bounds, access is performed in a packed array (unpacked arrays are not
 synthesizable), or an index has unknown bits (`?`), a runtime warning can be
 generated and the result is an unknown (`0sb?`). Notice that this is a
 pessimistic assumption because maybe all the entries have the same value when
 the index has unknowns.
 
 
-The Pyrope compile will trigger compile errors for out of bound access. It is not
+The Pyrope compile will trigger compile errors for out-of-bound access. It is not
 possible to create an array index that may perform an out of bounds access.
 
 ```
@@ -171,7 +184,7 @@ Attributes for basic types, usually simple variables or tuple entries:
 Some attributes apply for basic types and/or any type of tuple:
 
 * `__size`: number of tuple sub-entries
-* `__id`: get field name
+* `__id`: get the field name
 
 
 Some syntax sugar on the language creates wrappers around the attributes, but
@@ -193,16 +206,36 @@ let b = bad.b
 assert  b.__poison and b==4
 ```
 
+### Concate fields
+
+Each tuple field must be unique. Nevertheless, it is practical to have
+fields that add more subfields. This is the case for overloading. To
+append or concatenate in a given field the `++=` operator can be assigned.
+
+```
+var x = (
+  ,ff = 1
+  ,ff = 2 // compile error
+)
+
+var y = (
+  ,ff = 1
+  ,ff ++= 2
+  ,zz ++= 3
+)
+assert y == (ff=(1,2),zz=3)
+```
+
 ## Optional tuple parenthesis
 
-Parenthesis mark the beginning and the end of a tuple. Those parenthesis can
-be avoided for unnamed tuple in some cases:
+Parenthesis marks the beginning and the end of a tuple. Those parentheses can
+be avoided for an unnamed tuple in some cases:
 
 * When doing a simple function call after an assignment or at the beginning of a line.
 * When used inside a selector `[...]`.
 * When used after an `in` operator followed by a `{` like in a `for` and `match` statements.
 * For the inputs in a match statement
-* When the function types only has inputs.
+* When the function types only have input.
 
 ```
 fcall 1,2         // same as: fcall(1,2)
@@ -222,7 +255,7 @@ fun = {|a,b|      // same as: fun = {|(a,b)|
 } 
 ```
 
-A named tuple parenthesis can be omitted on the left hand side of an assignment. This is
+A named tuple parenthesis can be omitted on the left-hand side of an assignment. This is
 to mutate or declare multiple variables at once. 
 
 ```
@@ -236,4 +269,91 @@ var c,d = 1        // compile error, 2 entry tuple in lhs
 var c,d = (1,2)
 assert c == 1 and d == 2
 ```
+
+
+## enums
+
+Enums are created out of a tuple structure.
+
+
+```
+enum v1 = (a:,b:,c:)
+
+assert v1.a != v1.b  // enum
+let x = v1.a
+assert x == v1.a
+
+puts "x is {}", x  // prints: "x is v1.a"
+```
+
+
+When default values are provided the enum preserves the value.
+
+
+```
+enum v2 = (a=3,b=2,c:)
+
+assert v2.a == 3 and v2.b == 2
+
+let x = v2.b
+```
+
+The enum default values are NOT like typical non hardware languages. The enum
+auto-created values use a one hot encoding. The first entry has the first bit
+set, the 2nd the 2nd bit set. If an entry has a value, the next entry uses
+the next free bit.
+
+```
+enum v3 = (
+   ,a:
+   ,b=5  // alias with 'a'
+   ,c:
+)
+assert v3.a == 1
+assert v3.b == 5
+assert v3.c == 2
+```
+
+Enum can accept hierarchical tuples. Each enum level follows the same algorithm.
+Each entry tries to find a new bit. In the case of the hierarchy, the lower
+hierarchy level bits are kept.
+
+```
+enum animal = (
+  ,bird=(eagle:, parrot:)
+  ,mammal=(rat:, human:)
+)
+
+assert animal.bird.eagle != animal.mammal
+assert animal.bird != animal.mammal.human
+assert animal.bird == animal.bird.parrot
+
+assert animal.bird         == 0b000001
+assert animal.bird.eagle   == 0b000011
+assert animal.bird.parrot  == 0b000101
+assert animal.mammal       == 0b001000
+assert animal.mammal.rat   == 0b011000
+assert animal.mammal.human == 0b101000
+```
+
+In general, if there are no value specified in an entry, the number of bits is
+equivalent to the number of entries in the tuple.
+
+
+It is possible to use a sequence which is more consistent with hardware languages.
+
+```
+enum v3:int = (
+   ,a:
+   ,b=5  // alias with 'a'
+   ,c:
+)
+assert v3.a == 0
+assert v3.b == 5
+assert v3.c == 6
+```
+
+The same syntax is used for enums to different objects. The hiearchy is not allowed
+when an ordered numbering is requested.
+
 

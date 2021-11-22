@@ -1,6 +1,6 @@
 # Assertions
 
-Assertions are consider debug statements. This means that they can not have
+Assertions are considered to debug statements. This means that they can not have
 side effects on non-debug statements.
 
 Pyrope supports a syntax close to Verilog for assertions. The language is
@@ -15,10 +15,10 @@ There are 4 main methods:
 * `assume`: Similar to assert, but allows the tool to simplify code based on it
   (it has optimization side-effects). 
 
-* `verify`: Similar to assert, but it is potentially slow to check, so checked
+* `verify`: Similar to assert, but it is potentially slow to check, so it is checked
   at runtime or verification step.
 
-* `restrict`: Constraints or restricts beyond to check a subset of the valid
+* `restrict`: Constraints or restrictions beyond to check a subset of the valid
   space. It only affects the verify command. The restrict command accepts a
   list of conditions to restrict
 
@@ -36,7 +36,7 @@ restrict "cond1" when foo < 1 and foo >3 {
 }
 ```
 
-To guard an assertion for being checked unless some condition happens, you can
+To guard an assertion from being checked unless some condition happens, you can
 use the `when/unless` statement modifier or the `implies` logic. All the
 verification statements (`assert`, `assume`, `verify`) can have an error
 message.
@@ -59,8 +59,8 @@ In a way, most type checks have equivalent `comptime assert` checks.
 
 # Coverage
 
-A bit connected with assertion is coverage. The goal of an assertion is to be
-true all the time. The goal of a coverage point is to be truth at least once
+A bit connected with the assertion is coverage. The goal of an assertion is to be
+true all the time. The goal of a coverage point is to be true at least once
 during testing.
 
 
@@ -89,10 +89,10 @@ assert (!reset and val>3) || reset  // less checks than COND1
 cover a==3, "at least a is 3 once in a while"
 ```
 
-The `covercase` is a similar to write the assertions, but it checks that all
+The `covercase` is similar to writing the assertions, but it checks that all
 the conditions happen through time or a low coverage is reported. In the
 `COND1` case, the assertion does not check that sometimes reset is set, and
-others the val is bigger than 3.  The assertion will succeed if reset is always
+others the value is bigger than 3.  The assertion will succeed if reset is always
 set, but the covercase will fail because the "bigger than 3" case will not be
 tested.
 

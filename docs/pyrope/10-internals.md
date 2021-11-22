@@ -254,13 +254,13 @@ node:
   by input constants and types. If no call matches a valid type trigger a
   compile error
 
-+ If the node is a conditional (`if`/`match`).
++ If the node is a conditional (`if`/`match`), the pass performs narrowing[^1].
 
     - Delete any unreachable paths (`if false { delete his }`)
 
-    - When the expression has these possible syntax `v >= const`, `v >
-      const` or the reciprocals, restrict the Bitwidth. E.g: in the `v < const`
-      restricts the `v.max = const-1`
+    - When the expression has these possible syntax `v >= y`, `v >
+      y` or the reciprocals, restrict the Bitwidth. E.g: in the `v < y`
+      restricts the `v.max = y.min-1 ; y.min = v.min + 1`
 
     - When the expression is an equality format `eq [and eq]*` or `eq [or
       eq]*` like `v1 == z1 and v2 != z2`, create a `v1=z1` and `v2=z2` in the
@@ -290,4 +290,8 @@ node:
 The previous algorithm describes the semantics, the implementation may be
 different.  For example, to parallelize the algorithm, each LNAST tree can be
 processed locally, and then a global top pass is performed.
+
+
+[^1]: Narrowing is based on "ABCD: eliminating array bounds checks on demand"
+  by Ras Bodik et al.
 

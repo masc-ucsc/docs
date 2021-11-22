@@ -6,18 +6,18 @@ functions. Usually, there is a top module that instantiates several
 sub-modules. The difference between module and function is mostly what is
 visible/left after synthesis. We call module any function call left visible in
 the generated netlist as a separate entity. If a function is inlined in the
-caller module, we do not call it module. By this definition, a function is a
+caller module, we do not call it a module. By this definition, a function is a
 super-set of modules.
 
 
-Functions also can be classified in three cathegories based on the outputs:
+Functions also can be classified into three categories based on the outputs:
 pure combinational, synchronous combinational, and pipelined:
 
 + A pure combinational output does not use a clock and all the outputs are as a
   combinational result of the inputs. 
 
 + A synchronous output uses some register or memory to keep state across
-  functions but the output is still combinational as a result of inputs and/or
+  functions but the output are still combinational as a result of inputs and/or
   internal registers. 
 
 + A pipelined output does not have any combinational path to any of the inputs
@@ -25,11 +25,12 @@ pure combinational, synchronous combinational, and pipelined:
 
 
 !!!Note
-    Pyrope only supports a restricted amount of recursion. Recursion is only allowed when it can be unrolled at compile time.
+    Pyrope only supports a restricted amount of recursion. Recursion is only
+    allowed when it can be unrolled at compile time.
 
 ## Function definition
 
-All the functions are lambdas that must passed as arguments or assigned to a
+All the functions are lambdas that must be passed as arguments or assigned to a
 given variable. There is no global scope for variables or functions.
 
 ```
@@ -52,22 +53,16 @@ The difference between a function and a normal scope is the function definition
 enclosed between pipes (`|`).
 
 ```txt
-[ATTRIBUTES] | [CAPTURE] [INPUT] [-> OUTPUT] [where COND] |
+[CAPTURE] [INPUT] [-> OUTPUT] [where COND] |
 ```
-
-+ ATTRIBUTES are optional method modifiers like:
-    - `comptime`: function should be computed at compile time
-    - `debug`   : function is for debugging, not side effects in non-debug statements
-
-+ META are a list of type identifiers or type definitions.
 
 + CAPTURE has the list of capture variables for the function. If no capture is
   provided, any local variable can be captured. An empty list (`[]`), means no
   captures allowed.
 
-+ INPUT has a list of inputs allowed with optional types. If no input is provided, the `$` bundle is used as input.
++ INPUT has a list of inputs allowed with optional types. If no input is provided, the `$` input tuple can be used.
 
-+ OUTPUT has a list of outputs allowed with optional types. If no output is provided, the `%` bundle is used as output.
++ OUTPUT has a list of outputs allowed with optional types. If no output is provided, the `%` output tuple can be used.
 
 + COND is the condition under which this statement is valid.
 
@@ -79,7 +74,7 @@ add = {|(a,b,c)| a+b+c }          // same
 add = {|(a:u32,b:s3,c)| a+b+c }   // constrain some input types
 add = {|(a,b,c) -> :u32| a+b+c }  // constrain result to u32
 add = {|(a,b,c) -> (res)| a+b+c } // constrain result to be named res
-add = {|(a:T,b:T,c:T)| a+b+c }    // constrain inputs to have same type
+add = {|(a,b:a,c:a)| a+b+c }      // constrain inputs to have same type
 
 x = 2
 var add2
@@ -108,7 +103,7 @@ my_log a, false, x+1
 
 The inputs and outputs on the current function can have an associated variable
 with the function definition, but it is always possible to access the inputs
-and outputs with the input tuple ($) and the output tuple (%). This allows
+and outputs with the input tuple (`$`) and the output tuple (`%`) This allows
 variable size arguments and simpler code for small code snippets.
 
 ```
@@ -145,28 +140,30 @@ assume %d < 4K
 
 ## Arguments
 
-Function calls only pass by value, there is no pass by reference like in most
-languages.  A function is a code block that has an input tuple (`$`) performs
-some statements and returns an output tuple (`%`). 
+Function calls only pass by value. Unlike most software languages, there is no
+pass by reference.
 
 * Arguments can be named. E.g: `fcall(a=2,b=3)`
 * There can be many return values. E.g: `return (a=3,b=5)`
-* Inputs can be accessed with the bundle. E.g: `return $1 + $.arg_2 + $arg3`
+* Inputs can be accessed with the `$` tuple. E.g: `return $1 + $.arg_2 + $arg3`
 
 There are several rules on how to handle function arguments.
 
 * Calls use the Uniform Function Call Syntax (UFCS). `(a,b).f(x,y) == f((a,b),x,y)`
-* Pipe |> concatenated inputs: `(a,b) |> f(x,y) == f(x,y,a,b)`
-* Function calls with arguments do not need parenthesis after newline or a variable assignment: `a = f(x,y)` is the same as `a = f x,y`
 
-Pyrope uses a uniform function call syntax (UFCS) like other languages (Nim or
-D) but it can be different from the order in other languages. Notice the
-different order in UFCS vs pipe, and also that in pipe the argument tuple is
-concatenated, but in UFCS the it is added as first argument.
+* Pipe |> concatenated inputs: `(a,b) |> f(x,y) == f(x,y,a,b)`
+
+* Function calls with arguments do not need parenthesis after newline or a
+  variable assignment: `a = f(x,y)` is the same as `a = f x,y`
+
+Pyrope uses a uniform function call syntax (UFCS) like Nim or D but it can be
+different from the order in other languages. Notice the different order in UFCS
+vs pipe, and also that in the pipe the argument tuple is concatenated, but in UFCS
+ is added as the first argument.
 
 ```
-div  = {|a,b| a / $b }   // named input bundle
-div2 = {|| $0 / $1 }     // unnamed input bundle
+div  = {|a,b| a / $b }   // named input tuple
+div2 = {|| $0 / $1 }     // unnamed input tuple
 
 a=div(3  , 4  , 3)       // compile error, div has 2 inputs
 b=div(a=8, b=4)          // OK, 2
@@ -186,16 +183,14 @@ n=div2((8,4), 3)         // compile error: (8,4)/3 is undefined
 o=(8,4).div2(1)          // compile error: (8,4)/1 is undefined
 ```
 
-
-
 ## Methods
 
 Pyrope functions only pass arguments by value. This looks like a problem if we
-implement a typical method. A method is a function associated to a tuple.  The
-method can access the parent bundle fields and potentially update some of them.
-To be consistent with the UFCS syntax, the tuple is passed as an input the
+implement a typical method. A method is a function associated with a tuple.  The
+method can access the parent tuple fields and potentially update some of them.
+To be consistent with the UFCS syntax, the tuple is passed as input the
 first argument (`self`). This works directly when the method does not update or
-mutate the bundle contents. To allow updates the an output should have `self`.
+mutate the tuple contents. To allow updates the output should have `self`.
 
 ```
 var a_1 = (
@@ -217,7 +212,7 @@ assert a_1.x == 3
 assert a_2.x == 4
 ```
 
-A difference a method and a UFCS call is that the method has higher priority to
+A difference between a method and a UFCS call is that the method has a higher priority to
 match.
 
 
@@ -299,9 +294,9 @@ assert a2.fun.size == 1
 ## Function call order
 
 
-A functions can be added to an unamed tuple. Those functions can have different
+Functions can be added to an unnamed tuple. Those functions can have a different
 number of arguments. When calling the tuple, the first function that matches
-the number or aguments is called. The function call order also considers types,
+the number of arguments is called. The function call order also considers types,
 this is addressed in the [07-typesystem](07-typesystem.md) section.
 
 
@@ -327,7 +322,7 @@ assert fun_list(1,2) == 200
 
 
 There are several ways to define functions, and there is a call order. First,
-it tries to find an entry in the bundle that matches the function call. If it
+it tries to find an entry in the tuple that matches the function call. If it
 does not exist, it looks for methods in the current function. It is not
 possible to define custom methods per scope.
 
@@ -360,7 +355,7 @@ assert y.a==3
 
 Functions and methods can constrain the inputs and input types.
 Unconstrained input types allow for more freedom and potential
-variable number of arguments generics, but it can be error prone.
+variable number of arguments generics, but it can be error-prone.
 
 === "unconstrained function declaration"
     ```

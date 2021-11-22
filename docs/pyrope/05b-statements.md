@@ -61,7 +61,7 @@ var hot = match x {
 
 ## Gate statements (`when`/`unless`)
 
-Simple statement like assignments, variable/type definitions, and function
+A simple statement like assignments, variable/type definitions, and function
 calls can be gated or not executed with a `when` or `unless` statement. This is
 similar to an `if` statement, but the difference is that the statement is in
 the current scope, not creating a new scope. This allows cleaner more compact
@@ -78,10 +78,46 @@ return 3 when some_condition
 
 Complex assignments like `a |> b(1) |> c` can not be gated because it is not
 clear if the gated applies to the last call or the whole pipeline sequence.
-Similarly, gating ifs/match statements does not make much sense. As a result,
+Similarly, gating ifs/match statements do not make much sense. As a result,
 `when`/`unless` can only be applied to assignments, function calls, and scope
 control statements (`return`, `break`, `continue`).
 
+
+## Scope
+
+Scopes are delimited by `{` and `}`. Pyrope has scopes and lambdas. The scopes
+are used by statements like `for` and `if`, the lambdas are a function
+declarations.
+
+
+Scopes allow declaring new variables. New variable declarations inside the
+scope are not visible outside it. Variable declaration shadowing is not allowed
+and a compiler error is generated.
+
+
+Expressions can have multiple scopes, but they can not have side effects.
+
+```
+{
+  var x=1
+  var z
+  {
+    z = 10
+    var x             // compile error, `x` shadows an upper scope
+
+  }
+  assert z == 10 
+}
+let zz = x            // compile error, `x` is out of scope
+
+var yy = {let x=3 ; 33/3} + 1
+assert yy == 12
+let xx = {yy=1 ; 33}  // compile error, 'yy' has side effects
+
+if {let a=1+yy; 13<a} {
+
+}
+```
 
 ## Loop (`for`)
 
@@ -120,50 +156,16 @@ for i,index,key in b {
 }
 ```
 
-The `for` can also be used in an expression which allows to build
-comprehensions to initialize arrays.
+The `for` can also be used in an expression that allows building
+comprehensions to initialize arrays. To indicate the values to add in the
+comprehensions there are `continue` or `abort` statements.
 
 ```
-var c = for i in 0..<5 { i }
+var c = for i in 0..<5 { i }           // compile error
+var c = for i in 0..<5 { continue i }
 assert c == (0,1,2,3,4)
 ```
 
-## Scopes
-
-
-Scopes are delimited by `{` and `}`. Pyrope has scopes and lambdas. The scopes
-are used by statements like `for` and `if`, the lambdas are function
-declarations.
-
-
-Scopes allow to declara new variables. New variable declaration inside the
-scope are not visible outside it. Variable declaration shadowing is not allowed
-and a compiler error is generated.
-
-
-Expressions can have multiple scopes, but they can not have side effects.
-
-```
-{
-  var x=1
-  var z
-  {
-    z = 10
-    var x             // compile error, `x` shadows an upper scope
-
-  }
-  assert z == 10 
-}
-let zz = x            // compile error, `x` is out of scope
-
-var yy = {let x=3 ; 33/3} + 1
-assert yy == 12
-let xx = {yy=1 ; 33}  // compile error, 'yy' has side effects
-
-if {let a=1+yy; 13<a} {
-
-}
-```
 
 ### Scope control (`break`, `continue`, `return`)
 
@@ -176,7 +178,7 @@ exists the associated scope.
 
 The `continue` starts to evaluate the current scope. When used in a `for`
 statement, the `continue` will perform the next loop iteration. In other
-statements, the statement will be re-evaluated and re-execute potentially
+statements, the statement will be re-evaluated and re-executed potentially
 creating a loop condition.
 
 ```
@@ -219,31 +221,31 @@ v = if total[0] == 11 {
 assert v == 4
 ```
 
-A scope has a `break` when the last statement in the scope is an expression. If
+The scope has a `break` when the last statement in the scope is an expression. If
 the return value is not the last expression in the scope, the `break` statement
 should be used. Notice that a `return` statement will exit the lambda not the
 current scope.
 
-## defer
+## defer reads
 
-A `defer` keyword can be added before assignments or function calls. This
-keyword effectively means that the statement right hand side reads the last
+A `defer_read` keyword can be added before assignments or function calls. This
+keyword effectively means that the statement on the right hand side reads the last
 values from the end of the cycle. This is needed if we need to have any loop in
 connecting blocks. It is also useful for delaying assertion checks to the end
 of the function.
 
 ```
 var c = 10
-defer assert b == 33    // behaves like a postcondition
-defer b = c
+defer_read assert b == 33    // behaves like a postcondition
+defer_read b = c
 assert b == 33
 c += 20
 c += 3
 ```
 
-To connect `ring` function calls in a loop.
+To connect the `ring` function calls in a loop.
 ```
-defer f1 = ring($a, f4)
+defer_read f1 = ring($a, f4)
 f2 = ring($b, f1)
 f3 = ring($c, f2)
 f4 = ring($d, f3)
@@ -269,6 +271,25 @@ test "my test 1" when size > 10 {
 In all the cases, the statements inside the code block can not have any effect outside.
 
 ## debug/comptime
+
+
+Pyrope can assign/read compile attributes to variables, but there are two
+common attributes that have a reserved keyword and special access (`debug` and
+`comptime`). Either of them can be placed at the beginning of the statement for
+function calls and assignments. It is also possible to place them before code
+blocks to indicate that all the statements inside the code block are either
+`debug` or `comptime` constants.
+
+
+```
+let c = 3
+comptime let x = c 
+
+if runtime == 1 comptime {
+  // all the values should be comptime
+  xx = 3
+}
+```
 
 ## Delay to next cycle (`step`/`yield`)
 
@@ -303,7 +324,7 @@ that must be satisfied to continue. In a way, both build a small state machine.
 
 The `yield` has a slightly different FSM with a supporting FIFO structure.
 Unlike the `step`, the `yield` is potentially unconstrained. This is why the
-`yield` must also provide the  maximum  number of outstanding waiting
+`yield` must also provide the maximum number of outstanding waiting
 conditions.
 
 === "`yield`"

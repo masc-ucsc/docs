@@ -2,7 +2,7 @@
 
 A variable is an instance of a given type. The type may be inferred from use.
 The basic types are Boolean, Function, Integer, Range, and String. All those
-types can be combined with tuples. All the complex types are build around
+types can be combined with tuples. All the complex types are built around
 these types.
 
 
@@ -12,8 +12,9 @@ Variables first use or declaration must indicate the mutability intention
 (`var`) or immutability (`let`).
 
 * `var` is used to declare mutable variables. Following statements can overwrite the variable.
-* `let` is used to declare immutable variables. Following statements can not modify the contents
-    with the exception of object constructors (setter).
+* `let` is used to declare immutable variables. Following statements can not
+  modify the contents except object constructors (setter).
+* `pub` is like `let` but the variable is exported (public).
 
 ```
 a  = 3         // compile error, no previous let or var
@@ -35,8 +36,7 @@ d.z   = 4  // compile error, 'd.z' is immutable
 ```
 
 Tuples fields (not contents) are immutable, but it is possible to construct new
-tuples with the `++` (concatenate), `...` (inplace insert), and `--` (remove)
-keywords:
+tuples with the `++` (concatenate) and `...` (in place insert):
 
 ```
 var a=(a=1,b=2)
@@ -55,12 +55,22 @@ assert join1 == (a=1,b=2,c=3)
 assert join1 == (1,2,3)
 
 var join2 = (...a,...(b=20)) // compile error, 'b' already exists
-
-var ext1 = a -- b            // compile error, 'c' does not exist in 'a'
-var ext2 = a -- (3)          // compile error, -- uses named tuple entries
-var ext3 = a -- (a=30)       // value is ignored in replacement
-assert ext3 == (b=2)
 ```
+
+
+The `a ++ b` concatenates two tuples. If the same field exists in both tuples,
+the resulting field will have a tuple with the entries of `a` and `b`.  The
+concat tries to match by field name, if the field names do not match or have no
+name a new entry is created. The algorithm starts with tuple `a` and starts
+from tuple field 0 upwards.
+
+```
+assert ((1,a=2,c=3) ++ (a=20,33,c=30,4)) == (1,a=(2,20),c=(3,30),33,4)
+```
+
+The `...` also concatenates, but it is an "inline concatenate". The difference
+is where the fields are concatenated and that it triggers a compile error if
+the same named entry already exists.
 
 ## Basic types
 
@@ -73,13 +83,13 @@ Pyrope has 5 basic types:
 * `string`: which is a sequence of characters
 
 
-All the types with the exception of the function can be converted back and
-forth to integer.
+All the types except the function can be converted back and
+forth to an integer.
 
 
 ### Integer or `int`
 
-Integers have unlimited precision and they are always signed. Type constrains 
+Integers have unlimited precision and they are always signed. Type constraints 
 can enforce a subset like unsigned or ranges.
 
 ```
@@ -126,19 +136,19 @@ declaration.
 
 Ranges are very useful in hardware description languages to select bits, but
 they are integrated all over the language. It is a type by itself that can be
-converted to an single Integer. The range can also be seen as a one hot
+converted to a single Integer. The range can also be seen as one hot
 encoding of a set of integers.
 
 
-The are 3 ways to specify a closed range:
+They are 3 ways to specify a closed range:
 
-* `first..=last`: Range from first to last element, both included
-* `first..<last`: Range from first to last, but last element is not included
-* `first..+size`: Range from first to `first+size`. Since there are `size`
+* `first..=last`: Range from first to the last element, both included
+* `first..<last`: Range from first to last, but the last element is not included
+* `first..+size`: Range from first to `first+size`. Since there is `size`
   elements, it is equivalent to write `first..<(first+last)`.
 
 When used inside selectors (`[range]`) the ranges can be open (no first/last specified)
-or use negative numbers. The negative number is to specify distance from last.
+or use negative numbers. The negative number is to specify the distance from last.
 
 * `[first..<-val]` is the same as `[first..<(last-val+1)]`. The advantage is that the `last` or 
 size in the tuple can be unknown.
@@ -211,8 +221,8 @@ let debug c = 3
 
 ## Basic type annotations
 
-Global type inference and unlimited precision allows to avoid most of the
-types. Pyrope allows to declare types. The types have two main uses, they
+Global type inference and unlimited precision allow avoiding most of the
+types. Pyrope allows declaring types. The types have two main uses, they
 behave like assertions, and they allow function polymorphism.
 
 ```
@@ -238,15 +248,15 @@ The basic type keywords provided by Pyrope:
 
 * `boolean`: true or false boolean. It can not be undefined (`0sb?`).
 * `string`: a string.
-* `{||}`: is a function without any statement which can be used as function type.
+* `{||}`: is a function without any statement which can be used as a function type.
 * `unsigned`: an unlimited precision natural number.
 * `u<num>`: a natural number with a maximum value of $2^{\texttt{num}}$. E.g: `u10` can go from zero to 1024.
 * `int`: an unlimited precision integer number.
 * `i<num>`: an integer 2s complement number with a maximum value of $2^{\texttt{num}-1}-1$ and a minimum of $-2^{\texttt{num}}$.
 
 
-Each tuple is has a type, either implicit or explicit, and as such it can be
-used to declared a new type. The `type` keywords guarantees that a variable is
+Each tuple is has a type, either implicit or explicit, and as such, it can be
+used to declare a new type. The `type` keywords guarantee that a variable is
 just a type and not an instance.
 
 ```
@@ -263,8 +273,7 @@ y.color   = "red"    // OK
 
 ## Operators
 
-There are the typical basic operators found in most common languages with the
-exception exponent operations. The reason is that those are very hardware
+There are the typical basic operators found in most common languages except exponent operations. The reason is that those are very hardware
 intensive and a library code should be used instead.
 
 All the operators work over signed integers.
@@ -317,12 +326,12 @@ Reduce and bit selection operators:
 * `&`: and-reduce.
 * `^`: xor-reduce or parity check.
 * `+`: pop-count.
-* `sext`: Sign extend selected bits.
-* `zext`: Zero sign extend selected bits.
+* `sext`: Sign extends selected bits.
+* `zext`: Zero sign extends selected bits.
 
 The or/and/xor reduce have a single bit signed result (not boolean). This means
-that the result can be 0 (`0sb0`) or -1 (`0sb1`). pop-count and `zext` have an
-always positive result. `sext` is a sign-extended, so it can be positive or
+that the result can be 0 (`0sb0`) or -1 (`0sb1`). pop-count and `zext` have 
+always positive results. `sext` is a sign-extended, so it can be positive or
 negative.
 
 If no operator is provided, a `zext` is used. The bit selection without
@@ -331,8 +340,8 @@ operator can also be used on the left hand side to update a set of bits.
 
 The or-reduce and and-reduce are always size insensitive. This means that to
 perform the reduction it is not needed to know the number of bits. It could
-pick more or less bits and the result is the same. E.g: 0sb111 or 0sb111111
-have the same and/or-reduce. This is the reason why both can work with open and
+pick more or fewer bits and the result is the same. E.g: 0sb111 or 0sb111111
+have the same and/or reduce. This is the reason why both can work with open and
 close ranges. 
 
 
@@ -369,15 +378,15 @@ mut z@[0] = 0b11 // compile error, '0b11` overflows the maximum allowed value of
     It is important to remember that in Pyrope all the operations use signed
     numbers. This means that an and-reduce over any positive number is always going
     to be zero because the most significant bit is zero, E.g: `0xFF@&[] == 0`. In
-    some cases, a close range will be needed if the intention is to ignore sign.
+    some cases, a close range will be needed if the intention is to ignore the sign.
     E.g: `0xFF@&[0..<8] == -1`.
 
 Another important characteristic of the bit selection is that the order of the
-bits on the selection do not affect the result. Internally, it is a bitmask
-which has no order. For the `zext` and `sext` the same order as the input
+bits on the selection does not affect the result. Internally, it is a bitmask
+that has no order. For the `zext` and `sext`, the same order as the input
 variable is respected. This means that `var@[1,2] == var@[2,1]`. As a result,
-the bit selection can not be use to transpose bits. A tuple must be used for
-such operation.
+the bit selection can not be used to transpose bits. A tuple must be used for
+such an operation.
 
 ```
 var = 0b10
@@ -389,29 +398,30 @@ assert trans == 1
 
 ### Operator with Tuples
 
-There are some operators that can also have tuples as input and/or outputs.
+Some operators can also have tuples as input and/or outputs.
 
-* `a ++ b` concatenate two tuples
-* `(,...b)` inplace insert `b`
-* `a -- b` remove tuple entries `b` from `a`
+* `a ++ b` concatenate two tuples. If field appears in both, concatenate field
+* `(,...b)` inplace insert `b`. Compile error if both have same named field
 * `a << b` shift left. `b` can be a tuple
 * `a has b` checks if `a` tuple has the `b` field
-* `a union b` union of tuples. The unicode character "\u222a"could be used as an alternative (`a` &#8746; `b`)
-* `a intersection b` intersection of tuples. The unicode character "\u2229" could be used as an alternative (`a` &#8745; `b`)
 
-The `<<` allows to have multiple values provided by a tuple on the right hand
+The `<<` allows having multiple values provided by a tuple on the right-hand
 side or amount. This is useful to create one-hot encodings.
 
 ```
 assert (a=1,b=2) ++ (c=3    ) == (a=1    ,b=2,c=3)
 assert (a=1,b=2) ++ (a=3,c=4) == (a=(1,3),b=2,c=4)
 
+assert (a=1,b=2,3,...(e=4,5)) == (a=1,b=2,3,e=4,5)
+
+assert (a=1,b=2) has "a"
+
 assert 1<<(1,4,3) == 0b01_1010
 ```
 
 ## Precedence
 
-Pyrope has a very shallow precedence, unlike most other languages the
+Pyrope has very shallow precedence, unlike most other languages the
 programmer should explicitly indicate the precedence. The exception is for
 widely expected precedence.
 
@@ -426,7 +436,7 @@ widely expected precedence.
 |:-----------:|:-----------:|-------------:|
 | 1          | unary       | not ! ~ ? |
 | 2          | mult/div    | *, /         |
-| 3          | other binary | ..,^, &, -,+, ++, --, <<, >> |
+| 3          | other binary | ..,^, &, -,+, ++, <<, >> |
 | 4          | comparators |    <, <=, ==, !=, >=, > |
 | 5          | logical     | and, or, implies |
 
@@ -472,3 +482,119 @@ i = a == 3 <= b == d
 assert i == (a==3 and 3<=b and b == d)
 ```
 
+## Valid or optional
+
+Pyrope has support to handle valids. The `?` is used by several languages to
+handle optional or null pointer references. The `?` is used to check if there
+is valid data or a null pointer.
+
+Pyrope has no pointers, but the same syntax is used for handle "valid" data.
+Instead the data is left to behave like without the optional, but there is a
+new "valid" field associated with the tuple.
+
+
+```
+var v1:u32
+var v2:u32?
+
+comptime assert v1 == 0 and v2 == 0 // data still same as usual
+
+comptime assert v1?            // compile error, no optional type
+comptime assert not v2?
+
+v1 = 0sb?                      // OK, poison data
+v2 = 0sb?                      // OK, poison data, and unset valid
+
+comptime assert v1 != 0        // usual verilog x logic
+comptime assert v2 != 0        // usual verilog x logic
+
+let res1 = v1 + 0              // OK, just unknown result
+let res2 = v2 + 0              // OK, just unknown result
+```
+
+
+Notice that the data field can be poison with `nil` or `0sb?`. The nil in
+Pyrope is a bit more strict and notifies on any usage error. nil poisons the
+data. Any op with it is a compile or runtime error. This behavior does not change
+because of the optional `?` type.
+
+```
+v1 = nil                       // OK, poison data
+v2 = nil                       // OK, poison data, and unset valid
+
+let res3 = v1 + 0              // compile or runtime error
+let res4 = v2 + 0              // compile or runtime error
+
+comptime assert v1 == nil       // compile error, can not do ops with nil
+comptime assert v2 == nil       // compile error, can not do ops with nil
+
+v2 = 100
+comptime assert v2? and (v2 + 1) == 101
+
+v2? = false                    // keep data, just toggle valid
+comptime assert not v2? and v2 == 101
+```
+
+Tuples also can have optional type:
+
+```
+type complex = (
+  ,pub v1:string
+  ,pub v2:string
+
+  ,pub set = {|(self,v)->(self)|
+     self.v1 = v
+     self.v2 = v
+  }
+)
+
+var x1:complex
+var x2:complex?
+
+comptime assert x1.v1 == "" and x1.v2 == ""
+comptime assert not x2?  and x2.v1 == "" and x2.v2 == ""
+
+comptime assert x2?.v1 == "" and x2?.v1 != ""  // any comparison is false
+
+// When x2? is false, any x2?.foo returns 0sb? with the associated x rules
+
+x2.v2 = "hello" // direct access still OK
+
+comptime assert not x2? and x2.v1 == "" and x2.v2 == "hello"
+
+x2 = "world"
+
+comptime assert x2? and x2?.v1 == "world" and x2.v1 == "world"
+```
+
+The valid bit can be overwritten:
+
+```
+//--------------
+// custom valid code
+
+type custom_valid = (
+  ,pub v:string
+
+  ,pub set = {|(self,v)->(self)|
+     self.v = v
+     self.my_valid = true
+  }
+
+  ,pub valid = {|(self)->(:boolean)| self.v != 0 and self.my_valid }
+  ,pub valid ++= {|(self,v)->(self)| self.my_valid = v }
+)
+
+var x:custom_valid  // no need to say x:custom_valid?, but legal
+
+comptime assert not x?
+
+x.v = "bypassed"
+comptime assert not x? and x.v == "bypassed"
+
+x = "direct"
+comptime assert x? and x.v == "direct" and x == Custom_valid("direct")
+
+x? = false
+comptime assert not x? and x.v == "direct" and x != Custom_valid("direct")
+```

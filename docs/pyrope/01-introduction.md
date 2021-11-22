@@ -1,8 +1,7 @@
 # Introduction
 
 !!!WARNING
-    This document explains the future Pyrope, some features are still not
-    implemented. They are documented to guide the designers.
+    This document explains the future Pyrope, some features are still not implemented. They are documented to guide the designers.
 
 Pyrope is a modern hardware description language, with these focus points:
 
@@ -46,7 +45,7 @@ Run
 $prp test
 ```
 
-All the pyrope files reside in `src` directory. The `prp` builder calls LiveHD to
+All the pyrope files reside in the `src` directory. The `prp` builder calls LiveHD to
 elaborate the pyrope files and run all the tests.
 
 
@@ -58,39 +57,35 @@ Populate the Pyrope code
 
     src/gcd.prp:
     ```pyrope linenums="1"
-    {|<T>(a:T,b:T,e)->(v:T,z)|
+    {|(cmd:(a:uint,b:uint)?)->(z:uint?)|
       reg x,y
-      if e {
-        x = a
-        y = b
-      }else{
-        x = if x > y { x - y } else { y - x }
-        z = x
-        v = y == 0
+      if cmd? {
+        x,y = cmd
+      }elif x > y { 
+        x = x - y 
+      }else{ 
+        y = y - x 
       }
+      z  = x
+      z? = y == 0
     }
 
     test "16bits gcd" {
       for i in 1..=100 {
         for j in 1..=100 {
-          a = i
-          b = j
-          e = true
+          let cmd = (a=i,b=j)
 
-          step // advance 1 clock
-          $e = false // deactivate load
-
-          waitfor v
+          waitfor z?
 
           puts "result is {}", z
-          assert z == __my_cpp_gcd(v1=a, v2=b)
+          assert z == __my_cpp_gcd(v1=cmd.a, v2=cmd.b)
         }
       }
     }
     ```
 
     src/my_cpp_gcd.cpp
-    ```c++ linenums="30"
+    ```c++ linenums="25"
     void my_gcd_cpp(const Lbundle &inp, Lbundle &out) {
       assert(inp.has_const("v1") && inp.has_const("v2"));
 
@@ -188,13 +183,13 @@ The `gcd.prp` includes the top level module (`gcd`) and the unit test.
 * Some Pyrope features not common in other HDLs (CHISEL):
 
     - Pyrope is not a DSL. Most modern HDLs like CHISEL, pyMTL, pyRTL, CλaSH
-      are DSL cases. In this cases, there is a host language (SCALA, or Python,
+      are DSL cases. In these cases, there is a host language (SCALA, or Python,
       or Haskell) that must be executed. The result of the execution is the hardware
       description which can be Verilog or some internal IR like FIRRTL in CHISEL. 
       The advantage of the DSL is that it can leverage the existing language to
       have a nice hardware generator. The disadvantage is that there are 2 languages
       at once, the DSL and the host language, and that it is difficult to do
-      incremental because the generated executable from host language must be
+      incremental because the generated executable from the host language must be
       executed to generate the design.
 
 

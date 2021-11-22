@@ -11,47 +11,47 @@ in different languages.
 ## FPGA/ASIC vs CPU
 
 
-Most software programming languages are build to program Von Neumann CPUs. As
-such, when dealing with single threaded code, the programmer has a sequence of
+Most software programming languages are built to program Von Neumann CPUs. As
+such, when dealing with single-threaded code, the programmer has a sequence of
 "commands" or "statements" specified in a programming language. The machine
 executes one of those statements after another. There are "control flow"
 instructions to select what is the next statement to execute.
 
 
 Potentially more restricting, software languages have a central or distributed
-"memory" concept where program data resides. For single threaded code, there
-tend to be a central unified memory.
+"memory" concept where program data resides. For single-threaded code, there
+tends to be a central unified memory.
 
 
 Current CPUs follow a Von Neumann approach[^1] and languages designed to
 program CPUs follow the same model to have a good mapping to existing hardware.
 Since the languages are Von Neumann, it is logical that CPUs also evolve to
 keep the same model and further improve the performance. Since CPUs and
-languages follow the same Von Neumann model, software designers mindset assumes
+languages follow the same Von Neumann model, software designers' mindset assumes
 this same concept. This feedback loop has resulted in that most languages,
-hardware, and developers evolve around this model.
+hardware, and developers evolving around this model.
 
 
-Neither FPGAs or ASICs are Von Neumann machines. There is no program counter to
+Neither FPGAs nor ASICs is Von Neumann machines. There is no program counter to
 execute one statement after another and there is no central memory. Those concepts
-could be build on top, and this is in fact what CPUs are about. CPUs are all
+could be built on top, and this is in fact what CPUs are about. CPUs are all
 about how to build efficient Von Neumann machines on top of FPGAs and/or ASICs
-given some power/area/performance constrains.
+given some power/area/performance constraints.
 
 
 
 If you want to design such CPUs or you want to directly use the existing
 FPGA/ASIC without a Von Neumann machine, you need to direct the hardware
-compiler without having a "central memory" and the concept of single thread of
+compiler without having a "central memory" and the concept of a single thread of
 execution does not make much sense either. The reason is that the cells
 available in hardware are always there. The result can be used or not, but it
 is always there.
 
 
-In a high level, hardware designers decide what are the basic hardware
+At a high level, hardware designers decide what are the basic hardware
 constructs to include in the design (adders, logic gates...) and how to connect them.
-Those hardware blocks will be there all the time, and the connection is fix
-too. In contrast a software designer needs to build efficient programs
+Those hardware blocks will be there all the time, and the connection is fixed
+too. In contrast, a software designer needs to build efficient programs
 to be executed by one or more Von Neumann CPUs.
 
 
@@ -60,10 +60,10 @@ to be executed by one or more Von Neumann CPUs.
 
 ## Optimization knobs
 
-Programming hardware and software is all about solving a problem to meet some
-performance/power/cost constrains using the available resources. The difference
+Programming hardware and software are all about solving a problem to meet some
+performance/power/cost constraints using the available resources. The difference
 is that the resources in hardware and software are not the same. In software
-there are instructions, in hardware there are cells[^2]. This results in
+there are instructions, in hardware, there are cells[^2]. This results in
 different optimization knobs.
 
 
@@ -78,38 +78,38 @@ use resources like memory.
 
 
 For most hardware designers, instead of instructions, they have hardware blocks
-or cells like adders, multiplexors, flops, SRAMs... There is no central
+or cells like adders, multiplexors, flops, SRAMs... There are no central
 resources like memory, and they have to consider frequency.
 
 
 Like a software designer, the hardware designer needs to solve a problem, but
-instead of selecting a sequence of instructions, the designer select the cells
-or hardware blocks, connected them, and divide them in smaller pipeline stages
+instead of selecting a sequence of instructions, the designer selects the cells
+or hardware blocks, connected them, and divides them into smaller pipeline stages
 to have a high frequency. A design with a small number of cells that can
 achieve the desired frequency is a good hardware design[^3]. So it is all about
 instantiating blocks and connecting them.
 
 
-In hardware there are two big categories of blocks: Combinational and
-Sequential. Combinational do not have clock and perform operations like adding,
-and, xor... Sequential have a clock.  The clock is used to remember a value,
+In hardware, there are two big categories of blocks: Combinational and
+Sequential. Combinational do not have a clock and perform operations like adding,
+and, xor... Sequential has a clock.  The clock is used to remember a value,
 hence the output of a sequential block can remember the value of previous
 cycles while combinational blocks have no memory or clock concept.
 
 
 The hardware blocks are physical, as such, they need some time to generate a
 valid output given a change in their inputs. When combinational blocks are
-connected together, their maximum speed or frequency can be decided by finding
-the slowest path in the combinational blocks connected together. This
+connected, their maximum speed or frequency can be decided by finding
+the slowest path in the combinational blocks connected. This
 means that to achieve higher frequency, combinational blocks should be
 separated by sequential blocks. This is called pipelining. There are overheads
 of adding more sequential blocks, and the hardware designer needs to find the
-correct balance given a set of constrains like area/frequency/power.
+correct balance given a set of constraints like area/frequency/power.
 
 
 A big effort in hardware design goes to pipelining. Not only to find the correct
-spot separating combinational blocks, but because the sequential block adds a
-concept of "state" or memory. Starting from a working combination block, and
+spot separating combinational blocks but because the sequential block adds a
+concept of "state" or memory. Starting from a working combination lock, and
 adding some "sequential" blocks randomly is extremely likely to result in an
 incorrect result. Pipelining not only adds the conceptual problem that adding
 sequential blocks changes the semantics but that ALL the combinational
@@ -118,25 +118,25 @@ design is unbalanced[^4] and the overall frequency is decided by the slowest
 pipeline.
 
 
-The pipelining optimization concept is very different from the software
+The pipelining optimization concept is very different from software
 optimization.  In software, designers care about the average. If a function is
 slow and its execution requires half of the execution time, reducing the
 function by half should have a 25\% performance improvement. The designer does
 not need to improve very infrequently used functions. In hardware, designers
-care about worst case. If a pipeline stage is slow, improving it will result in
+care about the worst case. If a pipeline stage is slow, improving it will result in
 a frequency improvement if it was the slowest, and the benefit will be just the
 difference with the next slower pipeline stage, not the optimization on the
 pipeline itself.
 
 
 The result is that hardware and software designers need to worry about
-different constrains like pipelining. Combinined with the fact that hardware
-optimizations need to care about worst case, not average, it is common for
-hardware designers to say that design hardware is hard.
+different constraints like pipelining. Combined with the fact that hardware
+optimizations need to care about the worst case, not average, it is common for
+hardware designers to say that designing hardware is hard.
 
-[^2]: In this document we call cells any logic gate or flop or memory array.
+[^2]: In this document, we call cells any logic gate or flop or memory array.
 
-[^3]: There are other constrains like power, but the same idea/problem could be said
+[^3]: There are other constraints like power, but the same idea/problem could be said
 for software design.
 
 [^4]: Unbalance pipelines have higher overheads in power/area.
@@ -146,27 +146,27 @@ for software design.
 
 
 Hardware designers also use programming languages to specify their FPGA/ASIC
-design. In the past, designers "draw" the transistor/cells/gates and had a more
-visual layout to see/place where each combination and sequential block was
+design. In the past, designers "drew" the transistor/cells/gates and had a more
+visual layout to see/place where each combination and the sequential block was
 located. Although it is possible to do a design in such a way, it is not as
 productive as using some hardware design language.
 
 
 There are many popular software languages like C++, Java, Rust, swift... There
-are also several hardware design languages, but they tend to fall in two
+are also several hardware design languages, but they tend to fall into two
 categories: HLS (High Level Synthesis) or HDLs (Hardware Description
 Languages). HLS can be languages like a subset of C or Rust. The HDLs are
 languages like Verilog, CHISEL, or Pyrope.
 
 
 In a nutshell, HLS tries to leverage the larger Von Neumann community
-(languages and humans that know to to program Von Neumann) and use compilers to
+(languages and humans that know to program Von Neumann) and use compilers to
 transform to efficient hardware mappings that are not Von Neumann.
 
 
-As such HLS have to deal with constructs like loops and central memory. The
+As such HLS has to deal with constructs like loops and central memory. The
 typical solution for loops is to use heuristics and/or directives to split the
-loops in different pipeline stages. The typical solution for global memory is
+loops into different pipeline stages. The typical solution for global memory is
 to just not use it or put directives to guide them. Other constructs like
 memory allocation and recursion are also avoided in HLS. When a C program is
 translated to hardware, if it has pointers and uses memory, it needs directives
@@ -177,7 +177,7 @@ inefficient.
 
 HDLs (Hardware Description Languages) do not have a Von Neumann model. The
 currently most popular HDL (Verilog) is a data flow language that does not have
-a global program counter like Von Neumann languages. Instead the programmer
+a global program counter like Von Neumann languages. Instead, the programmer
 specifies a hierarchy of modules[^5], and then each module/function
 instantiated is executed every cycle. In Verilog, the execution of each module
 has a complicated set of options, but from a high level point of view, a set of
@@ -185,7 +185,7 @@ statements are executed in each module. The module executes forever being
 called once each cycle.
 
 
-The rest of the document assumes an HDL model, and goes over their generic
+The rest of the document assumes an HDL model and goes over their generic
 characteristics without going to specific language syntax.
 
 
@@ -202,12 +202,12 @@ call several functions which can iterate in loops, and the program finishes exec
 when the main finishes. Most HDLs are different.
 
 
-In HDLs the there is a "top" or entry point which provides a tree-like structure
+In HDLs the there is a "top" or entry point that provides a tree-like structure
 of module instantiations. Each module has a set of statements that execute
-every cycle. It resembles a bit an actor model. An actor being a module with
+every cycle. It resembles a bit of an actor model. An actor is a module with
 individual execution, but there are many differences like the tree structure of
-instantiations, and the incapacity to spawn new actors. Maybe more important
-key concept of actors is the blocking on message reads.  Although it is
+instantiations, and the incapacity to spawn new actors. Maybe a more important
+key concept of actors is the blocking of message reads.  Although it is
 possible to build an HLS around the actor model, popular HDLs do not.
 
 
@@ -216,7 +216,7 @@ possible to build an HLS around the actor model, popular HDLs do not.
 
 
 In this document, a hardware artifact is a "strange" or "unexpected" behavior
-for a reasonable software programmer. It is not a lack of feature in a language
+for a reasonable software programmer. It is not a lack of features in a language
 like not having recursion or not having type checking or some strange syntax.
 An artifact is some strange behavior different from the typical software
 languages.
@@ -260,7 +260,7 @@ a software programmer may expect:
     ```
 
 
-A programmer will expect that function do_division and do_multiplication will
+A programmer will expect that the function do_division and do_multiplication will
 be instantiated, and called only if the some_opcode condition is true or false.
 In hardware, both modules will be instantiated. This means that the previous
 code sequence will instantiate both modules in the hierarchy. The challenge is
@@ -288,14 +288,14 @@ is any side effect inside.
 Each module function is called every cycle. Instantiated modules in the
 hierarchy tree are called every cycle. This could be seen as if the "top" or
 entry point is called each cycle. In a way, the whole program executes every
-cycle if we ignore reset and intialization state. 
+cycle if we ignore the reset and initialization state. 
 
 
-The artifact comes that calling a module or function can return the results
+The artifact comes that calling a module or function that can return the results
 from previous cycle calls. To illustrate the problem, imagine a multiplier
-function (mult) that takes 1 cycles to produce the results, and the programmer
+function (mult) that takes 1 cycle to produce the results, and the programmer
 has an assertion checking that it was a multiply. The result `c` is not the
-current cycle `a*b` but the last cycle `a` multiplied by last cycle `b`. This
+current cycle `a*b` but the last cycle `a` multiplied by the last cycle `b`. This
 is not what would be expected in a normal software API.
 
 
@@ -352,7 +352,7 @@ affect simulation.
 === "HLS possible solution"
 
     ```verilog
-    // Do allow simulation code to have side-effects to synthesis code
+    // Do allow simulation code to have side-effects on synthesis code
     // Any directive should affect simulation AND synthesis (not one or the other)
 
     unique case(x) // do not use synthesis only directives
@@ -369,8 +369,8 @@ affect simulation.
 ### Reset
 
 
-Programmers are used to initialize their variables. Since the modules are
-called every cycle, the typical software syntax for intialization does not
+Programmers are used to initializing their variables. Since the modules are
+called every cycle, the typical software syntax for initialization does not
 work. To make it worse, some languages like Verilog (and others) have two
 initializations: reset and simulation setup.
 
@@ -411,14 +411,14 @@ Some differences between reset and software initialization:
 ### Non-blocking assignments
 
 
-Many HDLs have what hardware designers call "non blocking assignments". The idea
+Many HDLs have what hardware designers call "non-blocking assignments". The idea
 is that in hardware, when assigning a variable the designer could think about
-the "result at the end of this cycle" rather "update this mutable variable".
+the "result at the end of this cycle" rather than "update this mutable variable".
 
-Technically, a non blocking assignment is an assignment to a variable but the
+Technically, a nonblocking assignment is an assignment to a variable but the
 variable will be updated only at the end of the cycle. To illustrate the
 concept, imagine a counter. The counter can be updated with a non-blocking
-assignment, and following statements could still read the value before the
+assignment and following statements could still read the value before the
 scheduled update.
 
 
@@ -449,18 +449,13 @@ scheduled update.
 HDLs can generate invalid code that can not be fabricated or it is strongly recommended
 to not be fabricated. Examples are:
 
-* Combinational loops. Creating a loop with combinational logic is generally
-  consider a bug (only few circuits could accept this). If the combinational
-  loop is inside a mux, it can be difficult to catch during verification unless a
+* Combinational loops. Creating a loop with combinational logic is generally considered a bug (only a few circuits could accept this). If the combinational loop is inside a mux, it can be difficult to catch during verification unless a
   good toggle coverage results.
 
-* Implicit latches. Some HDLs like Verilog can generate code with implicit
-  latches. Since the module is execute each time, variables with a missing
-  initialization can remember results from last cycles generating implicit
-  latches. Most ASIC tools do not accept this and it is considered a bug.
+* Implicit latches. Some HDLs like Verilog can generate code with implicit latches. Since the module is executed each time, variables with a missing initialization can remember results from the last cycles generating implicit latches. Most ASIC tools do not accept this and it is considered a bug.
 
 * Bogus flow. Any compile (software or hardware) can have bugs, but because
-  hardware compilers tend to have a smaller user base, they they to have more
+  hardware compilers tend to have a smaller user base, they have more
   bugs than typical software compilers. Since this cost of fixing a bug is also
   higher, the solution is to have an additional verification or logical
   equivalence test.
@@ -481,7 +476,7 @@ most HDLs.
 
 
 Software designers are used to binary numbers with 0s and 1s. In many HDLs
-there are more than 2 possible stages for each bit. In languages like Verilog
+there are more than 2 possible stages for each bit. In languages like Verilog,
 there are 4 states: `0`, `1`, `?` or `z`. Where `?` is a "quantum" like state
 indicating that it is both zero and one at the same time, and the `z` is to
 indicate that it is in "high impedance" which means that nobody is writing the
@@ -489,15 +484,15 @@ value. Some languages like VHDL have even more states.
 
 
 The challenge is that when running code, the result may be unexpected. There
-are many discussion on how to address that the community calls "x-propagation". 
-There is not an agreement on the best solution. The reason for not removing `?`
+are many discussions on how to address what the community calls "x-propagation". 
+There is no agreement on the best solution. The reason for not removing `?`
 is that some large structures will not be initialized because they are very large,
 some engineers like the `?` to allow more freedom to the synthesis tools[^7]
 
 
 There are 3 main solutions categories:
 
-* Allow `?` and run many simulation with different x-propagation rules.
+* Allow `?` and run many simulations with different x-propagation rules.
 * Allow `?` and randomly pick 0/1 for each `?` bit at simulation time.
 * Do not allow `?`.
 
@@ -523,7 +518,7 @@ There are 3 main solutions categories:
     $display("%b\n", a[5:1]); // displays 11111 (sign extend)
     ```
 
-[^7]: This is very controversial and many companies coding style do not allow
+[^7]: This is very controversial and many companies coding styles do not allow
   the use of `?` to improve synthesis results.
 
 
@@ -544,7 +539,7 @@ languages. These are some differences that can make the HDLs simpler:
 High performance software must adjust to the hardware and as such, there are
 several integer types (int, short, long).  The result is that the programmer
 tends to be careful with overflows and type conversion. This is not a problem
-in hardware. If a 113 bits adder is needed, it can be synthesized. If only an 7
+in hardware. If a 113 bits adder is needed, it can be synthesized. If only a 7
 bits adder is needed, the synthesis can create the smaller adder too.
 
 Some HLS may have different integer sizes, but it is either a "strange" design decision
@@ -553,17 +548,17 @@ or just as a type check so that no unnecessary hardware is generated.
 
 ### No pointers
 
-Memory and pointer management is a big issue in most languages. Either garbage
-collect, manual, or alternative approaches.  Since there is no global memory,
-there are no memory to manage. Maybe even more important, there is no need for
-pointers. This avoid another set of problems like null dereferencing.
+Memory and pointer management is big issue in most languages. Either garbage
+collection, manual, or alternative approaches.  Since there is no global memory,
+there is no memory to manage. Maybe even more important, there is no need for
+pointers. This avoids another set of problems like null dereferencing.
 
 
 ### Pass by value
 
-Most software languages support to pass function arguments either by value or
+Most software languages support passing function arguments either by value or
 reference. This is done to avoid copying the object that may reside in memory.
-Again, HLS have no memory, therefore it is not as problematic. 
+Again, HLS has no memory, therefore it is not as problematic. 
 
 Most HDLs only support passing by value. This is not a drawback but avoid
 another source of bugs without the cost overhead that it will represent in a
@@ -572,7 +567,7 @@ Vonn Neumann machine.
 
 ### No recursion
 
-Most HDLs support recursion at compile time, but not at runtime. The reason is
+Most HDLs support recursion at compile-time, but not at runtime. The reason is
 that there is no "stack memory". It is possible to support run-time recursion
 if the depth is bound, but it would be "strange" because of the potentially
 large combinational path.  Only manageable with retiming. As a result, most
