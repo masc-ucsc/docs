@@ -1,13 +1,13 @@
 # Assertions
 
-Assertions are considered to debug statements. This means that they can not have
-side effects on non-debug statements.
+Assertions are considered to debug statements. This means that they can not
+have side effects on non-debug statements.
 
 Pyrope supports a syntax close to Verilog for assertions. The language is
 designed to have 3 levels of assertion checking: simulation runtime,
 compilation time, and formal verification time.
 
-There are 4 main methods: 
+There are 5 main verification statements: 
 
 * `assert`: The condition should be true at runtime. If `comptime assert`, the
   condition must be true at compile time.
@@ -15,12 +15,19 @@ There are 4 main methods:
 * `assume`: Similar to assert, but allows the tool to simplify code based on it
   (it has optimization side-effects). 
 
-* `verify`: Similar to assert, but it is potentially slow to check, so it is checked
-  at runtime or verification step.
+* `verify`: Similar to assert, but it is potentially slow to check, so it is
+  checked only when verification is enabled.
 
-* `restrict`: Constraints or restrictions beyond to check a subset of the valid
-  space. It only affects the verify command. The restrict command accepts a
-  list of conditions to restrict
+* `lec`: It is a verification only step that checks that all the arguments are
+  logically equivalent. The difference with `verify` that it also accepts
+  functions (only). `lec` does not include the reset state. The first argument
+  is the gold model, the rest are implementation. This matters because gold
+  model unknown output bit checks againt any value for the equivalent
+  implementation bit.
+
+* `restrict`: Constraints or restrictions beyond to check a subset of the
+  valid space. It only affects the verify command. The restrict command
+  accepts a list of conditions to restrict.
 
 
 ```pyrope
@@ -34,10 +41,14 @@ assume b > 3           // may optimize and perform a runtime check
 restrict "cond1" when foo < 1 and foo >3 {
    verify bar == 4  // only checked at verification, restricting conditions
 }
+
+let fun1 = {|a,b| a | b}
+let fun2 = {|a,b| ~(~a | ~b) }
+lec fun1, fun2
 ```
 
-To guard an assertion from being checked unless some condition happens, you can
-use the `when/unless` statement modifier or the `implies` logic. All the
+To guard an assertion from being checked unless some condition happens, you
+can use the `when/unless` statement modifier or the `implies` logic. All the
 verification statements (`assert`, `assume`, `verify`) can have an error
 message.
 

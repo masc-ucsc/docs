@@ -11,10 +11,13 @@ these types.
 Variables first use or declaration must indicate the mutability intention
 (`var`) or immutability (`let`).
 
-* `var` is used to declare mutable variables. Following statements can overwrite the variable.
+* `var` is used to declare mutable variables. Following statements can
+  overwrite the variable.
+
 * `let` is used to declare immutable variables. Following statements can not
-  modify the contents except object constructors (setter).
-* `pub` is like `let` but the variable is exported (public).
+  modify the contents. For methods, only use `let` when no overloading/traits
+  should be allowed.
+
 
 ```
 a  = 3         // compile error, no previous let or var
@@ -71,6 +74,29 @@ assert ((1,a=2,c=3) ++ (a=20,33,c=30,4)) == (1,a=(2,20),c=(3,30),33,4)
 The `...` also concatenates, but it is an "inline concatenate". The difference
 is where the fields are concatenated and that it triggers a compile error if
 the same named entry already exists.
+
+
+## Register
+
+Both mutable and immutable variables (`var`/`let`) are created every cycle. To
+have persistence across cycles the `reg` keyword must be used.
+
+
+```
+reg counter = 10
+var not_count = 20
+```
+
+In `reg`, the right hand side of the initialization (`10` in the counter
+example) is called only during reset. In `var/let`, the righ hand size is
+called every cycle. As expected, `reg` is a mutable.
+
+## public
+
+All types of declarations (`let`, `var`, `reg`) can have a `pub` before. This
+is used to indicate the the declaration is public and hence visible outside the
+scope defined. Section (typesystem)[07-typesystem.md] has more details on how
+to `import` or `punch` a declaration across files.
 
 ## Basic types
 
@@ -129,7 +155,7 @@ assert boolean(33) or false   // explicity typecast
 Functions have several options (see [Functions](06-functions.md)), but from a
 high level they provide a sequence of statements and they have a tuple for
 input and a tuple for output. Functions also can capture values from function
-declaration.
+declaration. Functions are immutable objects.
 
 
 ### Range
@@ -539,7 +565,7 @@ Tuples also can have optional type:
 
 ```
 type complex = (
-  ,pub v1:string
+  ,reg v1:string
   ,pub v2:string
 
   ,pub set = {|(self,v)->(self)|

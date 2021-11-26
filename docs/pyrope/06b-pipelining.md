@@ -1,56 +1,50 @@
-# Pipeline and Flops
+# Pipelining
 
 
-## Flops and Latches
+## Registers
 
-Together with memories, flip-flop or latches are the basic construct used by hardware to store information and to build pipeline stages. Pyrope goal is to be a zero cost overhead, and as such it allows to handle flops directly.
+Together with memories, flip-flop or latches are the basic construct used by
+hardware to store information and to build pipeline stages. Pyrope goal is to
+be a zero cost overhead, and as such it allows to handle flops directly.
 
 
 To create an individual flop, a direct RTL instantiation of a `__flop` can be
-used.  Flops and latches have several pins `din`, `q`, `clock`, `enable` and
+used. Flops and latches have several pins `din`, `q`, `clock`, `enable` and
 configuration options `posclk`, `initial`, and `async`. 
 
 
-A more programmers friendly is to use the `#` modifier which will automatically
-create a flop. The `din` field does not exist because writing to it is writing
-to the din. The flop parameters and options can also be modified, but there is
-no guarantee that the flop may be split in multiple flops.
+A more programmers friendly is to use to declare a register (flop) variabl. The
+compiler does not provide guarantees that the register will not be split in
+multiple registers.
 
 
-In this example, `my_flop1_q` and `my_flop2_q` are identical.
+In this example, `my_flop1_q and my_flop2_q` are equivalent.
 
 ```
 my_flop1_q = __flop(din=my_din, reset=my_reset, clock=my_clock, enable=my_enable, posclk=true, initial=3, async=false)
 
-my_flop2_q = #my_flop2
-#my_flop2 = my_din
+reg my_flop2 = (reset=my_reset, clock=my_clock, posclk=true, initial=3, async=false)
+let my_flop2_q = my_flop2
 
-#my_flop2.__reset = my_reset
-#my_flop2.__clock = my_clock
-#my_flop2.__posclk = true
-#my_flop2.__initial = 3
-
-assert my_flop1_q == my_flop2_q
-assert #my_flop2  == my_din
-
-assert #my_flop2#[0] == my_flop2_q
-assert #my_flop2#[0] == my_flop1_q
+if my_enable {
+  my_flop2 = my_din
+}
 ```
 
-
-A flop has a `din` and a `q` pin. At the beginning of the cycle both `din` and
+Flops have `din` and a `q` pin. At the beginning of the cycle both `din` and
 `q` have the same value, but as the `din` is updated with "next cycle" `q`
 value their contents may be different. Different HDLs have different syntax to
 distinguish between `din` and `q` pin. In Verilog is common to have a coding
 style guideline that gives a different name to the din variables than to the q
 variables (E.g: `something_q` vs `something_next`).
 
-In Pyrope the `#something` points to the `din` pin. This is the value to
+In Pyrope the `something` points to the `din` pin. This is the value to
 update.  To have the `q` pin contents there are two ways. Read it before being
-updated, or use the pipeline directive `#something#[0]`.
+updated, or use the pipeline directive `something#[0]`.
 
-If the flop is accessed with `-1` cycle (`#something#[-1]`), the flop will insert
-an additional pipeline to access 1 cycle before flop contents.
+
+If the register is accessed with `-1` cycle (`#something#[-1]`), the flop will
+insert an additional pipeline to access 1 cycle before flop contents.
 
 
 Latches are possible but with with the direct RTL instantiation. Latches have 
@@ -62,28 +56,30 @@ my_latch_q = __latch(din=my_din, enable=my_enable, posclk=true)
 
 ## Pipelining
 
-One of the fundamental differences between most programming languages and hardware description languages is that pipelining is a
-fundamental feature that must be used in hardware but not in software designs.
+One of the fundamental differences between most programming languages and
+hardware description languages is that pipelining is a fundamental feature that
+must be used in hardware but not in software designs.
 
-To illustrate the confusion/complication the following example illustrates a multiplier that takes 3 cycles and an adder that
-takes 1 cycle to complete, and the conceptual problems of integrating them:
+To illustrate the confusion/complication the following example illustrates a
+multiplier that takes 3 cycles and an adder that takes 1 cycle to complete, and
+the conceptual problems of integrating them:
 
-```pyrope
-|(in1,in2) -> (out)|  // compile error unless first line of file
-
-add1 = {|a,b| // 1 cycle add
+```
+let add1 = {|a,b| // 1 cycle add
   #reg = a+b
   return #reg
 }
-mul3 = {|a,b| // 3 cycle multiply
+let mul3 = {|a,b| // 3 cycle multiply
   #reg1 = $a * $b
   #reg2 = #reg1
   #reg3 = #reg2
   return #reg3
 }
 
-x    =# mul3(in1, in2)
-%out =# add1(x,in3)
+pub let block = {|(in1,in2)->(out)|
+  let x =# mul3(in1, in2)
+  out   =# add1(x,in3)
+}
 ```
 
 The first observation is the new assignment `=#` instead of `=`. This is to explicitly indicate to Pyrope that the function called

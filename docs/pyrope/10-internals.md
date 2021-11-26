@@ -3,6 +3,60 @@
 This section of the document provides a series of disconnected topics about the
 compiler internals that affect semantics.
 
+## Determinism
+
+Pyrope is designed to be deterministic. This means that the result is always
+the same.  Notice that the `puts` command is a debugging directive, and as such
+is not guarantee to be deterministic.
+
+### Puts
+
+If needed for debugging, the puts messages can be ordered. `puts` has an before
+and after to create dependence between messages. 
+
+
+### Setup section
+
+The setup code section is called only once only if it is the top level file or
+it is imported by another file. The order of the across independent files can
+have many orders. This could look like lack of determinism with `puts` but they
+can not have side effects because imports are by value, not reference.
+
+### `punch`
+
+Punch can create a dependence update between files. 
+
+```
+// file1.prp
+
+var a:punch("A")
+var b = punch("B")
+b = a + 1
+var c:punch("C")
+
+assert a == 100
+assert b == 101
+assert c == 102
+
+// file2.prp
+
+var x = punch("A")
+x = 100
+var y:punch("B")
+var z = punch("C")
+z = y + 1
+
+assert x == 100
+assert y == 101
+assert y == 102
+```
+
+In theory, the connections can be dependent on the previous pass value. This
+will create an iterative process to solve the `punch` connections. Pyrope does
+not allow this. The Setup code section is called only once and all the `punch`
+commands must be `comptime` with a single pass. If they are not, a compile
+error is generated.
+
 
 ## Dealing with unknowns
 
@@ -242,7 +296,11 @@ node:
     - `comptime asserts` should satisfy the condition or a compile error is
       generated
 
-+ If the node does type checks (`has`, `does`) compute the outcome
++ If the node does type checks (`equals`, `does`) compute the outcome and
+  perform copy propagation. The result of this step is that the compiler is
+  effectively doing flow type inference. All the types must be resolved before.
+  If the `equals`/`does` was in a `if` condition, the control is decided at
+  compile time.
 
 + If the node is a loop (`for`/`while`) that has at least one iteration expand
   the loop. This is an iterative process becasue the loop exit condition may

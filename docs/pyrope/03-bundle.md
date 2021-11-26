@@ -206,7 +206,7 @@ let b = bad.b
 assert  b.__poison and b==4
 ```
 
-### Concate fields
+### Concatenate fields
 
 Each tuple field must be unique. Nevertheless, it is practical to have
 fields that add more subfields. This is the case for overloading. To

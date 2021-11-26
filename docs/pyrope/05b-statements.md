@@ -226,13 +226,13 @@ the return value is not the last expression in the scope, the `break` statement
 should be used. Notice that a `return` statement will exit the lambda not the
 current scope.
 
-## defer reads
+## defer 
 
 A `defer_read` keyword can be added before assignments or function calls. This
 keyword effectively means that the statement on the right hand side reads the last
-values from the end of the cycle. This is needed if we need to have any loop in
-connecting blocks. It is also useful for delaying assertion checks to the end
-of the function.
+values from the end of the current cycle. This is needed if we need to have any
+loop in connecting blocks. It is also useful for delaying assertion checks to
+the end of the function.
 
 ```
 var c = 10
@@ -250,6 +250,68 @@ f2 = ring($b, f1)
 f3 = ring($c, f2)
 f4 = ring($d, f3)
 ```
+
+If the intention is to read the result after being flop, there is no need to
+use the `defer_read`, a normal register access could do it. If the read
+variables are registers, the `defer_read ... = var` and the `var#[0]` is
+equivalent. The difference is that defer_read does not insert a register.
+
+
+```
+reg counter:u32
+
+let counter_m1 = counter#[-1] // last cycle
+let counter_0  = counter#[0] // current cycle 
+let counter_1  = counter#[1] // last cycle
+let counter_2  = counter#[2] // last last cycle cycle 
+
+defer_read deferred = counter
+
+if counter < 100 {
+  counter += 1
+}else{
+  counter = 0
+}
+
+if counter == 10 {
+  assert deferred   == 10
+  assert counter_0  == 10
+  assert counter_1  ==  9
+  assert counter_2  ==  8
+  assert counter_m1 ==  9
+}
+```
+
+The `defer_write` delays the write/updates to the end of the cycle, but uses
+the current value.
+
+```
+var a = 1
+var x = 100
+defer_write x = a
+a = 200
+
+comptime assert x == 100
+defer_read comptime assert x == 1
+```
+
+## always block
+
+Tuples can also have 3 special field entries: `always_before`, `always_after`,
+and `always_reset`. These entries can point to methods that have special
+reserved functionality:
+
+* `always_before` is executed every cycle BEFORE any method to tuple is called.
+  This method is called even when reset is set active. This means that the
+  always_before is called even before the variable is initialized if there is a
+  setter.
+
+* `always_after` is similar to the `always_before` but the method is called after all the other methods to the tuple are called.
+
+* `always_reset` is only called when the reset for the tuple is high. This
+  means that it is valid only if the tuple is being instantiated as a `reg`.
+  If called, it is called after the `always_after` so that their values can not
+  be overried by other methods.
 
 ## restrict/test/fail
 

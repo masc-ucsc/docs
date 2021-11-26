@@ -217,12 +217,14 @@ This is typically called the short-circuit evaluation. Some languages like
 Pascal, Rust, Kotlin have different `and/or` to express conditional evaluation.
 In Pascal, there is an `and/or` and `and_then/or_else` (conditional). In Rust
 `&/|` and `&&/||` (conditional). In Kotlin `&&/||` and `and/or` (conditional).
+Pyrope uses has the `and/or` without short-circuit, and the `and_then/or_else`
+with explicit short-circuit.
 
 
-Pyrope is more restrictive because it wants to be a fully defined deterministic
-independent of implementation. Pyrope is deterministic in the synthesizable
-but not in the `debug` statements. To illustrate the point/difference, and how
-to handle it, it is useful to see a Verilog example.
+For most expressions, Pyrope is more restrictive because it wants to be a fully
+defined deterministic independent of implementation. Pyrope is deterministic in
+the synthesizable but not in the `debug` statements. To illustrate the
+point/difference, and how to handle it, it is useful to see a Verilog example.
 
 
 The following Verilog sequence evaluates differently in VCS and Icarus Verilog.

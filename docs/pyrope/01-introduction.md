@@ -200,6 +200,8 @@ The `gcd.prp` includes the top level module (`gcd`) and the unit test.
 
     - Immutable objects
 
+    - Language support for several hardware constructs
+
 * Some Pyrope features not common in other languages
 
     - No object references, only pass by value
