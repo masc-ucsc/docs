@@ -512,7 +512,7 @@ The `implement` checks that the method is redefined. This is the case only if
 the method as nil as body. The reason is that the method arguments must be
 preserved.
  
- ```
+```
 type base_abstract = (
    ,pub var fun = nil, // must be defined
    ,pub var fun2 = {|(a,b)->(c)| nil } // must be extended with a method that 'does' fun2

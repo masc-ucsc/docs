@@ -91,7 +91,7 @@ In `reg`, the right hand side of the initialization (`10` in the counter
 example) is called only during reset. In `var/let`, the righ hand size is
 called every cycle. As expected, `reg` is a mutable.
 
-## public
+## Public
 
 All types of declarations (`let`, `var`, `reg`) can have a `pub` before. This
 is used to indicate the the declaration is public and hence visible outside the
