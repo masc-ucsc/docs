@@ -115,7 +115,7 @@ forth to an integer.
 
 ### Integer or `int`
 
-Integers have unlimited precision and they are always signed. Type constraints 
+Integers have unlimited precision and they are always signed. Type constraints
 can enforce a subset like unsigned or ranges.
 
 ```
@@ -176,7 +176,7 @@ They are 3 ways to specify a closed range:
 When used inside selectors (`[range]`) the ranges can be open (no first/last specified)
 or use negative numbers. The negative number is to specify the distance from last.
 
-* `[first..<-val]` is the same as `[first..<(last-val+1)]`. The advantage is that the `last` or 
+* `[first..<-val]` is the same as `[first..<(last-val+1)]`. The advantage is that the `last` or
 size in the tuple can be unknown.
 * `[first..]` is the same as `[first..=-1]`.
 
@@ -192,7 +192,7 @@ let b = 0b0110_1001
 assert b@[1..]        == 0b0110_100
 assert b@[1..=-1]     == 0b0110_100
 assert b@[1..=-2]     == 0b0110_100  // unsigned result from bit selector
-assert b@sext[1..=-2] == 0sb110_100 
+assert b@sext[1..=-2] == 0sb110_100
 assert b@[1..=-3]     == 0sb10_100
 assert b@[1..<-3]     == 0b0_100
 
@@ -221,9 +221,9 @@ can be declared compile time constants or `comptime`. This means that the value
 must be constant at compile time or an error is generated.
 
 ```
-let comptime a = 1     // obviously comptime
-var comptime b = a + 2 // OK too
-let comptime c = $rand // compile error, 'c' can not be computed at compile time
+comptime let a = 1     // obviously comptime
+comptime var b = a + 2 // OK too
+comptime let c = $rand // compile error, 'c' can not be computed at compile time
 ```
 
 The `comptime` directive considers values propagated across modules.
@@ -242,7 +242,7 @@ side-effect beyond debug statements.
 
 ```
 var a = (debug b=2, c = 3) // a.b is a debug variable
-let debug c = 3
+debug let c = 3
 ```
 
 ## Basic type annotations
@@ -255,8 +255,8 @@ behave like assertions, and they allow function polymorphism.
 var a:u120    // a is an unsigned value with up to 120bits, initialized to zero
 
 var x:s3 = 0  // x is a signed value with 3 bits (-4 to 3)
-mut x = 3     // OK
-mut x = 4     // compile error, '4' overflows the maximum allowed value of 'x'
+x = 3         // OK
+x = 4         // compile error, '4' overflows the maximum allowed value of 'x'
 
 var person = (
   ,name:string // empty string by default
@@ -356,7 +356,7 @@ Reduce and bit selection operators:
 * `zext`: Zero sign extends selected bits.
 
 The or/and/xor reduce have a single bit signed result (not boolean). This means
-that the result can be 0 (`0sb0`) or -1 (`0sb1`). pop-count and `zext` have 
+that the result can be 0 (`0sb0`) or -1 (`0sb1`). pop-count and `zext` have
 always positive results. `sext` is a sign-extended, so it can be positive or
 negative.
 
@@ -368,7 +368,7 @@ The or-reduce and and-reduce are always size insensitive. This means that to
 perform the reduction it is not needed to know the number of bits. It could
 pick more or fewer bits and the result is the same. E.g: 0sb111 or 0sb111111
 have the same and/or reduce. This is the reason why both can work with open and
-close ranges. 
+close ranges.
 
 
 This is not the case for the xor-reduce and pop-count. These two operations are
@@ -386,7 +386,7 @@ y = 0s1_0110   // negative
 assert x@[0,2] == 0b10
 assert y@[100,200]       == 0b11   and x@[100,200]       == 0
 assert y@sext[0,100,200] == 0sb110 and x@sext[1,100,200] == 0b001
-assert x@|[] == -1 
+assert x@|[] == -1
 assert x@&[0,1] == 0
 assert x@+[0..=5] == x@+[0..<100] == 3
 assert y@+[0..=5]  // compile error, 'y' can be negative
@@ -395,9 +395,9 @@ assert y@[0..=5]@+[] == 3
 assert y@[0..=6]@+[] == 4
 
 var z     = 0b0110
-mut z@[0] = 1    // same as mut z@[0] = -1 
+z@[0] = 1
 assert z == 0b0111
-mut z@[0] = 0b11 // compile error, '0b11` overflows the maximum allowed value of `z@[0]`
+z@[0] = 0b11 // compile error, '0b11` overflows the maximum allowed value of `z@[0]`
 ```
 
 !!!Note
@@ -415,10 +415,10 @@ the bit selection can not be used to transpose bits. A tuple must be used for
 such an operation.
 
 ```
-var = 0b10
-assert var@[0,1] == var@[1,2] == var@[] == var@[0..=1] == var@[..=1] == 0b10
+var v = 0b10
+assert v@[0,1] == v@[1,2] == v@[] == v@[0..=1] == v@[..=1] == 0b10
 
-trans = (var[1], var[0])@[]
+trans = (v[1], v[0])@[]
 assert trans == 1
 ```
 
@@ -496,11 +496,11 @@ g = 1 + 3
 
 g1= 1 + (3 * 1)
   + 2
-  + 5           // OK 
+  + 5           // OK
 
 g2= (1 + 3)
   * (1 + 2)
-  + 5           // OK 
+  + 5           // OK
 
 h = x or y and z// compile error: use parenthesis for explicit precedence
 
@@ -521,7 +521,7 @@ new "valid" field associated with the tuple.
 
 ```
 var v1:u32
-var v2:u32?
+var v2:?u32
 
 comptime assert v1 == 0 and v2 == 0 // data still same as usual
 
@@ -575,7 +575,7 @@ type complex = (
 )
 
 var x1:complex
-var x2:complex?
+var x2:?complex
 
 comptime assert x1.v1 == "" and x1.v2 == ""
 comptime assert not x2?  and x2.v1 == "" and x2.v2 == ""
@@ -592,6 +592,10 @@ x2 = "world"
 
 comptime assert x2? and x2?.v1 == "world" and x2.v1 == "world"
 ```
+
+!!!!NOTE
+    The Pyrope grammar does not allow for an optional without type check like `x = foo:? + 3`
+    because it is ambiguous.
 
 The valid bit can be overwritten:
 

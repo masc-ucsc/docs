@@ -57,7 +57,7 @@ Populate the Pyrope code
 
     src/gcd.prp:
     ```pyrope linenums="1"
-    {|(cmd:(a:uint,b:uint)?)->(z:uint?)|
+    {|(cmd:?(a:uint,b:uint))->(z:?uint)|
       reg x,y
       if cmd? {
         x,y = cmd

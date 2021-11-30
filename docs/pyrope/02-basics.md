@@ -234,7 +234,7 @@ dependent on the optimization (in this case, `testing(1)` got optimized away by
 vcs).
 
 
-```
+```verilog
 module test();
 
 function testing(input [0:3] a);
@@ -264,9 +264,9 @@ end
 ```
 
 === "Icarus output"
-    ```
+    ```bash
     test called with  1
-    est called with  2
+    test called with  2
     test2
     test called with  3
     test3
@@ -275,7 +275,7 @@ end
     ```
 
 === "VCS output"
-    ```
+    ```bash
     test called with  2
     test2
     test called with  3
@@ -285,7 +285,7 @@ end
     ```
 
 === "C++/short-circuit output"
-    ```
+    ```bash
     test called with 2
     test2
     test called with 3

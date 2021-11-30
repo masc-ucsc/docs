@@ -177,7 +177,7 @@ In a way, it is a safer version of Verilog `?`.
 
 === "Verilog x-optimization"
 
-    ```
+    ```verilog
     always_comb begin // one hot mux
       case (sel)
         3’b001 : f=i0;
@@ -211,8 +211,8 @@ In a way, it is a safer version of Verilog `?`.
 Assume allows more freedom, without dangerous Verilog x-optimizations:
 
 === "Bad Verilog x-optimization"
-    ```
-    if a == 0 begin
+    ```verilog
+    if (a == 0) begin
        assert(false);
        out = '?;
     end else if (1 + a) == 1 begin // always false

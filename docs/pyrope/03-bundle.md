@@ -48,7 +48,6 @@ let x = (
   ,field1=1         // field1 with implicit type and 1 value
   ,field2:string    // field2 with explicit type and "" default value
   ,field3:int = 3   // field3 with explicit type and 3 value
-  ,field4:          // field4 without type or default value
   ,val              // unnamed field with value `val` (4)
 )
 ```
@@ -273,30 +272,39 @@ assert c == 1 and d == 2
 
 ## enums
 
-Enums are created out of a tuple structure.
+Enums use the familiar tuple structure, but there is a significant difference.
+The following case generates a enum compile error because the enum entries
+shadow existing variable entries.
 
 
 ```
-enum v1 = (a:,b:,c:)
-
-assert v1.a != v1.b  // enum
-let x = v1.a
-assert x == v1.a
-
-puts "x is {}", x  // prints: "x is v1.a"
+let a = "foo"
+enum err = (a,b) // compile error, 'a' is a shadow variable
 ```
 
+The reason is to avoid confusion between tuple and enum that use the similar
+tuple syntax. In the `err` example, it is unclear if the intention to have
+`err.foo` or `err.a`.
 
-When default values are provided the enum preserves the value.
-
+The shadow variable constrain does not happen if the enum has a non-defeault
+value. Another solution is to move the enum declaration ahead of the shadowing
+variables.
 
 ```
-enum v2 = (a=3,b=2,c:)
+let a = 10
+let b = 20
+let c = 30
 
-assert v2.a == 3 and v2.b == 2
+let v = (a,b,c)
+assert v == (10,20,30)
 
-let x = v2.b
+enum e = (a=1,b=2,c=300)
+assert e.a == 1 and e.b == 2 and e.c == 300
+
+let x = e.a
+puts "x is {}", x  // prints: "x is e.a"
 ```
+
 
 The enum default values are NOT like typical non hardware languages. The enum
 auto-created values use a one hot encoding. The first entry has the first bit
@@ -305,9 +313,9 @@ the next free bit.
 
 ```
 enum v3 = (
-   ,a:
+   ,a
    ,b=5  // alias with 'a'
-   ,c:
+   ,c
 )
 assert v3.a == 1
 assert v3.b == 5
@@ -320,8 +328,8 @@ hierarchy level bits are kept.
 
 ```
 enum animal = (
-  ,bird=(eagle:, parrot:)
-  ,mammal=(rat:, human:)
+  ,bird=(eagle, parrot)
+  ,mammal=(rat, human)
 )
 
 assert animal.bird.eagle != animal.mammal
@@ -344,16 +352,16 @@ It is possible to use a sequence which is more consistent with hardware language
 
 ```
 enum v3:int = (
-   ,a:
+   ,a
    ,b=5  // alias with 'a'
-   ,c:
+   ,c
 )
 assert v3.a == 0
 assert v3.b == 5
 assert v3.c == 6
 ```
 
-The same syntax is used for enums to different objects. The hiearchy is not allowed
-when an ordered numbering is requested.
+The same syntax is used for enums to different objects. The hiearchy is not
+allowed when an ordered numbering is requested.
 
 

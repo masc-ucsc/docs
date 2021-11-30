@@ -146,28 +146,30 @@ graph LR
   a0 --> out[out]
 ```
 
-It is possible to balance the pipeline stages explicitly, the issue is that it is error prone because it requires to know exactly
-the number of cycles for `mul3`. This is were the `repipe` command becomes handy, it guarantees that all the paths from the inputs
-to every tuple entry has exactly the same pipeline depth. It does it by adding pipeline stages as needed. If it can not be done
-automatically like when there are loops, an error is generated and an explicit solution should be used.
+It is possible to balance the pipeline stages explicitly, the issue is that it
+is error prone because it requires to know exactly the number of cycles for
+`mul3`. This is were the `repipe` command becomes handy, it guarantees that all
+the paths from the inputs to every tuple entry has exactly the same pipeline
+depth. It does it by adding pipeline stages as needed. If it can not be done
+automatically like when there are loops, an error is generated and an explicit
+solution should be used.
 
 === "Explicitly added pipeline stages"
 
     ```
     x =# mul3(in1, in2)
     y = in1#[-3]
-    %out =# add1(a=x,b=y)  // connect in1 from -3 cycles
+    %out =# add1(a=x,b=y)    // connect in1 from -3 cycles
     ```
 
 === "repipe statement"
 
     ```
     x =# mul3(in1, in2)
-    z = repipe  (a=x,b=in1)  // add flops to match x and in1
-    %out =# add1(z)
+    repipe z = (in1, x)     // add flops to match x and in1
+    %out =# add1(a=x,b=z)
 
-    assert z.a == x // x is not repipelined
-    assert z.b == in1#[-3]
+    assert z == in1#[-3]
     ```
 
 The |> keyword (`|>`) connects functions, but guarantees that all the outputs have the same delay from the inputs. Effectively,
@@ -186,8 +188,10 @@ it adds a `repipe` command.
 === "With repipe"
 
     ```
-    let x =# repipe (a=mul3(in1, in2), b=in1)  // pipelined add.b input
-    %out  =# add(x)
+    let x =# mul3(in1, in2)
+    repipe z = (in2, x)
+    %out  =# add(a=x, b=z.in2)
+    assert x == z.x
 
     let x =# mul3(in1, in2)
     %out  =# add(a=x, b=in1)                   // non-pipelined add.b input
@@ -203,15 +207,9 @@ it adds a `repipe` command.
     %out  =# add(a=x, b=in1)                   // non-pipelined add.b input
     ```
 
-The `repipe` command arguments can add and remove pipeline stages. The default setting is to add pipeline stages to match, but
-those are future options:
+The `repipe` command arguments can add pipeline stages, not remove pipeline
+stages.
 
-```
-z = repipe (a=x,b=in1) to x  // same as a=x,b=in#[-3]
-z = repipe (a=x,b=in1) to 5  // same as a=x#[-2],b=in#[-5]
-z = repipe (a=x,b=in1) to 0  // try to create a combinational path
-z = repipe (x        ) to 2  // repipeline mul3 to have 2 stages
-```
 
 !!! Observation
 

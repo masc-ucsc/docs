@@ -88,7 +88,7 @@ var y = (
   ,inc1 = {|(self)->(self)| self.val = u32(self.val + 1) }
 )
 
-let my_log = debug {||
+debug let my_log = {||
   print "loging:"
   for i in $ {
     print " {}", i
@@ -109,7 +109,7 @@ simplifies instrospection since all the inputs are in `$` and all the outputs
 are in `%`.
 
 ```
-let fun = {|(in1,in2)->(out1,out2)
+let fun = {|(in1,in2)->(out1,out2)|
   assert in1 == $.in1 and in2 == $.in2
 
   out1 = in1 + $in1
@@ -226,7 +226,7 @@ to start the simulation/synthesis.
 reg r:u16 = 3 // reset sets r to 3
 r = 2         // non-reset assignment
 
-reg array:u16[] = {1,2,3,4}  // reset values
+reg array:u16[] = (1,2,3,4)  // reset values
 
 reg r2:u128 = conf.get("my_data.for.r2")
 
@@ -265,7 +265,7 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
 
 === "Verilog"
 
-    ```
+    ```verilog
     module inner(input z, input y, output a, output h);
       assign a =   y & z;
       assign h = !(y & z);
@@ -310,7 +310,7 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
     )
 
     pub let top2 = {|(a,b)->(c,d)|
-      let foo:inner_t = y=a,z=b
+      let foo:inner_t = (y=a,z=b)
       c = foo.a
       d = foo.h
     }
@@ -399,8 +399,8 @@ it can be error-prone.
       ,foo = {||
          bar = {|| puts "bar" }
          puts "mem.foo"
-         return bar=bar
-      )
+         return (bar=bar)
+      }
     )
     b = 3
 
@@ -432,8 +432,8 @@ it can be error-prone.
       ,foo = {|()|                    // implicit self 
          bar = {|()| puts "bar" }
          puts "mem.foo"
-         return bar=bar
-      )
+         return (bar=bar)
+      }
     )
     b = 3
 
@@ -471,7 +471,7 @@ type base = (
   ,pub var fun1 = {|| 1 }         // catch all
   ,pub var fun2 = {|| 2 }         // catch all
   ,pub var fun3 = {|| 3 }         // catch all
-}
+)
 type ext extends base with (
   ,pub var fun1 =   {|(a,b)| 4 }  // overwrite allowed with extends
   ,pub var fun2 ++= {|a,b|   5 }  // append
@@ -480,7 +480,7 @@ type ext extends base with (
   ,pub var fun3 =   {||      8 } ++ base.fun3 // prepend
 )
 
-Var t:ext
+var t:ext
 
 // t.fun1 only has ext.fun1
 assert t.fun1(a=1,b=2) == 4

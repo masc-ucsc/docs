@@ -168,7 +168,7 @@ b = {|| return 2 }
 assert a equals {|| }
 assert a != b
 assert a equals b
-assert a not equals {|(x)| return 1 } // different arguments
+assert not (a equals {|(x)| return 1 }) // different arguments
 ```
 
 Some languages use an `is` keyword but Pyrope uses `does` or `equals` because
@@ -249,7 +249,7 @@ val = 300  // compile error, '300' overflows the maximum allowed value of 'val'
 val = 0x1F0@[0..<val.__ubits] // explicitly select bits to not overflow
 assert val == 240
 
-val := 0x1F0       // Drop bits from 0x1F0 to fit in maximum 'val' allowed bits
+wrap val = 0x1F0       // Drop bits from 0x1F0 to fit in maximum 'val' allowed bits
 assert val == 240
 
 val = u8(0x1F0)    // same
@@ -335,7 +335,7 @@ if cmd? {
 }else{ 
   y = y - x 
 }
-x:cmd.a := x  // use cmd.a type for x, and drop bits as needed
+wrap x:cmd.a = x  // use cmd.a type for x, and drop bits as needed
 y = cmd.b(y)  // typecast y to cmd.b type (this can add a mux)
 ```
 
@@ -428,7 +428,7 @@ type Say_hi_mixin = (
 
 type User = (
   ,var name:string
-  ,let set = {|mut (self,n:string)| self.name = n }
+  ,let set = {|(self,n:string)| self.name = n }
 )
 
 type Mixing_all = Say_mixin ++ Say_hi_mixin ++ User
@@ -460,13 +460,13 @@ An issue with mixin is when more than one tuple has the `set` method. If the
 tuples are concatenated with `...` and error is triggered, if the tuples are
 concatenated with `++` the methods are overrided when declared with `var`.
 Neither is the expected solution.  A smaller issue with mixins is that
-`comptime assert X implements Y` should be inserted when implementing an
+`comptime assert X extends Y` should be inserted when implementing an
 interface.
 
 
 Without supporting OOP, but providing a more familiar abstract or trait
-interface, Pyrope provides the `implements` keyword. It checks that the new
-type implements the functionality undefined and allows to use methods defined.
+interface, Pyrope provides the `extends` keyword. It checks that the new
+type extends the functionality undefined and allows to use methods defined.
 The constructor (`set`) can call the parent constructor with the `super` keyword.
 
 This is effectively a mixin with checks that some methods should be
@@ -475,14 +475,14 @@ implemented.
 ```
 type Shape = (
   ,name:string
-  ,area          = {|    (self,     )->:i32  |}
-  ,increase_size = {|mut (self,_:i12)->(self)|} // same as {|mut| assert $1:i12}
-  ,set           = {|mut name| self.name = name }
+  ,area          = {|(self,     )->:i32  |}
+  ,increase_size = {|(self,_:i12)->(self)|}
+  ,set           = {|name| self.name = name }
 )
 
-type Circle = implements Shape with (
-  ,set = {|mut | super("circle") }
-  ,increase_size = {|mut (self,_:i12)| self.rad *= $1 }
+type Circle extends Shape with (
+  ,set = {|| super("circle") }
+  ,increase_size = {|(self,_:i12)| self.rad *= $1 }
   ,rad:i32
   ,area = {|(self) -> :i32   |
      let pi = import("math").pi
@@ -502,7 +502,7 @@ type Circle = (
      let pi = import("math").pi
      return pi * self.rad * self.rad
   }
-  ,increase_size = {|mut (self,_:i12)| self.rad *= $1 }
+  ,increase_size = {|(self,_:i12)| self.rad *= $1 }
 )
 comptime assert Circle does Shape
 ```
@@ -608,14 +608,13 @@ Any call to a function or tuple outside requires a prior `import` statement.
 
 ```
 // file: src/my_fun.prp
-pub fun1    = {|a,b|  }
-pub fun2    = {|a|
-     pub inside = {|| }
-  }
+pub let fun1    = {|a,b|  }
+pub let fun2    = {|a|
+  pub let inside = {|| }
 }
-pub another = {|a|  }
+pub let another = {|a|  }
 
-pub mytup = (
+pub let mytup = (
   ,call = {|| puts "call called" }
 )
 ```
@@ -827,7 +826,7 @@ because it can be used to initialize objects.
 ```
 var f1:XXX = 3,2
 var f2:XXX = XXX(3,2)
-Var f3:XXX
+var f3:XXX
 
 f3 = 3,2
 assert f3 == f2 == f1
@@ -846,9 +845,9 @@ type some_obj = (
   ,a2 = (
     ,get={|| self._val + 100 }       // getter
     ,_val:u32                        // hidden field
-    ,set={|mut x| self._val = x+1 }  // setter
+    ,set={|x| self._val = x+1 }  // setter
   )
-  ,set = {|mut a,b|
+  ,set = {|a,b|
     self.a1      = a
     self.a2._val = b
   }
