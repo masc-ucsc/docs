@@ -85,17 +85,36 @@ control statements (`return`, `break`, `continue`).
 
 ## Scope
 
-Scopes are delimited by `{` and `}`. Pyrope has scopes and lambdas. The scopes
-are used by statements like `for` and `if`, the lambdas are a function
-declarations.
+A scope is a sequence of statements delimited by `{` and `}`. The functionality
+is the same as in other languages. Variables can be declared within the scope
+boundary. 
 
 
-Scopes allow declaring new variables. New variable declarations inside the
-scope are not visible outside it. Variable declaration shadowing is not allowed
-and a compiler error is generated.
+Scopes are different than lambdas or functions or modules. A lambda consist of
+a scope but it has several differences: Variables defined in upper scopes
+immutable copies, inputs and outputs could be constrained, and the `return`
+statements finish a lambda not a scope.
 
 
-Expressions can have multiple scopes, but they can not have side effects.
+The scopes are used by statements like `for` and `if`, the lambdas are a
+function declarations.
+
+
+The main features of scopes:
+
+* New variable declarations inside the scope are not visible outside it. 
+
+* Variable declaration shadowing is not allowed and a compiler error is generated.
+
+* Expressions can have multiple scopes, but they can not have side effects
+  besides debug statements.
+
+* When used in an expression or lambda, the last statement in the scope can be
+  an expression.
+
+* A expression scope, not lambda, can be terminated with the `break` statement
+  that can also return a value. A `return` statement terminates the lambda
+  scope, not the expression scope.
 
 ```
 {
@@ -104,7 +123,6 @@ Expressions can have multiple scopes, but they can not have side effects.
   {
     z = 10
     var x             // compile error, `x` shadows an upper scope
-
   }
   assert z == 10 
 }
@@ -117,6 +135,9 @@ let xx = {yy=1 ; 33}  // compile error, 'yy' has side effects
 if {let a=1+yy; 13<a} {
 
 }
+
+let z3 = 1 + { if true { break 3  } else { assert false } }
+assert z4 == 4
 ```
 
 ## Loop (`for`)
@@ -156,48 +177,56 @@ for i,index,key in b {
 }
 ```
 
-The `for` can also be used in an expression that allows building
-comprehensions to initialize arrays. To indicate the values to add in the
-comprehensions there are `continue` or `abort` statements.
+The `for` can also be used in an expression that allows building comprehensions
+to initialize arrays. To indicate the values to add in the comprehensions there
+are `continue`, `break`, or the last expression in the `for` scope.
 
 ```
-var c = for i in 0..<5 { i }           // compile error
+var c = for i in 0..<5 { var xx = i }  // compile error, no expression
 var c = for i in 0..<5 { continue i }
-assert c == (0,1,2,3,4)
+var d = for i in 0..<5 { i }
+var 2 = for i in 0..<5 { break i }
+assert c == (0,1,2,3,4) == d
+assert e == (0)
 ```
 
 
 ### Scope control (`break`, `continue`, `return`)
 
 
-A `return`
-statement exits or terminates the current lambda. The `break` statement exists or
-terminates the current scope. If the scope was used by another statement, the `break`
-exists the associated scope.
+A `return` statement exits or terminates the current lambda. The `break`
+statement exists or terminates the closest higher scope that belongs
+to an expression, a `for`, or a `while`. If neither is found, a compile
+error is generated.
 
 
-The `continue` starts to evaluate the current scope. When used in a `for`
-statement, the `continue` will perform the next loop iteration. In other
-statements, the statement will be re-evaluated and re-executed potentially
-creating a loop condition.
+The `continue` looks for the closest upper `for` or `while` scope. The
+`continue` will perform the next loop iteration. If the loop was in an
+expression (comprehension), the value in the continue is added to the
+comprehension result. If no upper loop is found, a compile error is generated.
+
 
 ```
 var total
 for a in 1..=10 {
   continue when a == 2
   total ++= a
-  break when a == 3      // exit for scope
+  break when a == 3    // exit for scope
 }
 assert total == (1,3)
+
+if true {
+  continue             // compile error, no upper loop scope
+}
 
 a = 3
 var total2
 if a>0 {
   total2 ++= a
-  break when a == 2  // exit if scope
+  break when a == 2    // exit if scope
   a = a - 1
   continue
-  assert false       // never executed
+  assert false         // never executed
 }
 assert total2 == (3,2)
 ```
@@ -221,10 +250,6 @@ v = if total[0] == 11 {
 assert v == 4
 ```
 
-The scope has a `break` when the last statement in the scope is an expression. If
-the return value is not the last expression in the scope, the `break` statement
-should be used. Notice that a `return` statement will exit the lambda not the
-current scope.
 
 ## defer 
 
@@ -353,67 +378,72 @@ if runtime == 1 comptime {
 }
 ```
 
-## Delay to next cycle (`step`/`yield`)
+## Test only (`step`/`waitfor`)
 
-Both `step` and `yield` break down the program in the statements before and after. The
-statements after the `step`/`yield` statement will be executed in future cycles.
+`test` code blocks are allowed to use special statements not available outside
+testing blocks:
 
-The difference is that `step` has the number of cycles to wait, and the `yield` has the condition
-that must be satisfied to continue. In a way, both build a small state machine.
 
+* `step [ncycles]` advances the simulation for a number of cycles. The local variables
+will preserve the value, the inputs may change value.
+
+* `waitfor condition` is a syntax sugar to wait for a condition to be true.
 
 === "`step`"
 
     ```
-    a = 1 + $input
-    puts "printed every cycle input={}", a
-    step 1
-    puts "also every cycle a={}",a  // printed on cycle later
-    ```
-
-=== "custom FSM version"
-
-    ```
-    a = 1 + $input
-    puts "printed every cycle input={}", a
-
-    if #step_cycle {
-      puts "also every cycle a={}",#step_a
+    test "wait 1 cycle" {
+      let a = 1 + $input
+      puts "printed every cycle input={}", a
+      step 1
+      puts "also every cycle a={}",a  // printed on cycle later
     }
-    #step_a      = a
-    #step_cycle  = true
     ```
 
-The `yield` has a slightly different FSM with a supporting FIFO structure.
-Unlike the `step`, the `yield` is potentially unconstrained. This is why the
-`yield` must also provide the maximum number of outstanding waiting
-conditions.
+=== "synthesizable equivalent"
 
-=== "`yield`"
+    ```
+    test "wait 1 cycle" {
+      {
+        pub let a = 1 + $input
+        puts "printed every cycle input={}", a
+      } #> {
+        puts "also every cycle a={}",a  // printed on cycle later
+      }
+    }
+    ```
+
+The `waitfor` command is equivalent to a `while` with a `step`.
+
+=== "`waitfor`"
 
     ```
     total = 3
-    yield 5, a_cond  // wait until a_cond is true
+
+    waitfor a_cond  // wait until a_cond is true
+
     assert total == 3 and a_cond
     ```
 
-=== "custom FSM version"
+=== "equivalent Pyrope"
 
     ```
     total = 3
-    if a_cond {
-      local_total = #fifo.pop()
-      assert local_total == 3
+
+    while !a_cond {
+      step
     }
-    #fifo.push(total)
+
+    assert total == 3 and a_cond
     ```
 
-Currently, the `yield` and `step` statements can not be used in loop constructs.
+The main reason for using the `step` is that the equivalent `#>` does not work
+in loops.
 
-## try
-
-Reserved for fluid
 
 ## while
 
-Reserved for future use with HLS
+`while cond { [stmts]+ }` is a typical while loop found in most programming
+languages.  The only different is that like with loops, the while must be fully
+unrolled at compilation time.
+

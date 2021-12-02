@@ -303,7 +303,7 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
         self.z = z
         self.y = y
       }
-      ,always_after = {
+      ,always_after = {||
         self.a =   self.y & self.z
         self.h = !(self.y & self.z)
       }
@@ -384,6 +384,19 @@ assert counter.val == 20
 `self` is an input and/or output but also a reserved word. It could be a tuple
 first input argument or the first output argument
 
+!!!NOTE
+    To avoid verbose `self` in methods, the compiler automatically inserts a
+    `self` as the first entry in the input tuple if the `self` variable is ever
+    read in the method. Similartly, it inserts in the output tuple if it is
+    every written in the method.
+
+    ```
+    // equivalent code due to automatic `self` insertion
+    let fun1 = {|(self,a)->(self)| self.foo = self.bar + a}
+    let fun2 = {|(a     )->(self)| self.foo = self.bar + a}
+    let fun3 = {|(self,a)->()    | self.foo = self.bar + a}
+    let fun4 = {|(a     )->()    | self.foo = self.bar + a}
+    ```
 
 ## Arguments
 

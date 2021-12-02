@@ -80,7 +80,7 @@ constrains from the type system. Pyrope type system constructs to handle types:
 
 * `a does b`: Checks 'a' is a superset or equal to 'b'. In the future, the
   unicode character "\u02287" could be used as an alternative to `does` (`a`
-&#8839 `b`). The 
+&#8839 `b`).
 
 * `a:b` is equivalent to `a does b` for type check, but it is also used by type
   synthesis.

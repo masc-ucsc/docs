@@ -95,7 +95,7 @@ called every cycle. As expected, `reg` is a mutable.
 
 All types of declarations (`let`, `var`, `reg`) can have a `pub` before. This
 is used to indicate the the declaration is public and hence visible outside the
-scope defined. Section (typesystem)[07-typesystem.md] has more details on how
+scope defined. Section [typesystem](07-typesystem.md) has more details on how
 to `import` or `punch` a declaration across files.
 
 ## Basic types
@@ -593,7 +593,7 @@ x2 = "world"
 comptime assert x2? and x2?.v1 == "world" and x2.v1 == "world"
 ```
 
-!!!!NOTE
+!!!NOTE
     The Pyrope grammar does not allow for an optional without type check like `x = foo:? + 3`
     because it is ambiguous.
 
