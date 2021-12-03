@@ -61,10 +61,11 @@ can not allow module hosting because it is assigned to a normal variable.
   provided, the `%` output tuple can be used. `()` indicates no outputs.
 
 + `COND` is the condition under which this statement is valid. The `COND` can
-  use the inputs AND outputs to evaluate. If the `COND` evaluates false
-  statement is not evaluated. When (explicit method
-  overload)[07-typesystem.md#explicit-function-overloading] is used a false
-  `COND` means that the next statement should be tried.
+  use the inputs, outputs and `self` to evaluate. If the outputs are used in
+  the `COND`, the module must be immutable. This means that the method is
+  called when the condition could evaluate true depending on its execution, but
+  being immutable there are no side-effects. The
+  (overload)[07-typesystem.md#overloading] section has more details.
 
 ```
 var add
@@ -470,7 +471,14 @@ it can be error-prone.
     b.foo()       // prints "fun.foo"
     ```
 
-## Method overloading
+## Overloading
+
+Pyrope does not have a global scope for defined functions/lambdas. Intead all
+the function/lambda/method must reside in a local variable or must be
+"imported". Nevertheless, a local variable can have many functions. It is
+similar to languages like Odin that calls this systems explicit parametric
+polymorphism. This section explains how is the overloading selection in this
+case.
 
 When overloading, methods are typically added at the end `++=` of the tuple.
 This means that it is NOT overwriting an existing functionality, but providing
@@ -516,40 +524,48 @@ type x extends base with (
 )
 ```
 
-To allow overloading the base method must be declared as `var`. The result is
-that API methods should have a `pub var` API.
+To allow overloading the base method must be declared as `pub var`. `pub` to
+indicate that the API is public/visible, and `var` to indicate that it can be
+overloaded.
 
 
-## Overloading call order
+By concatenating lambdas to a variable, we effectively create an unnamed tuple
+with multiple entries. Since all the variables are tuples of size one too, the
+following rules apply to any function/lambda/method call:
+
+* If the caller uses "named arguments", pick the all the modules that has an
+  exact match in the named tuple and the types are compatible[^2]. If the
+  module used output has a known type (no output use is a known type too), the
+  output type is used in the match. If none found, apply the "unnamed
+  arguments" rule.
+
+* If the caller uses "unnamed arguments", look for all the modules that has the
+  same number of arguments and where each argument type is compatible[^2]. If
+  the module used output has a known type (no output use is a known type too),
+  the output type is used in the match. If none found, then look for a module
+  without type constrains constrains.
+
+* Once a list of ordered modules are found, evaluate the `COND`. If the method
+  is immutable, the `COND` can include the output result and/or `self`. In this
+  case the we call the method and then evaluate the `COND`. If a `COND` is
+  comptime true (or no `COND`), stop selecting additional modules. If `COND` is
+  comptime false remove from list and continue. All the selected modules will
+  be executed, but the output will be selected based in priority order based on
+  the `COND` result.
 
 
-Multiple modules can be added to the same variable, effectively creating an
-unnamed tuple with a module per tuple entry. When calling the tuple the
-following rule applies:
 
-
-* If the caller uses "unnamed arguments", look for the first entry has the same
-  number of arguments and where each argument type is compatible[^2]. If none
-  found, then look for a function without argument constrains.
-
-* If the caller uses "named arguments", pick the first module that has an exact
-  match in the named tuple and the types are compatible. If none found, apply
-  the "unnamed arguments" rule.
-
-* Once a module is found, evaluate the `COND`. If the `COND` is not comptime,
-  call the module and look for the next module that may also satisfy the
-  arguments constrains. If a `COND` is comptime true (or no `COND`), stop
-  selecting additional modules. If `COND` is comptime false remove from list
-  and continue. All the selected modules will be executed, but the output will
-  be selected based in priority order based on the `COND` result.
-
+The previous rules imply that Pyrope has some type of dynamic dispatch. The
+types for the inputs and outputs must be known at compile time (static
+dispatch) but the `where` condition may be known at run-time as long as the
+module is immutable.
 
 
 [2]: The type match is addressed in the [07-typesystem](07-typesystem.md)
 section.
 
 
-For unnamed argument calls:
+For untyped unnamed argument calls:
 
 ```
 var fun_list = {|(a,b)| return a+b}
@@ -571,7 +587,7 @@ fun_list = {|(a,b)| return 200} ++ fun_list
 assert fun_list(1,2) == 200
 ```
 
-For named argument calls:
+For untyped named argument calls:
 
 ```
 var fun = {|(a,b)| return a+b+100 }
@@ -580,6 +596,24 @@ var fun = {|(a,b)| return a+b+100 }
 assert fun(a=1,b=2) == 103
 assert fun(x=1,y=2) == 203
 assert fun(  1,  2) == 103  // first in list
+```
+
+For typed calls:
+
+```
+var fun = {|(a:int,b:string)->:bool  | return true    }
+fun ++=   {|(a:int,b:int   )->:bool  | return false   }
+fun ++=   {|(a:int,b:int   )->:string| return "hello" }
+
+let a = fun(3,hello)
+assert a == true
+
+let b = fun(3,300)        // first in list return bool
+assert b == false
+
+let c:int = fun(3,300)    // compile error, no method fulfills constrains
+let c:string = fun(3,300)
+assert c == "hello"
 ```
 
 For conditional argument calls:

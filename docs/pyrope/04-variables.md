@@ -160,10 +160,9 @@ declaration. Functions are immutable objects.
 
 ### Range
 
-Ranges are very useful in hardware description languages to select bits, but
-they are integrated all over the language. It is a type by itself that can be
-converted to a single Integer. The range can also be seen as one hot
-encoding of a set of integers.
+Ranges are very useful in hardware description languages to select bits. A
+range is a type can be converted to a single Integer. It can also be seen as
+one hot encoding of a set of integers.
 
 
 They are 3 ways to specify a closed range:
@@ -200,6 +199,16 @@ let c = 1..=3
 assert int(c) == 0b1110
 assert range(0b01_1100) == 2..=4
 ```
+
+As mentioned, a range is a set of the one hot encodings. As such, there is no
+order, but in Pyrope, ranges always have the order from smallest to largest.
+The `by expr` can be added to indicate a step or step function. This is only
+possible when both begin and end of range are fully specified.
+
+```
+assert (0..<30 by 10) == (0,10,20)
+```
+
 
 ### String
 

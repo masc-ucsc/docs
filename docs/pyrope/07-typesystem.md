@@ -836,18 +836,18 @@ assert f3 == f2 == f1
 Encapsulation can be achieved with methods, but to have a more familiar
 getter/setter syntax, it is possible to create a tuple where the
 initialization is the setter (`set`) and the default method is the getter
-(`get`). 
+(`get`).
 
 
 ```
 type some_obj = (
   ,a1:string
-  ,a2 = (
-    ,get={|| self._val + 100 }       // getter
+  ,pub a2 = (
+    ,pub var get={|| self._val + 100 }       // getter
     ,_val:u32                        // hidden field
     ,set={|x| self._val = x+1 }  // setter
   )
-  ,set = {|a,b|
+  ,pub var set = {|a,b|
     self.a1      = a
     self.a2._val = b
   }
@@ -861,3 +861,29 @@ x.a2 = 5
 assert x.a2.get == 106
 ```
 
+
+The getter is a method, which means that the default
+[overloading](06-functions.md#Overloading) apply. This allows to customize by
+return type:
+
+```
+
+type showcase = (
+  ,pub var v:int
+  ,pub var get ++= {|(self)->(self,:string) where self.i>100|
+    return "this is a big number" ++ string(v)
+  }
+  ,pub var get ++= {|(self)->(self,:int)|
+    return v
+  }
+)
+
+var s:showcase
+s.v = 3
+let foo:string = s // compile error, no matching getter
+s.v = 100
+
+let foo:string = s // compile error, no matching getter
+
+
+```
