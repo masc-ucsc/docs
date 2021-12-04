@@ -62,11 +62,29 @@ assert a == 3, "the same error" when   cond
 verify a == 0, "the same error" unless cond
 ```
 
+
 The recommendation is to write as many `assert` and `assume` as possible. If
 something can not happen, writing the `assume` has the advantage of allowing
 the synthesis tool to generate more efficient code.
 
 In a way, most type checks have equivalent `comptime assert` checks.
+
+## Asserts and reset
+
+In hardware is common to have undefined state during the reset period. Ideally
+asserts should not be active during reset periods unless explicitly stated. The
+problem is that it may not clear what is a reset period.
+
+
+Pyrope by default resets all the variables, registers, and memories to zero,
+but the reset logic could take several cycles to reset a memory. As such,
+disabling the assertion when indexing arrays may be the best solution.
+
+```
+reg memory:u33[] = {1,2,3} // may take cycles to load this contents
+
+assert memory[0] == 1 unless memory.reset 
+```
 
 # Coverage
 

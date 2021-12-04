@@ -203,13 +203,21 @@ The available puts/print arguments:
 
 
 The expression evaluation order is important if the elements in the expression
-can have side effects. Pyrope does not allow expressions to have side effects
-except `debug` statements like `puts`.
+can have side effects. Pyrope constrains the expressions so that no matter the
+evaluation order, the result is the same. This constrain does not apply to
+debug `debug` statements like `puts`.
 
 
 As reference languages like C++11 do not have a defined order of evaluation
 for all types of expressions. Calling `call1() + call2()` is not defined.
 Either `call1()` first or `call2()` first.
+
+
+To guarantee that the evaluation order has no side-effects, only one function
+call or code scope in the expression can have a side effect. The side effect
+can not affect any of the variables in the expression. This is a difficult to
+prove, so the compiler only allows one code scope or function call unless
+explicit order is in the expression.
 
 
 In many languages, the evaluation order is defined for logical expressions.
@@ -219,6 +227,7 @@ In Pascal, there is an `and/or` and `and_then/or_else` (conditional). In Rust
 `&/|` and `&&/||` (conditional). In Kotlin `&&/||` and `and/or` (conditional).
 Pyrope uses has the `and/or` without short-circuit, and the `and_then/or_else`
 with explicit short-circuit.
+
 
 
 For most expressions, Pyrope is more restrictive because it wants to be a fully

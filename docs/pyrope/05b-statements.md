@@ -106,8 +106,9 @@ The main features of scopes:
 
 * Variable declaration shadowing is not allowed and a compiler error is generated.
 
-* Expressions can have multiple scopes, but they can not have side effects
-  besides debug statements.
+* Expressions can have multiple scopes, but the whole expression only can have
+  one function call with side-effects. The reason is that if there are 2 scopes
+  with side effects, the order called can have different results.
 
 * When used in an expression or lambda, the last statement in the scope can be
   an expression.

@@ -160,12 +160,8 @@ declaration. Functions are immutable objects.
 
 ### Range
 
-Ranges are very useful in hardware description languages to select bits. A
-range is a type can be converted to a single Integer. It can also be seen as
-one hot encoding of a set of integers.
-
-
-They are 3 ways to specify a closed range:
+Ranges are very useful in hardware description languages to select bits. They
+are 3 ways to specify a closed range:
 
 * `first..=last`: Range from first to the last element, both included
 * `first..<last`: Range from first to last, but the last element is not included
@@ -200,15 +196,20 @@ assert int(c) == 0b1110
 assert range(0b01_1100) == 2..=4
 ```
 
-As mentioned, a range is a set of the one hot encodings. As such, there is no
+
+A closed range can be converted to a single integer or to a tuple. A range
+encoded as an integer is a set of the one hot encodings. As such, there is no
 order, but in Pyrope, ranges always have the order from smallest to largest.
 The `by expr` can be added to indicate a step or step function. This is only
 possible when both begin and end of range are fully specified.
 
-```
-assert (0..<30 by 10) == (0,10,20)
-```
 
+```
+assert (0..<30 by 10) == (0,10,20) // ranges and tuples can be directly combined
+assert (1..=3) ++ 4 == (1,2,3,4)   // tuple and range ops become a tuple
+assert 1..=3 == (1,2,3)
+assert (1..=3)@[] == 0b1110       // convert range to integer with @[]
+```
 
 ### String
 
@@ -221,6 +222,15 @@ a = 'cad'              // c is 0x63, a is 0x61, and d is 0x64
 b = 0x64_61_63
 assert a == string(b)  // typecast number to string
 assert int(a) == b     // typecast string to number
+assert a@[] == b       // typecast string to number
+```
+
+Like ranges, strings can also be seen as a tuple, and when tuple operations are
+performed they are converted to a tuple.
+
+```
+assert "hello" == ('h','e','l','l','o')
+assert "h" ++ "ell" == ('h','e','l','l') == "hell"
 ```
 
 ## comptime

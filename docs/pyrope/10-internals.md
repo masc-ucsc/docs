@@ -345,6 +345,16 @@ node:
     - Track the array accesses for memory/array Lgraph generation
 
 
+No previous transformation could break the type checks. This means that the
+copy propagation, and final lgraph translation the type checks are respected.
+
+* All the entries on the comparator have the same type (`lhs equals rhs`)
+
+* Left side assignments respect the assigned type (`lhs does rhs`)
+
+* Any explicit type on any expression should respect the type (`var does type`)
+
+
 The previous algorithm describes the semantics, the implementation may be
 different.  For example, to parallelize the algorithm, each LNAST tree can be
 processed locally, and then a global top pass is performed.
@@ -352,4 +362,269 @@ processed locally, and then a global top pass is performed.
 
 [^1]: Narrowing is based on "ABCD: eliminating array bounds checks on demand"
   by Ras Bodik et al.
+
+
+## Programming Warts
+
+In programming languages, warts are small code fragments that have unexpected
+or not great behavior. Every language has its warts. This section tries to list
+the Pyrope main ones to address and learn more about the language.
+
+
+### Shadowing
+
+Pyrope does not allow shadowing, but you can still have it with tuples
+
+```
+let fun = {|| 1 }
+
+let tup = (
+  ,let fun = {|| 2}
+
+  ,let code = {||
+     assert self.fun() == 2
+     assert fun() == 1
+  }
+)
+```
+
+### Closures
+
+Closures capture state. In Pyrope everything is by value, so capture variables.
+By default, all the upper scope variables are captured, but you can not declare
+new variables in the new lambda that shadow the captures. You must restrict the
+capture list.
+
+```
+var x = 3
+
+let fun = {|()->:int|
+   assert x == 3
+   var x    // compile error. Shadow captured x
+   return 200
+}
+```
+
+Captured variables keep the declared type (`var`/`let`) but the change does not
+escape the local lambda.
+
+```
+var x = 3
+let y = 10
+
+let fun = {|()->:int|
+   assert x == 3 and y == 10
+   x = 10000
+   //y = 100              // compile error, y is immutable
+   return x+200
+}
+
+assert x == 3
+
+let z = fun()
+assert z == 10200
+assert x == 3
+```
+
+Capture variables pass the value at capture time:
+
+```
+var x = 3
+var y = 10
+
+let fun2 = {|[y]()->:int| // [] means capture just y
+  var x  = 200
+  return y + x
+}
+x = 1000
+assert fun2() == 203
+```
+
+### always blocks
+
+Tuples can have several always blocks. This can lead to confusion in the
+evaluation order.
+
+
+```
+var x = (
+  ,var v:int
+  ,var always_after = {||
+    self.v = 1
+  }
+)
+
+var y = x ++ (
+  ,var always_after = {||
+    self.v = 2
+  }
+)
+
+var z = (
+  ,var always_after = {||
+    self.v = 3
+  }
+) ++ x
+
+assert x.v == 1
+assert y.v == 2
+assert z.v == 1 // self.v = 3 executes before self.v = 1
+```
+
+### Unknowns
+
+
+Pyrope respects the same semantics as Verilog with unknowns. As such, there can
+be many un-expected behaviors in these cases. The difference is that in Pyrope
+everything is initialized and unknowns (`0sb?`) can happen only when explicitly
+enabled.
+
+
+The compare respects Verilog semantics. This means that it is true if and only
+if all the possible values are true, which is quite counter-intuitive bahavior
+for programmers not used to 4 value logic.
+
+```
+assert !(0sb? == 0)
+assert !(0sb? != 0)
+assert !(0sb? == 0sb?)
+assert !(0sb? != 0sb?)
+```
+
+There is no way to known at run-time if a value is unknown, but a compile trick
+can work. The reason is that integers can be converted to strings in a C++ API
+
+```
+var x = 0sb10?
+let str = __to_string(x) // only works for compile time constants
+assert x == "0sb10?"
+```
+
+### Initialization
+
+Registers and variables are initialized to zero by default, but the reset logic
+can change to a more traditional Verilog with uninitialized (`0sb?`) contents.
+
+
+```
+reg r_ver = (
+  ,always_reset = {||} // do nothing
+)
+reg r
+var v
+
+assert v == 0 and r == 0
+
+assert !(r_ver != 0)    // 0sb? != 0 evaluates false
+assert !(r_ver == 0)    // 0sb? == 0 evaluates false too
+assert !(r_ver != 0sb?) // 0sb? != 0sb? evaluates false too
+assert !(r_ver == 0sb?) // 0sb? == 0sb? evaluates false too
+
+assert r_ver == something unless r_ver.reset  // do not check during reset
+```
+
+
+The reset for arrays may take several cycles to take effect, this can
+result to unexpected results during the reset period.
+
+```
+var arr:[] = {0,1,2,3,4,5,6,7}
+
+assert arr[0] == 0 and arr[7] == 7 // always works
+
+reg mem:[] = {0,1,2,3,4,5,6,7}
+
+assert mem[7] == 7 // FAIL, this may fail during reset
+assert mem[7] == 7 unless mem.reset // OK
+```
+
+
+Registers have reset code, which create un-expected code:
+
+```
+reg v:u32 = 33
+
+assert v == 33 // this will fail after reset
+
+v = 1
+```
+
+### Unexpected calls
+
+
+```
+let fun = {|| puts "here" ; return 3}
+let have = {|f| f() }
+
+let x = have fun   // same as have(fun), nothing printed
+assert x == 3      // prints "here"
+
+let y = have fun() // same as have(fun()), prints "here"
+assert x == 3      // nothing printed
+```
+
+### Unexpected return
+
+
+Return has an optional exit value
+
+```
+let fun1 = {|()->(out)|
+  out = 100
+  return {
+    3
+  }
+}
+
+let fun2 = {|()->(out)|
+  out = 100
+  return 
+  {  // code never reached
+    3
+  }
+}
+
+assert fun1() == 3
+assert fun2() == 100
+
+```
+
+### `if` is an expression
+
+Since `if`, `for`, `match` are expressions, you can build some strange code:
+
+```
+if if x == 3 { true }else{ false } {
+  puts "x is 3"
+}
+```
+
+### Legal but weird
+
+The variable `http` has a type `8080` followed by a comment
+(`//masc.soe.ucsc.edu`)
+
+```
+let http:8080//masc.soe.ucsc.edu
+
+assert http == 8080
+```
+
+
+There is no `--` operator in Pyrope, but there is a `-` which can be followed
+by a negative number `-3`.
+
+```
+let v = (3)--3
+assert v == 6
+```
+
+
+A lambda can return an empty lambda, and then both get called in a single
+useless line of code (spaces are not needed).
+
+```
+{|| {||} }()()  // does nothing
+```
+
 
