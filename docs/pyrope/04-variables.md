@@ -527,15 +527,16 @@ i = a == 3 <= b == d
 assert i == (a==3 and 3<=b and b == d)
 ```
 
-## Valid or optional
+## Optional
 
-Pyrope has support to handle valids. The `?` is used by several languages to
-handle optional or null pointer references. The `?` is used to check if there
-is valid data or a null pointer.
+The `?` is used by several languages to handle optional or null pointer
+references. In non hardware languages, `?` is used to check if there is valid
+data or a null pointer.
+
 
 Pyrope has no pointers, but the same syntax is used for handle "valid" data.
 Instead the data is left to behave like without the optional, but there is a
-new "valid" field associated with the tuple.
+new "valid" field associated with each tuple entry.
 
 
 ```

@@ -8,8 +8,9 @@ Pyrope is a modern hardware description language, with these focus points:
 * Fast parallel and incremental elaboration 
 * Modern and concise language
 * Avoiding hardware specific artifacts
-    - Allows hierarchical [calls](00-hwdesign.md#hierarchy-calls)
-    - Support [pipelining](00-hwdesign.md#pipelining) constructs
+    - Allows optional hierarchical [calls](00-hwdesign.md#instantiation-vs-execution)
+    - Supports [instantiation](00-hwdesign.md#instantiation-vs-execution) optimization with typical software syntax
+    - Supports [pipelining](00-hwdesign.md#pipelining) constructs
     - No mismatch [simulation vs synthesis](00-hwdesign.md#simulation-vs-synthesis)
     - Single [reset](00-hwdesign.md#reset) mechanism
     - Avoid [non-blocking](00-hwdesign.md#non-blocking-assignments) assignments

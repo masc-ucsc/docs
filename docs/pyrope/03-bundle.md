@@ -30,14 +30,17 @@ assert a.0.c     == 2
 assert a.0.1     == 2
 ```
 
-There is introspection to check for an existing field with the `has` operator.
+There is introspection to check for an existing field with the `has` and `has
+no` operators.
 
 ```
 let a = (foo = 3)
 assert a has 'foo'
 assert !(a has 'bar')
+assert a has no 'bar' // "has no" is the opposite of "has"
 assert a has 0
 assert !(a has 1)
+assert a has no 1
 ```
 
 Tuple named fields can have a default type and or contents:
@@ -79,6 +82,11 @@ assert a.0 == b.0 == c.0 == d.0
 assert a!=b
 assert b == c == d
 ```
+
+Tuple can have attributes associated to each entry. These attributes start with
+a double underscore `__attr_sample`. A tuple with a single entry element is
+called a scalar. A tuple with a single element and no attributes is called a
+trivial scalar.
 
 
 Tuples are used in many places:
@@ -158,13 +166,12 @@ if index<3 {
 }
 ```
 
-Pyrope compiler will allow an index of an array/tuple with unknowns or invalid.
-If the index is a `nil` a simulation error is generated. If the index has
-unknown bits `?` but the compiler can not know, the result will have unknowns
-(see [internals](10-internals.md) for more details). Notice that the only way
-to have unknowns is that somewhere else a variable or a memory was explicitly
-initialized with unknowns. The default initialization in Pyrope is 0, not
-unknown like Verilog.
+Pyrope compiler will allow an index of an array/tuple with unknowns. If the
+index has unknown bits (`0sb?` or `0b1?0`) but the compiler can not know, the
+result will have unknowns (see [internals](10-internals.md) for more details).
+Notice that the only way to have unknowns is that somewhere else a variable or
+a memory was explicitly initialized with unknowns. The default initialization
+in Pyrope is 0, not unknown like Verilog.
 
 
 ## Attributes/Fields

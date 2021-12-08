@@ -192,19 +192,34 @@ assert e == (0)
 ```
 
 
-### Scope control (`break`, `continue`, `return`)
+### Scope control
+
+Scope control statements allow to change the control flow for `lambdas`, `for`,
+and `while` statements. When the control flow is changed, some allow scope
+control allow to return a value (`ret`, `last`, `next`) and others do not
+(`return`, `break`, `continue`).
 
 
-A `return` statement exits or terminates the current lambda. The `break`
-statement exists or terminates the closest higher scope that belongs
-to an expression, a `for`, or a `while`. If neither is found, a compile
-error is generated.
+* `return` exits or terminates the current lambda. The current output variables
+  are provided as the `lambda` output.
 
+* `ret` behaves like `return` but requires a tuple. The tuple is the returned
+  value, the output variables are not used. When a `method` calls `ret` the
+  `self` is implicit.
 
-The `continue` looks for the closest upper `for` or `while` scope. The
-`continue` will perform the next loop iteration. If the loop was in an
-expression (comprehension), the value in the continue is added to the
-comprehension result. If no upper loop is found, a compile error is generated.
+* `break` terminates the closest higher scope that belongs to an expression, a
+  `for`, or a `while`. If neither is found, a compile error is generated.
+
+* `last` behaves like `break` but a return tuple is provided. This is may be
+  needed when the `for` or `while` is used in an expression.
+
+* `continue` looks for the closest upper `for` or `while` scope. The `continue`
+  will perform the next loop iteration. If no upper loop is found, a compile
+  error is generated.
+
+* `next` behaves like the `continue` but a tuple is provided. The `next` is
+  used with comprehensions, and the tuple provided is added to the
+  comprehension result.
 
 
 ```
@@ -232,25 +247,19 @@ if a>0 {
 assert total2 == (3,2)
 ```
 
-In addition, the three statements can have a tuple. This is only useful when
+`ret`, `last`, and `next` statements can have a tuple. This is only useful when
 the statements are used in an expression.
 
 ```
 total = for i in 1..=9 {
-  continue i+10 when i < 3
-  break    i+20 when i > 5
+  next  i+10 when i < 3
+  last  i+20 when i > 5
 }
 assert total == (11, 12, 3, 4, 5, 26)
 
-v = if total[0] == 11 {
-  break 4 
-  assert false
-} else { 
-  0 
-}
+let v = {|| ret 4 }
 assert v == 4
 ```
-
 
 ## defer 
 

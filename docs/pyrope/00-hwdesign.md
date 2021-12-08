@@ -8,7 +8,7 @@ to be high level to explain the differences without going to syntactic details
 in different languages.
 
 
-## FPGA/ASIC vs CPU
+## No Von Neumann
 
 
 Most software programming languages are built to program Von Neumann CPUs. As
@@ -178,61 +178,72 @@ inefficient.
 HDLs (Hardware Description Languages) do not have a Von Neumann model. The
 currently most popular HDL (Verilog) is a data flow language that does not have
 a global program counter like Von Neumann languages. Instead, the programmer
-specifies a hierarchy of modules[^5], and then each module/function
-instantiated is executed every cycle. In Verilog, the execution of each module
+specifies a hierarchy of modules[^5]. In Verilog, the execution of each module
 has a complicated set of options, but from a high level point of view, a set of
-statements are executed in each module. The module executes forever being
-called once each cycle.
+statements are executed in each module. The module executes forever because
+it is a set of gates instantiated in the hardware design.
 
 
-The rest of the document assumes an HDL model and goes over their generic
-characteristics without going to specific language syntax.
-
-
-[^5]: Verilog modules could be seen as functions in a software language.
-
-## HDLs
-
-HDLs different from software languages in that they specify a tree hierarchy of
-modules, and then provide some syntax on how each module executes every cycle.
-
-
-All software languages have a "main" or starting point of execution. The "main" may
-call several functions which can iterate in loops, and the program finishes execution
-when the main finishes. Most HDLs are different.
-
-
-In HDLs the there is a "top" or entry point that provides a tree-like structure
-of module instantiations. Each module has a set of statements that execute
-every cycle. It resembles a bit of an actor model. An actor is a module with
-individual execution, but there are many differences like the tree structure of
-instantiations, and the incapacity to spawn new actors. Maybe a more important
-key concept of actors is the blocking of message reads.  Although it is
-possible to build an HLS around the actor model, popular HDLs do not.
-
+[^5]: Verilog modules could be seen as functions in a software language that
+  can be instantiated in one or more places. The instantiation point sets a
+  hierarhy of modules.
 
 
 ## Hardware artifacts
 
 
-In this document, a hardware artifact is a "strange" or "unexpected" behavior
-for a reasonable software programmer. It is not a lack of features in a language
-like not having recursion or not having type checking or some strange syntax.
-An artifact is some strange behavior different from the typical software
-languages.
+This section goes over several of the main hardware artifacts that tend to be
+exist in most HDLs independent of the syntax.
+
+
+### Instantiation vs Execution
+
+
+Hardware designers decide the gates to be instantiated[^5a] in the design while
+software designers tend to focus on the instruction executed. If a set of gates
+is rarely used, the hardware still has to instantiate them and their
+performance area impact is quite independent on the usage frequency. In
+software a set of rarely executed instructions have no performance impact. This
+is not the case in hardware. As such languages tend to build around
+"instantiation" more than traditional instruction "execution".
+
+
+[^5a]: Instantiation is the process of deciding which gates are fabricated or
+  mapped in a given hardware design. In an ASIC, it is the process of selecting
+  a set of gates that will be fabricated.
+
+
+Instantiation means that the designer explicitly indicates the set of gates or
+ciruit mapped to hardware. In the vast majority of HDLs (Verilog, CHISEl,
+pyRTL, VHDL...), the designer specifies a top level "module". Each module can
+have a set of gates and more instantiated sub-modules.
 
 
 
-### Hierarchy calls
+In "software" languages have a "main" or starting point of execution. The
+"main" executes or calls several functions depending on the data. The functions
+can iterate in loops, and the program finishes execution when the main
+finishes.
 
-In hardware, there is a "top" or function that represents the entry point, but the
-entry point is selected by some flags at compile time. It is not a language reserved
-keyword.
 
-In most HDLs like CHISEL and Verilog, the tree hierarchy is fixed. This makes
-sense from a hardware point of view[^6], but this means that a module can not
-be called inside a control flow statement. E.g: this code sequence is not what
-a software programmer may expect:
+In contrast, most HDLs differ from software languages in that they specify an
+instantiation tree hierarchy of modules, and then provide some syntax on how
+each module executes independently of the other modules. 
+
+
+In HDLs, the execution never ends and the modules run independently. It
+resembles a bit of an actor model. An actor is a module with individual
+execution, but there are many differences like the tree structure of
+instantiations, and the incapacity to spawn new actors. Although it is possible
+to build an HLS around the actor model without spawning capability, popular
+HDLs do not.
+
+
+In most HDLs, the instantiated tree hierarchy is fixed. This makes sense from a
+hardware point of view[^6], but this means that a module can not be called
+inside a control flow statement. A common mistake from designers learning HDLs
+is to conditionally call a module. E.g: this code sequence is not what a
+software programmer may expect:
 
 
 === "Problematic code"
@@ -246,12 +257,12 @@ a software programmer may expect:
     }
     ```
 
-=== "HLS possible solution"
+=== "Possible solution"
 
     ```pyrope
     var result
-    result1 = do_division(enable=some_opcode, a,b)
-    result2 = do_multiplication(enable=!some_opcodea,b)
+    result1 = do_division(a,b)
+    result2 = do_multiplication(a,b)
     if some_opcode {
       result = result1
     }else{
@@ -260,43 +271,49 @@ a software programmer may expect:
     ```
 
 
-A programmer will expect that the function do_division and do_multiplication will
-be instantiated, and called only if the some_opcode condition is true or false.
-In hardware, both modules will be instantiated. This means that the previous
-code sequence will instantiate both modules in the hierarchy. The challenge is
-that many HDLs do not allow such syntax unless the function is inlined and
-hence, no module is generated. The reason is that if some statement like a
-`print` is inside the do_division module, the programmer will not expect a
-print of the message unless the do_division is true. The fact that the module
-is always instantiated, and the module always executes breaks this expected
-assumption. This can be seen as a hardware artifact.
+A software programmer thinks about executing instructions. The previous syntax
+looks like execute or call `do_division` when `some_opcode` is true, but this
+is not possible to do in most HDLs because they are centered around
+instantiation, not execution. For synthesizable code, none of the most popular
+HDLs like Verilog, VHDL, CHISEL, pyRTL allow the instantiation of a module in a
+conditional. Some like Verilog have `functions` but those are inlined. They can
+be seen as a macro preprocessor that inserts the function statements when
+called.
 
 
-The solution to the hierarchy call artifact is that most HDLs tend to convert
-to explicitly call the functions all the time, and adding an enable if there
-is any side effect inside.
+HDLs force the designer to spicy the instantiation unconditionally, and then
+the `if` selects between the instantiations. Even though HDLs looks like they
+execute instructions, they do not, it is all about cell instantiation and how
+to connect those instances. The `if` is not a branch instruction, it is a multiplexor
+instantiation. The `do_division` is not a function call, is an instantiation of
+a circuit or module.
+
 
 !!! Artifact
 
     Function calls inside control flow statements are either not allowed or forced to be inlined.
 
-[^6]: new transistors can not be added at runtime.
+
+!!! Artifact
+
+    HDLs look like instruction execution but they are about circuit instantiation.
+
+[^6]: Transistors can not be added at runtime.
 
 ### Pipelining
 
 
-Each module function is called every cycle. Instantiated modules in the
-hierarchy tree are called every cycle. This could be seen as if the "top" or
-entry point is called each cycle. In a way, the whole program executes every
-cycle if we ignore the reset and initialization state. 
+Pipelining is the process of adding registers in combinational circuits to
+create smaller critical paths and hence higher frequency designs. It is
+essential to hardware design and there is not much related to it in software
+design flows.
 
 
-The artifact comes that calling a module or function that can return the results
-from previous cycle calls. To illustrate the problem, imagine a multiplier
-function (mult) that takes 1 cycle to produce the results, and the programmer
-has an assertion checking that it was a multiply. The result `c` is not the
-current cycle `a*b` but the last cycle `a` multiplied by the last cycle `b`. This
-is not what would be expected in a normal software API.
+To illustrate the problem, imagine a pipelined multiplier function (mult) that
+takes 1 cycle to produce the results, and the programmer has an assertion
+checking that it was a multiply. The result `c` is not the current cycle `a*b`
+but the last cycle `a` multiplied by the last cycle `b`. This is not what would
+be expected in a normal software API.
 
 
 === "Problematic code"
@@ -313,9 +330,25 @@ is not what would be expected in a normal software API.
     assert c == a#[-1] * b#[-1] // read last cycle #[-1] a and b
     ```
 
+If actors execution is somewhat similar to concurrent module instantiation
+execution, async/await is somewhat similar to pipelining. In async/await the
+results of a function is not available at the function return. In HDLs, there
+is no await and the results from previous cycles are output by the module
+instance. 
+
+
+
+Pipelining is not restricted to just function or module instantiations. A
+module itself can have a set of registers and different variables/wires have
+the results from different cycles. It is up to the designer to manage it, and
+it is one of the main sources of complexity of hardware design and
+verification.
+
+
 !!! Artifact
 
-    Function results can be from other cycles
+    Different variables or wires can have results from other cycles due to
+    pipelining.
 
 
 ### Simulation vs Synthesis

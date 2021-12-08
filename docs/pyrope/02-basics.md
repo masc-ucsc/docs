@@ -1,4 +1,4 @@
-# Basics
+# Basic syntax
 
 ## Comments
 
@@ -55,7 +55,7 @@ to Pyrope code. The `nil` means that the numeric value is invalid. If any
 operation is performed with `nil`, the result is an assertion failure. The only
 thing allowed to do with nil is to copy it. While the `nil` behaves like an
 invalid value, the `0sb?` behaves like an unknown value that still can be used
-in arithmetic operations. E.g: `0sb? | 0` is `0` but `nil | 0` is an error.
+in arithmetic operations. E.g: `0sb? & 1` is `1` but `nil & 1` is an error.
 
 
 Notice that `nil` is a state in the integer basic type, it is not a new type by
@@ -64,16 +64,11 @@ important is that the compiler will guarantee that all the `nil` are eliminated
 at compile time or a compile error is generated.
 
 
-```
-a = 0sb? & 0 // OK, result is 0
-b = nil  & 0 // Error
-```
-
 ### Strings
 
 Pyrope accepts single line strings with a single quote (`'`) or double quote
-(`"`).  Single quote only has `\'` as an escape character, double quote supports
-extra escape sequences.
+(`"`).  Single quote do not have escape character, double quote supports escape
+sequences.
 
 ```
 a = "hello \n newline"
@@ -83,7 +78,6 @@ b = 'simpler here'
 * `\n`: newline
 * `\\`: backslash
 * `\"`: double quote
-* `\'`: single quote (only one allowed in single quote)
 * `\xNN`: hexadecimal 8 bit character (2 digits)
 * `\uNNNN`: hexadecimal 16-bit Unicode character UTF-8 encoded (4 digits)
 
@@ -91,31 +85,14 @@ b = 'simpler here'
 Integers and strings can be converted back and forth:
 
 ```
-a = "127"
-b = a.__to_i()
-c = a.__to_s()
+let a:string = "127"
+let b:int    = a     // same as let b = int(a)
+let c:string = b     // same as let c = string(b)
 assert a == c
 assert b == 0x7F
+assert a == b        // compile error, 'a' and 'b' have different types
 ```
 
-A Pyrope std library could provide a better interface in the future like
-`a.to_i()`, but fields that start with a double underscore are reserved to
-interact with the compiler or call the C++ provided library.
-
-
-### Unique identifiers
-
-When an identifier uses an all upper case (E.g: `ALL_CAPS`). Pyrope assigns a
-unique identifier for each upper case constant. The value is unique and not
-visible, but it can be used to index tuples or to compare equality. The
-identifier scope is the whole Pyrope file.
-
-```
-a = ONE
-b = TWO
-assert a!=b
-val[ONE] = true
-```
 
 ## Newlines and spaces
 
@@ -150,16 +127,29 @@ style.
 ### Identifiers
 
 An identifier is any non-reserved keyword that starts with an underscore or an
-alphabetic character.  Since Pyrope is designer to support any synthesizable
-Verilog automatic translation, any sequence of characters between \` can
-form a valid identifier. This is needed because Verilog has the \\ that builds
+alphabetic character. Since Pyrope is designer to support any synthesizable
+Verilog automatic translation, any sequence of characters between \` can form a
+valid identifier. This is needed because Verilog has the \\ that builds
 identifiers with special characters. The \` has the same escape sequence as
-strings with \".
+strings with double quote (`"`) but it also has the \\\` escape sequence.
 
 ```
-`foo is . strange!` = 4
+`foo is . strange!\nidentifier` = 4
+`for` = 3
 ```
 
+Using the \` allows to have reserved keywords as identifiers.
+
+
+Identifiers are case sensitive like Verilog, but the compiler issues errors for
+non \` escaped identifiers that do not follow these conditions in order:
+
+* Identifiers with a single character followed by a number can be upper or lower case.
+* An all upper case variable must be a compile time constant `comptime`.
+* Types should either: (1) start the first character uppercase and everything
+  else lower case; (2) be all lower case and finish with `_t`.
+* All the other identifiers that start with a alpha character `[a-z]` are
+  always lower case.
 
 ## Semicolons
 
@@ -186,7 +176,8 @@ puts "Hello a is {}", a
 Since many modules can print at the same cycle, it is possible to put a relative
 order between puts (`order`).
 
-This example will print "hello world" even though there are 2 puts/prints in different files.
+This example will print "hello world" even though there are 2 puts/prints in
+different files.
 
 ```
 // src/file1.prp
@@ -199,25 +190,63 @@ The available puts/print arguments:
 * `order`: relative order to print in a given cycle
 * `file`: file to send the message. E.g: `stdout`, `my_large.log`,...
 
-## Expression evaluation order
+
+## Functions, Procedures
+
+
+Pyrope only supports annonymous lambdas. A lambda can be asigned to a variable,
+and it can be called like most programmers expect. [Lambda
+section](06-functions.md) has more details on the allowed syntax.
+
+
+```
+let fun = {|(a,b)| ret a + b }
+```
+
+Pyrope classifies lambdas as follows:
+
+* `lambda` is any sequence of statements grouped in a code block that can be
+  assigned to a variable and called to execute later.
+
+* `function` is a lambda with only combination statements without non-Pyrope
+  calls or `punch` statements [^punch].
+
+* `procedure` is a lambda that can have combination and non-combinational
+  (register/memories) or potential calls to non-Pyrope or `punch` statements.
+
+* `method` is a lambda that updates tuple fields. A lambda that only reads
+  tuple entries is either a `function` or a `procedure` not a `method`. A
+  `method` can only update one tuple.
+
+* `module` is a lambda that has a physical instance. lambdas are either inlined
+  or modules.
+
+
+[^punch]: `punch` is a Pyrope statement that allows access accross modules. It
+allows to connect modules directly withouth going through the call hierarchy.
+
+## Evaluation order
+
+
+Statements are evaluated one after another in program order. The main source of
+conflicts comes from expressions.
 
 
 The expression evaluation order is important if the elements in the expression
 can have side effects. Pyrope constrains the expressions so that no matter the
-evaluation order, the result is the same. This constrain does not apply to
-debug `debug` statements like `puts`.
+evaluation order, the synthesis result is the same. It is important to notice
+that synthesis results explicitly excludes debug `debug` statements like
+`puts`. Pyrope is non-deterministic for debug statements[^debug].
 
 
-As reference languages like C++11 do not have a defined order of evaluation
-for all types of expressions. Calling `call1() + call2()` is not defined.
-Either `call1()` first or `call2()` first.
+[^debug]: Non-deterministic for debug statements means that debug calls like
+`puts` can have many valid orders.
 
 
-To guarantee that the evaluation order has no side-effects, only one function
-call or code scope in the expression can have a side effect. The side effect
-can not affect any of the variables in the expression. This is a difficult to
-prove, so the compiler only allows one code scope or function call unless
-explicit order is in the expression.
+As reference languages like C++11 do not have a defined order of evaluation for
+all types of expressions. Calling `call1() + call2()` is not defined. Either
+`call1()` first or `call2()` first. Pyrope is designed to be fully
+deterministic for synthesizable code.
 
 
 In many languages, the evaluation order is defined for logical expressions.
@@ -229,11 +258,34 @@ Pyrope uses has the `and/or` without short-circuit, and the `and_then/or_else`
 with explicit short-circuit.
 
 
+To guarantee that the evaluation order has no synthesis side-effects, Pyrope
+expressions can have many calls to `functions` because they are guaranteed to
+have no synthesis side-effects. Only defined expression have calls to
+`procedures` or `methods`.
 
-For most expressions, Pyrope is more restrictive because it wants to be a fully
-defined deterministic independent of implementation. Pyrope is deterministic in
-the synthesizable but not in the `debug` statements. To illustrate the
-point/difference, and how to handle it, it is useful to see a Verilog example.
+
+Defined expressions leverage `and_then`, `or_else`, or control expressions
+(`if/else`, `match`, `for`) to fully decide the evaluation order. Expressions
+are also defined when one `procedure` or `method` is combined with imutable
+variables or `functions`. In this case, the `functions` should have only access
+to immutable variables or constants. This is still a deterministic expression
+because even the non-pure lambda can not mutate immutables.
+
+
+```
+var a = pure() + 1          // OK
+let x = nonpure() + a       // error, `a` is mutable and `nonpure` is unpure
+let b = pure(a) + 10 + nonpure(a) // OK
+var d = t.nonpure() + pure(b)     // OK, b is immutable
+let y = t.nonpure() + nonpure()   // error, multiple non pure calls
+```
+
+
+For most expressions, Pyrope is more restrictive than other languages because
+it wants to be a fully defined deterministic independent of implementation.
+Pyrope is deterministic in the synthesizable but not in the `debug` statements.
+To illustrate the point/difference, and how to handle it, it is useful to see a
+Verilog example.
 
 
 The following Verilog sequence evaluates differently in VCS and Icarus Verilog.
@@ -302,9 +354,9 @@ end
     test4
     ```
 
-If an order is needed and a function call can have `debug` side-effects or real
-side-effects, the statement must be broken down into several statements, or the
-`and_then` and `or_else` operations must be used.
+If an order is needed and a function call can have `debug` side-effects or
+synthesis side-effects, the statement must be broken down into several
+statements, or the `and_then` and `or_else` operations must be used.
 
 
 === "Incorrect code with side-effects"
