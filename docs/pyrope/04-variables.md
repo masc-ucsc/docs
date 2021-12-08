@@ -530,7 +530,7 @@ assert i == (a==3 and 3<=b and b == d)
 ## Optional
 
 The `?` is used by several languages to handle optional or null pointer
-references. In non hardware languages, `?` is used to check if there is valid
+references. In non-hardware languages, `?` is used to check if there is valid
 data or a null pointer.
 
 
@@ -539,49 +539,101 @@ Instead the data is left to behave like without the optional, but there is a
 new "valid" field associated with each tuple entry.
 
 
+There are 4 explicitly interact with valids:
+
+* `tup.f1?` reads the valid for field `f1` from tuple `tup`
+
+* `tup?.f1.f2` returns `0bs?` if tuple fields `f1` or `f2` are invalid
+
+* `tup.f1? = cond` explicitly sets the field `f1` valid to `cond`
+
+* `var:?ty` explicitly sets variable to be conditional with defaults set to
+  false
+
+
+The optional or valid associated to each varible and tuple field is implicitly
+computed as follows:
+
+* Each cycle the `valid` is set for non-register variables initialization[^clear].
+  Unless the type is optional, in which case the valid is initialized to false.
+
+* Registers with reset set the valid on reset, unless the type is optional, in
+  which case the register is valid is initialized to false.
+
+* Left hand side variables `valids` are set to the and-gate of all the variable
+  valids used in the expression
+
+* Reading from a memory is always a valid contents
+
+* Writing to a register updates the register valid based on the din valid
+
+* conditionals (`if`) update valids independently for each path
+
+* A tuple is valid check is false if any of the tuple fields are invalid
+
+* The valid computation can be overwritten with the `valid` method
+
+
+[^clear]: Non register variables are initialized to zero each cycle too, the
+  valid is cleared at the same time.
+
+
+!!! NOTE
+    The variable valid calculation is similar to the Elastic 'output_written'
+    from [Liam](https://masc.soe.ucsc.edu/docs/memocode17.pdf) but it is not an
+    elastic update because it does not consider the abort or retry.
+
+
+The previous rules will clear a valid only if an expression has no valids, but
+the only way to have a non-valid is if the inputs to the lambda are invalid or
+if the valid is explicitly clear. The rules are designed to have no overhead
+when valids are not used. The compiler should detect that the valid is true all
+the time, and the associated logic is removed.
+
+
 ```
 var v1:u32
 var v2:?u32
 
-comptime assert v1 == 0 and v2 == 0 // data still same as usual
-
-comptime assert v1?            // compile error, no optional type
+comptime assert v1?
 comptime assert not v2?
 
+comptime assert v1 == 0 and v2 == 0 // data still same as usual
+
 v1 = 0sb?                      // OK, poison data
-v2 = 0sb?                      // OK, poison data, and unset valid
+v2 = 0sb?                      // OK, poison data, do not touch valid
+comptime assert v2?            // valid even though data is not
 
 comptime assert v1 != 0        // usual verilog x logic
 comptime assert v2 != 0        // usual verilog x logic
 
 let res1 = v1 + 0              // OK, just unknown result
 let res2 = v2 + 0              // OK, just unknown result
+
+comptime assert res1?
+comptime assert res2?
+```
+
+A valid method allows to overwrite the default valid behavior:
+
+```
+type custom = (
+  ,var data:i16
+  ,var valid= {||
+    ret self.data != 33
+  }
+)
+
+var x:custom
+comptime assert x?
+x.data = 33
+comptime assert not x?
 ```
 
 
-Notice that the data field can be poison with `nil` or `0sb?`. The nil in
-Pyrope is a bit more strict and notifies on any usage error. nil poisons the
-data. Any op with it is a compile or runtime error. This behavior does not change
-because of the optional `?` type.
-
-```
-v1 = nil                       // OK, poison data
-v2 = nil                       // OK, poison data, and unset valid
-
-let res3 = v1 + 0              // compile or runtime error
-let res4 = v2 + 0              // compile or runtime error
-
-comptime assert v1 == nil       // compile error, can not do ops with nil
-comptime assert v2 == nil       // compile error, can not do ops with nil
-
-v2 = 100
-comptime assert v2? and (v2 + 1) == 101
-
-v2? = false                    // keep data, just toggle valid
-comptime assert not v2? and v2 == 101
-```
-
-Tuples also can have optional type:
+The contents of the tuple field does not affect the field valid bit. It is data
+independent. Tuples also can have optional type, which behaves like adding
+optional to each of the tuple fields.
 
 ```
 type complex = (
@@ -598,7 +650,8 @@ var x1:complex
 var x2:?complex
 
 comptime assert x1.v1 == "" and x1.v2 == ""
-comptime assert not x2?  and x2.v1 == "" and x2.v2 == ""
+comptime assert not x2?  and not x2.v1? and not v2.v2?
+comptime assert x2.v1 == "" and x2.v2 == ""
 
 comptime assert x2?.v1 == "" and x2?.v1 != ""  // any comparison is false
 
@@ -614,37 +667,6 @@ comptime assert x2? and x2?.v1 == "world" and x2.v1 == "world"
 ```
 
 !!!NOTE
-    The Pyrope grammar does not allow for an optional without type check like `x = foo:? + 3`
-    because it is ambiguous.
+    The Pyrope grammar does not allow for an optional without type check like
+    `x = foo:? + 3` because it is ambiguous.
 
-The valid bit can be overwritten:
-
-```
-//--------------
-// custom valid code
-
-type custom_valid = (
-  ,pub v:string
-
-  ,pub set = {|(self,v)->(self)|
-     self.v = v
-     self.my_valid = true
-  }
-
-  ,pub valid = {|(self)->(:boolean)| self.v != 0 and self.my_valid }
-  ,pub valid ++= {|(self,v)->(self)| self.my_valid = v }
-)
-
-var x:custom_valid  // no need to say x:custom_valid?, but legal
-
-comptime assert not x?
-
-x.v = "bypassed"
-comptime assert not x? and x.v == "bypassed"
-
-x = "direct"
-comptime assert x? and x.v == "direct" and x == Custom_valid("direct")
-
-x? = false
-comptime assert not x? and x.v == "direct" and x != Custom_valid("direct")
-```

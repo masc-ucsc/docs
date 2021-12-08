@@ -11,7 +11,6 @@ The solution is to not have namespaces but rely in variable scope to decide
 which lambda to call.
 
 
-
 Pyrope divides the lambdas in two categories: `functions` and `procedures`.
 Functions operate only over combinational logic. They can not have any
 synthesis side-effect. This means the function outputs are only a function of
