@@ -53,9 +53,9 @@ assert a_fun() == 4       // calls to eval the function
 ```
 
 The simplest lambda resembles a scope with at `{` followed by a sequence of
-statements where the last statement can be an expression before the closing
-`}`.  The difference between a lambda and a normal scope is the lambda
-definition enclosed between pipes (`|`).
+statements before the closing `}`. Like scopes, it is possible to have a single
+expression instead of a sequence of statements. The difference between a lambda
+and a normal scope is the lambda definition enclosed between pipes (`|`).
 
 
 ```txt
@@ -320,7 +320,7 @@ it can be error-prone.
       ,foo = {||
          bar = {|| puts "bar" }
          puts "mem.foo"
-         return (bar=bar)
+         ret (bar=bar)
       }
     )
     b = 3
@@ -353,7 +353,7 @@ it can be error-prone.
       ,foo = {|()|                    // implicit self 
          bar = {|()| puts "bar" }
          puts "mem.foo"
-         return (bar=bar)
+         ret (bar=bar)
       }
     )
     b = 3
@@ -478,9 +478,9 @@ section.
 For untyped unnamed argument calls:
 
 ```
-var fun_list = {|(a,b)| return a+b}
-fun_list ++= {|(a,b,c)| return a+b+c }
-fun_list ++= {|(a,b,c,d)| return a+b+c+d }
+var fun_list = {|(a,b)| ret a+b}
+fun_list ++= {|(a,b,c)| ret a+b+c }
+fun_list ++= {|(a,b,c,d)| ret a+b+c+d }
 
 assert fun_list.size()
 
@@ -490,18 +490,18 @@ assert fun_list(1,2,4,5) == 12
 assert fun_list(1,2,4,5,6) == 18 // compile error, no function with 5 args
 
 
-fun_list ++= {|(a,b)| return 100}
+fun_list ++= {|(a,b)| ret 100}
 assert fun_list(1,2) == 3
 
-fun_list = {|(a,b)| return 200} ++ fun_list
+fun_list = {|(a,b)| ret 200} ++ fun_list
 assert fun_list(1,2) == 200
 ```
 
 For untyped named argument calls:
 
 ```
-var fun = {|(a,b)| return a+b+100 }
-  fun ++= {|(x,y)| return x+y+200 }
+var fun = {|(a,b)| ret a+b+100 }
+  fun ++= {|(x,y)| ret x+y+200 }
 
 assert fun(a=1,b=2) == 103
 assert fun(x=1,y=2) == 203
@@ -511,9 +511,9 @@ assert fun(  1,  2) == 103  // first in list
 For typed calls:
 
 ```
-var fun = {|(a:int,b:string)->:bool  | return true    }
-fun ++=   {|(a:int,b:int   )->:bool  | return false   }
-fun ++=   {|(a:int,b:int   )->:string| return "hello" }
+var fun = {|(a:int,b:string)->:bool  | ret true    }
+fun ++=   {|(a:int,b:int   )->:bool  | ret false   }
+fun ++=   {|(a:int,b:int   )->:string| ret "hello" }
 
 let a = fun(3,hello)
 assert a == true
@@ -529,28 +529,28 @@ assert c == "hello"
 For conditional argument calls:
 
 ```
-var fun = {|(a,b)      where a>40    | return b+100 }
-  fun ++= {|(a,b)->(x) where x > 300 | return b+200 } // output x
-  fun ++= {|(a,b)->(a) where $.a > 20| return b+300 } // input a
-  fun ++= {|(a,b)->(a) where %.a > 10| return b+400 } // output a
-  fun ++= {|(a,b)                    | return a+b+1000 } // default
+var fun = {|(a,b)      where a>40    | ret b+100 }
+  fun ++= {|(a,b)->(x) where x > 300 | ret b+200 } // output x
+  fun ++= {|(a,b)->(a) where $.a > 20| ret b+300 } // input a
+  fun ++= {|(a,b)->(a) where %.a > 10| ret b+400 } // output a
+  fun ++= {|(a,b)                    | ret a+b+1000 } // default
 
 var fun_manual = {|(a,b)|
   if a>40 {
-    return b+100
+    ret b+100
   }
   let x = b + 200
   if x>300 {
-    return (x=x)
+    ret (x=x)
   }
   if a>20 {
-    return b+300
+    ret b+300
   }
   let tmp = a + b
   if tmp >10 {
-    return (a=tmp)
+    ret (a=tmp)
   }
-  return a+b+1000
+  ret a+b+1000
 }
 
 test "check equiv" {

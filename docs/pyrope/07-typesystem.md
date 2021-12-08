@@ -163,12 +163,12 @@ Ignoring the value is what makes `equals` different from `==`. As a result
 different functionality functions could be `equals`. 
 
 ```
-a = {|| return 1 }
-b = {|| return 2 }
+a = {|| ret 1 }
+b = {|| ret 2 }
 assert a equals {|| }
 assert a != b
 assert a equals b
-assert not (a equals {|(x)| return 1 }) // different arguments
+assert not (a equals {|(x)| ret 1 }) // different arguments
 ```
 
 Some languages use an `is` keyword but Pyrope uses `does` or `equals` because
@@ -263,12 +263,12 @@ External libraries could be created to handle saturated operations. E.g:
 
 ```pyrope
 saturated = {||
-  if $1 > $0.__max {
-    return $0.__max
+  ret if $1 > $0.__max {
+    $0.__max
   }elif $1 < $0.__min{
-    return $0.__min
+    $0.__min
   }else{
-    return $1
+    $1
   }
 }
   
@@ -486,7 +486,7 @@ type Circle extends Shape with (
   ,rad:i32
   ,area = {|(self) -> :i32   |
      let pi = import("math").pi
-     return pi * self.rad * self.rad
+     ret pi * self.rad * self.rad
   }
 )
 ```
@@ -500,7 +500,7 @@ type Circle = (
   ,name = "Circle"
   ,area = {|(self) -> :i32|
      let pi = import("math").pi
-     return pi * self.rad * self.rad
+     ret pi * self.rad * self.rad
   }
   ,increase_size = {|(self,_:i12)| self.rad *= $1 }
 )
@@ -575,7 +575,7 @@ randomize = debug {|(self)|
       i = rnd.boolean()
     }
   }
-  return self
+  ret self
 }
 
 x = (a=1,b=true,c="hello")
@@ -871,10 +871,10 @@ return type:
 type showcase = (
   ,pub var v:int
   ,pub var get ++= {|(self)->(self,:string) where self.i>100|
-    return "this is a big number" ++ string(v)
+    ret "this is a big number" ++ string(v)
   }
   ,pub var get ++= {|(self)->(self,:int)|
-    return v
+    ret v
   }
 )
 

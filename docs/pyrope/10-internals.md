@@ -304,7 +304,9 @@ node:
 
 + If the node is a loop (`for`/`while`) that has at least one iteration expand
   the loop. This is an iterative process becasue the loop exit condition may
-  depend on the loop body or functions called inside
+  depend on the loop body or functions called inside. After the loop
+  expansions, no `for`, `while`, `break`, `last`, `continue`, `cont` statement
+  exists.
 
 + If the node is a function call, iterate over the possible polymorphic calls.
   Call the first call that is valid (input types). Call the function and pass
@@ -401,7 +403,7 @@ var x = 3
 let fun = {|()->:int|
    assert x == 3
    var x    // compile error. Shadow captured x
-   return 200
+   ret 200
 }
 ```
 
@@ -416,7 +418,7 @@ let fun = {|()->:int|
    assert x == 3 and y == 10
    x = 10000
    //y = 100              // compile error, y is immutable
-   return x+200
+   ret x+200
 }
 
 assert x == 3
@@ -434,7 +436,7 @@ var y = 10
 
 let fun2 = {|[y]()->:int| // [] means capture just y
   var x  = 200
-  return y + x
+  ret y + x
 }
 x = 1000
 assert fun2() == 203
@@ -553,7 +555,7 @@ v = 1
 
 
 ```
-let fun = {|| puts "here" ; return 3}
+let fun = {|| puts "here" ; ret 3}
 let have = {|f| f() }
 
 let x = have fun   // same as have(fun), nothing printed
@@ -561,32 +563,6 @@ assert x == 3      // prints "here"
 
 let y = have fun() // same as have(fun()), prints "here"
 assert x == 3      // nothing printed
-```
-
-### Unexpected return
-
-
-Return has an optional exit value
-
-```
-let fun1 = {|()->(out)|
-  out = 100
-  return {
-    3
-  }
-}
-
-let fun2 = {|()->(out)|
-  out = 100
-  return 
-  {  // code never reached
-    3
-  }
-}
-
-assert fun1() == 3
-assert fun2() == 100
-
 ```
 
 ### `if` is an expression

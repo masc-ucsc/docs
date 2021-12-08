@@ -147,11 +147,11 @@ let telescope_unit3 = {|(a:u32,b:u32) -> (:?u32)|
     pub let tmp = a+1
   } #> {
     if b == 0 {
-      return tmp
+      ret tmp
     }
     pub let tmp2 = tmp-b
   } #> {
-    return tmp2
+    ret tmp2
   }
 }
 ```

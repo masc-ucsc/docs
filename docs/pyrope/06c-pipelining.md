@@ -67,13 +67,13 @@ the conceptual problems of integrating them:
 ```
 let add1 = {|a,b| // 1 cycle add
   #reg = a+b
-  return #reg
+  ret #reg
 }
 let mul3 = {|a,b| // 3 cycle multiply
   #reg1 = $a * $b
   #reg2 = #reg1
   #reg3 = #reg2
-  return #reg3
+  ret #reg3
 }
 
 pub let block = {|(in1,in2)->(out)|

@@ -281,6 +281,16 @@ let y = t.nonpure() + nonpure()   // error, multiple non pure calls
 ```
 
 
+Expressions also can have scope, but expression scopes are not allowed have
+side-effects, so they can be treated as `functions`.
+
+```
+var a = {var d=3 ; last d+1} + 100 // OK
+assert a == (3+1+100)
+```
+
+
+
 For most expressions, Pyrope is more restrictive than other languages because
 it wants to be a fully defined deterministic independent of implementation.
 Pyrope is deterministic in the synthesizable but not in the `debug` statements.

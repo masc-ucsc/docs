@@ -73,7 +73,7 @@ a += 1 when false             // never executes
 assert a == 3
 assert a == 1000 when a > 10  // assert never executed either
 
-return 3 when some_condition
+ret 3 when some_condition
 ```
 
 Complex assignments like `a |> b(1) |> c` can not be gated because it is not
@@ -90,14 +90,14 @@ is the same as in other languages. Variables can be declared within the scope
 boundary. 
 
 
-Scopes are different than lambdas or functions or modules. A lambda consist of
-a scope but it has several differences: Variables defined in upper scopes
-immutable copies, inputs and outputs could be constrained, and the `return`
-statements finish a lambda not a scope.
+Scopes are different than lambdas. A lambda consist of a scope but it has
+several differences: Variables defined in upper scopes are accessed inside the
+lambda as immutable copies, inputs and outputs could be constrained, and the
+`ret`/`return` statements finish a lambda not a scope.
 
 
-The scopes are used by statements like `for` and `if`, the lambdas are a
-function declarations.
+From a high level point of view, scopes are used by statements like `if` and
+`for`, the lambdas are a function declarations.
 
 
 The main features of scopes:
@@ -106,9 +106,10 @@ The main features of scopes:
 
 * Variable declaration shadowing is not allowed and a compiler error is generated.
 
-* Expressions can have multiple scopes, but the whole expression only can have
-  one function call with side-effects. The reason is that if there are 2 scopes
-  with side effects, the order called can have different results.
+* Expressions can have multiple scopes but they are not allowed to have
+  side-effects for variables outside the scope or scope state. The [evaluation
+  order](02-basics.md#evaluation-order) provides more details on expressions
+  evaluation order.
 
 * When used in an expression or lambda, the last statement in the scope can be
   an expression.
@@ -180,13 +181,13 @@ for i,index,key in b {
 
 The `for` can also be used in an expression that allows building comprehensions
 to initialize arrays. To indicate the values to add in the comprehensions there
-are `continue`, `break`, or the last expression in the `for` scope.
+are `cont`, `last`, or the last expression in the `for` scope.
 
 ```
 var c = for i in 0..<5 { var xx = i }  // compile error, no expression
-var c = for i in 0..<5 { continue i }
+var c = for i in 0..<5 { cont i }
 var d = for i in 0..<5 { i }
-var 2 = for i in 0..<5 { break i }
+var 2 = for i in 0..<5 { last i }
 assert c == (0,1,2,3,4) == d
 assert e == (0)
 ```
@@ -196,7 +197,7 @@ assert e == (0)
 
 Scope control statements allow to change the control flow for `lambdas`, `for`,
 and `while` statements. When the control flow is changed, some allow scope
-control allow to return a value (`ret`, `last`, `next`) and others do not
+control allow to return a value (`ret`, `last`, `cont`) and others do not
 (`return`, `break`, `continue`).
 
 
@@ -211,13 +212,15 @@ control allow to return a value (`ret`, `last`, `next`) and others do not
   `for`, or a `while`. If neither is found, a compile error is generated.
 
 * `last` behaves like `break` but a return tuple is provided. This is may be
-  needed when the `for` or `while` is used in an expression.
+  needed when the `for` or `while` is used in an expression. In addition, the
+  `last` can be used in expresion scopes. The `last` is equivalent to a `ret`
+  but terminates the closest expression scope.
 
 * `continue` looks for the closest upper `for` or `while` scope. The `continue`
   will perform the next loop iteration. If no upper loop is found, a compile
   error is generated.
 
-* `next` behaves like the `continue` but a tuple is provided. The `next` is
+* `cont` behaves like the `continue` but a tuple is provided. The `cont` is
   used with comprehensions, and the tuple provided is added to the
   comprehension result.
 
@@ -247,18 +250,33 @@ if a>0 {
 assert total2 == (3,2)
 ```
 
-`ret`, `last`, and `next` statements can have a tuple. This is only useful when
+`ret`, `last`, and `cont` statements can have a tuple. This is only useful when
 the statements are used in an expression.
 
 ```
 total = for i in 1..=9 {
-  next  i+10 when i < 3
+  cont  i+10 when i < 3
   last  i+20 when i > 5
 }
 assert total == (11, 12, 3, 4, 5, 26)
 
 let v = {|| ret 4 }
 assert v == 4
+
+let y = {         // expr scope1
+  var d=1 
+  last {          // start expr scope2, last finishes scope1
+    if true { 
+      last 33     // finishes scope2
+      assert false 
+    } else { 
+      last d
+      assert false 
+    }
+  } + 200 
+  assert false
+}
+assert y == (33+200)
 ```
 
 ## defer 

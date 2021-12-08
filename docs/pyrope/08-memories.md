@@ -257,7 +257,7 @@ let flatten = {|arr|
   for i in arr {
     res ++= i
   }
-  return res
+  ret res
 }
 
 assert flatten(d2) == (1,2,3,4)
