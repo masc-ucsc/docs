@@ -58,7 +58,7 @@ Populate the Pyrope code
 
     src/gcd.prp:
     ```pyrope linenums="1"
-    {|(cmd:?(a:uint,b:uint))->(z:?uint)|
+    pub let gcd = {|(cmd:?(a:uint,b:uint))->(z:?uint)|
       reg x,y
       if cmd? {
         x,y = cmd
@@ -74,7 +74,7 @@ Populate the Pyrope code
     test "16bits gcd" {
       for i in 1..=100 {
         for j in 1..=100 {
-          let cmd = (a=i,b=j)
+          let z =# gcd(a=i,b=j)
 
           waitfor z?
 
@@ -86,7 +86,7 @@ Populate the Pyrope code
     ```
 
     src/my_cpp_gcd.cpp
-    ```c++ linenums="25"
+    ```c++ linenums="26"
     void my_gcd_cpp(const Lbundle &inp, Lbundle &out) {
       assert(inp.has_const("v1") && inp.has_const("v2"));
 
