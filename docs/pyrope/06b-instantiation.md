@@ -110,7 +110,7 @@ or not short-circuit (`and_then`/`or_else`) expressions.
     lec lhs?, lhs2_v
     ```
 
- === "Usual expression"
+=== "Usual expression"
 
     ```
     var lhs = v1 + v2
@@ -123,7 +123,7 @@ or not short-circuit (`and_then`/`or_else`) expressions.
     lec lhs?, lhs2_v
     ```
 
- === "Conditionals"
+=== "Conditionals"
 
     ```
     lhs = v0

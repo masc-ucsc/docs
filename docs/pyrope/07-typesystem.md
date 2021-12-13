@@ -249,7 +249,7 @@ val = 300  // compile error, '300' overflows the maximum allowed value of 'val'
 val = 0x1F0@[0..<val.__ubits] // explicitly select bits to not overflow
 assert val == 240
 
-wrap val = 0x1F0       // Drop bits from 0x1F0 to fit in maximum 'val' allowed bits
+wrap val = 0x1F0   // Drop bits from 0x1F0 to fit in maximum 'val' allowed bits
 assert val == 240
 
 val = u8(0x1F0)    // same
@@ -929,7 +929,7 @@ assert m1 <= m2 and m1 != m2 and m2 > m1 and m2 >= m1
 
 
 It is also possible to provide a custom `ge` (Greater Than). The `ge` is redundant
-with the `lt` and `eq` (`a > b == (a!=b) && !`) but it allows to have more
+with the `lt` and `eq` (`(a >= b) == (a==b or b<a)`) but it allows to have more
 efficient implemetations:
 
 
