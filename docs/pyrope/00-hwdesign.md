@@ -24,7 +24,7 @@ tends to be a central unified memory.
 
 
 Current CPUs follow a Von Neumann approach[^1] and languages designed to
-program CPUs follow the same model to have a good mapping to existing hardware.
+program CPUs have the same model to efficiently map existing hardware.
 Since the languages are Von Neumann, it is logical that CPUs also evolve to
 keep the same model and further improve the performance. Since CPUs and
 languages follow the same Von Neumann model, software designers' mindset assumes
@@ -32,7 +32,7 @@ this same concept. This feedback loop has resulted in that most languages,
 hardware, and developers evolving around this model.
 
 
-Neither FPGAs nor ASICs is Von Neumann machines. There is no program counter to
+Neither FPGAs nor ASICs are Von Neumann machines. There is no program counter to
 execute one statement after another and there is no central memory. Those concepts
 could be built on top, and this is in fact what CPUs are about. CPUs are all
 about how to build efficient Von Neumann machines on top of FPGAs and/or ASICs
@@ -70,7 +70,7 @@ different optimization knobs.
 When designing an efficient software program, it is all about deciding the
 sequence of instructions to be small and fast. The computer architecture Iron's
 law summarizes it well. The performance is "Instruction Count" x "Instructions
-Per Cycle" x "Frequency". Since software programmers do not tend to consider
+Per Cycle" x "Frequency". Since software programmers do not tend to consider the
 frequency, it is all about executing the fewer number of instructions and doing
 each instruction as fast as possible. The software designer has to create a
 sequence of instructions that will solve a problem. Those instructions could
@@ -179,14 +179,14 @@ HDLs (Hardware Description Languages) do not have a Von Neumann model. The
 currently most popular HDL (Verilog) is a data flow language that does not have
 a global program counter like Von Neumann languages. Instead, the programmer
 specifies a hierarchy of modules[^5]. In Verilog, the execution of each module
-has a complicated set of options, but from a high level point of view, a set of
+has a complicated set of options, but from a high-level point of view, a set of
 statements are executed in each module. The module executes forever because
 it is a set of gates instantiated in the hardware design.
 
 
 [^5]: Verilog modules could be seen as functions in a software language that
   can be instantiated in one or more places. The instantiation point sets a
-  hierarhy of modules.
+  hierarchy of modules.
 
 
 ## Hardware artifacts
@@ -202,8 +202,8 @@ exist in most HDLs independent of the syntax.
 Hardware designers decide the gates to be instantiated[^5a] in the design while
 software designers tend to focus on the instruction executed. If a set of gates
 is rarely used, the hardware still has to instantiate them and their
-performance area impact is quite independent on the usage frequency. In
-software a set of rarely executed instructions have no performance impact. This
+performance area impact is quite independent of the usage frequency. In
+software, a set of rarely executed instructions have no performance impact. This
 is not the case in hardware. As such languages tend to build around
 "instantiation" more than traditional instruction "execution".
 
@@ -214,8 +214,8 @@ is not the case in hardware. As such languages tend to build around
 
 
 Instantiation means that the designer explicitly indicates the set of gates or
-ciruit mapped to hardware. In the vast majority of HDLs (Verilog, CHISEl,
-pyRTL, VHDL...), the designer specifies a top level "module". Each module can
+circuits mapped to hardware. In the vast majority of HDLs (Verilog, CHISEl,
+pyRTL, VHDL...), the designer specifies a top-level "module". Each module can
 have a set of gates and more instantiated sub-modules.
 
 
@@ -282,7 +282,7 @@ called.
 
 
 HDLs force the designer to spicy the instantiation unconditionally, and then
-the `if` selects between the instantiations. Even though HDLs looks like they
+the `if` selects between the instantiations. Even though HDLs look like they
 execute instructions, they do not, it is all about cell instantiation and how
 to connect those instances. The `if` is not a branch instruction, it is a multiplexor
 instantiation. The `do_division` is not a function call, is an instantiation of
@@ -332,7 +332,7 @@ be expected in a normal software API.
 
 If actors execution is somewhat similar to concurrent module instantiation
 execution, async/await is somewhat similar to pipelining. In async/await the
-results of a function is not available at the function return. In HDLs, there
+results of a function are not available at the function return. In HDLs, there
 is no await and the results from previous cycles are output by the module
 instance. 
 
@@ -341,7 +341,7 @@ instance.
 Pipelining is not restricted to just function or module instantiations. A
 module itself can have a set of registers and different variables/wires have
 the results from different cycles. It is up to the designer to manage it, and
-it is one of the main sources of complexity of hardware design and
+it is one of the main complexity sources of hardware design and
 verification.
 
 
@@ -384,7 +384,7 @@ affect simulation.
 
 === "HLS possible solution"
 
-    ```verilog
+    ```Verilog
     // Do allow simulation code to have side-effects on synthesis code
     // Any directive should affect simulation AND synthesis (not one or the other)
 
@@ -428,7 +428,7 @@ Some differences between reset and software initialization:
 
 === "HLS possible solution"
 
-    ```verilog
+    ```Verilog
     // Just use the reset flop values to initialize contents
 
     always @(posedge clk) begin
@@ -569,7 +569,7 @@ languages. These are some differences that can make the HDLs simpler:
 ### Unlimited precision
 
 
-High performance software must adjust to the hardware and as such, there are
+High-performance software must adjust to the hardware and as such, there are
 several integer types (int, short, long).  The result is that the programmer
 tends to be careful with overflows and type conversion. This is not a problem
 in hardware. If a 113 bits adder is needed, it can be synthesized. If only a 7
@@ -581,10 +581,17 @@ or just as a type check so that no unnecessary hardware is generated.
 
 ### No pointers
 
-Memory and pointer management is big issue in most languages. Either garbage
+Memory and pointer management is a big issue in most languages. Either garbage
 collection, manual, or alternative approaches.  Since there is no global memory,
 there is no memory to manage. Maybe even more important, there is no need for
 pointers. This avoids another set of problems like null dereferencing.
+
+### No destructors
+
+Since there is no global memory, there is no need to have garbage collection or
+the associated object destruction. If a "hardware resource" is utilized, it
+can not be recycled. As a result, the destructor may not make sense in
+hardware.
 
 
 ### Pass by value

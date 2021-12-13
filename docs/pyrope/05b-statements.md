@@ -27,14 +27,14 @@ if a { x = 3 } else { x = 4 }
 ## Unique parallel conditional (`match`)
 
 The `match` statement is similar to a chain of unique if/elif, like the
-`unique` if/elif sequence, one of the options in the match must be true. The
+`unique if/elif` sequence, one of the options in the match must be true. The
 difference is that one of the entries must be truth or an error is generated.
 This makes the `match` statement a replacement for the common "unique parallel
 case" Verilog directive.
 
 
 In addition to functionality, the syntax is different to avoid redundancy.
-`match` joins the match expression with the beginning of the match entry must
+`match` joins the match expression with the beginning of the matching entry must
 form a valid expression.
 
 ```
@@ -90,14 +90,14 @@ is the same as in other languages. Variables can be declared within the scope
 boundary. 
 
 
-Scopes are different than lambdas. A lambda consist of a scope but it has
+Scopes are different than lambdas. A lambda consists of scope but it has
 several differences: Variables defined in upper scopes are accessed inside the
 lambda as immutable copies, inputs and outputs could be constrained, and the
 `ret`/`return` statements finish a lambda not a scope.
 
 
-From a high level point of view, scopes are used by statements like `if` and
-`for`, the lambdas are a function declarations.
+From a high-level point of view, scopes are used by statements like `if` and
+`for`, the lambdas are function declarations.
 
 
 The main features of scopes:
@@ -107,14 +107,14 @@ The main features of scopes:
 * Variable declaration shadowing is not allowed and a compiler error is generated.
 
 * Expressions can have multiple scopes but they are not allowed to have
-  side-effects for variables outside the scope or scope state. The [evaluation
+  side effects for variables outside the scope or scope state. The [evaluation
   order](02-basics.md#evaluation-order) provides more details on expressions
   evaluation order.
 
 * When used in an expression or lambda, the last statement in the scope can be
   an expression.
 
-* A expression scope, not lambda, can be terminated with the `break` statement
+* An expression scope, not lambda, can be terminated with the `break` statement
   that can also return a value. A `return` statement terminates the lambda
   scope, not the expression scope.
 
@@ -144,9 +144,9 @@ assert z4 == 4
 
 ## Loop (`for`)
 
-The `for` iterates over the first level elements in a tuple or the values in a
+The `for` iterates over the first-level elements in a tuple or the values in a
 range.  In all the cases, the number of loop iterations must be known at
-compile time. The loop exit condition can not be run-time data dependent.
+compile time. The loop exit condition can not be run-time data-dependent.
 
 The loop can have an early exit when calling `break` and skip of the current
 iteration with the `continue` keyword.
@@ -195,9 +195,9 @@ assert e == (0)
 
 ### Scope control
 
-Scope control statements allow to change the control flow for `lambdas`, `for`,
+Scope control statements allow changing the control flow for `lambdas`, `for`,
 and `while` statements. When the control flow is changed, some allow scope
-control allow to return a value (`ret`, `last`, `cont`) and others do not
+control allows to return a value (`ret`, `last`, `cont`) and others do not
 (`return`, `break`, `continue`).
 
 
@@ -211,9 +211,9 @@ control allow to return a value (`ret`, `last`, `cont`) and others do not
 * `break` terminates the closest higher scope that belongs to an expression, a
   `for`, or a `while`. If neither is found, a compile error is generated.
 
-* `last` behaves like `break` but a return tuple is provided. This is may be
+* `last` behaves like `break` but a return tuple is provided. This is maybe
   needed when the `for` or `while` is used in an expression. In addition, the
-  `last` can be used in expresion scopes. The `last` is equivalent to a `ret`
+  `last` can be used in expression scopes. The `last` is equivalent to a `ret`
   but terminates the closest expression scope.
 
 * `continue` looks for the closest upper `for` or `while` scope. The `continue`
@@ -282,7 +282,7 @@ assert y == (33+200)
 ## defer 
 
 A `defer_read` keyword can be added before assignments or function calls. This
-keyword effectively means that the statement on the right hand side reads the last
+keyword effectively means that the statement on the right-hand side reads the last
 values from the end of the current cycle. This is needed if we need to have any
 loop in connecting blocks. It is also useful for delaying assertion checks to
 the end of the function.
@@ -304,7 +304,7 @@ f3 = ring($c, f2)
 f4 = ring($d, f3)
 ```
 
-If the intention is to read the result after being flop, there is no need to
+If the intention is to read the result after being a flop, there is no need to
 use the `defer_read`, a normal register access could do it. If the read
 variables are registers, the `defer_read ... = var` and the `var#[0]` is
 equivalent. The difference is that defer_read does not insert a register.
@@ -335,7 +335,7 @@ if counter == 10 {
 }
 ```
 
-The `defer_write` delays the write/updates to the end of the cycle, but uses
+The `defer_write` delays the write/updates to the end of the cycle but uses
 the current value.
 
 ```
@@ -351,10 +351,10 @@ defer_read comptime assert x == 1
 ## always block
 
 Tuples can also have 3 special field entries: `always_before`, `always_after`,
-and `always_reset`. These entries can point to methods that have special
+and `always_reset`. These entries can point to methods that have
 reserved functionality:
 
-* `always_before` is executed every cycle BEFORE any method to tuple is called.
+* `always_before` is executed every cycle BEFORE any method to a tuple is called.
   This method is called even when reset is set active. This means that the
   always_before is called even before the variable is initialized if there is a
   setter.
@@ -364,7 +364,7 @@ reserved functionality:
 * `always_reset` is only called when the reset for the tuple is high. This
   means that it is valid only if the tuple is being instantiated as a `reg`.
   If called, it is called after the `always_after` so that their values can not
-  be overried by other methods.
+  be overridden by other methods.
 
 ## restrict/test/fail
 
@@ -388,8 +388,7 @@ In all the cases, the statements inside the code block can not have any effect o
 ## debug/comptime
 
 
-Pyrope can assign/read compile attributes to variables, but there are two
-common attributes that have a reserved keyword and special access (`debug` and
+Pyrope can assign/read compile attributes to variables, but two keywords and special access (`debug` and
 `comptime`). Either of them can be placed at the beginning of the statement for
 function calls and assignments. It is also possible to place them before code
 blocks to indicate that all the statements inside the code block are either
@@ -412,7 +411,7 @@ if runtime == 1 comptime {
 testing blocks:
 
 
-* `step [ncycles]` advances the simulation for a number of cycles. The local variables
+* `step [ncycles]` advances the simulation for several cycles. The local variables
 will preserve the value, the inputs may change value.
 
 * `waitfor condition` is a syntax sugar to wait for a condition to be true.
@@ -472,6 +471,6 @@ in loops.
 ## while
 
 `while cond { [stmts]+ }` is a typical while loop found in most programming
-languages.  The only different is that like with loops, the while must be fully
+languages.  The only difference is that like with loops, the while must be fully
 unrolled at compilation time.
 

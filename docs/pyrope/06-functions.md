@@ -1,17 +1,17 @@
 # Lambdas
 
 
-A `lambda` consists of sequence of statements that can be bound to a variable.
+A `lambda` consists of a sequence of statements that can be bound to a variable.
 The variable can be copied and called as needed. Unlike most languages, Pyrope
 only supports anonymous lambdas. The reason is that without it lambdas would be
 assigned to a namespace. Supporting namespaces would avoid aliases across
 libraries, but Pyrope allows different versions of the same library at
 different parts of the project. This will effectively create a namespace alias.
-The solution is to not have namespaces but rely in variable scope to decide
+The solution is to not have namespaces but relies upon variable scope to decide
 which lambda to call.
 
 
-Pyrope divides the lambdas in two categories: `functions` and `procedures`.
+Pyrope divides the lambdas into two categories: `functions` and `procedures`.
 Functions operate only over combinational logic. They can not have any
 synthesis side-effect. This means the function outputs are only a function of
 the function inputs. Any external call can only affect `debug` statements not
@@ -26,13 +26,13 @@ argument in the output which allows to mutable the called tuple.
 
 
 Lambdas also can be divided into `modules` and non-`modules`. A `module` is a
-lambda visible at synthesis call hiearchy. A `non-module` is an inlined or
+lambda visible at synthesis call hierarchy. A `non-module` is an inlined or
 flattened `lambda`.
 
 
 ## definition
 
-Only annynoymous lambdas are supported, this means that there is no global
+Only anonymous lambdas are supported, this means that there is no global
 scope for functions, procedures, or modules. The only way for a file to access
 a lambda is to have access to a local variable with a definition or to "import"
 a variable from another file.
@@ -73,10 +73,10 @@ and a normal scope is the lambda definition enclosed between pipes (`|`).
   provided, the `%` output tuple can be used. `()` indicates no outputs.
 
 + `COND` is the condition under which this statement is valid. The `COND` can
-  use the inputs, outputs and `self` to evaluate. If the outputs are used in
+  use the inputs, outputs, and `self` to evaluate. If the outputs are used in
   the `COND`, the lambda must be immutable. This means that the method is
   called when the condition could evaluate true depending on its execution, but
-  being immutable there are no side-effects. The
+  being immutable there are no side effects. The
   [overload](06-functions.md#overloading) section has more details.
 
 ```
@@ -118,7 +118,7 @@ The inputs and outputs on the current lambda can have an associated variable
 with the lambda definition, but it is always possible to access the inputs
 and outputs with the input tuple (`$`) and the output tuple (`%`). This allows
 variable size arguments and simpler code for small code snippets. It also
-simplifies instrospection since all the inputs are in `$` and all the outputs
+simplifies introspection since all the inputs are in `$` and all the outputs
 are in `%`.
 
 ```
@@ -155,6 +155,9 @@ There are several rules on how to handle arguments.
 * Function calls with arguments do not need parenthesis after newline or a
   variable assignment: `a = f(x,y)` is the same as `a = f x,y`
 
+* Functions explicitly declared without arguments, do not need parenthesis in
+  function call.
+
 Pyrope uses a Uniform Function Call Syntax (UFCS) like Nim or D but it can be
 different from the order in other languages. Notice the different order in
 UFCS vs pipe, and also that in the pipe the argument tuple is concatenated,
@@ -163,6 +166,10 @@ but in UFCS is added as the first argument.
 ```
 div  = {|a,b| a / $b }   // named input tuple
 div2 = {|| $0 / $1 }     // unnamed input tuple
+
+noarg = {|()| ret 33 }   // explicit no args
+
+assert noarg == 33 == noarg()
 
 a=div(3  , 4  , 3)       // compile error, div has 2 inputs
 b=div(a=8, b=4)          // OK, 2
@@ -184,7 +191,7 @@ o=(8,4).div2(1)          // compile error: (8,4)/1 is undefined
 
 
 The UFCS allows to have `functions` to call any tuple, but if the called tuple
-has a lambda defined with the same name, the tuple lambda has higher priority.
+has a lambda defined with the same name, the tuple lambda has a higher priority.
 
 ```
 var tup = (
@@ -207,13 +214,14 @@ read by any expression.
 ```
 var tup = (
   ,var x = 3
-  ,let fun = {|| assert $.size == 1 ; ret self.x }
+  ,let fun = {|()| assert $.size == 1 ; ret self.x }
 )
 
 let fun2 = {|(b)| ret b.x             } // no self, but it is the same
 let fun3 = {|(self,b)| ret self.x + b }
 
 assert tup.fun() == 3   // tup.fun call
+assert tup.fun == 3     // explicit no args, so () is optional in call
 assert fun2(tup) == 3
 assert tup.fun2() == 3  // UFCS
 
@@ -226,7 +234,7 @@ assert tup.fun3(2) == 5
 ## Methods
 
 Pyrope lambdas only pass arguments by value. This looks like a problem if we
-implement a typical `method`. The `method` access the parent tuple fields and
+implement a typical `method`. The `method` accesses the parent tuple fields and
 updates some of them. 
 
 
@@ -309,7 +317,7 @@ first input argument or the first output argument
 ## Arguments
 
 Arguments can constrain the inputs and input types. Unconstrained input types
-allow for more freedom and potential variable number of arguments generics, but
+allow for more freedom and a potentially variable number of arguments generics, but
 it can be error-prone.
 
 === "unconstrained declaration"
@@ -379,7 +387,7 @@ it can be error-prone.
 
 ## Overloading
 
-Pyrope does not have a global scope for defined lambdas. Intead all the lambda
+Pyrope does not have global scope for defined lambdas. Instead, all the lambda
 must reside in a local variable or must be "imported". Nevertheless, a local
 variable can have multiple lambdas. It is similar to Odin's "explicit procedure
 overloading". This section explains how is the overloading selection in this
@@ -434,27 +442,27 @@ variable, we effectively create an unnamed tuple with multiple entries. Since
 all the variables are tuples of size one too, the following rules apply to any
 lambda call:
 
-* If the caller uses "named arguments", pick the all the modules that has an
+* If the caller uses "named arguments", pick all the modules that have an
   exact match in the named tuple and the types are compatible[^2]. If the
   module used output has a known type (no output use is a known type too), the
-  output type is used in the match. If no `lambda` match found, apply the
+  output type is used in the match. If no `lambda` match is found, apply the
   "unnamed arguments" rule.
 
 * If the caller uses "unnamed arguments" (or no match in "named arguments"),
-  look for all the modules that has the same number of arguments and where each
+  look for all the modules that have the same number of arguments and where each
   argument type is compatible[^2] and at least one of the input/outputs in the
   lambda definition is typed. If the module used output has a known type (no
   output use is a known type too), the output type is used in the match. If no
   lambda is found, then look for a module where none of the inputs/outputs have
-  type constrains constrains (untyped inputs/outputs). 
+  type constraints (untyped inputs/outputs). 
 
 * If the list is empty, generate a compile error (no possible lambda to call).
 
-* Once a list of ordered modules are found, evaluate the `COND`. `COND` can
+* Once a list of ordered modules is found, evaluate the `COND`. `COND` can
   include inputs, self, and outputs. If a `COND` is comptime true (no
   `COND` is the same as `true`), stop selecting additional modules. If `COND`
-  is comptime `false` remove from list and continue. All the selected modules
-  will be executed, but the output will be selected based in priority order
+  is comptime `false` remove from the list and continue. All the selected modules
+  will be executed, but the output will be selected based on priority order
   based on the `COND` result.
 
 
@@ -464,7 +472,7 @@ dispatch) but the `where` condition may be known at run-time as long as the
 module is immutable.
 
 
-It is important to motice that a lambda overload can have multiple
+It is important to notice that a lambda overload can have multiple
 `procedures`. If the where COND is not comptime, several procedures can be
 called. The order of evaluation is defined because the tuple is ordered. This
 is still considered a defined expression.

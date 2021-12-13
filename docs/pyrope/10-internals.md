@@ -1,25 +1,25 @@
 # Internals
 
 This section of the document provides a series of disconnected topics about the
-compiler internals that affect semantics.
+compiler internals that affects semantics.
 
 ## Determinism
 
 Pyrope is designed to be deterministic. This means that the result is always
 the same.  Notice that the `puts` command is a debugging directive, and as such
-is not guarantee to be deterministic.
+is not guaranteed to be deterministic.
 
 ### Puts
 
-If needed for debugging, the puts messages can be ordered. `puts` has an before
+If needed for debugging, the puts messages can be ordered. `puts` has a before
 and after to create dependence between messages. 
 
 
 ### Setup section
 
-The setup code section is called only once only if it is the top level file or
+The setup code section is called only once only if it is the top-level file or
 it is imported by another file. The order of the across independent files can
-have many orders. This could look like lack of determinism with `puts` but they
+have many orders. This could look like a lack of determinism with `puts` but they
 can not have side effects because imports are by value, not reference.
 
 ### `punch`
@@ -70,7 +70,7 @@ equivalence check generates an `?`.
 
 The previous definition of compatibility could allow the Pyrope compiler to
 randomly replace all the unknowns by `0` or `1` when doing internal compiler
-passes. It could even replace all the unknowns by `0` all the time, or even
+passes. It could even replace all the unknowns with `0` all the time, or even
 pick the representation that generates the most efficient code.
 
 
@@ -89,22 +89,22 @@ propagation or peephole optimizations. The compile goes through 2 phases: LNAST 
 
 In the LNAST passes, we have the following semantics:
 
-+ In Pyrope, there are 3 array-like structures: non persistent arrays, register
++ In Pyrope, there are 3 array-like structures: non-persistent arrays, register
   arrays, and custom RTL memories. Verilog and CHISEL memories get translated
-  to custom RTL arrays. Non persistent Verilog/CHISEL get translated to arrays.
-  In Verilog the semantics is that an out of bounds access generates unknowns. In
+  to custom RTL arrays. Non-persistent Verilog/CHISEL get translated to arrays.
+  In Verilog, the semantics is that an out of bounds access generates unknowns. In
   CHISEL, the `Vec` sematic is that an out of bound access uses the first index
   of the array. A CHISEL out of bound memory is an unknown like in Verilog. 
-  The Pyrope compiler guarantees that there is no out of bound access for
-  arrays but there is not guarantees for RTL memories:
+  The Pyrope compiler guarantees that there is no out of bounds access for
+  arrays but there are no guarantees for RTL memories:
 
-    - An out of bound RTL address drops the unused index bits. If the size is
+    - An out-of-bound RTL address drops the unused index bits. If the size is
       not a power of two, the reminding index bits can access an invalid entry.
       This does not matter for the compiler optimizations because it is not
       possible to use memory contents to optimize logic.
 
-    - Out of bound array access triggers a compile error. The code must be fixed
-      to avoid the access. An `if addr < mem_size { ... mem[addr] ... }` tends
+    - Out of bounds array access triggers a compile error. The code must be fixed
+      to avoid access. An `if addr < mem_size { ... mem[addr] ... }` tends
       to be enough.
 
     - The contents of a persistent array (`reg`) can not be used in compile
@@ -140,7 +140,7 @@ In the LNAST passes, we have the following semantics:
   no unknowns.
 
 + `if` statement without `unique` logical expressions that have an unknown
-  (single bit) are a source of confusion. In Verilog it depends on the compiler
+  (single bit) are a source of confusion. In Verilog, it depends on the compiler
   options. A classic compiler will generate `?` in all the updated variables.  A
   Tmerge option will propagate `?` only if both sides can generate a different
   value. The LNAST optimization pass will behave like the Tmerge:
@@ -150,7 +150,7 @@ In the LNAST passes, we have the following semantics:
     - If any path has a different constant value, the generated result bits will
       have unknowns if the source bits are different or unknown. 
 
-    - If any paths is not constant, there is no LNAST optimization. Further Lgraph optimizations could optimize if all the mux generated value are proved to be the same.
+    - If any paths are not constant, there is no LNAST optimization. Further Lgraph optimizations could optimize if all the mux generated values are proved to be the same.
 
 + The `for` loops are expanded, if the expression in the `for` is unknown, a compile error is generated.
 
@@ -248,9 +248,9 @@ Assume allows more freedom, without dangerous Verilog x-optimizations:
 
 Values stores in registers (flop or latches) and memories (synchronous or
 asynchronous) can not be used in compiler optimization passes. The reason is that
-a scan-chain is allowed to replace the values.
+a scan chain is allowed to replace the values.
 
-The only way to optimize away a register or memor bit is if there is a
+The only way to optimize away a register or memory bit is if there is a
 guarantee that the value is never used. If after compiler optimizations the
 memory has no read and writes. Even just having writes the register is
 preserved because it can be used to read values with the scan-chain.
@@ -259,20 +259,19 @@ preserved because it can be used to read values with the scan-chain.
 ## Type synthesis
 
 
-The type synthesis and check is performed during the LNAST pass. This is a mid
-level IR in the LiveHD compiler. The high level is the parse AST, the mid level
+The type synthesis and check are performed during the LNAST pass. This is a mid-level IR in the LiveHD compiler. The high level is the parse AST, the mid-level
 is the LNAST, and the low level is the Lgraph. This section explains the main
 steps in the type synthesis as a way to specify Pyrope.
 
 
 Pyrope uses a structural type system with global type inference. The work is
 performed in a single topographical pass starting from the root/top, where each
-LNAST node performs this operations during traversal depending on the LNAST
+LNAST node performs these operations during traversal depending on the LNAST
 node:
 
 + If the node allows, perform these node input optimization steps first:
 
-    - When the sematics allow it, sort the inputs by name/constant. E.g: `+ 0 2
+    - When the semantics allow it, sort the inputs by name/constant. E.g: `+ 0 2
       a b`. This simplifies the following steps but it is not needed for
       semantics.
 
@@ -298,19 +297,19 @@ node:
 
 + If the node does type checks (`equals`, `does`) compute the outcome and
   perform copy propagation. The result of this step is that the compiler is
-  effectively doing flow type inference. All the types must be resolved before.
+  effectively doing flow-type inference. All the types must be resolved before.
   If the `equals`/`does` was in a `if` condition, the control is decided at
   compile time.
 
 + If the node is a loop (`for`/`while`) that has at least one iteration expand
-  the loop. This is an iterative process becasue the loop exit condition may
+  the loop. This is an iterative process because the loop exit condition may
   depend on the loop body or functions called inside. After the loop
   expansions, no `for`, `while`, `break`, `last`, `continue`, `cont` statement
   exists.
 
 + If the node is a function call, iterate over the possible polymorphic calls.
   Call the first call that is valid (input types). Call the function and pass
-  all the input constants needed. This requires to specialize the function
+  all the input constants needed. This requires specializing the function
   by input constants and types. If no call matches a valid type trigger a
   compile error
 
@@ -325,7 +324,7 @@ node:
     - When the expression is an equality format `eq [and eq]*` or `eq [or
       eq]*` like `v1 == z1 and v2 != z2`, create a `v1=z1` and `v2=z2` in the
       corresponding path. This will help bitwidth and copy propagation.
-      Complicated mixes of and/ors have no path optimization
+      Complicated mixes of and/or have no path optimization
 
     - When the expression is a single variable `a` or `!a`, set the variable
       `true` and `false` in both paths
@@ -350,9 +349,9 @@ node:
 No previous transformation could break the type checks. This means that the
 copy propagation, and final lgraph translation the type checks are respected.
 
-* All the entries on the comparator have the same type (`lhs equals rhs`)
+* All the entries on the comparator have the same type (`LHS equals rhs`)
 
-* Left side assignments respect the assigned type (`lhs does rhs`)
+* Left side assignments respect the assigned type (`LHS does rhs`)
 
 * Any explicit type on any expression should respect the type (`var does type`)
 
@@ -362,7 +361,7 @@ different.  For example, to parallelize the algorithm, each LNAST tree can be
 processed locally, and then a global top pass is performed.
 
 
-[^1]: Narrowing is based on "ABCD: eliminating array bounds checks on demand"
+[^1]: Narrowing is based on "ABCD: eliminating array bounds checks on-demand"
   by Ras Bodik et al.
 
 
@@ -392,7 +391,7 @@ let tup = (
 
 ### Closures
 
-Closures capture state. In Pyrope everything is by value, so capture variables.
+Closures capture the state. In Pyrope everything is by value, so capture variables.
 By default, all the upper scope variables are captured, but you can not declare
 new variables in the new lambda that shadow the captures. You must restrict the
 capture list.
@@ -477,13 +476,13 @@ assert z.v == 1 // self.v = 3 executes before self.v = 1
 
 
 Pyrope respects the same semantics as Verilog with unknowns. As such, there can
-be many un-expected behaviors in these cases. The difference is that in Pyrope
+be many unexpected behaviors in these cases. The difference is that in Pyrope
 everything is initialized and unknowns (`0sb?`) can happen only when explicitly
 enabled.
 
 
 The compare respects Verilog semantics. This means that it is true if and only
-if all the possible values are true, which is quite counter-intuitive bahavior
+if all the possible values are true, which is quite counter-intuitive behavior
 for programmers not used to 4 value logic.
 
 ```
@@ -493,7 +492,7 @@ assert !(0sb? == 0sb?)
 assert !(0sb? != 0sb?)
 ```
 
-There is no way to known at run-time if a value is unknown, but a compile trick
+There is no way to know at run-time if a value is unknown, but a compile trick
 can work. The reason is that integers can be converted to strings in a C++ API
 
 ```
@@ -527,7 +526,7 @@ assert r_ver == something unless r_ver.reset  // do not check during reset
 
 
 The reset for arrays may take several cycles to take effect, this can
-result to unexpected results during the reset period.
+lead to unexpected results during the reset period.
 
 ```
 var arr:[] = {0,1,2,3,4,5,6,7}
@@ -541,7 +540,7 @@ assert mem[7] == 7 unless mem.reset // OK
 ```
 
 
-Registers have reset code, which create un-expected code:
+Registers have reset code, which creates un-expected code:
 
 ```
 reg v:u32 = 33

@@ -1,19 +1,19 @@
 # Type system
 
 Type system assign types for each variable (type synthesis) and check that each
-variable use/expression respect the allowed types (type check). Additionally, a
+variable use/expression respects the allowed types (type check). Additionally, a
 language can also use the type synthesis results to implement polymorphism.
 
 
 Most HDLs do not have modern type systems, but they could benefit like in other
-software domains. Unlike software, in hardware we do not need to have many integer
-size because hardware can implement any size. This simplifies the type system
+software domains. Unlike software, in the hardware, we do not need to have many integer
+sizes because hardware can implement any size. This simplifies the type system
 allowing unlimited precision integers but it needs a bitwidth inference mechanism.
 
 
-Additionally, in hardware it makes sense to have different implementations that
-adjust for performance/constrains like size, area, FPGA/ASIC. Type systems
-could help on these areas.
+Additionally, in hardware, it makes sense to have different implementations that
+adjust for performance/constraints like size, area, FPGA/ASIC. Type systems
+could help in these areas.
 
 
 ## Types vs `comptime assert`
@@ -23,9 +23,9 @@ assert` translation. The type system has two components: type synthesis and
 type check. The type check can be understood as a `comptime assert`.
 
 
-After type synthesis, each variable has an associated type. In Pyrope, each
-assignment, the type checks that the left hand side (lhs) has the same type as
-the right hand side (rhs) of the expression. Additional type checks happen when
+After type synthesis, each variable has an associated type. In Pyrope, for each
+assignment, the type checks that the left-hand side (LHS) has the same type as
+the right-hand side (RHS) of the expression. Additional type checks happen when
 variables have a type check explicitly set (`var:type`) in rhs expressions.
 
 
@@ -74,12 +74,12 @@ optimize.
 ## Building types
 
 Each variable can be a basic type. In addition, each variable can have a set of
-constrains from the type system. Pyrope type system constructs to handle types:
+constraints from the type system. Pyrope type system constructs to handle types:
 
-* `type` keyword allows to declare types.
+* `type` keyword allows declaring types.
 
 * `a does b`: Checks 'a' is a superset or equal to 'b'. In the future, the
-  unicode character "\u02287" could be used as an alternative to `does` (`a`
+  Unicode character "\u02287" could be used as an alternative to `does` (`a`
 &#8839 `b`).
 
 * `a:b` is equivalent to `a does b` for type check, but it is also used by type
@@ -98,7 +98,7 @@ comptime assert t1 equals t2
 comptime assert t1 equals v1
 ```
 
-While `var` statement declares a new variable instance which can also have an
+While the `var` statement declares a new variable instance that can also have an
 associated type, the `type` statement declares a type without any instance.
 The `type` keyword also allows for expressions to build more complex types.
 All the elements in the type expression are treated as "type of". E.g: `type x
@@ -136,7 +136,7 @@ puts "b:{}", b           // b:(c="hello",d=100)
 
 
 Both `does` and `equals` operate over types. This means that the values in the
-entries are ignored, but the type of the entry is considered.
+entries are ignored, but the type of entry is considered.
 
 ```
 assert      (a=3     ,:string) does (a:int,"hello")
@@ -146,7 +146,7 @@ assert not ((a="foo" ,:string) does (a:int,"hello"))
 assert not ((a={|| 3},:string) does (a:int,"hello"))
 ```
 
-The `does` keyword checks that functions have a "compatible" arguments.
+The `does` keyword checks that functions have "compatible" arguments.
 
 ```
 assert      {||    3 } does {|(a)| 3 }
@@ -172,7 +172,7 @@ assert not (a equals {|(x)| ret 1 }) // different arguments
 ```
 
 Some languages use an `is` keyword but Pyrope uses `does` or `equals` because
-in English "a is b" is not clear ("a is same as b" vs "a is subtype of b"). 
+in English "a is b" is not clear ("a is same as b" vs "a is a subtype of b"). 
 
 ```
 type x = (a:string, b:int)
@@ -224,7 +224,7 @@ if y == Color.Red {
 Integers can be constrained based on the maximum and minimum value (not by
 number of bits).
 
-Pyrope automatically infers the maximum and minimum value for each numeric
+Pyrope automatically infers the maximum and minimum values for each numeric
 variable. If a variable width can not be inferred, the compiler generates a
 compilation error. A compilation error is generated if the destination
 variable has an assigned size smaller than the operand results. 
@@ -277,8 +277,7 @@ v = v.saturated(1+300)  // 255
 ```
 
 Pyrope leverages LiveHD bitwidth pass [stephenson_bitwidth] to compute the maximum and minimum
-value of each variable. For each operation, the maximum and minimum is computed. For control
-flow divergences, the worst possible path is considered.
+value of each variable. For each operation, the maximum and minimum are computed. For control-flow divergences, the worst possible path is considered.
 
 ```
 a = 3                      // max:3, min:3
@@ -301,7 +300,7 @@ h = c@[0,1]                // max:3, min:0
 Bitwidth uses narrowing to converge (see
 [internals](10-internals.md/#type-synthesis)). The GCD example does not specify
 the input/output size, but narrowing allows to work without typecasts.  To
-understand, the commens show the max/min bitwidth computations.
+understand, the comments show the max/min bitwidth computations.
 
 ```
 if cmd? {
@@ -345,15 +344,15 @@ y = cmd.b(y)  // typecast y to cmd.b type (this can add a mux)
 Typecasting is the process of changing from one type to other. There are 2 reserved
 keywords for typecasting: 
 
-* `saturate` keeps the maximum or minumum (negative integer) that fits on the
-  left hand side. 
+* `saturate` keeps the maximum or minimum (negative integer) that fits on the
+  left-hand side. 
 
-* `wrap` drops the bits that do not fit on the left hand side. It performs sign
+* `wrap` drops the bits that do not fit on the left-hand side. It performs sign
   extension if needed.
 
 In all the cases, there is no bitwidth of type inference between the right and
-left side of the assignment. The lhs variable will be a immutable if not
-defined before. Also, in both cases if the left hand side is not a boolean or
+left side of the assignment. The LHS variable will be immutable if not
+defined before. Also, in both cases, if the left-hand side is not a boolean or
 an integer, a compile error is generated.
 
 
@@ -412,7 +411,7 @@ d = a // OK, call intitial to type cast
 
 There is no object inheritance in Pyrope, but tuples allow to build mixin and composition with traits.
 
-A mixin is when an object or class can add methods and the parent object can access them. In several languages
+A mixin is when an object or class can add methods and the parent object can access them. In several languages,
 there are different constructs to build them (E.g: an include inside a class in Ruby). Since Pyrope tuples
 are not immutable, new methods can be added like in mixin.
 
@@ -437,13 +436,13 @@ var a:Mixing_all("Julius Caesar")
 a.say_hi() 
 ```
 
-Mixin are very expressive by allowing to redefine methods. If two tuples have
+Mixin is very expressive by allowing redefining methods. If two tuples have
 the same field a tuple with the concatenated values will be created. This is
 likely an error with basic types but useful to handle explicit method overload.
 
 
 In a way, mixin just adds methods from two tuples to create a new tuple. In
-programming languages with object oriented programming (OOP) there are many
+programming languages with object-oriented programming (OOP), there are many
 keywords (`virtual`, `final`, `override`, `static`...) to constrain how methods can be
 updated/changed. In Pyrope, the `let` and `var` keywords can be added to any tuple
 field. The `let` makes the entry immutable when applied to a method, it behaves like
@@ -458,7 +457,7 @@ same field appears twice.
 
 An issue with mixin is when more than one tuple has the `set` method. If the
 tuples are concatenated with `...` and error is triggered, if the tuples are
-concatenated with `++` the methods are overrided when declared with `var`.
+concatenated with `++` the methods are overridden when declared with `var`.
 Neither is the expected solution.  A smaller issue with mixins is that
 `comptime assert X extends Y` should be inserted when implementing an
 interface.
@@ -466,7 +465,7 @@ interface.
 
 Without supporting OOP, but providing a more familiar abstract or trait
 interface, Pyrope provides the `extends` keyword. It checks that the new
-type extends the functionality undefined and allows to use methods defined.
+type extends the functionality undefined and allows to use of methods defined.
 The constructor (`set`) can call the parent constructor with the `super` keyword.
 
 This is effectively a mixin with checks that some methods should be
@@ -508,9 +507,8 @@ comptime assert Circle does Shape
 ```
 
 
-The `implement` checks that the method is redefined. This is the case only if
-the method as nil as body. The reason is that the method arguments must be
-preserved.
+The `implement` checks that the method is redefined. The reason is that the method arguments must be
+preserved with a non-empty list of statements.
  
 ```
 type base_abstract = (
@@ -541,7 +539,7 @@ assert a.0.__id == ':0:b' and a.b.__id == ':0:b'
 assert a.1.__id == ':1:c' and a.c.__id == ':1:c'
 ```
 
-Function definitions allocate a tuple, which allows to instrospect the
+Function definitions allocate a tuple, which allows to introspect the
 function but not to change the functionality. Functions have 3 fields `inputs`,
 `outputs`, `where`. The `where` is a function that always returns true if unset
 at declaration.
@@ -562,8 +560,8 @@ let x = for i in fun { break i(args) when (i.inputs does args) and i.where(args)
 ```
 
 
-There are several uses for instrospection, but for example it is possible to build a
-function that returns a randomly mutated tuples.
+There are several uses for introspection, but for example, it is possible to build a
+function that returns a randomly mutated tuple.
 
 ```
 randomize = debug {|(self)|
@@ -596,7 +594,7 @@ function, but they are only visible to the same directory/project Pyrope files.
 
 
 The `punch` statement allows to access variables from other files/functions. The
-`import` statement allows to reference functions from other files.
+`import` statement allows referencing functions from other files.
 
 
 ### import
@@ -659,7 +657,7 @@ the path. `import` stops the search on the first hit. If no match happens, a
 compile error is generated. 
 
 
-`import` allows specialized libraries per subproject.  For example xx/yy/zz can
+`import` allows specialized libraries per subproject.  For example, xx/yy/zz can
 use a different library version than xx/bb/cc if the library is provided by yy,
 or use a default one from the xx directory.
 
@@ -672,7 +670,7 @@ d = import "prj2/file3"   // import the functions from project prj2 and file3
 
 Many languages have a "using" or "import" or "include" command that includes
 all the imported functions/variables to the current scope. Pyrope does not
-allow that, but it is possible to use mixin to add the imported functionality
+allow that, but it is possible to use a mixin to add the imported functionality
 to a tuple.
 
 ```
@@ -686,37 +684,36 @@ var x:Number = 3
 
 ### punch
 
-The `punch` statement allows to access variables from other instantiated
-modules. 
+The `punch` statement allows accessing registers, inputs, and outputs from other
+instantiated modules. 
 
-Verilog has a somewhat similar punch semantics called Hierarchical Reference.
-It also allows to go through the module hierarchy and read/write the contents
-of a variable. It is not popular for 2 main reasons: (1) It is consider "not
-nice" to bypass the module interface and touch an internal variable; (2) some
-tools do not support it as synthesizable.
+Verilog has a somewhat similar semantics with the Hierarchical Reference. It
+also allows to go through the module hierarchy and read/write the contents of a
+variable. It is not popular for 2 main reasons: (1) It is considered "not nice"
+to bypass the module interface and touch an internal variable; (2) some tools
+do not support it as synthesizable.
 
 
 Pyrope benefits more than Verilog from the `punch`  because it allows to punch
-tuples (SystemVerilog does not allow to punch classes which do not tend to be
+tuples (SystemVerilog does not allow to punch classes that do not tend to be
 synthesizable anyway). Also Pyrope `punch` allows relative hierarchy reference.
 
-Without a `punch`, the tuple could be pass in the input/outputs, but since
+Without a `punch`, the tuple could be passed in the input/outputs, but since
 everything is passed by value, it will create a copy. It would not be possible
 to have a memory, and then use methods to update/read the memory contents
-across modules. This will be very counter intuitive for most programmers[^4].
+across modules. This will be very counterintuitive for most programmers[^4].
 
 
-[4]: Although it is the thing that most verilog codign guidelines force you to do.
+[4]: Although it is the thing that most Verilog coding guidelines force you to do.
 
 
-The punch is a super set of these 3 different set of tools:
+The punch is a superset of these 3 different sets of tools:
 
-* Verilog hierarchical reference. Like Verilog hier, `ounch` allows to access
+* Verilog hierarchical reference. Like Verilog hier, `punch` allows to access
   variables through the hierarchy. A difference in Pyrope is that only `pub`
-  variables are accessible, and remote updates are only allowed to `pub var`
-  that did not have any other write.
+  registers or undriven inputs are accessible.
 
-* Soft connections and CHISEL boring utils allow to define a unique identifier,
+* Soft connections and CHISEL boring utils allow to define of a unique identifier
   and connects between the IDs. Punch also has this capability by building a
   tuple that provides name registration.
 
@@ -749,16 +746,16 @@ Maybe the best way to understand the `punch` is to see the differences with the 
 * Instantiation vs File hierarchy
   + `punch` traverses the instantiation hierarchy to find matches.
   + `import` traverses the file/directory hierarchy to find matches.
-* Succcess vs Failure
+* Success vs Failure
   + `punch` keeps going to find all the matches, and it is possible to have a zero matches
   + `import` stops at the first match, and a compile error is generated if there is no match.
 * Regex vs file path
-  + `punch` uses a more powerful regex to match instance hierarchy.
+  + `punch` uses a more powerful regex to match the instance hierarchy.
   + `import` uses a simple file/function names skipping some keywords (code,src,lib).
 
 
 The instantiation hierarchy looks like a tree with a root at the top function.
-Given a instantiation hierarchy, the tree traversal starts by visiting all the
+Given an instantiation hierarchy, the tree traversal starts by visiting all the
 children, then the parents.  The traversal is similar to a post-order tree
 traversal, but not the same. The post-order traversal visits a tree node once
 all the children are visited. The `punch` traversal visits a tree node once all
@@ -812,10 +809,31 @@ $d = punch_from "bar/some_register"
 ```
 
 
+### Mocking library
+
+One possible use of the `punch` command is to create a "mocking" library. A
+mocking library instantiates a large design but forces some subblocks to
+produce some results for testing. This is possible with `punch` because it
+allows to for a value on inputs and/or outputs.
+
+```
+type bpred = ( // complex predictor
+  ,pub let taken = {|| ret some_table[som_var] >=0 }
+)
+
+test "mocking taken branches" {
+  var btaken = punch "core.fetch.bpred.taken"
+  btaken = true
+
+  var l = core.fetch.predict(0xFFF)
+
+}
+```
+
 ## Operator overloading
 
 There is no operator overload in Pyrope. `+` always adds Numbers, `++`
-always concatenates a tuple or a String, `[]` always indexes a tuple.
+always concatenates a tuple or a String, `[]` indexes a tuple.
 
 
 ## Getter/Setter
@@ -863,11 +881,10 @@ assert x.a2.get == 106
 
 
 The getter is a method, which means that the default
-[overloading](06-functions.md#Overloading) apply. This allows to customize by
+[overloading](06-functions.md#Overloading) applies. This allows to customize by
 return type:
 
 ```
-
 type showcase = (
   ,pub var v:int
   ,pub var get ++= {|(self)->(self,:string) where self.i>100|
@@ -884,6 +901,43 @@ let foo:string = s // compile error, no matching getter
 s.v = 100
 
 let foo:string = s // compile error, no matching getter
+```
+
+
+## Compare
+
+
+The comparator operations (`==`, `!=`, `<=`,...) need to be overloaded for most
+objects. Pyrope has the `lt` and `eq` methods to build all the other
+comparators. When non-provided the `lt` (Less Than) is a compile error, and the
+`eq` (Equal) compares that all the tuple fields are equal.
 
 
 ```
+type t:(
+  ,pub var v
+  ,pub let set = {|a| self.v = a }
+  ,pub let lt = {|other| self.v  < other.v }
+  ,pub let eq = {|other| self.v == other.v }
+)
+
+var m1:t = 10
+var m2:t = 4
+assert m1 < m2 and !(m1==m2)
+assert m1 <= m2 and m1 != m2 and m2 > m1 and m2 >= m1
+```
+
+
+It is also possible to provide a custom `ge` (Greater Than). The `ge` is redundant
+with the `lt` and `eq` (`a > b == (a!=b) && !`) but it allows to have more
+efficient implemetations:
+
+
+* `a == b` is `__eq(a,b)`
+* `a != b` is `__not(__eq(a,b))`
+* `a  < b` is `__lt(a,b)`
+* `a  < b` is `__lt(b,a)`
+* `a <= b` is `__lt(a,b) | __eq(a,b)` (without `ge`) or `__ge(b,a)`
+* `a >= b` is `__lt(b,a) | __eq(a,b)` (without `ge`) or `__ge(a,b)`
+
+

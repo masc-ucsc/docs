@@ -18,11 +18,11 @@ There are 5 main verification statements:
 * `verify`: Similar to assert, but it is potentially slow to check, so it is
   checked only when verification is enabled.
 
-* `lec`: It is a verification only step that checks that all the arguments are
-  logically equivalent. The difference with `verify` that it also accepts
+* `lec`: It is a verification-only step that checks that all the arguments are
+  logically equivalent. The difference with `verify` is that it also accepts
   functions (only). `lec` does not include the reset state. The first argument
-  is the gold model, the rest are implementation. This matters because gold
-  model unknown output bit checks againt any value for the equivalent
+  is the gold model, the rest are implementation. This matters because the gold
+  model unknown output bit checks against any value for the equivalent
   implementation bit.
 
 * `restrict`: Constraints or restrictions beyond to check a subset of the
@@ -47,7 +47,7 @@ let fun2 = {|a,b| ~(~a | ~b) }
 lec fun1, fun2
 ```
 
-To guard an assertion from being checked unless some condition happens, you
+To guard an assertion against being checked unless some condition happens, you
 can use the `when/unless` statement modifier or the `implies` logic. All the
 verification statements (`assert`, `assume`, `verify`) can have an error
 message.
@@ -71,7 +71,7 @@ In a way, most type checks have equivalent `comptime assert` checks.
 
 ## Asserts and reset
 
-In hardware is common to have undefined state during the reset period. Ideally
+In hardware is common to have an undefined state during the reset period. Ideally
 asserts should not be active during reset periods unless explicitly stated. The
 problem is that it may not clear what is a reset period.
 
@@ -84,6 +84,14 @@ disabling the assertion when indexing arrays may be the best solution.
 reg memory:u33[] = {1,2,3} // may take cycles to load this contents
 
 assert memory[0] == 1 unless memory.reset 
+```
+
+The `disable.assert` variable can also be set at the beginning to disable all
+the following assertions during reset.
+
+```
+disable.assert = memory.reset or foo_reset
+assert false   // never fails during reset
 ```
 
 # Coverage
@@ -101,7 +109,7 @@ System Verilog `coverpoint` and `covergroup` but the meaning is not the same.
   compile time.
 
 * `covercase grp, cond [,message]` is very similar to cover but it has a `grp`
-  group. There can be one or more cover for a given group. The extra check is
+  group. There can be one or more covers for a given group. The extra check is
   that one of the `cond` in the cover case must be true each time. 
 
 

@@ -178,7 +178,7 @@ Run
 $prp test gcd
 ```
 
-The `gcd.prp` includes the top level module (`gcd`) and the unit test. 
+The `gcd.prp` includes the top-level module (`gcd`) and the unit test. 
 
 
 * Some Pyrope features not common in other HDLs (CHISEL):

@@ -73,7 +73,7 @@ assert ((1,a=2,c=3) ++ (a=20,33,c=30,4)) == (1,a=(2,20),c=(3,30),33,4)
 
 The `...` also concatenates, but it is an "inline concatenate". The difference
 is where the fields are concatenated and that it triggers a compile error if
-the same named entry already exists.
+the same entry already exists.
 
 
 ## Register
@@ -87,14 +87,13 @@ reg counter = 10
 var not_count = 20
 ```
 
-In `reg`, the right hand side of the initialization (`10` in the counter
-example) is called only during reset. In `var/let`, the righ hand size is
-called every cycle. As expected, `reg` is a mutable.
+In `reg`, the right-hand side of the initialization (`10` in the counterexample) is called only during reset. In `var/let`, the right-hand side is
+called every cycle. As expected, `reg` is mutable.
 
 ## Public
 
 All types of declarations (`let`, `var`, `reg`) can have a `pub` before. This
-is used to indicate the the declaration is public and hence visible outside the
+is used to indicate that the declaration is public and hence visible outside the
 scope defined. Section [typesystem](07-typesystem.md) has more details on how
 to `import` or `punch` a declaration across files.
 
@@ -197,11 +196,11 @@ assert range(0b01_1100) == 2..=4
 ```
 
 
-A closed range can be converted to a single integer or to a tuple. A range
-encoded as an integer is a set of the one hot encodings. As such, there is no
+A closed range can be converted to a single integer or a tuple. A range
+encoded as an integer is a set of one-hot encodings. As such, there is no
 order, but in Pyrope, ranges always have the order from smallest to largest.
 The `by expr` can be added to indicate a step or step function. This is only
-possible when both begin and end of range are fully specified.
+possible when both begin and end of the range are fully specified.
 
 
 ```
@@ -257,7 +256,7 @@ The `debug` attribute marks a mutable or immutable variable. At synthesis, all
 the statements that use a `debug` can be removed. `debug` variables can read
 from non debug variables, but non-debug variables can not read from `debug`.
 This guarantees that `debug` variables, or statements, do not have any
-side-effect beyond debug statements.
+side-effects beyond debug statements.
 
 ```
 var a = (debug b=2, c = 3) // a.b is a debug variable
@@ -360,8 +359,8 @@ let y = x + 1    // compile error: 'x' is a boolean, '1' is not
 
 The reduce operators and bit selection share a common syntax `variable@op[selection]`
 where there can be different operators (op) and/or bit selection. The selection
-can be a close range like `1..<=4` or `(1,4,6)` or an open range like `3..`.
-Internally, the open range is converted to a close range based on the variable
+can be a close-range like `1..<=4` or `(1,4,6)` or an open range like `3..`.
+Internally, the open range is converted to a close-range based on the variable
 size.
 
 
@@ -380,7 +379,7 @@ always positive results. `sext` is a sign-extended, so it can be positive or
 negative.
 
 If no operator is provided, a `zext` is used. The bit selection without
-operator can also be used on the left hand side to update a set of bits.
+operator can also be used on the left-hand side to update a set of bits.
 
 
 The or-reduce and and-reduce are always size insensitive. This means that to
@@ -423,7 +422,7 @@ z@[0] = 0b11 // compile error, '0b11` overflows the maximum allowed value of `z@
     It is important to remember that in Pyrope all the operations use signed
     numbers. This means that an and-reduce over any positive number is always going
     to be zero because the most significant bit is zero, E.g: `0xFF@&[] == 0`. In
-    some cases, a close range will be needed if the intention is to ignore the sign.
+    some cases, a close-range will be needed if the intention is to ignore the sign.
     E.g: `0xFF@&[0..<8] == -1`.
 
 Another important characteristic of the bit selection is that the order of the
@@ -446,7 +445,7 @@ assert trans == 1
 Some operators can also have tuples as input and/or outputs.
 
 * `a ++ b` concatenate two tuples. If field appears in both, concatenate field
-* `(,...b)` inplace insert `b`. Compile error if both have same named field
+* `(,...b)` in place insert `b`. Compile error if both have the same named field
 * `a << b` shift left. `b` can be a tuple
 * `a has b` checks if `a` tuple has the `b` field
 
@@ -534,8 +533,8 @@ references. In non-hardware languages, `?` is used to check if there is valid
 data or a null pointer.
 
 
-Pyrope has no pointers, but the same syntax is used for handle "valid" data.
-Instead the data is left to behave like without the optional, but there is a
+Pyrope has no pointers, but the same syntax is used to handle "valid" data.
+Instead, the data is left to behave without the optional, but there is a
 new "valid" field associated with each tuple entry.
 
 
@@ -551,7 +550,7 @@ There are 4 explicitly interact with valids:
   false
 
 
-The optional or valid associated to each varible and tuple field is implicitly
+The optional or valid attached to each variable and tuple field is implicitly
 computed as follows:
 
 * Each cycle the `valid` is set for non-register variables initialization[^clear].
@@ -560,7 +559,7 @@ computed as follows:
 * Registers with reset set the valid on reset, unless the type is optional, in
   which case the register is valid is initialized to false.
 
-* Left hand side variables `valids` are set to the and-gate of all the variable
+* Left-hand side variables `valids` are set to the and-gate of all the variable
   valids used in the expression
 
 * Reading from a memory is always a valid contents
@@ -569,12 +568,12 @@ computed as follows:
 
 * conditionals (`if`) update valids independently for each path
 
-* A tuple is valid check is false if any of the tuple fields are invalid
+* A tuple has the valid set to false if any of the tuple fields are invalid
 
 * The valid computation can be overwritten with the `valid` method
 
 
-[^clear]: Non register variables are initialized to zero each cycle too, the
+[^clear]: Non-register variables are initialized to zero each cycle too, the
   valid is cleared at the same time.
 
 
@@ -584,10 +583,10 @@ computed as follows:
     elastic update because it does not consider the abort or retry.
 
 
-The previous rules will clear a valid only if an expression has no valids, but
+The previous rules will clear a valid only if an expression has no valid, but
 the only way to have a non-valid is if the inputs to the lambda are invalid or
 if the valid is explicitly clear. The rules are designed to have no overhead
-when valids are not used. The compiler should detect that the valid is true all
+when valid are not used. The compiler should detect that the valid is true all
 the time, and the associated logic is removed.
 
 
@@ -631,8 +630,7 @@ comptime assert not x?
 ```
 
 
-The contents of the tuple field does not affect the field valid bit. It is data
-independent. Tuples also can have optional type, which behaves like adding
+The contents of the tuple field do not affect the field valid bit. It is data-independent. Tuples also can have an optional type, which behaves like adding
 optional to each of the tuple fields.
 
 ```

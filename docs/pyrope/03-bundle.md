@@ -83,7 +83,7 @@ assert a!=b
 assert b == c == d
 ```
 
-Tuple can have attributes associated to each entry. These attributes start with
+Tuple can have attributes associated with each entry. These attributes start with
 a double underscore `__attr_sample`. A tuple with a single entry element is
 called a scalar. A tuple with a single element and no attributes is called a
 trivial scalar.
@@ -280,7 +280,7 @@ assert c == 1 and d == 2
 ## enums
 
 Enums use the familiar tuple structure, but there is a significant difference.
-The following case generates a enum compile error because the enum entries
+The following case generates an enum compile error because the enum entries
 shadow existing variable entries.
 
 
@@ -289,11 +289,11 @@ let a = "foo"
 enum err = (a,b) // compile error, 'a' is a shadow variable
 ```
 
-The reason is to avoid confusion between tuple and enum that use the similar
-tuple syntax. In the `err` example, it is unclear if the intention to have
+The reason is to avoid confusion between tuple and enum that use similar
+tuple syntax. In the `err` example, it is unclear if the intention is to have
 `err.foo` or `err.a`.
 
-The shadow variable constrain does not happen if the enum has a non-defeault
+The shadow variable constrain does not happen if the enum has a non-default
 value. Another solution is to move the enum declaration ahead of the shadowing
 variables.
 
@@ -313,8 +313,8 @@ puts "x is {}", x  // prints: "x is e.a"
 ```
 
 
-The enum default values are NOT like typical non hardware languages. The enum
-auto-created values use a one hot encoding. The first entry has the first bit
+The enum default values are NOT like typical non-hardware languages. The enum
+auto-created values use a one-hot encoding. The first entry has the first bit
 set, the 2nd the 2nd bit set. If an entry has a value, the next entry uses
 the next free bit.
 
@@ -351,11 +351,11 @@ assert animal.mammal.rat   == 0b011000
 assert animal.mammal.human == 0b101000
 ```
 
-In general, if there are no value specified in an entry, the number of bits is
+In general, if there is no value specified in an entry, the number of bits is
 equivalent to the number of entries in the tuple.
 
 
-It is possible to use a sequence which is more consistent with hardware languages.
+It is possible to use a sequence that is more consistent with hardware languages.
 
 ```
 enum v3:int = (
@@ -368,7 +368,7 @@ assert v3.b == 5
 assert v3.c == 6
 ```
 
-The same syntax is used for enums to different objects. The hiearchy is not
+The same syntax is used for enums to different objects. The hierarchy is not
 allowed when an ordered numbering is requested.
 
 

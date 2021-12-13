@@ -67,7 +67,7 @@ at compile time or a compile error is generated.
 ### Strings
 
 Pyrope accepts single line strings with a single quote (`'`) or double quote
-(`"`).  Single quote do not have escape character, double quote supports escape
+(`"`).  Single quote does not have escape character, double quote supports escape
 sequences.
 
 ```
@@ -78,6 +78,7 @@ b = 'simpler here'
 * `\n`: newline
 * `\\`: backslash
 * `\"`: double quote
+* `\``: backtick quote
 * `\xNN`: hexadecimal 8 bit character (2 digits)
 * `\uNNNN`: hexadecimal 16-bit Unicode character UTF-8 encoded (4 digits)
 
@@ -128,27 +129,25 @@ style.
 
 An identifier is any non-reserved keyword that starts with an underscore or an
 alphabetic character. Since Pyrope is designer to support any synthesizable
-Verilog automatic translation, any sequence of characters between \` can form a
-valid identifier. This is needed because Verilog has the \\ that builds
-identifiers with special characters. The \` has the same escape sequence as
-strings with double quote (`"`) but it also has the \\\` escape sequence.
+Verilog automatic translation, any sequence of characters between backticks
+(\`) can form a valid identifier. The identifier uses the same escape sequence
+as strings. 
 
 ```
 `foo is . strange!\nidentifier` = 4
 `for` = 3
 ```
 
-Using the \` allows to have reserved keywords as identifiers.
-
-
-Identifiers are case sensitive like Verilog, but the compiler issues errors for
-non \` escaped identifiers that do not follow these conditions in order:
+Using the backtick, Pyrope can use any string as an identifier, even reserved
+keywords. Identifiers are case sensitive like Verilog, but the compiler issues
+errors for non \` escaped identifiers that do not follow these conditions in
+order:
 
 * Identifiers with a single character followed by a number can be upper or lower case.
 * An all upper case variable must be a compile time constant `comptime`.
 * Types should either: (1) start the first character uppercase and everything
   else lower case; (2) be all lower case and finish with `_t`.
-* All the other identifiers that start with a alpha character `[a-z]` are
+* All the other identifiers that start with an alpha character `[a-z]` are
   always lower case.
 
 ## Semicolons
@@ -182,20 +181,23 @@ different files.
 ```
 // src/file1.prp
 puts(order=2, " world")
+
 // src/file2.prp
 print(order=1, "hello")
 ```
 
 The available puts/print arguments:
 * `order`: relative order to print in a given cycle
-* `file`: file to send the message. E.g: `stdout`, `my_large.log`,...
+* `file`: file to send the message. E.g: `stdout`, `stderr`, `my_large.log`,...
 
+
+A related command to the puts is the `format` it behaves like `print` but
+returns a string.
 
 ## Functions, Procedures
 
-
-Pyrope only supports annonymous lambdas. A lambda can be asigned to a variable,
-and it can be called like most programmers expect. [Lambda
+Pyrope only supports anonymous lambdas. A lambda can be assigned to a variable,
+and it can be called as most programmers expect. [Lambda
 section](06-functions.md) has more details on the allowed syntax.
 
 
@@ -209,33 +211,32 @@ Pyrope classifies lambdas as follows:
   assigned to a variable and called to execute later.
 
 * `function` is a lambda with only combination statements without non-Pyrope
-  calls or `punch` statements [^punch].
+  calls or `punch` write statements [^punch].
 
-* `procedure` is a lambda that can have combination and non-combinational
-  (register/memories) or potential calls to non-Pyrope or `punch` statements.
+* `procedure` is a lambda that is not a `function`. It can have combination and
+  non-combinational (register/memories).
 
-* `method` is a lambda that updates tuple fields. A lambda that only reads
-  tuple entries is either a `function` or a `procedure` not a `method`. A
+* `method` is a lambda (`function` or `procedure`) that updates tuple fields. A
   `method` can only update one tuple.
 
-* `module` is a lambda that has a physical instance. lambdas are either inlined
+* `module` is a lambda that has a physical instance. Lambdas are either inlined
   or modules.
 
 
-[^punch]: `punch` is a Pyrope statement that allows access accross modules. It
-allows to connect modules directly withouth going through the call hierarchy.
+[^punch]: `punch` is a Pyrope statement that allows access across modules. It
+allows connecting modules directly without going through the call hierarchy.
 
 ## Evaluation order
 
 
 Statements are evaluated one after another in program order. The main source of
-conflicts comes from expressions.
+conflicts come from expressions.
 
 
 The expression evaluation order is important if the elements in the expression
 can have side effects. Pyrope constrains the expressions so that no matter the
 evaluation order, the synthesis result is the same. It is important to notice
-that synthesis results explicitly excludes debug `debug` statements like
+that synthesis results explicitly exclude `debug` statements like
 `puts`. Pyrope is non-deterministic for debug statements[^debug].
 
 
@@ -243,7 +244,7 @@ that synthesis results explicitly excludes debug `debug` statements like
 `puts` can have many valid orders.
 
 
-As reference languages like C++11 do not have a defined order of evaluation for
+As a reference, languages like C++11 do not have a defined order of evaluation for
 all types of expressions. Calling `call1() + call2()` is not defined. Either
 `call1()` first or `call2()` first. Pyrope is designed to be fully
 deterministic for synthesizable code.
@@ -260,13 +261,13 @@ with explicit short-circuit.
 
 To guarantee that the evaluation order has no synthesis side-effects, Pyrope
 expressions can have many calls to `functions` because they are guaranteed to
-have no synthesis side-effects. Only defined expression have calls to
+have no synthesis side-effects. Only defined expressions have calls to
 `procedures` or `methods`.
 
 
 Defined expressions leverage `and_then`, `or_else`, or control expressions
 (`if/else`, `match`, `for`) to fully decide the evaluation order. Expressions
-are also defined when one `procedure` or `method` is combined with imutable
+are also defined when one `procedure` or `method` is combined with immutable
 variables or `functions`. In this case, the `functions` should have only access
 to immutable variables or constants. This is still a deterministic expression
 because even the non-pure lambda can not mutate immutables.
@@ -281,7 +282,7 @@ let y = t.nonpure() + nonpure()   // error, multiple non pure calls
 ```
 
 
-Expressions also can have scope, but expression scopes are not allowed have
+Expressions also can have a scope, but expression scopes are not allowed to have
 side-effects, so they can be treated as `functions`.
 
 ```
