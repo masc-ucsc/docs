@@ -78,7 +78,7 @@ b = 'simpler here'
 * `\n`: newline
 * `\\`: backslash
 * `\"`: double quote
-* `\``: backtick quote
+* `` ` ``: backtick quote
 * `\xNN`: hexadecimal 8 bit character (2 digits)
 * `\uNNNN`: hexadecimal 16-bit Unicode character UTF-8 encoded (4 digits)
 
@@ -99,16 +99,17 @@ assert a == b        // compile error, 'a' and 'b' have different types
 
 Spaces do not have meaning but new lines do. Several programming languages like
 Python use indentation level (spaces) to know the parsing meaning of
-expressions. In Pyrope, spaces do not have meaning, but newlines affect the
-operator precedence and multi line statements.
+expressions. In Pyrope, spaces do not have meaning, and newlines combined with
+the first token after newline is enough to decide the end of statement.
 
 
 By looking at the first character after a new line, it is possible to know if
 the rest of the line belongs to the previous statement or it is a new
 statement.
 
-If the line starts with an alphanumeric (`[a-z0-9]`) value or an open
-parenthesis (`(`), the rest of the line belongs to a new statement.
+If the line starts with an alphanumeric (`[a-z0-9]` that excludes operators
+like `or`, `and`) value or an open parenthesis (`(`), the rest of the line
+belongs to a new statement.
 
 ```
 a = 1
@@ -173,7 +174,9 @@ puts "Hello a is {}", a
 ```
 
 Since many modules can print at the same cycle, it is possible to put a relative
-order between puts (`order`).
+order between puts (`order`). If no relative order is provided, the messages
+are kept to the end of the cycle, and then printed in alphabetical order. This is
+done to be deterministic.
 
 This example will print "hello world" even though there are 2 puts/prints in
 different files.
@@ -187,7 +190,7 @@ print(order=1, "hello")
 ```
 
 The available puts/print arguments:
-* `order`: relative order to print in a given cycle
+* `order`: relative order to print in a given cycle.
 * `file`: file to send the message. E.g: `stdout`, `stderr`, `my_large.log`,...
 
 
@@ -235,19 +238,12 @@ conflicts come from expressions.
 
 The expression evaluation order is important if the elements in the expression
 can have side effects. Pyrope constrains the expressions so that no matter the
-evaluation order, the synthesis result is the same. It is important to notice
-that synthesis results explicitly exclude `debug` statements like
-`puts`. Pyrope is non-deterministic for debug statements[^debug].
-
-
-[^debug]: Non-deterministic for debug statements means that debug calls like
-`puts` can have many valid orders.
+evaluation order, the synthesis result is the same. 
 
 
 As a reference, languages like C++11 do not have a defined order of evaluation for
 all types of expressions. Calling `call1() + call2()` is not defined. Either
-`call1()` first or `call2()` first. Pyrope is designed to be fully
-deterministic for synthesizable code.
+`call1()` first or `call2()` first.
 
 
 In many languages, the evaluation order is defined for logical expressions.
@@ -269,8 +265,7 @@ Defined expressions leverage `and_then`, `or_else`, or control expressions
 (`if/else`, `match`, `for`) to fully decide the evaluation order. Expressions
 are also defined when one `procedure` or `method` is combined with immutable
 variables or `functions`. In this case, the `functions` should have only access
-to immutable variables or constants. This is still a deterministic expression
-because even the non-pure lambda can not mutate immutables.
+to immutable variables or constants.
 
 
 ```
@@ -294,9 +289,10 @@ assert a == (3+1+100)
 
 For most expressions, Pyrope is more restrictive than other languages because
 it wants to be a fully defined deterministic independent of implementation.
-Pyrope is deterministic in the synthesizable but not in the `debug` statements.
-To illustrate the point/difference, and how to handle it, it is useful to see a
-Verilog example.
+Pyrope is deterministic in the synthesizable, the `puts` determinism is
+achieved not by serializing the calls, but to delay the output until the end of
+the cycle To illustrate the point/difference, and how to handle it, it is
+useful to see a Verilog example.
 
 
 The following Verilog sequence evaluates differently in VCS and Icarus Verilog.
@@ -372,10 +368,10 @@ statements, or the `and_then` and `or_else` operations must be used.
 
 === "Incorrect code with side-effects"
     ```
-    var r1 = fcall1() or  fcall2()  // compile error, or non-determistic debug
+    var r1 = fcall1() or  fcall2()  // compile error, non-deterministic
 
 
-    var r2 = fcall1() and fcall2()  // compile error, or non-determistic debug
+    var r2 = fcall1() and fcall2()  // compile error, non-deterministic
 
 
     var r3 = fcall1() +   fcall2()  // compile error

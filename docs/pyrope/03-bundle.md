@@ -1,7 +1,7 @@
 # Tuples
 
-Tuples are a basic construct in Pyrope. Tuples are defined as "ordered"
-sequence of elements where the entries may be named.
+Tuples are a basic construct in Pyrope. Tuples are defined as an "ordered"
+sequence fields or entries that can be named.
 
 
 ```

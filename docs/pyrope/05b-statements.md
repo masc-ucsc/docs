@@ -405,7 +405,7 @@ if runtime == 1 comptime {
 }
 ```
 
-## Test only (`step`/`waitfor`)
+## Test only
 
 `test` code blocks are allowed to use special statements not available outside
 testing blocks:
@@ -467,6 +467,10 @@ The `waitfor` command is equivalent to a `while` with a `step`.
 The main reason for using the `step` is that the equivalent `#>` does not work
 in loops.
 
+* `peek` allows to read any flop, and lambda input or output
+
+* `poke` is similar to `peek` but allows to set a value on any flop and lambda
+  input/output.
 
 ## while
 

@@ -629,10 +629,18 @@ x = import "my_fun/mytup"
 x.call()                // prints call called
 ```
 
-The `import` points to a file. The imported file (Setup
-code)[06-functions.md##setup-vs-reset-vs-execution] is guaranteed to be
-executed only once before the import, but there is no guarantee of order across
-different independent imports. Importing multiple times is allowed.
+The `import` points to a file [setup code](06b-instantiation.md#setup-code)
+list of pub variables or types. The setup code corresponds to the "top" scope
+in the imported file. The import statement can only be executed during the
+setup phase. The import allows for cyclic dependencies between files as long as
+there is no true cyclic dependency between variables. This means that "false"
+cyclic dependencies are allowed but not true ones. 
+
+
+The import is delayed until the imported variable is used in the local file.
+There is no order guarantee between imported files, just that the code needed
+to compute the used imported variables is executed before.
+
 
 All the variables at the top scope declared with `pub` are visible to the
 `import` statement. The import is by value, this means that it creates a "copy"
@@ -740,6 +748,10 @@ xx = 300 // sets uart_addr to 300
 ```
 
 
+The `punch` connects through the hierarchy, as such, `punch` can not be called during
+the setup phase because the hierarchy is still unknown. `punch` is only allowed
+during reset or execution phase.
+
 
 Maybe the best way to understand the `punch` is to see the differences with the `import`:
 
@@ -752,7 +764,28 @@ Maybe the best way to understand the `punch` is to see the differences with the 
 * Regex vs file path
   + `punch` uses a more powerful regex to match the instance hierarchy.
   + `import` uses a simple file/function names skipping some keywords (code,src,lib).
+* Setup phase
+  + `punch` can not be called during setup phase because hierarchy does not exist.
+  + `import` can be called during setup, execution, and reset phases.
++ Conditionally executed
+  + `punch` can no be conditionally executed. Connecting or punching is done or
+    not, but it can not be based on a run-time condition.
+  + `import` can happen inside a runtime condition.
 
+
+```
+let some = {||
+  if runtime {
+    let pi = import "math.PI" // OK
+    puts "PI is {}", pi
+
+    var v = punch "foo.bar"   // compile error, punch must be unconditional
+  }
+  var v = punch "foo.bar"     // OK
+}
+
+var v = punch "foo.bar"       // compile error, punch not in the setup phase
+```
 
 The instantiation hierarchy looks like a tree with a root at the top function.
 Given an instantiation hierarchy, the tree traversal starts by visiting all the
@@ -829,6 +862,10 @@ test "mocking taken branches" {
 
 }
 ```
+
+
+Nevertheless, the `punch` must be unconditional. An alternitive allowed only
+during testing is the `poke`/`peek` statements.
 
 ## Operator overloading
 

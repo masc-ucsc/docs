@@ -5,12 +5,16 @@ repo_url: https://github.com/masc-ucsc/livehd
 
 remote_branch: gh-pages
 
+plugins:
+  - search
+
 theme:
   name: material
   font:
     code: Fira Code
   logo: assets/pyrope5.png
   features:
+    - search.suggest
     - navigation.sections
     - navigation.instant
     - navigation.indexes

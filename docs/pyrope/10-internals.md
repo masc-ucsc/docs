@@ -6,21 +6,55 @@ compiler internals that affects semantics.
 ## Determinism
 
 Pyrope is designed to be deterministic. This means that the result is always
-the same.  Notice that the `puts` command is a debugging directive, and as such
-is not guaranteed to be deterministic.
-
-### Puts
-
-If needed for debugging, the puts messages can be ordered. `puts` has a before
-and after to create dependence between messages. 
+the same. 
 
 
-### Setup section
+Within a `lambda` the determinism is guaranteed because `procedures` have an
+explicit order in Pyrope. Only `functions` have a non-explicit order, but
+`functions` are pure without side-effects. `puts` can be called
+non-deterministically but the result is buffered and ordered at the end of the
+cycle to be deterministic.
 
-The setup code section is called only once only if it is the top-level file or
-it is imported by another file. The order of the across independent files can
-have many orders. This could look like a lack of determinism with `puts` but they
-can not have side effects because imports are by value, not reference.
+
+The only source of non-determinism is non-Pyrope (C++) calls from `procedures`
+executed at different pipeline stages. The pipeline stages could be executed in
+any order, it is just that the same order must be repeated deterministically.
+The non-Pyrope C++ calls must be `comptime` to affect synthesis. So the
+synthesis is deterministic, but the testing like cosimulation may not.
+
+
+The same non-Pyrope (C++) calls also represent a problem for the compiler
+optimizations. During the setup phase, several non-Pyrope can exist like
+reading the configuration file. If the non-Pyrope calls are not deterministic,
+the result could be a non-deterministic setup phase.
+
+
+The idea is that the non-Pyrope API is also divided in 2 categories:
+`functions` and `procedures`. A `function` can be called many times without
+non-Pyrope side-effects. Under this solution, the `lambdas` with non-Pyrope
+`procedure` calls must be ordered deterministically.
+
+
+### Import
+
+
+`import` statement allows for circular dependencies of files, but not of
+variables. This means that if there is no dependency (`a imports b`), just
+running a before b is enough. If there is a dependency (`a imports b` and `b
+imports a`) a multiple compiler pass is proposed.
+
+
+The solution to this problem is to pick an order, and import at least three
+times the files involved in the cyclic dependency. The files involved in
+the cylic dependency are alphabetically sorted and called three times: (1) `a
+import b`, then `b import a`; (2) `a import b` and `b import a`; (3) `a import
+b` and `b import a`. Only the last import chain can perform non-Pyrope calls
+and puts/debug statements.
+
+
+If the result of the last two imports has the same variables, the import has
+"converged", otherwise a compile error is generated.
+
 
 ### `punch`
 
@@ -84,7 +118,8 @@ will generate a Verilog with the same initialization.
 
 
 The compiler internals only needs to deal with unknowns during the copy
-propagation or peephole optimizations. The compile goes through 2 phases: LNAST and Lgraph.
+propagation or peephole optimizations. The compile goes through 2 phases: LNAST
+and Lgraph.
 
 
 In the LNAST passes, we have the following semantics:
@@ -145,16 +180,21 @@ In the LNAST passes, we have the following semantics:
   Tmerge option will propagate `?` only if both sides can generate a different
   value. The LNAST optimization pass will behave like the Tmerge:
 
-    - If all the paths have the same constant value, the `if` is useless and the correct value will be used. 
+    - If all the paths have the same constant value, the `if` is useless and
+      the correct value will be used. 
 
     - If any path has a different constant value, the generated result bits will
       have unknowns if the source bits are different or unknown. 
 
-    - If any paths are not constant, there is no LNAST optimization. Further Lgraph optimizations could optimize if all the mux generated values are proved to be the same.
+    - If any paths are not constant, there is no LNAST optimization. Further
+      Lgraph optimizations could optimize if all the mux generated values are
+      proved to be the same.
 
-+ The `for` loops are expanded, if the expression in the `for` is unknown, a compile error is generated.
++ The `for` loops are expanded, if the expression in the `for` is unknown, a
+  compile error is generated.
 
-+ The `while` loops are also expanded, if the condition on the `while` loop has unknowns a compile error is generated.
++ The `while` loops are also expanded, if the condition on the `while` loop has
+  unknowns a compile error is generated.
 
 
 At the end of the LNAST generation, a Lgraph is created. Only the registers and
@@ -499,6 +539,73 @@ can work. The reason is that integers can be converted to strings in a C++ API
 var x = 0sb10?
 let str = __to_string(x) // only works for compile time constants
 assert x == "0sb10?"
+```
+
+### for loop
+
+The `for` expects a tuple, and iterates over the tuple. This can lead to some
+unexpected behaviour. The most strange is that ranges are always from smallest
+to largest, so they do not allow to create a decreasing iterator.
+
+
+```
+let s:string="hell"
+for i,idx in s {
+  let v = match idx {
+   == 0 { "h" }
+   == 1 { "e" }
+   == 2 { "l" }
+   == 3 { "l" }
+  }
+  assert v == i
+}
+
+let t = (1,2,3)
+for i,idx in t {
+  let v = match idx {
+   == 0 { 1 }
+   == 1 { 2 }
+   == 2 { 3 }
+  }
+  assert v == i
+}
+
+let r=2..<5
+for i,idx in r {
+  let v = match idx {
+   == 0 { 2 }
+   == 1 { 3 }
+   == 2 { 4 }
+  }
+  assert v == i
+}
+
+let r2=4..=2 step -1
+assert r == r2
+for i,idx in r2 {
+  let v = match idx {
+   == 0 { 2 }
+   == 1 { 3 }
+   == 2 { 4 }
+  }
+  assert v == i
+}
+
+for i in 2..<5 {
+  let ri = 2+(4-i) // reverse index
+  // 2 == (2..<5).trailing_one
+  // 4 == (2..<5).leading_one
+  let v = match idx {
+   == 0 { 4 }
+   == 1 { 3 }
+   == 2 { 2 }
+  }
+  assert v == ri
+}
+
+for i,idx in 123 {
+  assert i == 123 and idx==0
+}
 ```
 
 ### Initialization
