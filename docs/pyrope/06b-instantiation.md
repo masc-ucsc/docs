@@ -73,13 +73,16 @@ enabled, which allows further optimizations.
 
 ```
 var res = a
-match {
-  cond1 { res = b }
-  cond2 { res = c }
-  cond3 { res = d }
+match x {
+  == c1 { res = b }
+  == c2 { res = c }
+  == c3 { res = d }
 }
 
 // RTL equivalent
+let cond1 = x == c1
+let cond2 = x == c2
+let cond3 = x == c3
 var sel = (cond1, cond2, !cond1 and !cond2)@[]  // one hot encode (no cond3)
 var res2= __hotmux(sel, b, c, d)
 assume  ( cond1 and !cond2 and !cond3)
@@ -100,7 +103,7 @@ or not short-circuit (`and_then`/`or_else`) expressions.
 === "Short-circuit expression"
 
     ```
-    var lhs = v1 or_then v2
+    var lhs = v1 or_else v2
 
     // RTL equivalent
     let lhs2  = __or(v1, v2)

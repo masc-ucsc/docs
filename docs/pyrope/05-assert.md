@@ -81,7 +81,7 @@ but the reset logic could take several cycles to reset a memory. As such,
 disabling the assertion when indexing arrays may be the best solution.
 
 ```
-reg memory:u33[] = {1,2,3} // may take cycles to load this contents
+reg memory:u33[] = (1,2,3) // may take cycles to load this contents
 
 assert memory[0] == 1 unless memory.reset 
 ```

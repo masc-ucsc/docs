@@ -357,21 +357,25 @@ let y = x + 1    // compile error: 'x' is a boolean, '1' is not
 
 ### Reduce and bit selection operators
 
-The reduce operators and bit selection share a common syntax `variable@op[selection]`
-where there can be different operators (op) and/or bit selection. The selection
-can be a close-range like `1..<=4` or `(1,4,6)` or an open range like `3..`.
-Internally, the open range is converted to a close-range based on the variable
-size.
+The reduce operators and bit selection share a common syntax
+`variable@op[sel]` where:
 
++ `variable` is a tuple where all the tuple fields and subfields must have a
+  explicit type size unless the tuple has 1 entry.
 
-Reduce and bit selection operators:
++ `op` is the operation to perform
 
-* `|`: or-reduce.
-* `&`: and-reduce.
-* `^`: xor-reduce or parity check.
-* `+`: pop-count.
-* `sext`: Sign extends selected bits.
-* `zext`: Zero sign extends selected bits.
+    * `|`: or-reduce.
+    * `&`: and-reduce.
+    * `^`: xor-reduce or parity check.
+    * `+`: pop-count.
+    * `sext`: Sign extends selected bits.
+    * `zext`: Zero sign extends selected bits.
+
++ `sel` can be a close-range like `1..<=4` or `(1,4,6)` or an open range like
+  `3..`. Internally, the open range is converted to a close-range based on the
+  variable size.
+
 
 The or/and/xor reduce have a single bit signed result (not boolean). This means
 that the result can be 0 (`0sb0`) or -1 (`0sb1`). pop-count and `zext` have
@@ -425,6 +429,25 @@ z@[0] = 0b11 // compile error, '0b11` overflows the maximum allowed value of `z@
     some cases, a close-range will be needed if the intention is to ignore the sign.
     E.g: `0xFF@&[0..<8] == -1`.
 
+
+When the selected variable is a tuple with many entries, the type must be
+explicit. This is to avoid confusion on the number of bits used. This is needed
+because the `tup@[]` is effectively concatenating the bits in `tup`.
+
+```
+var tup = (a:u8=0xf, b:u8=0x1)  // explicit sizes set
+assert tup@[] == 0xf1
+
+assert (0xF:u8,0x1:u16)@[] == 0xF_0001
+assert (0xF:u8,0x1:u8 )@[] == 0xF_01
+```
+
+Without the explicit sizes, the previous code would have look like `(0b01111,
+0b01)` which is different than what most people would expect. This is the
+reason why Pyrope enforces to have explicit types for concatenation and avoids
+the implicit bit size inference.
+
+
 Another important characteristic of the bit selection is that the order of the
 bits on the selection does not affect the result. Internally, it is a bitmask
 that has no order. For the `zext` and `sext`, the same order as the input
@@ -436,8 +459,10 @@ such an operation.
 var v = 0b10
 assert v@[0,1] == v@[1,2] == v@[] == v@[0..=1] == v@[..=1] == 0b10
 
-trans = (v[1], v[0])@[]
-assert trans == 1
+var trans
+trans@[0] = v@[1]
+trans@[1] = v@[0]
+assert trans == 0b01
 ```
 
 ### Operator with Tuples

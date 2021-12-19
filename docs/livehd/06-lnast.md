@@ -102,7 +102,7 @@ reg reg_foo;
 
 ```cpp
 // C++
-auto node_reg = Lnast_node::create_ref("#reg_foo", line_num, pos1, pos2);
+auto node_reg = Lnast_node::create_ref("reg_foo", line_num, pos1, pos2);
 ```
 
 

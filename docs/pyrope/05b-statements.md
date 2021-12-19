@@ -138,7 +138,7 @@ if {let a=1+yy; 13<a} {
 
 }
 
-let z3 = 1 + { if true { break 3  } else { assert false } }
+let z3 = 1 + { if true { last 3  } else { assert false } }
 assert z4 == 4
 ```
 

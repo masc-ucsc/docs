@@ -58,8 +58,11 @@ and a normal scope is the lambda definition enclosed between pipes (`|`).
 
 
 ```txt
-[CAPTURE] [INPUT] [-> OUTPUT] [where COND] |
+[GENERIC] [CAPTURE] [INPUT] [-> OUTPUT] [where COND] |
 ```
+
++ `GENERIC` is an optional comma separated list of names between `<` and `>` to
+  use as generic types in the lambda.
 
 + `CAPTURE` has the list of capture variables for the lambda. If no capture
   is provided, any local variable can be captured. An empty list (`[]`), means
@@ -108,6 +111,9 @@ debug let my_log = {||
   }
   puts
 }
+
+let fun = {|<X>(a:X,b:X)| a+b }   // enforces a and b with same type
+assert fun(33:u22,100:u22)
 
 my_log a, false, x+1
 ```

@@ -55,7 +55,9 @@ maximum/minimum value on the index effectively sets the size and the default
 initialization is zero.
 
 ```
-#mem[3]  = something // async memory
+reg mem:[]
+mem[3]   = something // async memory
+var array:[]
 array[3] = something // array no cross cycles persistence
 ```
 
@@ -72,10 +74,10 @@ In the previous example, the compiler infers that the bundle at most has 127 ent
 There are several constructs to declare arrays or async memories:
 
 ```
-var #mem1:i8[16] = 3                // 16bit memory initialized to 3 with type i8
-var #mem2:i8[16]                    // 16bit memory initialized to 0 with type i8
-var #mem3:[] = 0sb?                 // infer size and type, 0sb? initialized
-var #mem4:[13]                      // 13 entries size, initialized to zero
+reg mem1:i8[16] = 3       // mem 16bit memory initialized to 3 with type i8
+reg mem2:i8[16]           // mem 16bit memory initialized to 0 with type i8
+var mem3:[] = 0sb?        // array infer size and type, 0sb? initialized
+var mem4:[13]             // array 13 entries size, initialized to zero
 ```
 
 Pyrope allows slicing of bundles and hence arrays.
@@ -104,25 +106,25 @@ triggered.
 
 === "Pyrope array syntax"
     ```
-    var #mem1:u5[4][8] = 0
-    var reset_value:u5[3][8]  // only used during reset, implicit comptime
+    var mem1:u5[4][8] = 0
+    comptime var reset_value:u5[3][8]  // only used during reset
     for i in 0..<3 {
       for j in 0..<8 {
         reset_value[i][j] = j
       }
     }
-    var #mem2 = reset_value   // infer async mem u5[3][8]
+    reg mem2 = reset_value   // infer async mem u5[3][8]
     ```
 
 === "Explicit initialization"
     ```
-    var #mem:( 
+    var mem:( 
       ,(u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0))
       ,(u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0))
       ,(u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0))
       ,(u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0))
     )
-    var #mem2:( 
+    reg mem2:( 
       ,(u5(0), u5(1), u5(2), u5(3), u5(4), u5(5), u5(6), u5(7))
       ,(u5(0), u5(1), u5(2), u5(3), u5(4), u5(5), u5(6), u5(7))
       ,(u5(0), u5(1), u5(2), u5(3), u5(4), u5(5), u5(6), u5(7))
@@ -155,26 +157,26 @@ is a typical decode stage from an in-order CPU:
 
 === "Flop the inputs"
     ```
-    var #rf:i64[32]
+    reg rf:i64[32]
 
-    var #a:(addr1:u5, addr2:u5)
+    reg a:(addr1:u5, addr2:u5)
 
-    %data_rs1 = #rf[#a.addr1]
-    %data_rs2 = #rf[#a.addr2]
+    data_rs1 = rf[a.addr1]
+    data_rs2 = rf[a.addr2]
 
-    #a = ($insn[8..=11], $insn[0..=4])
+    a = (insn[8..=11], insn[0..=4])
     ```
 
 === "Flop the outputs"
     ```
-    var #rf:i64[32]
+    reg rf:i64[32]
 
-    var #a:(data1:i64, data2:i64)
+    reg a:(data1:i64, data2:i64)
 
-    %data_rs1 = #a.data1
-    %data_rs2 = #a.data2
+    data_rs1 = a.data1
+    data_rs2 = a.data2
 
-    #a = (#rf[$insn[8..=11]], #rf[$insn[0..=4]])
+    a = (rf[insn[8..=11]], rf[insn[0..=4]])
     ```
 
 ### RTL instantiation

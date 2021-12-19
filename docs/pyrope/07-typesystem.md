@@ -121,7 +121,7 @@ type b3 = a1 or a3  // compile error: unclear how to combine type 'a1' and 'a2'
 The puts command understands types.
 
 ```
-type at:int=33..     // number bigger than 32
+type at=int(33..)     // number bigger than 32
 type bt=(
   ,var c:string
   ,var d=100
@@ -152,15 +152,15 @@ The `does` keyword checks that functions have "compatible" arguments.
 assert      {||    3 } does {|(a)| 3 }
 assert not ({|(a)| 3 } does {|(a)| 3 })
 
-assert not ({|(a,b)| 3 } does {|(a)   3})
-assert not ({|(a)|   3 } does {|(a,b) 3})
+assert not ({|(a,b)| 3 } does {|(a)  | 3})
+assert not ({|(a)|   3 } does {|(a,b)| 3})
 
-assert     ({|(a)|     3 } does {|(a:string) 3})
-assert not ({|(a:int)| 3 } does {|(a:string) 3})
+assert     ({|(a)|     3 } does {|(a:string)| 3})
+assert not ({|(a:int)| 3 } does {|(a:string)| 3})
 ```
 
 Ignoring the value is what makes `equals` different from `==`. As a result
-different functionality functions could be `equals`. 
+different functionality functions could be `equals`.
 
 ```
 a = {|| ret 1 }
@@ -172,7 +172,7 @@ assert not (a equals {|(x)| ret 1 }) // different arguments
 ```
 
 Some languages use an `is` keyword but Pyrope uses `does` or `equals` because
-in English "a is b" is not clear ("a is same as b" vs "a is a subtype of b"). 
+in English "a is b" is not clear ("a is same as b" vs "a is a subtype of b").
 
 ```
 type x = (a:string, b:int)
@@ -197,25 +197,27 @@ assert !(big does (d:u40))
 
 ## Enums with types
 
-Enums can handle complex types:
+Enumerates (enums) create number for each entry in a set of identifiers. Pyrope
+also allows to associate a tuple or type for each entry.
+
+Enums can handle types:
 
 ```
 type Rgb = (
-  ,let color:u24
-  ,let set = {|(self,x)->(self)| self.color = x:u24 }
+  ,let c:u24
+  ,let set = {|c| self.c = c }
 )
 
 enum Color:Rgb = (
   ,Yellow   = 0xffff00
-  ,Red:Rgb  = 0xff0000      // alternative redundant syntax
+  ,Red      = 0xff0000
   ,Green    = Rgb(0x00ff00) // alternative redundant syntax
-  ,Blue:Rgb = Rgb(0x0000ff) // alternative redundant syntax
+  ,Blue     = Rgb(0x0000ff)
 )
-
 
 var y:Color = Color.Red
 if y == Color.Red {
-  puts "c1:{} c2:{}\n", y, y.color  // prints: c1:Color.Red c2:0xff0000
+  puts "c1:{} c2:{}\n", y, y.c  // prints: c1:Color.Red c2:0xff0000
 }
 ```
 
@@ -227,7 +229,7 @@ number of bits).
 Pyrope automatically infers the maximum and minimum values for each numeric
 variable. If a variable width can not be inferred, the compiler generates a
 compilation error. A compilation error is generated if the destination
-variable has an assigned size smaller than the operand results. 
+variable has an assigned size smaller than the operand results.
 
 The programmer can specify the maximum number of bits, or the maximum value range.
 The programmer can not specify the exact number of bits because the compiler has
@@ -259,25 +261,11 @@ val = :val(0x1F0)  // same
 assert val == 0xF0
 ```
 
-External libraries could be created to handle saturated operations. E.g:
 
-```pyrope
-saturated = {||
-  ret if $1 > $0.__max {
-    $0.__max
-  }elif $1 < $0.__min{
-    $0.__min
-  }else{
-    $1
-  }
-}
-  
-var v:u8
-v = v.saturated(1+300)  // 255
-```
-
-Pyrope leverages LiveHD bitwidth pass [stephenson_bitwidth] to compute the maximum and minimum
-value of each variable. For each operation, the maximum and minimum are computed. For control-flow divergences, the worst possible path is considered.
+Pyrope leverages LiveHD bitwidth pass [stephenson_bitwidth] to compute the
+maximum and minimum value of each variable. For each operation, the maximum and
+minimum are computed. For control-flow divergences, the worst possible path is
+considered.
 
 ```
 a = 3                      // max:3, min:3
@@ -305,7 +293,7 @@ understand, the comments show the max/min bitwidth computations.
 ```
 if cmd? {
   x,y = cmd     // x.max=cmd.a.max; x.min = 0 (uint) ; ....
-}elif x > y {  
+}elif x > y {
                 // narrowing: x.min = y.min + 1 = 1
                 // narrowing: y.max = x.min - 1
   x = x - y     // x.max = x.max - x.min = x.max - 1
@@ -329,10 +317,10 @@ the bitwidth. For example, this could work:
 reg x,y
 if cmd? {
   x,y = cmd
-}elif x > y { 
-  x = x - y 
-}else{ 
-  y = y - x 
+}elif x > y {
+  x = x - y
+}else{
+  y = y - x
 }
 wrap x:cmd.a = x  // use cmd.a type for x, and drop bits as needed
 y = cmd.b(y)  // typecast y to cmd.b type (this can add a mux)
@@ -341,20 +329,25 @@ y = cmd.b(y)  // typecast y to cmd.b type (this can add a mux)
 ## Typecasting
 
 
-Typecasting is the process of changing from one type to other. There are 2 reserved
-keywords for typecasting: 
+Typecasting is the process of changing from one type to other. There are 2
+reserved keywords for typecasting (`saturate` and `wrap`), and an explicit
+bitcast.
 
 * `saturate` keeps the maximum or minimum (negative integer) that fits on the
-  left-hand side. 
+  left-hand side.
 
 * `wrap` drops the bits that do not fit on the left-hand side. It performs sign
   extension if needed.
 
-In all the cases, there is no bitwidth of type inference between the right and
-left side of the assignment. The LHS variable will be immutable if not
-defined before. Also, in both cases, if the left-hand side is not a boolean or
-an integer, a compile error is generated.
+* `lhs@[] = rhs` bit casts the RHS to the LHS as long as both have explicit bit
+  sizes and the sizes are the same. Like the `tup@[]` operator in the RHS, the
+  bitwidth inference is disabled and explicit bitsizes are used to avoid
+  confusion.
 
+In all the cases, there is no bitwidth of type inference between the right and
+left side of the assignment. The LHS variable will be immutable (`let`) if not
+defined before with a `var`. Also, in both cases, if the left-hand side is not
+a boolean or an integer with a explicit type, a compile error is generated.
 
 ```
 var a:u32=100
@@ -375,6 +368,10 @@ saturate d = c+1 // OK, d==31
 saturate d = c+1 // OK, d==31
 
 saturate x:boolean = c // same as x = c!=0
+
+var lhs:(x1:u8, x2:u12) // 9 + 13 bits in signed == 22bits
+lhs@[] = 0x1FF:u22
+assert lhs.x1 == 0xFF and lhs.x2==1
 ```
 
 To convert between tuples, an explicit setter is needed unless the tuple fields
@@ -409,11 +406,13 @@ d = a // OK, call intitial to type cast
 
 ## Traits and mixin
 
-There is no object inheritance in Pyrope, but tuples allow to build mixin and composition with traits.
+There is no object inheritance in Pyrope, but tuples allow to build mixin and
+composition with traits.
 
-A mixin is when an object or class can add methods and the parent object can access them. In several languages,
-there are different constructs to build them (E.g: an include inside a class in Ruby). Since Pyrope tuples
-are not immutable, new methods can be added like in mixin.
+A mixin is when an object or class can add methods and the parent object can
+access them. In several languages, there are different constructs to build them
+(E.g: an include inside a class in Ruby). Since Pyrope tuples are not
+immutable, new methods can be added like in mixin.
 
 ```
 type Say_mixin = (
@@ -433,7 +432,7 @@ type User = (
 type Mixing_all = Say_mixin ++ Say_hi_mixin ++ User
 
 var a:Mixing_all("Julius Caesar")
-a.say_hi() 
+a.say_hi()
 ```
 
 Mixin is very expressive by allowing redefining methods. If two tuples have
@@ -509,7 +508,7 @@ comptime assert Circle does Shape
 
 The `implement` checks that the method is redefined. The reason is that the method arguments must be
 preserved with a non-empty list of statements.
- 
+
 ```
 type base_abstract = (
    ,pub var fun = nil, // must be defined
@@ -526,7 +525,7 @@ a = (b=1,c:u32=2)
 var b = a
 b.c=100
 
-assert a equals b 
+assert a equals b
 assert a.size == 2
 assert a['b'] == 1
 assert a['c'] equals u32
@@ -556,7 +555,7 @@ This means that function overloading behaves like this:
 ```
 let x = fun(args)
 
-let x = for i in fun { break i(args) when (i.inputs does args) and i.where(args) }
+let x = for i in fun { last i(args) when (i.inputs does args) and i.where(args) }
 ```
 
 
@@ -634,7 +633,7 @@ list of pub variables or types. The setup code corresponds to the "top" scope
 in the imported file. The import statement can only be executed during the
 setup phase. The import allows for cyclic dependencies between files as long as
 there is no true cyclic dependency between variables. This means that "false"
-cyclic dependencies are allowed but not true ones. 
+cyclic dependencies are allowed but not true ones.
 
 
 The import is delayed until the imported variable is used in the local file.
@@ -662,7 +661,7 @@ pub fun2 = {||          // visible for import
 The import statement is a filename or path without the file extension.
 Directories named `code`, `src`, and `lib` are skipped. No need to add them in
 the path. `import` stops the search on the first hit. If no match happens, a
-compile error is generated. 
+compile error is generated.
 
 
 `import` allows specialized libraries per subproject.  For example, xx/yy/zz can
@@ -693,7 +692,7 @@ var x:Number = 3
 ### punch
 
 The `punch` statement allows accessing registers, inputs, and outputs from other
-instantiated modules. 
+instantiated modules.
 
 Verilog has a somewhat similar semantics with the Hierarchical Reference. It
 also allows to go through the module hierarchy and read/write the contents of a
@@ -873,10 +872,11 @@ There is no operator overload in Pyrope. `+` always adds Numbers, `++`
 always concatenates a tuple or a String, `[]` indexes a tuple.
 
 
-## Getter/Setter
+## Properties: Getter/Setter
 
-The only thing that looks like operator overload (but it is not) is the `=`
-because it can be used to initialize objects.
+The getter/setter allow to have properties for each variable. The setter
+is also the "constructor" for the object.
+
 
 ```
 var f1:XXX = 3,2
@@ -887,22 +887,22 @@ f3 = 3,2
 assert f3 == f2 == f1
 ```
 
-
-Encapsulation can be achieved with methods, but to have a more familiar
-getter/setter syntax, it is possible to create a tuple where the
-initialization is the setter (`set`) and the default method is the getter
-(`get`).
+Encapsulation can be achieved with explicit methods (initialize/setXXX/getXXX).
+This creates problems with overloading or exposing variables. It is possible to
+create a tuple where the initialization is the setter (`set`) and the default
+method is the getter (`get`).
 
 
 ```
 type some_obj = (
   ,a1:string
   ,pub a2 = (
-    ,pub var get={|| self._val + 100 }       // getter
-    ,_val:u32                        // hidden field
-    ,set={|x| self._val = x+1 }  // setter
+    ,_val:u32                            // hidden field
+
+    ,pub var get={|| self._val + 100 }   // getter
+    ,set={|x| self._val = x+1 }          // setter
   )
-  ,pub var set = {|a,b|
+  ,pub var set = {|a,b|                  // setter
     self.a1      = a
     self.a2._val = b
   }
@@ -917,9 +917,8 @@ assert x.a2.get == 106
 ```
 
 
-The getter is a method, which means that the default
-[overloading](06-functions.md#Overloading) applies. This allows to customize by
-return type:
+The getter method can be [overloaded](06-functions.md#Overloading). This allows
+to customize by return type:
 
 ```
 type showcase = (
@@ -940,6 +939,18 @@ s.v = 100
 let foo:string = s // compile error, no matching getter
 ```
 
+Like all the lambdas, the getter method can also be overloaded on return type.
+In this case it allows to build typecast per type.
+
+```
+type my_obj = (
+  ,val:u32
+  ,pub var get 
+    = {|()->:string | ret string(self.val) }
+   ++ {|()->:boolean| ret self.val != 0    }
+   ++ {|()->:int    | ret self.val         }
+)
+```
 
 ## Compare
 
@@ -951,7 +962,7 @@ comparators. When non-provided the `lt` (Less Than) is a compile error, and the
 
 
 ```
-type t:(
+type t=(
   ,pub var v
   ,pub let set = {|a| self.v = a }
   ,pub let lt = {|other| self.v  < other.v }

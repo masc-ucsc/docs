@@ -482,10 +482,15 @@ scheduled update.
 HDLs can generate invalid code that can not be fabricated or it is strongly recommended
 to not be fabricated. Examples are:
 
-* Combinational loops. Creating a loop with combinational logic is generally considered a bug (only a few circuits could accept this). If the combinational loop is inside a mux, it can be difficult to catch during verification unless a
-  good toggle coverage results.
+* Combinational loops. Creating a loop with combinational logic is generally
+  considered a bug (only a few circuits could accept this). If the
+  combinational loop is inside a mux, it can be difficult to catch during
+  verification unless a good toggle coverage results.
 
-* Implicit latches. Some HDLs like Verilog can generate code with implicit latches. Since the module is executed each time, variables with a missing initialization can remember results from the last cycles generating implicit latches. Most ASIC tools do not accept this and it is considered a bug.
+* Implicit latches. Some HDLs like Verilog can generate code with implicit
+  latches. Since the module is executed each time, variables with a missing
+  initialization can remember results from the last cycles generating implicit
+  latches. Most ASIC tools do not accept this and it is considered a bug.
 
 * Bogus flow. Any compile (software or hardware) can have bugs, but because
   hardware compilers tend to have a smaller user base, they have more
@@ -575,8 +580,14 @@ tends to be careful with overflows and type conversion. This is not a problem
 in hardware. If a 113 bits adder is needed, it can be synthesized. If only a 7
 bits adder is needed, the synthesis can create the smaller adder too.
 
-Some HLS may have different integer sizes, but it is either a "strange" design decision
-or just as a type check so that no unnecessary hardware is generated.
+Some HLS may have different integer sizes, but it is either a "strange" design
+decision or just as a type check so that no unnecessary hardware is generated.
+
+
+Overflow is a source of many subtle bugs. For example experience programmers
+write `a + (b-a))/2` not the expected `(a+b)/2` because of integer overflow
+semantics. HDLs can handle this like unlimited precision scripting languages
+without overhead.
 
 
 ### No pointers

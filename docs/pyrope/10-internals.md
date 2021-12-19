@@ -580,7 +580,7 @@ for i,idx in r {
   assert v == i
 }
 
-let r2=4..=2 step -1
+let r2=4..=2 by -1
 assert r == r2
 for i,idx in r2 {
   let v = match idx {
@@ -636,11 +636,11 @@ The reset for arrays may take several cycles to take effect, this can
 lead to unexpected results during the reset period.
 
 ```
-var arr:[] = {0,1,2,3,4,5,6,7}
+var arr:[] = (0,1,2,3,4,5,6,7)
 
 assert arr[0] == 0 and arr[7] == 7 // always works
 
-reg mem:[] = {0,1,2,3,4,5,6,7}
+reg mem:[] = (0,1,2,3,4,5,6,7)
 
 assert mem[7] == 7 // FAIL, this may fail during reset
 assert mem[7] == 7 unless mem.reset // OK
@@ -706,7 +706,7 @@ A lambda can return an empty lambda, and then both get called in a single
 useless line of code (spaces are not needed).
 
 ```
-{|| {||} }()()  // does nothing
+({|| {||} }())()  // does nothing
 ```
 
 

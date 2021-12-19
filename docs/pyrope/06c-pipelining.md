@@ -65,7 +65,7 @@ must be used in hardware but not in software designs.
 Pyrope has a `pipestage` statement that helps to create simple pipeline stages.
 The syntax for pipestage:
 
-```
+```pseudoprp
 // variables/register before
 
 {
@@ -198,14 +198,17 @@ the conceptual problems of integrating them:
 
     ```
     let add1 = #{|a,b| // 1 cycle add
-      #reg = a+b
-      ret #reg
+      reg r
+      let rr = r // get flop value
+      r = a+b
+      ret rr
     }
     let mul3 = #{|a,b| // 3 cycle multiply
-      #reg1 = $a * $b
-      #reg2 = #reg1
-      #reg3 = #reg2
-      ret #reg3
+      reg reg1, reg2, reg3
+      reg3 = reg2
+      reg2 = reg1
+      reg1 = $a * $b
+      ret reg3
     }
 
     pub let block = #{|(in1,in2)->(out)|

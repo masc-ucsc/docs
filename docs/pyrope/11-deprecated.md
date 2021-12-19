@@ -126,7 +126,7 @@ remembering the live-ins and continue executing when the condition is
 satisfied.
 
 ```pyrope
- let res1:? =#[1,2] telescope_unit($a,$b,$start)
+ let res1 =#[1,2] telescope_unit(a,b,start)
 
  yield res1? // wait for condition to happen
  assert res1?
