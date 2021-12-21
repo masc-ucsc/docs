@@ -511,8 +511,8 @@ preserved with a non-empty list of statements.
 
 ```
 type base_abstract = (
-   ,pub var fun = nil, // must be defined
-   ,pub var fun2 = {|(a,b)->(c)| nil } // must be extended with a method that 'does' fun2
+  ,pub var fun = nil,                 // defined or error on use
+  ,pub var fun2 = {|(a,b)->(c)| nil } // extended or error on use
 )
 ```
 

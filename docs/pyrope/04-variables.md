@@ -470,9 +470,12 @@ assert trans == 0b01
 Some operators can also have tuples as input and/or outputs.
 
 * `a ++ b` concatenate two tuples. If field appears in both, concatenate field
-* `(,...b)` in place insert `b`. Compile error if both have the same named field
+* `(,...b)` in place insert `b`. Compile error if both have the same named
+  field
 * `a << b` shift left. `b` can be a tuple
-* `a has b` checks if `a` tuple has the `b` field
+* `a has b` checks if `a` tuple has the `b` field where `b` is a string or
+  integer (position).
+* `a in b` checks if `a` values are in `b`
 
 The `<<` allows having multiple values provided by a tuple on the right-hand
 side or amount. This is useful to create one-hot encodings.
@@ -484,6 +487,9 @@ assert (a=1,b=2) ++ (a=3,c=4) == (a=(1,3),b=2,c=4)
 assert (a=1,b=2,3,...(e=4,5)) == (a=1,b=2,3,e=4,5)
 
 assert (a=1,b=2) has "a"
+
+assert 2 in (a=1,b=2)
+assert (2,5) in (a=1,b=2,4,5)
 
 assert 1<<(1,4,3) == 0b01_1010
 ```
