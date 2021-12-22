@@ -481,6 +481,26 @@ x = 1000
 assert fun2() == 203
 ```
 
+### Lambda calls
+
+
+Lambda calls happen whenever an identifer is followed by a tuple. Since the
+tuple bundary can be dropped, this can lead to unexpected cases like:
+
+
+```
+assert 0 == (0)  // OK, same as assert( 0 == (0) )
+assert (0) == 0  // compile error: (assert(0)) == 0 is an expression
+```
+
+It is also easy to forget that parenthesis can be ommited in simple expressions,
+not when ranges or tuples are involed.
+
+```
+asssert 2 in (1,2)  // compile error, not allowed to drop parenthesis
+asssert(2 in (1,2)) // OK
+```
+
 ### always blocks
 
 Tuples can have several always blocks. This can lead to confusion in the

@@ -252,6 +252,7 @@ x = fcall 1,2     // same as: x = fcall(1,2)
 b = xx[1,2]       // same as: xx[(1,2)]
 
 for a in 1,2,3 {  // same as: for a in (1,2,3) {
+  x = a
 }
 y = match z {    
   in 1,2 { 4 }    // same as: in (1,2) { 4 }

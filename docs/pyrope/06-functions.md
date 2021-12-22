@@ -439,7 +439,7 @@ A more traditional "overload" calling the is possible by calling the lambda dire
 
 ```
 type x extends base with (
-  ,pub var fun1 = {|| base.fun1() + 100 }
+  ,pub var fun1 = {|| ret base.fun1() + 100 }
 )
 ```
 

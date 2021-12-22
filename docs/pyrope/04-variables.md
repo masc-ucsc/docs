@@ -68,7 +68,7 @@ name a new entry is created. The algorithm starts with tuple `a` and starts
 from tuple field 0 upwards.
 
 ```
-assert ((1,a=2,c=3) ++ (a=20,33,c=30,4)) == (1,a=(2,20),c=(3,30),33,4)
+assert(((1,a=2,c=3) ++ (a=20,33,c=30,4)) == (1,a=(2,20),c=(3,30),33,4))
 ```
 
 The `...` also concatenates, but it is an "inline concatenate". The difference
@@ -134,18 +134,19 @@ the integer is a 1 bit signed integer (0 and -1).
 let b = true
 let c = 3
 
-if c    {}     // compile error, 'c' is not a boolean expression
-if c!=0 {}     // OK
+if c    { call(x) }     // compile error, 'c' is not a boolean expression
+if c!=0 { call(x) }     // OK
 
 d = b or false // OK
 e = c or false // compile error, 'c' is not a boolean
 
 let e = -1
 if e { // OK e is a 1 bit signed value
+  call(x)
 }
 
-assert (int(true)  + 1) == 0  // explicity typecast
-assert (int(false) + 1) == 1  // explicity typecast
+assert 0 == (int(true)  + 1)  // explicity typecast
+assert 1 == (int(false) + 1)  // explicity typecast
 assert boolean(33) or false   // explicity typecast
 ```
 
@@ -204,10 +205,10 @@ possible when both begin and end of the range are fully specified.
 
 
 ```
-assert (0..<30 by 10) == (0,10,20) // ranges and tuples can be directly combined
-assert (1..=3) ++ 4 == (1,2,3,4)   // tuple and range ops become a tuple
+assert((0..<30 by 10) == (0,10,20)) // ranges and tuples can combined
+assert((1..=3) ++ 4 == (1,2,3,4))   // tuple and range ops become a tuple
 assert 1..=3 == (1,2,3)
-assert (1..=3)@[] == 0b1110       // convert range to integer with @[]
+assert((1..=3)@[] == 0b1110)        // convert range to integer with @[]
 ```
 
 ### String
@@ -438,8 +439,8 @@ because the `tup@[]` is effectively concatenating the bits in `tup`.
 var tup = (a:u8=0xf, b:u8=0x1)  // explicit sizes set
 assert tup@[] == 0xf1
 
-assert (0xF:u8,0x1:u16)@[] == 0xF_0001
-assert (0xF:u8,0x1:u8 )@[] == 0xF_01
+assert((0xF:u8,0x1:u16)@[] == 0xF_0001)
+assert((0xF:u8,0x1:u8 )@[] == 0xF_01)
 ```
 
 Without the explicit sizes, the previous code would have look like `(0b01111,
@@ -481,15 +482,15 @@ The `<<` allows having multiple values provided by a tuple on the right-hand
 side or amount. This is useful to create one-hot encodings.
 
 ```
-assert (a=1,b=2) ++ (c=3    ) == (a=1    ,b=2,c=3)
-assert (a=1,b=2) ++ (a=3,c=4) == (a=(1,3),b=2,c=4)
+assert((a=1,b=2) ++ (c=3    ) == (a=1    ,b=2,c=3))
+assert((a=1,b=2) ++ (a=3,c=4) == (a=(1,3),b=2,c=4))
 
-assert (a=1,b=2,3,...(e=4,5)) == (a=1,b=2,3,e=4,5)
+assert((a=1,b=2,3,...(e=4,5)) == (a=1,b=2,3,e=4,5))
 
-assert (a=1,b=2) has "a"
+assert((a=1,b=2) has "a")
 
-assert 2 in (a=1,b=2)
-assert (2,5) in (a=1,b=2,4,5)
+assert(2 in (a=1,b=2))
+assert((2,5) in (a=1,b=2,4,5))
 
 assert 1<<(1,4,3) == 0b01_1010
 ```
@@ -517,8 +518,8 @@ widely expected precedence.
 
 
 ```
-assert (x or !y) == (x or (!y)) == (x or not y)
-assert (3*5+5) == ((3*5) + 5) == 3*5 + 5
+assert((x or !y) == (x or (!y)) == (x or not y))
+assert((3*5+5) == ((3*5) + 5) == 3*5 + 5)
 
 a = x1 or x2==x3 // same as b = x1 or (x2==x3)
 b = 3 & 4 * 4    // compile error: use parenthesis for explicit precedence

@@ -185,8 +185,10 @@ the conceptual problems of integrating them:
       {
         pub let tmp = in1 * in2
       } #> {
+        assert true // nothing to do, but one statement required
         // extra cycle for multiply
       } #> {
+        assert true
         // extra cycle for multiply
       } #> {
         out = tmp + in1#[0]
@@ -305,8 +307,10 @@ is error-prone because it requires knowing exactly the number of cycles for
     {
       pub tmp = in1 * in2
     } #> {
+      assert true
       // extra cycle for multiply
     } #> {
+      assert true
       // extra cycle for multiply
     } #> {
       out = tmp + in1

@@ -121,7 +121,7 @@ covecase NUM, !(random&1), "even number"
 covercase COND1, reset, "in reset"
 covercase COND1, val>3, "bigger than 3"
 
-assert (!reset and val>3) or reset  // less checks than COND1
+assert((!reset and val>3) or reset)  // less checks than COND1
 
 cover a==3, "at least a is 3 once in a while"
 ```

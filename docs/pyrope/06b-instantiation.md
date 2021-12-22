@@ -39,7 +39,7 @@ if cond1 {
 }elif cond2 {
   res = c
 }else{
-  // no res
+  assert true // no res
 }
 
 // RTL equivalent

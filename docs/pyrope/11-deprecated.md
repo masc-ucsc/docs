@@ -186,7 +186,7 @@ like extending an enum, but not reducing it. Some potential API for Pyrope
 
 Using the set operations:
 
-```
+```future
 enum Order = (One, Two, Three)
 enum Order2 = (...Order, Four)
 enum Order2 = Order ++ Four       // error on overlap?
@@ -196,7 +196,7 @@ enum Order3 = Order except Three  // new "remove" tuple op
 Overloading the logical operations is another option, but breaks the rule of
 lack of overloading in ops:
 
-```
+```future
 enum Order2 = Order or (Four)
 enum Order3 = Order and not (Three)
 ```
@@ -204,14 +204,14 @@ enum Order3 = Order and not (Three)
 Using the trait syntax creates some confusion on the meaning, but an option is to have
 custom keywords for enum:
 
-```
+```future
 enum Order2 = Order with (Four)
 enum Order3 = Order except Three
 ```
 
 Once we support adding/removing to enums, operations like this would make sense:
 
-```
+```future
 match x:Order {
   in Order2      { puts "1 or 2" }
   == Order.Three { puts "3"      }

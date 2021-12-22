@@ -256,9 +256,6 @@ assert val == 240
 
 val = u8(0x1F0)    // same
 assert val == 0xF0
-
-val = :val(0x1F0)  // same
-assert val == 0xF0
 ```
 
 
@@ -711,7 +708,7 @@ to have a memory, and then use methods to update/read the memory contents
 across modules. This will be very counterintuitive for most programmers[^4].
 
 
-[4]: Although it is the thing that most Verilog coding guidelines force you to do.
+[^4]: Although it is the thing that most Verilog coding guidelines force you to do.
 
 
 The punch is a superset of these 3 different sets of tools:
@@ -731,21 +728,20 @@ The punch is a superset of these 3 different sets of tools:
   unique identifier.
 
 
-When the `punch` is used as a type, it assigns a unique identifier so that
-other `punch` commands can connect to it.
-
 ```
-type x = punch("foo/core")  // connect to module foo.core
-
 // file remote.prp
-var uart_addr:punch("MY_ADDR")
-assert uart_addr == 300
+punch uart_addr from "MY_ADDR" // compile error, setup code
+pub let uart = {||
+  punch uart_addr from "MY_ADDR" // compile error, setup code
+  assert uart_addr == 300
+}
 
 // file local.prp
-var xx = punch("MY_ADDR") // connect to uart_addr
-xx = 300 // sets uart_addr to 300
+pub let setup_xx = {||
+  punch xx to "MY_ADDR"     // creates a var that drives remote uart_addr
+  xx = 300                  // sets uart_addr to 300
+}
 ```
-
 
 The `punch` connects through the hierarchy, as such, `punch` can not be called during
 the setup phase because the hierarchy is still unknown. `punch` is only allowed
@@ -764,7 +760,8 @@ Maybe the best way to understand the `punch` is to see the differences with the 
   + `punch` uses a more powerful regex to match the instance hierarchy.
   + `import` uses a simple file/function names skipping some keywords (code,src,lib).
 * Setup phase
-  + `punch` can not be called during setup phase because hierarchy does not exist.
+  + `punch` can not be called during setup phase because hierarchy does not
+    exist.
   + `import` can be called during setup, execution, and reset phases.
 + Conditionally executed
   + `punch` can no be conditionally executed. Connecting or punching is done or
@@ -778,12 +775,12 @@ let some = {||
     let pi = import "math.PI" // OK
     puts "PI is {}", pi
 
-    var v = punch "foo.bar"   // compile error, punch must be unconditional
+    punch v to "foo/bar"      // compile error, punch must be unconditional
   }
-  var v = punch "foo.bar"     // OK
+  punch v to "foo/bar"        // OK
 }
 
-var v = punch "foo.bar"       // compile error, punch not in the setup phase
+punch v to "foo/bar"          // compile error, punch not in the setup phase
 ```
 
 The instantiation hierarchy looks like a tree with a root at the top function.
@@ -822,31 +819,35 @@ it will visit nodes in this order:
 ```
 
 There are two variations of the `punch` command, one that creates inputs to the
-current module (`punch_from`) and the other that creates outputs (`punch_to`).
-`punch_from` can connect to any flop or module output, `punch_to` can only
-connect to undriven nets in flops or inputs.
+current module (`punch ... from ...`) and the other that creates outputs
+(`punch ... to ...`). `punch variable from ...` is to indicate `variable` must
+be driven remotely by some `punch ... to`. `punch variable to ...` can only
+connect `variable` to any `punch ... from...` or undriven registers or undriven
+lambda inputs.
 
 
 ```
-%a = punch_to "module1/mod2/foo"
+pub let mod2 = {||
+  punch a to "module1/mod2/foo"
 
-%b = punch_to "uart_addr" // any module that has an input $uart_addr
-%b[0] = 0x100
-%b[1] = 0x200
+  punch b to "uart_addr" // any module that has an input $uart_addr
+  b[0] = 0x100
+  b[1] = 0x200
 
-%b = punch_to "foo.*/uart_addr" // modules named foo.* that have uart_addr as input
+  punch b to "foo.*/uart_addr" // modules named foo.* that have uart_addr as input
 
-$c = punch_from "bar/some_output"
-$d = punch_from "bar/some_register"
+  punch c from "bar/some_output"
+  punch d from "bar/some_register"
+}
 ```
-
 
 ### Mocking library
 
 One possible use of the `punch` command is to create a "mocking" library. A
 mocking library instantiates a large design but forces some subblocks to
-produce some results for testing. This is possible with `punch` because it
-allows to for a value on inputs and/or outputs.
+produce some results for testing. The challenge is that `punch` needs undriven,
+but the testing library can use the `peek`/`poke` to overwrite an existing
+value. The peek/poke use the same reference as `punch`.
 
 ```
 type bpred = ( // complex predictor
@@ -854,11 +855,9 @@ type bpred = ( // complex predictor
 )
 
 test "mocking taken branches" {
-  var btaken = punch "core.fetch.bpred.taken"
-  btaken = true
+  poke "core.fetch.bpred.taken", true
 
   var l = core.fetch.predict(0xFFF)
-
 }
 ```
 

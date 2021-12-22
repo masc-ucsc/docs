@@ -135,10 +135,10 @@ assert yy == 12
 let xx = {yy=1 ; 33}  // compile error, 'yy' has side effects
 
 if {let a=1+yy; 13<a} {
-
+ some_code()
 }
 
-let z3 = 1 + { if true { last 3  } else { assert false } }
+let z3 = 1 + { if true { brk 3  } else { assert false } }
 assert z4 == 4
 ```
 
@@ -153,6 +153,7 @@ iteration with the `continue` keyword.
 
 ```
 for i in 0..<100 {
+ some_code(i)
 }
 
 var bund = (1,2,3,4)
@@ -181,13 +182,13 @@ for i,index,key in b {
 
 The `for` can also be used in an expression that allows building comprehensions
 to initialize arrays. To indicate the values to add in the comprehensions there
-are `cont`, `last`, or the last expression in the `for` scope.
+are `cont`, `brk`, or the last expression in the `for` scope.
 
 ```
 var c = for i in 0..<5 { var xx = i }  // compile error, no expression
 var c = for i in 0..<5 { cont i }
 var d = for i in 0..<5 { i }
-var 2 = for i in 0..<5 { last i }
+var 2 = for i in 0..<5 { brk i }
 assert c == (0,1,2,3,4) == d
 assert e == (0)
 ```
@@ -197,7 +198,7 @@ assert e == (0)
 
 Scope control statements allow changing the control flow for `lambdas`, `for`,
 and `while` statements. When the control flow is changed, some allow scope
-control allows to return a value (`ret`, `last`, `cont`) and others do not
+control allows to return a value (`ret`, `brk`, `cont`) and others do not
 (`return`, `break`, `continue`).
 
 
@@ -211,9 +212,9 @@ control allows to return a value (`ret`, `last`, `cont`) and others do not
 * `break` terminates the closest higher scope that belongs to an expression, a
   `for`, or a `while`. If neither is found, a compile error is generated.
 
-* `last` behaves like `break` but a return tuple is provided. This is maybe
+* `brk` behaves like `break` but a return tuple is provided. This is maybe
   needed when the `for` or `while` is used in an expression. In addition, the
-  `last` can be used in expression scopes. The `last` is equivalent to a `ret`
+  `brk` can be used in expression scopes. The `brk` is equivalent to a `ret`
   but terminates the closest expression scope.
 
 * `continue` looks for the closest upper `for` or `while` scope. The `continue`
@@ -235,6 +236,7 @@ for a in 1..=10 {
 assert total == (1,3)
 
 if true {
+  code(x)
   continue             // compile error, no upper loop scope
 }
 
@@ -250,13 +252,13 @@ if a>0 {
 assert total2 == (3,2)
 ```
 
-`ret`, `last`, and `cont` statements can have a tuple. This is only useful when
+`ret`, `brk`, and `cont` statements can have a tuple. This is only useful when
 the statements are used in an expression.
 
 ```
 total = for i in 1..=9 {
   cont  i+10 when i < 3
-  last  i+20 when i > 5
+  brk  i+20 when i > 5
 }
 assert total == (11, 12, 3, 4, 5, 26)
 
@@ -265,12 +267,12 @@ assert v == 4
 
 let y = {         // expr scope1
   var d=1 
-  last {          // start expr scope2, last finishes scope1
+  brk {          // start expr scope2, brk finishes scope1
     if true { 
-      last 33     // finishes scope2
+      brk 33     // finishes scope2
       assert false 
     } else { 
-      last d
+      brk d
       assert false 
     }
   } + 200 
