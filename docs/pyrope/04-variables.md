@@ -95,14 +95,15 @@ called every cycle. As expected, `reg` is mutable.
 All types of declarations (`let`, `var`, `reg`) can have a `pub` before. This
 is used to indicate that the declaration is public and hence visible outside the
 scope defined. Section [typesystem](07-typesystem.md) has more details on how
-to `import` or `punch` a declaration across files.
+to `import` or register reference across files.
 
 ## Basic types
 
-Pyrope has 5 basic types:
+Pyrope has 7 basic types:
 
 * `boolean`: either `true` or `false`
-* `function`: A method/function
+* `enum`: enumerated
+* `proc` and `fun`: A procedure or a function
 * `integer`: which is signed integer of unlimited precision
 * `range`: A one hot encoding of values `1..=3 == 0b1110`
 * `string`: which is a sequence of characters
@@ -242,7 +243,7 @@ must be constant at compile time or an error is generated.
 ```
 comptime let a = 1     // obviously comptime
 comptime var b = a + 2 // OK too
-comptime let c = $rand // compile error, 'c' can not be computed at compile time
+comptime let c = rand  // compile error, 'c' can not be computed at compile time
 ```
 
 The `comptime` directive considers values propagated across modules.
@@ -293,7 +294,7 @@ The basic type keywords provided by Pyrope:
 
 * `boolean`: true or false boolean. It can not be undefined (`0sb?`).
 * `string`: a string.
-* `{||}`: is a function without any statement which can be used as a function type.
+* `fun` and `proc`: a lambda without code block can be used as a function type.
 * `unsigned`: an unlimited precision natural number.
 * `u<num>`: a natural number with a maximum value of $2^{\texttt{num}}$. E.g: `u10` can go from zero to 1024.
 * `int`: an unlimited precision integer number.
@@ -650,7 +651,7 @@ A valid method allows to overwrite the default valid behavior:
 ```
 type custom = (
   ,var data:i16
-  ,var valid= {||
+  ,var valid= fun () {
     ret self.data != 33
   }
 )
@@ -670,7 +671,7 @@ type complex = (
   ,reg v1:string
   ,pub v2:string
 
-  ,pub set = {|(self,v)->(self)|
+  ,pub set = proc (self,v)->(self) {
      self.v1 = v
      self.v2 = v
   }

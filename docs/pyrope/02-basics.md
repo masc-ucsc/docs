@@ -205,7 +205,7 @@ section](06-functions.md) has more details on the allowed syntax.
 
 
 ```
-let fun = {|(a,b)| ret a + b }
+let f = fun(a,b) { ret a + b }
 ```
 
 Pyrope classifies lambdas as follows:
@@ -214,7 +214,7 @@ Pyrope classifies lambdas as follows:
   assigned to a variable and called to execute later.
 
 * `function` is a lambda with only combination statements without non-Pyrope
-  calls or `punch` write statements [^punch].
+  calls.
 
 * `procedure` is a lambda that is not a `function`. It can have combination and
   non-combinational (register/memories).
@@ -226,8 +226,11 @@ Pyrope classifies lambdas as follows:
   or modules.
 
 
-[^punch]: `punch` is a Pyrope statement that allows access across modules. It
-allows connecting modules directly without going through the call hierarchy.
+lambda are not only restricted to Pyrope code. It is possible to interface with
+non-Pyrope (C++) code, but the calls should respect the same
+`procedure`/`function` definition. A C++ `function` can not update the C++
+internal state or generate output because the simulation/compiler is allowed to
+call it multiple times. This is not the case for C++ `procedure`.
 
 ## Evaluation order
 
@@ -401,4 +404,40 @@ statements, or the `and_then` and `or_else` operations must be used.
     var r3 = fcall1()
     r3 += fcall2()
     ```
+
+## Basic gates
+
+Pyrope allows a low level or structural direct basic gate instantiation. There
+are some basic gates to which to which the compiler translates Pyrope code to. These
+basic gates are also directly accesible:
+
+
+* `__sum` for addition and substraction gate.
+* `__mult` for multiplication gate.
+* `__div` for divisions gate.
+* `__and` for bitwise and gate
+* `__or` for bitwise or gate
+* `__xor` for bitwise xor gate
+* `__ror` for bitwise reduce-or gate
+* `__not` for bitwise not gate
+* `__get_mask` for extrating bits using a mask gate
+* `__set_mask` for replacing bits using a mask gate
+* `__sext` for sign-extension gate
+* `__lt` for less-than comparison gate
+* `__ge` for greater-equal comparison gate
+* `__eq` for equal comparison gate
+* `__shl` for shift left logical gate
+* `__sra` for shift right arithmetic gate
+* `__lut` for Look-Up-Table gate
+* `__mux` for a priority multiplexer
+* `__hotmux` for a one-hot excoded multiplexer
+* `__memory` for a memory gate
+* `__flop` for a flop gate
+* `__latch` for a latch gate
+
+
+Each of the basic gates operate always over signed integers like Pyrope, but
+their semantics vary. A more detailed explanation is available at [LiveHD cell
+type section](/livehd/05-lgraph/#cell-type).
+
 

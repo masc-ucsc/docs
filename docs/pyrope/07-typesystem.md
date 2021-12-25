@@ -98,11 +98,9 @@ comptime assert t1 equals t2
 comptime assert t1 equals v1
 ```
 
-While the `var` statement declares a new variable instance that can also have an
-associated type, the `type` statement declares a type without any instance.
-The `type` keyword also allows for expressions to build more complex types.
-All the elements in the type expression are treated as "type of". E.g: `type x
-= a or 1..=3`.
+
+While the `var` statement declares a new variable instance that can also have
+an associated type, the `type` statement declares a type without any instance.
 
 ```
 type a1 = u32                 // same as 'type a1:u32'
@@ -111,11 +109,6 @@ type a3 = (
     ,var name:string
     ,var age:u8
     )
-
-type b1 = a1 or  a2           // same as 'type b1:int(-5..<4G)
-type b2 = a1 and a2           // same as 'type b2:int( 0..=33)
-
-type b3 = a1 or a3  // compile error: unclear how to combine type 'a1' and 'a2'
 ```
 
 The puts command understands types.
@@ -125,7 +118,7 @@ type at=int(33..)     // number bigger than 32
 type bt=(
   ,var c:string
   ,var d=100
-  ,let set = {|(self)->(self)| self.c = $[1..] } // skip first argument (self)
+  ,let set = fun(...args)->(self) { self.c = args }
 )
 
 var a:at=40
@@ -134,78 +127,71 @@ puts "a:{} or {}", a, at // a:40 or 33
 puts "b:{}", b           // b:(c="hello",d=100)
 ```
 
+### Type equivalence
 
-Both `does` and `equals` operate over types. This means that the values in the
-entries are ignored, but the type of entry is considered.
+
+The `does` operator is the base to compare types. These are the detailed rules
+for the `a does b` operator depending on the `a` and `b` fields:
+
+
+* false when `a` and `b` are different basic types (`boolean`, `fun`,
+  `integer`, `proc`, `range`, `string`, `enums`).
+
+* true when `a` and `b` are `boolean`
+
+* true when `a` and `b` are `enum` and `a` has all the posible enumerates
+  fields in `b` with the same value.
+
+* `a.max>=b.max and a.min<=b.min` when `a` and `b` are integers
+
+* recursively checks if `(a.__inp does b.__inp) and (a.__out does b.__out)`
+  when `a` and `b` are the same lambda type (`fun` or `proc`). `.inp` is the
+  lambda input tuple and `.out` is the lambda output tuple. The lambda also can
+  have a `where` statement. It is not included in the type equivalance check.
+
+* `(a@[] & b@[]) == b@[]` when `a` and `b` are `range`. This means that the `a`
+  range has at least all the values in `b` range.
+
+* true when `a` and `b` are `string`.
+
+* For two tuples is true if for all the fields in `b` the `a.field does
+  b.field` and the fields match in position and name.
+
 
 ```
-assert      (a=3     ,:string) does (a:int,"hello")
-assert      (a={3}   ,:string) does (a:int,"hello")
-assert not ((a=3     ,:string) does (b:int,"hello"))
-assert not ((a="foo" ,:string) does (a:int,"hello"))
-assert not ((a={|| 3},:string) does (a:int,"hello"))
-```
+assert     (a:int(max=33,min=0) does (a:int(20,5))
+assert not (a:int(max=33,min=0) does (a:int(50,5))
 
-The `does` keyword checks that functions have "compatible" arguments.
+assert     (a:string,b:int) does (a:"hello", b:33)
+assert not ((b:int,a:string) does (a:"hello", b:33)) // order maters in tuples
 
-```
-assert      {||    3 } does {|(a)| 3 }
-assert not ({|(a)| 3 } does {|(a)| 3 })
-
-assert not ({|(a,b)| 3 } does {|(a)  | 3})
-assert not ({|(a)|   3 } does {|(a,b)| 3})
-
-assert     ({|(a)|     3 } does {|(a:string)| 3})
-assert not ({|(a:int)| 3 } does {|(a:string)| 3})
+assert      :fun(x,xxx2)->(y,z) does :fun(x     )->(y,z)
+assert not (:fun(x     )->(y,z) does :fun(x,xxx2)->(y,z))
 ```
 
 Ignoring the value is what makes `equals` different from `==`. As a result
 different functionality functions could be `equals`.
 
 ```
-a = {|| ret 1 }
-b = {|| ret 2 }
-assert a equals {|| }
+let a = fun() { ret 1 }
+let b = fun() { ret 2 }
+assert a equals :fun()
 assert a != b
 assert a equals b
-assert not (a equals {|(x)| ret 1 }) // different arguments
-```
-
-Some languages use an `is` keyword but Pyrope uses `does` or `equals` because
-in English "a is b" is not clear ("a is same as b" vs "a is a subtype of b").
-
-```
-type x = (a:string, b:int)
-type y = (a:string)
-type z = (a:string, b:u32, c:i8)
-
-assert   x does y
-assert   y does y
-assert   z does y
-assert !(x does z)
-assert !(y does z)
-assert !(y does x)
-assert !(z does x)
-
-type big = x or y or z or (d:u33)
-assert   big does x
-assert   big does y
-assert   big does z
-assert   big does (d:u20)
-assert !(big does (d:u40))
+assert not (a equals fun() { ret 1 }) // different arguments
 ```
 
 ## Enums with types
 
 Enumerates (enums) create number for each entry in a set of identifiers. Pyrope
-also allows to associate a tuple or type for each entry.
+also allows to associate a tuple or type for each entry. A difference from a
+tuple is that the enumerate tuple contents must be known at compile time.
 
-Enums can handle types:
 
 ```
 type Rgb = (
   ,let c:u24
-  ,let set = {|c| self.c = c }
+  ,let set = proc(c)->(self) { self.c = c }
 )
 
 enum Color:Rgb = (
@@ -385,7 +371,7 @@ type ct=(
 type dt=(
   ,var d:u32
   ,var c:string
-  ,let set = {|(x:at)| self.d = x.d ; self.c = x.c }
+  ,let set = proc (x:at)->(self) { self.d = x.d ; self.c = x.c }
 )
 
 var b:bt=(c="hello", d=10000)
@@ -413,17 +399,17 @@ immutable, new methods can be added like in mixin.
 
 ```
 type Say_mixin = (
-  ,let say = {|s| puts s }
+  ,let say = fun(s) { puts s }
 )
 
 type Say_hi_mixin = (
-  ,let say_hi  = {|| self.say("hi {}", self.name) }
-  ,let say_bye = {|| self.say("bye {}", self.name) }
+  ,let say_hi  = fun() {self.say("hi {}", self.name) }
+  ,let say_bye = fun() {self.say("bye {}", self.name) }
 )
 
 type User = (
   ,var name:string
-  ,let set = {|(self,n:string)| self.name = n }
+  ,let set = proc(n:string)->(self) { self.name = n }
 )
 
 type Mixing_all = Say_mixin ++ Say_hi_mixin ++ User
@@ -470,16 +456,16 @@ implemented.
 ```
 type Shape = (
   ,name:string
-  ,area          = {|(self,     )->:i32  |}
-  ,increase_size = {|(self,_:i12)->(self)|}
-  ,set           = {|name| self.name = name }
+  ,area         :fun (self )->:i32       // defined but unimplemented 
+  ,increase_size:proc(x:i12)->(self)     // defined but unimplemented 
+  ,set          :proc(name )->(self) { self.name = name }
 )
 
 type Circle extends Shape with (
-  ,set = {|| super("circle") }
-  ,increase_size = {|(self,_:i12)| self.rad *= $1 }
+  ,set = proc()->(self) { super("circle") }
+  ,increase_size = proc(x:i12)->(self) { self.rad *= x }
   ,rad:i32
-  ,area = {|(self) -> :i32   |
+  ,area = fun(self) -> :i32 {
      let pi = import("math").pi
      ret pi * self.rad * self.rad
   }
@@ -493,25 +479,17 @@ assert`. An equivalent "Circle" functionality:
 type Circle = (
   ,rad:i32
   ,name = "Circle"
-  ,area = {|(self) -> :i32|
+  ,area = fun() -> :i32 {
      let pi = import("math").pi
      ret pi * self.rad * self.rad
   }
-  ,increase_size = {|(self,_:i12)| self.rad *= $1 }
+  ,increase_size = proc(a:i12)->(self){ self.rad *= a }
 )
 comptime assert Circle does Shape
 ```
 
-
-The `implement` checks that the method is redefined. The reason is that the method arguments must be
-preserved with a non-empty list of statements.
-
-```
-type base_abstract = (
-  ,pub var fun = nil,                 // defined or error on use
-  ,pub var fun2 = {|(a,b)->(c)| nil } // extended or error on use
-)
-```
+The `implement` differs from a tuple concatenation (`++` or `...tup`) by
+checking that the method are implemented.
 
 ## Instrospection
 
@@ -541,27 +519,29 @@ function but not to change the functionality. Functions have 3 fields `inputs`,
 at declaration.
 
 ```
-fun = {|(a,b=2) -> (c) where a>10| c = a + b }
-assert fun.inputs equals (a,b)
-assert fun.outputs equals (c)
-assert fun.where(a=200) and !fun.where(a=1)
+let fu = fun(a,b=2) -> (c) where a>10 { c = a + b }
+assert fu.__inp equals (a,b)
+assert fu.__out equals (c)
+assert fu.__where(a=200) and !fun.__where(a=1)
 ```
 
-This means that function overloading behaves like this:
+This means that when ignoring named vs unnamed calls, overloading behaves like
+this:
 
 ```
-let x = fun(args)
+let x = fn(args)
 
-let x = for i in fun { last i(args) when (i.inputs does args) and i.where(args) }
+let x = for i in fn { last i(args) when (i.__inp does :args) 
+                                    and (i.__out does :x   ) 
+                                    and (i.__where(args)   ) }
 ```
-
 
 There are several uses for introspection, but for example, it is possible to build a
 function that returns a randomly mutated tuple.
 
 ```
-randomize = debug {|(self)|
-  rnd = import "prp/rnd"
+randomize = debug fun(self)->(self) {
+  let rnd = import "prp/rnd"
   for mut i in self {
     if i equals :int {
       i = rnd.between(i.__max,i.__min)
@@ -572,13 +552,13 @@ randomize = debug {|(self)|
   ret self
 }
 
-x = (a=1,b=true,c="hello")
-y = x.randomize()
+let x = (a=1,b=true,c="hello")
+let y = x.randomize()
 
 assert x.a==1 and x.b==true and x.c=="hello"
 cover  y.a!=1
 cover  y.b!=true
-assert y.c=="hello"
+assert y.c=="hello"  // string is not supposed to mutate in randomize()
 ```
 
 
@@ -589,8 +569,10 @@ restricted by code block `{ ... }` and/or the file. Each Pyrope file is a
 function, but they are only visible to the same directory/project Pyrope files.
 
 
-The `punch` statement allows to access variables from other files/functions. The
-`import` statement allows referencing functions from other files.
+There are only two ways to access variables outside Pyrope file. The `import`
+statement allows referencing public lambdas from other files. The register
+declarations allow to assign an ID, and other files can access the register by
+"reference".
 
 
 ### import
@@ -602,14 +584,15 @@ Any call to a function or tuple outside requires a prior `import` statement.
 
 ```
 // file: src/my_fun.prp
-pub let fun1    = {|a,b|  }
-pub let fun2    = {|a|
-  pub let inside = {|| }
+pub let fun1    = fun(a,b) { a+b }
+pub let fun2    = fun(a) {
+  pub let inside = fun() { ret 3 }
+  ret a
 }
-pub let another = {|a|  }
+pub let another = fun(a) { ret a }
 
 pub let mytup = (
-  ,call = {|| puts "call called" }
+  ,pub let call3 = fun() { puts "call called" }
 )
 ```
 
@@ -618,11 +601,14 @@ pub let mytup = (
 a = import "my_fun/*fun*"
 a.fun1(a=1,b=2)         // OK
 a.another(a=1,2)        // compile error, 'another' is not an imported function
-a.fun2.inside()         // compile error, `inside` is not in top scope
+a.fun2.inside()         // compile error, `inside` is not in top scope variable
+
+let fun1 = import "my_fun/fun1"
+lec fun1, a.fun1
 
 x = import "my_fun/mytup"
 
-x.call()                // prints call called
+x.call3()                // prints call called
 ```
 
 The `import` points to a file [setup code](06b-instantiation.md#setup-code)
@@ -637,23 +623,6 @@ The import is delayed until the imported variable is used in the local file.
 There is no order guarantee between imported files, just that the code needed
 to compute the used imported variables is executed before.
 
-
-All the variables at the top scope declared with `pub` are visible to the
-`import` statement. The import is by value, this means that it creates a "copy"
-of the variables imported.
-
-```
-pub fun1 = {|| }        // visible for import
-pub fun2 = {||          // visible for import
-   pub fun2_1 = {|| }   // visible for import
-   if cond {
-     pub fun2_2 = {|| } // not visible (if scope)
-   }
-}
-{
-  pub fun3 = {|| }      // not visible (scope)
-}
-```
 
 The import statement is a filename or path without the file extension.
 Directories named `code`, `src`, and `lib` are skipped. No need to add them in
@@ -686,168 +655,95 @@ type Number = b ++ a // patch the default Number class
 var x:Number = 3
 ```
 
-### punch
-
-The `punch` statement allows accessing registers, inputs, and outputs from other
-instantiated modules.
-
-Verilog has a somewhat similar semantics with the Hierarchical Reference. It
-also allows to go through the module hierarchy and read/write the contents of a
-variable. It is not popular for 2 main reasons: (1) It is considered "not nice"
-to bypass the module interface and touch an internal variable; (2) some tools
-do not support it as synthesizable.
+### Register reference
 
 
-Pyrope benefits more than Verilog from the `punch`  because it allows to punch
-tuples (SystemVerilog does not allow to punch classes that do not tend to be
-synthesizable anyway). Also Pyrope `punch` allows relative hierarchy reference.
-
-Without a `punch`, the tuple could be passed in the input/outputs, but since
-everything is passed by value, it will create a copy. It would not be possible
-to have a memory, and then use methods to update/read the memory contents
-across modules. This will be very counterintuitive for most programmers[^4].
+Registers can be declared with an string that shares the same syntax as the
+import. Any register sharing the same file/ID match point to the same register.
+From a programmers point of view resembles a pointer or reference to a
+register.
 
 
-[^4]: Although it is the thing that most Verilog coding guidelines force you to do.
+```
+let do_increase = {||
+  reg counter("MY_COUNTER")
+
+  wrap counter:u32 = counter + 1
+}
+
+let do_debug = {||
+  reg counter("MY_COUNTER")
+  puts "The counter value is {}", counter
+}
+```
 
 
-The punch is a superset of these 3 different sets of tools:
 
-* Verilog hierarchical reference. Like Verilog hier, `punch` allows to access
-  variables through the hierarchy. A difference in Pyrope is that only `pub`
-  registers or undriven inputs are accessible.
+Verilog has a more flexible semantics with the Hierarchical Reference. It also
+allows to go through the module hierarchy and read/write the contents of any
+variable. Pyrope only allows you to reference registers. Verilog hierarchical
+reference is not popular for 2 main reasons: (1) It is considered "not nice" to
+bypass the module interface and touch an internal variable; (2) some tools do
+not support it as synthesizable; (3) the evaluation order is not clear because
+the execution order of the modules is not defined. 
 
-* Soft connections and CHISEL boring utils allow to define of a unique identifier
-  and connects between the IDs. Punch also has this capability by building a
-  tuple that provides name registration.
 
-* A reference/pointer to an object. Import will create a copy, passing through
-  value will create a copy too. Punch behaves like a pointer or reference to a
-  remote instance. It could be seen as a pointer, but it can not pass the
-  pointer. You must "find" the pointer either through the hierarchy or with a
-  unique identifier.
+Allowing only to update registers avoids the evaluation order problem. The
+updates go to the register `din` pin, and the references read the register `q`
+pin. The register references follow the model of single writer multiple reader.
+This means that only a single lambda can update the register, but many lambdas
+can read the register. This allows to be independent on the `lambda` evaluation
+order.
 
+
+The register reference uses instantiated registers. This means that if a lambda
+having a register is called in multiple places, only one can write, and the
+others are reading the update. It is useful to have configuration registers. In
+this case, multiple instances of the same register can have different values.
+As an illustrative example, a UART can have a register and the controller can
+set a different value for each uart base register. This can be achieved using
+the `instance=string` instead of the default `name=string`.
 
 ```
 // file remote.prp
-punch uart_addr from "MY_ADDR" // compile error, setup code
-pub let uart = {||
-  punch uart_addr from "MY_ADDR" // compile error, setup code
-  assert uart_addr == 300
-}
+reg uart_addr("MY_ADDR")
+assert 0x400 > uart_addr >= 0x300
 
 // file local.prp
 pub let setup_xx = {||
-  punch xx to "MY_ADDR"     // creates a var that drives remote uart_addr
-  xx = 300                  // sets uart_addr to 300
+  reg xx(instance="MY_ADDR") // creates a var that drives remote uart_addr
+  for mut i,index in xx {
+    i = 0x300+index*0x10     //  sets uart_addr to 0x300, 0x310, 0x320...
+  }
 }
 ```
 
-The `punch` connects through the hierarchy, as such, `punch` can not be called during
-the setup phase because the hierarchy is still unknown. `punch` is only allowed
-during reset or execution phase.
 
-
-Maybe the best way to understand the `punch` is to see the differences with the `import`:
+Maybe the best way to understand the register reference (regref for short) is
+to see the differences with the `import`:
 
 * Instantiation vs File hierarchy
-  + `punch` traverses the instantiation hierarchy to find matches.
-  + `import` traverses the file/directory hierarchy to find matches.
+  + `regref` finds matches across instantiated registers.
+  + `import` traverses the file/directory hierarchy to find one matche.
 * Success vs Failure
-  + `punch` keeps going to find all the matches, and it is possible to have a zero matches
+  + `regref` keeps going to find all the matches, and it is possible to have a zero matches
   + `import` stops at the first match, and a compile error is generated if there is no match.
-* Regex vs file path
-  + `punch` uses a more powerful regex to match the instance hierarchy.
-  + `import` uses a simple file/function names skipping some keywords (code,src,lib).
-* Setup phase
-  + `punch` can not be called during setup phase because hierarchy does not
-    exist.
-  + `import` can be called during setup, execution, and reset phases.
-+ Conditionally executed
-  + `punch` can no be conditionally executed. Connecting or punching is done or
-    not, but it can not be based on a run-time condition.
-  + `import` can happen inside a runtime condition.
 
 
-```
-let some = {||
-  if runtime {
-    let pi = import "math.PI" // OK
-    puts "PI is {}", pi
+When `instance` is used, there can be many matches. To have a deterministic
+result, given a hierarchy the order should be fixed, but changing the hierarchy
+can provide a new order. There is no guarantee of tuple order across multiple
+instances.
 
-    punch v to "foo/bar"      // compile error, punch must be unconditional
-  }
-  punch v to "foo/bar"        // OK
-}
-
-punch v to "foo/bar"          // compile error, punch not in the setup phase
-```
-
-The instantiation hierarchy looks like a tree with a root at the top function.
-Given an instantiation hierarchy, the tree traversal starts by visiting all the
-children, then the parents.  The traversal is similar to a post-order tree
-traversal, but not the same. The post-order traversal visits a tree node once
-all the children are visited. The `punch` traversal visits a tree node once all
-the children AND niblings (niece of nephews from siblings) are visited.
-
-
-For example, given this tree hierarchy. If the punch is called from `1/2/1` node,
-it will visit nodes in this order:
-
-```txt
-            +── 1/2/1/3/1   // 5th
-            |── 1/2/1/3/2   // 4th
-        +── 1/2/1/1         // 3th
-        ├── 1/2/1/2         // 2nd
-        |── 1/2/1/3         // 1st
-    +── 1/2/1               // START <--
-    |   +── 1/3/1/1         // 7th
-    |   |── 1/3/1/2         // 8th
-    ├── 1/3/1               // 9th
-    ├── 1/3/2               // 10th
-    ├── 1/3/3               // 11th
-    │   -── 1/4/2/1         // 12th
-    |   |── 1/4/3/1         // 13th
-    ├── 1/4/1               // 14th
-    ├── 1/4/2               // 15th
-    ├── 1/4/3               // 16th
-+── 1/1                     // 17th
-├── 1/2                     // 20th
-├── 1/3                     // 21st
-├── 1/4                     // 22nd
-| 1                         // LAST
-```
-
-There are two variations of the `punch` command, one that creates inputs to the
-current module (`punch ... from ...`) and the other that creates outputs
-(`punch ... to ...`). `punch variable from ...` is to indicate `variable` must
-be driven remotely by some `punch ... to`. `punch variable to ...` can only
-connect `variable` to any `punch ... from...` or undriven registers or undriven
-lambda inputs.
-
-
-```
-pub let mod2 = {||
-  punch a to "module1/mod2/foo"
-
-  punch b to "uart_addr" // any module that has an input $uart_addr
-  b[0] = 0x100
-  b[1] = 0x200
-
-  punch b to "foo.*/uart_addr" // modules named foo.* that have uart_addr as input
-
-  punch c from "bar/some_output"
-  punch d from "bar/some_register"
-}
-```
 
 ### Mocking library
 
-One possible use of the `punch` command is to create a "mocking" library. A
+One possible use of the register reference is to create a "mocking" library. A
 mocking library instantiates a large design but forces some subblocks to
-produce some results for testing. The challenge is that `punch` needs undriven,
-but the testing library can use the `peek`/`poke` to overwrite an existing
-value. The peek/poke use the same reference as `punch`.
+produce some results for testing. The challenge is that it needs undriven
+registers. During testing, the `peek`/`poke` is more flexible and it can
+overwrite an existing value. The peek/poke use the same reference as `import`
+or register reference.
 
 ```
 type bpred = ( // complex predictor
@@ -855,15 +751,11 @@ type bpred = ( // complex predictor
 )
 
 test "mocking taken branches" {
-  poke "core.fetch.bpred.taken", true
+  poke "bpred_file/taken", true
 
   var l = core.fetch.predict(0xFFF)
 }
 ```
-
-
-Nevertheless, the `punch` must be unconditional. An alternitive allowed only
-during testing is the `poke`/`peek` statements.
 
 ## Operator overloading
 
@@ -987,4 +879,37 @@ efficient implemetations:
 * `a <= b` is `__lt(a,b) | __eq(a,b)` (without `ge`) or `__ge(b,a)`
 * `a >= b` is `__lt(b,a) | __eq(a,b)` (without `ge`) or `__ge(a,b)`
 
+
+## Non-Pyrope (C++) calls
+
+Calling C++ or external code is still fully synthesizable if the code is
+available at compile time. An example could be calling a C++ API to read a json
+file during setup phase to decide configuration parameters.
+
+
+```
+let cfg = __read_json()
+
+pub let ext = if cfg.foo.bar == 3 {
+   foo
+}else{
+   bar
+}
+```
+
+
+Non-Pyrope calls have the same procedure/function distinction and use the same
+Pyrope lambda definition but they do not have the `where` clause.
+
+
+If no type is provided, a C++ call assumes a `proc(...inp)->(...out)` type is
+can pass many inputs/outputs and has permission to mutate values. Any call to a
+method with two underscores `__` is either a basic gate or a C++ function.
+
+```
+type __my_typed_cpp:fun(a,b)->(e)
+```
+
+Type defining non-Pyrope code is good to catch errors and also because declaring
+`function` allows to handle several cases of circular dependencies not possible with `procedure` [import section](10-internals.md)
 

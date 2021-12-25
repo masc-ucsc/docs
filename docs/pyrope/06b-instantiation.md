@@ -162,7 +162,7 @@ Conditional called `lambdas` have extra logic to compute the associated
 and the outputs are generated accordingly.
 
 ```
-let fun = {|(a,b)->(c,d)| 
+let work = fun(a,b)->(c,d) {
    c = a+b
    if c==0 { 
     d = a-b 
@@ -170,7 +170,7 @@ let fun = {|(a,b)->(c,d)|
 }
 
 if cond {
-  c,d = fun(a,b)
+  c,d = work(a,b)
 }
 
 // RTL equivalent
@@ -179,7 +179,7 @@ let tmp_b = b
 tmp_a? = __and(a?, cond)   // adjust the call arg valids
 tmp_b? = __and(b?, cond)
 
-tmp_c, tmp_d = fun(tmp_a,tmp_b)
+tmp_c, tmp_d = work(tmp_a,tmp_b)
 
 let c2 = __mux(cond, c, tmp_c)
 let d2 = __mux(cond, d, tmp_d)
@@ -195,7 +195,7 @@ lec d?, d2_v
 ```
 
 
-The previous code WILL call `fun` every cycle, but in some cycles the inputs
+The previous code WILL call `work` every cycle, but in some cycles the inputs
 will be invalid. This is one of the main Pyrope differences with other HDLs. In
 languages like Verilog, modules can not be conditionally called. Pyrope allows
 it by toggling the inputs valids. The module can decide how to handle it. 
@@ -217,12 +217,12 @@ modified like any captured mutable variable.
 === "Explicitly handled"
 
     ```
-    let div = {|a,b|
+    let div = fun(a,b) {
 
       assert b!=0 or b?  // OK if invalid too
       out = a / b
     }
-    let fun = {|a,b|
+    let work = fun(a,b) {
       out = a + b
       if out? {          // we may want to print only when valid
         puts "{} + {} is {}", a, b, out
@@ -233,13 +233,13 @@ modified like any captured mutable variable.
 === "Disable"
 
     ```
-    let div = {|a,b|
+    let div = fun(a,b) {
       disable.assert not b?
       assert b!=0 
       out = a / b
     }
 
-    let fun2 = {|a,b|
+    let fun2 = fun(a,b) {
       out = a + b
 
       disable.puts = not out?
@@ -336,7 +336,7 @@ When a state machine is needed to execute for several cycles a tuple with an
 reg array:tag[1024] = (
   ,clock=my_clock
 
-  ,always_reset = {|(self)->(self)|
+  ,always_reset = fun()->(self) {
      reg reset_iter:u10 = (reset="") // no reset flop
 
      self[reset_iter].state = I
@@ -379,12 +379,12 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
 
 
     ```
-    pub let inner = {|(z,y)->(a,h)|
+    pub let inner = fun(z,y)->(a,h) {
       a =   y & z
       h = !(y & z)
     }
 
-    pub let top2 = {|(a,b)->(c,d)|
+    pub let top2 = fun(a,b)->(c,d) {
       let x= inner(y=a,z=b)
       c = x.a
       d = x.h
@@ -395,17 +395,17 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
 
     ```
     type inner_t = (
-      ,pub set = {|(z,y)->(self)|
+      ,pub set = fun(z,y)->(self) {
         self.z = z
         self.y = y
       }
-      ,always_after = {||
+      ,always_after = fun()->(self) {
         self.a =   self.y & self.z
         self.h = !(self.y & self.z)
       }
     )
 
-    pub let top2 = {|(a,b)->(c,d)|
+    pub let top2 = fun(a,b)->(c,d) {
       let foo:inner_t = (y=a,z=b)
       c = foo.a
       d = foo.h

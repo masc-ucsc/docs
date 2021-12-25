@@ -192,12 +192,12 @@ such that memories can be created directly.
 ```
 // A 2rd+1wr memory (RF type)
 
-mem.addr    = ($raddr0, $raddr1, $wraddr)
+mem.addr    = (raddr0, raddr1, wraddr)
 mem.bits    = 4
 mem.size    = 16
-mem.clock   = $my_clock
-mem.din     = (0, 0, $din0)
-mem.enable  = (1, 1, $we0)
+mem.clock   = my_clock
+mem.din     = (0, 0, din0)
+mem.enable  = (1, 1, we0)
 
 mem.fwd     = false
 mem.latency = (1, 1, 1)
@@ -206,15 +206,15 @@ mem.rdport  = (-1,1,0) // 0 WR, !=0 -> RD
 
 res =# __memory(mem)
 
-%q0 = res.0
-%q1 = res.1
+q0 = res.0
+q1 = res.1
 
 ```
 
 The previous code directly instantiates a memory and passes the configuration. The
 memory attributes:
 
-* `addr`: Address ports for the memory. In the example port 0 is `$raddr0`, and port 2 is `$wraddr`
+* `addr`: Address ports for the memory. In the example port 0 is `raddr0`, and port 2 is `wraddr`
 * `bits`: The number of bits for each memory entry
 * `size`: The number of entries. Total size in bits is $size x bits$.
 * `clock`: Optional clock pin, `clock` by default. A bundle is possible to specify the clock for each address port.
@@ -253,7 +253,7 @@ does in row-major order. This allows building a simple function to flatten
 multi-dimensional arrays.
 
 ```
-let flatten = {|arr|
+let flatten = fun(...arr) {
   var res
   for i in arr {
     res ++= i

@@ -75,7 +75,7 @@ This example explicitly manages the valid output signals.
 
 
 ```pyrope
-let telescope_unit = {|(a:u32,b:u32,start:bool) -> (res:?u32)|
+let telescope_unit = fun(a:u32,b:u32,start:bool) -> (res:?u32) {
 
   reg result_done
   reg result_flop
@@ -113,10 +113,10 @@ after the `telescope_unit` starts. For the designer, this is quite difficult to
 handle. How many flops to add to remember the starting point for `a` and `b`.
 
 ```pyrope
- let res1 =#[1,2] telescope_unit($a,$b,$start)
+ let res1 =#[1,2] telescope_unit(a,b,start)
 
  if res1? {
-   puts "{}-{}+1 is {}", $a, $b, res1.res  // incorrect reference to a
+   puts "{}-{}+1 is {}", a, b, res1.res  // incorrect reference to a
  }
 ```
 
@@ -132,7 +132,7 @@ satisfied.
  assert res1?
 
  // code executed 1 or 2 cycles after telescope_unit is called
- puts "{}-{}+1 is {}", $a, $b, res1.res
+ puts "{}-{}+1 is {}", a, b, res1.res
 ```
 
 An alternative implementation is using the `#>` keyword. The disadvantage is
@@ -141,7 +141,7 @@ efficient.
 
 ```pyrope
 // implicit start/end (starts when called)
-let telescope_unit3 = {|(a:u32,b:u32) -> (:?u32)|
+let telescope_unit3 = fun(a:u32,b:u32) -> (:?u32) {
 
   {
     pub let tmp = a+1
@@ -159,21 +159,21 @@ let telescope_unit3 = {|(a:u32,b:u32) -> (:?u32)|
 The code sample for explicitly managed step function usage:
 
 ```pyrope
- let res2 =#[1,2] telescope_unit3($a,$b,$start)
+ let res2 =#[1,2] telescope_unit3(a,b,start)
 
  if res2? { // code executed 1 or 2 cycles after telescope_unit is called
-   puts "{}-{}+1 is {}", $a, $b, res2
+   puts "{}-{}+1 is {}", a, b, res2
  }
 ```
 
 The code sample for implicitly managed step function usage:
 
 ```future
- async res3 =#[1,2] telescope_unit3($a,$b) when $start
+ async res3 =#[1,2] telescope_unit3(a,b) when start
 
  await res3 {
    // a and b could have the correct results due to the async/await
-   puts "{}-{}+1 is {}", $a, $b, res3.res
+   puts "{}-{}+1 is {}", a, b, res3.res
  }
 ```
 

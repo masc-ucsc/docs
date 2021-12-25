@@ -41,55 +41,28 @@ non-Pyrope side-effects. Under this solution, the `lambdas` with non-Pyrope
 `import` statement allows for circular dependencies of files, but not of
 variables. This means that if there is no dependency (`a imports b`), just
 running a before b is enough. If there is a dependency (`a imports b` and `b
-imports a`) a multiple compiler pass is proposed.
+imports a`) a multiple compiler pass is proposed, but other solutions are
+allowed as long as it can handle not true circular dependences.
 
 
 The solution to this problem is to pick an order, and import at least three
-times the files involved in the cyclic dependency. The files involved in
-the cylic dependency are alphabetically sorted and called three times: (1) `a
+times the files involved in the cyclic dependency. The files involved in the
+cylic dependency are alphabetically sorted and called three times: (1) `a
 import b`, then `b import a`; (2) `a import b` and `b import a`; (3) `a import
-b` and `b import a`. Only the last import chain can perform non-Pyrope calls
-and puts/debug statements.
+b` and `b import a`. Only the last import chain can perform procedure `proc`
+calls (Pyrope and non-Pyrope) and puts/debug statements.
 
 
 If the result of the last two imports has the same variables, the import has
 "converged", otherwise a compile error is generated.
 
 
-### `punch`
+### Register Reference
 
-Punch can create a dependence update between files. 
-
-```
-// file1.prp
-
-var a:punch("A")
-var b = punch("B")
-b = a + 1
-var c:punch("C")
-
-assert a == 100
-assert b == 101
-assert c == 102
-
-// file2.prp
-
-var x = punch("A")
-x = 100
-var y:punch("B")
-var z = punch("C")
-z = y + 1
-
-assert x == 100
-assert y == 101
-assert y == 102
-```
-
-In theory, the connections can be dependent on the previous pass value. This
-will create an iterative process to solve the `punch` connections. Pyrope does
-not allow this. The Setup code section is called only once and all the `punch`
-commands must be `comptime` with a single pass. If they are not, a compile
-error is generated.
+Register reference can create a dependence update between files, but this is
+not a source of non-determinism because only one file can perform updates for
+the register `din` pin, and all the updated register can only read the register
+`q` pin.
 
 
 ## Dealing with unknowns

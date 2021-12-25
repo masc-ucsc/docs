@@ -262,7 +262,7 @@ total = for i in 1..=9 {
 }
 assert total == (11, 12, 3, 4, 5, 26)
 
-let v = {|| ret 4 }
+let v = fun() { ret 4 }
 assert v == 4
 
 let y = {         // expr scope1
@@ -300,10 +300,10 @@ c += 3
 
 To connect the `ring` function calls in a loop.
 ```
-defer_read f1 = ring($a, f4)
-f2 = ring($b, f1)
-f3 = ring($c, f2)
-f4 = ring($d, f3)
+defer_read f1 = ring(a, f4)
+f2 = ring(b, f1)
+f3 = ring(c, f2)
+f4 = ring(d, f3)
 ```
 
 If the intention is to read the result after being a flop, there is no need to
@@ -422,7 +422,7 @@ will preserve the value, the inputs may change value.
 
     ```
     test "wait 1 cycle" {
-      let a = 1 + $input
+      let a = 1 + input
       puts "printed every cycle input={}", a
       step 1
       puts "also every cycle a={}",a  // printed on cycle later
@@ -434,7 +434,7 @@ will preserve the value, the inputs may change value.
     ```
     test "wait 1 cycle" {
       {
-        pub let a = 1 + $input
+        pub let a = 1 + input
         puts "printed every cycle input={}", a
       } #> {
         puts "also every cycle a={}",a  // printed on cycle later

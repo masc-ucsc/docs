@@ -91,8 +91,6 @@ trivial scalar.
 
 Tuples are used in many places:
 
-* The inputs for a function are in `$` tuple. E.g: `total = $.a + $[3]`
-* The outputs for a function are in the `%` tuple. E.g: `%.out1 = 3` or `%sum = 4`
 * The arguments for a call function are a tuple. E.g: `fcall(1,2)`
 * The return of a function call is always a tuple. E.g: `foo = fcall()`
 * The index for a selector `[...]` is a tuple. As syntax sugar, the tuple parenthesis can be omitted. E.g: `foo@[0,2,3]`
@@ -244,7 +242,6 @@ be avoided for an unnamed tuple in some cases:
 * When used inside a selector `[...]`.
 * When used after an `in` operator followed by a `{` like in a `for` and `match` statements.
 * For the inputs in a match statement
-* When the function types only have input.
 
 ```
 fcall 1,2         // same as: fcall(1,2)
@@ -260,9 +257,6 @@ y = match z {
 }
 y2 = match 1,z {  // same as: y2 = match (1,z) {
 }
-
-fun = {|a,b|      // same as: fun = {|(a,b)|
-} 
 ```
 
 A named tuple parenthesis can be omitted on the left-hand side of an assignment. This is

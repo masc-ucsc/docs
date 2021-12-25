@@ -181,7 +181,7 @@ the conceptual problems of integrating them:
 
 === "Pipestage"
     ```
-    pub let block = #{|(in1,in2)->(out)|
+    pub let block = proc (in1,in2)->(out) {
       {
         pub let tmp = in1 * in2
       } #> {
@@ -199,28 +199,28 @@ the conceptual problems of integrating them:
 === "Explicit Stages"
 
     ```
-    let add1 = #{|a,b| // 1 cycle add
+    let add1 = proc (a,b) { // 1 cycle add
       reg r
       let rr = r // get flop value
       r = a+b
       ret rr
     }
-    let mul3 = #{|a,b| // 3 cycle multiply
+    let mul3 = proc (a,b){ // 3 cycle multiply
       reg reg1, reg2, reg3
       reg3 = reg2
       reg2 = reg1
-      reg1 = $a * $b
+      reg1 = a * b
       ret reg3
     }
 
-    pub let block = #{|(in1,in2)->(out)|
+    pub let block = proc (in1,in2)->(out) {
       let x =# mul3(in1, in2)
       out   =# add1(x,in3)
     }
     ```
 
 In general, `#` is used when dealing with registers. The previous example use
-`procedures` (`#{||...}`) instead of `functions` (`{||...}`) because functions
+`procedures` (`proc ... {...}`) instead of `functions` (`fun ... {...}`) because functions
 only have combinational logic. When the procedures are called, the assigned
 variable needs the `=#`. This is to explicitly indicate to Pyrope that the
 function called (`mul3`, `add1`) can have pipeline outputs. This helps the tool
@@ -268,12 +268,12 @@ that there are between 0 and 3 cycles, and open range could be used when there
 are loops (E.g: `=#[2..]`).
 
 ```
-let x = mul3(in1, in2)      // compile error: 'mul3' is pipelined
-let x =# mul3(in1, in2)     // OK
-%out  =# add1(x,in3)        // OK (in3 has 0 cycles, x has 3 cycles)
-%out  =#[1] add1(x,in3)     // compile error: 'x' is pipelined with '3' cycles
-%out  =#[3] add1(x,in3)     // compile error: 'in3' is pipelined with '1' cycle
-%out  =#[1..<4] add1(x,in3) // OK
+let x = mul3(in1, in2)     // compile error: 'mul3' is pipelined
+let x =# mul3(in1, in2)    // OK
+out  =# add1(x,in3)        // OK (in3 has 0 cycles, x has 3 cycles)
+out  =#[1] add1(x,in3)     // compile error: 'x' is pipelined with '3' cycles
+out  =#[3] add1(x,in3)     // compile error: 'in3' is pipelined with '1' cycle
+out  =#[1..<4] add1(x,in3) // OK
 ```
 
 
@@ -322,7 +322,7 @@ is error-prone because it requires knowing exactly the number of cycles for
     ```
     x =# mul3(in1, in2)
     y = in1#[-3]
-    %out =# add1(a=x,b=y)    // connect in1 from -3 cycles
+    out =# add1(a=x,b=y)    // connect in1 from -3 cycles
     ```
 
 !!! Observation

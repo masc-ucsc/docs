@@ -42,8 +42,8 @@ restrict "cond1" when foo < 1 and foo >3 {
    verify bar == 4  // only checked at verification, restricting conditions
 }
 
-let fun1 = {|a,b| a | b}
-let fun2 = {|a,b| ~(~a | ~b) }
+let fun1 = fun(a,b) { ret a | b}
+let fun2 = fun(a,b) { ret ~(~a | ~b) }
 lec fun1, fun2
 ```
 

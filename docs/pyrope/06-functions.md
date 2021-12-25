@@ -38,24 +38,20 @@ a lambda is to have access to a local variable with a definition or to "import"
 a variable from another file.
 
 ```
-let a_3   = {   3 } // just scope, not a lambda. Scope is evaluate now
-let a_fun = {|| 4 } // local function, when just_4 is called 4 is returned
+let a_3   = {   3 }     // just scope, not a lambda. Scope is evaluate now
+let a_fun = fun() { 4 } // local function, when just_4 is called 4 is returned
 
-pub let fun3 = {|| 5 }    // public lambda that can be imported by other files
+pub let fun3 = fun(){ 5 } // public lambda that can be imported by other files
 
 let x = a_3()             // compile error, explicit call not posible in scope
 let x = a_fun()           // OK, explicit call
 
 assert a_3 equals 3
-assert a_fun equals {|| }
+assert a_fun equals :fun()
 assert a_fun() == 4       // calls to eval the function
 ```
 
-The simplest lambda resembles a scope with at `{` followed by a sequence of
-statements before the closing `}`. Like scopes, it is possible to have a single
-expression instead of a sequence of statements. The difference between a lambda
-and a normal scope is the lambda definition enclosed between pipes (`|`).
-
+The lambda definition has the following fields:
 
 ```txt
 [GENERIC] [CAPTURE] [INPUT] [-> OUTPUT] [where COND] |
@@ -64,83 +60,59 @@ and a normal scope is the lambda definition enclosed between pipes (`|`).
 + `GENERIC` is an optional comma separated list of names between `<` and `>` to
   use as generic types in the lambda.
 
-+ `CAPTURE` has the list of capture variables for the lambda. If no capture
-  is provided, any local variable can be captured. An empty list (`[]`), means
-  no captures allowed. The captures are by value only, no capture by reference
-  is allowed.
++ `CAPTURE` has the list of capture variables for the lambda. If no capture is
+  provided, any local variable can be captured by value. An empty list (`[]`),
+  means no captures allowed. The captures are by value only, no capture by
+  reference is allowed.
 
-+ `INPUT` has a list of inputs allowed with optional types. If no input is
-  provided, the `$` input tuple can be used. `()` indicates no inputs.
++ `INPUT` has a list of inputs allowed with optional types. `()` indicates no
+  inputs. `(...args)` allow to accept a variable number of arguments.
 
-+ `OUTPUT` has a list of outputs allowed with optional types. If no output is
-  provided, the `%` output tuple can be used. `()` indicates no outputs.
++ `OUTPUT` has a list of outputs allowed with optional types. `()` indicates no
+  outputs. `(...out)` will expand the out tuple as individual outputs.
 
 + `COND` is the condition under which this statement is valid. The `COND` can
   use the inputs, outputs, and `self` to evaluate. If the outputs are used in
-  the `COND`, the lambda must be immutable. This means that the method is
-  called when the condition could evaluate true depending on its execution, but
-  being immutable there are no side effects. The
+  the `COND`, the lambda must be immutable (`fun`). This means that the method
+  is called when the condition could evaluate true depending on its execution,
+  but being immutable there are no side effects. The
   [overload](06-functions.md#overloading) section has more details.
 
 ```
 var add
-add = {|| $a+$b+$c }              // no IO specified
-add = {|a,b,c| a+b+c }            // constrain inputs to a,b,c
-add = {|(a,b,c)| a+b+c }          // same
-add = {|(a:u32,b:s3,c)| a+b+c }   // constrain some input types
-add = {|(a,b,c) -> :u32| a+b+c }  // constrain result to u32
-add = {|(a,b,c) -> (res)| a+b+c } // constrain result to be named res
-add = {|(a,b:a,c:a)| a+b+c }      // constrain inputs to have same type
+add = fun (...x) { x.0+x.1+x.2 }       // no IO specified
+add = fun (a,b,c){ a+b+c }            // constrain inputs to a,b,c
+add = fun (a,b,c){ a+b+c }            // same
+add = fun (a:u32,b:s3,c){ a+b+c }     // constrain some input types
+add = fun (a,b,c) -> (x:u32){ a+b+c } // constrain result to u32
+add = fun (a,b,c) -> (res){ a+b+c }   // constrain result to be named res
+add = fun (a,b:a,c:a){ a+b+c }        // constrain inputs to have same type
+add = fun <T>(a:T,b:T,c:T){ a+b+c }   // same
 
 x = 2
 var add2
-add2 = {|       (a)|   x + a }    // implicit capture x
-add2 = {|[x    ](a)|   x + a }    // explicit capture x
-add2 = {|[     ](a)|   x + a }    // compile error, undefined 'x'
-add2 = {|[foo=x](a)| foo + a }    // capture x but rename to something else
+add2 = fun       (a){   x + a }    // implicit capture x
+add2 = fun[x    ](a){   x + a }    // explicit capture x
+add2 = fun[     ](a){   x + a }    // compile error, undefined 'x'
+add2 = fun[foo=x](a){ foo + a }    // capture x but rename to something else
 
 var y = (
   ,val:u32 = 1
-  ,inc1 = {|(self)->(self)| self.val = u32(self.val + 1) }
+  ,inc1 = fun (self)->(self){ self.val = u32(self.val + 1) }
 )
 
-debug let my_log = {||
+debug let my_log = fun (...inp) {
   print "loging:"
-  for i in $ {
+  for i in inp {
     print " {}", i
   }
   puts
 }
 
-let fun = {|<X>(a:X,b:X)| a+b }   // enforces a and b with same type
-assert fun(33:u22,100:u22)
+let f = fun<X>(a:X,b:X){ ret a+b }   // enforces a and b with same type
+assert f(33:u22,100:u22)
 
 my_log a, false, x+1
-```
-
-## Implicit input/output tuple
-
-The inputs and outputs on the current lambda can have an associated variable
-with the lambda definition, but it is always possible to access the inputs
-and outputs with the input tuple (`$`) and the output tuple (`%`). This allows
-variable size arguments and simpler code for small code snippets. It also
-simplifies introspection since all the inputs are in `$` and all the outputs
-are in `%`.
-
-```
-let fun = {|(in1,in2)->(out1,out2)|
-  assert in1 == $.in1 and in2 == $.in2
-
-  out1 = in1 + $in1
-  out2 = out1 + in2 + $in2
-
-  assert out1 == $.out1 and out2 == $.out2
-}
-
-let fun2 = {|(a1,...rest)|
-  assert a1   == $.0
-  assert rest == $[1..]
-}
 ```
 
 ## Arguments
@@ -150,7 +122,6 @@ there is no way to pass by reference.
 
 * Arguments can be named. E.g: `fcall(a=2,b=3)`
 * There can be many return values. E.g: `ret (a=3,b=5)`
-* Inputs can be accessed with the `$` tuple. E.g: `ret $1 + $.arg_2 + $arg3`
 
 There are several rules on how to handle arguments.
 
@@ -170,10 +141,10 @@ UFCS vs pipe, and also that in the pipe the argument tuple is concatenated,
 but in UFCS is added as the first argument.
 
 ```
-div  = {|a,b| a / $b }   // named input tuple
-div2 = {|| $0 / $1 }     // unnamed input tuple
+div  = fun (a,b) { a / b }          // named input tuple
+div2 = fun (...x){ x.0 / x.1 }   // unnamed input tuple
 
-noarg = {|()| ret 33 }   // explicit no args
+noarg = fun () { ret 33 }         // explicit no args
 
 assert noarg == 33 == noarg()
 
@@ -201,10 +172,10 @@ has a lambda defined with the same name, the tuple lambda has a higher priority.
 
 ```
 var tup = (
-  ,let fun = {|| ret 1 }
+  ,let fun = fun() { ret 1 }
 )
 
-let fun = {|(b)| ret 2 }
+let fun = fun (b){ ret 2 }
 
 assert fun()    == 2
 assert fun(tup) == 2
@@ -213,18 +184,20 @@ assert tup.fun() == 1
 ```
 
 The keyword `self` is used to indicate that the function is accessing a tuple.
-It is also passed as the first argument (`$[0] == self`). As a syntax sugar,
-when no inputs are specified, the `self` can be from the input list when it is
-read by any expression.
+It is also passed as the first argument. As a syntax sugar, when no inputs are
+specified, the `self` can be from the input list when it is read by any
+expression, but it is not added to the input tuple unless `self` is explicitly
+listed. The output `self` is always needed if a mutable method is the
+intention.
 
 ```
 var tup = (
   ,var x = 3
-  ,let fun = {|()| assert $.size == 1 ; ret self.x }
+  ,let fun = fun(...rest){ assert rest.size == 0 ; ret self.x }
 )
 
-let fun2 = {|(b)| ret b.x             } // no self, but it is the same
-let fun3 = {|(self,b)| ret self.x + b }
+let fun2 = fun(b){ ret b.x             } // no self, but it is the same
+let fun3 = fun(self,b){ ret self.x + b }
 
 assert tup.fun() == 3   // tup.fun call
 assert tup.fun == 3     // explicit no args, so () is optional in call
@@ -244,28 +217,33 @@ implement a typical `method`. The `method` accesses the parent tuple fields and
 updates some of them. 
 
 
-Updates to tuples needed by `methods` are allowed when the first output of the
-lambda is a `self` keyword. Although not required, `methods` tend to also have
-`self` as the first input argument.
+Updates to tuples needed by `methods` are allowed when the output of the lambda
+is a `self` keyword. Although not required, `methods` tend to also have `self`
+as the first input argument.
+
+
+For a method to update the tuple, the return value must be assigned to the
+calling variable. As a syntax sugar, if the call does not have an assignment,
+the same tuple assign is created.
 
 ```
 var a_1 = (
   ,x:u10
-  ,let fun = {|(self,x)->(self)| 
-    assert $.__size == 2 // self and x
+  ,let fun = fun(self,x)->(self) {
     self.x = x 
-    assert %.__size == 2 // due to the mut keyword
-    assert %.self.x == x
   }
 )
 
-a_1.fun(3)
-assert a_1.x == 3
+a_1.fun(3)            // syntax sugar for a_1 = a_1.fun(3)
+var a_2 = a_1.fun(4)  // a_2 is updated, not a_1
+assert a_1.x == 3 and a_2.x == 4
 
-fun2 = {|(self, x)->(self)| self.x = x }
-a_2 = a_1.fun2(4)
-assert a_1.x == 3
-assert a_2.x == 4
+// Same behavior as in a function with UFCS
+fun2 = fun (self, x)->(self){ self.x = x }
+
+a_1.fun2(10)    
+var a_3 = a_1.fun2(20)
+assert a_1 == 10 and a_3 == 20
 ```
 
 A difference between a method and a UFCS call is that the method has a higher
@@ -277,14 +255,14 @@ output tuple.
 ```
 var counter = (
   ,var val:i32
-  ,let inc = {|(self, v)| self.var += v }
+  ,let inc = fun (self, v){ self.var += v }
 )
 
 assert counter.val == 0
 counter.inc(3)
 assert counter.val == 3
 
-let inc = {|(self, v)->(self)| self.var *= v } // NOT INC but multiply
+let inc = fun (self, v)->(self){ self.var *= v } // NOT INC but multiply
 counter.inc(2)
 assert counter.val == 5
 
@@ -310,14 +288,14 @@ first input argument or the first output argument
 
     ```
     // equivalent code due to automatic `self` insertion
-    let fun1 = {|(self)->(self)| self.foo = self.bar + 1}
-    let fun2 = {|      ->(self)| self.foo = self.bar + 1}
-    let fun3 = {|(self)        | self.foo = self.bar + 1}
-    let fun4 = {|              | self.foo = self.bar + 1}
+    let fun1 = proc(self)->(self){ self.foo = self.bar + 1}
+    let fun2 = proc      ->(self){ self.foo = self.bar + 1}
+    let fun3 = proc(self)        { self.foo = self.bar + 1}
+    let fun4 = proc              { self.foo = self.bar + 1}
 
     // NOT equivalent because () means no input/output
-    let non2 = {|()    ->(self)| self.foo = self.bar + 1}
-    let non3 = {|(self)->()    | self.foo = self.bar + 1}
+    let non2 = proc()    ->(self){ self.foo = self.bar + 1}
+    let non3 = proc(self)->()    { self.foo = self.bar + 1}
     ```
 
 ## Arguments
@@ -328,10 +306,10 @@ it can be error-prone.
 
 === "unconstrained declaration"
     ```
-    foo = {|| puts "fun.foo" }
+    foo = fun () { puts "fun.foo" }
     a = (
-      ,foo = {||
-         bar = {|| puts "bar" }
+      ,foo = fun () {
+         bar = fun() { puts "bar" }
          puts "mem.foo"
          ret (bar=bar)
       }
@@ -361,10 +339,10 @@ it can be error-prone.
 === "constrained declaration"
 
     ```
-    foo = {|(self)| puts "fun.foo" }  // explicit self
+    foo = fun (self){ puts "fun.foo" }  // explicit self
     a = (
-      ,foo = {|()|                    // implicit self 
-         bar = {|()| puts "bar" }
+      ,foo = fun (){                    // implicit self 
+         bar = fun (){ puts "bar" }
          puts "mem.foo"
          ret (bar=bar)
       }
@@ -408,16 +386,16 @@ tuple entry.
 
 ```
 type base = (
-  ,pub var fun1 = {|| 1 }         // catch all
-  ,pub var fun2 = {|| 2 }         // catch all
-  ,pub var fun3 = {|| 3 }         // catch all
+  ,pub var fun1 = fun() { 1 }         // catch all
+  ,pub var fun2 = fun() { 2 }         // catch all
+  ,pub var fun3 = fun() { 3 }         // catch all
 )
 type ext extends base with (
-  ,pub var fun1 =   {|(a,b)| 4 }  // overwrite allowed with extends
-  ,pub var fun2 ++= {|a,b|   5 }  // append
-  ,pub var fun2 ++= {||      6 }  // append
-  ,pub var fun3 =   {|a,b|   7 } ++ base.fun3 // prepend
-  ,pub var fun3 =   {||      8 } ++ base.fun3 // prepend
+  ,pub var fun1 =   fun (a,b){ 4 }  // overwrite allowed with extends
+  ,pub var fun2 ++= fun (a,b){ 5 }  // append
+  ,pub var fun2 ++= fun ()   { 6 }  // append
+  ,pub var fun3 =   fun(a,b) { 7 } ++ base.fun3 // prepend
+  ,pub var fun3 =   fun()    { 8 } ++ base.fun3 // prepend
 )
 
 var t:ext
@@ -439,7 +417,7 @@ A more traditional "overload" calling the is possible by calling the lambda dire
 
 ```
 type x extends base with (
-  ,pub var fun1 = {|| ret base.fun1() + 100 }
+  ,pub var fun1 = fun() { ret base.fun1() + 100 }
 )
 ```
 
@@ -491,9 +469,9 @@ section.
 For untyped unnamed argument calls:
 
 ```
-var fun_list = {|(a,b)| ret a+b}
-fun_list ++= {|(a,b,c)| ret a+b+c }
-fun_list ++= {|(a,b,c,d)| ret a+b+c+d }
+var fun_list = fun(a,b){ ret a+b}
+fun_list ++= fun(a,b,c){ ret a+b+c }
+fun_list ++= fun(a,b,c,d){ ret a+b+c+d }
 
 assert fun_list.size()
 
@@ -503,18 +481,18 @@ assert fun_list(1,2,4,5) == 12
 assert fun_list(1,2,4,5,6) == 18 // compile error, no function with 5 args
 
 
-fun_list ++= {|(a,b)| ret 100}
+fun_list ++= fun(a,b){ ret 100}
 assert fun_list(1,2) == 3
 
-fun_list = {|(a,b)| ret 200} ++ fun_list
+fun_list = fun(a,b){ ret 200} ++ fun_list
 assert fun_list(1,2) == 200
 ```
 
 For untyped named argument calls:
 
 ```
-var fun = {|(a,b)| ret a+b+100 }
-  fun ++= {|(x,y)| ret x+y+200 }
+var fun = fun(a,b){ ret a+b+100 }
+  fun ++= fun(x,y){ ret x+y+200 }
 
 assert fun(a=1,b=2) == 103
 assert fun(x=1,y=2) == 203
@@ -524,31 +502,31 @@ assert fun(  1,  2) == 103  // first in list
 For typed calls:
 
 ```
-var fun = {|(a:int,b:string)->:bool  | ret true    }
-fun ++=   {|(a:int,b:int   )->:bool  | ret false   }
-fun ++=   {|(a:int,b:int   )->:string| ret "hello" }
+var fo = fun(a:int,b:string)->(:bool)  { ret true    }
+fo ++=   fun(a:int,b:int   )->(:bool)  { ret false   }
+fo ++=   fun(a:int,b:int   )->(:string){ ret "hello" }
 
-let a = fun(3,hello)
+let a = fo(3,hello)
 assert a == true
 
-let b = fun(3,300)        // first in list return bool
+let b = fo(3,300)        // first in list return bool
 assert b == false
 
-let c:int = fun(3,300)    // compile error, no method fulfills constrains
-let c:string = fun(3,300)
+let c:int = fo(3,300)    // compile error, no method fulfills constrains
+let c:string = fo(3,300)
 assert c == "hello"
 ```
 
 For conditional argument calls:
 
 ```
-var fun = {|(a,b)      where a>40    | ret b+100 }
-  fun ++= {|(a,b)->(x) where x > 300 | ret b+200 } // output x
-  fun ++= {|(a,b)->(a) where $.a > 20| ret b+300 } // input a
-  fun ++= {|(a,b)->(a) where %.a > 10| ret b+400 } // output a
-  fun ++= {|(a,b)                    | ret a+b+1000 } // default
+var f1 = fun(a,b)      where a >  40 { ret b+100    }
+  f1 ++= fun(a,b)->(x) where x > 300 { ret b+200    } // output x
+  f1 ++= fun(a,b)->(a) where a >  20 { ret b+300    } // input a
+  f1 ++= fun(a,b)->(x) where x >  10 { ret b+400    } // output x
+  f1 ++= fun(a,b)                    { ret a+b+1000 } // default
 
-var fun_manual = {|(a,b)|
+var fun_manual = fun(a,b){
   if a>40 {
     ret b+100
   }
@@ -569,10 +547,11 @@ var fun_manual = {|(a,b)|
 test "check equiv" {
   for a in -100..=100 {
     for b in -100..=100 {
-      assert fun(a,b) == fun_manual(a,b)
+      assert f1(a,b) == fun_manual(a,b)
     }
   }
 }
 ```
+
 
 
