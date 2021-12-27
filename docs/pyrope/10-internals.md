@@ -280,7 +280,7 @@ scan-chain.
 The compiler has three IR levels: The high level is the parse AST, the
 mid-level is the LNAST, and the low level is the Lgraph. This section explains
 the main steps in the LNAST optimizations/transformations before performing
-type sysnthesis and generating the lower level Lgraph. This is a minimum of
+type synthesis and generating the lower level Lgraph. This is a minimum of
 optimizations without them several type conflicts would be affected.
 
 
