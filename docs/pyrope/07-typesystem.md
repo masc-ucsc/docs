@@ -456,16 +456,16 @@ implemented.
 ```
 type Shape = (
   ,name:string
-  ,area         :fun (self )->:i32       // defined but unimplemented 
+  ,area         :fun (self )->(:i32)     // defined but unimplemented 
   ,increase_size:proc(x:i12)->(self)     // defined but unimplemented 
-  ,set          :proc(name )->(self) { self.name = name }
+  ,set          =proc(name )->(self) { self.name = name } // implemented, use =
 )
 
 type Circle extends Shape with (
   ,set = proc()->(self) { super("circle") }
   ,increase_size = proc(x:i12)->(self) { self.rad *= x }
   ,rad:i32
-  ,area = fun(self) -> :i32 {
+  ,area = fun(self) -> (:i32) {
      let pi = import("math").pi
      ret pi * self.rad * self.rad
   }
@@ -479,7 +479,7 @@ assert`. An equivalent "Circle" functionality:
 type Circle = (
   ,rad:i32
   ,name = "Circle"
-  ,area = fun() -> :i32 {
+  ,area = fun() -> (:i32) {
      let pi = import("math").pi
      ret pi * self.rad * self.rad
   }
@@ -665,13 +665,13 @@ register.
 
 
 ```
-let do_increase = {||
+let do_increase = proc() {
   reg counter("MY_COUNTER")
 
   wrap counter:u32 = counter + 1
 }
 
-let do_debug = {||
+let do_debug = proc() {
   reg counter("MY_COUNTER")
   puts "The counter value is {}", counter
 }
@@ -710,7 +710,7 @@ reg uart_addr("MY_ADDR")
 assert 0x400 > uart_addr >= 0x300
 
 // file local.prp
-pub let setup_xx = {||
+pub let setup_xx = proc() {
   reg xx(instance="MY_ADDR") // creates a var that drives remote uart_addr
   for mut i,index in xx {
     i = 0x300+index*0x10     //  sets uart_addr to 0x300, 0x310, 0x320...
@@ -747,7 +747,7 @@ or register reference.
 
 ```
 type bpred = ( // complex predictor
-  ,pub let taken = {|| ret some_table[som_var] >=0 }
+  ,pub let taken = fun(){ ret self.some_table[som_var] >=0 }
 )
 
 test "mocking taken branches" {
@@ -788,12 +788,12 @@ method is the getter (`get`).
 type some_obj = (
   ,a1:string
   ,pub a2 = (
-    ,_val:u32                            // hidden field
+    ,_val:u32                                // hidden field
 
-    ,pub var get={|| self._val + 100 }   // getter
-    ,set={|x| self._val = x+1 }          // setter
+    ,pub var get=fun(){ self._val + 100 }    // getter
+    ,set=proc(x)->(self){ self._val = x+1 }  // setter
   )
-  ,pub var set = {|a,b|                  // setter
+  ,pub var set = proc(a,b)->(self){          // setter
     self.a1      = a
     self.a2._val = b
   }
@@ -814,10 +814,10 @@ to customize by return type:
 ```
 type showcase = (
   ,pub var v:int
-  ,pub var get ++= {|(self)->(self,:string) where self.i>100|
+  ,pub var get ++= fun()->(:string) where self.i>100 {
     ret "this is a big number" ++ string(v)
   }
-  ,pub var get ++= {|(self)->(self,:int)|
+  ,pub var get ++= fun()->(:int) {
     ret v
   }
 )
@@ -837,9 +837,9 @@ In this case it allows to build typecast per type.
 type my_obj = (
   ,val:u32
   ,pub var get 
-    = {|()->:string | ret string(self.val) }
-   ++ {|()->:boolean| ret self.val != 0    }
-   ++ {|()->:int    | ret self.val         }
+    = fun()->(:string ){ ret string(self.val) }
+   ++ fun()->(:boolean){ ret self.val != 0    }
+   ++ fun()->(:int    ){ ret self.val         }
 )
 ```
 
@@ -855,9 +855,9 @@ comparators. When non-provided the `lt` (Less Than) is a compile error, and the
 ```
 type t=(
   ,pub var v
-  ,pub let set = {|a| self.v = a }
-  ,pub let lt = {|other| self.v  < other.v }
-  ,pub let eq = {|other| self.v == other.v }
+  ,pub let set = proc()->(self){ self.v = a }
+  ,pub let lt = fun(other)->(:boolean){ self.v  < other.v }
+  ,pub let eq = fun(other)          { self.v == other.v } // infer ret type
 )
 
 var m1:t = 10

@@ -172,15 +172,15 @@ has a lambda defined with the same name, the tuple lambda has a higher priority.
 
 ```
 var tup = (
-  ,let fun = fun() { ret 1 }
+  ,let f1 = fun() { ret 1 }
 )
 
-let fun = fun (b){ ret 2 }
+let f1 = fun (b){ ret 2 }
 
-assert fun()    == 2
-assert fun(tup) == 2
-assert 4.fun()  == 2
-assert tup.fun() == 1
+assert f1()     == 2
+assert f1(tup)  == 2
+assert 4.f1()   == 2
+assert tup.f1() == 1
 ```
 
 The keyword `self` is used to indicate that the function is accessing a tuple.
@@ -193,14 +193,14 @@ intention.
 ```
 var tup = (
   ,var x = 3
-  ,let fun = fun(...rest){ assert rest.size == 0 ; ret self.x }
+  ,let f1 = fun(...rest){ assert rest.size == 0 ; ret self.x }
 )
 
 let fun2 = fun(b){ ret b.x             } // no self, but it is the same
 let fun3 = fun(self,b){ ret self.x + b }
 
-assert tup.fun() == 3   // tup.fun call
-assert tup.fun == 3     // explicit no args, so () is optional in call
+assert tup.f1() == 3   // tup.fun call
+assert tup.f1 == 3     // explicit no args, so () is optional in call
 assert fun2(tup) == 3
 assert tup.fun2() == 3  // UFCS
 
@@ -229,13 +229,13 @@ the same tuple assign is created.
 ```
 var a_1 = (
   ,x:u10
-  ,let fun = fun(self,x)->(self) {
+  ,let f1 = fun(self,x)->(self) {
     self.x = x 
   }
 )
 
-a_1.fun(3)            // syntax sugar for a_1 = a_1.fun(3)
-var a_2 = a_1.fun(4)  // a_2 is updated, not a_1
+a_1.f1(3)            // syntax sugar for a_1 = a_1.f1(3)
+var a_2 = a_1.f1(4)  // a_2 is updated, not a_1
 assert a_1.x == 3 and a_2.x == 4
 
 // Same behavior as in a function with UFCS
@@ -289,9 +289,9 @@ first input argument or the first output argument
     ```
     // equivalent code due to automatic `self` insertion
     let fun1 = proc(self)->(self){ self.foo = self.bar + 1}
-    let fun2 = proc      ->(self){ self.foo = self.bar + 1}
+    let fun2 = proc(    )->(self){ self.foo = self.bar + 1}
     let fun3 = proc(self)        { self.foo = self.bar + 1}
-    let fun4 = proc              { self.foo = self.bar + 1}
+    let fun4 = proc(    )        { self.foo = self.bar + 1}
 
     // NOT equivalent because () means no input/output
     let non2 = proc()    ->(self){ self.foo = self.bar + 1}
@@ -442,18 +442,26 @@ lambda call:
 
 * If the list is empty, generate a compile error (no possible lambda to call).
 
-* Once a list of ordered modules is found, evaluate the `COND`. `COND` can
-  include inputs, self, and outputs. If a `COND` is comptime true (no
+* Once a list of ordered modules is found, evaluate the `where COND`. `COND`
+  can include inputs, self, and outputs. If a `COND` is comptime true (no
   `COND` is the same as `true`), stop selecting additional modules. If `COND`
-  is comptime `false` remove from the list and continue. All the selected modules
-  will be executed, but the output will be selected based on priority order
-  based on the `COND` result.
+  is comptime `false` remove from the list and continue. All the selected
+  modules will be executed, but the output will be selected based on priority
+  order based on the `COND` result.
 
+
+If the `where COND` is not compile time there must be a `where true` condition
+to catch the default behavior. 
 
 The previous rules imply that Pyrope has some type of dynamic dispatch. The
 types for the inputs and outputs must be known at compile time (static
 dispatch) but the `where` condition may be known at run-time as long as the
 module is immutable.
+
+The `where` condition is not considered part of the type system, but a syntax
+sugar to allow several function implementations depending on some condition.
+The alternative and equivalent syntax is to add all the `if/else` chain at
+every call but this result in not so maintanable code.
 
 
 It is important to notice that a lambda overload can have multiple
@@ -491,12 +499,12 @@ assert fun_list(1,2) == 200
 For untyped named argument calls:
 
 ```
-var fun = fun(a,b){ ret a+b+100 }
-  fun ++= fun(x,y){ ret x+y+200 }
+var f1 = fun(a,b){ ret a+b+100 }
+  f1 ++= fun(x,y){ ret x+y+200 }
 
-assert fun(a=1,b=2) == 103
-assert fun(x=1,y=2) == 203
-assert fun(  1,  2) == 103  // first in list
+assert f1(a=1,b=2) == 103
+assert f1(x=1,y=2) == 203
+assert f1(  1,  2) == 103  // first in list
 ```
 
 For typed calls:
@@ -526,7 +534,7 @@ var f1 = fun(a,b)      where a >  40 { ret b+100    }
   f1 ++= fun(a,b)->(x) where x >  10 { ret b+400    } // output x
   f1 ++= fun(a,b)                    { ret a+b+1000 } // default
 
-var fun_manual = fun(a,b){
+var fun_manual = fun(a,b){  // equivalent but not as maintenable
   if a>40 {
     ret b+100
   }

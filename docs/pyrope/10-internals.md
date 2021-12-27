@@ -6,24 +6,25 @@ compiler internals that affects semantics.
 ## Determinism
 
 Pyrope is designed to be deterministic. This means that the result is always
-the same. 
+the same for synthesis. Simulation is also deterministic unless the random seed
+is changed or non-Pyrope (C++) calls to `procedures` add non-determinism.
 
 
-Within a `lambda` the determinism is guaranteed because `procedures` have an
-explicit order in Pyrope. Only `functions` have a non-explicit order, but
-`functions` are pure without side-effects. `puts` can be called
-non-deterministically but the result is buffered and ordered at the end of the
-cycle to be deterministic.
+Expressions are deterministic because `procedures` have an explicit order in
+Pyrope. Only `functions` have a non-explicit order, but `functions` are pure
+without side-effects. `puts` can be called non-deterministically but the result
+is buffered and ordered at the end of the cycle to be deterministic.
 
 
 The only source of non-determinism is non-Pyrope (C++) calls from `procedures`
 executed at different pipeline stages. The pipeline stages could be executed in
-any order, it is just that the same order must be repeated deterministically.
-The non-Pyrope C++ calls must be `comptime` to affect synthesis. So the
-synthesis is deterministic, but the testing like cosimulation may not.
+any order, it is just that the same order must be repeated deterministically
+during simulation. The non-Pyrope calls must be `comptime` to affect
+synthesis. So the synthesis is deterministic, but the testing like cosimulation
+may not.
 
 
-The same non-Pyrope (C++) calls also represent a problem for the compiler
+The same non-Pyrope calls also represent a problem for the compiler
 optimizations. During the setup phase, several non-Pyrope can exist like
 reading the configuration file. If the non-Pyrope calls are not deterministic,
 the result could be a non-deterministic setup phase.
@@ -31,8 +32,10 @@ the result could be a non-deterministic setup phase.
 
 The idea is that the non-Pyrope API is also divided in 2 categories:
 `functions` and `procedures`. A `function` can be called many times without
-non-Pyrope side-effects. Under this solution, the `lambdas` with non-Pyrope
-`procedure` calls must be ordered deterministically.
+non-Pyrope side-effects. Pyrope guarantees that the `procedures` are called in
+the same order given a source code, but does not guarantee the call order. This
+guarantee order slowdowns simulation and elaboration. Whenever possible, use
+`functions` instead of `procedures` for compilation speed reasons.
 
 
 ### Import
@@ -40,7 +43,7 @@ non-Pyrope side-effects. Under this solution, the `lambdas` with non-Pyrope
 
 `import` statement allows for circular dependencies of files, but not of
 variables. This means that if there is no dependency (`a imports b`), just
-running a before b is enough. If there is a dependency (`a imports b` and `b
+running `a` before `b` is enough. If there is a dependency (`a imports b` and `b
 imports a`) a multiple compiler pass is proposed, but other solutions are
 allowed as long as it can handle not true circular dependences.
 
@@ -54,7 +57,11 @@ calls (Pyrope and non-Pyrope) and puts/debug statements.
 
 
 If the result of the last two imports has the same variables, the import has
-"converged", otherwise a compile error is generated.
+"converged", otherwise a compile error is generated. This multi-pass solution
+does not address all the false paths, but the common case of having two sets of
+independent variables. This should address most of the Pyrope cases because
+there is no concept of "reference/pointer" which is a common source of
+dependences.
 
 
 ### Register Reference
@@ -95,35 +102,27 @@ propagation or peephole optimizations. The compile goes through 2 phases: LNAST
 and Lgraph.
 
 
-In the LNAST passes, we have the following semantics:
+In the compiler passes, we have the following semantics:
 
 + In Pyrope, there are 3 array-like structures: non-persistent arrays, register
   arrays, and custom RTL memories. Verilog and CHISEL memories get translated
-  to custom RTL arrays. Non-persistent Verilog/CHISEL get translated to arrays.
+  to custom RTL memories. Non-persistent Verilog/CHISEL get translated to arrays.
   In Verilog, the semantics is that an out of bounds access generates unknowns. In
   CHISEL, the `Vec` sematic is that an out of bound access uses the first index
-  of the array. A CHISEL out of bound memory is an unknown like in Verilog. 
-  The Pyrope compiler guarantees that there is no out of bounds access for
-  arrays but there are no guarantees for RTL memories:
+  of the array. A CHISEL out of bound memory is an unknown like in Verilog. These
+  are the semantics applied by the compiler optimization/transformations:
 
-    - An out-of-bound RTL address drops the unused index bits. If the size is
-      not a power of two, the reminding index bits can access an invalid entry.
-      This does not matter for the compiler optimizations because it is not
-      possible to use memory contents to optimize logic.
+    - Custom RTL memories do not allow value propagation across the array, only
+      across non-persistent arrays, or register arrays explicitly marked with
+      `retime=true`.
 
-    - Out of bounds array access triggers a compile error. The code must be fixed
-      to avoid access. An `if addr < mem_size { ... mem[addr] ... }` tends
-      to be enough.
+    - An out of bound RTL address drops the unused index bits. For non-power of
+      two arrays, out of bounds access triggers a compile error. The code must
+      be fixed to avoid access. An `if addr < mem_size { ... mem[addr] ... }`
+      tends to be enough. This is to guarantee that passes like Verilog and
+      CHISEL have the same semantics, and trigger likely bugs in Pyrope code.
 
-    - The contents of a persistent array (`reg`) can not be used in compile
-      optimization. This means that the compile is not affected by
-      having unknowns at the index.
-
-    - A index access non-persistent with unknowns sets the unknown bits to
-      zero, and it is used as the index of the array. CHISEL 3.5 is not fully
-      specified in this case, but Verilog states that the output is unknown.
-      Pyrope picks a valid entry. In a way, Verilog has x-pesimism, Pyrope has
-      x-optimism.
+    - An index with unknowns does not perform value propagation.
 
 + Shifts, additions and substractions propagate unknowns at computation. E.g:
   `0b11?0 + 0b1` is `0b11?1`, `0b1?0 >> 1` is `0b1?`.
@@ -148,10 +147,11 @@ In the LNAST passes, we have the following semantics:
   no unknowns.
 
 + `if` statement without `unique` logical expressions that have an unknown
-  (single bit) are a source of confusion. In Verilog, it depends on the compiler
-  options. A classic compiler will generate `?` in all the updated variables.  A
-  Tmerge option will propagate `?` only if both sides can generate a different
-  value. The LNAST optimization pass will behave like the Tmerge:
+  (single bit) are a source of confusion. In Verilog, it depends on the
+  compiler options. A classic compiler will generate `?` in all the updated
+  variables.  A Tmerge option will propagate `?` only if both sides can
+  generate a different value. The LNAST optimization pass will behave like the
+  Tmerge when the if/mux control has unknowns:
 
     - If all the paths have the same constant value, the `if` is useless and
       the correct value will be used. 
@@ -172,8 +172,9 @@ In the LNAST passes, we have the following semantics:
 
 At the end of the LNAST generation, a Lgraph is created. Only the registers and
 memory initialization are allowed to have unknowns in Lgraph.  Any invalid
-(`nil`) left triggers a compile error.  Any unknown bit is translated to zero
-(`0b10?` becomes `0b100`). 
+(`nil`) to an outout or register triggers a compile error. Any unknown constant
+bit is translated to zero (`0b10?` becomes `0b100`). LGraph does not have
+"unknowns" outside the register/memories.
 
 
 As a result of these translations, the generated simulator may have to deal
@@ -259,41 +260,53 @@ Assume allows more freedom, without dangerous Verilog x-optimizations:
 
 ## Registers and Memories
 
-Values stores in registers (flop or latches) and memories (synchronous or
+Values stored in registers (flop or latches) and memories (synchronous or
 asynchronous) can not be used in compiler optimization passes. The reason is that
 a scan chain is allowed to replace the values.
 
-The only way to optimize away a register or memory bit is if there is a
-guarantee that the value is never used. If after compiler optimizations the
-memory has no read and writes. Even just having writes the register is
-preserved because it can be used to read values with the scan-chain.
+
+The `retime` directive indicates that the register/memory can be replicated and
+used for optimization. Copy values can propagate through `retime`
+register/memories.
 
 
-## Type synthesis
+A register or memory without explicit `retime=true` can only be optimized away
+if there is no read AND no write to the register. Even just having writes the
+register is preserved because it can be used to read values with the
+scan-chain.
+
+## LNAST optimization
+
+The compiler has three IR levels: The high level is the parse AST, the
+mid-level is the LNAST, and the low level is the Lgraph. This section explains
+the main steps in the LNAST optimizations/transformations before performing
+type sysnthesis and generating the lower level Lgraph. This is a minimum of
+optimizations without them several type conflicts would be affected.
 
 
-The type synthesis and check are performed during the LNAST pass. This is a mid-level IR in the LiveHD compiler. The high level is the parse AST, the mid-level
-is the LNAST, and the low level is the Lgraph. This section explains the main
-steps in the type synthesis as a way to specify Pyrope.
+Unlike the parse AST, the LNAST nodes are guaranteed to be in topological
+order. This means that a single pass that visits the children first (deep
+first) is sufficient.
 
 
-Pyrope uses a structural type system with global type inference. The work is
-performed in a single topographical pass starting from the root/top, where each
-LNAST node performs these operations during traversal depending on the LNAST
-node:
+The work can be performed as a single "global" topographical pass starting from
+the root/top, where each LNAST node performs these operations during traversal
+depending on the LNAST node:
 
-+ If the node allows, perform these node input optimization steps first:
 
-    - When the semantics allow it, sort the inputs by name/constant. E.g: `+ 0 2
-      a b`. This simplifies the following steps but it is not needed for
-      semantics.
++ If the node allows, perform these node input optimization first:
+
+    - constant folding for existing node, also be performed as instruction
+      combining proceeds
 
     - instruction combining from sources only for same type but not beyond 128
       n-ary nodes. This step subsumes constant propagation and copy
       propagation. E.g: `a+(x-3)+1` becomes `a+x-3+1`
 
-    - constant folding for existing node, also be performed as instruction
-      combining proceeds
+    - create a canonical order by sorting the inputs by name/constant. E.g: `+
+      2 a b`. This simplifies the following steps but it is not needed for
+      semantics. Most commutative gates (`add/sub/and/or/...`) will have a
+      single constant as a result.
 
     - trivial simplification with constants for existing node, also performed
       as instruction combining proceeds. E.g.: `a+0 == a`, `a or true
@@ -308,12 +321,6 @@ node:
     - `comptime asserts` should satisfy the condition or a compile error is
       generated
 
-+ If the node does type checks (`equals`, `does`) compute the outcome and
-  perform copy propagation. The result of this step is that the compiler is
-  effectively doing flow-type inference. All the types must be resolved before.
-  If the `equals`/`does` was in a `if` condition, the control is decided at
-  compile time.
-
 + If the node is a loop (`for`/`while`) that has at least one iteration expand
   the loop. This is an iterative process because the loop exit condition may
   depend on the loop body or functions called inside. After the loop
@@ -326,9 +333,42 @@ node:
   by input constants and types. If no call matches a valid type trigger a
   compile error
 
-+ If the node is a conditional (`if`/`match`), the pass performs narrowing[^1].
++ Delete unreachable statements (`if false { delete his }`, `delete this when false`, ...)
 
-    - Delete any unreachable paths (`if false { delete his }`)
++ Compute these steps that may be needed in future steps:
+
+    - Perform the "Mark" phase typical in dead-code-elimination (DCE) so that
+      dead nodes are not generated when creating the Lgraph.
+
+    - Update the tuple field in the Symbol Table
+
+    - Track the array accesses for memory/array Lgraph generation
+
+### Type synthesis
+
+The type synthesis and check are performed during the LNAST pass. Pyrope uses a
+structural type system with global type inference. 
+
+The type inference should be performed as the same time as the LNAST
+optimization traverses the tree. It can not be a separate pass because there
+can be interactions between the LNAST optimization and the Type synthesis.
+These are the additional checks performed for type synthesis:
+
+
++ If the node does type checks (`equals`, `does`) compute the outcome and
+  perform copy propagation. The result of this step is that the compiler is
+  effectively doing flow-type inference. All the types must be resolved before.
+  If the `equals`/`does` was in a `if` condition, the control is decided at
+  compile time.
+
++ If the node reads bitwidth, replace the node with the computer Bitwidth value
+  (max, min, ubits, and/or sbits)
+
+    - Compute the max/min for the output[s] using the bitwidth algorithm.
+      Update the symbol table with the range. This is only needed because some
+      code like polymorphism functions can read the bits.
+
++ If the node is a conditional (`if`/`match`), the pass performs narrowing[^1].
 
     - When the expression has these possible syntax `v >= y`, `v >
       y` or the reciprocals, restrict the Bitwidth. E.g: in the `v < y`
@@ -342,29 +382,13 @@ node:
     - When the expression is a single variable `a` or `!a`, set the variable
       `true` and `false` in both paths
 
-+ If the node reads bitwidth, replace the node with the computer Bitwidth value
-  (max, min, ubits, and/or sbits)
-
-+ Compute these steps that may be needed in future steps:
-
-    - Perform the "Mark" phase typical in dead-code-elimination (DCE) so that
-      dead nodes are not generated when creating the Lgraph.
-
-    - Compute the max/min for the output[s] using the bitwidth algorithm.
-      Update the symbol table with the range. This is only needed because some
-      code like polymorphism functions can read the bits.
-
-    - Update the tuple field in the Symbol Table
-
-    - Track the array accesses for memory/array Lgraph generation
-
 
 No previous transformation could break the type checks. This means that the
 copy propagation, and final lgraph translation the type checks are respected.
 
-* All the entries on the comparator have the same type (`LHS equals rhs`)
+* All the entries on the comparator have the same type (`LHS equals RHS`)
 
-* Left side assignments respect the assigned type (`LHS does rhs`)
+* Left side assignments respect the assigned type (`LHS does RHS`)
 
 * Any explicit type on any expression should respect the type (`var does type`)
 
@@ -390,14 +414,14 @@ the Pyrope main ones to address and learn more about the language.
 Pyrope does not allow shadowing, but you can still have it with tuples
 
 ```
-let fun = {|| 1 }
+let f1 = fun() { 1 }
 
 let tup = (
-  ,let fun = {|| 2}
+  ,let f1 = fun() { 2 }
 
-  ,let code = {||
-     assert self.fun() == 2
-     assert fun() == 1
+  ,let code = fun() {
+     assert self.f1() == 2
+     assert f1() == 1
   }
 )
 ```
@@ -412,7 +436,7 @@ capture list.
 ```
 var x = 3
 
-let fun = {|()->:int|
+let f1 = fun()->(:int){
    assert x == 3
    var x    // compile error. Shadow captured x
    ret 200
@@ -426,7 +450,7 @@ escape the local lambda.
 var x = 3
 let y = 10
 
-let fun = {|()->:int|
+let f1 = fun()->(:int){
    assert x == 3 and y == 10
    x = 10000
    //y = 100              // compile error, y is immutable
@@ -435,7 +459,7 @@ let fun = {|()->:int|
 
 assert x == 3
 
-let z = fun()
+let z = f1()
 assert z == 10200
 assert x == 3
 ```
@@ -446,7 +470,7 @@ Capture variables pass the value at capture time:
 var x = 3
 var y = 10
 
-let fun2 = {|[y]()->:int| // [] means capture just y
+let fun2 = fun[y]()->(:int){ // [] means capture just y
   var x  = 200
   ret y + x
 }
@@ -483,19 +507,19 @@ evaluation order.
 ```
 var x = (
   ,var v:int
-  ,var always_after = {||
+  ,var always_after = proc()->(self) {
     self.v = 1
   }
 )
 
 var y = x ++ (
-  ,var always_after = {||
+  ,var always_after = proc()->(self) {
     self.v = 2
   }
 )
 
 var z = (
-  ,var always_after = {||
+  ,var always_after = proc()->(self) {
     self.v = 3
   }
 ) ++ x
@@ -609,7 +633,7 @@ can change to a more traditional Verilog with uninitialized (`0sb?`) contents.
 
 ```
 reg r_ver = (
-  ,always_reset = {||} // do nothing
+  ,always_reset = proc()->(self){ self = 0sb? }
 )
 reg r
 var v
@@ -653,16 +677,32 @@ v = 1
 ### Unexpected calls
 
 
-```
-let fun = {|| puts "here" ; ret 3}
-let have = {|f| f() }
+Lambdas with no inputs are called when referenced. This is not the case for
+lambdas with inputs. This difference can show when passing a lambda as argument
+to another lambda.
 
-let x = have fun   // same as have(fun), nothing printed
-assert x == 3      // prints "here"
-
-let y = have fun() // same as have(fun()), prints "here"
-assert x == 3      // nothing printed
 ```
+let args = fun(x) { puts "args:{}", b ; ret 1}
+let here = fun()  { puts "here" ; ret 3}
+
+let call = fun(f:fun){ ret f } 
+
+let x0 = call here           // same as call(here), prints "here"
+let x1 = call args           // same as call(args), nothing printed
+assert x0      == 3          // nothing printed
+assert x1("b") == 1          // prints "args:b"
+```
+
+The reason is that variables can be exposed, and future refactors can change
+the variable for an attribute getter. The behavior is respected by evaluating
+the lambda on use. The evaluation will happen before the call even when an
+explicit lambda is created.
+
+```
+let x3 = call fun() {here}   // prints "here" 
+assert x3 == 3               // nothing printed
+```
+
 
 ### `if` is an expression
 
@@ -685,21 +725,12 @@ let http:8080//masc.soe.ucsc.edu
 assert http == 8080
 ```
 
-
 There is no `--` operator in Pyrope, but there is a `-` which can be followed
 by a negative number `-3`.
 
 ```
 let v = (3)--3
 assert v == 6
-```
-
-
-A lambda can return an empty lambda, and then both get called in a single
-useless line of code (spaces are not needed).
-
-```
-({|| {||} }())()  // does nothing
 ```
 
 
