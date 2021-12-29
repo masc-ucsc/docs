@@ -625,6 +625,22 @@ for i,idx in 123 {
 }
 ```
 
+### Bit order
+
+Ranges are sets, this creates potentially unexpected results in reverse `for`
+iterators, but also in bit section:
+
+```
+let v = 0xF0
+
+assert v@[0] == 0
+assert v@[4] == 1
+
+assert v@[3..=4] == 0b010 == v@[3,4]
+assert v@[4..=3 by -1] == 0b010
+assert v@[4,3] == 0b001
+```
+
 ### Initialization
 
 Registers and variables are initialized to zero by default, but the reset logic
@@ -733,4 +749,28 @@ let v = (3)--3
 assert v == 6
 ```
 
+### Return tuple
+
+Pyrope everything is a tuple, but return value can be unexpected if 1 or 2
+return values happen.
+
+```
+let ret1 = fun()->(a) {
+  a = 1
+}
+
+let ret2 = fun()->(a,b) {
+  a = 2
+  b = 3
+}
+
+let a1 = ret1()
+assert a1 == 1 // NOT a1.a == 1
+
+let a2 = ret2()
+assert a2.a == 2 and a2.b == 3
+
+let x1,x2 = ret2()
+assert x1 == 2 and x2 == 3
+```
 

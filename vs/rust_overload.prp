@@ -1,0 +1,38 @@
+
+// https://medium.com/@cedricbeust/what-rust-could-learn-from-kotlin-b32ebe2da28d
+
+
+// RUST
+truct Window {
+  x: u16,
+  y: u16,
+  visible: bool,
+}
+
+impl Window {
+  fn new_with_visibility(x: u16, y: u16, visible: bool) -> Self {
+    Window {
+      x, y, visible
+    }
+  }
+
+  fn new(x: u16, y: u16) -> Self {
+    Window::new_with_visibility(x, y, false)
+  }
+}
+
+// KOTLIN
+class Window(x: Int, y: Int, visible: Boolean = false)
+
+// Pyrope
+
+type Window = (
+  ,x:int
+  ,y:int
+  ,visible = false
+)
+
+// var x:Window = 1,2
+// x = 200,300, true
+// x = (x=33,visible=false,y==44)
+

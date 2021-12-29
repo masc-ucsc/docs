@@ -1,0 +1,20 @@
+
+// Decorator is a function that takes a function as last argument and returns a
+// function. Pyrope allows this too
+
+let filter = fun(...args,fun) {
+  ret for i in args {
+    cont i when fun(i)
+  }
+}
+
+let add = fun(...args) {
+  let total = args[0]
+  for i in args[1..] {
+    total += i
+  }
+  ret total
+}
+
+filter 1, 2, 100, fun(a) { ret a < 30 } |> add
+

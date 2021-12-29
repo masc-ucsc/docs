@@ -1,0 +1,78 @@
+
+# --------- NIM
+
+proc say(x:int16, y:int16) =
+  echo("aa")
+
+proc say(x:string, y:string) =
+  echo("bb")
+
+proc say(x:int16, y:string) =
+  echo("ab")
+
+proc say(x:string, y:int16) =
+  echo("ba")
+
+proc swap(x:int16|string, y:int16|string) =
+  say(x,y)
+  say(y,x)
+
+proc main() =
+  let a:int16 = 33
+  let b = "hello"
+  swap(b,a)
+
+main()
+
+// -------- Pyrope
+
+var say = fun(x:i16, y:i16) {
+  puts "aa"
+}
+
+say ++= fun(x:string, y:string) {
+  puts "bb"
+}
+
+say ++= fun(x:i16, y:string) {
+  puts "ab"
+}
+
+say ++= {|(x:string, y:i16)|
+  puts "ba"
+}
+
+let swap = fun(x,y) {
+  say(x,y)
+  say(y,x)
+}
+
+test "main" {
+  let a:i16 = 33
+  let b = "hello"
+  swap(b,a)
+}
+
+// -------- Pyrope
+
+var say = fun(x:i16, y:i16) {
+  puts "aa"
+} ++ fun(x:string, y:string) {
+  puts "bb"
+} ++ fun(x:i16, y:string) {
+  puts "ab"
+} ++ fun(x:string, y:i16) {
+  puts "ba"
+}
+
+let swap = fun(x,y) {
+  say(x,y)
+  say(y,x)
+}
+
+test "main" {
+  let a:i16 = 33
+  let b = "hello"
+  swap(b,a)
+}
+

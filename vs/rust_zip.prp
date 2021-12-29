@@ -1,0 +1,47 @@
+
+// ------- RUST
+
+let letters = vec!['a', 'b', 'c'];
+let numbers = vec![1, 2, 3];
+for zipped in numbers.iter().zip(letters) {
+    println!("{:?}", zipped);
+}
+// (1, 'a')
+// (2, 'b')
+// (3, 'c')
+
+// ------- Pyrope
+
+
+let zip = fun(...args)->(...res) {
+  var min_size = args.size // first arg
+  for i in args[1..] {
+    min_size = i.size when i.size < min_size
+  }
+  for i in 0..<min_size {
+    var entry
+    for j in args {
+      entry ++= j[i]
+    }
+    res ++= entry
+  }
+}
+
+let letters = ('a', 'b', 'c')
+let numbers = (1  , 2  , 3  )
+
+for zipped in letters.zip(numbers) { // for zipped in zip(letters, numbers) works too
+  puts "{}", zipped
+}
+
+// zip using each, min
+
+let zip = fun(...args) {
+  let min_size = args.reduce fun(a,b){ a < b }
+
+  ret for i in 0..<min_size {
+    cont for j in args {
+      j[i]
+    }
+  }
+}

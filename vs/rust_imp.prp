@@ -1,0 +1,69 @@
+
+//---------- RUST
+// Rust does not have function name overloading
+
+#[derive(Debug)]
+struct Point3D {
+    x: i64,
+    y: i64,
+    z: i64,
+}
+
+// it's easy pal, just implement the `Default` trait
+impl Default for Point3D {
+    fn default() -> Self {
+        Point3D {
+            x: 0_i64,
+            y: 0_i64,
+            z: 0_i64,
+        }
+    }
+}
+
+fn main() {
+    let origin: Point3D = Default::default();
+    println!("{:?}", origin); // Point3D { x: 0.0, y: 0.0, z: 0.0 }
+}
+
+//---------- PYROPE
+
+type Point3D = (
+  ,x:i64
+  ,y:i64
+  ,z:i64
+)
+
+// works too pub type Default extends import("some_place").default with (
+pub type Default = import("some_place").default ++ ( // no need to use other extend features like all the virtuals defined
+  ,pub var default = fun()->(self:Point3D) {
+    self.x = 0
+    self.y = 0
+    self.z = 0
+  }
+)
+
+test "main" {
+    let origin:Point3D = Default.default()
+    puts "{}", origin
+}
+
+//---------- PYROPE
+// with function name overloading
+
+type Point3D = (
+  ,x:i64
+  ,y:i64
+  ,z:i64
+)
+
+pub var default = import("some_place").default ++ fun()->(self:Point3D) {
+  self.x = 0
+  self.y = 0
+  self.z = 0
+}
+
+test "main" {
+    let origin:Point3D = default
+    puts "{}", origin
+}
+

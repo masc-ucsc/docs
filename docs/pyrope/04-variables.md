@@ -433,8 +433,9 @@ z@[0] = 0b11 // compile error, '0b11` overflows the maximum allowed value of `z@
 
 
 When the selected variable is a tuple with many entries, the type must be
-explicit. This is to avoid confusion on the number of bits used. This is needed
-because the `tup@[]` is effectively concatenating the bits in `tup`.
+explicit or boolean conditions. This is to avoid confusion on the number of
+bits used. This is needed because the `tup@[]` is effectively concatenating the
+bits in `tup`.
 
 ```
 var tup = (a:u8=0xf, b:u8=0x1)  // explicit sizes set
@@ -442,6 +443,9 @@ assert tup@[] == 0xf1
 
 assert((0xF:u8,0x1:u16)@[] == 0xF_0001)
 assert((0xF:u8,0x1:u8 )@[] == 0xF_01)
+assert((false,true,false,false,true )@[] == 0sb0_1001)
+assert((true)@[]     == 0sb01)
+assert((true)@sext[] == -1   )
 ```
 
 Without the explicit sizes, the previous code would have look like `(0b01111,

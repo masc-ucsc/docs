@@ -1,0 +1,46 @@
+
+// ------ scala
+
+val sum = List(1, 2, 3).map(_ * 2)
+                       .filter(_ > 2)
+                       .foldLeft(0)(_ + _)
+
+// ------ pyrope
+
+var sum = (1,2,3).map      (fun(a) {a * 2})
+                 .filter   (fun(a) {a > 2})
+                 .fold_left(0, fun(a,b) { a + b })
+
+===================
+
+// ------ scala
+
+case class Person(name: String, age: Int, favouriteColour: String)
+
+val maggie = Person("Maggie", 32, "Red")
+val millie = Person("Millie", 24, "Blue")
+val molly  = Person("Molly",  45, "Green")
+val may    = Person("May",    41, "Yellow")
+val persons = List(maggie, millie, molly, may)
+
+var res1 = persons.map(person => (person.name, person.age))
+                  .filter(_._2 > 40)
+
+// res1: List[(String, Int)] = [("Molly", 45), ("May", 41)]
+
+// ------ pyrope
+
+type Person = (name: string, age: int, favouriteColour: string)
+
+let maggie:Person = ("Maggie", 32, "Red")
+let millie:Person = ("Millie", 24, "Blue")
+let molly:Person  = ("Molly",  45, "Green")
+let may:Person    = ("May",    41, "Yellow")
+let persons = (maggie, millie, molly, may)
+
+var res1 = persons.map   (fun(a) { (a.name, a.age) })
+                  .filter(fun(a) { ret a > 40      })
+
+// res1:(:string, :int)[] = (("Molly", 45), ("May", 41))
+
+

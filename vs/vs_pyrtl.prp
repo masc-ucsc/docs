@@ -1,0 +1,48 @@
+
+// pyRTL
+
+def fibonacci(n, req, bitwidth):
+    a = pyrtl.Register(bitwidth, 'a')
+    b = pyrtl.Register(bitwidth, 'b')
+    i = pyrtl.Register(bitwidth, 'i')
+    local_n = pyrtl.Register(bitwidth, 'local_n')
+    done = pyrtl.WireVector(bitwidth=1, name='done')
+
+    with pyrtl.conditional_assignment:
+        with req:
+            local_n.next |= n
+            i.next |= 0
+            a.next |= 0
+            b.next |= 1
+        with pyrtl.otherwise:
+            i.next |= i + 1
+            a.next |= b
+            b.next |= a + b
+    done <<= i == local_n
+    return a, done
+
+// pyrope
+
+pub let fibonacci = fun(n, max)->(result) {
+  reg a:int(0,max)
+  reg b:int(0,max)
+  reg i:int(0,max)
+
+  if n? {  // new request
+    a,b,i = (0,0,n)
+  }else{
+    a,b,i = (b,a+b, i-1)
+  }
+
+  result when i == 0
+}
+
+test "fibtest" {
+  let seq = (0,1,1,2,3,5,8,13,21,34)
+  for n in 0..<9 {
+    let b = fibonacci(n, seq[-1])
+    waitfor b
+    assert b == seq[n]
+  }
+}
+

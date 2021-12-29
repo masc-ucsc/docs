@@ -1,0 +1,16 @@
+
+let router = fun(inp, self_addr, from_node)->(out, to_node, from_node_retry) {
+  from_node_retry = false
+  if inp? {
+    if inp.addr == self_addr {
+      to_node = inp
+      out     = from_node when from_node?
+    }else{
+      out    = inp
+      from_node_retry = true
+    }
+  }else{
+    out  = from_node
+  }
+}
+

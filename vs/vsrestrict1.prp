@@ -1,0 +1,67 @@
+
+// rescript
+let message = {
+  let part1 = "hello"
+  let part2 = "world"
+  part1 ++ " " ++ part2
+}
+
+// Pyrope 0.2
+message as ::{
+  part1 as "hello"
+  part2 as "world"
+  part1 ++ " " ++ part2
+}
+
+// Pyrope 0.3
+let message = ||{
+  part1 = "hello" // immutable by default
+  part2 = "world"
+  % = part1 ++ " " ++ part2
+}
+
+// Pyrope 0.4
+let message = fun() {
+  part1 = "hello"
+  part2 = "world"
+  ret part1 ++ " " ++ part2
+}
+
+
+-----------------------------
+
+reg f1(clk_pin=clock1)
+reg f2(clk_pin=clock2)
+
+f1 = $a + $b
+f2 = f1 + $c               // compile error: likely problem, no cross clock sync
+f2 = f1@[] + $c            // crazy but OK
+
+------------------------------
+
+// rescript
+let message = if isMorning {
+  "Good morning!"
+} else {
+  "Hello!"
+}
+
+// Pyrope 0.9
+let message = if isMorning {
+  "Good morning!"
+} else {
+  "Hello!"
+}
+
+------------------------------
+
+// rescript
+
+one->a(two, three) // same as 'a(one, two, three)'
+
+// Pyrope
+
+one.a(two, three)
+three |> a(one, two)
+
+

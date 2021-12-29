@@ -1,0 +1,61 @@
+
+// PYTHON
+###{
+def dispatch_if(operator, x, y):
+    if operator == 'add':
+        return x + y
+    elif operator == 'sub':
+        return x - y
+    elif operator == 'mul':
+        return x * y
+    elif operator == 'div':
+        return x / y
+    else:
+        return None
+
+
+def dispatch_dict(operator, x, y):
+    return {
+        'add': lambda: x + y,
+        'sub': lambda: x - y,
+        'mul': lambda: x * y,
+        'div': lambda: x / y,
+    }.get(operator, lambda: None)()
+
+
+>>> dispatch_if('mul', 2, 8)
+16
+
+>>> dispatch_dict('mul', 2, 8)
+16
+###}
+
+// PYROPE
+
+dispatch_if = fun(operator,x,y) {
+  ret unique if operator == 'add' { x + y
+   }elif operator == 'sub' { x - y
+   }elif operator == 'mul' { x * y
+   }elif operator == 'div' { x / y
+   }else{ assert false
+   }
+}
+
+dispatch_math = fun(operator,x,y) {
+  ret match operator {
+    == 'add' { x + y }
+    == 'sub' { x - y }
+    == 'mul' { x * y }
+    == 'div' { x / y }
+  }
+}
+
+dispatch_dict = fun(operator,x,y) {
+  var s
+  s.add = fun(a,b){ a + b }
+  s.sub = fun(a,b){ a - b }
+  s.mul = fun(a,b){ a * b }
+  s.div = fun(a,b){ a / b }
+  ret s[operator](x,y)
+}
+

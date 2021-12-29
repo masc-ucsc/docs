@@ -1,0 +1,61 @@
+
+// ------- scala
+
+def foo(n: Int, v: Int) =
+   for (i <- 0 until n;
+        j <- 0 until n if i + j == v)
+   yield (i, j)
+
+foo(10, 10) foreach {
+  case (i, j) =>
+    println(s"($i, $j) ")  // prints (1, 9) (2, 8) (3, 7) (4, 6) (5, 5) (6, 4) (7, 3) (8, 2) (9, 1)
+}
+
+// ------- pyrope
+
+foo = fun(n:int,v:int) {
+  for i in 0..<n {
+    for j in 0..<n {
+      cont (i,j) when i+j == v
+    }
+  }
+}
+
+for x in foo() {
+  puts "{} ", x  // prints (1, 9) (2, 8) (3, 7)....(9, 1)
+}
+
+
+// ---
+
+ret  vs return
+next vs continue
+last vs break
+
+ret val
+next val  // like continue x in for/while, adds to comprehension otherwise
+last val  // like break x in for/while, adds to comprehension
+
+// What if I want (1, 9) (9, 1) (2, 8) (8, 2) ....
+
+let f1 = fun(n) {
+  var r
+  for i in 0..<n {
+    for j in 0..<n {
+      if i+j == v {
+        r ++= (i,j)
+        r ++= (j,i)
+      }
+    }
+  }
+  ret r
+}
+
+let f2 = fun(n) {
+  ret for i in 0..<n {
+    for j in 0..<n {
+      cont ((i,j), (j,i)) when i+j==v
+    }
+  }
+}
+

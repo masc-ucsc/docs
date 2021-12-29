@@ -1,0 +1,46 @@
+//--------- swift
+class MyClass {
+
+    func getSomething() -> Int {
+        return 2
+    }
+
+    func getSomething() -> String {
+        return "hey"
+    }
+}
+
+    let obj = MyClass()
+
+    //let x = obj.getSomething()
+    // Doesn't compile: "Ambiguous use of 'getSomething'"
+
+    let result3: String = obj.getSomething()
+    print("result3 \(result3)")  // prints "result3 hey"
+
+    let result4: Int = obj.getSomething()
+    print("result4 \(result4)") // prints "result4 2"
+
+//--------- pyrope
+
+type MyClass = (
+  ,var getSomething = fun() -> (:int) {
+      ret 2
+  }
+  ,var getSomething ++= fun() -> (:string) {
+      ret "hey"
+  }
+)
+
+test "main" {
+  let obj:MyClass
+
+  let result2 = obj.getSomething() // picks first that it is allowed??
+  puts "result2 {}", result2
+
+  let result3: String = obj.getSomething()
+  puts "result3 {}", result3 // prints result3 hey
+
+  let result4: Int = obj.getSomething()
+  puts "result4 {}", result3 // prints result4 2
+}

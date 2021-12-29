@@ -1,0 +1,13 @@
+//--------- typescript
+
+function display(a:string, b:string):void //Compiler Error: Duplicate function implementation
+{
+    console.log(a + b);
+}
+
+function display(a:number): void //Compiler Error: Duplicate function implementation
+{
+    console.log(a);
+}
+
+
