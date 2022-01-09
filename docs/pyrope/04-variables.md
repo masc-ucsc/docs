@@ -39,7 +39,7 @@ d.z   = 4  // compile error, 'd.z' is immutable
 ```
 
 Tuples fields (not contents) are immutable, but it is possible to construct new
-tuples with the `++` (concatenate) and `...` (in place insert):
+tuples with the `++` (concatenate) and `...` (in-place operator):
 
 ```
 var a=(a=1,b=2)
@@ -476,7 +476,7 @@ assert trans == 0b01
 Some operators can also have tuples as input and/or outputs.
 
 * `a ++ b` concatenate two tuples. If field appears in both, concatenate field
-* `(,...b)` in place insert `b`. Compile error if both have the same named
+* `(,...b)` in-place insert `b`. Compile error if both have the same named
   field
 * `a << b` shift left. `b` can be a tuple
 * `a has b` checks if `a` tuple has the `b` field where `b` is a string or

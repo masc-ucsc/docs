@@ -24,7 +24,7 @@ type check. The type check can be understood as a `comptime assert`.
 
 
 After type synthesis, each variable has an associated type. In Pyrope, for each
-assignment, the type checks that the left-hand side (LHS) has the same type as
+assignment, the type checks that the left-hand side (LHS) has a compatible type with
 the right-hand side (RHS) of the expression. Additional type checks happen when
 variables have a type check explicitly set (`var:type`) in rhs expressions.
 
@@ -144,19 +144,20 @@ for the `a does b` operator depending on the `a` and `b` fields:
 
 * `a.max>=b.max and a.min<=b.min` when `a` and `b` are integers
 
-* recursively checks if `(a.__inp does b.__inp) and (a.__out does b.__out)`
-  when `a` and `b` are the same lambda type (`fun` or `proc`). `.inp` is the
-  lambda input tuple and `.out` is the lambda output tuple. The lambda also can
-  have a `where` statement. It is not included in the type equivalance check.
-
 * `(a@[] & b@[]) == b@[]` when `a` and `b` are `range`. This means that the `a`
   range has at least all the values in `b` range.
 
 * true when `a` and `b` are `string`.
 
-* For two tuples is true if for all the fields in `b` the `a.field does
-  b.field` and the fields match in position and name.
+* There are two cases for tuples. If all the tuple entries are named, `a does
+  b` is true if for all the root fields in `b` the `a.field does b.field`.
+  When either `a` or `b` have unnamed fields, for each field in `b` the name
+  and also position should match. If the field has no name, only position should match.
 
+* `a does b` is false if the explicit array size of `a` is smaller than the explicit array size of `b`. If the size check is true, the array entry type is checked. `:x[] does :y[]` is false when `x does y` is false.
+
+* The lambdas have a more complicated set of rules explained later. It
+  distinguieshes between lambda call and lambda reference.
 
 ```
 assert     (a:int(max=33,min=0) does (a:int(20,5))
@@ -167,6 +168,24 @@ assert not ((b:int,a:string) does (a:"hello", b:33)) // order maters in tuples
 
 assert      :fun(x,xxx2)->(y,z) does :fun(x     )->(y,z)
 assert not (:fun(x     )->(y,z) does :fun(x,xxx2)->(y,z))
+```
+
+For named tuples, this code shows some of the corner cases:
+
+```
+type t1 = (a:string, b:int)
+type t2 = (b:int, a:string)
+
+var a:t1  = ("hello", 3)     // OK
+var a1:t1 = (3, "hello")     // compile error, positions do not match
+var b:t1  = (a="hello", 3)   // OK
+var b1:t1 = (3, a="hello")   // compile error, positions do not match
+var c:t1  = (a="hello", b=3) // OK
+var c1:t1 = (b=3, a="hello") // OK
+
+var d:t2 = c                 // OK, both fully named
+assert d.0 == c.1 and c.0 == d.1
+assert d.a == c.a and d.b == c.b
 ```
 
 Ignoring the value is what makes `equals` different from `==`. As a result
