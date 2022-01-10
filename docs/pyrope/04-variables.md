@@ -628,7 +628,7 @@ the time, and the associated logic is removed.
 
 ```
 var v1:u32
-var v2:?u32
+var v2:u32?
 
 comptime assert v1?
 comptime assert not v2?
@@ -681,7 +681,7 @@ type complex = (
 )
 
 var x1:complex
-var x2:?complex
+var x2:complex?
 
 comptime assert x1.v1 == "" and x1.v2 == ""
 comptime assert not x2?  and not x2.v1? and not v2.v2?

@@ -321,7 +321,7 @@ it can be error-prone.
     b.foo()   // prints "fun.foo"
     a.foo     // compile error: parenthesis needed (no arguments passed)
     a.foo()   // prints "mem.foo"
-    a.foo 3   // prints "mem.foo", arg passed (but not used by foo)
+    a.foo 3   // compile error: parenthesis needed (hierarchical function call)
     a.foo(3)  // prints "mem.foo", arg passed (but not used by foo)
     x = a.foo // Nothing printed, just lambda in x
     y = x()   // prints "foo"

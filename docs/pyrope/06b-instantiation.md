@@ -234,7 +234,7 @@ modified like any captured mutable variable.
 
     ```
     let div = fun(a,b) {
-      disable.assert not b?
+      disable.assert = not b?
       assert b!=0 
       out = a / b
     }

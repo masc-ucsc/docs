@@ -160,8 +160,8 @@ for the `a does b` operator depending on the `a` and `b` fields:
   distinguieshes between lambda call and lambda reference.
 
 ```
-assert     (a:int(max=33,min=0) does (a:int(20,5))
-assert not (a:int(max=33,min=0) does (a:int(50,5))
+assert     (a:int(max=33,min=0) does (a:int(20,5)))
+assert not (a:int(max=33,min=0) does (a:int(50,5)))
 
 assert     (a:string,b:int) does (a:"hello", b:33)
 assert not ((b:int,a:string) does (a:"hello", b:33)) // order maters in tuples
@@ -541,7 +541,7 @@ at declaration.
 let fu = fun(a,b=2) -> (c) where a>10 { c = a + b }
 assert fu.__inp equals (a,b)
 assert fu.__out equals (c)
-assert fu.__where(a=200) and !fun.__where(a=1)
+assert fu.__where(a=200) and !fu.__where(a=1)
 ```
 
 This means that when ignoring named vs unnamed calls, overloading behaves like
@@ -789,11 +789,11 @@ is also the "constructor" for the object.
 
 
 ```
-var f1:XXX = 3,2
+var f1:XXX = (3,2)
 var f2:XXX = XXX(3,2)
 var f3:XXX
 
-f3 = 3,2
+f3 = (3,2)
 assert f3 == f2 == f1
 ```
 
@@ -818,7 +818,7 @@ type some_obj = (
   }
 )
 
-var x:some_obj = "hello", 3
+var x:some_obj = ("hello", 3)
 
 assert x.a1 == "hello"
 assert x.a2 == 103
@@ -926,7 +926,7 @@ can pass many inputs/outputs and has permission to mutate values. Any call to a
 method with two underscores `__` is either a basic gate or a C++ function.
 
 ```
-type __my_typed_cpp:fun(a,b)->(e)
+type __my_typed_cpp = fun(a,b)->(e)
 ```
 
 Type defining non-Pyrope code is good to catch errors and also because declaring

@@ -160,12 +160,6 @@ var bund = (1,2,3,4)
 for i,index in bund {
   assert bund[j] == i
 }
-
-
-for mut i in bund {
-  i += 1
-}
-assert bund == (2,3,4,5)
 ```
 
 ```
@@ -185,7 +179,7 @@ to initialize arrays. To indicate the values to add in the comprehensions there
 are `cont`, `brk`, or the last expression in the `for` scope.
 
 ```
-var c = for i in 0..<5 { var xx = i }  // compile error, no expression
+var c = for i in 1..<5 { var xx = i }  // compile error, no expression
 var c = for i in 0..<5 { cont i }
 var d = for i in 0..<5 { i }
 var 2 = for i in 0..<5 { brk i }
@@ -347,7 +341,7 @@ defer_write x = a
 a = 200
 
 comptime assert x == 100
-defer_read comptime assert x == 1
+defer_read assert x == 1
 ```
 
 ## always block
@@ -401,7 +395,7 @@ blocks to indicate that all the statements inside the code block are either
 let c = 3
 comptime let x = c 
 
-if runtime == 1 comptime {
+comptime if runtime == 1 {
   // all the values should be comptime
   xx = 3
 }

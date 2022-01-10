@@ -75,7 +75,7 @@ This example explicitly manages the valid output signals.
 
 
 ```pyrope
-let telescope_unit = fun(a:u32,b:u32,start:bool) -> (res:?u32) {
+let telescope_unit = fun(a:u32,b:u32,start:bool) -> (res:u32?) {
 
   reg result_done
   reg result_flop
@@ -141,7 +141,7 @@ efficient.
 
 ```pyrope
 // implicit start/end (starts when called)
-let telescope_unit3 = fun(a:u32,b:u32) -> (:?u32) {
+let telescope_unit3 = fun(a:u32,b:u32) -> (:u32?) {
 
   {
     pub let tmp = a+1
