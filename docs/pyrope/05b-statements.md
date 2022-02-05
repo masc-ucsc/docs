@@ -107,7 +107,7 @@ The main features of scopes:
 * Variable declaration shadowing is not allowed and a compiler error is generated.
 
 * Expressions can have multiple scopes but they are not allowed to have
-  side effects for variables outside the scope or scope state. The [evaluation
+  side-effects for variables outside the scope or scope state. The [evaluation
   order](02-basics.md#evaluation-order) provides more details on expressions
   evaluation order.
 

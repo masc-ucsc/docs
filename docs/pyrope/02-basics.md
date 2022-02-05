@@ -294,7 +294,7 @@ For most expressions, Pyrope is more restrictive than other languages because
 it wants to be a fully defined deterministic independent of implementation.
 Pyrope is deterministic in the synthesizable, the `puts` determinism is
 achieved not by serializing the calls, but to delay the output until the end of
-the cycle To illustrate the point/difference, and how to handle it, it is
+the cycle. To illustrate the point/difference, and how to handle it, it is
 useful to see a Verilog example.
 
 

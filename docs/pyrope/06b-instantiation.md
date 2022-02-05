@@ -92,7 +92,7 @@ assume  ( cond1 and !cond2 and !cond3)
 lec res, res2
 ```
 
-## Optionals
+## Optional expression
 
 Valid or options are computed for each assignment and passed to every lambda
 call. Each variable has an associated valid bit, but it is removed if never
@@ -147,7 +147,8 @@ or not short-circuit (`and_then`/`or_else`) expressions.
     lec lhs?, lhs2_v
     ```
 
-## Lambdas
+
+## Optional lambdas
 
 HDLs use typical software constructs that look like function calls to represent
 instances in design. As [previously
@@ -157,95 +158,76 @@ lambda called unconditionally is likely to result in `module` unless the
 compiler decides to be small and it is inlined.
 
 
-Conditional called `lambdas` have extra logic to compute the associated
-`optionals`. `lambdas` also pass the input optionals as part of their inputs,
-and the outputs are generated accordingly.
 
-```
-let work = fun(a,b)->(c,d) {
-   c = a+b
-   if c==0 { 
-    d = a-b 
-  }
-}
-
-if cond {
-  c,d = work(a,b)
-}
-
-// RTL equivalent
-let tmp_a = a
-let tmp_b = b
-tmp_a? = __and(a?, cond)   // adjust the call arg valids
-tmp_b? = __and(b?, cond)
-
-tmp_c, tmp_d = work(tmp_a,tmp_b)
-
-let c2 = __mux(cond, c, tmp_c)
-let d2 = __mux(cond, d, tmp_d)
-
-let c2_v = __mux(cond, c?, tmp_c?)
-let d2_v = __mux(cond, d?, tmp_d?)
-
-lec c, c2
-lec d, d2
-
-lec c?, c2_v
-lec d?, d2_v
-```
+In Pyrope, the semantics are that when a lambda is conditionally called, it
+should behave like if the lambda were inlined in the conditional place. Since
+functions have no side effects, it is also equivalent to call the lambda before
+the conditional path, and assign the return value inside the conditional path
+only. Special care must be handled for the `puts` which is allowed in
+functions. The `puts` should not be called if the function is conditionally
+called.
 
 
-The previous code WILL call `work` every cycle, but in some cycles the inputs
-will be invalid. This is one of the main Pyrope differences with other HDLs. In
-languages like Verilog, modules can not be conditionally called. Pyrope allows
-it by toggling the inputs valids. The module can decide how to handle it. 
-
-
-The main concern happens on how to deal with `puts` or assertions. The problem of
-`conditionals` is somewhat similar to the `reset`. The lambda or expressions
-can be called during reset or when the inputs are not valid, this can lead to faulty
-assertions or maybe unwanted debug messages.
-
-
-To help, Pyrope has a `disable` variable for each lambda. The disable allows to
-disable `asserts` and `puts` for the remaining of the lambda or until it is
-uncleared. The semantics is like if the `disable` tuple was a global variable.
-Lambda definitions will capture the disable by value, and they can be locally
-modified like any captured mutable variable. 
-
-
-=== "Explicitly handled"
+=== "Conditional proc call"
 
     ```
-    let div = fun(a,b) {
+    pub case_1_counter = proc(runtime)->(res) {
 
-      assert b!=0 or b?  // OK if invalid too
-      out = a / b
-    }
-    let work = fun(a,b) {
-      out = a + b
-      if out? {          // we may want to print only when valid
-        puts "{} + {} is {}", a, b, out
+      reg r:(
+        ,reg total
+        ,increase = fun(a) {
+          puts "hello"
+
+          let res = self.total
+          self.total = u16(res+a)
+
+          ret res
+        }
+      )
+
+      if runtime == 2 {
+        res = r.increase(3)
+      }elif runtime == 4 {
+        res = r.increase(9)
       }
     }
     ```
 
-=== "Disable"
+=== "Pyrope inline equivalent"
 
     ```
-    let div = fun(a,b) {
-      disable.assert = not b?
-      assert b!=0 
-      out = a / b
-    }
+    pub case_1_counter = proc(runtime)->(res) {
 
-    let fun2 = fun(a,b) {
-      out = a + b
+      reg r:(
+        ,reg total
+        ,increase = fun(a) {
+          puts "hello"
 
-      disable.puts = not out?
-      puts "{} + {} is {}", a, b, out
+          let res = self.total
+          self.total = u16(res+a)
+
+          ret res
+        }
+      )
+
+      if runtime == 2 {
+        puts "hello"
+
+        let res = r.total
+        r.total = u16(res+3)
+        res = res
+      }elif runtime == 4 {
+        puts "hello"
+
+        let res = r.total
+        r.total = u16(res+9)
+        res = res
+      }
     }
     ```
+
+The result of conditionally calling procedures is that most of the code may be
+inlined. This can change the expected equivalent Verilog generated modules.
 
 
 ## Expressions

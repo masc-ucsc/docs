@@ -86,13 +86,6 @@ reg memory:u33[] = (1,2,3) // may take cycles to load this contents
 assert memory[0] == 1 unless memory.reset 
 ```
 
-The `disable.assert` variable can also be set at the beginning to disable all
-the following assertions during reset.
-
-```
-disable.assert = memory.reset or foo_reset
-assert false   // never fails during reset
-```
 
 # Coverage
 
