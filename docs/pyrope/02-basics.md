@@ -178,6 +178,7 @@ order between puts (`order`). If no relative order is provided, the messages
 are kept to the end of the cycle, and then printed in alphabetical order. This is
 done to be deterministic.
 
+
 This example will print "hello world" even though there are 2 puts/prints in
 different files.
 
@@ -196,6 +197,12 @@ The available puts/print arguments:
 
 A related command to the puts is the `format` it behaves like `print` but
 returns a string.
+
+`puts/print` are a bit special. In most languages, IO operations like `puts` are
+considered to have side-effects. In Pyrope, the `puts` can not modify the
+behavior of the synthesized code and it is considered a non-side-effect lambda
+call. This allows to have `puts` calls in `functions`.
+
 
 ## Functions, Procedures
 
@@ -280,14 +287,16 @@ let y = t.nonpure() + nonpure()   // error, multiple non pure calls
 ```
 
 
-Expressions also can have a scope, but expression scopes are not allowed to have
-side-effects, so they can be treated as `functions`.
+Expressions also can have a code blocks (`{  }`) as long as there are no
+side-effects. In a way, expression code blocks can be seen as a type of
+`functions` that are called immedialy after definition.
+
 
 ```
-var a = {var d=3 ; last d+1} + 100 // OK
-assert a == (3+1+100)
+var a =       {var d=3 ; last d+1}    + 100 // OK
+var b = (fun(){var d=3 ; last d+1})() + 100 // same with functions
+assert a == (3+1+100) == b
 ```
-
 
 
 For most expressions, Pyrope is more restrictive than other languages because

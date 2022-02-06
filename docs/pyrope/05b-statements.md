@@ -79,44 +79,45 @@ ret 3 when some_condition
 Complex assignments like `a |> b(1) |> c` can not be gated because it is not
 clear if the gated applies to the last call or the whole pipeline sequence.
 Similarly, gating ifs/match statements do not make much sense. As a result,
-`when`/`unless` can only be applied to assignments, function calls, and scope
-control statements (`return`, `break`, `continue`).
+`when`/`unless` can only be applied to assignments, function calls, and code
+block control statements (`return`, `break`, `continue`).
 
 
-## Scope
+## Code block
 
-A scope is a sequence of statements delimited by `{` and `}`. The functionality
-is the same as in other languages. Variables can be declared within the scope
-boundary. 
-
-
-Scopes are different than lambdas. A lambda consists of scope but it has
-several differences: Variables defined in upper scopes are accessed inside the
-lambda as immutable copies, inputs and outputs could be constrained, and the
-`ret`/`return` statements finish a lambda not a scope.
+A code block is a sequence of statements delimited by `{` and `}`. The
+functionality is the same as in other languages. Variables declared within
+a code block are not visible outside the code block. In other words, code block
+variables have scope from definition until the end of the code block.
 
 
-From a high-level point of view, scopes are used by statements like `if` and
-`for`, the lambdas are function declarations.
+Code blocks are different from lambdas. A lambda consists of a code block but
+it has several differences. In lambdas, variables defined in upper scopes are
+accessed inside as immutable copies, inputs and outputs could be constrained,
+and the `ret`/`return` statements finish a lambda not a code block.
 
 
-The main features of scopes:
+From a high-level point of view, code blocks are used by statements like `if`
+and `for`, the lambdas are function declarations.
 
-* New variable declarations inside the scope are not visible outside it. 
 
-* Variable declaration shadowing is not allowed and a compiler error is generated.
+The main features of code blocks:
 
-* Expressions can have multiple scopes but they are not allowed to have
-  side-effects for variables outside the scope or scope state. The [evaluation
+* Code blocks define a new scope. New variable declarations inside are not visible outside it. 
+
+* Code blocks do not allow variable declaration shadowing.
+
+* Expressions can have multiple code blocks but they are not allowed to have
+  side-effects for variables outside the code block. The [evaluation
   order](02-basics.md#evaluation-order) provides more details on expressions
   evaluation order.
 
-* When used in an expression or lambda, the last statement in the scope can be
-  an expression.
+* When used in an expression or lambda, the last statement in the code block
+  can be an expression.
 
-* An expression scope, not lambda, can be terminated with the `break` statement
-  that can also return a value. A `return` statement terminates the lambda
-  scope, not the expression scope.
+* An expression code block, not lambda, can be terminated with the `break`
+  statement that can also return a value. A `ret/return` statement terminates
+  the lambda, not the expression code block.
 
 ```
 {
@@ -176,7 +177,7 @@ for i,index,key in b {
 
 The `for` can also be used in an expression that allows building comprehensions
 to initialize arrays. To indicate the values to add in the comprehensions there
-are `cont`, `brk`, or the last expression in the `for` scope.
+are `cont`, `brk`, or the last expression in the `for` code block.
 
 ```
 var c = for i in 1..<5 { var xx = i }  // compile error, no expression
@@ -188,12 +189,12 @@ assert e == (0)
 ```
 
 
-### Scope control
+### Code block control
 
-Scope control statements allow changing the control flow for `lambdas`, `for`,
-and `while` statements. When the control flow is changed, some allow scope
-control allows to return a value (`ret`, `brk`, `cont`) and others do not
-(`return`, `break`, `continue`).
+Code block control statements allow changing the control flow for `lambdas`,
+`for`, and `while` statements. When the control flow is changed, some allow
+returning a value (`ret`, `brk`, `cont`) and others do not (`return`, `break`,
+`continue`).
 
 
 * `return` exits or terminates the current lambda. The current output variables
@@ -203,17 +204,18 @@ control allows to return a value (`ret`, `brk`, `cont`) and others do not
   value, the output variables are not used. When a `method` calls `ret` the
   `self` is implicit.
 
-* `break` terminates the closest higher scope that belongs to an expression, a
-  `for`, or a `while`. If neither is found, a compile error is generated.
+* `break` terminates the closest higher code block that belongs to an
+  expression, a `for`, or a `while`. If neither is found, a compile error is
+  generated.
 
 * `brk` behaves like `break` but a return tuple is provided. This is maybe
   needed when the `for` or `while` is used in an expression. In addition, the
-  `brk` can be used in expression scopes. The `brk` is equivalent to a `ret`
-  but terminates the closest expression scope.
+  `brk` can be used in expression code blocks. The `brk` is equivalent to a `ret`
+  but terminates the closest expression code block.
 
-* `continue` looks for the closest upper `for` or `while` scope. The `continue`
-  will perform the next loop iteration. If no upper loop is found, a compile
-  error is generated.
+* `continue` looks for the closest upper `for` or `while` code block. The
+  `continue` will perform the next loop iteration. If no upper loop is found, a
+  compile error is generated.
 
 * `cont` behaves like the `continue` but a tuple is provided. The `cont` is
   used with comprehensions, and the tuple provided is added to the

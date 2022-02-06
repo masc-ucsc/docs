@@ -29,7 +29,7 @@ lec res, res2
 ```
 
 Chaining `if`/`elif` creates a chain of muxes. If not all the inputs are
-covered the value from before the scope is used. If the variable did not exist,
+covered the value from before the `if` is used. If the variable did not exist,
 a compile error is generated.
 
 ```

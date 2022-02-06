@@ -93,9 +93,107 @@ called every cycle. As expected, `reg` is mutable.
 ## Public
 
 All types of declarations (`let`, `var`, `reg`) can have a `pub` before. This
-is used to indicate that the declaration is public and hence visible outside the
-scope defined. Section [typesystem](07-typesystem.md) has more details on how
-to `import` or register reference across files.
+is used to indicate that the declaration is public and hence visible outside
+the scope defined. 
+
+
+The `pub` has different meaning depending on when it is applied:
+
+* When the `pub` is applied to a tuple entry, it means that the tuple entry can
+  be accessed outside the tuple. 
+
+* When the `pub` is applied to a `pipestage` variable, it means that the
+  variable is to be pipelined to the next type stage.
+  Section [pipestage](06c-pipelining.md) has more details.
+
+* When the `pub` is applied to a pyrope file upper scope variable, it means
+  that an `import` command or register reference can access it across files.
+  Section [typesystem](07-typesystem.md) has more details.
+
+
+To avoid the common case of adding `pub var` to most tuple entries,
+when no modifier is applied a `pub var` is assumed.
+
+```
+let x1  = (pub let b=3, pub var d=4, let e=5, var f=6)
+
+let x2  = (pub let b=3,         d=4, let e=5, var f=6)
+
+var x3  = (pub let b=3,         d=4, let e=5, var f=6)
+
+type x4 = (pub let b=3,         d=4, let e=5, var f=6)
+
+// x1,x2,x3,x4 have identical tuple entry modifiers
+```
+
+## Variable scope
+
+Scope constrains defined variables visibility. There are three types of scope
+delimitation in Pyrope: code blocks, lambda definitions, and tuples. Each has
+a different set of rules constraining the variable scopes.
+
+
+=== "Code Block scope"
+
+    ```
+    // a is not visible
+    var a = 3
+    {
+      assert a == 3
+      a = 33         // OK
+      let b = 4
+      let a = 3333   // compile error. Variable shadowing
+    }
+    // b is not visible
+    ```
+
+=== "Lambda scope"
+
+    ```
+    // a is not visible
+    var a = 3
+    let f1 = fun() {
+      assert a == 3
+      a = 33         // compile error, upper scope are always immutable
+      let b = 4
+      let a = 3333   // OK, shadowing allowed
+      assert a == 3333
+    }
+    let f2 = fun[]() { // restrict scope
+      assert a == 3 // compile error. `a` not in scope
+    }
+    let f3 = fun[ff=a]() { // restrict scope
+      assert ff == 3 // OK
+    }
+    // b is not visible
+    ```
+
+=== "Tuple scope"
+
+    ```
+    // a is not visible
+    var a = 3
+    let r1 = (
+      // b is not visible
+      ,b=a+1
+      ,c = {assert a == 3; assert b==4; 50}
+    )
+
+    let r2 = (a=100, c=(a=a+1, e=a+30))
+    assert r2 == (a=100,c=(a==101, e=131))
+
+    // b is not visible
+    ```
+
+* code blocks do not allow variable shadowing. Lambdas and tuples allow
+  shadowing.
+
+* Lambdas and tuples upper scope variables are always immutable.
+
+* Lambdas can restrict upper scope visibility with `[]`.
+
+* A variable is visible from definition until the end of scope in program order.
+
 
 ## Basic types
 
