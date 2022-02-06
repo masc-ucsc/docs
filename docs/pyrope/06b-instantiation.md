@@ -230,6 +230,11 @@ The result of conditionally calling procedures is that most of the code may be
 inlined. This can change the expected equivalent Verilog generated modules.
 
 
+Calling a procedure with the inputs set invalid has a different behavior. For
+once C++ calls will still happen, and updates to registers with not valid data
+is allowed to reset the valid bit.
+
+
 ## Expressions
 
 Pyrope expressions are guaranteed to have the same result independent of the
@@ -398,4 +403,9 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
 The top-level module `top2` must be a module, but as the alternative Pyrope
 syntax shows, the inner modules may be in tuples or direct module calls. The
 are advantages to each approach but the code quality should be the same.
+
+## Pipelining
+
+
+TBA (allow `#>` in if/else due to inlining of procedures)
 
