@@ -404,8 +404,72 @@ The top-level module `top2` must be a module, but as the alternative Pyrope
 syntax shows, the inner modules may be in tuples or direct module calls. The
 are advantages to each approach but the code quality should be the same.
 
-## Pipelining
+## Pipestages
 
 
-TBA (allow `#>` in if/else due to inlining of procedures)
+The pipestage directive (`#>`) automatically creates pipeline resources.
+
+
+```
+if cond {
+  var p1 = inp1
+  var out
+
+  {
+    var l1 = inp1 + 1
+
+    pub var p2 = inp1 + 2
+  } #> {
+    out = p1 + p2
+  }
+
+  res = out
+}
+
+// Non pipestage equivalent
+if cond {
+  var p1 = inp1
+  var out
+
+  {
+    reg p1r
+    reg p2r
+
+    var l1 = inp1 + 1
+    pub var p2 = inp1 + 2 // now pub has no special meaning
+
+    out = p1r + p2r       // registered values
+
+    p1r = p1
+    p2r = p2
+  }
+
+  res = out
+}
+```
+
+## Registers
+
+
+```
+reg a = 3
+a = u16(a+1)
+
+reg b = 4
+if cond {
+  reg c
+  c = b + 1
+  b = 5
+}
+
+// RTL equivalent
+a_qpin = __flop(reset=reset, clk=clk, reset_value=3, din=a.__last_value)
+a      = __sum(A=(a_qpin, 1))
+
+b_qpin = __flop(reset=reset, clk=clk, reset_value=4, din=b.__last_value)
+b      = __mux(cond, b_qpin, 5)
+
+c_cond_qpin = __flop(reset=reset, clk=clk, din=c_cond.__last_value)
+c_cond      = __sum(A=(b, 1))
+```
 
