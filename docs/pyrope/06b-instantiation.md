@@ -29,7 +29,7 @@ lec res, res2
 ```
 
 Chaining `if`/`elif` creates a chain of muxes. If not all the inputs are
-covered the value from before the scope is used. If the variable did not exist,
+covered the value from before the `if` is used. If the variable did not exist,
 a compile error is generated.
 
 ```
@@ -92,7 +92,7 @@ assume  ( cond1 and !cond2 and !cond3)
 lec res, res2
 ```
 
-## Optionals
+## Optional expression
 
 Valid or options are computed for each assignment and passed to every lambda
 call. Each variable has an associated valid bit, but it is removed if never
@@ -147,7 +147,8 @@ or not short-circuit (`and_then`/`or_else`) expressions.
     lec lhs?, lhs2_v
     ```
 
-## Lambdas
+
+## Optional lambdas
 
 HDLs use typical software constructs that look like function calls to represent
 instances in design. As [previously
@@ -157,95 +158,81 @@ lambda called unconditionally is likely to result in `module` unless the
 compiler decides to be small and it is inlined.
 
 
-Conditional called `lambdas` have extra logic to compute the associated
-`optionals`. `lambdas` also pass the input optionals as part of their inputs,
-and the outputs are generated accordingly.
 
-```
-let work = fun(a,b)->(c,d) {
-   c = a+b
-   if c==0 { 
-    d = a-b 
-  }
-}
-
-if cond {
-  c,d = work(a,b)
-}
-
-// RTL equivalent
-let tmp_a = a
-let tmp_b = b
-tmp_a? = __and(a?, cond)   // adjust the call arg valids
-tmp_b? = __and(b?, cond)
-
-tmp_c, tmp_d = work(tmp_a,tmp_b)
-
-let c2 = __mux(cond, c, tmp_c)
-let d2 = __mux(cond, d, tmp_d)
-
-let c2_v = __mux(cond, c?, tmp_c?)
-let d2_v = __mux(cond, d?, tmp_d?)
-
-lec c, c2
-lec d, d2
-
-lec c?, c2_v
-lec d?, d2_v
-```
+In Pyrope, the semantics are that when a lambda is conditionally called, it
+should behave like if the lambda were inlined in the conditional place. Since
+functions have no side effects, it is also equivalent to call the lambda before
+the conditional path, and assign the return value inside the conditional path
+only. Special care must be handled for the `puts` which is allowed in
+functions. The `puts` should not be called if the function is conditionally
+called.
 
 
-The previous code WILL call `work` every cycle, but in some cycles the inputs
-will be invalid. This is one of the main Pyrope differences with other HDLs. In
-languages like Verilog, modules can not be conditionally called. Pyrope allows
-it by toggling the inputs valids. The module can decide how to handle it. 
-
-
-The main concern happens on how to deal with `puts` or assertions. The problem of
-`conditionals` is somewhat similar to the `reset`. The lambda or expressions
-can be called during reset or when the inputs are not valid, this can lead to faulty
-assertions or maybe unwanted debug messages.
-
-
-To help, Pyrope has a `disable` variable for each lambda. The disable allows to
-disable `asserts` and `puts` for the remaining of the lambda or until it is
-uncleared. The semantics is like if the `disable` tuple was a global variable.
-Lambda definitions will capture the disable by value, and they can be locally
-modified like any captured mutable variable. 
-
-
-=== "Explicitly handled"
+=== "Conditional proc call"
 
     ```
-    let div = fun(a,b) {
+    pub case_1_counter = proc(runtime)->(res) {
 
-      assert b!=0 or b?  // OK if invalid too
-      out = a / b
-    }
-    let work = fun(a,b) {
-      out = a + b
-      if out? {          // we may want to print only when valid
-        puts "{} + {} is {}", a, b, out
+      reg r:(
+        ,reg total
+        ,increase = fun(a) {
+          puts "hello"
+
+          let res = self.total
+          self.total = u16(res+a)
+
+          ret res
+        }
+      )
+
+      if runtime == 2 {
+        res = r.increase(3)
+      }elif runtime == 4 {
+        res = r.increase(9)
       }
     }
     ```
 
-=== "Disable"
+=== "Pyrope inline equivalent"
 
     ```
-    let div = fun(a,b) {
-      disable.assert = not b?
-      assert b!=0 
-      out = a / b
-    }
+    pub case_1_counter = proc(runtime)->(res) {
 
-    let fun2 = fun(a,b) {
-      out = a + b
+      reg r:(
+        ,reg total
+        ,increase = fun(a) {
+          puts "hello"
 
-      disable.puts = not out?
-      puts "{} + {} is {}", a, b, out
+          let res = self.total
+          self.total = u16(res+a)
+
+          ret res
+        }
+      )
+
+      if runtime == 2 {
+        puts "hello"
+
+        let res = r.total
+        r.total = u16(res+3)
+        res = res
+      }elif runtime == 4 {
+        puts "hello"
+
+        let res = r.total
+        r.total = u16(res+9)
+        res = res
+      }
     }
     ```
+
+The result of conditionally calling procedures is that most of the code may be
+inlined. This can change the expected equivalent Verilog generated modules.
+
+
+Calling a procedure with the inputs set invalid has a different behavior. For
+once C++ calls will still happen, and updates to registers with not valid data
+is allowed to reset the valid bit.
 
 
 ## Expressions
@@ -416,4 +403,73 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
 The top-level module `top2` must be a module, but as the alternative Pyrope
 syntax shows, the inner modules may be in tuples or direct module calls. The
 are advantages to each approach but the code quality should be the same.
+
+## Pipestages
+
+
+The pipestage directive (`#>`) automatically creates pipeline resources.
+
+
+```
+if cond {
+  var p1 = inp1
+  var out
+
+  {
+    var l1 = inp1 + 1
+
+    pub var p2 = inp1 + 2
+  } #> {
+    out = p1 + p2
+  }
+
+  res = out
+}
+
+// Non pipestage equivalent
+if cond {
+  var p1 = inp1
+  var out
+
+  {
+    reg p1r
+    reg p2r
+
+    var l1 = inp1 + 1
+    pub var p2 = inp1 + 2 // now pub has no special meaning
+
+    out = p1r + p2r       // registered values
+
+    p1r = p1
+    p2r = p2
+  }
+
+  res = out
+}
+```
+
+## Registers
+
+
+```
+reg a = 3
+a = u16(a+1)
+
+reg b = 4
+if cond {
+  reg c
+  c = b + 1
+  b = 5
+}
+
+// RTL equivalent
+a_qpin = __flop(reset=reset, clk=clk, reset_value=3, din=a.__last_value)
+a      = __sum(A=(a_qpin, 1))
+
+b_qpin = __flop(reset=reset, clk=clk, reset_value=4, din=b.__last_value)
+b      = __mux(cond, b_qpin, 5)
+
+c_cond_qpin = __flop(reset=reset, clk=clk, din=c_cond.__last_value)
+c_cond      = __sum(A=(b, 1))
+```
 

@@ -93,9 +93,107 @@ called every cycle. As expected, `reg` is mutable.
 ## Public
 
 All types of declarations (`let`, `var`, `reg`) can have a `pub` before. This
-is used to indicate that the declaration is public and hence visible outside the
-scope defined. Section [typesystem](07-typesystem.md) has more details on how
-to `import` or register reference across files.
+is used to indicate that the declaration is public and hence visible outside
+the scope defined. 
+
+
+The `pub` has different meaning depending on when it is applied:
+
+* When the `pub` is applied to a tuple entry, it means that the tuple entry can
+  be accessed outside the tuple. 
+
+* When the `pub` is applied to a `pipestage` variable, it means that the
+  variable is to be pipelined to the next type stage.
+  Section [pipestage](06c-pipelining.md) has more details.
+
+* When the `pub` is applied to a pyrope file upper scope variable, it means
+  that an `import` command or register reference can access it across files.
+  Section [typesystem](07-typesystem.md) has more details.
+
+
+To avoid the common case of adding `pub var` to most tuple entries,
+when no modifier is applied a `pub var` is assumed.
+
+```
+let x1  = (pub let b=3, pub var d=4, let e=5, var f=6)
+
+let x2  = (pub let b=3,         d=4, let e=5, var f=6)
+
+var x3  = (pub let b=3,         d=4, let e=5, var f=6)
+
+type x4 = (pub let b=3,         d=4, let e=5, var f=6)
+
+// x1,x2,x3,x4 have identical tuple entry modifiers
+```
+
+## Variable scope
+
+Scope constrains defined variables visibility. There are three types of scope
+delimitation in Pyrope: code blocks, lambda definitions, and tuples. Each has
+a different set of rules constraining the variable scopes.
+
+
+=== "Code Block scope"
+
+    ```
+    // a is not visible
+    var a = 3
+    {
+      assert a == 3
+      a = 33         // OK
+      let b = 4
+      let a = 3333   // compile error. Variable shadowing
+    }
+    // b is not visible
+    ```
+
+=== "Lambda scope"
+
+    ```
+    // a is not visible
+    var a = 3
+    let f1 = fun() {
+      assert a == 3
+      a = 33         // compile error, upper scope are always immutable
+      let b = 4
+      let a = 3333   // OK, shadowing allowed
+      assert a == 3333
+    }
+    let f2 = fun[]() { // restrict scope
+      assert a == 3 // compile error. `a` not in scope
+    }
+    let f3 = fun[ff=a]() { // restrict scope
+      assert ff == 3 // OK
+    }
+    // b is not visible
+    ```
+
+=== "Tuple scope"
+
+    ```
+    // a is not visible
+    var a = 3
+    let r1 = (
+      // b is not visible
+      ,b=a+1
+      ,c = {assert a == 3; assert b==4; 50}
+    )
+
+    let r2 = (a=100, c=(a=a+1, e=a+30))
+    assert r2 == (a=100,c=(a==101, e=131))
+
+    // b is not visible
+    ```
+
+* code blocks do not allow variable shadowing. Lambdas and tuples allow
+  shadowing.
+
+* Lambdas and tuples upper scope variables are always immutable.
+
+* Lambdas can restrict upper scope visibility with `[]`.
+
+* A variable is visible from definition until the end of scope in program order.
+
 
 ## Basic types
 
@@ -569,31 +667,28 @@ references. In non-hardware languages, `?` is used to check if there is valid
 data or a null pointer.
 
 
-Pyrope has no pointers, but the same syntax is used to handle "valid" data.
-Instead, the data is left to behave without the optional, but there is a
-new "valid" field associated with each tuple entry.
+Pyrope has references, but it does not have null pointers. Pyrope uses `?` to
+handle "valid" data. Instead, the data is left to behave without the optional,
+but there is a new "valid" field associated with each tuple entry.
 
 
 There are 4 explicitly interact with valids:
 
 * `tup.f1?` reads the valid for field `f1` from tuple `tup`
 
-* `tup?.f1.f2` returns `0bs?` if tuple fields `f1` or `f2` are invalid
+* `tup?.f1.f2` returns `0bs0` if tuple fields `f1` or `f2` are invalid
 
 * `tup.f1? = cond` explicitly sets the field `f1` valid to `cond`
 
-* `var:?ty` explicitly sets variable to be conditional with defaults set to
-  false
+* `a = b op c` variable `a` will be valid if `b` and `c` are valid
 
 
 The optional or valid attached to each variable and tuple field is implicitly
 computed as follows:
 
 * Each cycle the `valid` is set for non-register variables initialization[^clear].
-  Unless the type is optional, in which case the valid is initialized to false.
 
-* Registers with reset set the valid on reset, unless the type is optional, in
-  which case the register is valid is initialized to false.
+* Registers with reset set the valid on reset (not every cycle)
 
 * Left-hand side variables `valids` are set to the and-gate of all the variable
   valids used in the expression
@@ -604,9 +699,11 @@ computed as follows:
 
 * conditionals (`if`) update valids independently for each path
 
-* A tuple has the valid set to false if any of the tuple fields are invalid
+* A tuple field has the valid set to false if any of the parent tuple fields is
+  invalid
 
-* The valid computation can be overwritten with the `valid` method
+* The valid computation can be overwritten with the `__valid` attribute. This
+  is possible during execution or reset.
 
 
 [^clear]: Non-register variables are initialized to zero each cycle too, the
@@ -627,16 +724,16 @@ the time, and the associated logic is removed.
 
 
 ```
-var v1:u32
-var v2:u32?
+var v1:u32                      // valid and zero every cycle
+var v2:u32 = (__valid=false, 3) // not valid and 3 every cycle
 
 comptime assert v1?
 comptime assert not v2?
 
-comptime assert v1 == 0 and v2 == 0 // data still same as usual
+comptime assert v1 == 0 and v2 == 3 // data still same as usual
 
 v1 = 0sb?                      // OK, poison data
-v2 = 0sb?                      // OK, poison data, do not touch valid
+v2 = 0sb?                      // OK, poison data, and update valid
 comptime assert v2?            // valid even though data is not
 
 comptime assert v1 != 0        // usual verilog x logic
@@ -666,8 +763,9 @@ comptime assert not x?
 ```
 
 
-The contents of the tuple field do not affect the field valid bit. It is data-independent. Tuples also can have an optional type, which behaves like adding
-optional to each of the tuple fields.
+The contents of the tuple field do not affect the field valid bit. It is
+data-independent. Tuples also can have an optional type, which behaves like
+adding optional to each of the tuple fields.
 
 ```
 type complex = (
@@ -681,7 +779,7 @@ type complex = (
 )
 
 var x1:complex
-var x2:complex?
+var x2:complex = (__valid=false)  // toggle valid, keep zero
 
 comptime assert x1.v1 == "" and x1.v2 == ""
 comptime assert not x2?  and not x2.v1? and not v2.v2?
@@ -699,8 +797,4 @@ x2 = "world"
 
 comptime assert x2? and x2?.v1 == "world" and x2.v1 == "world"
 ```
-
-!!!NOTE
-    The Pyrope grammar does not allow for an optional without type check like
-    `x = foo:? + 3` because it is ambiguous.
 
