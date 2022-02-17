@@ -38,15 +38,22 @@ markdown_extensions:
   - def_list
   - toc:
       permalink: true
+      toc_depth: 4
   - admonition
   - footnotes
+  - tables
   - pymdownx.details
   - pymdownx.tabbed
+  - pymdownx.highlight:
+      use_pygments: true
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
           class: mermaid
           format: !!python/name:mermaid2.fence_mermaid
+
+extra_css:
+  - stylesheets/table.css
 
 extra_javascript:
   - javascripts/config.js
