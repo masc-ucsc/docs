@@ -33,9 +33,20 @@ Labels used in comments:
 
 ## strings
 
-Avoid std::string and std::string_view. Use them only when interfacing external project. Use mmap_lib::str
+We use std::string and std::string_view. These are the rules:
 
-Avoid pointers, use std::unique_ptr with RAII
+* Arguments for functions are always std::string_view (no const std::string &)
+
+* If the return argument is not allocated in the function, we return a std::string_view
+
+* If the return argument can be a new string, the function returns std::string
+
+* Use the absl::StrCat, absl::StrAppend, absl::StrSplit when possible
+
+* To convert to/from integers use str_tools::to_i to_hex ...
+
+* Use str_tools for sub-string operations like str_tools::ends_with 
+
 
 ## Variable naming rules
 
