@@ -1,12 +1,12 @@
 # Memories
 
 A significant effort of hardware design revolves around memories. Unlike Von
-Neumann models, the memories must be explicitly managed. Some list of concerns
+Neumann models, memories must be explicitly managed. Some list of concerns
 when designing memories in ASIC/FPGAs:
 
 * Reads and Writes may have different number of cycles to take effect
 * Reset does not initialize memory contents
-* There may not be forwarding if a read and a write happen in the same cycle
+* There may not be data forwarding if a read and a write happen in the same cycle
 * ASIC memories come from memory compilers that require custom setup pins and connections
 * FPGA memories tend to have their own set of constraints too
 * Logic around memories like BIST has to be added before fabrication
@@ -25,13 +25,13 @@ The flow directly supports arrays/memories in two ways:
 
 Asynchronous memories, async memories for short, have the same Pyrope tuple
 interface. The difference between tuples/arrays and async memories is that the
-async memories preserve the array contents across cycles while the array
+async memories preserve the array contents across cycles. In contrast, the array
 contents are cleared at the end of each cycle.
 
 
-In Pyrope, an async memory has 1 cycle to write a value and 0 cycles to read.
-The memory has forwarding by default which makes it behave like a 0 cycle
-read/write. From a traditional programmer, this memory looks like an array
+In Pyrope, an async memory has one cycle to write a value and 0 cycles to read.
+The memory has forwarding by default, which behaves like a 0 cycle
+read/write. From a non-hardware programmer, the default memory looks like an array with
 persistence across cycles.
 
 

@@ -26,7 +26,7 @@ type check. The type check can be understood as a `comptime assert`.
 After type synthesis, each variable has an associated type. In Pyrope, for each
 assignment, the type checks that the left-hand side (LHS) has a compatible type with
 the right-hand side (RHS) of the expression. Additional type checks happen when
-variables have a type check explicitly set (`var:type`) in rhs expressions.
+variables have a type check explicitly set (`var:type`) in the rhs expression.
 
 
 Although the type system is not implemented with asserts, it is an equivalent
@@ -130,16 +130,16 @@ puts "b:{}", b           // b:(c="hello",d=100)
 ### Type equivalence
 
 
-The `does` operator is the base to compare types. These are the detailed rules
-for the `a does b` operator depending on the `a` and `b` fields:
+The `does` operator is the base to compare types. It follows structural typing rules. 
+These are the detailed rules for the `a does b` operator depending on the `a` and `b` fields:
 
 
 * false when `a` and `b` are different basic types (`boolean`, `fun`,
   `integer`, `proc`, `range`, `string`, `enums`).
 
-* true when `a` and `b` are `boolean`
+* true when `a` and `b` are `boolean` or `string`.
 
-* true when `a` and `b` are `enum` and `a` has all the posible enumerates
+* true when `a` and `b` are `enum` and `a` has all the possible enumerates
   fields in `b` with the same value.
 
 * `a.max>=b.max and a.min<=b.min` when `a` and `b` are integers
@@ -147,17 +147,15 @@ for the `a does b` operator depending on the `a` and `b` fields:
 * `(a@[] & b@[]) == b@[]` when `a` and `b` are `range`. This means that the `a`
   range has at least all the values in `b` range.
 
-* true when `a` and `b` are `string`.
-
 * There are two cases for tuples. If all the tuple entries are named, `a does
   b` is true if for all the root fields in `b` the `a.field does b.field`.
   When either `a` or `b` have unnamed fields, for each field in `b` the name
-  and also position should match. If the field has no name, only position should match.
+  and also position should match. The conclusion is that if the field has no name, only position should match.
 
 * `a does b` is false if the explicit array size of `a` is smaller than the explicit array size of `b`. If the size check is true, the array entry type is checked. `:x[] does :y[]` is false when `x does y` is false.
 
 * The lambdas have a more complicated set of rules explained later. It
-  distinguieshes between lambda call and lambda reference.
+  distinguishes between lambda call and lambda reference.
 
 ```
 assert     (a:int(max=33,min=0) does (a:int(20,5)))
@@ -202,9 +200,9 @@ assert not (a equals fun() { ret 1 }) // different arguments
 
 ## Enums with types
 
-Enumerates (enums) create number for each entry in a set of identifiers. Pyrope
-also allows to associate a tuple or type for each entry. A difference from a
-tuple is that the enumerate tuple contents must be known at compile time.
+Enumerates (enums) create a number for each entry in a set of identifiers. Pyrope
+also allows associating a tuple or type for each entry. Another difference from a
+tuple is that the enumerate values must be known at compile time.
 
 
 ```
@@ -229,7 +227,7 @@ if y == Color.Red {
 ## Bitwidth
 
 Integers can be constrained based on the maximum and minimum value (not by
-number of bits).
+the number of bits).
 
 Pyrope automatically infers the maximum and minimum values for each numeric
 variable. If a variable width can not be inferred, the compiler generates a
@@ -289,7 +287,7 @@ h = c@[0,1]                // max:3, min:0
 
 Bitwidth uses narrowing to converge (see
 [internals](10-internals.md/#type-synthesis)). The GCD example does not specify
-the input/output size, but narrowing allows to work without typecasts.  To
+the input/output size, but narrowing allows it to work without typecasts.  To
 understand, the comments show the max/min bitwidth computations.
 
 ```
@@ -311,9 +309,9 @@ if cmd? {
                 // converged becauze x and y is same or smaller at beginning
 ```
 
-Even with narrowing, the bitwidth pass may not converge to find a valid size.
+The bitwidth pass may not converge to find a valid size even with narrowing.
 In this case, the programmer must insert a typecast or operation to constrain
-the bitwidth. For example, this could work:
+the bitwidth by typecasting. For example, this could work:
 
 ```
 reg x,y
@@ -491,7 +489,7 @@ type Circle extends Shape with (
 )
 ```
 
-Like most type checks, the `implement` can be translated for a `comptime
+Like most type checks, the `extends` can be translated for a `comptime
 assert`. An equivalent "Circle" functionality:
 
 ```
@@ -507,8 +505,10 @@ type Circle = (
 comptime assert Circle does Shape
 ```
 
-The `implement` differs from a tuple concatenation (`++` or `...tup`) by
-checking that the method are implemented.
+The `extends` differs from a tuple concatenation (`++` or `...tup`) by
+checking that the base methods are implemented. It can be seen as a syntax
+sugar for `...tup` and a compile time `does` type check.
+
 
 ## Instrospection
 
@@ -677,9 +677,9 @@ var x:Number = 3
 ### Register reference
 
 
-Registers can be declared with an string that shares the same syntax as the
+Registers can be declared with a string that shares the same syntax as the
 import. Any register sharing the same file/ID match point to the same register.
-From a programmers point of view resembles a pointer or reference to a
+From a programmer's point of view resembles a pointer or reference to a
 register.
 
 
@@ -849,8 +849,8 @@ s.v = 100
 let foo:string = s // compile error, no matching getter
 ```
 
-Like all the lambdas, the getter method can also be overloaded on return type.
-In this case it allows to build typecast per type.
+Like all the lambdas, the getter method can also be overloaded on the return type.
+In this case, it allows building typecast per type.
 
 ```
 type my_obj = (
@@ -903,7 +903,7 @@ efficient implemetations:
 
 Calling C++ or external code is still fully synthesizable if the code is
 available at compile time. An example could be calling a C++ API to read a json
-file during setup phase to decide configuration parameters.
+file during the setup phase to decide configuration parameters.
 
 
 ```
