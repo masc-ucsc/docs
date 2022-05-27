@@ -294,7 +294,7 @@ all the variables are tuples of size one too, the following rules apply to any
 lambda call:
 
 
-* Given a lambda call `f(a:a_t):r_t` with defined call and return types.
+* Given a lambda call `f(a:a_t)->(:r_t)` with defined call and return types.
   Iterate and pick all the lambda definitions `f(x)->(y)` that satisfy `x does
   a_t and y does r_t` using the previously explained lambda checks.
 
