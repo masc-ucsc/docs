@@ -1,0 +1,1318 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-8.2.15">
+    
+    
+      
+        <title>Lambdas - LiveHD and Pyrope</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.c382b1dc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.cc9b2e1e.min.css">
+        
+      
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CFira+Code:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Fira Code"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/table.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="" data-md-color-accent="">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#lambdas" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LiveHD and Pyrope" class="md-header__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LiveHD and Pyrope
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Lambdas
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3Z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6zm0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4zM7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LiveHD and Pyrope" class="md-nav__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    LiveHD and Pyrope
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        LiveHD and Pyrope
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+      
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_2">
+          Livehd
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Livehd" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Livehd
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/00-intro/" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/01-install/" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/02-usage/" class="md-nav__link">
+        Usage
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/04-api/" class="md-nav__link">
+        C++ API
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/05-lgraph/" class="md-nav__link">
+        LGraph
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/06-lnast/" class="md-nav__link">
+        LNAST
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/07-mmapstr/" class="md-nav__link">
+        mmap_lib::str
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10-bazel/" class="md-nav__link">
+        Bazel build
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10b-3rdparty/" class="md-nav__link">
+        3rd Party
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/11-pass/" class="md-nav__link">
+        Creating a Pass
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/12-github/" class="md-nav__link">
+        GitHub Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/13-style/" class="md-nav__link">
+        Coding Style
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
+      
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          Pyrope
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Pyrope" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Pyrope
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00-hwdesign/" class="md-nav__link">
+        Hardware Design
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-introduction/" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-basics/" class="md-nav__link">
+        Basic syntax
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-bundle/" class="md-nav__link">
+        Tuples
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-variables/" class="md-nav__link">
+        Variables and types
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-assert/" class="md-nav__link">
+        Assertions
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05b-statements/" class="md-nav__link">
+        Statements
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Lambdas
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Lambdas
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#definition" class="md-nav__link">
+    definition
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#arguments" class="md-nav__link">
+    Arguments
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#methods" class="md-nav__link">
+    Methods
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#arguments_1" class="md-nav__link">
+    Arguments
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06b-instantiation/" class="md-nav__link">
+        Instantiation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06c-pipelining/" class="md-nav__link">
+        Pipelining
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-typesystem/" class="md-nav__link">
+        Type system
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07b-structtype/" class="md-nav__link">
+        Structural Typing
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-memories/" class="md-nav__link">
+        Memories
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-stdlib/" class="md-nav__link">
+        Pyrope std lib
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-internals/" class="md-nav__link">
+        Internals
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../11-deprecated/" class="md-nav__link">
+        Deprecated or Future
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#definition" class="md-nav__link">
+    definition
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#arguments" class="md-nav__link">
+    Arguments
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#methods" class="md-nav__link">
+    Methods
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#arguments_1" class="md-nav__link">
+    Arguments
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+  <a href="https://github.com/masc-ucsc/docs/edit/main/docs/pyrope/06-functions.md" title="Edit this page" class="md-content__button md-icon">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
+  </a>
+
+
+
+<h1 id="lambdas">Lambdas<a class="headerlink" href="#lambdas" title="Permanent link">&para;</a></h1>
+<p>A <code>lambda</code> consists of a sequence of statements that can be bound to a variable.
+The variable can be copied and called as needed. Unlike most languages, Pyrope
+only supports anonymous lambdas. The reason is that without it lambdas would be
+assigned to a namespace. Supporting namespaces would avoid aliases across
+libraries, but Pyrope allows different versions of the same library at
+different parts of the project. This will effectively create a namespace alias.
+The solution is to not have namespaces but relies upon variable scope to decide
+which lambda to call.</p>
+<p>Pyrope divides the lambdas into two categories: <code>functions</code> and <code>procedures</code>.
+Functions operate only over combinational logic. They can not have any
+synthesis side-effect. This means the function outputs are only a function of
+the function inputs. Any external call can only affect <code>debug</code> statements not
+the synthesizable code. <code>functions</code> resemble <code>pure functions</code> in normal
+programming languages, but they are allowed to have side effects on
+non-synthesizable code.</p>
+<p>Non-function lambdas are called <code>procedures</code> or <code>methods</code>. The only difference
+between <code>procedures</code> and <code>methods</code> is that a <code>method</code> has <code>self</code> as the first
+argument in the output which allows to mutable the called tuple.</p>
+<p>Lambdas also can be divided into <code>modules</code> and non-<code>modules</code>. A <code>module</code> is a
+lambda visible at synthesis call hierarchy. A <code>non-module</code> is an inlined or
+flattened <code>lambda</code>.</p>
+<h2 id="definition">definition<a class="headerlink" href="#definition" title="Permanent link">&para;</a></h2>
+<p>Only anonymous lambdas are supported, this means that there is no global
+scope for functions, procedures, or modules. The only way for a file to access
+a lambda is to have access to a local variable with a definition or to "import"
+a variable from another file.</p>
+<div class="highlight"><pre><span></span><code>let a_3   = {   3 }     // just scope, not a lambda. Scope is evaluate now
+let a_fun = fun() { 4 } // local function, when just_4 is called 4 is returned
+
+pub let fun3 = fun(){ 5 } // public lambda that can be imported by other files
+
+let x = a_3()             // compile error, explicit call not posible in scope
+let x = a_fun()           // OK, explicit call
+
+assert a_3 equals 3
+assert a_fun equals :fun()
+assert a_fun() == 4       // calls to eval the function
+</code></pre></div>
+<p>The lambda definition has the following fields:</p>
+<div class="highlight"><pre><span></span><code>[GENERIC] [CAPTURE] [INPUT] [-&gt; OUTPUT] [where COND] |
+</code></pre></div>
+<ul>
+<li>
+<p><code>GENERIC</code> is an optional comma separated list of names between <code>&lt;</code> and <code>&gt;</code> to
+  use as generic types in the lambda.</p>
+</li>
+<li>
+<p><code>CAPTURE</code> has the list of capture variables for the lambda. If no capture is
+  provided, any local variable can be captured by value. An empty list (<code>[]</code>),
+  means no captures allowed. The captures are by value only, no capture by
+  reference is allowed.</p>
+</li>
+<li>
+<p><code>INPUT</code> has a list of inputs allowed with optional types. <code>()</code> indicates no
+  inputs. <code>(...args)</code> allow to accept a variable number of arguments.</p>
+</li>
+<li>
+<p><code>OUTPUT</code> has a list of outputs allowed with optional types. <code>()</code> indicates no
+  outputs. <code>(...out)</code> will expand the out tuple as individual outputs.</p>
+</li>
+<li>
+<p><code>COND</code> is the condition under which this statement is valid. The <code>COND</code> can
+  use the inputs, outputs, and <code>self</code> to evaluate. If the outputs are used in
+  the <code>COND</code>, the lambda must be immutable (<code>fun</code>). This means that the method
+  is called when the condition could evaluate true depending on its execution,
+  but being immutable there are no side effects. The
+  <a href="../07b-structtype/#lambda_overloading">overload</a> section has more details.</p>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><code>var add
+add = fun (...x) { x.0+x.1+x.2 }       // no IO specified
+add = fun (a,b,c){ a+b+c }            // constrain inputs to a,b,c
+add = fun (a,b,c){ a+b+c }            // same
+add = fun (a:u32,b:s3,c){ a+b+c }     // constrain some input types
+add = fun (a,b,c) -&gt; (x:u32){ a+b+c } // constrain result to u32
+add = fun (a,b,c) -&gt; (res){ a+b+c }   // constrain result to be named res
+add = fun (a,b:a,c:a){ a+b+c }        // constrain inputs to have same type
+add = fun &lt;T&gt;(a:T,b:T,c:T){ a+b+c }   // same
+
+x = 2
+var add2
+add2 = fun       (a){   x + a }    // implicit capture x
+add2 = fun[x    ](a){   x + a }    // explicit capture x
+add2 = fun[     ](a){   x + a }    // compile error, undefined &#39;x&#39;
+add2 = fun[foo=x](a){ foo + a }    // capture x but rename to something else
+
+var y = (
+  ,val:u32 = 1
+  ,inc1 = fun (self)-&gt;(self){ self.val = u32(self.val + 1) }
+)
+
+debug let my_log = fun (...inp) {
+  print &quot;loging:&quot;
+  for i in inp {
+    print &quot; {}&quot;, i
+  }
+  puts
+}
+
+let f = fun&lt;X&gt;(a:X,b:X){ ret a+b }   // enforces a and b with same type
+assert f(33:u22,100:u22)
+
+my_log a, false, x+1
+</code></pre></div>
+<h2 id="arguments">Arguments<a class="headerlink" href="#arguments" title="Permanent link">&para;</a></h2>
+<p>Lambda calls only pass arguments by value. Unlike most software languages,
+there is no way to pass by reference.</p>
+<ul>
+<li>Arguments can be named. E.g: <code>fcall(a=2,b=3)</code></li>
+<li>There can be many return values. E.g: <code>ret (a=3,b=5)</code></li>
+</ul>
+<p>There are several rules on how to handle arguments.</p>
+<ul>
+<li>
+<p>Calls use the Uniform Function Call Syntax (UFCS). <code>(a,b).f(x,y) == f((a,b),x,y)</code></p>
+</li>
+<li>
+<p>Pipe <code>|&gt;</code> concatenated inputs: <code>(a,b) |&gt; f(x,y) == f(x,y,a,b)</code></p>
+</li>
+<li>
+<p>Function calls with arguments do not need parenthesis after newline or a
+  variable assignment: <code>a = f(x,y)</code> is the same as <code>a = f x,y</code></p>
+</li>
+<li>
+<p>Functions explicitly declared without arguments, do not need parenthesis in
+  function call.</p>
+</li>
+</ul>
+<p>Pyrope uses a Uniform Function Call Syntax (UFCS) like Nim or D but it can be
+different from the order in other languages. Notice the different order in
+UFCS vs pipe, and also that in the pipe the argument tuple is concatenated,
+but in UFCS is added as the first argument.</p>
+<div class="highlight"><pre><span></span><code>div  = fun (a,b) { a / b }          // named input tuple
+div2 = fun (...x){ x.0 / x.1 }   // unnamed input tuple
+
+noarg = fun () { ret 33 }         // explicit no args
+
+assert noarg == 33 == noarg()
+
+a=div(3  , 4  , 3)       // compile error, div has 2 inputs
+b=div(a=8, b=4)          // OK, 2
+c=div a=8, b=4           // compile error, parenthesis needed for complex call
+d=(a=8).div(b=2)         // OK, 4
+e=(a=8).div b=2          // compile error, parenthesis needed for complex call
+
+h=div2(8, 4, 3)          // OK, 2 (3rd arg is not used)
+i=8.div2(4,3)            // OK, same as div2(8,4,2)
+
+j=(8,4)  |&gt; div2         // OK, 2, same as div2(8,4)
+k=(4)    |&gt; div2(8)      // OK, 2, same as div2(8,4)
+l=(4,33) |&gt; div2(8)      // OK, 2, same as div2(8,4,33)
+m=4      |&gt; div2 8       // compile error, parenthesis needed for complex call
+
+n=div2((8,4), 3)         // compile error: (8,4)/3 is undefined
+o=(8,4).div2(1)          // compile error: (8,4)/1 is undefined
+</code></pre></div>
+<p>The UFCS allows to have <code>functions</code> to call any tuple, but if the called tuple
+has a lambda defined with the same name, the tuple lambda has a higher priority.</p>
+<div class="highlight"><pre><span></span><code>var tup = (
+  ,let f1 = fun() { ret 1 }
+)
+
+let f1 = fun (b){ ret 2 }
+
+assert f1()     == 2
+assert f1(tup)  == 2
+assert 4.f1()   == 2
+assert tup.f1() == 1
+</code></pre></div>
+<p>The keyword <code>self</code> is used to indicate that the function is accessing a tuple.
+It is also passed as the first argument. As a syntax sugar, when no inputs are
+specified, the <code>self</code> can be from the input list when it is read by any
+expression, but it is not added to the input tuple unless <code>self</code> is explicitly
+listed. The output <code>self</code> is always needed if a mutable method is the
+intention.</p>
+<div class="highlight"><pre><span></span><code>var tup = (
+  ,var x = 3
+  ,let f1 = fun(...rest){ assert rest.size == 0 ; ret self.x }
+)
+
+let fun2 = fun(b){ ret b.x             } // no self, but it is the same
+let fun3 = fun(self,b){ ret self.x + b }
+
+assert tup.f1() == 3   // tup.fun call
+assert tup.f1 == 3     // explicit no args, so () is optional in call
+assert fun2(tup) == 3
+assert tup.fun2() == 3  // UFCS
+
+assert fun3(tup) == 3   // compile error, missing b arg
+assert tup.fun3() == 3  // compile error, missing b arg
+assert fun3(tup,2) == 5
+assert tup.fun3(2) == 5
+</code></pre></div>
+<h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>
+<p>Pyrope lambdas only pass arguments by value. This looks like a problem if we
+implement a typical <code>method</code>. The <code>method</code> accesses the parent tuple fields and
+updates some of them. </p>
+<p>Updates to tuples needed by <code>methods</code> are allowed when the output of the lambda
+is a <code>self</code> keyword. Although not required, <code>methods</code> tend to also have <code>self</code>
+as the first input argument.</p>
+<p>For a method to update the tuple, the return value must be assigned to the
+calling variable. As a syntax sugar, if the call does not have an assignment,
+the same tuple assign is created.</p>
+<div class="highlight"><pre><span></span><code>var a_1 = (
+  ,x:u10
+  ,let f1 = fun(self,x)-&gt;(self) {
+    self.x = x 
+  }
+)
+
+a_1.f1(3)            // syntax sugar for a_1 = a_1.f1(3)
+var a_2 = a_1.f1(4)  // a_2 is updated, not a_1
+assert a_1.x == 3 and a_2.x == 4
+
+// Same behavior as in a function with UFCS
+fun2 = fun (self, x)-&gt;(self){ self.x = x }
+
+a_1.fun2(10)    
+var a_3 = a_1.fun2(20)
+assert a_1 == 10 and a_3 == 20
+</code></pre></div>
+<p>A difference between a method and a UFCS call is that the method has a higher
+priority to match. Like in the input syntax sugar, if no output is specified
+and there is an update to a <code>self</code> variable, the compiler assumes <code>(self)</code> as
+output tuple.</p>
+<div class="highlight"><pre><span></span><code>var counter = (
+  ,var val:i32
+  ,let inc = fun (self, v){ self.var += v }
+)
+
+assert counter.val == 0
+counter.inc(3)
+assert counter.val == 3
+
+let inc = fun (self, v)-&gt;(self){ self.var *= v } // NOT INC but multiply
+counter.inc(2)
+assert counter.val == 5
+
+let mul = inc
+counter = counter.mul(2)   // call the new mul method with UFCS
+assert counter.val == 10
+
+let other = counter.mul(2) // UFCS no self update return
+assert counter.val == 10
+assert other.val   == 20
+
+mul(counter, 2) // also legal, but no self update
+assert counter.val == 20
+</code></pre></div>
+<p><code>self</code> is an input and/or output but also a reserved word. It could be a tuple
+first input argument or the first output argument</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>To avoid verbose <code>self</code> in methods, the compiler automatically inserts a
+<code>self</code> as the first entry in the input tuple if the <code>self</code> variable is ever
+read in the method and no input/output was defined.</p>
+<div class="highlight"><pre><span></span><code>// equivalent code due to automatic `self` insertion
+let fun1 = proc(self)-&gt;(self){ self.foo = self.bar + 1}
+let fun2 = proc(    )-&gt;(self){ self.foo = self.bar + 1}
+let fun3 = proc(self)        { self.foo = self.bar + 1}
+let fun4 = proc(    )        { self.foo = self.bar + 1}
+
+// NOT equivalent because () means no input/output
+let non2 = proc()    -&gt;(self){ self.foo = self.bar + 1}
+let non3 = proc(self)-&gt;()    { self.foo = self.bar + 1}
+</code></pre></div>
+</div>
+<h2 id="arguments_1">Arguments<a class="headerlink" href="#arguments_1" title="Permanent link">&para;</a></h2>
+<p>Arguments can constrain the inputs and input types. Unconstrained input types
+allow for more freedom and a potentially variable number of arguments generics, but
+it can be error-prone.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">unconstrained declaration</label><label for="__tabbed_1_2">constrained declaration</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>foo = fun () { puts &quot;fun.foo&quot; }
+a = (
+  ,foo = fun () {
+     bar = fun() { puts &quot;bar&quot; }
+     puts &quot;mem.foo&quot;
+     ret (bar=bar)
+  }
+)
+b = 3
+
+puts &quot;start&quot;
+b.foo     // compile error: parenthesis needed
+b.foo()   // prints &quot;fun.foo&quot;
+a.foo     // compile error: parenthesis needed (no arguments passed)
+a.foo()   // prints &quot;mem.foo&quot;
+a.foo 3   // compile error: parenthesis needed (hierarchical function call)
+a.foo(3)  // prints &quot;mem.foo&quot;, arg passed (but not used by foo)
+x = a.foo // Nothing printed, just lambda in x
+y = x()   // prints &quot;foo&quot;
+y()       // prints &quot;bar&quot;
+z = y     // nothing printed
+
+a.foo.bar()   // prints &quot;bar&quot;, passes a.foo as argument to bar
+a.foo().bar() // prints &quot;mem.foo&quot; (foo gets a) and then &quot;bar&quot; (has no input)
+
+b.foo().bar() // compile error, no bar method
+foo()         // prints &quot;fun.foo&quot;
+b.foo()       // prints &quot;fun.foo&quot;
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>foo = fun (self){ puts &quot;fun.foo&quot; }  // explicit self
+a = (
+  ,foo = fun (){                    // implicit self 
+     bar = fun (){ puts &quot;bar&quot; }
+     puts &quot;mem.foo&quot;
+     ret (bar=bar)
+  }
+)
+b = 3
+
+puts &quot;start&quot;
+b.foo     // compile error: parenthesis needed
+b.foo()   // prints &quot;fun.foo&quot;
+a.foo     // compile error: parenthesis needed (no arguments passed)
+a.foo()   // prints &quot;mem.foo&quot;
+a.foo 3   // compile error
+a.foo(3)  // compile error
+x = a.foo // Nothing printed, just lambda in x
+y = x()   // prints &quot;foo&quot;
+y()       // prints &quot;bar&quot;
+z = y     // nothing printed
+
+a.foo.bar()   // compile error
+a.foo().bar() // prints &quot;mem.foo&quot; and then &quot;bar&quot;
+
+b.foo().bar() // compile error, no bar method
+foo()         // compile error
+b.foo()       // prints &quot;fun.foo&quot;
+</code></pre></div>
+</div>
+</div>
+</div>
+
+              
+            </article>
+          </div>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../05b-statements/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Statements" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Statements
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../06b-instantiation/" class="md-footer__link md-footer__link--next" aria-label="Next: Instantiation" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Instantiation
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["search.suggest", "navigation.sections", "navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.2a1c317c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a6c66575.min.js"></script>
+      
+        <script src="../../javascripts/config.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>

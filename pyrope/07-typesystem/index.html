@@ -1,0 +1,1933 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-8.2.15">
+    
+    
+      
+        <title>Type system - LiveHD and Pyrope</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.c382b1dc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.cc9b2e1e.min.css">
+        
+      
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CFira+Code:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Fira Code"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/table.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="" data-md-color-accent="">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#type-system" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LiveHD and Pyrope" class="md-header__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LiveHD and Pyrope
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Type system
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3Z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6zm0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4zM7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LiveHD and Pyrope" class="md-nav__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    LiveHD and Pyrope
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        LiveHD and Pyrope
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+      
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_2">
+          Livehd
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Livehd" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Livehd
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/00-intro/" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/01-install/" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/02-usage/" class="md-nav__link">
+        Usage
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/04-api/" class="md-nav__link">
+        C++ API
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/05-lgraph/" class="md-nav__link">
+        LGraph
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/06-lnast/" class="md-nav__link">
+        LNAST
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/07-mmapstr/" class="md-nav__link">
+        mmap_lib::str
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10-bazel/" class="md-nav__link">
+        Bazel build
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10b-3rdparty/" class="md-nav__link">
+        3rd Party
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/11-pass/" class="md-nav__link">
+        Creating a Pass
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/12-github/" class="md-nav__link">
+        GitHub Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/13-style/" class="md-nav__link">
+        Coding Style
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
+      
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          Pyrope
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Pyrope" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Pyrope
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00-hwdesign/" class="md-nav__link">
+        Hardware Design
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-introduction/" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-basics/" class="md-nav__link">
+        Basic syntax
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-bundle/" class="md-nav__link">
+        Tuples
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-variables/" class="md-nav__link">
+        Variables and types
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-assert/" class="md-nav__link">
+        Assertions
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05b-statements/" class="md-nav__link">
+        Statements
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-functions/" class="md-nav__link">
+        Lambdas
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06b-instantiation/" class="md-nav__link">
+        Instantiation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06c-pipelining/" class="md-nav__link">
+        Pipelining
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Type system
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Type system
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#types-vs-comptime-assert" class="md-nav__link">
+    Types vs comptime assert
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#building-types" class="md-nav__link">
+    Building types
+  </a>
+  
+    <nav class="md-nav" aria-label="Building types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#type-equivalence" class="md-nav__link">
+    Type equivalence
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enums-with-types" class="md-nav__link">
+    Enums with types
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bitwidth" class="md-nav__link">
+    Bitwidth
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#typecasting" class="md-nav__link">
+    Typecasting
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#traits-and-mixin" class="md-nav__link">
+    Traits and mixin
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#instrospection" class="md-nav__link">
+    Instrospection
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#global-variables" class="md-nav__link">
+    Global variables
+  </a>
+  
+    <nav class="md-nav" aria-label="Global variables">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#import" class="md-nav__link">
+    import
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-reference" class="md-nav__link">
+    Register reference
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mocking-library" class="md-nav__link">
+    Mocking library
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#operator-overloading" class="md-nav__link">
+    Operator overloading
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#properties-gettersetter" class="md-nav__link">
+    Properties: Getter/Setter
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compare" class="md-nav__link">
+    Compare
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#non-pyrope-c-calls" class="md-nav__link">
+    Non-Pyrope (C++) calls
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07b-structtype/" class="md-nav__link">
+        Structural Typing
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-memories/" class="md-nav__link">
+        Memories
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-stdlib/" class="md-nav__link">
+        Pyrope std lib
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-internals/" class="md-nav__link">
+        Internals
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../11-deprecated/" class="md-nav__link">
+        Deprecated or Future
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#types-vs-comptime-assert" class="md-nav__link">
+    Types vs comptime assert
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#building-types" class="md-nav__link">
+    Building types
+  </a>
+  
+    <nav class="md-nav" aria-label="Building types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#type-equivalence" class="md-nav__link">
+    Type equivalence
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enums-with-types" class="md-nav__link">
+    Enums with types
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bitwidth" class="md-nav__link">
+    Bitwidth
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#typecasting" class="md-nav__link">
+    Typecasting
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#traits-and-mixin" class="md-nav__link">
+    Traits and mixin
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#instrospection" class="md-nav__link">
+    Instrospection
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#global-variables" class="md-nav__link">
+    Global variables
+  </a>
+  
+    <nav class="md-nav" aria-label="Global variables">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#import" class="md-nav__link">
+    import
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-reference" class="md-nav__link">
+    Register reference
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mocking-library" class="md-nav__link">
+    Mocking library
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#operator-overloading" class="md-nav__link">
+    Operator overloading
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#properties-gettersetter" class="md-nav__link">
+    Properties: Getter/Setter
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compare" class="md-nav__link">
+    Compare
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#non-pyrope-c-calls" class="md-nav__link">
+    Non-Pyrope (C++) calls
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+  <a href="https://github.com/masc-ucsc/docs/edit/main/docs/pyrope/07-typesystem.md" title="Edit this page" class="md-content__button md-icon">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
+  </a>
+
+
+
+<h1 id="type-system">Type system<a class="headerlink" href="#type-system" title="Permanent link">&para;</a></h1>
+<p>Type system assign types for each variable (type synthesis) and check that each
+variable use/expression respects the allowed types (type check). Additionally, a
+language can also use the type synthesis results to implement polymorphism.</p>
+<p>Most HDLs do not have modern type systems, but they could benefit like in other
+software domains. Unlike software, in the hardware, we do not need to have many integer
+sizes because hardware can implement any size. This simplifies the type system
+allowing unlimited precision integers but it needs a bitwidth inference mechanism.</p>
+<p>Additionally, in hardware, it makes sense to have different implementations that
+adjust for performance/constraints like size, area, FPGA/ASIC. Type systems
+could help in these areas.</p>
+<h2 id="types-vs-comptime-assert">Types vs <code>comptime assert</code><a class="headerlink" href="#types-vs-comptime-assert" title="Permanent link">&para;</a></h2>
+<p>To understand the type check, it is useful to see an equivalent <code>comptime
+assert</code> translation. The type system has two components: type synthesis and
+type check. The type check can be understood as a <code>comptime assert</code>.</p>
+<p>After type synthesis, each variable has an associated type. In Pyrope, for each
+assignment, the type checks that the left-hand side (LHS) has a compatible type with
+the right-hand side (RHS) of the expression. Additional type checks happen when
+variables have a type check explicitly set (<code>var:type</code>) in the rhs expression.</p>
+<p>Although the type system is not implemented with asserts, it is an equivalent
+way to understand the type system "check" behavior.  Although it is possible to
+declare just the <code>comptime assert</code> for type checks, the recommendation is to
+use the explicit Pyrope type syntax because it is more readable and easier to
+optimize.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Snippet with types</label><label for="__tabbed_1_2">Snippet with comptime assert</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>var b = &quot;hello&quot;
+
+var a:u32
+
+a += 1
+
+a = b                       // incorrect
+
+
+var dest:u32
+
+dest = foo:u16 + v:u8
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>var b = &quot;hello&quot;
+
+var a:u32
+
+a += 1
+comptime assert a does u32
+a = b                       // incorrect
+comptime assert a does u32
+
+var dest:u32
+comptime assert (dest does u32) and (foo does u16) and (v does u8)
+dest = foo:u16 + v:u8
+</code></pre></div>
+</div>
+</div>
+</div>
+<h2 id="building-types">Building types<a class="headerlink" href="#building-types" title="Permanent link">&para;</a></h2>
+<p>Each variable can be a basic type. In addition, each variable can have a set of
+constraints from the type system. Pyrope type system constructs to handle types:</p>
+<ul>
+<li>
+<p><code>type</code> keyword allows declaring types.</p>
+</li>
+<li>
+<p><code>a does b</code>: Checks 'a' is a superset or equal to 'b'. In the future, the
+  Unicode character "\u02287" could be used as an alternative to <code>does</code> (<code>a</code>
+&#8839; <code>b</code>).</p>
+</li>
+<li>
+<p><code>a:b</code> is equivalent to <code>a does b</code> for type check, but it is also used by type
+  synthesis.</p>
+</li>
+<li>
+<p><code>a equals b</code>: Checks that <code>a does b</code> and <code>b does a</code>. Effectively checking
+  that they have the same type. Notice that this is not like checking for
+  logical equivalence, just type equivalence.</p>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><code>type t1 = (a:int=1  , b:string)
+type t2 = (a:int=100, b:string)
+var  v1 = (a=33     , b=&quot;hello&quot;)
+
+comptime assert t1 equals t2
+comptime assert t1 equals v1
+</code></pre></div>
+<p>While the <code>var</code> statement declares a new variable instance that can also have
+an associated type, the <code>type</code> statement declares a type without any instance.</p>
+<div class="highlight"><pre><span></span><code>type a1 = u32                 // same as &#39;type a1:u32&#39;
+type a2 = int(max=33,min=-5)  // same as &#39;type a2:int(-5,33)&#39;
+type a3 = (
+    ,var name:string
+    ,var age:u8
+    )
+</code></pre></div>
+<p>The puts command understands types.</p>
+<div class="highlight"><pre><span></span><code>type at=int(33..)     // number bigger than 32
+type bt=(
+  ,var c:string
+  ,var d=100
+  ,let set = fun(...args)-&gt;(self) { self.c = args }
+)
+
+var a:at=40
+var v:bt=&quot;hello&quot;
+puts &quot;a:{} or {}&quot;, a, at // a:40 or 33
+puts &quot;b:{}&quot;, b           // b:(c=&quot;hello&quot;,d=100)
+</code></pre></div>
+<h3 id="type-equivalence">Type equivalence<a class="headerlink" href="#type-equivalence" title="Permanent link">&para;</a></h3>
+<p>The <code>does</code> operator is the base to compare types. It follows structural typing rules. 
+These are the detailed rules for the <code>a does b</code> operator depending on the <code>a</code> and <code>b</code> fields:</p>
+<ul>
+<li>
+<p>false when <code>a</code> and <code>b</code> are different basic types (<code>boolean</code>, <code>fun</code>,
+  <code>integer</code>, <code>proc</code>, <code>range</code>, <code>string</code>, <code>enums</code>).</p>
+</li>
+<li>
+<p>true when <code>a</code> and <code>b</code> are <code>boolean</code> or <code>string</code>.</p>
+</li>
+<li>
+<p>true when <code>a</code> and <code>b</code> are <code>enum</code> and <code>a</code> has all the possible enumerates
+  fields in <code>b</code> with the same value.</p>
+</li>
+<li>
+<p><code>a.max&gt;=b.max and a.min&lt;=b.min</code> when <code>a</code> and <code>b</code> are integers</p>
+</li>
+<li>
+<p><code>(a@[] &amp; b@[]) == b@[]</code> when <code>a</code> and <code>b</code> are <code>range</code>. This means that the <code>a</code>
+  range has at least all the values in <code>b</code> range.</p>
+</li>
+<li>
+<p>There are two cases for tuples. If all the tuple entries are named, <code>a does
+  b</code> is true if for all the root fields in <code>b</code> the <code>a.field does b.field</code>.
+  When either <code>a</code> or <code>b</code> have unnamed fields, for each field in <code>b</code> the name
+  and also position should match. The conclusion is that if the field has no name, only position should match.</p>
+</li>
+<li>
+<p><code>a does b</code> is false if the explicit array size of <code>a</code> is smaller than the explicit array size of <code>b</code>. If the size check is true, the array entry type is checked. <code>:x[] does :y[]</code> is false when <code>x does y</code> is false.</p>
+</li>
+<li>
+<p>The lambdas have a more complicated set of rules explained later. It
+  distinguishes between lambda call and lambda reference.</p>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><code>assert     (a:int(max=33,min=0) does (a:int(20,5)))
+assert not (a:int(max=33,min=0) does (a:int(50,5)))
+
+assert     (a:string,b:int) does (a:&quot;hello&quot;, b:33)
+assert not ((b:int,a:string) does (a:&quot;hello&quot;, b:33)) // order maters in tuples
+
+assert      :fun(x,xxx2)-&gt;(y,z) does :fun(x     )-&gt;(y,z)
+assert not (:fun(x     )-&gt;(y,z) does :fun(x,xxx2)-&gt;(y,z))
+</code></pre></div>
+<p>For named tuples, this code shows some of the corner cases:</p>
+<div class="highlight"><pre><span></span><code>type t1 = (a:string, b:int)
+type t2 = (b:int, a:string)
+
+var a:t1  = (&quot;hello&quot;, 3)     // OK
+var a1:t1 = (3, &quot;hello&quot;)     // compile error, positions do not match
+var b:t1  = (a=&quot;hello&quot;, 3)   // OK
+var b1:t1 = (3, a=&quot;hello&quot;)   // compile error, positions do not match
+var c:t1  = (a=&quot;hello&quot;, b=3) // OK
+var c1:t1 = (b=3, a=&quot;hello&quot;) // OK
+
+var d:t2 = c                 // OK, both fully named
+assert d.0 == c.1 and c.0 == d.1
+assert d.a == c.a and d.b == c.b
+</code></pre></div>
+<p>Ignoring the value is what makes <code>equals</code> different from <code>==</code>. As a result
+different functionality functions could be <code>equals</code>.</p>
+<div class="highlight"><pre><span></span><code>let a = fun() { ret 1 }
+let b = fun() { ret 2 }
+assert a equals :fun()
+assert a != b
+assert a equals b
+assert not (a equals fun() { ret 1 }) // different arguments
+</code></pre></div>
+<h2 id="enums-with-types">Enums with types<a class="headerlink" href="#enums-with-types" title="Permanent link">&para;</a></h2>
+<p>Enumerates (enums) create a number for each entry in a set of identifiers. Pyrope
+also allows associating a tuple or type for each entry. Another difference from a
+tuple is that the enumerate values must be known at compile time.</p>
+<div class="highlight"><pre><span></span><code>type Rgb = (
+  ,let c:u24
+  ,let set = proc(c)-&gt;(self) { self.c = c }
+)
+
+enum Color:Rgb = (
+  ,Yellow   = 0xffff00
+  ,Red      = 0xff0000
+  ,Green    = Rgb(0x00ff00) // alternative redundant syntax
+  ,Blue     = Rgb(0x0000ff)
+)
+
+var y:Color = Color.Red
+if y == Color.Red {
+  puts &quot;c1:{} c2:{}\n&quot;, y, y.c  // prints: c1:Color.Red c2:0xff0000
+}
+</code></pre></div>
+<h2 id="bitwidth">Bitwidth<a class="headerlink" href="#bitwidth" title="Permanent link">&para;</a></h2>
+<p>Integers can be constrained based on the maximum and minimum value (not by
+the number of bits).</p>
+<p>Pyrope automatically infers the maximum and minimum values for each numeric
+variable. If a variable width can not be inferred, the compiler generates a
+compilation error. A compilation error is generated if the destination
+variable has an assigned size smaller than the operand results.</p>
+<p>The programmer can specify the maximum number of bits, or the maximum value range.
+The programmer can not specify the exact number of bits because the compiler has
+the option to optimize the design.</p>
+<p>Pyrope code can set or access the bitwidth pass results for each variable.</p>
+<ul>
+<li><code>__max</code>: the maximum number</li>
+<li><code>__min</code>: the minimum number</li>
+<li><code>__sbits</code>: the number of bits to represent the value</li>
+<li><code>__ubits</code>: the number of bits. The variable must be always positive or a compile error.</li>
+</ul>
+<div class="highlight"><pre><span></span><code>var val:u8 // designer constraints a to be between 0 and 255
+val = 3    // val has 3 bits (0sb011 all the numbers are signed)
+
+val = 300  // compile error, &#39;300&#39; overflows the maximum allowed value of &#39;val&#39;
+
+val = 0x1F0@[0..&lt;val.__ubits] // explicitly select bits to not overflow
+assert val == 240
+
+wrap val = 0x1F0   // Drop bits from 0x1F0 to fit in maximum &#39;val&#39; allowed bits
+assert val == 240
+
+val = u8(0x1F0)    // same
+assert val == 0xF0
+</code></pre></div>
+<p>Pyrope leverages LiveHD bitwidth pass [stephenson_bitwidth] to compute the
+maximum and minimum value of each variable. For each operation, the maximum and
+minimum are computed. For control-flow divergences, the worst possible path is
+considered.</p>
+<div class="highlight"><pre><span></span><code>a = 3                      // max:3, min:3
+if b {
+  c = a+1                  // max:4, min:4
+}else{
+  c = a                    // max:3, min:3
+}
+e.__sbits = 4              // max:3, min:-4
+e = 3                      // max:3, min:3
+d = c                      // max:4, min:3
+if d==4 {
+  d = e + 1                // max:4, min:4
+}
+g = d                      // max:4, min:3
+h = c@[0,1]                // max:3, min:0
+</code></pre></div>
+<p>Bitwidth uses narrowing to converge (see
+<a href="10-internals.md/#type-synthesis">internals</a>). The GCD example does not specify
+the input/output size, but narrowing allows it to work without typecasts.  To
+understand, the comments show the max/min bitwidth computations.</p>
+<div class="highlight"><pre><span></span><code>if cmd? {
+  x,y = cmd     // x.max=cmd.a.max; x.min = 0 (uint) ; ....
+}elif x &gt; y {
+                // narrowing: x.min = y.min + 1 = 1
+                // narrowing: y.max = x.min - 1
+  x = x - y     // x.max = x.max - x.min = x.max - 1
+                // x.min = x.min - y.max = 1
+}else{          // x &lt;= y
+                // narrowing: x.max = y.min
+                // narrowing: y.min = x.min
+  y = y - x     // y.max = y.max - x.min = y.max
+                // y.min = y.min - x.max = 0
+}
+                // merging: x.max = x.max ; x.min = 0
+                // merging: y.max = y.max ; y.min = 0
+                // converged becauze x and y is same or smaller at beginning
+</code></pre></div>
+<p>The bitwidth pass may not converge to find a valid size even with narrowing.
+In this case, the programmer must insert a typecast or operation to constrain
+the bitwidth by typecasting. For example, this could work:</p>
+<div class="highlight"><pre><span></span><code>reg x,y
+if cmd? {
+  x,y = cmd
+}elif x &gt; y {
+  x = x - y
+}else{
+  y = y - x
+}
+wrap x:cmd.a = x  // use cmd.a type for x, and drop bits as needed
+y = cmd.b(y)  // typecast y to cmd.b type (this can add a mux)
+</code></pre></div>
+<h2 id="typecasting">Typecasting<a class="headerlink" href="#typecasting" title="Permanent link">&para;</a></h2>
+<p>Typecasting is the process of changing from one type to other. There are 2
+reserved keywords for typecasting (<code>saturate</code> and <code>wrap</code>), and an explicit
+bitcast.</p>
+<ul>
+<li>
+<p><code>saturate</code> keeps the maximum or minimum (negative integer) that fits on the
+  left-hand side.</p>
+</li>
+<li>
+<p><code>wrap</code> drops the bits that do not fit on the left-hand side. It performs sign
+  extension if needed.</p>
+</li>
+<li>
+<p><code>lhs@[] = rhs</code> bit casts the RHS to the LHS as long as both have explicit bit
+  sizes and the sizes are the same. Like the <code>tup@[]</code> operator in the RHS, the
+  bitwidth inference is disabled and explicit bitsizes are used to avoid
+  confusion.</p>
+</li>
+</ul>
+<p>In all the cases, there is no bitwidth of type inference between the right and
+left side of the assignment. The LHS variable will be immutable (<code>let</code>) if not
+defined before with a <code>var</code>. Also, in both cases, if the left-hand side is not
+a boolean or an integer with a explicit type, a compile error is generated.</p>
+<div class="highlight"><pre><span></span><code>var a:u32=100
+var b:u10
+var c:u5
+var d:u5
+
+b = a      // OK done automatically. No precision lost
+c = a      // compile error, &#39;100&#39; overflows the maximum allowed value of &#39;c&#39;
+wrap c = a // OK, same as c = a@[0..&lt;5] (Since 100 is 0b1100100, c==4)
+
+saturate c = a  // OK, c == 31
+c = 31
+d = c + 1 // compile error, &#39;32&#39; overflows the maximum allowed value of &#39;d&#39;
+
+wrap d = c + 1   // OK d == 0
+saturate d = c+1 // OK, d==31
+saturate d = c+1 // OK, d==31
+
+saturate x:boolean = c // same as x = c!=0
+
+var lhs:(x1:u8, x2:u12) // 9 + 13 bits in signed == 22bits
+lhs@[] = 0x1FF:u22
+assert lhs.x1 == 0xFF and lhs.x2==1
+</code></pre></div>
+<p>To convert between tuples, an explicit setter is needed unless the tuple fields
+names, order, and types match.</p>
+<div class="highlight"><pre><span></span><code>type at=(c:string,d:u32)
+type bt=(c:string,d:u100)
+
+type ct=(
+  ,var d:u32
+  ,var c:string
+) // different order
+type dt=(
+  ,var d:u32
+  ,var c:string
+  ,let set = proc (x:at)-&gt;(self) { self.d = x.d ; self.c = x.c }
+)
+
+var b:bt=(c=&quot;hello&quot;, d=10000)
+var a:at
+
+a = b // OK c is string, and 10000 fits in u32
+
+var c:ct
+c = a // compile error, different order
+
+var d:dt
+d = a // OK, call intitial to type cast
+</code></pre></div>
+<h2 id="traits-and-mixin">Traits and mixin<a class="headerlink" href="#traits-and-mixin" title="Permanent link">&para;</a></h2>
+<p>There is no object inheritance in Pyrope, but tuples allow to build mixin and
+composition with traits.</p>
+<p>A mixin is when an object or class can add methods and the parent object can
+access them. In several languages, there are different constructs to build them
+(E.g: an include inside a class in Ruby). Since Pyrope tuples are not
+immutable, new methods can be added like in mixin.</p>
+<div class="highlight"><pre><span></span><code>type Say_mixin = (
+  ,let say = fun(s) { puts s }
+)
+
+type Say_hi_mixin = (
+  ,let say_hi  = fun() {self.say(&quot;hi {}&quot;, self.name) }
+  ,let say_bye = fun() {self.say(&quot;bye {}&quot;, self.name) }
+)
+
+type User = (
+  ,var name:string
+  ,let set = proc(n:string)-&gt;(self) { self.name = n }
+)
+
+type Mixing_all = Say_mixin ++ Say_hi_mixin ++ User
+
+var a:Mixing_all(&quot;Julius Caesar&quot;)
+a.say_hi()
+</code></pre></div>
+<p>Mixin is very expressive by allowing redefining methods. If two tuples have
+the same field a tuple with the concatenated values will be created. This is
+likely an error with basic types but useful to handle explicit method overload.</p>
+<p>In a way, mixin just adds methods from two tuples to create a new tuple. In
+programming languages with object-oriented programming (OOP), there are many
+keywords (<code>virtual</code>, <code>final</code>, <code>override</code>, <code>static</code>...) to constrain how methods can be
+updated/changed. In Pyrope, the <code>let</code> and <code>var</code> keywords can be added to any tuple
+field. The <code>let</code> makes the entry immutable when applied to a method, it behaves like
+a <code>final</code> keyword in most languages.</p>
+<p>There are also two ways to concatenate tuples in Pyrope. <code>bun1 ++ bun2</code> and
+<code>(...bun1, ...bun2)</code>. The difference is that <code>++</code> concatenates and replaces any
+not <code>let</code> field. The <code>...</code> concatenates and but triggers a compile error if the
+same field appears twice.</p>
+<p>An issue with mixin is when more than one tuple has the <code>set</code> method. If the
+tuples are concatenated with <code>...</code> and error is triggered, if the tuples are
+concatenated with <code>++</code> the methods are overridden when declared with <code>var</code>.
+Neither is the expected solution.  A smaller issue with mixins is that
+<code>comptime assert X extends Y</code> should be inserted when implementing an
+interface.</p>
+<p>Without supporting OOP, but providing a more familiar abstract or trait
+interface, Pyrope provides the <code>extends</code> keyword. It checks that the new
+type extends the functionality undefined and allows to use of methods defined.
+The constructor (<code>set</code>) can call the parent constructor with the <code>super</code> keyword.</p>
+<p>This is effectively a mixin with checks that some methods should be
+implemented.</p>
+<div class="highlight"><pre><span></span><code>type Shape = (
+  ,name:string
+  ,area         :fun (self )-&gt;(:i32)     // defined but unimplemented 
+  ,increase_size:proc(x:i12)-&gt;(self)     // defined but unimplemented 
+  ,set          =proc(name )-&gt;(self) { self.name = name } // implemented, use =
+)
+
+type Circle extends Shape with (
+  ,set = proc()-&gt;(self) { super(&quot;circle&quot;) }
+  ,increase_size = proc(x:i12)-&gt;(self) { self.rad *= x }
+  ,rad:i32
+  ,area = fun(self) -&gt; (:i32) {
+     let pi = import(&quot;math&quot;).pi
+     ret pi * self.rad * self.rad
+  }
+)
+</code></pre></div>
+<p>Like most type checks, the <code>extends</code> can be translated for a <code>comptime
+assert</code>. An equivalent "Circle" functionality:</p>
+<div class="highlight"><pre><span></span><code>type Circle = (
+  ,rad:i32
+  ,name = &quot;Circle&quot;
+  ,area = fun() -&gt; (:i32) {
+     let pi = import(&quot;math&quot;).pi
+     ret pi * self.rad * self.rad
+  }
+  ,increase_size = proc(a:i12)-&gt;(self){ self.rad *= a }
+)
+comptime assert Circle does Shape
+</code></pre></div>
+<p>The <code>extends</code> differs from a tuple concatenation (<code>++</code> or <code>...tup</code>) by
+checking that the base methods are implemented. It can be seen as a syntax
+sugar for <code>...tup</code> and a compile time <code>does</code> type check.</p>
+<h2 id="instrospection">Instrospection<a class="headerlink" href="#instrospection" title="Permanent link">&para;</a></h2>
+<p>Instrospection is possible for tuples.</p>
+<div class="highlight"><pre><span></span><code>a = (b=1,c:u32=2)
+var b = a
+b.c=100
+
+assert a equals b
+assert a.size == 2
+assert a[&#39;b&#39;] == 1
+assert a[&#39;c&#39;] equals u32
+
+assert   a has &#39;c&#39;
+assert !(a has &#39;foo&#39;)
+
+assert a.__id == &#39;a&#39;
+assert a.0.__id == &#39;:0:b&#39; and a.b.__id == &#39;:0:b&#39;
+assert a.1.__id == &#39;:1:c&#39; and a.c.__id == &#39;:1:c&#39;
+</code></pre></div>
+<p>Function definitions allocate a tuple, which allows to introspect the
+function but not to change the functionality. Functions have 3 fields <code>inputs</code>,
+<code>outputs</code>, <code>where</code>. The <code>where</code> is a function that always returns true if unset
+at declaration.</p>
+<div class="highlight"><pre><span></span><code>let fu = fun(a,b=2) -&gt; (c) where a&gt;10 { c = a + b }
+assert fu.__inp equals (a,b)
+assert fu.__out equals (c)
+assert fu.__where(a=200) and !fu.__where(a=1)
+</code></pre></div>
+<p>This means that when ignoring named vs unnamed calls, overloading behaves like
+this:</p>
+<div class="highlight"><pre><span></span><code>let x = fn(args)
+
+let x = for i in fn { last i(args) when (i.__inp does :args) 
+                                    and (i.__out does :x   ) 
+                                    and (i.__where(args)   ) }
+</code></pre></div>
+<p>There are several uses for introspection, but for example, it is possible to build a
+function that returns a randomly mutated tuple.</p>
+<div class="highlight"><pre><span></span><code>randomize = debug fun(self)-&gt;(self) {
+  let rnd = import &quot;prp/rnd&quot;
+  for mut i in self {
+    if i equals :int {
+      i = rnd.between(i.__max,i.__min)
+    }elif i equals :boolean {
+      i = rnd.boolean()
+    }
+  }
+  ret self
+}
+
+let x = (a=1,b=true,c=&quot;hello&quot;)
+let y = x.randomize()
+
+assert x.a==1 and x.b==true and x.c==&quot;hello&quot;
+cover  y.a!=1
+cover  y.b!=true
+assert y.c==&quot;hello&quot;  // string is not supposed to mutate in randomize()
+</code></pre></div>
+<h2 id="global-variables">Global variables<a class="headerlink" href="#global-variables" title="Permanent link">&para;</a></h2>
+<p>There are no global variables or functions in Pyrope. Variable scope is
+restricted by code block <code>{ ... }</code> and/or the file. Each Pyrope file is a
+function, but they are only visible to the same directory/project Pyrope files.</p>
+<p>There are only two ways to access variables outside Pyrope file. The <code>import</code>
+statement allows referencing public lambdas from other files. The register
+declarations allow to assign an ID, and other files can access the register by
+"reference".</p>
+<h3 id="import">import<a class="headerlink" href="#import" title="Permanent link">&para;</a></h3>
+<p><code>import</code> keyword allows to access functions not defined in the current file.
+Any call to a function or tuple outside requires a prior <code>import</code> statement.</p>
+<div class="highlight"><pre><span></span><code>// file: src/my_fun.prp
+pub let fun1    = fun(a,b) { a+b }
+pub let fun2    = fun(a) {
+  pub let inside = fun() { ret 3 }
+  ret a
+}
+pub let another = fun(a) { ret a }
+
+pub let mytup = (
+  ,pub let call3 = fun() { puts &quot;call called&quot; }
+)
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>// file: src/user.prp
+a = import &quot;my_fun/*fun*&quot;
+a.fun1(a=1,b=2)         // OK
+a.another(a=1,2)        // compile error, &#39;another&#39; is not an imported function
+a.fun2.inside()         // compile error, `inside` is not in top scope variable
+
+let fun1 = import &quot;my_fun/fun1&quot;
+lec fun1, a.fun1
+
+x = import &quot;my_fun/mytup&quot;
+
+x.call3()                // prints call called
+</code></pre></div>
+<p>The <code>import</code> points to a file <a href="../06b-instantiation/#setup-code">setup code</a>
+list of pub variables or types. The setup code corresponds to the "top" scope
+in the imported file. The import statement can only be executed during the
+setup phase. The import allows for cyclic dependencies between files as long as
+there is no true cyclic dependency between variables. This means that "false"
+cyclic dependencies are allowed but not true ones.</p>
+<p>The import is delayed until the imported variable is used in the local file.
+There is no order guarantee between imported files, just that the code needed
+to compute the used imported variables is executed before.</p>
+<p>The import statement is a filename or path without the file extension.
+Directories named <code>code</code>, <code>src</code>, and <code>lib</code> are skipped. No need to add them in
+the path. <code>import</code> stops the search on the first hit. If no match happens, a
+compile error is generated.</p>
+<p><code>import</code> allows specialized libraries per subproject.  For example, xx/yy/zz can
+use a different library version than xx/bb/cc if the library is provided by yy,
+or use a default one from the xx directory.</p>
+<div class="highlight"><pre><span></span><code>a = import &quot;prj1/file1&quot;
+b = import &quot;file1&quot;        // import xxx_fun from file1 in the local project
+c = import &quot;file2&quot;        // import the functions from local file2
+d = import &quot;prj2/file3&quot;   // import the functions from project prj2 and file3
+</code></pre></div>
+<p>Many languages have a "using" or "import" or "include" command that includes
+all the imported functions/variables to the current scope. Pyrope does not
+allow that, but it is possible to use a mixin to add the imported functionality
+to a tuple.</p>
+<div class="highlight"><pre><span></span><code>b = import &quot;prp/Number&quot;
+a = import &quot;fancy/Number_mixin&quot;
+
+type Number = b ++ a // patch the default Number class
+
+var x:Number = 3
+</code></pre></div>
+<h3 id="register-reference">Register reference<a class="headerlink" href="#register-reference" title="Permanent link">&para;</a></h3>
+<p>Registers can be declared with a string that shares the same syntax as the
+import. Any register sharing the same file/ID match point to the same register.
+From a programmer's point of view resembles a pointer or reference to a
+register.</p>
+<div class="highlight"><pre><span></span><code>let do_increase = proc() {
+  reg counter(&quot;MY_COUNTER&quot;)
+
+  wrap counter:u32 = counter + 1
+}
+
+let do_debug = proc() {
+  reg counter(&quot;MY_COUNTER&quot;)
+  puts &quot;The counter value is {}&quot;, counter
+}
+</code></pre></div>
+<p>Verilog has a more flexible semantics with the Hierarchical Reference. It also
+allows to go through the module hierarchy and read/write the contents of any
+variable. Pyrope only allows you to reference registers. Verilog hierarchical
+reference is not popular for 2 main reasons: (1) It is considered "not nice" to
+bypass the module interface and touch an internal variable; (2) some tools do
+not support it as synthesizable; (3) the evaluation order is not clear because
+the execution order of the modules is not defined. </p>
+<p>Allowing only to update registers avoids the evaluation order problem. The
+updates go to the register <code>din</code> pin, and the references read the register <code>q</code>
+pin. The register references follow the model of single writer multiple reader.
+This means that only a single lambda can update the register, but many lambdas
+can read the register. This allows to be independent on the <code>lambda</code> evaluation
+order.</p>
+<p>The register reference uses instantiated registers. This means that if a lambda
+having a register is called in multiple places, only one can write, and the
+others are reading the update. It is useful to have configuration registers. In
+this case, multiple instances of the same register can have different values.
+As an illustrative example, a UART can have a register and the controller can
+set a different value for each uart base register. This can be achieved using
+the <code>instance=string</code> instead of the default <code>name=string</code>.</p>
+<div class="highlight"><pre><span></span><code>// file remote.prp
+reg uart_addr(&quot;MY_ADDR&quot;)
+assert 0x400 &gt; uart_addr &gt;= 0x300
+
+// file local.prp
+pub let setup_xx = proc() {
+  reg xx(instance=&quot;MY_ADDR&quot;) // creates a var that drives remote uart_addr
+  for mut i,index in xx {
+    i = 0x300+index*0x10     //  sets uart_addr to 0x300, 0x310, 0x320...
+  }
+}
+</code></pre></div>
+<p>Maybe the best way to understand the register reference (regref for short) is
+to see the differences with the <code>import</code>:</p>
+<ul>
+<li>Instantiation vs File hierarchy</li>
+<li><code>regref</code> finds matches across instantiated registers.</li>
+<li><code>import</code> traverses the file/directory hierarchy to find one matche.</li>
+<li>Success vs Failure</li>
+<li><code>regref</code> keeps going to find all the matches, and it is possible to have a zero matches</li>
+<li><code>import</code> stops at the first match, and a compile error is generated if there is no match.</li>
+</ul>
+<p>When <code>instance</code> is used, there can be many matches. To have a deterministic
+result, given a hierarchy the order should be fixed, but changing the hierarchy
+can provide a new order. There is no guarantee of tuple order across multiple
+instances.</p>
+<h3 id="mocking-library">Mocking library<a class="headerlink" href="#mocking-library" title="Permanent link">&para;</a></h3>
+<p>One possible use of the register reference is to create a "mocking" library. A
+mocking library instantiates a large design but forces some subblocks to
+produce some results for testing. The challenge is that it needs undriven
+registers. During testing, the <code>peek</code>/<code>poke</code> is more flexible and it can
+overwrite an existing value. The peek/poke use the same reference as <code>import</code>
+or register reference.</p>
+<div class="highlight"><pre><span></span><code>type bpred = ( // complex predictor
+  ,pub let taken = fun(){ ret self.some_table[som_var] &gt;=0 }
+)
+
+test &quot;mocking taken branches&quot; {
+  poke &quot;bpred_file/taken&quot;, true
+
+  var l = core.fetch.predict(0xFFF)
+}
+</code></pre></div>
+<h2 id="operator-overloading">Operator overloading<a class="headerlink" href="#operator-overloading" title="Permanent link">&para;</a></h2>
+<p>There is no operator overload in Pyrope. <code>+</code> always adds Numbers, <code>++</code>
+always concatenates a tuple or a String, <code>[]</code> indexes a tuple.</p>
+<h2 id="properties-gettersetter">Properties: Getter/Setter<a class="headerlink" href="#properties-gettersetter" title="Permanent link">&para;</a></h2>
+<p>The getter/setter allow to have properties for each variable. The setter
+is also the "constructor" for the object.</p>
+<div class="highlight"><pre><span></span><code>var f1:XXX = (3,2)
+var f2:XXX = XXX(3,2)
+var f3:XXX
+
+f3 = (3,2)
+assert f3 == f2 == f1
+</code></pre></div>
+<p>Encapsulation can be achieved with explicit methods (initialize/setXXX/getXXX).
+This creates problems with overloading or exposing variables. It is possible to
+create a tuple where the initialization is the setter (<code>set</code>) and the default
+method is the getter (<code>get</code>).</p>
+<div class="highlight"><pre><span></span><code>type some_obj = (
+  ,a1:string
+  ,pub a2 = (
+    ,_val:u32                                // hidden field
+
+    ,pub var get=fun(){ self._val + 100 }    // getter
+    ,set=proc(x)-&gt;(self){ self._val = x+1 }  // setter
+  )
+  ,pub var set = proc(a,b)-&gt;(self){          // setter
+    self.a1      = a
+    self.a2._val = b
+  }
+)
+
+var x:some_obj = (&quot;hello&quot;, 3)
+
+assert x.a1 == &quot;hello&quot;
+assert x.a2 == 103
+x.a2 = 5
+assert x.a2.get == 106
+</code></pre></div>
+<p>The getter method can be <a href="../06-functions/#Overloading">overloaded</a>. This allows
+to customize by return type:</p>
+<div class="highlight"><pre><span></span><code>type showcase = (
+  ,pub var v:int
+  ,pub var get ++= fun()-&gt;(:string) where self.i&gt;100 {
+    ret &quot;this is a big number&quot; ++ string(v)
+  }
+  ,pub var get ++= fun()-&gt;(:int) {
+    ret v
+  }
+)
+
+var s:showcase
+s.v = 3
+let foo:string = s // compile error, no matching getter
+s.v = 100
+
+let foo:string = s // compile error, no matching getter
+</code></pre></div>
+<p>Like all the lambdas, the getter method can also be overloaded on the return type.
+In this case, it allows building typecast per type.</p>
+<div class="highlight"><pre><span></span><code>type my_obj = (
+  ,val:u32
+  ,pub var get 
+    = fun()-&gt;(:string ){ ret string(self.val) }
+   ++ fun()-&gt;(:boolean){ ret self.val != 0    }
+   ++ fun()-&gt;(:int    ){ ret self.val         }
+)
+</code></pre></div>
+<h2 id="compare">Compare<a class="headerlink" href="#compare" title="Permanent link">&para;</a></h2>
+<p>The comparator operations (<code>==</code>, <code>!=</code>, <code>&lt;=</code>,...) need to be overloaded for most
+objects. Pyrope has the <code>lt</code> and <code>eq</code> methods to build all the other
+comparators. When non-provided the <code>lt</code> (Less Than) is a compile error, and the
+<code>eq</code> (Equal) compares that all the tuple fields are equal.</p>
+<div class="highlight"><pre><span></span><code>type t=(
+  ,pub var v
+  ,pub let set = proc()-&gt;(self){ self.v = a }
+  ,pub let lt = fun(other)-&gt;(:boolean){ self.v  &lt; other.v }
+  ,pub let eq = fun(other)          { self.v == other.v } // infer ret type
+)
+
+var m1:t = 10
+var m2:t = 4
+assert m1 &lt; m2 and !(m1==m2)
+assert m1 &lt;= m2 and m1 != m2 and m2 &gt; m1 and m2 &gt;= m1
+</code></pre></div>
+<p>It is also possible to provide a custom <code>ge</code> (Greater Than). The <code>ge</code> is redundant
+with the <code>lt</code> and <code>eq</code> (<code>(a &gt;= b) == (a==b or b&lt;a)</code>) but it allows to have more
+efficient implemetations:</p>
+<ul>
+<li><code>a == b</code> is <code>__eq(a,b)</code></li>
+<li><code>a != b</code> is <code>__not(__eq(a,b))</code></li>
+<li><code>a  &lt; b</code> is <code>__lt(a,b)</code></li>
+<li><code>a  &lt; b</code> is <code>__lt(b,a)</code></li>
+<li><code>a &lt;= b</code> is <code>__lt(a,b) | __eq(a,b)</code> (without <code>ge</code>) or <code>__ge(b,a)</code></li>
+<li><code>a &gt;= b</code> is <code>__lt(b,a) | __eq(a,b)</code> (without <code>ge</code>) or <code>__ge(a,b)</code></li>
+</ul>
+<h2 id="non-pyrope-c-calls">Non-Pyrope (C++) calls<a class="headerlink" href="#non-pyrope-c-calls" title="Permanent link">&para;</a></h2>
+<p>Calling C++ or external code is still fully synthesizable if the code is
+available at compile time. An example could be calling a C++ API to read a json
+file during the setup phase to decide configuration parameters.</p>
+<div class="highlight"><pre><span></span><code>let cfg = __read_json()
+
+pub let ext = if cfg.foo.bar == 3 {
+   foo
+}else{
+   bar
+}
+</code></pre></div>
+<p>Non-Pyrope calls have the same procedure/function distinction and use the same
+Pyrope lambda definition but they do not have the <code>where</code> clause.</p>
+<p>If no type is provided, a C++ call assumes a <code>proc(...inp)-&gt;(...out)</code> type is
+can pass many inputs/outputs and has permission to mutate values. Any call to a
+method with two underscores <code>__</code> is either a basic gate or a C++ function.</p>
+<div class="highlight"><pre><span></span><code>type __my_typed_cpp = fun(a,b)-&gt;(e)
+</code></pre></div>
+<p>Type defining non-Pyrope code is good to catch errors and also because declaring
+<code>function</code> allows to handle several cases of circular dependencies not possible with <code>procedure</code> <a href="../10-internals/">import section</a></p>
+
+              
+            </article>
+          </div>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../06c-pipelining/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Pipelining" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Pipelining
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../07b-structtype/" class="md-footer__link md-footer__link--next" aria-label="Next: Structural Typing" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Structural Typing
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["search.suggest", "navigation.sections", "navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.2a1c317c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a6c66575.min.js"></script>
+      
+        <script src="../../javascripts/config.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,1937 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-8.2.15">
+    
+    
+      
+        <title>Internals - LiveHD and Pyrope</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.c382b1dc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.cc9b2e1e.min.css">
+        
+      
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CFira+Code:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Fira Code"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/table.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="" data-md-color-accent="">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#internals" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LiveHD and Pyrope" class="md-header__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LiveHD and Pyrope
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Internals
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3Z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6zm0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4zM7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LiveHD and Pyrope" class="md-nav__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    LiveHD and Pyrope
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        LiveHD and Pyrope
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+      
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_2">
+          Livehd
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Livehd" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Livehd
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/00-intro/" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/01-install/" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/02-usage/" class="md-nav__link">
+        Usage
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/04-api/" class="md-nav__link">
+        C++ API
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/05-lgraph/" class="md-nav__link">
+        LGraph
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/06-lnast/" class="md-nav__link">
+        LNAST
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/07-mmapstr/" class="md-nav__link">
+        mmap_lib::str
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10-bazel/" class="md-nav__link">
+        Bazel build
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10b-3rdparty/" class="md-nav__link">
+        3rd Party
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/11-pass/" class="md-nav__link">
+        Creating a Pass
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/12-github/" class="md-nav__link">
+        GitHub Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/13-style/" class="md-nav__link">
+        Coding Style
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
+      
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          Pyrope
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Pyrope" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Pyrope
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00-hwdesign/" class="md-nav__link">
+        Hardware Design
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-introduction/" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-basics/" class="md-nav__link">
+        Basic syntax
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-bundle/" class="md-nav__link">
+        Tuples
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-variables/" class="md-nav__link">
+        Variables and types
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-assert/" class="md-nav__link">
+        Assertions
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05b-statements/" class="md-nav__link">
+        Statements
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-functions/" class="md-nav__link">
+        Lambdas
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06b-instantiation/" class="md-nav__link">
+        Instantiation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06c-pipelining/" class="md-nav__link">
+        Pipelining
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-typesystem/" class="md-nav__link">
+        Type system
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07b-structtype/" class="md-nav__link">
+        Structural Typing
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-memories/" class="md-nav__link">
+        Memories
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-stdlib/" class="md-nav__link">
+        Pyrope std lib
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Internals
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Internals
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#determinism" class="md-nav__link">
+    Determinism
+  </a>
+  
+    <nav class="md-nav" aria-label="Determinism">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#import" class="md-nav__link">
+    Import
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-reference" class="md-nav__link">
+    Register Reference
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dealing-with-unknowns" class="md-nav__link">
+    Dealing with unknowns
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#assume-directive" class="md-nav__link">
+    Assume directive
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#registers-and-memories" class="md-nav__link">
+    Registers and Memories
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lnast-optimization" class="md-nav__link">
+    LNAST optimization
+  </a>
+  
+    <nav class="md-nav" aria-label="LNAST optimization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#type-synthesis" class="md-nav__link">
+    Type synthesis
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#programming-warts" class="md-nav__link">
+    Programming Warts
+  </a>
+  
+    <nav class="md-nav" aria-label="Programming Warts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#shadowing" class="md-nav__link">
+    Shadowing
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#closures" class="md-nav__link">
+    Closures
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lambda-calls" class="md-nav__link">
+    Lambda calls
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#always-blocks" class="md-nav__link">
+    always blocks
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unknowns" class="md-nav__link">
+    Unknowns
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#for-loop" class="md-nav__link">
+    for loop
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bit-order" class="md-nav__link">
+    Bit order
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#initialization" class="md-nav__link">
+    Initialization
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unexpected-calls" class="md-nav__link">
+    Unexpected calls
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#if-is-an-expression" class="md-nav__link">
+    if is an expression
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#legal-but-weird" class="md-nav__link">
+    Legal but weird
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#return-tuple" class="md-nav__link">
+    Return tuple
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../11-deprecated/" class="md-nav__link">
+        Deprecated or Future
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#determinism" class="md-nav__link">
+    Determinism
+  </a>
+  
+    <nav class="md-nav" aria-label="Determinism">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#import" class="md-nav__link">
+    Import
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#register-reference" class="md-nav__link">
+    Register Reference
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dealing-with-unknowns" class="md-nav__link">
+    Dealing with unknowns
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#assume-directive" class="md-nav__link">
+    Assume directive
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#registers-and-memories" class="md-nav__link">
+    Registers and Memories
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lnast-optimization" class="md-nav__link">
+    LNAST optimization
+  </a>
+  
+    <nav class="md-nav" aria-label="LNAST optimization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#type-synthesis" class="md-nav__link">
+    Type synthesis
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#programming-warts" class="md-nav__link">
+    Programming Warts
+  </a>
+  
+    <nav class="md-nav" aria-label="Programming Warts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#shadowing" class="md-nav__link">
+    Shadowing
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#closures" class="md-nav__link">
+    Closures
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lambda-calls" class="md-nav__link">
+    Lambda calls
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#always-blocks" class="md-nav__link">
+    always blocks
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unknowns" class="md-nav__link">
+    Unknowns
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#for-loop" class="md-nav__link">
+    for loop
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bit-order" class="md-nav__link">
+    Bit order
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#initialization" class="md-nav__link">
+    Initialization
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unexpected-calls" class="md-nav__link">
+    Unexpected calls
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#if-is-an-expression" class="md-nav__link">
+    if is an expression
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#legal-but-weird" class="md-nav__link">
+    Legal but weird
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#return-tuple" class="md-nav__link">
+    Return tuple
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+  <a href="https://github.com/masc-ucsc/docs/edit/main/docs/pyrope/10-internals.md" title="Edit this page" class="md-content__button md-icon">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
+  </a>
+
+
+
+<h1 id="internals">Internals<a class="headerlink" href="#internals" title="Permanent link">&para;</a></h1>
+<p>This section of the document provides a series of disconnected topics about the
+compiler internals that affects semantics.</p>
+<h2 id="determinism">Determinism<a class="headerlink" href="#determinism" title="Permanent link">&para;</a></h2>
+<p>Pyrope is designed to be deterministic. This means that the result is always
+the same for synthesis. Simulation is also deterministic unless the random seed
+is changed or non-Pyrope (C++) calls to <code>procedures</code> add non-determinism.</p>
+<p>Expressions are deterministic because <code>procedures</code> have an explicit order in
+Pyrope. Only <code>functions</code> have a non-explicit order, but <code>functions</code> are pure
+without side-effects. <code>puts</code> can be called non-deterministically but the result
+is buffered and ordered at the end of the cycle to be deterministic.</p>
+<p>The only source of non-determinism is non-Pyrope (C++) calls from <code>procedures</code>
+executed at different pipeline stages. The pipeline stages could be executed in
+any order, it is just that the same order must be repeated deterministically
+during simulation. The non-Pyrope calls must be <code>comptime</code> to affect
+synthesis. So the synthesis is deterministic, but the testing like cosimulation
+may not.</p>
+<p>The same non-Pyrope calls also represent a problem for the compiler
+optimizations. During the setup phase, several non-Pyrope can exist like
+reading the configuration file. If the non-Pyrope calls are not deterministic,
+the result could be a non-deterministic setup phase.</p>
+<p>The idea is that the non-Pyrope API is also divided in 2 categories:
+<code>functions</code> and <code>procedures</code>. A <code>function</code> can be called many times without
+non-Pyrope side-effects. Pyrope guarantees that the <code>procedures</code> are called in
+the same order given a source code, but does not guarantee the call order. This
+guarantee order slowdowns simulation and elaboration. Whenever possible, use
+<code>functions</code> instead of <code>procedures</code> for compilation speed reasons.</p>
+<h3 id="import">Import<a class="headerlink" href="#import" title="Permanent link">&para;</a></h3>
+<p><code>import</code> statement allows for circular dependencies of files, but not of
+variables. This means that if there is no dependency (<code>a imports b</code>), just
+running <code>a</code> before <code>b</code> is enough. If there is a dependency (<code>a imports b</code> and <code>b
+imports a</code>) a multiple compiler pass is proposed, but other solutions are
+allowed as long as it can handle not true circular dependences.</p>
+<p>The solution to this problem is to pick an order, and import at least three
+times the files involved in the cyclic dependency. The files involved in the
+cylic dependency are alphabetically sorted and called three times: (1) <code>a
+import b</code>, then <code>b import a</code>; (2) <code>a import b</code> and <code>b import a</code>; (3) <code>a import
+b</code> and <code>b import a</code>. Only the last import chain can perform procedure <code>proc</code>
+calls (Pyrope and non-Pyrope) and puts/debug statements.</p>
+<p>If the result of the last two imports has the same variables, the import has
+"converged", otherwise a compile error is generated. This multi-pass solution
+does not address all the false paths, but the common case of having two sets of
+independent variables. This should address most of the Pyrope cases because
+there is no concept of "reference/pointer" which is a common source of
+dependences.</p>
+<h3 id="register-reference">Register Reference<a class="headerlink" href="#register-reference" title="Permanent link">&para;</a></h3>
+<p>Register reference can create a dependence update between files, but this is
+not a source of non-determinism because only one file can perform updates for
+the register <code>din</code> pin, and all the updated register can only read the register
+<code>q</code> pin.</p>
+<h2 id="dealing-with-unknowns">Dealing with unknowns<a class="headerlink" href="#dealing-with-unknowns" title="Permanent link">&para;</a></h2>
+<p>Pyrope tries to be compatible with synthesizable Verilog, as such it must
+handle/understand unknowns. Compatible does not mean that it will generate the
+same <code>?</code> bits as Verilog, but that it will not generate an unknown when Verilog
+has known. It is allowed to generate a <code>0</code> or a <code>1</code> when the Verilog logical
+equivalence check generates an <code>?</code>.</p>
+<p>The previous definition of compatibility could allow the Pyrope compiler to
+randomly replace all the unknowns by <code>0</code> or <code>1</code> when doing internal compiler
+passes. It could even replace all the unknowns with <code>0</code> all the time, or even
+pick the representation that generates the most efficient code.</p>
+<p>The issue is that the most likely source of having unknowns in operations is
+either during reset or due to a bug on how to handle non initialized structures
+like memories.</p>
+<p>The compiler internal transformations use a 3-state logic that includes <code>0</code>,
+<code>1</code>, and <code>?</code> for each bit. Any register or memory initialized with unknowns
+will generate a Verilog with the same initialization.</p>
+<p>The compiler internals only needs to deal with unknowns during the copy
+propagation or peephole optimizations. The compile goes through 2 phases: LNAST
+and Lgraph.</p>
+<p>In the compiler passes, we have the following semantics:</p>
+<ul>
+<li>
+<p>In Pyrope, there are 3 array-like structures: non-persistent arrays, register
+  arrays, and custom RTL memories. Verilog and CHISEL memories get translated
+  to custom RTL memories. Non-persistent Verilog/CHISEL get translated to arrays.
+  In Verilog, the semantics is that an out of bounds access generates unknowns. In
+  CHISEL, the <code>Vec</code> sematic is that an out of bound access uses the first index
+  of the array. A CHISEL out of bound memory is an unknown like in Verilog. These
+  are the semantics applied by the compiler optimization/transformations:</p>
+<ul>
+<li>
+<p>Custom RTL memories do not allow value propagation across the array, only
+  across non-persistent arrays, or register arrays explicitly marked with
+  <code>retime=true</code>.</p>
+</li>
+<li>
+<p>An out of bound RTL address drops the unused index bits. For non-power of
+  two arrays, out of bounds access triggers a compile error. The code must
+  be fixed to avoid access. An <code>if addr &lt; mem_size { ... mem[addr] ... }</code>
+  tends to be enough. This is to guarantee that passes like Verilog and
+  CHISEL have the same semantics, and trigger likely bugs in Pyrope code.</p>
+</li>
+<li>
+<p>An index with unknowns does not perform value propagation.</p>
+</li>
+</ul>
+</li>
+<li>
+<p>Shifts, additions and substractions propagate unknowns at computation. E.g:
+  <code>0b11?0 + 0b1</code> is <code>0b11?1</code>, <code>0b1?0 &gt;&gt; 1</code> is <code>0b1?</code>.</p>
+</li>
+<li>
+<p>Other arithmetic are more conservative. When an input is unknown, the result
+  is unknown only respecting the sign when possible. E.g: <code>0b1?0? * -1</code> is
+  <code>0sb1?</code>.</p>
+</li>
+<li>
+<p>Logic operations behave like Verilog. <code>0b000111??? | 0b01?01?01?</code> is
+  <code>0b01?111?1?</code>.</p>
+</li>
+<li>
+<p>Equality comparisons (<code>==</code> and <code>!=</code>) use unknowns, this means that at compile
+  time <code>0b1? != 0b10</code>. Comparisons is consistent with the equivalent logic
+  operations <code>a == b</code> is the same as <code>(a ^ b) == -1</code>.</p>
+</li>
+<li>
+<p>Other comparisons (<code>&lt;=</code>, <code>&lt;</code>, <code>&gt;</code>, <code>&gt;=</code>) return true if the comparison is
+  true for each possible unknown bit.</p>
+</li>
+<li>
+<p><code>match</code> statement and <code>unique if</code> will trigger a compile error if the unknown
+  semantics during compiler passes can trigger 2 options simultaneously. The
+  solution is to change to a sequence of <code>ifs</code> or change the code to guarantee
+  no unknowns.</p>
+</li>
+<li>
+<p><code>if</code> statement without <code>unique</code> logical expressions that have an unknown
+  (single bit) are a source of confusion. In Verilog, it depends on the
+  compiler options. A classic compiler will generate <code>?</code> in all the updated
+  variables.  A Tmerge option will propagate <code>?</code> only if both sides can
+  generate a different value. The LNAST optimization pass will behave like the
+  Tmerge when the if/mux control has unknowns:</p>
+<ul>
+<li>
+<p>If all the paths have the same constant value, the <code>if</code> is useless and
+  the correct value will be used. </p>
+</li>
+<li>
+<p>If any path has a different constant value, the generated result bits will
+  have unknowns if the source bits are different or unknown. </p>
+</li>
+<li>
+<p>If any paths are not constant, there is no LNAST optimization. Further
+  Lgraph optimizations could optimize if all the mux generated values are
+  proved to be the same.</p>
+</li>
+</ul>
+</li>
+<li>
+<p>The <code>for</code> loops are expanded, if the expression in the <code>for</code> is unknown, a
+  compile error is generated.</p>
+</li>
+<li>
+<p>The <code>while</code> loops are also expanded, if the condition on the <code>while</code> loop has
+  unknowns a compile error is generated.</p>
+</li>
+</ul>
+<p>At the end of the LNAST generation, a Lgraph is created. Only the registers and
+memory initialization are allowed to have unknowns in Lgraph.  Any invalid
+(<code>nil</code>) to an outout or register triggers a compile error. Any unknown constant
+bit is translated to zero (<code>0b10?</code> becomes <code>0b100</code>). LGraph does not have
+"unknowns" outside the register/memories.</p>
+<p>As a result of these translations, the generated simulator may have to deal
+with unknowns, but only for arrays and memories explicitly non initialized
+contents. The semantics on the generated simulator are similar to CHISEL, any
+unknowns are randomly translated to 0 or 1 at initialization.</p>
+<h2 id="assume-directive">Assume directive<a class="headerlink" href="#assume-directive" title="Permanent link">&para;</a></h2>
+<p>The <code>assume</code> directive is like an <code>assert</code> but it also allows compiler optimizations.
+In a way, it is a safer version of Verilog <code>?</code>.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Verilog x-optimization</label><label for="__tabbed_1_2">Pyrope <code>match</code></label><label for="__tabbed_1_3">Generated Logic 1 bit f</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="k">always_comb</span><span class="w"> </span><span class="k">begin</span><span class="w"> </span><span class="c1">// one hot mux</span>
+<span class="w">  </span><span class="k">case</span><span class="w"> </span><span class="p">(</span><span class="n">sel</span><span class="p">)</span><span class="w"></span>
+<span class="w">    </span><span class="mh">3</span><span class="err">’</span><span class="n">b001</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">f</span><span class="o">=</span><span class="n">i0</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="mh">3</span><span class="err">’</span><span class="n">b010</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">f</span><span class="o">=</span><span class="n">i1</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="mh">3</span><span class="err">’</span><span class="n">b100</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">f</span><span class="o">=</span><span class="n">i2</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">default</span><span class="o">:</span><span class="w"> </span><span class="n">f</span><span class="o">=</span><span class="mh">2</span><span class="err">’</span><span class="n">b</span><span class="o">??</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">endcase</span><span class="w"></span>
+<span class="k">end</span><span class="w"></span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>assume sel==1 or sel==2 or sel==4 // not needed. match sets it
+match sel {
+  == 0b001 { f = i0 }
+  == 0b010 { f = i2 }
+  == 0b100 { f = i3 }
+}
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>f = (sel[0] &amp; i0)
+  | (sel[1] &amp; i1)
+  | (sel[2] &amp; i2)
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>Assume allows more freedom, without dangerous Verilog x-optimizations:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Bad Verilog x-optimization</label><label for="__tabbed_2_2">Pyrope assume</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mh">0</span><span class="p">)</span><span class="w"> </span><span class="k">begin</span><span class="w"></span>
+<span class="w">   </span><span class="n">assert</span><span class="p">(</span><span class="n">false</span><span class="p">);</span><span class="w"></span>
+<span class="w">   </span><span class="n">out</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">&#39;</span><span class="o">?</span><span class="p">;</span><span class="w"></span>
+<span class="k">end</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="mh">1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">a</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mh">1</span><span class="w"> </span><span class="k">begin</span><span class="w"> </span><span class="c1">// always false</span>
+<span class="w">   </span><span class="n">out</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">1</span><span class="p">;</span><span class="w"></span>
+<span class="k">end</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">begin</span><span class="w"></span>
+<span class="w">   </span><span class="n">out</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">3</span><span class="p">;</span><span class="w"></span>
+<span class="k">end</span><span class="w"></span>
+
+<span class="n">array</span><span class="p">[</span><span class="mh">3</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">&#39;</span><span class="o">?</span><span class="p">;</span><span class="w"> </span><span class="c1">// entry 3 will not be used</span>
+<span class="c1">// array = (1,2,3,&#39;?,5,6,7,8)</span>
+<span class="n">res</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">array</span><span class="p">[</span><span class="n">b</span><span class="p">]</span><span class="w"></span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>assume a != 0
+
+
+if (1 + a) != 1 { // always false
+  out = 1
+}else{
+  out = 3
+}
+
+assume b != 3 
+// array = (1,2,3,4,5,6,7,8)
+res = array[b]
+</code></pre></div>
+</div>
+</div>
+</div>
+<h2 id="registers-and-memories">Registers and Memories<a class="headerlink" href="#registers-and-memories" title="Permanent link">&para;</a></h2>
+<p>Values stored in registers (flop or latches) and memories (synchronous or
+asynchronous) can not be used in compiler optimization passes. The reason is that
+a scan chain is allowed to replace the values.</p>
+<p>The <code>retime</code> directive indicates that the register/memory can be replicated and
+used for optimization. Copy values can propagate through <code>retime</code>
+register/memories.</p>
+<p>A register or memory without explicit <code>retime=true</code> can only be optimized away
+if there is no read AND no write to the register. Even just having writes the
+register is preserved because it can be used to read values with the
+scan-chain.</p>
+<h2 id="lnast-optimization">LNAST optimization<a class="headerlink" href="#lnast-optimization" title="Permanent link">&para;</a></h2>
+<p>The compiler has three IR levels: The high level is the parse AST, the
+mid-level is the LNAST, and the low level is the Lgraph. This section explains
+the main steps in the LNAST optimizations/transformations before performing
+type synthesis and generating the lower level Lgraph. This is a minimum of
+optimizations without them several type conflicts would be affected.</p>
+<p>Unlike the parse AST, the LNAST nodes are guaranteed to be in topological
+order. This means that a single pass that visits the children first (deep
+first) is sufficient.</p>
+<p>The work can be performed as a single "global" topographical pass starting from
+the root/top, where each LNAST node performs these operations during traversal
+depending on the LNAST node:</p>
+<ul>
+<li>
+<p>If the node allows, perform these node input optimization first:</p>
+<ul>
+<li>
+<p>constant folding for existing node, also be performed as instruction
+  combining proceeds</p>
+</li>
+<li>
+<p>instruction combining from sources only for same type but not beyond 128
+  n-ary nodes. This step subsumes constant propagation and copy
+  propagation. E.g: <code>a+(x-3)+1</code> becomes <code>a+x-3+1</code></p>
+</li>
+<li>
+<p>create a canonical order by sorting the inputs by name/constant. E.g: <code>+
+  2 a b</code>. This simplifies the following steps but it is not needed for
+  semantics. Most commutative gates (<code>add/sub/and/or/...</code>) will have a
+  single constant as a result.</p>
+</li>
+<li>
+<p>trivial simplification with constants for existing node, also performed
+  as instruction combining proceeds. E.g.: <code>a+0 == a</code>, <code>a or true
+  == true</code> ... </p>
+</li>
+<li>
+<p>trivial identity simplification for existing node, also performed as
+  instruction combining proceeds. E.g: <code>a^a == a</code>, <code>a-a=0</code> ... </p>
+</li>
+</ul>
+</li>
+<li>
+<p>If the node is a <code>comptime</code> trigger a compile error unless all the inputs are
+  constant</p>
+<ul>
+<li><code>comptime asserts</code> should satisfy the condition or a compile error is
+  generated</li>
+</ul>
+</li>
+<li>
+<p>If the node is a loop (<code>for</code>/<code>while</code>) that has at least one iteration expand
+  the loop. This is an iterative process because the loop exit condition may
+  depend on the loop body or functions called inside. After the loop
+  expansions, no <code>for</code>, <code>while</code>, <code>break</code>, <code>last</code>, <code>continue</code>, <code>cont</code> statement
+  exists.</p>
+</li>
+<li>
+<p>If the node is a function call, iterate over the possible polymorphic calls.
+  Call the first call that is valid (input types). Call the function and pass
+  all the input constants needed. This requires specializing the function
+  by input constants and types. If no call matches a valid type trigger a
+  compile error</p>
+</li>
+<li>
+<p>Delete unreachable statements (<code>if false { delete his }</code>, <code>delete this when false</code>, ...)</p>
+</li>
+<li>
+<p>Compute these steps that may be needed in future steps:</p>
+<ul>
+<li>
+<p>Perform the "Mark" phase typical in dead-code-elimination (DCE) so that
+  dead nodes are not generated when creating the Lgraph.</p>
+</li>
+<li>
+<p>Update the tuple field in the Symbol Table</p>
+</li>
+<li>
+<p>Track the array accesses for memory/array Lgraph generation</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="type-synthesis">Type synthesis<a class="headerlink" href="#type-synthesis" title="Permanent link">&para;</a></h3>
+<p>The type synthesis and check are performed during the LNAST pass. Pyrope uses a
+structural type system with global type inference. </p>
+<p>The type inference should be performed as the same time as the LNAST
+optimization traverses the tree. It can not be a separate pass because there
+can be interactions between the LNAST optimization and the Type synthesis.
+These are the additional checks performed for type synthesis:</p>
+<ul>
+<li>
+<p>If the node does type checks (<code>equals</code>, <code>does</code>) compute the outcome and
+  perform copy propagation. The result of this step is that the compiler is
+  effectively doing flow-type inference. All the types must be resolved before.
+  If the <code>equals</code>/<code>does</code> was in a <code>if</code> condition, the control is decided at
+  compile time.</p>
+</li>
+<li>
+<p>If the node reads bitwidth, replace the node with the computer Bitwidth value
+  (max, min, ubits, and/or sbits)</p>
+<ul>
+<li>Compute the max/min for the output[s] using the bitwidth algorithm.
+  Update the symbol table with the range. This is only needed because some
+  code like polymorphism functions can read the bits.</li>
+</ul>
+</li>
+<li>
+<p>If the node is a conditional (<code>if</code>/<code>match</code>), the pass performs narrowing<sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup>.</p>
+<ul>
+<li>
+<p>When the expression has these possible syntax <code>v &gt;= y</code>, <code>v &gt;
+  y</code> or the reciprocals, restrict the Bitwidth. E.g: in the <code>v &lt; y</code>
+  restricts the <code>v.max = y.min-1 ; y.min = v.min + 1</code></p>
+</li>
+<li>
+<p>When the expression is an equality format <code>eq [and eq]*</code> or <code>eq [or
+  eq]*</code> like <code>v1 == z1 and v2 != z2</code>, create a <code>v1=z1</code> and <code>v2=z2</code> in the
+  corresponding path. This will help bitwidth and copy propagation.
+  Complicated mixes of and/or have no path optimization</p>
+</li>
+<li>
+<p>When the expression is a single variable <code>a</code> or <code>!a</code>, set the variable
+  <code>true</code> and <code>false</code> in both paths</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>No previous transformation could break the type checks. This means that the
+copy propagation, and final lgraph translation the type checks are respected.</p>
+<ul>
+<li>
+<p>All the entries on the comparator have the same type (<code>LHS equals RHS</code>)</p>
+</li>
+<li>
+<p>Left side assignments respect the assigned type (<code>LHS does RHS</code>)</p>
+</li>
+<li>
+<p>Any explicit type on any expression should respect the type (<code>var does type</code>)</p>
+</li>
+</ul>
+<p>The previous algorithm describes the semantics, the implementation may be
+different.  For example, to parallelize the algorithm, each LNAST tree can be
+processed locally, and then a global top pass is performed.</p>
+<h2 id="programming-warts">Programming Warts<a class="headerlink" href="#programming-warts" title="Permanent link">&para;</a></h2>
+<p>In programming languages, warts are small code fragments that have unexpected
+or not great behavior. Every language has its warts. This section tries to list
+the Pyrope main ones to address and learn more about the language.</p>
+<h3 id="shadowing">Shadowing<a class="headerlink" href="#shadowing" title="Permanent link">&para;</a></h3>
+<p>Pyrope does not allow shadowing, but you can still have it with tuples</p>
+<div class="highlight"><pre><span></span><code>let f1 = fun() { 1 }
+
+let tup = (
+  ,let f1 = fun() { 2 }
+
+  ,let code = fun() {
+     assert self.f1() == 2
+     assert f1() == 1
+  }
+)
+</code></pre></div>
+<h3 id="closures">Closures<a class="headerlink" href="#closures" title="Permanent link">&para;</a></h3>
+<p>Closures capture the state. In Pyrope everything is by value, so capture variables.
+By default, all the upper scope variables are captured, but you can not declare
+new variables in the new lambda that shadow the captures. You must restrict the
+capture list.</p>
+<div class="highlight"><pre><span></span><code>var x = 3
+
+let f1 = fun()-&gt;(:int){
+   assert x == 3
+   var x    // compile error. Shadow captured x
+   ret 200
+}
+</code></pre></div>
+<p>Captured variables keep the declared type (<code>var</code>/<code>let</code>) but the change does not
+escape the local lambda.</p>
+<div class="highlight"><pre><span></span><code>var x = 3
+let y = 10
+
+let f1 = fun()-&gt;(:int){
+   assert x == 3 and y == 10
+   x = 10000
+   //y = 100              // compile error, y is immutable
+   ret x+200
+}
+
+assert x == 3
+
+let z = f1()
+assert z == 10200
+assert x == 3
+</code></pre></div>
+<p>Capture variables pass the value at capture time:</p>
+<div class="highlight"><pre><span></span><code>var x = 3
+var y = 10
+
+let fun2 = fun[y]()-&gt;(:int){ // [] means capture just y
+  var x  = 200
+  ret y + x
+}
+x = 1000
+assert fun2() == 203
+</code></pre></div>
+<h3 id="lambda-calls">Lambda calls<a class="headerlink" href="#lambda-calls" title="Permanent link">&para;</a></h3>
+<p>Lambda calls happen whenever an identifer is followed by a tuple. Since the
+tuple bundary can be dropped, this can lead to unexpected cases like:</p>
+<div class="highlight"><pre><span></span><code>assert 0 == (0)  // OK, same as assert( 0 == (0) )
+assert (0) == 0  // compile error: (assert(0)) == 0 is an expression
+</code></pre></div>
+<p>It is also easy to forget that parenthesis can be ommited in simple expressions,
+not when ranges or tuples are involed.</p>
+<div class="highlight"><pre><span></span><code>asssert 2 in (1,2)  // compile error, not allowed to drop parenthesis
+asssert(2 in (1,2)) // OK
+</code></pre></div>
+<h3 id="always-blocks">always blocks<a class="headerlink" href="#always-blocks" title="Permanent link">&para;</a></h3>
+<p>Tuples can have several always blocks. This can lead to confusion in the
+evaluation order.</p>
+<div class="highlight"><pre><span></span><code>var x = (
+  ,var v:int
+  ,var always_after = proc()-&gt;(self) {
+    self.v = 1
+  }
+)
+
+var y = x ++ (
+  ,var always_after = proc()-&gt;(self) {
+    self.v = 2
+  }
+)
+
+var z = (
+  ,var always_after = proc()-&gt;(self) {
+    self.v = 3
+  }
+) ++ x
+
+assert x.v == 1
+assert y.v == 2
+assert z.v == 1 // self.v = 3 executes before self.v = 1
+</code></pre></div>
+<h3 id="unknowns">Unknowns<a class="headerlink" href="#unknowns" title="Permanent link">&para;</a></h3>
+<p>Pyrope respects the same semantics as Verilog with unknowns. As such, there can
+be many unexpected behaviors in these cases. The difference is that in Pyrope
+everything is initialized and unknowns (<code>0sb?</code>) can happen only when explicitly
+enabled.</p>
+<p>The compare respects Verilog semantics. This means that it is true if and only
+if all the possible values are true, which is quite counter-intuitive behavior
+for programmers not used to 4 value logic.</p>
+<div class="highlight"><pre><span></span><code>assert !(0sb? == 0)
+assert !(0sb? != 0)
+assert !(0sb? == 0sb?)
+assert !(0sb? != 0sb?)
+</code></pre></div>
+<p>There is no way to know at run-time if a value is unknown, but a compile trick
+can work. The reason is that integers can be converted to strings in a C++ API</p>
+<div class="highlight"><pre><span></span><code>var x = 0sb10?
+let str = __to_string(x) // only works for compile time constants
+assert x == &quot;0sb10?&quot;
+</code></pre></div>
+<h3 id="for-loop">for loop<a class="headerlink" href="#for-loop" title="Permanent link">&para;</a></h3>
+<p>The <code>for</code> expects a tuple, and iterates over the tuple. This can lead to some
+unexpected behaviour. The most strange is that ranges are always from smallest
+to largest, so they do not allow to create a decreasing iterator.</p>
+<div class="highlight"><pre><span></span><code>let s:string=&quot;hell&quot;
+for i,idx in s {
+  let v = match idx {
+   == 0 { &quot;h&quot; }
+   == 1 { &quot;e&quot; }
+   == 2 { &quot;l&quot; }
+   == 3 { &quot;l&quot; }
+  }
+  assert v == i
+}
+
+let t = (1,2,3)
+for i,idx in t {
+  let v = match idx {
+   == 0 { 1 }
+   == 1 { 2 }
+   == 2 { 3 }
+  }
+  assert v == i
+}
+
+let r=2..&lt;5
+for i,idx in r {
+  let v = match idx {
+   == 0 { 2 }
+   == 1 { 3 }
+   == 2 { 4 }
+  }
+  assert v == i
+}
+
+let r2=4..=2 by -1
+assert r == r2
+for i,idx in r2 {
+  let v = match idx {
+   == 0 { 2 }
+   == 1 { 3 }
+   == 2 { 4 }
+  }
+  assert v == i
+}
+
+for i in 2..&lt;5 {
+  let ri = 2+(4-i) // reverse index
+  // 2 == (2..&lt;5).trailing_one
+  // 4 == (2..&lt;5).leading_one
+  let v = match idx {
+   == 0 { 4 }
+   == 1 { 3 }
+   == 2 { 2 }
+  }
+  assert v == ri
+}
+
+for i,idx in 123 {
+  assert i == 123 and idx==0
+}
+</code></pre></div>
+<h3 id="bit-order">Bit order<a class="headerlink" href="#bit-order" title="Permanent link">&para;</a></h3>
+<p>Ranges are sets, this creates potentially unexpected results in reverse <code>for</code>
+iterators, but also in bit section:</p>
+<div class="highlight"><pre><span></span><code>let v = 0xF0
+
+assert v@[0] == 0
+assert v@[4] == 1
+
+assert v@[3..=4] == 0b010 == v@[3,4]
+assert v@[4..=3 by -1] == 0b010
+assert v@[4,3] == 0b001
+</code></pre></div>
+<h3 id="initialization">Initialization<a class="headerlink" href="#initialization" title="Permanent link">&para;</a></h3>
+<p>Registers and variables are initialized to zero by default, but the reset logic
+can change to a more traditional Verilog with uninitialized (<code>0sb?</code>) contents.</p>
+<div class="highlight"><pre><span></span><code>reg r_ver = (
+  ,always_reset = proc()-&gt;(self){ self = 0sb? }
+)
+reg r
+var v
+
+assert v == 0 and r == 0
+
+assert !(r_ver != 0)    // 0sb? != 0 evaluates false
+assert !(r_ver == 0)    // 0sb? == 0 evaluates false too
+assert !(r_ver != 0sb?) // 0sb? != 0sb? evaluates false too
+assert !(r_ver == 0sb?) // 0sb? == 0sb? evaluates false too
+
+assert r_ver == something unless r_ver.reset  // do not check during reset
+</code></pre></div>
+<p>The reset for arrays may take several cycles to take effect, this can
+lead to unexpected results during the reset period.</p>
+<div class="highlight"><pre><span></span><code>var arr:[] = (0,1,2,3,4,5,6,7)
+
+assert arr[0] == 0 and arr[7] == 7 // always works
+
+reg mem:[] = (0,1,2,3,4,5,6,7)
+
+assert mem[7] == 7 // FAIL, this may fail during reset
+assert mem[7] == 7 unless mem.reset // OK
+</code></pre></div>
+<p>Registers have reset code, which creates un-expected code:</p>
+<div class="highlight"><pre><span></span><code>reg v:u32 = 33
+
+assert v == 33 // this will fail after reset
+
+v = 1
+</code></pre></div>
+<h3 id="unexpected-calls">Unexpected calls<a class="headerlink" href="#unexpected-calls" title="Permanent link">&para;</a></h3>
+<p>Lambdas with no inputs are called when referenced. This is not the case for
+lambdas with inputs. This difference can show when passing a lambda as argument
+to another lambda.</p>
+<div class="highlight"><pre><span></span><code>let args = fun(x) { puts &quot;args:{}&quot;, b ; ret 1}
+let here = fun()  { puts &quot;here&quot; ; ret 3}
+
+let call = fun(f:fun){ ret f } 
+
+let x0 = call here           // same as call(here), prints &quot;here&quot;
+let x1 = call args           // same as call(args), nothing printed
+assert x0      == 3          // nothing printed
+assert x1(&quot;b&quot;) == 1          // prints &quot;args:b&quot;
+</code></pre></div>
+<p>The reason is that variables can be exposed, and future refactors can change
+the variable for an attribute getter. The behavior is respected by evaluating
+the lambda on use. The evaluation will happen before the call even when an
+explicit lambda is created.</p>
+<div class="highlight"><pre><span></span><code>let x3 = call fun() {here}   // prints &quot;here&quot; 
+assert x3 == 3               // nothing printed
+</code></pre></div>
+<h3 id="if-is-an-expression"><code>if</code> is an expression<a class="headerlink" href="#if-is-an-expression" title="Permanent link">&para;</a></h3>
+<p>Since <code>if</code>, <code>for</code>, <code>match</code> are expressions, you can build some strange code:</p>
+<div class="highlight"><pre><span></span><code>if if x == 3 { true }else{ false } {
+  puts &quot;x is 3&quot;
+}
+</code></pre></div>
+<h3 id="legal-but-weird">Legal but weird<a class="headerlink" href="#legal-but-weird" title="Permanent link">&para;</a></h3>
+<p>The variable <code>http</code> has a type <code>8080</code> followed by a comment
+(<code>//masc.soe.ucsc.edu</code>)</p>
+<div class="highlight"><pre><span></span><code>let http:8080//masc.soe.ucsc.edu
+
+assert http == 8080
+</code></pre></div>
+<p>There is no <code>--</code> operator in Pyrope, but there is a <code>-</code> which can be followed
+by a negative number <code>-3</code>.</p>
+<div class="highlight"><pre><span></span><code>let v = (3)--3
+assert v == 6
+</code></pre></div>
+<h3 id="return-tuple">Return tuple<a class="headerlink" href="#return-tuple" title="Permanent link">&para;</a></h3>
+<p>Pyrope everything is a tuple, but return value can be unexpected if 1 or 2
+return values happen.</p>
+<div class="highlight"><pre><span></span><code>let ret1 = fun()-&gt;(a) {
+  a = 1
+}
+
+let ret2 = fun()-&gt;(a,b) {
+  a = 2
+  b = 3
+}
+
+let a1 = ret1()
+assert a1 == 1 // NOT a1.a == 1
+
+let a2 = ret2()
+assert a2.a == 2 and a2.b == 3
+
+let x1,x2 = ret2()
+assert x1 == 2 and x2 == 3
+</code></pre></div>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:1">
+<p>Narrowing is based on "ABCD: eliminating array bounds checks on-demand"
+  by Ras Bodik et al.&#160;<a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
+
+              
+            </article>
+          </div>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../09-stdlib/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Pyrope std lib" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Pyrope std lib
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../11-deprecated/" class="md-footer__link md-footer__link--next" aria-label="Next: Deprecated or Future" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Deprecated or Future
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["search.suggest", "navigation.sections", "navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.2a1c317c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a6c66575.min.js"></script>
+      
+        <script src="../../javascripts/config.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>

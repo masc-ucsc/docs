@@ -1,0 +1,1973 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-8.2.15">
+    
+    
+      
+        <title>Variables and types - LiveHD and Pyrope</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.c382b1dc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.cc9b2e1e.min.css">
+        
+      
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CFira+Code:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Fira Code"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/table.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="" data-md-color-accent="">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#variables-and-types" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LiveHD and Pyrope" class="md-header__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LiveHD and Pyrope
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Variables and types
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3Z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6zm0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4zM7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LiveHD and Pyrope" class="md-nav__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    LiveHD and Pyrope
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        LiveHD and Pyrope
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+      
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_2">
+          Livehd
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Livehd" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Livehd
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/00-intro/" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/01-install/" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/02-usage/" class="md-nav__link">
+        Usage
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/04-api/" class="md-nav__link">
+        C++ API
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/05-lgraph/" class="md-nav__link">
+        LGraph
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/06-lnast/" class="md-nav__link">
+        LNAST
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/07-mmapstr/" class="md-nav__link">
+        mmap_lib::str
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10-bazel/" class="md-nav__link">
+        Bazel build
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10b-3rdparty/" class="md-nav__link">
+        3rd Party
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/11-pass/" class="md-nav__link">
+        Creating a Pass
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/12-github/" class="md-nav__link">
+        GitHub Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/13-style/" class="md-nav__link">
+        Coding Style
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
+      
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          Pyrope
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Pyrope" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Pyrope
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00-hwdesign/" class="md-nav__link">
+        Hardware Design
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-introduction/" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-basics/" class="md-nav__link">
+        Basic syntax
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-bundle/" class="md-nav__link">
+        Tuples
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Variables and types
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Variables and types
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#mutableimmutable" class="md-nav__link">
+    Mutable/Immutable
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#register" class="md-nav__link">
+    Register
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#public" class="md-nav__link">
+    Public
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variable-scope" class="md-nav__link">
+    Variable scope
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basic-types" class="md-nav__link">
+    Basic types
+  </a>
+  
+    <nav class="md-nav" aria-label="Basic types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#integer-or-int" class="md-nav__link">
+    Integer or int
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#boolean" class="md-nav__link">
+    Boolean
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function" class="md-nav__link">
+    Function
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#range" class="md-nav__link">
+    Range
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#string" class="md-nav__link">
+    String
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#comptime" class="md-nav__link">
+    comptime
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#debug" class="md-nav__link">
+    debug
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basic-type-annotations" class="md-nav__link">
+    Basic type annotations
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#operators" class="md-nav__link">
+    Operators
+  </a>
+  
+    <nav class="md-nav" aria-label="Operators">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unary-operators" class="md-nav__link">
+    Unary operators
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#binary-integer-operators" class="md-nav__link">
+    Binary Integer operators
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#binary-boolean-operators" class="md-nav__link">
+    Binary Boolean operators
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reduce-and-bit-selection-operators" class="md-nav__link">
+    Reduce and bit selection operators
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#operator-with-tuples" class="md-nav__link">
+    Operator with Tuples
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#precedence" class="md-nav__link">
+    Precedence
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optional" class="md-nav__link">
+    Optional
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-assert/" class="md-nav__link">
+        Assertions
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05b-statements/" class="md-nav__link">
+        Statements
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-functions/" class="md-nav__link">
+        Lambdas
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06b-instantiation/" class="md-nav__link">
+        Instantiation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06c-pipelining/" class="md-nav__link">
+        Pipelining
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-typesystem/" class="md-nav__link">
+        Type system
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07b-structtype/" class="md-nav__link">
+        Structural Typing
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-memories/" class="md-nav__link">
+        Memories
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-stdlib/" class="md-nav__link">
+        Pyrope std lib
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-internals/" class="md-nav__link">
+        Internals
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../11-deprecated/" class="md-nav__link">
+        Deprecated or Future
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#mutableimmutable" class="md-nav__link">
+    Mutable/Immutable
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#register" class="md-nav__link">
+    Register
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#public" class="md-nav__link">
+    Public
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variable-scope" class="md-nav__link">
+    Variable scope
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basic-types" class="md-nav__link">
+    Basic types
+  </a>
+  
+    <nav class="md-nav" aria-label="Basic types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#integer-or-int" class="md-nav__link">
+    Integer or int
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#boolean" class="md-nav__link">
+    Boolean
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function" class="md-nav__link">
+    Function
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#range" class="md-nav__link">
+    Range
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#string" class="md-nav__link">
+    String
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#comptime" class="md-nav__link">
+    comptime
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#debug" class="md-nav__link">
+    debug
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basic-type-annotations" class="md-nav__link">
+    Basic type annotations
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#operators" class="md-nav__link">
+    Operators
+  </a>
+  
+    <nav class="md-nav" aria-label="Operators">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unary-operators" class="md-nav__link">
+    Unary operators
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#binary-integer-operators" class="md-nav__link">
+    Binary Integer operators
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#binary-boolean-operators" class="md-nav__link">
+    Binary Boolean operators
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reduce-and-bit-selection-operators" class="md-nav__link">
+    Reduce and bit selection operators
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#operator-with-tuples" class="md-nav__link">
+    Operator with Tuples
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#precedence" class="md-nav__link">
+    Precedence
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optional" class="md-nav__link">
+    Optional
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+  <a href="https://github.com/masc-ucsc/docs/edit/main/docs/pyrope/04-variables.md" title="Edit this page" class="md-content__button md-icon">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
+  </a>
+
+
+
+<h1 id="variables-and-types">Variables and types<a class="headerlink" href="#variables-and-types" title="Permanent link">&para;</a></h1>
+<p>A variable is an instance of a given type. The type may be inferred from use.
+The basic types are Boolean, Function, Integer, Range, and String. All those
+types can be combined with tuples. All the complex types are built around
+these types.</p>
+<h2 id="mutableimmutable">Mutable/Immutable<a class="headerlink" href="#mutableimmutable" title="Permanent link">&para;</a></h2>
+<p>Variables first use or declaration must indicate the mutability intention
+(<code>var</code>) or immutability (<code>let</code>).</p>
+<ul>
+<li>
+<p><code>var</code> is used to declare mutable variables. Following statements can
+  overwrite the variable.</p>
+</li>
+<li>
+<p><code>let</code> is used to declare immutable variables. Following statements can not
+  modify the contents. For methods, only use <code>let</code> when no overloading/traits
+  should be allowed.</p>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><code>a  = 3         // compile error, no previous let or var
+
+var b  = 3
+b  = 5     // OK
+b += 1     // OK, OP= assumes mutable
+
+var c=(x=1,let b=2, var d=3)
+c.x   = 3  // OK, x inherited the &#39;var&#39; declaration
+x.foo = 2  // compile error, tuple &#39;x&#39; does not have field &#39;foo&#39;
+c.b   = 10 // compile error, &#39;c.b&#39; is immutable
+c.d   = 30 // OK, d was already var type
+
+let d=(x=1, let y=2, var z=3)
+d.x   = 2  // compile error: x inherits the &#39;let&#39; declaration
+d.foo = 3  // compile error, tuple &#39;d&#39; does not have field foo&#39;
+d.z   = 4  // compile error, &#39;d.z&#39; is immutable
+</code></pre></div>
+<p>Tuples fields (not contents) are immutable, but it is possible to construct new
+tuples with the <code>++</code> (concatenate) and <code>...</code> (in-place operator):</p>
+<div class="highlight"><pre><span></span><code>var a=(a=1,b=2)
+var b=(c=3)
+
+var ccat1 = a ++ b
+assert ccat1 == (a=1,b=2,c=3)
+assert ccat1 == (1,2,3)
+
+var ccat2 = a ++ (b=20)
+assert ccat2 == (a=1,b=(2,20),c=3)
+assert ccat2 == (1,(2,20),3)
+
+var join1 = (...a,...b)
+assert join1 == (a=1,b=2,c=3)
+assert join1 == (1,2,3)
+
+var join2 = (...a,...(b=20)) // compile error, &#39;b&#39; already exists
+</code></pre></div>
+<p>The <code>a ++ b</code> concatenates two tuples. If the same field exists in both tuples,
+the resulting field will have a tuple with the entries of <code>a</code> and <code>b</code>.  The
+concat tries to match by field name, if the field names do not match or have no
+name a new entry is created. The algorithm starts with tuple <code>a</code> and starts
+from tuple field 0 upwards.</p>
+<div class="highlight"><pre><span></span><code>assert(((1,a=2,c=3) ++ (a=20,33,c=30,4)) == (1,a=(2,20),c=(3,30),33,4))
+</code></pre></div>
+<p>The <code>...</code> also concatenates, but it is an "inline concatenate". The difference
+is where the fields are concatenated and that it triggers a compile error if
+the same entry already exists.</p>
+<h2 id="register">Register<a class="headerlink" href="#register" title="Permanent link">&para;</a></h2>
+<p>Both mutable and immutable variables (<code>var</code>/<code>let</code>) are created every cycle. To
+have persistence across cycles the <code>reg</code> keyword must be used.</p>
+<div class="highlight"><pre><span></span><code>reg counter = 10
+var not_count = 20
+</code></pre></div>
+<p>In <code>reg</code>, the right-hand side of the initialization (<code>10</code> in the counterexample) is called only during reset. In <code>var/let</code>, the right-hand side is
+called every cycle. As expected, <code>reg</code> is mutable.</p>
+<h2 id="public">Public<a class="headerlink" href="#public" title="Permanent link">&para;</a></h2>
+<p>All types of declarations (<code>let</code>, <code>var</code>, <code>reg</code>) can have a <code>pub</code> before. This
+is used to indicate that the declaration is public and hence visible outside
+the scope defined. </p>
+<p>The <code>pub</code> has different meaning depending on when it is applied:</p>
+<ul>
+<li>
+<p>When the <code>pub</code> is applied to a tuple entry, it means that the tuple entry can
+  be accessed outside the tuple. </p>
+</li>
+<li>
+<p>When the <code>pub</code> is applied to a <code>pipestage</code> variable, it means that the
+  variable is to be pipelined to the next type stage.
+  Section <a href="../06c-pipelining/">pipestage</a> has more details.</p>
+</li>
+<li>
+<p>When the <code>pub</code> is applied to a pyrope file upper scope variable, it means
+  that an <code>import</code> command or register reference can access it across files.
+  Section <a href="../07-typesystem/">typesystem</a> has more details.</p>
+</li>
+</ul>
+<p>To avoid the common case of adding <code>pub var</code> to most tuple entries,
+when no modifier is applied a <code>pub var</code> is assumed.</p>
+<div class="highlight"><pre><span></span><code>let x1  = (pub let b=3, pub var d=4, let e=5, var f=6)
+
+let x2  = (pub let b=3,         d=4, let e=5, var f=6)
+
+var x3  = (pub let b=3,         d=4, let e=5, var f=6)
+
+type x4 = (pub let b=3,         d=4, let e=5, var f=6)
+
+// x1,x2,x3,x4 have identical tuple entry modifiers
+</code></pre></div>
+<h2 id="variable-scope">Variable scope<a class="headerlink" href="#variable-scope" title="Permanent link">&para;</a></h2>
+<p>Scope constrains defined variables visibility. There are three types of scope
+delimitation in Pyrope: code blocks, lambda definitions, and tuples. Each has
+a different set of rules constraining the variable scopes.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Code Block scope</label><label for="__tabbed_1_2">Lambda scope</label><label for="__tabbed_1_3">Tuple scope</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>// a is not visible
+var a = 3
+{
+  assert a == 3
+  a = 33         // OK
+  let b = 4
+  let a = 3333   // compile error. Variable shadowing
+}
+// b is not visible
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>// a is not visible
+var a = 3
+let f1 = fun() {
+  assert a == 3
+  a = 33         // compile error, upper scope are always immutable
+  let b = 4
+  let a = 3333   // OK, shadowing allowed
+  assert a == 3333
+}
+let f2 = fun[]() { // restrict scope
+  assert a == 3 // compile error. `a` not in scope
+}
+let f3 = fun[ff=a]() { // restrict scope
+  assert ff == 3 // OK
+}
+// b is not visible
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>// a is not visible
+var a = 3
+let r1 = (
+  // b is not visible
+  ,b=a+1
+  ,c = {assert a == 3; assert b==4; 50}
+)
+
+let r2 = (a=100, c=(a=a+1, e=a+30))
+assert r2 == (a=100,c=(a==101, e=131))
+
+// b is not visible
+</code></pre></div>
+</div>
+</div>
+</div>
+<ul>
+<li>
+<p>code blocks do not allow variable shadowing. Lambdas and tuples allow
+  shadowing.</p>
+</li>
+<li>
+<p>Lambdas and tuples upper scope variables are always immutable.</p>
+</li>
+<li>
+<p>Lambdas can restrict upper scope visibility with <code>[]</code>.</p>
+</li>
+<li>
+<p>A variable is visible from definition until the end of scope in program order.</p>
+</li>
+</ul>
+<h2 id="basic-types">Basic types<a class="headerlink" href="#basic-types" title="Permanent link">&para;</a></h2>
+<p>Pyrope has 7 basic types:</p>
+<ul>
+<li><code>boolean</code>: either <code>true</code> or <code>false</code></li>
+<li><code>enum</code>: enumerated</li>
+<li><code>proc</code> and <code>fun</code>: A procedure or a function</li>
+<li><code>integer</code>: which is signed integer of unlimited precision</li>
+<li><code>range</code>: A one hot encoding of values <code>1..=3 == 0b1110</code></li>
+<li><code>string</code>: which is a sequence of characters</li>
+</ul>
+<p>All the types except the function can be converted back and
+forth to an integer.</p>
+<h3 id="integer-or-int">Integer or <code>int</code><a class="headerlink" href="#integer-or-int" title="Permanent link">&para;</a></h3>
+<p>Integers have unlimited precision and they are always signed. Type constraints
+can enforce a subset like unsigned or ranges.</p>
+<div class="highlight"><pre><span></span><code>var a:int          // any value, no constrain
+var b:unsigned     // only positive values
+var c:u13          // only from 0 to 1&lt;&lt;13
+var d:int(20..=30) // only values from 20 to 30
+var e:int(-1,0)    // 1 bit integer: -1 or 0
+</code></pre></div>
+<h3 id="boolean">Boolean<a class="headerlink" href="#boolean" title="Permanent link">&para;</a></h3>
+<p>A boolean is either <code>true</code> or <code>false</code>. Booleans can not mix with integers in
+expressions unless there is an explicit typecast (<code>false=0</code> and <code>true=-1</code>) or
+the integer is a 1 bit signed integer (0 and -1).</p>
+<div class="highlight"><pre><span></span><code>let b = true
+let c = 3
+
+if c    { call(x) }     // compile error, &#39;c&#39; is not a boolean expression
+if c!=0 { call(x) }     // OK
+
+d = b or false // OK
+e = c or false // compile error, &#39;c&#39; is not a boolean
+
+let e = -1
+if e { // OK e is a 1 bit signed value
+  call(x)
+}
+
+assert 0 == (int(true)  + 1)  // explicity typecast
+assert 1 == (int(false) + 1)  // explicity typecast
+assert boolean(33) or false   // explicity typecast
+</code></pre></div>
+<h3 id="function">Function<a class="headerlink" href="#function" title="Permanent link">&para;</a></h3>
+<p>Functions have several options (see <a href="../06-functions/">Functions</a>), but from a
+high level they provide a sequence of statements and they have a tuple for
+input and a tuple for output. Functions also can capture values from function
+declaration. Functions are immutable objects.</p>
+<h3 id="range">Range<a class="headerlink" href="#range" title="Permanent link">&para;</a></h3>
+<p>Ranges are very useful in hardware description languages to select bits. They
+are 3 ways to specify a closed range:</p>
+<ul>
+<li><code>first..=last</code>: Range from first to the last element, both included</li>
+<li><code>first..&lt;last</code>: Range from first to last, but the last element is not included</li>
+<li><code>first..+size</code>: Range from first to <code>first+size</code>. Since there is <code>size</code>
+  elements, it is equivalent to write <code>first..&lt;(first+last)</code>.</li>
+</ul>
+<p>When used inside selectors (<code>[range]</code>) the ranges can be open (no first/last specified)
+or use negative numbers. The negative number is to specify the distance from last.</p>
+<ul>
+<li><code>[first..&lt;-val]</code> is the same as <code>[first..&lt;(last-val+1)]</code>. The advantage is that the <code>last</code> or
+size in the tuple can be unknown.</li>
+<li><code>[first..]</code> is the same as <code>[first..=-1]</code>.</li>
+</ul>
+<div class="highlight"><pre><span></span><code>let a = (1,2,3)
+assert a[0..] == (1,2,3)
+assert a[1..] == (2,3)
+assert a[..=1] == (1,2)
+assert a[..&lt;2] == (1,2)
+assert a[1..&lt;10] == (2,3)
+
+let b = 0b0110_1001
+assert b@[1..]        == 0b0110_100
+assert b@[1..=-1]     == 0b0110_100
+assert b@[1..=-2]     == 0b0110_100  // unsigned result from bit selector
+assert b@sext[1..=-2] == 0sb110_100
+assert b@[1..=-3]     == 0sb10_100
+assert b@[1..&lt;-3]     == 0b0_100
+
+let c = 1..=3
+assert int(c) == 0b1110
+assert range(0b01_1100) == 2..=4
+</code></pre></div>
+<p>A closed range can be converted to a single integer or a tuple. A range
+encoded as an integer is a set of one-hot encodings. As such, there is no
+order, but in Pyrope, ranges always have the order from smallest to largest.
+The <code>by expr</code> can be added to indicate a step or step function. This is only
+possible when both begin and end of the range are fully specified.</p>
+<div class="highlight"><pre><span></span><code>assert((0..&lt;30 by 10) == (0,10,20)) // ranges and tuples can combined
+assert((1..=3) ++ 4 == (1,2,3,4))   // tuple and range ops become a tuple
+assert 1..=3 == (1,2,3)
+assert((1..=3)@[] == 0b1110)        // convert range to integer with @[]
+</code></pre></div>
+<h3 id="string">String<a class="headerlink" href="#string" title="Permanent link">&para;</a></h3>
+<p>Strings are also Integers encoded using the ASCII sequence, but to perform arithmetic
+operations a typecast must be used. The string encoding assigns the lower bits
+to the first characters in the string, each character has 8 bits associated.</p>
+<div class="highlight"><pre><span></span><code>a = &#39;cad&#39;              // c is 0x63, a is 0x61, and d is 0x64
+b = 0x64_61_63
+assert a == string(b)  // typecast number to string
+assert int(a) == b     // typecast string to number
+assert a@[] == b       // typecast string to number
+</code></pre></div>
+<p>Like ranges, strings can also be seen as a tuple, and when tuple operations are
+performed they are converted to a tuple.</p>
+<div class="highlight"><pre><span></span><code>assert &quot;hello&quot; == (&#39;h&#39;,&#39;e&#39;,&#39;l&#39;,&#39;l&#39;,&#39;o&#39;)
+assert &quot;h&quot; ++ &quot;ell&quot; == (&#39;h&#39;,&#39;e&#39;,&#39;l&#39;,&#39;l&#39;) == &quot;hell&quot;
+</code></pre></div>
+<h2 id="comptime">comptime<a class="headerlink" href="#comptime" title="Permanent link">&para;</a></h2>
+<p>Pyrope borrows the <code>comptime</code> keyword and functionality from Zig. Any statement
+can be declared compile time constants or <code>comptime</code>. This means that the value
+must be constant at compile time or an error is generated.</p>
+<div class="highlight"><pre><span></span><code>comptime let a = 1     // obviously comptime
+comptime var b = a + 2 // OK too
+comptime let c = rand  // compile error, &#39;c&#39; can not be computed at compile time
+</code></pre></div>
+<p>The <code>comptime</code> directive considers values propagated across modules.</p>
+<h2 id="debug">debug<a class="headerlink" href="#debug" title="Permanent link">&para;</a></h2>
+<p>In software and more commonly in hardware, it is common to have extra
+statements to debug the code. These statements can be more than plain
+assertions, they can also include code.</p>
+<p>The <code>debug</code> attribute marks a mutable or immutable variable. At synthesis, all
+the statements that use a <code>debug</code> can be removed. <code>debug</code> variables can read
+from non debug variables, but non-debug variables can not read from <code>debug</code>.
+This guarantees that <code>debug</code> variables, or statements, do not have any
+side-effects beyond debug statements.</p>
+<div class="highlight"><pre><span></span><code>var a = (debug b=2, c = 3) // a.b is a debug variable
+debug let c = 3
+</code></pre></div>
+<h2 id="basic-type-annotations">Basic type annotations<a class="headerlink" href="#basic-type-annotations" title="Permanent link">&para;</a></h2>
+<p>Global type inference and unlimited precision allow avoiding most of the
+types. Pyrope allows declaring types. The types have two main uses, they
+behave like assertions, and they allow function polymorphism.</p>
+<div class="highlight"><pre><span></span><code>var a:u120    // a is an unsigned value with up to 120bits, initialized to zero
+
+var x:s3 = 0  // x is a signed value with 3 bits (-4 to 3)
+x = 3         // OK
+x = 4         // compile error, &#39;4&#39; overflows the maximum allowed value of &#39;x&#39;
+
+var person = (
+  ,name:string // empty string by default
+  ,age:u8      // zero by default
+)
+
+var b
+b ++= (1,2)
+b ++= (3,4)
+
+assert b == (1,2,3,4)
+</code></pre></div>
+<p>The basic type keywords provided by Pyrope:</p>
+<ul>
+<li><code>boolean</code>: true or false boolean. It can not be undefined (<code>0sb?</code>).</li>
+<li><code>string</code>: a string.</li>
+<li><code>fun</code> and <code>proc</code>: a lambda without code block can be used as a function type.</li>
+<li><code>unsigned</code>: an unlimited precision natural number.</li>
+<li><code>u&lt;num&gt;</code>: a natural number with a maximum value of <span class="arithmatex">\(2^{\texttt{num}}\)</span>. E.g: <code>u10</code> can go from zero to 1024.</li>
+<li><code>int</code>: an unlimited precision integer number.</li>
+<li><code>i&lt;num&gt;</code>: an integer 2s complement number with a maximum value of <span class="arithmatex">\(2^{\texttt{num}-1}-1\)</span> and a minimum of <span class="arithmatex">\(-2^{\texttt{num}}\)</span>.</li>
+</ul>
+<p>Each tuple is has a type, either implicit or explicit, and as such, it can be
+used to declare a new type. The <code>type</code> keywords guarantee that a variable is
+just a type and not an instance.</p>
+<div class="highlight"><pre><span></span><code>var bund1 = (color:string, value:s33)
+var x:bund1          // OK
+bund1.color = &quot;red&quot;  // OK
+x.color     = &quot;blue&quot; // OK
+
+type typ = (color:string, value:s20)
+var y:typ            // OK
+typ.color = &quot;red&quot;    // compile errro
+y.color   = &quot;red&quot;    // OK
+</code></pre></div>
+<h2 id="operators">Operators<a class="headerlink" href="#operators" title="Permanent link">&para;</a></h2>
+<p>There are the typical basic operators found in most common languages except exponent operations. The reason is that those are very hardware
+intensive and a library code should be used instead.</p>
+<p>All the operators work over signed integers.</p>
+<h3 id="unary-operators">Unary operators<a class="headerlink" href="#unary-operators" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>!a</code> or <code>not a</code> logical negation</li>
+<li><code>~a</code> bitwise negation</li>
+<li><code>-a</code> arithmetic negation</li>
+</ul>
+<h3 id="binary-integer-operators">Binary Integer operators<a class="headerlink" href="#binary-integer-operators" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>a + b</code> addition</li>
+<li><code>a - b</code> substraction</li>
+<li><code>a * b</code> multiplication</li>
+<li><code>a / b</code> division</li>
+<li><code>a &amp; b</code> bitwise and</li>
+<li><code>a | b</code> bitwise or</li>
+<li><code>a ^ b</code> bitwise xor</li>
+<li><code>a &gt;&gt; b</code> shift right</li>
+<li><code>a &lt;&lt; b</code> shift left</li>
+</ul>
+<h3 id="binary-boolean-operators">Binary Boolean operators<a class="headerlink" href="#binary-boolean-operators" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>a and b</code> logical and</li>
+<li><code>a or b</code> logical or</li>
+<li><code>a implies b</code> logical implication</li>
+</ul>
+<p>Most operations behave as expected when applied to signed unlimited precision
+integers. Logical and arithmetic operations can not be mixed.</p>
+<div class="highlight"><pre><span></span><code>let x = a and b
+let y = x + 1    // compile error: &#39;x&#39; is a boolean, &#39;1&#39; is not
+</code></pre></div>
+<h3 id="reduce-and-bit-selection-operators">Reduce and bit selection operators<a class="headerlink" href="#reduce-and-bit-selection-operators" title="Permanent link">&para;</a></h3>
+<p>The reduce operators and bit selection share a common syntax
+<code>variable@op[sel]</code> where:</p>
+<ul>
+<li>
+<p><code>variable</code> is a tuple where all the tuple fields and subfields must have a
+  explicit type size unless the tuple has 1 entry.</p>
+</li>
+<li>
+<p><code>op</code> is the operation to perform</p>
+<ul>
+<li><code>|</code>: or-reduce.</li>
+<li><code>&amp;</code>: and-reduce.</li>
+<li><code>^</code>: xor-reduce or parity check.</li>
+<li><code>+</code>: pop-count.</li>
+<li><code>sext</code>: Sign extends selected bits.</li>
+<li><code>zext</code>: Zero sign extends selected bits.</li>
+</ul>
+</li>
+<li>
+<p><code>sel</code> can be a close-range like <code>1..&lt;=4</code> or <code>(1,4,6)</code> or an open range like
+  <code>3..</code>. Internally, the open range is converted to a close-range based on the
+  variable size.</p>
+</li>
+</ul>
+<p>The or/and/xor reduce have a single bit signed result (not boolean). This means
+that the result can be 0 (<code>0sb0</code>) or -1 (<code>0sb1</code>). pop-count and <code>zext</code> have
+always positive results. <code>sext</code> is a sign-extended, so it can be positive or
+negative.</p>
+<p>If no operator is provided, a <code>zext</code> is used. The bit selection without
+operator can also be used on the left-hand side to update a set of bits.</p>
+<p>The or-reduce and and-reduce are always size insensitive. This means that to
+perform the reduction it is not needed to know the number of bits. It could
+pick more or fewer bits and the result is the same. E.g: 0sb111 or 0sb111111
+have the same and/or reduce. This is the reason why both can work with open and
+close ranges.</p>
+<p>This is not the case for the xor-reduce and pop-count. These two operations are
+size insensitive for positive numbers but sensitive for negative numbers. E.g:
+pop-count of 0sb111 is different than 0sb111111. When the variable is negative
+a close range must be used. Alternatively, a <code>zext</code> must be used to select
+bits accordingly. E.g: <code>var@[0..=3]@+[]</code> does a <code>zext</code> and the positive result
+is passed to the pop-count. The compiler could infer the size and compute, but
+it is considered non-intuitive for programmers.</p>
+<div class="highlight"><pre><span></span><code>x = 0b1_0110   // positive
+y = 0s1_0110   // negative
+assert x@[0,2] == 0b10
+assert y@[100,200]       == 0b11   and x@[100,200]       == 0
+assert y@sext[0,100,200] == 0sb110 and x@sext[1,100,200] == 0b001
+assert x@|[] == -1
+assert x@&amp;[0,1] == 0
+assert x@+[0..=5] == x@+[0..&lt;100] == 3
+assert y@+[0..=5]  // compile error, &#39;y&#39; can be negative
+assert y@[]@+[] == 3
+assert y@[0..=5]@+[] == 3
+assert y@[0..=6]@+[] == 4
+
+var z     = 0b0110
+z@[0] = 1
+assert z == 0b0111
+z@[0] = 0b11 // compile error, &#39;0b11` overflows the maximum allowed value of `z@[0]`
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>It is important to remember that in Pyrope all the operations use signed
+numbers. This means that an and-reduce over any positive number is always going
+to be zero because the most significant bit is zero, E.g: <code>0xFF@&amp;[] == 0</code>. In
+some cases, a close-range will be needed if the intention is to ignore the sign.
+E.g: <code>0xFF@&amp;[0..&lt;8] == -1</code>.</p>
+</div>
+<p>When the selected variable is a tuple with many entries, the type must be
+explicit or boolean conditions. This is to avoid confusion on the number of
+bits used. This is needed because the <code>tup@[]</code> is effectively concatenating the
+bits in <code>tup</code>.</p>
+<div class="highlight"><pre><span></span><code>var tup = (a:u8=0xf, b:u8=0x1)  // explicit sizes set
+assert tup@[] == 0xf1
+
+assert((0xF:u8,0x1:u16)@[] == 0xF_0001)
+assert((0xF:u8,0x1:u8 )@[] == 0xF_01)
+assert((false,true,false,false,true )@[] == 0sb0_1001)
+assert((true)@[]     == 0sb01)
+assert((true)@sext[] == -1   )
+</code></pre></div>
+<p>Without the explicit sizes, the previous code would have look like <code>(0b01111,
+0b01)</code> which is different than what most people would expect. This is the
+reason why Pyrope enforces to have explicit types for concatenation and avoids
+the implicit bit size inference.</p>
+<p>Another important characteristic of the bit selection is that the order of the
+bits on the selection does not affect the result. Internally, it is a bitmask
+that has no order. For the <code>zext</code> and <code>sext</code>, the same order as the input
+variable is respected. This means that <code>var@[1,2] == var@[2,1]</code>. As a result,
+the bit selection can not be used to transpose bits. A tuple must be used for
+such an operation.</p>
+<div class="highlight"><pre><span></span><code>var v = 0b10
+assert v@[0,1] == v@[1,2] == v@[] == v@[0..=1] == v@[..=1] == 0b10
+
+var trans
+trans@[0] = v@[1]
+trans@[1] = v@[0]
+assert trans == 0b01
+</code></pre></div>
+<h3 id="operator-with-tuples">Operator with Tuples<a class="headerlink" href="#operator-with-tuples" title="Permanent link">&para;</a></h3>
+<p>Some operators can also have tuples as input and/or outputs.</p>
+<ul>
+<li><code>a ++ b</code> concatenate two tuples. If field appears in both, concatenate field</li>
+<li><code>(,...b)</code> in-place insert <code>b</code>. Compile error if both have the same named
+  field</li>
+<li><code>a &lt;&lt; b</code> shift left. <code>b</code> can be a tuple</li>
+<li><code>a has b</code> checks if <code>a</code> tuple has the <code>b</code> field where <code>b</code> is a string or
+  integer (position).</li>
+<li><code>a in b</code> checks if <code>a</code> values are in <code>b</code></li>
+</ul>
+<p>The <code>&lt;&lt;</code> allows having multiple values provided by a tuple on the right-hand
+side or amount. This is useful to create one-hot encodings.</p>
+<div class="highlight"><pre><span></span><code>assert((a=1,b=2) ++ (c=3    ) == (a=1    ,b=2,c=3))
+assert((a=1,b=2) ++ (a=3,c=4) == (a=(1,3),b=2,c=4))
+
+assert((a=1,b=2,3,...(e=4,5)) == (a=1,b=2,3,e=4,5))
+
+assert((a=1,b=2) has &quot;a&quot;)
+
+assert(2 in (a=1,b=2))
+assert((2,5) in (a=1,b=2,4,5))
+
+assert 1&lt;&lt;(1,4,3) == 0b01_1010
+</code></pre></div>
+<h2 id="precedence">Precedence<a class="headerlink" href="#precedence" title="Permanent link">&para;</a></h2>
+<p>Pyrope has very shallow precedence, unlike most other languages the
+programmer should explicitly indicate the precedence. The exception is for
+widely expected precedence.</p>
+<ul>
+<li>Unary operators (not,!,~,?) bind stronger than binary operators (+,++,-,*...)</li>
+<li>Comparators can be chained (a==c&lt;=d) same as (a==c and c&lt;=d)</li>
+<li>mult/div precedence is only against +,- operators.</li>
+<li>Parenthesis can be avoided when a expression left-to-right has the same
+  result as right-to-left.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th align="center">Priority</th>
+<th align="center">Category</th>
+<th align="right">Main operators in category</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">1</td>
+<td align="center">unary</td>
+<td align="right">not ! ~ ?</td>
+</tr>
+<tr>
+<td align="center">2</td>
+<td align="center">mult/div</td>
+<td align="right">*, /</td>
+</tr>
+<tr>
+<td align="center">3</td>
+<td align="center">other binary</td>
+<td align="right">..,^, &amp;, -,+, ++, &lt;&lt;, &gt;&gt;</td>
+</tr>
+<tr>
+<td align="center">4</td>
+<td align="center">comparators</td>
+<td align="right">&lt;, &lt;=, ==, !=, &gt;=, &gt;</td>
+</tr>
+<tr>
+<td align="center">5</td>
+<td align="center">logical</td>
+<td align="right">and, or, implies</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code>assert((x or !y) == (x or (!y)) == (x or not y))
+assert((3*5+5) == ((3*5) + 5) == 3*5 + 5)
+
+a = x1 or x2==x3 // same as b = x1 or (x2==x3)
+b = 3 &amp; 4 * 4    // compile error: use parenthesis for explicit precedence
+c = 3
+  &amp; 4 * 4
+  &amp; 5 + 3        // compile error: use parenthesis for explicit precedence
+c2 = 3
+  &amp; (4 * 4)
+  &amp; (5 + 3)      // OK
+
+d = 3 + 3 - 5    // OK, same result right-left
+
+e = 1
+  | 5
+  &amp; 6           // compile error: use parenthesis for explicit precedence
+
+f = (1 &amp; 4)
+  | (1 + 5)
+  | 1
+
+g = 1 + 3
+  * 1 + 2
+  + 5           // OK, but not nice
+
+g1= 1 + (3 * 1)
+  + 2
+  + 5           // OK
+
+g2= (1 + 3)
+  * (1 + 2)
+  + 5           // OK
+
+h = x or y and z// compile error: use parenthesis for explicit precedence
+
+i = a == 3 &lt;= b == d
+assert i == (a==3 and 3&lt;=b and b == d)
+</code></pre></div>
+<h2 id="optional">Optional<a class="headerlink" href="#optional" title="Permanent link">&para;</a></h2>
+<p>The <code>?</code> is used by several languages to handle optional or null pointer
+references. In non-hardware languages, <code>?</code> is used to check if there is valid
+data or a null pointer.</p>
+<p>Pyrope has references, but it does not have null pointers. Pyrope uses <code>?</code> to
+handle "valid" data. Instead, the data is left to behave without the optional,
+but there is a new "valid" field associated with each tuple entry.</p>
+<p>There are 4 explicitly interact with valids:</p>
+<ul>
+<li>
+<p><code>tup.f1?</code> reads the valid for field <code>f1</code> from tuple <code>tup</code></p>
+</li>
+<li>
+<p><code>tup?.f1.f2</code> returns <code>0bs0</code> if tuple fields <code>f1</code> or <code>f2</code> are invalid</p>
+</li>
+<li>
+<p><code>tup.f1? = cond</code> explicitly sets the field <code>f1</code> valid to <code>cond</code></p>
+</li>
+<li>
+<p><code>a = b op c</code> variable <code>a</code> will be valid if <code>b</code> and <code>c</code> are valid</p>
+</li>
+</ul>
+<p>The optional or valid attached to each variable and tuple field is implicitly
+computed as follows:</p>
+<ul>
+<li>
+<p>Each cycle the <code>valid</code> is set for non-register variables initialization<sup id="fnref:clear"><a class="footnote-ref" href="#fn:clear">1</a></sup>.</p>
+</li>
+<li>
+<p>Registers with reset set the valid on reset (not every cycle)</p>
+</li>
+<li>
+<p>Left-hand side variables <code>valids</code> are set to the and-gate of all the variable
+  valids used in the expression</p>
+</li>
+<li>
+<p>Reading from a memory is always a valid contents</p>
+</li>
+<li>
+<p>Writing to a register updates the register valid based on the din valid</p>
+</li>
+<li>
+<p>conditionals (<code>if</code>) update valids independently for each path</p>
+</li>
+<li>
+<p>A tuple field has the valid set to false if any of the parent tuple fields is
+  invalid</p>
+</li>
+<li>
+<p>The valid computation can be overwritten with the <code>__valid</code> attribute. This
+  is possible during execution or reset.</p>
+</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The variable valid calculation is similar to the Elastic 'output_written'
+from <a href="https://masc.soe.ucsc.edu/docs/memocode17.pdf">Liam</a> but it is not an
+elastic update because it does not consider the abort or retry.</p>
+</div>
+<p>The previous rules will clear a valid only if an expression has no valid, but
+the only way to have a non-valid is if the inputs to the lambda are invalid or
+if the valid is explicitly clear. The rules are designed to have no overhead
+when valid are not used. The compiler should detect that the valid is true all
+the time, and the associated logic is removed.</p>
+<div class="highlight"><pre><span></span><code>var v1:u32                      // valid and zero every cycle
+var v2:u32 = (__valid=false, 3) // not valid and 3 every cycle
+
+comptime assert v1?
+comptime assert not v2?
+
+comptime assert v1 == 0 and v2 == 3 // data still same as usual
+
+v1 = 0sb?                      // OK, poison data
+v2 = 0sb?                      // OK, poison data, and update valid
+comptime assert v2?            // valid even though data is not
+
+comptime assert v1 != 0        // usual verilog x logic
+comptime assert v2 != 0        // usual verilog x logic
+
+let res1 = v1 + 0              // OK, just unknown result
+let res2 = v2 + 0              // OK, just unknown result
+
+comptime assert res1?
+comptime assert res2?
+</code></pre></div>
+<p>A valid method allows to overwrite the default valid behavior:</p>
+<div class="highlight"><pre><span></span><code>type custom = (
+  ,var data:i16
+  ,var valid= fun () {
+    ret self.data != 33
+  }
+)
+
+var x:custom
+comptime assert x?
+x.data = 33
+comptime assert not x?
+</code></pre></div>
+<p>The contents of the tuple field do not affect the field valid bit. It is
+data-independent. Tuples also can have an optional type, which behaves like
+adding optional to each of the tuple fields.</p>
+<div class="highlight"><pre><span></span><code>type complex = (
+  ,reg v1:string
+  ,pub v2:string
+
+  ,pub set = proc (self,v)-&gt;(self) {
+     self.v1 = v
+     self.v2 = v
+  }
+)
+
+var x1:complex
+var x2:complex = (__valid=false)  // toggle valid, keep zero
+
+comptime assert x1.v1 == &quot;&quot; and x1.v2 == &quot;&quot;
+comptime assert not x2?  and not x2.v1? and not v2.v2?
+comptime assert x2.v1 == &quot;&quot; and x2.v2 == &quot;&quot;
+
+comptime assert x2?.v1 == &quot;&quot; and x2?.v1 != &quot;&quot;  // any comparison is false
+
+// When x2? is false, any x2?.foo returns 0sb? with the associated x rules
+
+x2.v2 = &quot;hello&quot; // direct access still OK
+
+comptime assert not x2? and x2.v1 == &quot;&quot; and x2.v2 == &quot;hello&quot;
+
+x2 = &quot;world&quot;
+
+comptime assert x2? and x2?.v1 == &quot;world&quot; and x2.v1 == &quot;world&quot;
+</code></pre></div>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:clear">
+<p>Non-register variables are initialized to zero each cycle too, the
+  valid is cleared at the same time.&#160;<a class="footnote-backref" href="#fnref:clear" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
+
+              
+            </article>
+          </div>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../03-bundle/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Tuples" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Tuples
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../05-assert/" class="md-footer__link md-footer__link--next" aria-label="Next: Assertions" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Assertions
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["search.suggest", "navigation.sections", "navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.2a1c317c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a6c66575.min.js"></script>
+      
+        <script src="../../javascripts/config.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>

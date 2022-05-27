@@ -1,0 +1,1473 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-8.2.15">
+    
+    
+      
+        <title>Instantiation - LiveHD and Pyrope</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.c382b1dc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.cc9b2e1e.min.css">
+        
+      
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CFira+Code:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Fira Code"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/table.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="" data-md-color-accent="">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#instantiation" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LiveHD and Pyrope" class="md-header__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LiveHD and Pyrope
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Instantiation
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3Z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6zm0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4zM7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LiveHD and Pyrope" class="md-nav__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    LiveHD and Pyrope
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        LiveHD and Pyrope
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+      
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_2">
+          Livehd
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Livehd" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Livehd
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/00-intro/" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/01-install/" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/02-usage/" class="md-nav__link">
+        Usage
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/04-api/" class="md-nav__link">
+        C++ API
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/05-lgraph/" class="md-nav__link">
+        LGraph
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/06-lnast/" class="md-nav__link">
+        LNAST
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/07-mmapstr/" class="md-nav__link">
+        mmap_lib::str
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10-bazel/" class="md-nav__link">
+        Bazel build
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10b-3rdparty/" class="md-nav__link">
+        3rd Party
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/11-pass/" class="md-nav__link">
+        Creating a Pass
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/12-github/" class="md-nav__link">
+        GitHub Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/13-style/" class="md-nav__link">
+        Coding Style
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
+      
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          Pyrope
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Pyrope" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Pyrope
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00-hwdesign/" class="md-nav__link">
+        Hardware Design
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-introduction/" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-basics/" class="md-nav__link">
+        Basic syntax
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-bundle/" class="md-nav__link">
+        Tuples
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-variables/" class="md-nav__link">
+        Variables and types
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-assert/" class="md-nav__link">
+        Assertions
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05b-statements/" class="md-nav__link">
+        Statements
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-functions/" class="md-nav__link">
+        Lambdas
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Instantiation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Instantiation
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#conditionals" class="md-nav__link">
+    Conditionals
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optional-expression" class="md-nav__link">
+    Optional expression
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optional-lambdas" class="md-nav__link">
+    Optional lambdas
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#expressions" class="md-nav__link">
+    Expressions
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setup-vs-reset-vs-execution" class="md-nav__link">
+    Setup vs Reset vs Execution
+  </a>
+  
+    <nav class="md-nav" aria-label="Setup vs Reset vs Execution">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setup-code" class="md-nav__link">
+    Setup code
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reset" class="md-nav__link">
+    Reset
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execution" class="md-nav__link">
+    Execution
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipestages" class="md-nav__link">
+    Pipestages
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#registers" class="md-nav__link">
+    Registers
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06c-pipelining/" class="md-nav__link">
+        Pipelining
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-typesystem/" class="md-nav__link">
+        Type system
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07b-structtype/" class="md-nav__link">
+        Structural Typing
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-memories/" class="md-nav__link">
+        Memories
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-stdlib/" class="md-nav__link">
+        Pyrope std lib
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-internals/" class="md-nav__link">
+        Internals
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../11-deprecated/" class="md-nav__link">
+        Deprecated or Future
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#conditionals" class="md-nav__link">
+    Conditionals
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optional-expression" class="md-nav__link">
+    Optional expression
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optional-lambdas" class="md-nav__link">
+    Optional lambdas
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#expressions" class="md-nav__link">
+    Expressions
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setup-vs-reset-vs-execution" class="md-nav__link">
+    Setup vs Reset vs Execution
+  </a>
+  
+    <nav class="md-nav" aria-label="Setup vs Reset vs Execution">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setup-code" class="md-nav__link">
+    Setup code
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reset" class="md-nav__link">
+    Reset
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execution" class="md-nav__link">
+    Execution
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipestages" class="md-nav__link">
+    Pipestages
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#registers" class="md-nav__link">
+    Registers
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+  <a href="https://github.com/masc-ucsc/docs/edit/main/docs/pyrope/06b-instantiation.md" title="Edit this page" class="md-content__button md-icon">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
+  </a>
+
+
+
+<h1 id="instantiation">Instantiation<a class="headerlink" href="#instantiation" title="Permanent link">&para;</a></h1>
+<p>Instantiation is the process of translating from Pyrope to a representative set
+of gates. The gates could be simplified or further optimized by later compiler
+passes or optimization steps.</p>
+<h2 id="conditionals">Conditionals<a class="headerlink" href="#conditionals" title="Permanent link">&para;</a></h2>
+<p>Conditional statements like <code>if/else</code> and <code>match</code> translate to multiplexers
+(muxes).</p>
+<p>A trivial <code>if</code>/<code>else</code> with all the options covered is a simple mux.</p>
+<div class="highlight"><pre><span></span><code>var res
+if cond {
+  res = a
+}else{
+  res = b
+}
+
+// RTL equivalent
+var res2 = __mux(cond,b,a)
+
+lec res, res2
+</code></pre></div>
+<p>Chaining <code>if</code>/<code>elif</code> creates a chain of muxes. If not all the inputs are
+covered the value from before the <code>if</code> is used. If the variable did not exist,
+a compile error is generated.</p>
+<div class="highlight"><pre><span></span><code>var res = a
+if cond1 {
+  res = b
+}elif cond2 {
+  res = c
+}else{
+  assert true // no res
+}
+
+// RTL equivalent
+var tmp = __mux(cond2, a, c)
+var res2= __mux(cond1, tmp, b)
+
+lec res, res2
+</code></pre></div>
+<p><code>unique if</code>/<code>elif</code> is similar but avoids mux nesting using a one-hot encoded
+mux. </p>
+<div class="highlight"><pre><span></span><code>var res = a
+unique if cond1 {
+  res = b
+}elif cond2 {
+  res = c
+} // no res in else
+
+// RTL equivalent
+var sel = (!cond1 and !cond2, cond1, cond2)@[]  // one hot encode
+var res2= __hotmux(sel, a, b, c)
+assume !(cond1 and cond2)          // one hot check
+
+lec res, res2
+</code></pre></div>
+<p>The <code>match</code> is similar to the <code>unique if</code> but also checks that one of the options is
+enabled, which allows further optimizations.</p>
+<div class="highlight"><pre><span></span><code>var res = a
+match x {
+  == c1 { res = b }
+  == c2 { res = c }
+  == c3 { res = d }
+}
+
+// RTL equivalent
+let cond1 = x == c1
+let cond2 = x == c2
+let cond3 = x == c3
+var sel = (cond1, cond2, !cond1 and !cond2)@[]  // one hot encode (no cond3)
+var res2= __hotmux(sel, b, c, d)
+assume  ( cond1 and !cond2 and !cond3)
+     or (!cond1 and  cond2 and !cond3)
+     or (!cond1 and !cond2 and  cond3)    // one hot check (no else allowed)
+
+lec res, res2
+</code></pre></div>
+<h2 id="optional-expression">Optional expression<a class="headerlink" href="#optional-expression" title="Permanent link">&para;</a></h2>
+<p>Valid or options are computed for each assignment and passed to every lambda
+call. Each variable has an associated valid bit, but it is removed if never
+read, and it is always true unless the variables are assigned in conditionals
+or not short-circuit (<code>and_then</code>/<code>or_else</code>) expressions.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Short-circuit expression</label><label for="__tabbed_1_2">Usual expression</label><label for="__tabbed_1_3">Conditionals</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>var lhs = v1 or_else v2
+
+// RTL equivalent
+let lhs2  = __or(v1, v2)
+let lhs2_v = __or(__and(v1?, v1), __and(v2?, v2))
+
+lec lhs , lhs2
+lec lhs?, lhs2_v
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>var lhs = v1 + v2
+
+// RTL equivalent
+let lhs2   = __sum(A=(v1, v2))
+let lhs2_v = __and(v1?, v2?)
+
+lec lhs , lhs2
+lec lhs?, lhs2_v
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>lhs = v0
+if cond1 {
+  lhs = v1
+}elif cond2 {
+  lhs = v2
+} // no else
+
+// RTL equivalent
+let tmp = __mux(cond2, v0, v2)
+let lhs2= __mux(cond1, tmp, v1)
+
+let tmp_v = __mux(cond2, v0?, v2?)
+let lhs2_v= __mux(cond1, tmp_v, v1?)
+
+lec lhs , lhs2
+lec lhs?, lhs2_v
+</code></pre></div>
+</div>
+</div>
+</div>
+<h2 id="optional-lambdas">Optional lambdas<a class="headerlink" href="#optional-lambdas" title="Permanent link">&para;</a></h2>
+<p>HDLs use typical software constructs that look like function calls to represent
+instances in design. As <a href="../00-hwdesign/#instantiation-vs-execution">previously
+explained</a>, hardware languages are
+about instantiation, and software languages are about instruction execution. A
+lambda called unconditionally is likely to result in <code>module</code> unless the
+compiler decides to be small and it is inlined.</p>
+<p>In Pyrope, the semantics are that when a lambda is conditionally called, it
+should behave like if the lambda were inlined in the conditional place. Since
+functions have no side effects, it is also equivalent to call the lambda before
+the conditional path, and assign the return value inside the conditional path
+only. Special care must be handled for the <code>puts</code> which is allowed in
+functions. The <code>puts</code> should not be called if the function is conditionally
+called.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Conditional proc call</label><label for="__tabbed_2_2">Pyrope inline equivalent</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>pub case_1_counter = proc(runtime)-&gt;(res) {
+
+  reg r:(
+    ,reg total
+    ,increase = fun(a) {
+      puts &quot;hello&quot;
+
+      let res = self.total
+      self.total = u16(res+a)
+
+      ret res
+    }
+  )
+
+  if runtime == 2 {
+    res = r.increase(3)
+  }elif runtime == 4 {
+    res = r.increase(9)
+  }
+}
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>pub case_1_counter = proc(runtime)-&gt;(res) {
+
+  reg r:(
+    ,reg total
+    ,increase = fun(a) {
+      puts &quot;hello&quot;
+
+      let res = self.total
+      self.total = u16(res+a)
+
+      ret res
+    }
+  )
+
+  if runtime == 2 {
+    puts &quot;hello&quot;
+
+    let res = r.total
+    r.total = u16(res+3)
+    res = res
+  }elif runtime == 4 {
+    puts &quot;hello&quot;
+
+    let res = r.total
+    r.total = u16(res+9)
+    res = res
+  }
+}
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>The result of conditionally calling procedures is that most of the code may be
+inlined. This can change the expected equivalent Verilog generated modules.</p>
+<p>Calling a procedure with the inputs set invalid has a different behavior. For
+once C++ calls will still happen, and updates to registers with not valid data
+is allowed to reset the valid bit.</p>
+<h2 id="expressions">Expressions<a class="headerlink" href="#expressions" title="Permanent link">&para;</a></h2>
+<p>Pyrope expressions are guaranteed to have the same result independent of the
+order of evaluation. Only <code>and_then</code>, <code>or_else</code> or complex constructs like
+<code>if/else</code>, <code>match</code>, <code>for</code> have evaluation order.</p>
+<h2 id="setup-vs-reset-vs-execution">Setup vs Reset vs Execution<a class="headerlink" href="#setup-vs-reset-vs-execution" title="Permanent link">&para;</a></h2>
+<p>In a normal programming language, the Von Neumann PC specifies clear semantics
+on when the code is executed. The language could also have a macro or template
+system executed at compile-time, the rest of the code is called explicitly when
+the function is called. As mentioned, a key difference is that HDLs are all about
+instantiation, not instruction execution. The instantiated functionality in HDLs
+tend to have 3 code sections:</p>
+<ul>
+<li>
+<p>Setup: This is code executed to set up the hierarchies, parameters, read
+  configuration setups... It is usually executed at compile time. In Verilog,
+  these are the preprocessor directives and the generate statements.  In
+  CHISEL, the scala is the setup code.</p>
+</li>
+<li>
+<p>Reset: Hardware starts in an undefined/inconsistent state. Usually, a reset
+  signal is enabled several cycles and the associated reset logic configures
+  the system to a given state.</p>
+</li>
+<li>
+<p>Execution: This is the code executed every cycle after reset. The reset
+  logic activation can happen at any time, and parts of the machine may be in
+  reset mode while others are not.</p>
+</li>
+</ul>
+<p>In addition, some languages like Verilog have "initialization" code that is
+executed before reset. This is usually done for debugging, and it is not
+synthesizable. Pyrope does not have such simulation-only code.</p>
+<p>Pyrope aims to have the setup, reset, and execution specified.</p>
+<h3 id="setup-code">Setup code<a class="headerlink" href="#setup-code" title="Permanent link">&para;</a></h3>
+<p>Compiling a Pyrope program requires specifying a "top file" file and a
+"top variable" in the top file. The top file is executed only once. The top
+file may "import" other files. Each of the imports is executed only once too.
+The imported files are executed before the current file is executed. This is
+applied recursively but no loops are supported in import dependence chains.</p>
+<p>The "setup" code is the statements executed once for each imported file. Those
+statements can not be "imported" by other files. Only the resulting <code>pub</code>
+variables can be imported.</p>
+<p>During setup, each file can have a list of <code>pub</code> variables. Those are variables
+that can be used by importing modules.  The "top variable" is selected for simulation/synthesis.</p>
+<p>It is important to point that <code>comptime</code> may be used during setup but also in
+non-setup code. <code>comptime</code> just means that the associated variables are known
+at compile time. This is quite useful during reset and execution too.</p>
+<h3 id="reset">Reset<a class="headerlink" href="#reset" title="Permanent link">&para;</a></h3>
+<p>The most common reset logic is associated with registers and memories. The
+assignment to <code>reg</code> variable declaration is the reset code. It will be called
+for as many cycles are the reset is held active.  The <code>reg</code> assignment can be
+a constant or a call to <code>conf</code> that can provide a runtime file with the values
+to start the simulation/synthesis.</p>
+<div class="highlight"><pre><span></span><code>reg r:u16 = 3 // reset sets r to 3
+r = 2         // non-reset assignment
+
+reg array:u16[] = (1,2,3,4)  // reset values
+
+reg r2:u128 = conf.get(&quot;my_data.for.r2&quot;)
+
+reg array:[] = conf.get(&quot;some.conf.hex.dump&quot;)
+</code></pre></div>
+<p>When a state machine is needed to execute for several cycles a tuple with an
+<code>always_reset</code> must be created and assigned to the register[s] that use it.</p>
+<div class="highlight"><pre><span></span><code>reg array:tag[1024] = (
+  ,clock=my_clock
+
+  ,always_reset = fun()-&gt;(self) {
+     reg reset_iter:u10 = (reset=&quot;&quot;) // no reset flop
+
+     self[reset_iter].state = I
+
+     reset_iter = u10(reset_iter + 1)
+  }
+)
+</code></pre></div>
+<h3 id="execution">Execution<a class="headerlink" href="#execution" title="Permanent link">&para;</a></h3>
+<p>HDLs specify a tree-like structure of modules. Usually, there is a top module
+that instantiates several sub-modules. Pyrope Setup phase is to create such
+hierarchical structures.</p>
+<p>The hierarchy is achieved with modules calling other modules. The top file can
+have one or more modules.</p>
+<p>The following Verilog hierarchy can be encoded with the equivalent Pyrope:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:3"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><input id="__tabbed_3_3" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Verilog</label><label for="__tabbed_3_2">Pyrope equivalent</label><label for="__tabbed_3_3">Pyrope alternative</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="k">module</span><span class="w"> </span><span class="n">inner</span><span class="p">(</span><span class="k">input</span><span class="w"> </span><span class="n">z</span><span class="p">,</span><span class="w"> </span><span class="k">input</span><span class="w"> </span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="k">output</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="k">output</span><span class="w"> </span><span class="n">h</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="k">assign</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w">   </span><span class="n">y</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">z</span><span class="p">;</span><span class="w"></span>
+<span class="w">  </span><span class="k">assign</span><span class="w"> </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">!</span><span class="p">(</span><span class="n">y</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">z</span><span class="p">);</span><span class="w"></span>
+
+<span class="k">endmodule</span><span class="w"></span>
+
+<span class="k">module</span><span class="w"> </span><span class="n">top2</span><span class="p">(</span><span class="k">input</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="k">input</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="k">output</span><span class="w"> </span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="k">output</span><span class="w"> </span><span class="n">d</span><span class="p">);</span><span class="w"></span>
+
+<span class="n">inner</span><span class="w"> </span><span class="n">foo</span><span class="p">(.</span><span class="n">y</span><span class="p">(</span><span class="n">a</span><span class="p">),.</span><span class="n">z</span><span class="p">(</span><span class="n">b</span><span class="p">),.</span><span class="n">a</span><span class="p">(</span><span class="n">c</span><span class="p">),.</span><span class="n">h</span><span class="p">(</span><span class="n">d</span><span class="p">));</span><span class="w"></span>
+
+<span class="k">endmodule</span><span class="w"></span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>pub let inner = fun(z,y)-&gt;(a,h) {
+  a =   y &amp; z
+  h = !(y &amp; z)
+}
+
+pub let top2 = fun(a,b)-&gt;(c,d) {
+  let x= inner(y=a,z=b)
+  c = x.a
+  d = x.h
+}
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>type inner_t = (
+  ,pub set = fun(z,y)-&gt;(self) {
+    self.z = z
+    self.y = y
+  }
+  ,always_after = fun()-&gt;(self) {
+    self.a =   self.y &amp; self.z
+    self.h = !(self.y &amp; self.z)
+  }
+)
+
+pub let top2 = fun(a,b)-&gt;(c,d) {
+  let foo:inner_t = (y=a,z=b)
+  c = foo.a
+  d = foo.h
+}
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>The top-level module <code>top2</code> must be a module, but as the alternative Pyrope
+syntax shows, the inner modules may be in tuples or direct module calls. The
+are advantages to each approach but the code quality should be the same.</p>
+<h2 id="pipestages">Pipestages<a class="headerlink" href="#pipestages" title="Permanent link">&para;</a></h2>
+<p>The pipestage directive (<code>#&gt;</code>) automatically creates pipeline resources.</p>
+<div class="highlight"><pre><span></span><code>if cond {
+  var p1 = inp1
+  var out
+
+  {
+    var l1 = inp1 + 1
+
+    pub var p2 = inp1 + 2
+  } #&gt; {
+    out = p1 + p2
+  }
+
+  res = out
+}
+
+// Non pipestage equivalent
+if cond {
+  var p1 = inp1
+  var out
+
+  {
+    reg p1r
+    reg p2r
+
+    var l1 = inp1 + 1
+    pub var p2 = inp1 + 2 // now pub has no special meaning
+
+    out = p1r + p2r       // registered values
+
+    p1r = p1
+    p2r = p2
+  }
+
+  res = out
+}
+</code></pre></div>
+<h2 id="registers">Registers<a class="headerlink" href="#registers" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>reg a = 3
+a = u16(a+1)
+
+reg b = 4
+if cond {
+  reg c
+  c = b + 1
+  b = 5
+}
+
+// RTL equivalent
+a_qpin = __flop(reset=reset, clk=clk, reset_value=3, din=a.__last_value)
+a      = __sum(A=(a_qpin, 1))
+
+b_qpin = __flop(reset=reset, clk=clk, reset_value=4, din=b.__last_value)
+b      = __mux(cond, b_qpin, 5)
+
+c_cond_qpin = __flop(reset=reset, clk=clk, din=c_cond.__last_value)
+c_cond      = __sum(A=(b, 1))
+</code></pre></div>
+
+              
+            </article>
+          </div>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../06-functions/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Lambdas" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Lambdas
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../06c-pipelining/" class="md-footer__link md-footer__link--next" aria-label="Next: Pipelining" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Pipelining
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["search.suggest", "navigation.sections", "navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.2a1c317c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a6c66575.min.js"></script>
+      
+        <script src="../../javascripts/config.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>
