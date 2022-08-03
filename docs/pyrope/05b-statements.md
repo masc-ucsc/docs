@@ -175,6 +175,7 @@ for i,index,key in b {
 }
 ```
 
+
 The `for` can also be used in an expression that allows building comprehensions
 to initialize arrays. To indicate the values to add in the comprehensions there
 are `cont`, `brk`, or the last expression in the `for` code block.
@@ -188,6 +189,19 @@ assert c == (0,1,2,3,4) == d
 assert e == (0)
 ```
 
+The iterating element is copied by value, if the intention is to iterate over a
+vector or array to modify the contents, a `for mut` must be used. Only the
+element is mutable, the index or key are immutable. The mutable for (`for mut`)
+can not be used in comprehensions.
+
+```
+b = (1,2,3,4,5)
+
+for mut x in b {
+  x += 1
+}
+assert b == (2,3,4,5,6)
+```
 
 ### Code block control
 
