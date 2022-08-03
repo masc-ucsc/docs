@@ -561,7 +561,7 @@ function that returns a randomly mutated tuple.
 ```
 randomize = debug fun(self)->(self) {
   let rnd = import "prp/rnd"
-  for mut i in self {
+  for i in mut self {
     if i equals :int {
       i = rnd.between(i.__max,i.__min)
     }elif i equals :boolean {
@@ -731,7 +731,7 @@ assert 0x400 > uart_addr >= 0x300
 // file local.prp
 pub let setup_xx = proc() {
   reg xx(instance="MY_ADDR") // creates a var that drives remote uart_addr
-  for mut i,index in xx {
+  for i,index in mut xx {
     i = 0x300+index*0x10     //  sets uart_addr to 0x300, 0x310, 0x320...
   }
 }

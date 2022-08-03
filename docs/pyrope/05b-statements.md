@@ -190,14 +190,14 @@ assert e == (0)
 ```
 
 The iterating element is copied by value, if the intention is to iterate over a
-vector or array to modify the contents, a `for mut` must be used. Only the
-element is mutable, the index or key are immutable. The mutable for (`for mut`)
+vector or array to modify the contents, a `mut` must be used. Only the
+element is mutable, the index or key are immutable. The mutable for
 can not be used in comprehensions.
 
 ```
 b = (1,2,3,4,5)
 
-for mut x in b {
+for x in mut b {
   x += 1
 }
 assert b == (2,3,4,5,6)
