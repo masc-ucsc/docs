@@ -118,7 +118,7 @@ type at=int(33..)     // number bigger than 32
 type bt=(
   ,var c:string
   ,var d=100
-  ,let set = fun(...args)->(self) { self.c = args }
+  ,let set = fun(ref self, ...args) { self.c = args }
 )
 
 var a:at=40
@@ -208,7 +208,7 @@ tuple is that the enumerate values must be known at compile time.
 ```
 type Rgb = (
   ,let c:u24
-  ,let set = proc(c)->(self) { self.c = c }
+  ,let set = proc(ref self, c) { self.c = c }
 )
 
 enum Color:Rgb = (
@@ -388,7 +388,7 @@ type ct=(
 type dt=(
   ,var d:u32
   ,var c:string
-  ,let set = proc (x:at)->(self) { self.d = x.d ; self.c = x.c }
+  ,let set = proc (ref self, x:at) { self.d = x.d ; self.c = x.c }
 )
 
 var b:bt=(c="hello", d=10000)
@@ -426,7 +426,7 @@ type Say_hi_mixin = (
 
 type User = (
   ,var name:string
-  ,let set = proc(n:string)->(self) { self.name = n }
+  ,let set = proc(ref self, n:string) { self.name = n }
 )
 
 type Mixing_all = Say_mixin ++ Say_hi_mixin ++ User
@@ -474,13 +474,14 @@ implemented.
 type Shape = (
   ,name:string
   ,area         :fun (self )->(:i32)     // defined but unimplemented 
-  ,increase_size:proc(x:i12)->(self)     // defined but unimplemented 
-  ,set          =proc(name )->(self) { self.name = name } // implemented, use =
+  ,increase_size:proc(ref self, x:i12)   // defined but unimplemented 
+
+  ,set =proc(ref self, name ) { self.name = name } // implemented, use =
 )
 
 type Circle extends Shape with (
-  ,set = proc()->(self) { super("circle") }
-  ,increase_size = proc(x:i12)->(self) { self.rad *= x }
+  ,set = proc(ref self)) { super("circle") }
+  ,increase_size = proc(ref self, x:i12) { self.rad *= x }
   ,rad:i32
   ,area = fun(self) -> (:i32) {
      let pi = import("math").pi
@@ -500,7 +501,7 @@ type Circle = (
      let pi = import("math").pi
      ret pi * self.rad * self.rad
   }
-  ,increase_size = proc(a:i12)->(self){ self.rad *= a }
+  ,increase_size = proc(ref self, a:i12) { self.rad *= a }
 )
 comptime assert Circle does Shape
 ```
@@ -559,9 +560,9 @@ There are several uses for introspection, but for example, it is possible to bui
 function that returns a randomly mutated tuple.
 
 ```
-randomize = debug fun(self)->(self) {
+randomize = debug fun(ref self) {
   let rnd = import "prp/rnd"
-  for i in mut self {
+  for i in ref self {
     if i equals :int {
       i = rnd.between(i.__max,i.__min)
     }elif i equals :boolean {
@@ -731,7 +732,7 @@ assert 0x400 > uart_addr >= 0x300
 // file local.prp
 pub let setup_xx = proc() {
   reg xx(instance="MY_ADDR") // creates a var that drives remote uart_addr
-  for i,index in mut xx {
+  for i,index in ref xx {
     i = 0x300+index*0x10     //  sets uart_addr to 0x300, 0x310, 0x320...
   }
 }
@@ -807,12 +808,12 @@ method is the getter (`get`).
 type some_obj = (
   ,a1:string
   ,pub a2 = (
-    ,_val:u32                                // hidden field
+    ,_val:u32                                  // hidden field
 
-    ,pub var get=fun(){ self._val + 100 }    // getter
-    ,set=proc(x)->(self){ self._val = x+1 }  // setter
+    ,pub var get=fun() { self._val + 100 }     // getter
+    ,set=proc(ref self, x) { self._val = x+1 } // setter
   )
-  ,pub var set = proc(a,b)->(self){          // setter
+  ,pub var set = proc(ref self, a,b){          // setter
     self.a1      = a
     self.a2._val = b
   }
@@ -874,7 +875,7 @@ comparators. When non-provided the `lt` (Less Than) is a compile error, and the
 ```
 type t=(
   ,pub var v
-  ,pub let set = proc()->(self){ self.v = a }
+  ,pub let set = proc(ref self) { self.v = a }
   ,pub let lt = fun(other)->(:boolean){ self.v  < other.v }
   ,pub let eq = fun(other)          { self.v == other.v } // infer ret type
 )

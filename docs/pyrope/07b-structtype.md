@@ -30,16 +30,16 @@ type Animal = (
 )
 
 type Dog extends Animal with (
-  ,pub var set = proc()->(self) { self.legs = 4 }
+  ,pub var set = proc(ref self) { self.legs = 4 }
   ,bark = fun() { puts "bark bark" }
 )
 
 type Bird extends Animal with (
   ,seeds_eaten:int
 
-  ,pub var set = proc()->(self) { self.legs = 2 }
-  ++ proc(a:Animal)->(self) { self.legs = 2 ; name = "bird animal" }
-  ,eat_seeds = proc(n)->(self) { self.seeds_eaten += n }
+  ,pub var set = proc(ref self)  { self.legs = 2 }
+  ++ proc(ref self, a:Animal)    { self.legs = 2 ; name = "bird animal" }
+  ,eat_seeds = proc(ref self, n) { self.seeds_eaten += n }
 )
 
 type Greyhound = Dog ++ ( // also extends Dog

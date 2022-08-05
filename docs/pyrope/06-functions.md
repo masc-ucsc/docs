@@ -98,7 +98,7 @@ add2 = fun[foo=x](a){ foo + a }    // capture x but rename to something else
 
 var y = (
   ,val:u32 = 1
-  ,inc1 = fun (self)->(self){ self.val = u32(self.val + 1) }
+  ,inc1 = fun (self)->(self) { self.val = u32(self.val + 1) }
 )
 
 debug let my_log = fun (...inp) {
@@ -125,7 +125,8 @@ there is no way to pass by reference.
 
 There are several rules on how to handle arguments.
 
-* Calls use the Uniform Function Call Syntax (UFCS). `(a,b).f(x,y) == f((a,b),x,y)`
+* Calls use the Uniform Function Call Syntax (UFCS) when a `self` is defined as
+  first argument. `(a,b).f(x,y) == f((a,b),x,y)`
 
 * Pipe `|>` concatenated inputs: `(a,b) |> f(x,y) == f(x,y,a,b)`
 
@@ -135,10 +136,10 @@ There are several rules on how to handle arguments.
 * Functions explicitly declared without arguments, do not need parenthesis in
   function call.
 
-Pyrope uses a Uniform Function Call Syntax (UFCS) like Nim or D but it can be
-different from the order in other languages. Notice the different order in
-UFCS vs pipe, and also that in the pipe the argument tuple is concatenated,
-but in UFCS is added as the first argument.
+Pyrope uses a Uniform Function Call Syntax (UFCS) when the first argument is
+`self`. It resembles Nim or D UFCS but it can be different from the order in
+other languages. Notice the different order in UFCS vs pipe, and also that in
+the pipe the argument tuple is concatenated.
 
 ```
 div  = fun (a,b) { a / b }          // named input tuple
@@ -167,37 +168,38 @@ o=(8,4).div2(1)          // compile error: (8,4)/1 is undefined
 ```
 
 
-The UFCS allows to have `functions` to call any tuple, but if the called tuple
-has a lambda defined with the same name, the tuple lambda has a higher priority.
+The UFCS allows to have `lambdas` to call any tuple, but if the called tuple
+has a lambda defined with the same name a compile error is generated. Like with
+variables, Pyrope does not allow `lambda` call shadowing. Polymorphism is allowed
+but only explicit one as explained later.
 
 ```
 var tup = (
-  ,let f1 = fun() { ret 1 }
+  ,let f1 = fun(self) { ret 1 }
 )
 
-let f1 = fun (b){ ret 2 }
+let f1 = fun (self){ ret 2 }
+let f2 = fun (self){ ret 3 }
 
 assert f1()     == 2
 assert f1(tup)  == 2
-assert 4.f1()   == 2
+assert 4.f1()   == 2  // compile error, shadowing between tuple and lambda
+assert 4.f2()   == 3  // UFCS call
 assert tup.f1() == 1
 ```
 
 The keyword `self` is used to indicate that the function is accessing a tuple.
-It is also passed as the first argument. As a syntax sugar, when no inputs are
-specified, the `self` can be from the input list when it is read by any
-expression, but it is not added to the input tuple unless `self` is explicitly
-listed. The output `self` is always needed if a mutable method is the
-intention.
+It is also passed as the first argument, an output `self` is needed for methods
+that can mutate the tuple state.
 
 ```
 var tup = (
   ,var x = 3
-  ,let f1 = fun(...rest){ assert rest.size == 0 ; ret self.x }
+  ,let f1 = fun(self, ...rest){ assert rest.size == 0 ; ret self.x }
 )
 
-let fun2 = fun(b){ ret b.x             } // no self, but it is the same
-let fun3 = fun(self,b){ ret self.x + b }
+let fun2 = fun(self){ ret self.x       }
+let fun3 = fun(self,z){ ret self.x + z }
 
 assert tup.f1() == 3   // tup.fun call
 assert tup.f1 == 3     // explicit no args, so () is optional in call
@@ -210,93 +212,121 @@ assert fun3(tup,2) == 5
 assert tup.fun3(2) == 5
 ```
 
+## Pass by Reference and alias
+
+Pyrope arguments are by value, unless the `ref` keyword is used. Pass by
+reference is needed in three main cases: (1) allow methods to update the object
+instance; (2) pass variables to functions without needing to copy values like
+registers; (3) avoid function calls when passed as argument.
+
+In all those cases, the pass by reference behaves like if the calling lambda
+were inlined in the caller lambda. The `ref` keyword must be explicit in the
+lambda input definition but also in the lambda call. The lambda outputs can not
+have a `ref` modifier.
+
+
+```
+let inc1 = fun(ref a) { a += 1 }
+
+let x = 3
+inc1(ref x)       // compile error, no mutable access to x inside inc1
+
+var y = 3
+inc1(ref y)
+assert y == 4
+
+let banner = fun() { puts "hello"  }
+let execute_method = fun(ref fn) {
+  fn() // prints hello
+}
+
+execute_method(ref banner) // OK
+execute_method(banner)     // compile error, ref explicitly expected
+```
+
+A lambda will be called whenever referenced. When calling a method, a `ref` can
+be added before to avoid the lambda call. A related issue is when a lambda must
+be assigned to another variable without calling. In a way, it is an alias or
+reference creation. Because it is more intuitive to see it as an alias, the
+`alias` keyword is used in this case, but it has the same meaning.
+
+```
+let f1 = fun() { puts "here" }
+
+let f2 = f1 // prints here
+
+alias f3 = f1
+f3          // prints here
+```
+
 ## Methods
 
-Pyrope lambdas only pass arguments by value. This looks like a problem if we
-implement a typical `method`. The `method` accesses the parent tuple fields and
-updates some of them. 
+Pyrope arguments are by value, unless the `ref` keyword is used. `ref` is
+needed when a method intends to update the tuple contents. In this case, `ref
+self` argument behaves like a pass by reference in non-hardware languages. This
+means that the tuple fields are updated as the method executes, it does not
+wait until the method finishes execution. A method without the `ref` keyword is
+a pass by value call. Since all the inputs are immutable by default (`let`),
+any `self` updates should generate a compile error.
 
+```
+type Nested_call = (
+  ,var x = 1
+  ,let outter= proc(ref self) {  self.x = 100 ; self.inner(); self.x = 5 }
+  ,let inner = fun(self) { assert self.x == 100 }
+  ,let faulty = proc(self) { self.x = 55 } // compile error, immutable self
+)
+```
 
-Updates to tuples needed by `methods` are allowed when the output of the lambda
-is a `self` keyword. Although not required, `methods` tend to also have `self`
-as the first input argument.
-
-
-For a method to update the tuple, the return value must be assigned to the
-calling variable. As a syntax sugar, if the call does not have an assignment,
-the same tuple assign is created.
+`self` can also be returned but this behaves like a normal copy by value
+variable return.
 
 ```
 var a_1 = (
   ,x:u10
-  ,let f1 = fun(self,x)->(self) {
+  ,let f1 = fun(ref self,x)->(self) { 
     self.x = x 
+    ret self
   }
 )
 
-a_1.f1(3)            // syntax sugar for a_1 = a_1.f1(3)
+a_1.f1(3)
 var a_2 = a_1.f1(4)  // a_2 is updated, not a_1
 assert a_1.x == 3 and a_2.x == 4
 
 // Same behavior as in a function with UFCS
-fun2 = fun (self, x)->(self){ self.x = x }
+fun2 = fun (ref self, x) { self.x = x }
 
 a_1.fun2(10)    
 var a_3 = a_1.fun2(20)
 assert a_1 == 10 and a_3 == 20
 ```
 
-A difference between a method and a UFCS call is that the method has a higher
-priority to match. Like in the input syntax sugar, if no output is specified
-and there is an update to a `self` variable, the compiler assumes `(self)` as
-output tuple.
 
+Since UFCS does not allow shadowing, a wrapper must be built or a compile error is generated.
 
 ```
 var counter = (
   ,var val:i32
-  ,let inc = fun (self, v){ self.var += v }
+  ,let inc = fun (ref self, v){ self.var += v }
 )
 
 assert counter.val == 0
 counter.inc(3)
 assert counter.val == 3
 
-let inc = fun (self, v)->(self){ self.var *= v } // NOT INC but multiply
-counter.inc(2)
-assert counter.val == 5
+let inc = fun (ref self, v) { self.var *= v } // NOT INC but multiply
+counter.inc(2)             // compile error, multiple inc options
+assert 44.inc(2) == 8
 
-let mul = inc
-counter = counter.mul(2)   // call the new mul method with UFCS
+counter.val = 5
+alias mul = inc
+counter.mul(2)   // call the new mul method with UFCS
 assert counter.val == 10
 
-let other = counter.mul(2) // UFCS no self update return
-assert counter.val == 10
-assert other.val   == 20
-
-mul(counter, 2) // also legal, but no self update
+mul(counter, 2) // also legal
 assert counter.val == 20
 ```
-
-`self` is an input and/or output but also a reserved word. It could be a tuple
-first input argument or the first output argument
-
-!!!NOTE
-    To avoid verbose `self` in methods, the compiler automatically inserts a
-    `self` as the first entry in the input tuple if the `self` variable is ever
-    read in the method and no input/output was defined.
-
-    ```
-    // equivalent code due to automatic `self` insertion
-    let fun1 = proc(self)->(self){ self.foo = self.bar + 1}
-    let fun2 = proc(    )->(self){ self.foo = self.bar + 1}
-    let fun3 = proc(self)        { self.foo = self.bar + 1}
-    let fun4 = proc(    )        { self.foo = self.bar + 1}
-
-    // NOT equivalent because () means no input/output
-    let non2 = proc()    ->(self){ self.foo = self.bar + 1}
-    let non3 = proc(self)->()    { self.foo = self.bar + 1}
-    ```
 
 ## Arguments
 

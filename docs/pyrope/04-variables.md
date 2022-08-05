@@ -667,9 +667,9 @@ references. In non-hardware languages, `?` is used to check if there is valid
 data or a null pointer.
 
 
-Pyrope has references, but it does not have null pointers. Pyrope uses `?` to
-handle "valid" data. Instead, the data is left to behave without the optional,
-but there is a new "valid" field associated with each tuple entry.
+Pyrope does not have null pointers or memory associated management. Pyrope uses
+`?` to handle "valid" data. Instead, the data is left to behave without the
+optional, but there is a new "valid" field associated with each tuple entry.
 
 
 There are 4 explicitly interact with valids:

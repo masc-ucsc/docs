@@ -323,7 +323,7 @@ When a state machine is needed to execute for several cycles a tuple with an
 reg array:tag[1024] = (
   ,clock=my_clock
 
-  ,always_reset = fun()->(self) {
+  ,always_reset = fun(self)->(self) {
      reg reset_iter:u10 = (reset="") // no reset flop
 
      self[reset_iter].state = I
@@ -382,11 +382,11 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
 
     ```
     type inner_t = (
-      ,pub set = fun(z,y)->(self) {
+      ,pub set = fun(self, z,y)->(self) {
         self.z = z
         self.y = y
       }
-      ,always_after = fun()->(self) {
+      ,always_after = fun(self)->(self) {
         self.a =   self.y & self.z
         self.h = !(self.y & self.z)
       }

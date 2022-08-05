@@ -11,9 +11,10 @@ a syntax comparison.
 
 ## Lambda
 
-In Rust, the `self` keyword when applied to methods can be `&self`, `self`, `&mut self`. In Pyrope,
-there is only a `self`, because values are not passed by reference but by value. The equivalent of the `&mut self` is
-when Pyrope has the input and output tuple with `self`.
+In Rust, the `self` keyword when applied to lambda arguments can be `&self`,
+`self`, `&mut self`. In Pyrope, there is only a `self` and `ref self`. The
+equivalent of the `&mut self` is `ref self`. Pyrope does not have the
+equivalent of `mut self` that allows to modify a copy of self.
 
 
 ```rust
@@ -33,7 +34,9 @@ imp AnObject {
 }
 ```
 
-A Rust style Pyrope equivalent:
+A Rust style Pyrope equivalent, but this is an overkill because the base type
+does not have any method pending, so the `extends` does not have anything to
+check.
 
 ```
 pub type AnObject = (
@@ -41,7 +44,7 @@ pub type AnObject = (
 )
 
 pub type AnObject2 extends AnObject2 with (
-  ,pub f1 = proc(self) -> (self,:i32) {
+  ,pub f1 = proc(ref self) -> (:i32) {
     let res = self.v
     self.v += 1
     ret res
@@ -57,7 +60,7 @@ A more Pyrope style equivalent:
 ```
 pub type AnObject = (
   ,v:i32
-  ,pub f1 = proc(self) -> (self,:i32) {
+  ,pub f1 = proc(ref self) -> (:i32) {
     let res = self.v
     self.v += 1
     ret res
@@ -66,5 +69,23 @@ pub type AnObject = (
     ret self.v
   }
 )
+```
+
+Another Pyrope style equivalent alternative when the methods can be declared
+outside the object declaration.
+
+```
+pub type AnObject = (
+  ,v:i32
+)
+
+pub f1 = proc(ref self:AbObject) -> (:i32) {
+  let res = self.v
+  self.v += 1
+  ret res
+}
+pub f2 = fun(self:AbObject) -> (:i32) {
+  ret self.v
+}
 ```
 
