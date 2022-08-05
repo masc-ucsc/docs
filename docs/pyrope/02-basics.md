@@ -25,12 +25,13 @@ digit is a likely integer constant.
 0111    // 111 in decimal (some languages use octal here)
 ```
 
-Since powers of two are very common, Pyrope decimal integers can use the `k`, `m`, `g` modifiers.
+Since powers of two are very common, Pyrope decimal integers can use the `K`, `M`, `G`, and `T` modifiers.
 
 ```
-assert 1k == 1K == 1024
-assert 1m == 1M == 1024*1024
-assert 1g == 1G == 1024*1024*1024
+assert 1K == 1024
+assert 1M == 1024*1024
+assert 1G == 1024*1024*1024
+assert 1T == 1024*1024*1024*1024
 ```
 
 Several hardware languages support unknown bits (`?`) or high-impedance (`z`). Pyrope
