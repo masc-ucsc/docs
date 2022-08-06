@@ -480,7 +480,7 @@ type Shape = (
 )
 
 type Circle extends Shape with (
-  ,set = proc(ref self)) { super("circle") }
+  ,set = proc(ref self) { super("circle") }
   ,increase_size = proc(ref self, x:i12) { self.rad *= x }
   ,rad:i32
   ,area = fun(self) -> (:i32) {

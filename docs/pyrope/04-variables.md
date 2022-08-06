@@ -136,21 +136,21 @@ a different set of rules constraining the variable scopes.
 === "Code Block scope"
 
     ```
-    // a is not visible
+    assert a == 3    // compile error, undefined variable 'a'
     var a = 3
     {
       assert a == 3
       a = 33         // OK
       let b = 4
-      let a = 3333   // compile error. Variable shadowing
+      let a = 3333   // compile error, variable shadowing
     }
-    // b is not visible
+    assert b == 3    // compile error, undefined variable 'b'
     ```
 
 === "Lambda scope"
 
     ```
-    // a is not visible
+    assert a == 3    // compile error, undefined variable 'a'
     var a = 3
     let f1 = fun() {
       assert a == 3
@@ -160,12 +160,12 @@ a different set of rules constraining the variable scopes.
       assert a == 3333
     }
     let f2 = fun[]() { // restrict scope
-      assert a == 3 // compile error. `a` not in scope
+      assert a == 3 // compile error, undefined variable 'a'
     }
     let f3 = fun[ff=a]() { // restrict scope
       assert ff == 3 // OK
     }
-    // b is not visible
+    assert b == 3    // compile error, undefined variable 'b'
     ```
 
 === "Tuple scope"
@@ -417,8 +417,9 @@ y.color   = "red"    // OK
 
 ## Operators
 
-There are the typical basic operators found in most common languages except exponent operations. The reason is that those are very hardware
-intensive and a library code should be used instead.
+There are the typical basic operators found in most common languages except
+exponent operations. The reason is that those are very hardware intensive and a
+library code should be used instead.
 
 All the operators work over signed integers.
 
@@ -437,6 +438,9 @@ All the operators work over signed integers.
 * `a & b` bitwise and
 * `a | b` bitwise or
 * `a ^ b` bitwise xor
+* `a !& b` bitwise nand
+* `a !| b` bitwise nor
+* `a !^ b` bitwise xnor
 * `a >> b` shift right
 * `a << b` shift left
 
@@ -445,7 +449,14 @@ All the operators work over signed integers.
 * `a and b` logical and
 * `a or b` logical or
 * `a implies b` logical implication
+* `a !and b` logical nand
+* `a !or b` logical nor
+* `a !implies b` logical not implication
 
+### Tuple operators
+
+* `a in b` is element `a` in tuple `b`
+* `a !in b` true when element `a` is not in tuple `b`
 
 Most operations behave as expected when applied to signed unlimited precision
 integers. Logical and arithmetic operations can not be mixed.

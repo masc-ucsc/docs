@@ -37,10 +37,10 @@ no` operators.
 let a = (foo = 3)
 assert a has 'foo'
 assert !(a has 'bar')
-assert a has no 'bar' // "has no" is the opposite of "has"
+assert a !has 'bar' // "has no" is the opposite of "has"
 assert a has 0
-assert !(a has 1)
-assert a has no 1
+assert a !has 1
+assert a !has 1
 ```
 
 Tuple named fields can have a default type and or contents:
@@ -241,7 +241,8 @@ be avoided for an unnamed tuple in some cases:
 * When doing a simple function call after an assignment or at the beginning of a line.
 * When used inside a selector `[...]`.
 * When used after an `in` operator followed by a `{` like in a `for` and `match` statements.
-* For the inputs in a match statement
+* For the inputs in a match statement.
+* A single element lambda return value.
 
 ```
 fcall 1,2         // same as: fcall(1,2)
