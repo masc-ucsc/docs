@@ -272,7 +272,7 @@ with tuples or by requiring an enumerate.
 
 
 ```
-var x1:u3[2] = {0,1}
+var x1:u3[2] = (0,1)
 assert x1[0] == 0 and x1[1] == 1
 
 enum X = (
