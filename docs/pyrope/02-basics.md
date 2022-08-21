@@ -295,8 +295,7 @@ side-effects. In a way, expression code blocks can be seen as a type of
 
 ```
 var a =       {var d=3 ; last d+1}    + 100 // OK
-var b = (fun(){var d=3 ; last d+1})() + 100 // same with functions
-assert a == (3+1+100) == b
+assert a == (3+1+100)
 ```
 
 

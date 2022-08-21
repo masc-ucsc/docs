@@ -749,28 +749,3 @@ let v = (3)--3
 assert v == 6
 ```
 
-### Return tuple
-
-Pyrope everything is a tuple, but return value can be unexpected if 1 or 2
-return values happen.
-
-```
-let ret1 = fun()->(a) {
-  a = 1
-}
-
-let ret2 = fun()->(a,b) {
-  a = 2
-  b = 3
-}
-
-let a1 = ret1()
-assert a1 == 1 // NOT a1.a == 1
-
-let a2 = ret2()
-assert a2.a == 2 and a2.b == 3
-
-let x1,x2 = ret2()
-assert x1 == 2 and x2 == 3
-```
-

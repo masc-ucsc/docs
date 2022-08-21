@@ -69,7 +69,7 @@ The lambda definition has the following fields:
   inputs. `(...args)` allow to accept a variable number of arguments.
 
 + `OUTPUT` has a list of outputs allowed with optional types. `()` indicates no
-  outputs. `(...out)` will expand the out tuple as individual outputs.
+  outputs.
 
 + `COND` is the condition under which this statement is valid. The `COND` can
   use the inputs, outputs, and `self` to evaluate. If the outputs are used in
@@ -120,8 +120,15 @@ my_log a, false, x+1
 Lambda calls only pass arguments by value. Unlike most software languages,
 there is no way to pass by reference.
 
-* Arguments can be named. E.g: `fcall(a=2,b=3)`
-* There can be many return values. E.g: `ret (a=3,b=5)`
+Input arguments must be named. E.g: `fcall(a=2,b=3)` There are the following
+exceptions that avoid naming arguments:
+
+* If the argument is a single letter, it does not need to be names
+
+* If the type system can distinguish between unnamed arguments
+
+* The calling variable name has the same as an argument
+
 
 There are several rules on how to handle arguments.
 
@@ -142,8 +149,8 @@ other languages. Notice the different order in UFCS vs pipe, and also that in
 the pipe the argument tuple is concatenated.
 
 ```
-div  = fun (a,b) { a / b }          // named input tuple
-div2 = fun (...x){ x.0 / x.1 }   // unnamed input tuple
+div  = fun (a,b) { a / b }        // named input tuple
+div2 = fun (...x){ x.0 / x.1 }    // unnamed input tuple
 
 noarg = fun () { ret 33 }         // explicit no args
 
@@ -259,6 +266,37 @@ alias f3 = f1
 f3          // prints here
 ```
 
+### Output tuple
+
+Pyrope everything is a tuple, even the output or return from a lambda. When a
+single element is returned, it can be an unnamed tuple by omiting parenthesis.
+
+```
+let ret1 = fun()->(a:int) { // named
+  a = 1
+}
+
+let ret2 = fun()->a:int {   // unnamed
+  a = 2
+}
+
+let ret3 = fun()->(a,b) {   // named
+  a = 3
+  b = 4
+}
+
+let a1 = ret1()
+assert a1.a == 1 // NOT a1 == 1
+
+let a2 = ret2()
+assert a2 == 1   // NOT a2.a == 1
+
+let a3 = ret3()
+assert a3.a == 3 and a2.b == 4
+
+let x1,x2 = ret3()
+assert x1 == 3 and x2 == 4
+```
 ## Methods
 
 Pyrope arguments are by value, unless the `ref` keyword is used. `ref` is

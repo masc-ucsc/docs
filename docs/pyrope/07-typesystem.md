@@ -99,6 +99,7 @@ comptime assert t1 equals v1
 ```
 
 
+
 While the `var` statement declares a new variable instance that can also have
 an associated type, the `type` statement declares a type without any instance.
 
@@ -196,6 +197,32 @@ assert a equals :fun()
 assert a != b
 assert a equals b
 assert not (a equals fun() { ret 1 }) // different arguments
+```
+
+
+## Nominal type check
+
+
+Pyrope has structural type checking, but there is a keyword `is` that allows to
+check that the type name matches `a is b` returns true if the type of `a` has
+the same name as the type of `b`. This can be used in places like function
+calls to check that the type name matches. Instrad of `v:tp`, Pyrope also
+accepts `v is tp`. `:` checks that `v` has structural type compatible with
+`tp`. `is` checks that `v` has exactly the type `tp`.
+
+```
+type X1 = (b:u32)
+type X2 = (b:u32)
+
+let t1 = (b=3):X1  // OK
+let t2 = (b=3):X2  // OK
+let t3 = (b=3) is X2  // compile error
+let t4:X1 = (b=3)
+
+y1 = t4:X1    // OK
+y2 = t4:X2    // OK
+y3 = t4 is X1 // OK
+y4 = t4 is X2 // compile error
 ```
 
 ## Enums with types
@@ -810,7 +837,7 @@ type some_obj = (
   ,pub a2 = (
     ,_val:u32                                  // hidden field
 
-    ,pub var get=fun() { self._val + 100 }     // getter
+    ,pub var get=fun(self) { self._val + 100 } // getter
     ,set=proc(ref self, x) { self._val = x+1 } // setter
   )
   ,pub var set = proc(ref self, a,b){          // setter
@@ -834,10 +861,10 @@ to customize by return type:
 ```
 type showcase = (
   ,pub var v:int
-  ,pub var get ++= fun()->(:string) where self.i>100 {
+  ,pub var get ++= fun(self)->(:string) where self.i>100 {
     ret "this is a big number" ++ string(v)
   }
-  ,pub var get ++= fun()->(:int) {
+  ,pub var get ++= fun(self)->(:int) {
     ret v
   }
 )
@@ -857,9 +884,9 @@ In this case, it allows building typecast per type.
 type my_obj = (
   ,val:u32
   ,pub var get 
-    = fun()->(:string ){ ret string(self.val) }
-   ++ fun()->(:boolean){ ret self.val != 0    }
-   ++ fun()->(:int    ){ ret self.val         }
+    = fun(self)->(:string ){ ret string(self.val) }
+   ++ fun(self)->(:boolean){ ret self.val != 0    }
+   ++ fun(self)->(:int    ){ ret self.val         }
 )
 ```
 
@@ -876,8 +903,8 @@ comparators. When non-provided the `lt` (Less Than) is a compile error, and the
 type t=(
   ,pub var v
   ,pub let set = proc(ref self) { self.v = a }
-  ,pub let lt = fun(other)->(:boolean){ self.v  < other.v }
-  ,pub let eq = fun(other)          { self.v == other.v } // infer ret type
+  ,pub let lt = fun(self,other)->(:boolean){ self.v  < other.v }
+  ,pub let eq = fun(self,other)            { self.v == other.v } // infer ret
 )
 
 var m1:t = 10

@@ -264,3 +264,34 @@ let flatten = fun(...arr) {
 assert flatten(d2) == (1,2,3,4)
 assert flatten((((1),2),3),4) == (1,2,3,4)
 ```
+
+## Array index
+
+Array index by default are unsigned integers, but the index can be constrained
+with tuples or by requiring an enumerate.
+
+
+```
+var x1:u3[2] = {0,1}
+assert x1[0] == 0 and x1[1] == 1
+
+enum X = (
+  ,t1
+  ,t2
+  ,t3
+)
+
+var x2:u3[X]
+x2[X.t1] = 0
+x2[X.t2] = 1
+x2[0]              // compile error, only enum index
+
+
+var x3:u3[-8..<7]  // accept signed values
+
+var x4:u3[100..<132]
+
+assert x4[100] == 0
+assert x4[3]       // compile error, out of bounds index
+```
+
