@@ -61,9 +61,10 @@ The lambda definition has the following fields:
   use as generic types in the lambda.
 
 + `CAPTURE` has the list of capture variables for the lambda. If no capture is
-  provided, any local variable can be captured by value. An empty list (`[]`),
-  means no captures allowed. The captures are by value only, no capture by
-  reference is allowed.
+  provided, no local variable can be captured by value which is equivalent to
+  an empty list (`[]`), The captures are by value only, no capture by reference
+  is allowed. Unlike most languages, capture must be comptime. Section
+  [Closures](10-internals.md#Closures) has more details.
 
 + `INPUT` has a list of inputs allowed with optional types. `()` indicates no
   inputs. `(...args)` allow to accept a variable number of arguments.
@@ -75,8 +76,8 @@ The lambda definition has the following fields:
   use the inputs, outputs, and `self` to evaluate. If the outputs are used in
   the `COND`, the lambda must be immutable (`fun`). This means that the method
   is called when the condition could evaluate true depending on its execution,
-  but being immutable there are no side effects. The
-  [overload](07b-structtype.md#lambda_overloading) section has more details.
+  but being immutable there are no side effects. Section
+  [overload](07b-structtype.md#lambda_overloading) has more details.
 
 ```
 var add
@@ -91,9 +92,9 @@ add = fun <T>(a:T,b:T,c:T){ a+b+c }   // same
 
 x = 2
 var add2
-add2 = fun       (a){   x + a }    // implicit capture x
-add2 = fun[x    ](a){   x + a }    // explicit capture x
+add2 = fun       (a){   x + a }    // compile error, undefined 'x'
 add2 = fun[     ](a){   x + a }    // compile error, undefined 'x'
+add2 = fun[x    ](a){   x + a }    // explicit capture x
 add2 = fun[foo=x](a){ foo + a }    // capture x but rename to something else
 
 var y = (

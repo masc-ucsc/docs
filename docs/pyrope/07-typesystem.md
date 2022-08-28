@@ -666,6 +666,13 @@ there is no true cyclic dependency between variables. This means that "false"
 cyclic dependencies are allowed but not true ones.
 
 
+The import behaves like cut and pasting the imported code. It is not a
+reference to the file, but rather a cut and paste of functionality. This means
+that when importing a variable, it creates a copy. If two files import the same
+variable, they are not referencing the same variable, but each has a separate
+copy.
+
+
 The import is delayed until the imported variable is used in the local file.
 There is no order guarantee between imported files, just that the code needed
 to compute the used imported variables is executed before.
@@ -728,19 +735,19 @@ let do_debug = proc() {
 
 Verilog has a more flexible semantics with the Hierarchical Reference. It also
 allows to go through the module hierarchy and read/write the contents of any
-variable. Pyrope only allows you to reference registers. Verilog hierarchical
-reference is not popular for 2 main reasons: (1) It is considered "not nice" to
-bypass the module interface and touch an internal variable; (2) some tools do
-not support it as synthesizable; (3) the evaluation order is not clear because
-the execution order of the modules is not defined. 
+variable. Pyrope only allows you to reference registers by unique name. Verilog
+hierarchical reference is not popular for 2 main reasons: (1) It is considered
+"not nice" to bypass the module interface and touch an internal variable; (2)
+some tools do not support it as synthesizable; (3) the evaluation order is not
+clear because the execution order of the modules is not defined. 
 
 
-Allowing only to update registers avoids the evaluation order problem. The
-updates go to the register `din` pin, and the references read the register `q`
-pin. The register references follow the model of single writer multiple reader.
-This means that only a single lambda can update the register, but many lambdas
-can read the register. This allows to be independent on the `lambda` evaluation
-order.
+Allowing only a single lambda to update registers avoids the evaluation order
+problem. From a low level point of view, the updates go to the register `din`
+pin, and the references read the register `q` pin. The register references
+follow the model of single writer multiple reader.  This means that only a
+single lambda can update the register, but many lambdas can read the register.
+This allows to be independent on the `lambda` evaluation order.
 
 
 The register reference uses instantiated registers. This means that if a lambda

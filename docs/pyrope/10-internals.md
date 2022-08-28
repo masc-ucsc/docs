@@ -428,49 +428,99 @@ let tup = (
 
 ### Closures
 
-Closures capture the state. In Pyrope everything is by value, so capture variables.
-By default, all the upper scope variables are captured, but you can not declare
-new variables in the new lambda that shadow the captures. You must restrict the
-capture list.
+Closures capture extra state or inputs at definition. The capture variables are
+always immutable `let` no matter the outter scope definition. Therefore,
+capture variables behave like passed by value, not reference. 
+
+One important thing is 'when' does the capture happens. Pyrope follows the
+model of most languages like C++ that captures at lambda definition, not lambda
+execution. Unlike most languages, capture value must be known at compile time
+or an error is generated.
+
+=== "Pyrope capture time"
+
+```
+var x_s = 10
+
+pub call_captured = fun[x_s]() {
+  ret fun[x_s]() {
+    assert x_s == 10
+    ret x_s
+  }
+}
+
+test "capture test" {
+  let tst = fun() {
+    var x_s = 20   // not variable shadowing because fun scope
+
+    let x1 = call_captured()
+    assert x1 == 10
+
+    x_s = 30;
+
+    let x2 = call_captured()
+    assert x2 == 10
+  }
+  tst // call the test
+}
+```
+
+=== "C++17 capture time"
+
+```c++
+#include <iostream>
+
+int main() {
+
+  int x_s{ 10 };
+
+  auto call_captured{
+    [x_s]() {
+      assert(x_s == 10);
+      return x_s;
+    }
+  };
+  }
+
+  x_s = 20;
+
+  auto x1 = call_captured();
+  assert(x1==10);
+
+  x_s = 30;
+
+  auto x2 = call_captured();
+  assert(x2==10);
+}
+```
+
+Capture values must be explicit, or no capture happens. This means that
+`...fun[](...)...` is the same as `...fun(...)...`.
 
 ```
 var x = 3
 
-let f1 = fun()->(:int){
+let f1 = fun[x]()->(:int){
    assert x == 3
    var x    // compile error. Shadow captured x
    ret 200
 }
-```
-
-Captured variables keep the declared type (`var`/`let`) but the change does not
-escape the local lambda.
-
-```
-var x = 3
-let y = 10
-
-let f1 = fun()->(:int){
-   assert x == 3 and y == 10
-   x = 10000
-   //y = 100              // compile error, y is immutable
-   ret x+200
+let f2 = fun()->(:int){
+   var x    // OK, no captures 'x' variable
+   x = 100
+   ret x
 }
-
-assert x == 3
-
-let z = f1()
-assert z == 10200
-assert x == 3
 ```
 
 Capture variables pass the value at capture time:
+
 
 ```
 var x = 3
 var y = 10
 
-let fun2 = fun[y]()->(:int){ // [] means capture just y
+let fun2 = fun[y]()->(:int){
+  y = 100              // compile error, y is immutable when captured
   var x  = 200
   ret y + x
 }
