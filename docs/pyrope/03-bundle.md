@@ -30,6 +30,10 @@ assert a.0.c     == 2
 assert a.0.1     == 2
 ```
 
+The only main difference between `a.0` (dot) and `a[0]` (select) access is that
+dot access guarantees to be compile time index, while the select can have
+compile time or run-time index.
+
 There is introspection to check for an existing field with the `has` and `has
 no` operators.
 

@@ -1,0 +1,21 @@
+
+type Xconf = (
+  ,size:i20
+  ,pub let create = fun(sz) -> x:Xconf { 
+      x.size = sz * 2
+  }
+)
+
+
+let foo = Xconf.create(sz=10)
+
+type Xconf2 = (
+  ,size:i20
+  ,pub let set = fun(ref self, sz) {
+      self.size = sz * 2
+  }
+)
+
+let bar:Xconf2 = (sz=10)
+let baz:Xconf2 = 10
+

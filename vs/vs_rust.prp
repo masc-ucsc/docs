@@ -1,0 +1,86 @@
+
+//-------------- RUST
+
+trait SayHi {
+    fn say_hi(&self);
+}
+
+struct Person {
+    age: u8,
+}
+
+struct Child {
+    age: u8,
+    has_toy: bool,
+}
+
+impl SayHi for Person {
+    fn say_hi(&self) {
+        println!("Greetings. I am {}", self.age)
+    }
+}
+
+impl SayHi for Child {
+    fn say_hi(&self) {
+        if self.has_toy {
+            println!("I'm only {}, but I have a toy!", self.age)
+        } else {
+            println!("I'm only {}, and I don't even have a toy!", self.age)
+        }
+    }
+}
+
+fn greet<T>(thing: T)
+    where T: SayHi
+{
+    thing.say_hi()
+}
+
+fn main() {
+    let p = Person { age: 42 };
+    let c = Child { age: 7, has_toy: true };
+
+    greet(p);
+    greet(c);
+}
+
+//-------------- Pyrope
+
+type SayHi = {
+  ,pub let say_hi = fun(self);
+}
+
+type Person = {
+  ,age: u8
+}
+
+type Child = {
+  ,age: u8
+  ,has_toy: bool
+}
+
+Person.say_hi = fun(self) {
+  puts "Greetings. I am {}", self.age
+}
+
+Child.say_hi = fun(self) {
+  if self.has_toy {
+      puts "I'm only {}, but I have a toy!", self.age
+  } else {
+      puts "I'm only {}, and I don't even have a toy!", self.age
+  }
+}
+
+let greet = fun(thing) {
+  assert thing has 'say_hi'
+  thing.say_hi
+}
+
+test "no main in Pyrope" {
+  let p:Person = ( age: 42 )
+  let c:Child  = ( age: 7, has_toy: true )
+
+  greet(p)
+  greet(c)
+}
+

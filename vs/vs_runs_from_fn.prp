@@ -1,0 +1,21 @@
+
+// RUST 1.6
+
+let array = std::array::from_fn(|i| 2 * i );
+
+assert_eq!(array, [0,2,4,8,16,32]); // Infer size as needed
+assert_eq!(array[8], 256);
+
+// PYROPE
+
+type Array = (
+  ,var fn = fun(v:uint)
+  ,pub let get = fun(self, v) { ret self.fn(v) }
+  ,pub let from_fn(ref fn)->res:Array { res.fn = fn }
+)
+
+var array = Array.from_fn(fun(i) { ret 2 * i } )
+
+assert array[8] == 256
+assert array != [0,2,4,8,16,32] // object fields are different
+

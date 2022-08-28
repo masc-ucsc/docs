@@ -1,0 +1,41 @@
+
+// Everything in Pyrope is a copy by value, So even things that look similar are not
+//
+// In ZIG, foo is stack allocated, the result are undefined when used outside the function.
+//
+// In Pyrope, everything is by value (input arguments can be by reference if explicitly said)
+//
+
+// ZIG
+
+fn foo() []u32 {
+    var f: [5]u32 = [_]u32{ 10, 10, 10, 10, 10 };
+    std.debug.print("{any}\n", .{f}); // {0, 10, 10, 0, 10}
+    return f[0..];
+}
+
+test "return slice fn 3" {
+    const s1 = foo();
+
+    for (s1) |item, idx| {
+        std.debug.print("#{d}-> {d}\n", .{ idx, item }); // not always 0 -> 10, 1 -> 10....
+    }
+}
+
+// Pyrope
+
+foo = fun()->(:u32[]) {
+    var f: u32[5] = ( 10, 10, 10, 10, 10 )
+
+    puts "{}", f // (10,10,10,10,10)
+
+    ret f[0..]
+}
+
+test "return slice fn 3" {
+    let s1 = foo()
+
+    for item, idex in s1 {
+        puts "{}-> {}", idx, item  // always 0-> 10, 1-> 10, 2->10 ....
+    }
+}
