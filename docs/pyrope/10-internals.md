@@ -434,8 +434,7 @@ capture variables behave like passed by value, not reference.
 
 One important thing is 'when' does the capture happens. Pyrope follows the
 model of most languages like C++ that captures at lambda definition, not lambda
-execution. Unlike most languages, capture value must be known at compile time
-or an error is generated.
+execution. 
 
 === "Pyrope capture time"
 
@@ -493,6 +492,84 @@ int main() {
   assert(x2==10);
 }
 ```
+
+Some languages like ZIG do not allow closures, but they allow structs with a lambda to
+implement an equivalent functionality. It is possible in Pyrope to also create a tuple
+and populate the getter. This effectively behaves as the closures. Internally, Pyrope
+may do this implementation.
+
+
+=== "Pyrope tuple closure style"
+
+```
+let j = 1
+let b = fun[j](x:i32)-> :i32 {
+  ret x+j
+}
+
+assert b(1) == 2
+
+test "closure with tuple" {
+  var a: i32 = 1
+  a += 1
+
+  var addX = (
+    ,a: i32 = a                        // copy value, runtime or comptime
+    ,pub let get = fun(self, x: i32) {
+      ret x + self.a
+    }
+  }
+
+  a += 100;
+
+  assert addX(2) == 4
+}
+
+test "plain closure" {
+  var a: i32 = 1
+  a += 1
+
+  let addX = fun[a](x: i32) { // Same behaviour as closure with tuple
+    ret x + a
+  }
+
+  a += 100;
+
+  assert addX(2) == 4
+}
+```
+
+=== "ZIG closure style with struct"
+
+```zig
+pub fn main() void {
+    const j = 1;
+    var b = struct{
+        fn function(x: i32) i32 {
+            return x+j;
+        }
+    }.function;
+
+    @import("std").debug.assert(b(1) == 2);
+}
+
+test "closure with runtime" {
+  var a: i32 = 1;
+  a += 1;
+
+  const addX = (struct {
+    a: i32,
+    fn call(self: @This(), x: i32) i32 {
+      return x + self.a;
+    }
+  } { .a = a }).call;
+
+  a += 100;
+
+  @import("std").debug.assert(addX(2) == 4);
+}
+```
+
 
 Capture values must be explicit, or no capture happens. This means that
 `...fun[](...)...` is the same as `...fun(...)...`.

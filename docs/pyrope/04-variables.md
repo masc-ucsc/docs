@@ -152,15 +152,15 @@ a different set of rules constraining the variable scopes.
     ```
     assert a == 3    // compile error, undefined variable 'a'
     var a = 3
-    let f1 = fun() {
+    let f1 = fun[a]() {
       assert a == 3
       a = 33         // compile error, upper scope are always immutable
       let b = 4
-      let a = 3333   // OK, shadowing allowed
+      let a = 3333   // compile error, variable shadowing
       assert a == 3333
     }
-    let f2 = fun[]() { // restrict scope
-      assert a == 3 // compile error, undefined variable 'a'
+    let f2 = fun() { // restrict scope
+      assert a == 3  // compile error, undefined variable 'a'
     }
     let f3 = fun[ff=a]() { // restrict scope
       assert ff == 3 // OK
@@ -174,19 +174,18 @@ a different set of rules constraining the variable scopes.
     // a is not visible
     var a = 3
     let r1 = (
-      // b is not visible
-      ,b=a+1
-      ,c = {assert a == 3; assert b==4; 50}
+      ,a=a+1
+      ,c = {assert a == 3; assert self.a==4; 50}
     )
 
-    let r2 = (a=100, c=(a=a+1, e=a+30))
+    let r2 = (a=100, c=(a=a+1, e=self.a+30))
     assert r2 == (a=100,c=(a==101, e=131))
 
-    // b is not visible
     ```
 
-* code blocks do not allow variable shadowing. Lambdas and tuples allow
-  shadowing.
+* Shadowing is not allowed in lambdas or code blocks. Tuples can redefine
+  (shadow) the same variable but to use inside the tuple, the `self` keyword
+  must be used always.
 
 * Lambdas and tuples upper scope variables are always immutable.
 
