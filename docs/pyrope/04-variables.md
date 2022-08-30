@@ -212,21 +212,44 @@ forth to an integer.
 
 ### Integer or `int`
 
-Integers have unlimited precision and they are always signed. Type constraints
-can enforce a subset like unsigned or ranges.
+Integers have unlimited precision and they are always signed. Unlike most other
+languages, there is only one type for integer (unlimited), but the type system
+allows to add constrains to be checked when assigning the variable contents.
+Notice that the type is the same (`u32` is the same type as `i3`, they just have
+different constraints):
+
+* `int`: an unlimited precision integer number.
+* `unsigned`: An integer basic type constrained to be a natural number.
+* `u<num>`: An integer basic type constrained to be a natural number with a maximum value of $2^{\texttt{num}}$. E.g: `u10` can go from zero to 1024.
+* `i<num>`: an integer 2s complement number with a maximum value of $2^{\texttt{num}-1}-1$ and a minimum of $-2^{\texttt{num}}$.
+* `int(a..<b)`: integer basic type constrained to be between `a` and `b`.
 
 ```
 var a:int          // any value, no constrain
 var b:unsigned     // only positive values
 var c:u13          // only from 0 to 1<<13
-var d:int(20..=30) // only values from 20 to 30
+var d:int(20..=30) // only values from 20 to 30 (both included)
+var d:int(-5..<6)  // only values from -5 to 6 (6 not included)
 var e:int(-1,0)    // 1 bit integer: -1 or 0
 ```
+
+Integers can have 3 value (`0`,`1`,`?`) expression or a `nil`. Section
+[Integers](02-basics.md#Integers) has more details, but those values can not be
+part of the type requirement.
+
+
+Integer typecast accepts strings as input. The string must be a valid formatted
+Pryope number or an assertion is raised.
+
+
 ### Boolean
 
 A boolean is either `true` or `false`. Booleans can not mix with integers in
-expressions unless there is an explicit typecast (`false=0` and `true=-1`) or
-the integer is a 1 bit signed integer (0 and -1).
+expressions unless there is an explicit typecast (`int(false)==0` and
+`int(true)==-1`) or the integer is a 1 bit signed integer (0 and -1). Unlike
+integers, booleans do not support undefined value. A typecast from integer to
+boolean will raise an assertion when the integer has undefined bits (`?`) or
+`nil`.
 
 ```
 let b = true
@@ -247,6 +270,9 @@ assert 0 == (int(true)  + 1)  // explicity typecast
 assert 1 == (int(false) + 1)  // explicity typecast
 assert boolean(33) or false   // explicity typecast
 ```
+
+String input typecase is valid, but anything different than ("0", "1", "-1",
+"true", "TRUE", "t", "false", "FALSE", "f") raises an assertion failure.
 
 ### Function
 
@@ -294,6 +320,7 @@ assert int(c) == 0b1110
 assert range(0b01_1100) == 2..=4
 ```
 
+Range typecase only accepts integers as input.
 
 A closed range can be converted to a single integer or a tuple. A range
 encoded as an integer is a set of one-hot encodings. As such, there is no
@@ -311,9 +338,9 @@ assert((1..=3)@[] == 0b1110)        // convert range to integer with @[]
 
 ### String
 
-Strings are also Integers encoded using the ASCII sequence, but to perform arithmetic
-operations a typecast must be used. The string encoding assigns the lower bits
-to the first characters in the string, each character has 8 bits associated.
+Strings are a basic type, but they can be typecasted to integers using the
+ASCII sequence. The string encoding assigns the lower bits to the first
+characters in the string, each character has 8 bits associated.
 
 ```
 a = 'cad'              // c is 0x63, a is 0x61, and d is 0x64
@@ -335,7 +362,7 @@ assert "h" ++ "ell" == ('h','e','l','l') == "hell"
 
 Pyrope borrows the `comptime` keyword and functionality from Zig. Any statement
 can be declared compile time constants or `comptime`. This means that the value
-must be constant at compile time or an error is generated.
+must be constant at compile time or a compile error is generated.
 
 ```
 comptime let a = 1     // obviously comptime
@@ -362,45 +389,32 @@ var a = (debug b=2, c = 3) // a.b is a debug variable
 debug let c = 3
 ```
 
-## Basic type annotations
-
-Global type inference and unlimited precision allow avoiding most of the
-types. Pyrope allows declaring types. The types have two main uses, they
-behave like assertions, and they allow function polymorphism.
+debug statements can also bypass protection access. This means that private
+variables without a `pub` can be accessed (read-only) when used with `debug`
+statements. This also applies to `assert` because the assert/assume directives
+are consider debug statements.
 
 ```
-var a:u120    // a is an unsigned value with up to 120bits, initialized to zero
+var x:(var priv=3, pub var zz=4)
 
-var x:s3 = 0  // x is a signed value with 3 bits (-4 to 3)
-x = 3         // OK
-x = 4         // compile error, '4' overflows the maximum allowed value of 'x'
+let tmp = x.priv       // compile error
+debug let tmp = x.priv // OK
 
-var person = (
-  ,name:string // empty string by default
-  ,age:u8      // zero by default
-)
-
-var b
-b ++= (1,2)
-b ++= (3,4)
-
-assert b == (1,2,3,4)
+assert x.priv == 3     // OK, assert is a debug statement
 ```
 
-The basic type keywords provided by Pyrope:
 
-* `boolean`: true or false boolean. It can not be undefined (`0sb?`).
-* `string`: a string.
-* `fun` and `proc`: a lambda without code block can be used as a function type.
-* `unsigned`: an unlimited precision natural number.
-* `u<num>`: a natural number with a maximum value of $2^{\texttt{num}}$. E.g: `u10` can go from zero to 1024.
-* `int`: an unlimited precision integer number.
-* `i<num>`: an integer 2s complement number with a maximum value of $2^{\texttt{num}-1}-1$ and a minimum of $-2^{\texttt{num}}$.
+## type vs let
+
+Each variable has a type, either implicit or explicit, and as such, it can be
+used to declare a new type. 
 
 
-Each tuple is has a type, either implicit or explicit, and as such, it can be
-used to declare a new type. The `type` keywords guarantee that a variable is
-just a type and not an instance.
+The `type` keywords guarantee that a variable is just a type and not an
+instance. A type is also an immutable tuple, as such there is a very small
+difference betwee `type x =...` and `let x =...`. The only difference is that
+`type` assigns also a type name that can be checked with nominal type check
+`is`.
 
 ```
 var bund1 = (color:string, value:s33)
@@ -408,10 +422,25 @@ var x:bund1          // OK
 bund1.color = "red"  // OK
 x.color     = "blue" // OK
 
-type typ = (color:string, value:s20)
+type typ = (color:string, value:s33)
 var y:typ            // OK
-typ.color = "red"    // compile errro
+typ.color = "red"    // compile error
 y.color   = "red"    // OK
+
+let bund3 = (color:string, value:s33)
+var z:bund1          // OK
+bund1.color = "red"  // compile error
+z.color     = "blue" // OK
+
+assert x equals typ  // same type structure
+assert z equals typ  // same type structure
+assert x equals z    // same type structure
+
+assert y is typ
+assert typ is typ
+assert z !is bund3 
+assert z !is typ
+assert z !is bund1
 ```
 
 ## Operators

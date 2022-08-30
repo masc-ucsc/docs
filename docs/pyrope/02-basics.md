@@ -56,7 +56,7 @@ to Pyrope code. The `nil` means that the numeric value is invalid. If any
 operation is performed with `nil`, the result is an assertion failure. The only
 thing allowed to do with nil is to copy it. While the `nil` behaves like an
 invalid value, the `0sb?` behaves like an unknown value that still can be used
-in arithmetic operations. E.g: `0sb? & 1` is `1` but `nil & 1` is an error.
+in arithmetic operations. E.g: `0sb? | 1` is `1` but `nil | 1` is an assertion error.
 
 
 Notice that `nil` is a state in the integer basic type, it is not a new type by
