@@ -634,19 +634,19 @@ evaluation order.
 ```
 var x = (
   ,var v:int
-  ,var always_after = proc()->(self) {
+  ,var always_after = proc(ref self) {
     self.v = 1
   }
 )
 
 var y = x ++ (
-  ,var always_after = proc()->(self) {
+  ,var always_after = proc(ref self) {
     self.v = 2
   }
 )
 
 var z = (
-  ,var always_after = proc()->(self) {
+  ,var always_after = proc(ref self) {
     self.v = 3
   }
 ) ++ x

@@ -411,25 +411,29 @@ used to declare a new type.
 
 
 The `type` keywords guarantee that a variable is just a type and not an
-instance. A type is also an immutable tuple, as such there is a very small
-difference betwee `type x =...` and `let x =...`. The only difference is that
-`type` assigns also a type name that can be checked with nominal type check
-`is`.
+instance. A type is also a special class of immutable tuple. It does not allow
+to add variables, but it allows to add lambdas. As such there is a very small
+difference betwee `type x =...` and `let x =...`. Besides allowing to add
+methods, the other  main difference is that `type` assigns also a type name
+that can be checked with nominal type check `is`.
 
 ```
 var bund1 = (color:string, value:s33)
 var x:bund1          // OK
 bund1.color = "red"  // OK
+bund1.is_green = fun(self) { ret self.color == "green" }
 x.color     = "blue" // OK
 
 type typ = (color:string, value:s33)
 var y:typ            // OK
 typ.color = "red"    // compile error
+typ.is_green = fun(self) { ret self.color == "green" }
 y.color   = "red"    // OK
 
 let bund3 = (color:string, value:s33)
-var z:bund1          // OK
-bund1.color = "red"  // compile error
+var z:bund3          // OK
+bund3.color = "red"  // compile error
+bund3.is_green = fun(self) { ... } // compile error
 z.color     = "blue" // OK
 
 assert x equals typ  // same type structure
@@ -442,6 +446,10 @@ assert z !is bund3
 assert z !is typ
 assert z !is bund1
 ```
+
+Adding a method to a tuple with `tup.fn = fun...` is the same as `tup = tup ++
+(fn=fun...)`.
+
 
 ## Operators
 
@@ -811,7 +819,7 @@ type complex = (
   ,reg v1:string
   ,pub v2:string
 
-  ,pub set = proc (self,v)->(self) {
+  ,pub set = proc (ref self,v) {
      self.v1 = v
      self.v2 = v
   }

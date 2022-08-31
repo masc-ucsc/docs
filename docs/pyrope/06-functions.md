@@ -99,7 +99,7 @@ add2 = fun[foo=x](a){ foo + a }    // capture x but rename to something else
 
 var y = (
   ,val:u32 = 1
-  ,inc1 = fun (self)->(self) { self.val = u32(self.val + 1) }
+  ,inc1 = fun (ref self) { self.val = u32(self.val + 1) }
 )
 
 debug let my_log = fun (...inp) {
@@ -197,13 +197,13 @@ assert tup.f1() == 1
 ```
 
 The keyword `self` is used to indicate that the function is accessing a tuple.
-It is also passed as the first argument, an output `self` is needed for methods
+It is usually passed as the first argument, an output `self` is needed for methods
 that can mutate the tuple state.
 
 ```
 var tup = (
   ,var x = 3
-  ,let f1 = fun(self, ...rest){ assert rest.size == 0 ; ret self.x }
+  ,let f1 = fun(self, ...rest) { assert rest.size == 0 ; ret self.x }
 )
 
 let fun2 = fun(self){ ret self.x       }
@@ -323,7 +323,7 @@ variable return.
 ```
 var a_1 = (
   ,x:u10
-  ,let f1 = fun(ref self,x)->(self) { 
+  ,let f1 = fun(ref self,x)->(self) { // BOTH ref self and return self is OK
     self.x = x 
     ret self
   }
@@ -340,7 +340,6 @@ a_1.fun2(10)
 var a_3 = a_1.fun2(20)
 assert a_1 == 10 and a_3 == 20
 ```
-
 
 Since UFCS does not allow shadowing, a wrapper must be built or a compile error is generated.
 
@@ -365,6 +364,24 @@ assert counter.val == 10
 
 mul(counter, 2) // also legal
 assert counter.val == 20
+```
+
+
+For `type` and `var`, it is possible to add new methods after the type declaration.
+
+```
+type t1 = (a:u32)
+
+var x:t1 = (a=3)
+x.double // compile error, double method does not exit
+
+t1.double = proc(ref self) { self.a *= 2 }
+// previous is exactly the same as:
+// t1 = t1 ++ (double = proc(ref self) { self.a *= 2 })
+
+var y:t1 = (a=3)
+y.double // OK
+assert y.a == 6
 ```
 
 ## Arguments
