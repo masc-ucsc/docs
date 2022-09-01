@@ -727,7 +727,7 @@ There are 4 explicitly interact with valids:
 
 * `tup.f1? = cond` explicitly sets the field `f1` valid to `cond`
 
-* `a = b op c` variable `a` will be valid if `b` and `c` are valid
+* `a = b op c` variable `a` will be valid if `b` AND `c` are valid
 
 
 The optional or valid attached to each variable and tuple field is implicitly

@@ -1,33 +1,35 @@
 # Assertions
 
-Assertions are considered to debug statements. This means that they can not
+Assertions are considered debug statements. This means that they can not
 have side effects on non-debug statements.
 
 Pyrope supports a syntax close to Verilog for assertions. The language is
-designed to have 3 levels of assertion checking: simulation runtime,
-compilation time, and formal verification time.
+designed to have 3 levels of assertion checking: compilation time,
+simulation runtime, and formal verification time.
 
-There are 5 main verification statements: 
+There are 5 main verification statements:
 
 * `assert`: The condition should be true at runtime. If `comptime assert`, the
   condition must be true at compile time.
 
 * `assume`: Similar to assert, but allows the tool to simplify code based on it
-  (it has optimization side-effects). 
+  (it has optimization side-effects).
 
 * `verify`: Similar to assert, but it is potentially slow to check, so it is
-  checked only when verification is enabled.
+  checked only when formal verification is enabled. Simulation can also check
+  for this, but because it is slow, it may not be active by default.
 
-* `lec`: It is a verification-only step that checks that all the arguments are
+* `restrict`: Constraints or restrictions beyond to check a subset of the
+  valid space. It only affects the verify command. The restrict command
+  accepts a list of conditions to restrict.
+
+* `lec`: It is a formal verification step that checks that all the arguments are
   logically equivalent. The difference with `verify` is that it also accepts
   functions (only). `lec` does not include the reset state. The first argument
   is the gold model, the rest are implementation. This matters because the gold
   model unknown output bit checks against any value for the equivalent
   implementation bit.
 
-* `restrict`: Constraints or restrictions beyond to check a subset of the
-  valid space. It only affects the verify command. The restrict command
-  accepts a list of conditions to restrict.
 
 
 ```pyrope
@@ -83,7 +85,7 @@ disabling the assertion when indexing arrays may be the best solution.
 ```
 reg memory:u33[] = (1,2,3) // may take cycles to load this contents
 
-assert memory[0] == 1 unless memory.reset 
+assert memory[0] == 1 unless some_signal_is_reset
 ```
 
 
@@ -103,7 +105,7 @@ System Verilog `coverpoint` and `covergroup` but the meaning is not the same.
 
 * `covercase grp, cond [,message]` is very similar to cover but it has a `grp`
   group. There can be one or more covers for a given group. The extra check is
-  that one of the `cond` in the cover case must be true each time. 
+  that one of the `cond` in the cover case must be true each time.
 
 
 ```pyrope
