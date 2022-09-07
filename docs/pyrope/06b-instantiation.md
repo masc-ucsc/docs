@@ -247,9 +247,9 @@ order of evaluation. Only `and_then`, `or_else` or complex constructs like
 In a normal programming language, the Von Neumann PC specifies clear semantics
 on when the code is executed. The language could also have a macro or template
 system executed at compile-time, the rest of the code is called explicitly when
-the function is called. As mentioned, a key difference is that HDLs are all about
-instantiation, not instruction execution. The instantiated functionality in HDLs
-tend to have 3 code sections:
+the function is called. As mentioned, a key difference is that HDLs focus on
+instantiation of gates/logic/registers, not instruction execution. HDLs tend to
+have 3 code sections:
 
 
 * Setup: This is code executed to set up the hierarchies, parameters, read
@@ -268,7 +268,7 @@ tend to have 3 code sections:
 
 In addition, some languages like Verilog have "initialization" code that is
 executed before reset. This is usually done for debugging, and it is not
-synthesizable. Pyrope does not have such simulation-only code.
+synthesizable. Although not always synthesizable, we consider this setup code.
 
 
 Pyrope aims to have the setup, reset, and execution specified.
@@ -282,27 +282,29 @@ The imported files are executed before the current file is executed. This is
 applied recursively but no loops are supported in import dependence chains.
 
 The "setup" code is the statements executed once for each imported file. Those
-statements can not be "imported" by other files. Only the resulting `pub`
+statements can not be "imported" by other files. Only the resulting public
 variables can be imported.
 
 
-During setup, each file can have a list of `pub` variables. Those are variables
-that can be used by importing modules.  The "top variable" is selected for simulation/synthesis.
+During setup, each file can have a list of public variables. Those are
+variables that can be used by importing modules.  The "top variable" is
+selected for simulation/synthesis.
 
 
 It is important to point that `comptime` may be used during setup but also in
 non-setup code. `comptime` just means that the associated variables are known
-at compile time. This is quite useful during reset and execution too.
+at compile time. This is quite useful during reset and execution too or just to
+guaranteed that a computation is solved at compile time.
 
 
 ### Reset
 
 
-The most common reset logic is associated with registers and memories. The
-assignment to `reg` variable declaration is the reset code. It will be called
-for as many cycles are the reset is held active.  The `reg` assignment can be
-a constant or a call to `conf` that can provide a runtime file with the values
-to start the simulation/synthesis.
+The reset logic is associated with registers and memories. The assignment to
+register declaration is the reset code. It will be called for as many cycles
+are the reset is held active.  The `reg` assignment can be a constant or a call
+to `conf` that can provide a runtime file with the values to start the
+simulation/synthesis.
 
 
 ```
@@ -333,16 +335,55 @@ reg array:tag[1024] = (
 )
 ```
 
+All registers and memories can have a `always_reset` overload  method. If a tuple is
+called as a register state, the reset field is also called.
+
+To guarantee determinism, the following reset call constrains are applied:
+
+* Synchronous reset statements can not read the contents of other registers
+  with synchronous resets. Synchronous reset method can read asynchronous reset
+  methods.
+
+* Asynchronous resets can not read other reset values.
+
+* Reset method (`always_reset`) can read other resets if the reset signal is
+  different.
+
+
+```
+reg my_flop:u32[8] ++ (
+  ,always_reset = proc(ref self) {
+    reg reset_counter:u3 ++ (async=true) // async is only posedge reset
+
+    self[reset_counter] = reset_counter
+    wrap reset_counter += 1
+  }
+)
+```
+
+Similarly a tuple can have a reset when assigned to a register:
+
+```
+type My_update = (
+  ,counter:u32
+  ,state:u2
+  ,always_reset = proc(self) {
+    self.state = 2
+    self.counter = 33
+  }
+)
+
+reg my_flop2:My_update 
+```
+
 
 ### Execution
 
-HDLs specify a tree-like structure of modules. Usually, there is a top module
-that instantiates several sub-modules. Pyrope Setup phase is to create such
-hierarchical structures.
+HDLs specify a tree-like structure of modules. The top module could instantiate
+several sub-modules. Pyrope Setup phase is to create such hierarchical
+structures. The call order follows a program order from the top point every
+cycle, even when reset is set.
 
-
-The hierarchy is achieved with modules calling other modules. The top file can
-have one or more modules.
 
 The following Verilog hierarchy can be encoded with the equivalent Pyrope:
 
@@ -383,12 +424,8 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
     ```
     type inner_t = (
       ,pub set = fun(ref self, z,y) {
-        self.z = z
-        self.y = y
-      }
-      ,always_after = fun(ref self) {
-        self.a =   self.y & self.z
-        self.h = !(self.y & self.z)
+        self.a =   y & z
+        self.h = !(y & z)
       }
     )
 

@@ -378,20 +378,21 @@ assert counter.val == 20
 ```
 
 
-For `type` and `var`, it is possible to add new methods after the type declaration.
+For `type` and `var`, it is possible to add new methods after the type declaration. In some
+languages, this is called extension functions.
 
 ```
 type t1 = (a:u32)
 
 var x:t1 = (a=3)
-x.double // compile error, double method does not exit
 
-t1.double = proc(ref self) { self.a *= 2 }
+t1.double = proc(ref self) { self.a *= 2 }  // extension function
 // previous is exactly the same as:
 // t1 = t1 ++ (double = proc(ref self) { self.a *= 2 })
 
 var y:t1 = (a=3)
-y.double // OK
+x.double             // compile error, double method does not exit
+y.double             // OK
 assert y.a == 6
 ```
 

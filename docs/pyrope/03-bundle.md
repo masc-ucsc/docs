@@ -1,7 +1,7 @@
 # Tuples
 
 Tuples are a basic construct in Pyrope. Tuples are defined as an "ordered"
-sequence fields or entries that can be named.
+sequence fields that can be named.
 
 
 ```
@@ -34,8 +34,7 @@ The only main difference between `a.0` (dot) and `a[0]` (select) access is that
 dot access guarantees to be compile time index, while the select can have
 compile time or run-time index.
 
-There is introspection to check for an existing field with the `has` and `has
-no` operators.
+There is introspection to check for an existing field with the `has` and `!has` operators.
 
 ```
 let a = (foo = 3)
@@ -124,6 +123,29 @@ var y = (1, let 3)
 y[0] = 100          // OK
 y[1] = 101          // compile error, `y[1]` is immutable
 ```
+
+## Field access
+
+Since everything is a tuple, any variable can do `variable.0.0.0.0` because it
+literaly means, return the tuple first entry for four times. 
+
+
+Another useful shortcut is when a tuple has a single field or entry, the tuple
+contents can be accessed without requiring the individual position or field
+entry name. This is quite useful for function return tuples with a single
+entry.
+
+```
+let x = (first=(second=3))
+
+assert x.first.second == 3
+assert x.first        == 3
+assert x              == 3
+assert x.0.second     == 3
+assert x.first.0      == 3
+assert x.0            == 3
+```
+
 
 ## Tuples vs Arrays
 
@@ -376,5 +398,14 @@ The same syntax is used for enums to different objects. The hierarchy is not
 allowed when an ordered numbering is requested.
 
 
+Enumerates of the same type can perform bitwise binary operations
+(and/or/xor/nand/xnor/xnor) and set operators (in/!in).
 
+```
+let human_rat = animal.mammal.rat | animal.mammal.human  // union op
+
+assert animal.mammal      in human_rat
+assert animal.mammal.rat  in human_rat
+assert animal.bird       !in human_rat
+```
 

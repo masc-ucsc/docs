@@ -625,36 +625,59 @@ asssert 2 in (1,2)  // compile error, not allowed to drop parenthesis
 asssert(2 in (1,2)) // OK
 ```
 
-### always blocks
+### Multiple tuples
 
-Tuples can have several always blocks. This can lead to confusion in the
-evaluation order.
+
+The evaluation order is always the same program order starting from the top
+module. Remember that the setter method is the constructor called even when
+there is no initial value set.
+
 
 
 ```
-var x = (
-  ,var v:int
-  ,var always_after = proc(ref self) {
-    self.v = 1
-  }
+type X_t = (
+  ,var i1 = (
+    ,i1_field:u32 = 1
+    ,i2_field:u32 = 2
+    ,set = proc(ref self, a) {
+       self.i1_field = a
+    }
+  )
+  ,var i2 = (
+    ,i1_field:i32 = 11
+    ,set = proc(ref self, a) {
+       self.i1_field = a
+    }
+  )
 )
 
-var y = x ++ (
-  ,var always_after = proc(ref self) {
-    self.v = 2
+var top = (
+  ,set = proc(ref self) {
+    var x:X_t
+    assert x.i1.i1_field == 1
+    assert x.i1.i2_field == 2
+    assert x.i2.i1_field == 11
+
+    x.i1 = 400
+
+    assert x.i1.i1_field == 400
+    assert x.i1.i2_field == 2
+    assert x.i2.i1_field == 11
+
+    x.i2 = 1000
+
+    assert x.i1.i1_field == 400
+    assert x.i1.i2_field == 2
+    assert x.i2.i1_field == 1000
   }
 )
-
-var z = (
-  ,var always_after = proc(ref self) {
-    self.v = 3
-  }
-) ++ x
-
-assert x.v == 1
-assert y.v == 2
-assert z.v == 1 // self.v = 3 executes before self.v = 1
 ```
+
+
+If a lambda in the hierarchy does not have a setter/constructor, the program order
+follows the tuple scope which is in tuple ordered asignment.
+
+
 
 ### Unknowns
 
@@ -776,7 +799,7 @@ can change to a more traditional Verilog with uninitialized (`0sb?`) contents.
 
 ```
 reg r_ver = (
-  ,always_reset = proc()->(self){ self = 0sb? }
+  ,always_reset = proc(ref self) { self = 0sb? }
 )
 reg r
 var v
@@ -874,5 +897,21 @@ by a negative number `-3`.
 ```
 let v = (3)--3
 assert v == 6
+```
+
+### Endian
+
+In Pyrope, there is no order in bit selection (`xx@[0,1,2,3] == xx@[3,2,1,0]`). This is done to avoid
+mistakes. If a bit swap is wanted, it must be explicit.
+
+
+```
+let reverse = fun(x:uint)->total {
+  for a in x@[..] { bit iterator
+    total <<= 1
+    total  |= a
+  }
+}
+assert reverse(0b10110) = 0b01101
 ```
 

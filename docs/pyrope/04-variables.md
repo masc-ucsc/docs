@@ -483,9 +483,9 @@ All the operators work over signed integers.
 * `a & b` bitwise and
 * `a | b` bitwise or
 * `a ^ b` bitwise xor
-* `a !& b` bitwise nand
-* `a !| b` bitwise nor
-* `a !^ b` bitwise xnor
+* `a ~& b` bitwise nand
+* `a ~| b` bitwise nor
+* `a ~^ b` bitwise xnor
 * `a >> b` shift right
 * `a << b` shift left
 
@@ -498,7 +498,7 @@ All the operators work over signed integers.
 * `a !or b` logical nor
 * `a !implies b` logical not implication
 
-### Tuple operators
+### Set operators
 
 * `a in b` is element `a` in tuple `b`
 * `a !in b` true when element `a` is not in tuple `b`
@@ -508,7 +508,7 @@ integers. Logical and arithmetic operations can not be mixed.
 
 ```
 let x = a and b
-let y = x + 1    // compile error: 'x' is a boolean, '1' is not
+let y = x + 1    // compile error: 'x' is a boolean, '1' is integer
 ```
 
 ### Reduce and bit selection operators

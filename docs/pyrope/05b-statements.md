@@ -360,45 +360,53 @@ comptime assert x == 100
 defer_read assert x == 1
 ```
 
-## always block
+## Testing (`test`)
 
-Tuples can also have 3 special field entries: `always_before`, `always_after`,
-and `always_reset`. These entries can point to methods that have
-reserved functionality:
+The test statement requires a text identifier to notify when the test fails.
+The `test` is similar to a `puts` statement followed by a scope (`test <str>
+[,args] { stmts+ }`). The statements inside the code block can not have any
+effect outside. 
 
-* `always_before` is executed every cycle BEFORE any method to a tuple is called.
-  This method is called even when reset is set active. This means that the
-  always_before is called even before the variable is initialized if there is a
-  setter.
-
-* `always_after` is similar to the `always_before` but the method is called after all the other methods to the tuple are called.
-
-* `always_reset` is only called when the reset for the tuple is high. This
-  means that it is valid only if the tuple is being instantiated as a `reg`.
-  If called, it is called after the `always_after` so that their values can not
-  be overridden by other methods.
-
-## restrict/test/fail
-
-These three very different statements have the same structure: `keyword <id> [when condition] { stmts+ }`.
-
-The `id` is a string to identify/report when needed. The optional condition is when the statement is active.
-For example, the `test` statement:
 
 ```pyrope
-test "my test 1" when size > 10 {
-  assert size>10
+test "my test {}", 1 {
+  assert true
 }
 ```
 
-* `test` is active only during testing.
-* `restrict` is used for formal verification to restrict a testing case with the `when` condition.
-* `fail` is used to indicate that an expected test failure is expected. This can be a parse or assert failure.
+Each `test` can run in parallel, to increase the throughput, putting the
+randomization outside the test statement increases the number of tests:
 
-In all the cases, the statements inside the code block can not have any effect outside.
+
+=== "Parallel tests"
+    ```
+    let add = fun(a,b) { ret a+b }
+
+    for i in 0..<10 { // 10 tests
+      let a = (-30..100).rand
+      let b = (-30..100).rand
+
+      test "test {}+{}",a,b {
+        assert add(a,b) == (a+b)
+      }
+    }
+    ```
+
+=== "Single test"
+    ```
+    let add = fun(a,b) { ret a+b }
+
+    test "test 10 additions" {
+      for i in 0..<10 { // 10 tests
+        let a = (-30..100).rand
+        let b = (-30..100).rand
+
+        assert add(a,b) == (a+b)
+      }
+    }
+    ```
 
 ## debug/comptime
-
 
 Pyrope can assign/read compile attributes to variables, but two keywords and special access (`debug` and
 `comptime`). Either of them can be placed at the beginning of the statement for
