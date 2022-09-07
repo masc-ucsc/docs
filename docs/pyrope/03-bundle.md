@@ -358,12 +358,13 @@ In general, if there is no value specified in an entry, the number of bits is
 equivalent to the number of entries in the tuple.
 
 
-It is possible to use a sequence that is more consistent with hardware languages.
+It is possible to use a sequence that is more consistent with traditional
+programming languages, but this only works with non-hierarchical enumerates.
 
 ```
 enum v3:int = (
    ,a
-   ,b=5  // alias with 'a'
+   ,b=5
    ,c
 )
 assert v3.a == 0
@@ -373,5 +374,7 @@ assert v3.c == 6
 
 The same syntax is used for enums to different objects. The hierarchy is not
 allowed when an ordered numbering is requested.
+
+
 
 

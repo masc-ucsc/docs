@@ -251,6 +251,45 @@ if y == Color.Red {
 }
 ```
 
+
+## union
+
+Union shares syntax with enums with types declaration, but the usage and
+functionality is quite different. Enums do not allow to update values and
+unions are tuples with multiple labels sharing a single storage location. Since
+the `union` holds values, it can be used to explicitly convert between field
+types.
+
+
+```
+enum  e_type = (str:String = "hello",num=22)
+union u_type = (str:String, num:int)         // No default value in union
+
+var uu:u_type = (str="hello2")
+assert uu.str == "hello2"
+assert uu.num == 0x32_6f_6c_6c_65_68 // ASCII for 2 e l l o h
+
+uu.num = 0x65
+assert uu.str == "o"
+assert uu.num == 0x65
+var ee:e_type
+```
+
+
+As a reference, `enums` allow to compare for field but not update enum entries.
+
+```
+ee = u_type.String          // OK
+ee.str = "new_string"       // compile error, enum is immutable
+
+match ee {
+ == e_type.str { }
+ == e_type.num { }
+}
+
+
+```
+
 ## Bitwidth
 
 Integers can be constrained based on the maximum and minimum value (not by
@@ -712,25 +751,29 @@ var x:Number = 3
 ### Register reference
 
 
-Registers can be declared with a string that shares the same syntax as the
-import. Any register sharing the same file/ID match point to the same register.
-From a programmer's point of view resembles a pointer or reference to a
-register.
+While import "copies" the importent contents, `regref` or Register reference
+allows to reference (not copy) an existing register in the call hierarchy.
+
+
+The syntax of `regref` is similar to `import` but import looks through Pyrope
+files. `regref` looks through the instantiation hierarchy for matching register
+names. `regdef` only can get a reference to a register, it can not be used to
+import functions or variables.
 
 
 ```
 let do_increase = proc() {
-  reg counter("MY_COUNTER")
+  reg counter
 
   wrap counter:u32 = counter + 1
 }
 
 let do_debug = proc() {
-  reg counter("MY_COUNTER")
-  puts "The counter value is {}", counter
+  let cntr = regref "do_increase/counter"
+
+  puts "The counter value is {}", cntr
 }
 ```
-
 
 
 Verilog has a more flexible semantics with the Hierarchical Reference. It also
@@ -755,26 +798,25 @@ having a register is called in multiple places, only one can write, and the
 others are reading the update. It is useful to have configuration registers. In
 this case, multiple instances of the same register can have different values.
 As an illustrative example, a UART can have a register and the controller can
-set a different value for each uart base register. This can be achieved using
-the `instance=string` instead of the default `name=string`.
+set a different value for each uart base register. 
 
 ```
 // file remote.prp
-reg uart_addr("MY_ADDR")
+reg uart_addr:u32
 assert 0x400 > uart_addr >= 0x300
 
 // file local.prp
 pub let setup_xx = proc() {
-  reg xx(instance="MY_ADDR") // creates a var that drives remote uart_addr
-  for i,index in ref xx {
-    i = 0x300+index*0x10     //  sets uart_addr to 0x300, 0x310, 0x320...
+  let xx = regref "uart_addr"
+  for i,index in ref xx {    // ref in for to allow element updates
+    i = 0x300+index*0x10     // sets uart_addr to 0x300, 0x310, 0x320...
   }
 }
 ```
 
 
-Maybe the best way to understand the register reference (regref for short) is
-to see the differences with the `import`:
+Maybe the best way to understand the `regdef` is to see the differences with
+the `import`:
 
 * Instantiation vs File hierarchy
   + `regref` finds matches across instantiated registers.
@@ -782,12 +824,6 @@ to see the differences with the `import`:
 * Success vs Failure
   + `regref` keeps going to find all the matches, and it is possible to have a zero matches
   + `import` stops at the first match, and a compile error is generated if there is no match.
-
-
-When `instance` is used, there can be many matches. To have a deterministic
-result, given a hierarchy the order should be fixed, but changing the hierarchy
-can provide a new order. There is no guarantee of tuple order across multiple
-instances.
 
 
 ### Mocking library

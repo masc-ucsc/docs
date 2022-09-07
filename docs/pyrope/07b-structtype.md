@@ -365,8 +365,8 @@ For typed calls:
 
 ```
 var fo = fun(a:int,b:string)->(:bool)  { ret true    }
-fo ++=   fun(a:int,b:int   )->(:bool)  { ret false   }
-fo ++=   fun(a:int,b:int   )->(:string){ ret "hello" }
+  fo ++= fun(a:int,b:int   )->(:bool)  { ret false   }
+  fo ++= fun(a:int,b:int   )->(:string){ ret "hello" }
 
 let a = fo(3,hello)
 assert a == true
@@ -383,10 +383,10 @@ For conditional argument calls:
 
 ```
 var f1 = fun(a,b)      where a >  40 { ret b+100    }
-  f1 ++= fun(a,b)->(x) where x > 300 { ret b+200    } // output x
-  f1 ++= fun(a,b)->(a) where a >  20 { ret b+300    } // input a
-  f1 ++= fun(a,b)->(x) where x >  10 { ret b+400    } // output x
-  f1 ++= fun(a,b)                    { ret a+b+1000 } // default
+      ++ fun(a,b)->(x) where x > 300 { ret b+200    } // output x
+      ++ fun(a,b)->(a) where a >  20 { ret b+300    } // input a
+      ++ fun(a,b)->(x) where x >  10 { ret b+400    } // output x
+      ++ fun(a,b)                    { ret a+b+1000 } // default
 
 var fun_manual = fun(a,b){  // equivalent but not as maintenable
   if a>40 {

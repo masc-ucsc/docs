@@ -118,9 +118,6 @@ my_log a, false, x+1
 
 ## Arguments
 
-Lambda calls only pass arguments by value. Unlike most software languages,
-there is no way to pass by reference.
-
 Input arguments must be named. E.g: `fcall(a=2,b=3)` There are the following
 exceptions that avoid naming arguments:
 
@@ -133,7 +130,7 @@ exceptions that avoid naming arguments:
 
 There are several rules on how to handle arguments.
 
-* Calls use the Uniform Function Call Syntax (UFCS) when a `self` is defined as
+* Calls use the Uniform Function Call Syntax (UFCS) but only when `self` is defined as
   first argument. `(a,b).f(x,y) == f((a,b),x,y)`
 
 * Pipe `|>` concatenated inputs: `(a,b) |> f(x,y) == f(x,y,a,b)`
@@ -220,6 +217,8 @@ assert fun3(tup,2) == 5
 assert tup.fun3(2) == 5
 ```
 
+
+
 ## Pass by Reference and alias
 
 Pyrope arguments are by value, unless the `ref` keyword is used. Pass by
@@ -252,19 +251,31 @@ execute_method(ref banner) // OK
 execute_method(banner)     // compile error, ref explicitly expected
 ```
 
-A lambda will be called whenever referenced. When calling a method, a `ref` can
-be added before to avoid the lambda call. A related issue is when a lambda must
-be assigned to another variable without calling. In a way, it is an alias or
-reference creation. Because it is more intuitive to see it as an alias, the
-`alias` keyword is used in this case, but it has the same meaning.
+A lambda will be called whenever referenced. There are only two exceptions:
+`ref` and `alias`. 
+
+Adding a `ref` before a lambda call delays the call. It it is a variable, it
+delays the call to the getter/setter too.
+
+No logical or arithmetic operation can be done with a `ref`. As a result, this
+is useful to assign to a new variable or to pass a lambda as arguments to
+another lambda.
+
+
+The `alias` keyword allows to create a new name for a given variable. As such,
+it has the same functionality as the `ref` when assigning to a variable.
+
 
 ```
 let f1 = fun() { puts "here" }
 
-let f2 = f1 // prints here
+let f2a = f1      // prints here
 
-alias f3 = f1
-f3          // prints here
+let f2b = ref f1  // no call
+let xx = f2b      // prints here
+
+alias f3 = f1     // no call
+let yy = f3       // prints here
 ```
 
 ### Output tuple
@@ -384,7 +395,7 @@ y.double // OK
 assert y.a == 6
 ```
 
-## Arguments
+### Constraining arguments
 
 Arguments can constrain the inputs and input types. Unconstrained input types
 allow for more freedom and a potentially variable number of arguments generics, but
@@ -392,7 +403,7 @@ it can be error-prone.
 
 === "unconstrained declaration"
     ```
-    foo = fun () { puts "fun.foo" }
+    foo = fun (self) { puts "fun.foo" }
     a = (
       ,foo = fun () {
          bar = fun() { puts "bar" }
@@ -401,57 +412,67 @@ it can be error-prone.
       }
     )
     b = 3
+    c = "string"
 
-    puts "start"
-    b.foo     // compile error: parenthesis needed
-    b.foo()   // prints "fun.foo"
-    a.foo     // compile error: parenthesis needed (no arguments passed)
-    a.foo()   // prints "mem.foo"
-    a.foo 3   // compile error: parenthesis needed (hierarchical function call)
-    a.foo(3)  // prints "mem.foo", arg passed (but not used by foo)
-    x = a.foo // Nothing printed, just lambda in x
-    y = x()   // prints "foo"
-    y()       // prints "bar"
-    z = y     // nothing printed
-
-    a.foo.bar()   // prints "bar", passes a.foo as argument to bar
-    a.foo().bar() // prints "mem.foo" (foo gets a) and then "bar" (has no input)
-
-    b.foo().bar() // compile error, no bar method
-    foo()         // prints "fun.foo"
+    b.foo         // prints "fun.foo"
     b.foo()       // prints "fun.foo"
+    x = a.foo     // prints "mem.foo"
+    y = a.foo()   // prints "mem.foo"
+    x()           // prints "bar"
+
+    a.foo.bar()   // prints "mem.foo" and then "bar"
+    a.foo().bar() // prints "mem.foo" and then "bar"
+    a.foo().bar   // prints "mem.foo" and then "bar"
+
+    c.foo         // prints "fun.foo"
     ```
 
 === "constrained declaration"
 
     ```
-    foo = fun (self){ puts "fun.foo" }  // explicit self
+    foo = fun (self:int) { puts "fun.foo" }
     a = (
-      ,foo = fun (){                    // implicit self 
-         bar = fun (){ puts "bar" }
+      ,foo = fun () {
+         bar = fun() { puts "bar" }
          puts "mem.foo"
          ret (bar=bar)
       }
     )
     b = 3
+    c = "string"
 
-    puts "start"
-    b.foo     // compile error: parenthesis needed
-    b.foo()   // prints "fun.foo"
-    a.foo     // compile error: parenthesis needed (no arguments passed)
-    a.foo()   // prints "mem.foo"
-    a.foo 3   // compile error
-    a.foo(3)  // compile error
-    x = a.foo // Nothing printed, just lambda in x
-    y = x()   // prints "foo"
-    y()       // prints "bar"
-    z = y     // nothing printed
-
-    a.foo.bar()   // compile error
-    a.foo().bar() // prints "mem.foo" and then "bar"
-
-    b.foo().bar() // compile error, no bar method
-    foo()         // compile error
+    b.foo         // prints "fun.foo"
     b.foo()       // prints "fun.foo"
+    x = a.foo     // prints "mem.foo"
+    y = a.foo()   // prints "mem.foo"
+    x()           // prints "bar"
+
+    a.foo.bar()   // prints "mem.foo" and then "bar"
+    a.foo().bar() // prints "mem.foo" and then "bar"
+    a.foo().bar   // prints "mem.foo" and then "bar"
+
+    c.foo         // compile error, undefined 'foo' field/call
     ```
 
+The `where` statement also allows to constrain arguments. This is a sample of
+fibonnaci implementation with and without `where` clauses. Section
+[overload](07b-structtype.md#lambda_overloading) has more details on the method
+overloading.
+
+```
+let fib1 = fun(n) where n==0 {0}
+        ++ fun(n) where n==1 {1}
+        ++ fun(n)            { fib1(n-1) + fib1(n-2) }
+
+assert fib1(10) == 55
+
+let fib2 = fun(n) {
+  ret match n {
+    == 0 {0}
+    == 1 {1}
+    else {fib2(n-1) + fib2(n-2)}
+  }
+}
+
+assert fib2(10) == 55
+```

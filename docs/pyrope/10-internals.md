@@ -66,7 +66,7 @@ dependences.
 
 ### Register Reference
 
-Register reference can create a dependence update between files, but this is
+Register reference (`regfef`) can create a dependence update between files, but this is
 not a source of non-determinism because only one file can perform updates for
 the register `din` pin, and all the updated register can only read the register
 `q` pin.

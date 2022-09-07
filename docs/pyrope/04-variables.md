@@ -367,10 +367,19 @@ must be constant at compile time or a compile error is generated.
 ```
 comptime let a = 1     // obviously comptime
 comptime var b = a + 2 // OK too
-comptime let c = rand  // compile error, 'c' can not be computed at compile time
+comptime let c = rand  // compile error, 'c' is not compile time constant
 ```
 
 The `comptime` directive considers values propagated across modules.
+
+
+In addition to `comptime`, any variable that starts with an uppercase is also a
+compile time constant.
+
+```
+let Xconst1 = 1      // obvious comptime
+let Xvar2   = rand   // compile error, 'Xvar2' is not compile time constant
+```
 
 ## debug
 
