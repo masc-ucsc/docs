@@ -754,6 +754,8 @@ computed as follows:
 
 * Registers with reset set the valid on reset (not every cycle)
 
+* Register have invalid data during reset. Hence, the output of registers is invalid during reset.
+
 * Left-hand side variables `valids` are set to the and-gate of all the variable
   valids used in the expression
 
@@ -767,7 +769,7 @@ computed as follows:
   invalid
 
 * The valid computation can be overwritten with the `__valid` attribute. This
-  is possible during execution or reset.
+  is possible even during reset.
 
 
 [^clear]: Non-register variables are initialized to zero each cycle too, the
@@ -808,6 +810,10 @@ let res2 = v2 + 0              // OK, just unknown result
 
 comptime assert res1?
 comptime assert res2?
+
+reg counter:u32 = 0
+
+always_assert counter.reset implies !counter?
 ```
 
 A valid method allows to overwrite the default valid behavior:

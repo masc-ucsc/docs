@@ -288,6 +288,10 @@ y = match z {
 }
 y2 = match 1,z {  // same as: y2 = match (1,z) {
 }
+
+let addb = fun(a,b:u32)-> a:u32 { // same as: let addb = fun(a,b:u32)->(a:u32)  
+  a = a + b
+}
 ```
 
 A named tuple parenthesis can be omitted on the left-hand side of an assignment. This is

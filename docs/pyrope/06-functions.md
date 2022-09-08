@@ -271,7 +271,7 @@ let f2b = ref f1  // no call
 let xx = f2b      // prints here
 ```
 
-### Output tuple
+## Output tuple
 
 Pyrope everything is a tuple, even the output or return from a lambda. When a
 single element is returned, it can be an unnamed tuple by omiting parenthesis.
@@ -300,7 +300,8 @@ let a3 = ret3()
 assert a3.a == 3 and a2.b == 4
 
 let x1,x2 = ret3()
-assert x1 == 3 and x2 == 4
+assert x1   == 3 and x2   == 4
+assert x1.a == 3 and x2.b == 4
 ```
 ## Methods
 
@@ -363,10 +364,10 @@ assert 44.inc(2) == 8
 
 counter.val = 5
 let mul = ref inc
-counter.mul(2)   // call the new mul method with UFCS
+counter.mul(2)             // call the new mul method with UFCS
 assert counter.val == 10
 
-mul(counter, 2) // also legal
+mul(counter, 2)            // also legal
 assert counter.val == 20
 ```
 

@@ -620,4 +620,3 @@ Only manageable with retiming. As a result, most HDLs do not support runtime
 recursion.
 
 
-

@@ -297,7 +297,7 @@ at compile time. This is quite useful during reset and execution too or just to
 guaranteed that a computation is solved at compile time.
 
 
-### Reset
+### Reset code
 
 
 The reset logic is associated with registers and memories. The assignment to
@@ -400,7 +400,7 @@ if my_async_other_reg == 33 {
 assert my_async_other_reg in [4,33]
 ```
 
-### Execution
+### Execution code
 
 HDLs specify a tree-like structure of modules. The top module could instantiate
 several sub-modules. Pyrope Setup phase is to create such hierarchical
