@@ -376,6 +376,29 @@ type My_update = (
 reg my_flop2:My_update 
 ```
 
+Registers have the following configuration options:
+
+* `async`: false by default, selects an asynchronous reset
+* `posedge`: true by default, selects a posedge or negnedge flop
+* `reset`: connected to `reset` by default
+* `clock`: connected to `clock` by default
+
+A sample of asynchronous reset with different reset and clock signal
+
+```
+reg my_asyn_other_reg:u8 ++ (
+  ,async = true
+  ,clock = ref clk2    // ref to connect, not read clk2 value
+  ,reset = ref reset33 // ref to connect, not read current reset33 value
+) = 33 // initialized to 33 at reset
+
+
+if my_async_other_reg == 33 {
+  my_async_other_reg = 4
+}
+
+assert my_async_other_reg in [4,33]
+```
 
 ### Execution
 

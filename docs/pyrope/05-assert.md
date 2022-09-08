@@ -73,19 +73,20 @@ In a way, most type checks have equivalent `comptime assert` checks.
 
 ## Asserts and reset
 
-In hardware is common to have an undefined state during the reset period. Ideally
-asserts should not be active during reset periods unless explicitly stated. The
-problem is that it may not clear what is a reset period.
+In hardware is common to have an undefined state during the reset period. To
+avoid unnecessary assertion failures, if any of the inputs depends on a
+register directly or indirectly, the assertion is not checked when the reset is
+high for the given registers. An `assert_always` ignores the reset condition,
+and checks always independent of the reset wires.
 
-
-Pyrope by default resets all the variables, registers, and memories to zero,
-but the reset logic could take several cycles to reset a memory. As such,
-disabling the assertion when indexing arrays may be the best solution.
 
 ```
 reg memory:u33[] = (1,2,3) // may take cycles to load this contents
 
-assert memory[0] == 1 unless some_signal_is_reset
+assert memory[0] == 1 // not checked during reset
+
+assert_always memory[1] == 2 // may fail during reset
+assert_always memory[1] == 2 unless memory.reset  // should not fail
 ```
 
 
