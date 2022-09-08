@@ -15,6 +15,10 @@ let a = (
   ,r1 = (b=1,c=2)
   ,r2 = (3,4)
 )
+// tuple position is from left to right
+assert a.r1 == (1,2) and a.r2 == (3,4)
+assert a.0  == (1,2) and a[1] == (3,4)
+
 // different ways to access the same field
 assert a.r1.c    == 2
 assert a['r1'].c == 2
@@ -346,7 +350,7 @@ the next free bit.
 ```
 enum v3 = (
    ,a
-   ,b=5  // alias with 'a'
+   ,b=5
    ,c
 )
 assert v3.a == 1
@@ -381,10 +385,11 @@ equivalent to the number of entries in the tuple.
 
 
 It is possible to use a sequence that is more consistent with traditional
-programming languages, but this only works with non-hierarchical enumerates.
+programming languages, but this only works with non-hierarchical enumerates
+when a `:int` type is used.
 
 ```
-enum v3:int = (
+enum v3:int = ( // v3 has type :int
    ,a
    ,b=5
    ,c

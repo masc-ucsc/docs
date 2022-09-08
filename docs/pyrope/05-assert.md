@@ -90,7 +90,7 @@ assert_always memory[1] == 2 unless memory.reset  // should not fail
 ```
 
 
-# Coverage
+## Coverage
 
 A bit connected with the assertion is coverage. The goal of an assertion is to be
 true all the time. The goal of a coverage point is to be true at least once

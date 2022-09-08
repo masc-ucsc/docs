@@ -30,7 +30,7 @@ lambda visible at synthesis call hierarchy. A `non-module` is an inlined or
 flattened `lambda`.
 
 
-## definition
+## Declaration
 
 Only anonymous lambdas are supported, this means that there is no global
 scope for functions, procedures, or modules. The only way for a file to access
@@ -219,7 +219,7 @@ assert tup.fun3(2) == 5
 
 
 
-## Pass by Reference and alias
+## Pass by Reference
 
 Pyrope arguments are by value, unless the `ref` keyword is used. Pass by
 reference is needed in three main cases: (1) allow methods to update the object
@@ -251,8 +251,8 @@ execute_method(ref banner) // OK
 execute_method(banner)     // compile error, ref explicitly expected
 ```
 
-A lambda will be called whenever referenced. There are only two exceptions:
-`ref` and `alias`. 
+A lambda will be called whenever used, no need to have an explicit `()`. The
+only exception is when the `ref` keyword is used.
 
 Adding a `ref` before a lambda call delays the call. It it is a variable, it
 delays the call to the getter/setter too.
@@ -262,10 +262,6 @@ is useful to assign to a new variable or to pass a lambda as arguments to
 another lambda.
 
 
-The `alias` keyword allows to create a new name for a given variable. As such,
-it has the same functionality as the `ref` when assigning to a variable.
-
-
 ```
 let f1 = fun() { puts "here" }
 
@@ -273,9 +269,6 @@ let f2a = f1      // prints here
 
 let f2b = ref f1  // no call
 let xx = f2b      // prints here
-
-alias f3 = f1     // no call
-let yy = f3       // prints here
 ```
 
 ### Output tuple
@@ -369,7 +362,7 @@ counter.inc(2)             // compile error, multiple inc options
 assert 44.inc(2) == 8
 
 counter.val = 5
-alias mul = inc
+let mul = ref inc
 counter.mul(2)   // call the new mul method with UFCS
 assert counter.val == 10
 

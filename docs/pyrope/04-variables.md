@@ -526,7 +526,7 @@ The reduce operators and bit selection share a common syntax
     * `^`: xor-reduce or parity check.
     * `+`: pop-count.
     * `sext`: Sign extends selected bits.
-    * `zext`: Zero sign extends selected bits.
+    * `zext`: Zero sign extends selected bits (default option)
 
 + `sel` can be a close-range like `1..<=4` or `(1,4,6)` or an open range like
   `3..`. Internally, the open range is converted to a close-range based on the
@@ -538,7 +538,7 @@ that the result can be 0 (`0sb0`) or -1 (`0sb1`). pop-count and `zext` have
 always positive results. `sext` is a sign-extended, so it can be positive or
 negative.
 
-If no operator is provided, a `zext` is used. The bit selection without
+If no operator is provided, a `zext` is used by default. The bit selection without
 operator can also be used on the left-hand side to update a set of bits.
 
 
@@ -586,27 +586,35 @@ z@[0] = 0b11 // compile error, '0b11` overflows the maximum allowed value of `z@
     E.g: `0xFF@&[0..<8] == -1`.
 
 
-When the selected variable is a tuple with many entries, the type must be
-explicit or boolean conditions. This is to avoid confusion on the number of
-bits used. This is needed because the `tup@[]` is effectively concatenating the
-bits in `tup`.
+When the selected variable is a tuple with many entries, the result of the
+tuple expansion may be unexpected because the compiler can infer bits used
+independently of the type set. This is the case because the `tup@[]` is
+effectively concatenating the bits in `tup` but the tuple fields can be
+optimized making the resulting constant to be unexpected.
 
 ```
-var tup = (a:u8=0xf, b:u8=0x1)  // explicit sizes set
-assert tup@[] == 0xf1
+var tup = (a=0xf:u3232, b=0x1:int)  // explicit sizes set
+assert tup@[] == 0b001_01111
 
-assert((0xF:u8,0x1:u16)@[] == 0xF_0001)
-assert((0xF:u8,0x1:u8 )@[] == 0xF_01)
-assert((false,true,false,false,true )@[] == 0sb0_1001)
+assert((0xF:s8,0x1:s16)@[] == 0x0001_0F)
+assert((0xF:u8,0x1:u16)@[] == 0x0002_0F) // 0xF needs 9 signed bits
+
+assert((true,false,true,false,false,true )@[]     == 0sb0100101 == 0b100101
+assert((true,false,true,false,false,true )@sext[] == 0sb100101
 assert((true)@[]     == 0sb01)
 assert((true)@sext[] == -1   )
 ```
 
-Without the explicit sizes, the previous code would have look like `(0b01111,
-0b01)` which is different than what most people would expect. This is the
-reason why Pyrope enforces to have explicit types for concatenation and avoids
-the implicit bit size inference.
+A more straightforward solution is to explicitly set the bits expected:
 
+```
+var res
+
+res@[0..<8]= 0x0F
+res@[9..]  = 0x1
+
+assert res == 0b1_00001111 == 0x1_0F
+```
 
 Another important characteristic of the bit selection is that the order of the
 bits on the selection does not affect the result. Internally, it is a bitmask

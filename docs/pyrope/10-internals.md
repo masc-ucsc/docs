@@ -437,61 +437,59 @@ model of most languages like C++ that captures at lambda definition, not lambda
 execution. 
 
 === "Pyrope capture time"
+    ```
+    var x_s = 10
 
-```
-var x_s = 10
+    pub call_captured = fun[x_s]() {
+      ret fun[x_s]() {
+        assert x_s == 10
+        ret x_s
+      }
+    }
 
-pub call_captured = fun[x_s]() {
-  ret fun[x_s]() {
-    assert x_s == 10
-    ret x_s
-  }
-}
+    test "capture test" {
+      let tst = fun() {
+        var x_s = 20   // not variable shadowing because fun scope
 
-test "capture test" {
-  let tst = fun() {
-    var x_s = 20   // not variable shadowing because fun scope
+        let x1 = call_captured()
+        assert x1 == 10
 
-    let x1 = call_captured()
-    assert x1 == 10
+        x_s = 30;
 
-    x_s = 30;
-
-    let x2 = call_captured()
-    assert x2 == 10
-  }
-  tst // call the test
-}
-```
+        let x2 = call_captured()
+        assert x2 == 10
+      }
+      tst // call the test
+    }
+    ```
 
 === "C++17 capture time"
+    ```c++
+    #include <iostream>
 
-```c++
-#include <iostream>
+    int main() {
 
-int main() {
+      int x_s{ 10 };
 
-  int x_s{ 10 };
+      auto call_captured{
+        [x_s]() {
+          assert(x_s == 10);
+          return x_s;
+        }
+      };
+      }
 
-  auto call_captured{
-    [x_s]() {
-      assert(x_s == 10);
-      return x_s;
+      x_s = 20;
+
+      auto x1 = call_captured();
+      assert(x1==10);
+
+      x_s = 30;
+
+      auto x2 = call_captured();
+      assert(x2==10);
     }
-  };
-  }
-
-  x_s = 20;
-
-  auto x1 = call_captured();
-  assert(x1==10);
-
-  x_s = 30;
-
-  auto x2 = call_captured();
-  assert(x2==10);
-}
-```
+    ```
 
 Some languages like ZIG do not allow closures, but they allow structs with a lambda to
 implement an equivalent functionality. It is possible in Pyrope to also create a tuple
@@ -501,74 +499,74 @@ may do this implementation.
 
 === "Pyrope tuple closure style"
 
-```
-let j = 1
-let b = fun[j](x:i32)-> :i32 {
-  ret x+j
-}
-
-assert b(1) == 2
-
-test "closure with tuple" {
-  var a: i32 = 1
-  a += 1
-
-  var addX = (
-    ,a: i32 = a                        // copy value, runtime or comptime
-    ,pub let get = fun(self, x: i32) {
-      ret x + self.a
+    ```
+    let j = 1
+    let b = fun[j](x:i32)-> :i32 {
+      ret x+j
     }
-  }
 
-  a += 100;
+    assert b(1) == 2
 
-  assert addX(2) == 4
-}
+    test "closure with tuple" {
+      var a: i32 = 1
+      a += 1
 
-test "plain closure" {
-  var a: i32 = 1
-  a += 1
+      var addX = (
+        ,a: i32 = a                        // copy value, runtime or comptime
+        ,pub let get = fun(self, x: i32) {
+          ret x + self.a
+        }
+      }
 
-  let addX = fun[a](x: i32) { // Same behaviour as closure with tuple
-    ret x + a
-  }
+      a += 100;
 
-  a += 100;
+      assert addX(2) == 4
+    }
 
-  assert addX(2) == 4
-}
-```
+    test "plain closure" {
+      var a: i32 = 1
+      a += 1
+
+      let addX = fun[a](x: i32) { // Same behaviour as closure with tuple
+        ret x + a
+      }
+
+      a += 100;
+
+      assert addX(2) == 4
+    }
+    ```
 
 === "ZIG closure style with struct"
 
-```zig
-pub fn main() void {
-    const j = 1;
-    var b = struct{
-        fn function(x: i32) i32 {
-            return x+j;
-        }
-    }.function;
+    ```zig
+    pub fn main() void {
+        const j = 1;
+        var b = struct{
+            fn function(x: i32) i32 {
+                return x+j;
+            }
+        }.function;
 
-    @import("std").debug.assert(b(1) == 2);
-}
-
-test "closure with runtime" {
-  var a: i32 = 1;
-  a += 1;
-
-  const addX = (struct {
-    a: i32,
-    fn call(self: @This(), x: i32) i32 {
-      return x + self.a;
+        @import("std").debug.assert(b(1) == 2);
     }
-  } { .a = a }).call;
 
-  a += 100;
+    test "closure with runtime" {
+      var a: i32 = 1;
+      a += 1;
 
-  @import("std").debug.assert(addX(2) == 4);
-}
-```
+      const addX = (struct {
+        a: i32,
+        fn call(self: @This(), x: i32) i32 {
+          return x + self.a;
+        }
+      } { .a = a }).call;
+
+      a += 100;
+
+      @import("std").debug.assert(addX(2) == 4);
+    }
+    ```
 
 
 Capture values must be explicit, or no capture happens. This means that
@@ -605,16 +603,18 @@ x = 1000
 assert fun2() == 203
 ```
 
-### Lambda calls
+### Lambda arguments
 
 
-Lambda calls happen whenever an identifer is followed by a tuple. Since the
-tuple bundary can be dropped, this can lead to unexpected cases like:
+Lambda calls happen whenever an identifer is followed by a list of expressions.
+If the first expression in the list has parenthesis, it can lead to unexpected
+behavior:
 
 
 ```
 assert 0 == (0)  // OK, same as assert( 0 == (0) )
 assert (0) == 0  // compile error: (assert(0)) == 0 is an expression
+assert(0 == 0)   // OK
 ```
 
 It is also easy to forget that parenthesis can be ommited in simple expressions,
@@ -775,7 +775,7 @@ for i,idx in 123 {
 }
 ```
 
-### Bit order
+### Multiple bit selection
 
 Ranges are sets, this creates potentially unexpected results in reverse `for`
 iterators, but also in bit section:
@@ -784,17 +784,60 @@ iterators, but also in bit section:
 let v = 0xF0
 
 assert v@[0] == 0
-assert v@[4] == 1
+assert v@[4] == 1       // unsigned output
+assert v@sext[4] == -1  // signed output
 
 assert v@[3..=4] == 0b010 == v@[3,4]
 assert v@[4..=3 by -1] == 0b010
-assert v@[4,3] == 0b001
+assert v@[4,3] == v@[3,4] == 0b010
+
+let tmp1 = (v@[4], v@[3])@[]  // typecast from 
+let tmp2 = (v@[3], v@[4])@[]
+let tmp3 = v@[3,4]
+assert tmp1 == 0b01
+assert tmp2 == 0b100
+assert tmp3 == 0b10
+
+let tmp1s = (v@sext[4], v@sext[3])@[]  // typecast from 
+let tmp2s = (v@sext[3], v@sext[4])@[]
+let tmp3s = v@[4,3]
+assert tmp1s == 0b01
+assert tmp2s == 0b10
+assert tmp3s == 0b10
+
+let tmp1ss = (v@sext[4], v@sext[3])@sext[]  // typecast from 
+let tmp2ss = (v@sext[3], v@sext[4])@sext[]
+let tmp3ss = v@sext[3,4]
+assert tmp1ss == 0b01  ==  1
+assert tmp2ss == 0sb10 == -2
+assert tmp3ss == 0sb10 == -2 == v@sext[4,3]
+```
+
+
+The reason is that for multiple bit selection assumes a smaller to larger bits.
+If the opposite order is needed, support functions/code must explicitly do it.
+
+
+In Pyrope, there is no order in bit selection (`xx@[0,1,2,3] == xx@[3,2,1,0]`).
+This is done to avoid mistakes. If a bit swap is wanted, it must be explicit.
+
+
+```
+let reverse = fun(x:uint)->(total:uint) {
+  for i in 0..<x.__bits {
+    total <<= 1
+    total  |= x@[i]
+  }
+}
+assert reverse(0b10110) = 0b01101
 ```
 
 ### Initialization
 
 Registers and variables are initialized to zero by default, but the reset logic
 can change to a more traditional Verilog with uninitialized (`0sb?`) contents.
+Since the evaluation of unknowns will be done with randomly generated values
+for each `?` bit, the assertions should fail depending on the smulation seed.
 
 
 ```
@@ -806,12 +849,10 @@ var v
 
 assert v == 0 and r == 0
 
-assert !(r_ver != 0)    // 0sb? != 0 evaluates false
-assert !(r_ver == 0)    // 0sb? == 0 evaluates false too
-assert !(r_ver != 0sb?) // 0sb? != 0sb? evaluates false too
-assert !(r_ver == 0sb?) // 0sb? == 0sb? evaluates false too
-
-assert r_ver == something unless r_ver.reset  // do not check during reset
+assert !(r_ver != 0)    // it will randomly fail
+assert !(r_ver == 0)    // it will randomly fail
+assert !(r_ver != 0sb?) // it will randomly fail
+assert !(r_ver == 0sb?) // it will randomly fail
 ```
 
 
@@ -821,52 +862,53 @@ lead to unexpected results during the reset period.
 ```
 var arr:[] = (0,1,2,3,4,5,6,7)
 
-assert arr[0] == 0 and arr[7] == 7 // always works
+assert_always arr[0] == 0 and arr[7] == 7  // always works
 
 reg mem:[] = (0,1,2,3,4,5,6,7)
 
-assert mem[7] == 7 // FAIL, this may fail during reset
-assert mem[7] == 7 unless mem.reset // OK
+assert_always mem[7] == 7                  // FAIL, this may fail during reset
+assert_always mem[7] == 7 unless mem.reset // OK
+assert mem[7] == 7                         // OK, not checked during reset
 ```
 
-
-Registers have reset code, which creates un-expected code:
-
-```
-reg v:u32 = 33
-
-assert v == 33 // this will fail after reset
-
-v = 1
-```
 
 ### Unexpected calls
 
 
-Lambdas with no inputs are called when referenced. This is not the case for
-lambdas with inputs. This difference can show when passing a lambda as argument
-to another lambda.
+Lambdas are called always unless a `ref` keyword is added that passes the
+lambda reference.
+
 
 ```
 let args = fun(x) { puts "args:{}", b ; ret 1}
 let here = fun()  { puts "here" ; ret 3}
 
-let call = fun(f:fun){ ret f } 
+let call_now   = fun(f:fun){ ret f } 
+let call_defer = fun(f:fun){ ret ref f } 
 
-let x0 = call here           // same as call(here), prints "here"
-let x1 = call args           // same as call(args), nothing printed
-assert x0      == 3          // nothing printed
-assert x1("b") == 1          // prints "args:b"
+let x0 = call_now here           // prints "here"
+let e1 = call_now args           // compile error, args needs arguments
+let x1 = call_defer here         // prints "here"
+let e2 = call_defer args         // compile error, args needs arguments
+assert x0  == 3                  // nothing printed
+assert x1  == 3                  // nothing printed
+
+let x2 = call_now ref here       // prints "here"
+let e3 = call_now ref args       // compile error, args needs arguments
+let x3 = call_defer ref here     // nothing printed
+let x4 = call_defer ref args     // nothing printed
+assert x2  == 3                  // nothing printed
+assert x3  == 3                  // prints "here"
+assert x4  == 1                  // compile error, args needs arguments
+assert x4("xx") == 1             // prints "args:xx"
+
 ```
 
-The reason is that variables can be exposed, and future refactors can change
-the variable for an attribute getter. The behavior is respected by evaluating
-the lambda on use. The evaluation will happen before the call even when an
-explicit lambda is created.
+The `ref` is not needed if the lambda defition itself is the argument passed.
 
 ```
-let x3 = call fun() {here}   // prints "here" 
-assert x3 == 3               // nothing printed
+let x5 = call_now(fun() {here})  // nothing printed
+assert x3 == 3                   // prints here
 ```
 
 
@@ -888,7 +930,7 @@ The variable `http` has a type `8080` followed by a comment
 ```
 let http:8080//masc.soe.ucsc.edu
 
-assert http == 8080
+assert http equals :8080 // http variable has type 8080
 ```
 
 There is no `--` operator in Pyrope, but there is a `-` which can be followed
@@ -899,19 +941,4 @@ let v = (3)--3
 assert v == 6
 ```
 
-### Endian
-
-In Pyrope, there is no order in bit selection (`xx@[0,1,2,3] == xx@[3,2,1,0]`). This is done to avoid
-mistakes. If a bit swap is wanted, it must be explicit.
-
-
-```
-let reverse = fun(x:uint)->total {
-  for a in x@[..] { bit iterator
-    total <<= 1
-    total  |= a
-  }
-}
-assert reverse(0b10110) = 0b01101
-```
 

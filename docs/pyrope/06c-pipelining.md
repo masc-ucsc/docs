@@ -197,7 +197,6 @@ the conceptual problems of integrating them:
     ```
 
 === "Explicit Stages"
-
     ```
     let add1 = proc (a,b) { // 1 cycle add
       reg r
