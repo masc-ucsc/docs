@@ -71,22 +71,21 @@ Populate the Pyrope code
       z? = y == 0
     }
 
-    test "16bits gcd" {
-      for i in 1..=100 {
-        for j in 1..=100 {
-          let z =# gcd(a=i,b=j)
+    for a in 1..=100 {
+      for b in 1..=100 {
+        test "16bits gcd({},{})",a,b {
+          let z =# gcd(a,b)
 
           waitfor z?
 
-          puts "result is {}", z
-          assert z == __my_cpp_gcd(v1=cmd.a, v2=cmd.b)
+          assert z == __my_cpp_gcd(v1=a, v2=b)
         }
       }
     }
     ```
 
     src/my_cpp_gcd.cpp
-    ```c++ linenums="26"
+    ```c++ linenums="25"
     void my_gcd_cpp(const Lbundle &inp, Lbundle &out) {
       assert(inp.has_const("v1") && inp.has_const("v2"));
 
