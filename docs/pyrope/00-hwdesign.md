@@ -245,7 +245,7 @@ software programmer may expect:
 === "Problematic code"
 
     ```pyrope
-    var result
+    result := 0
     if some_opcode {
       result = do_division(a,b)
     }else{
@@ -256,7 +256,7 @@ software programmer may expect:
 === "Possible solution"
 
     ```pyrope
-    var result
+    result := 0
     result1 = do_division(a,b)
     result2 = do_multiplication(a,b)
     if some_opcode {

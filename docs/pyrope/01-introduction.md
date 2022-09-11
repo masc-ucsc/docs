@@ -58,8 +58,9 @@ Populate the Pyrope code
 
     src/gcd.prp:
     ```pyrope linenums="1"
-    pub let gcd = proc (cmd:(a:uint,b:uint)?)->(z:uint?) {
-      reg x,y
+    gcd := proc (cmd:(a:uint,b:uint)?)->(z:uint?) {
+      x:reg := 0
+      y:reg := 0
       if cmd? {
         x,y = cmd
       }elif x > y { 
@@ -73,8 +74,8 @@ Populate the Pyrope code
 
     for a in 1..=100 {
       for b in 1..=100 {
-        test "16bits gcd({},{})",a,b {
-          let z =# gcd(a,b)
+        test "check.gcd({},{})",a,b {
+          z :=# gcd(a,b)
 
           waitfor z?
 
@@ -85,7 +86,7 @@ Populate the Pyrope code
     ```
 
     src/my_cpp_gcd.cpp
-    ```c++ linenums="25"
+    ```c++ linenums="26"
     void my_gcd_cpp(const Lbundle &inp, Lbundle &out) {
       assert(inp.has_const("v1") && inp.has_const("v2"));
 
@@ -174,7 +175,7 @@ Populate the Pyrope code
 
 Run
 ```bash
-$prp test gcd
+$prp test check.gcd
 ```
 
 The `gcd.prp` includes the top-level module (`gcd`) and the unit test. 

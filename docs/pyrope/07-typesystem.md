@@ -395,51 +395,6 @@ y = cmd.b(y)  // typecast y to cmd.b type (this can add a mux)
 ## Typecasting
 
 
-Typecasting is the process of changing from one type to other. There are 2
-reserved keywords for typecasting (`saturate` and `wrap`), and an explicit
-bitcast.
-
-* `saturate` keeps the maximum or minimum (negative integer) that fits on the
-  left-hand side.
-
-* `wrap` drops the bits that do not fit on the left-hand side. It performs sign
-  extension if needed.
-
-* `lhs@[] = rhs` bit casts the RHS to the LHS as long as both have explicit bit
-  sizes and the sizes are the same. Like the `tup@[]` operator in the RHS, the
-  bitwidth inference is disabled and explicit bitsizes are used to avoid
-  confusion.
-
-In all the cases, there is no bitwidth of type inference between the right and
-left side of the assignment. The LHS variable will be immutable (`let`) if not
-defined before with a `var`. Also, in both cases, if the left-hand side is not
-a boolean or an integer with a explicit type, a compile error is generated.
-
-```
-var a:u32=100
-var b:u10
-var c:u5
-var d:u5
-
-b = a      // OK done automatically. No precision lost
-c = a      // compile error, '100' overflows the maximum allowed value of 'c'
-wrap c = a // OK, same as c = a@[0..<5] (Since 100 is 0b1100100, c==4)
-
-saturate c = a  // OK, c == 31
-c = 31
-d = c + 1 // compile error, '32' overflows the maximum allowed value of 'd'
-
-wrap d = c + 1   // OK d == 0
-saturate d = c+1 // OK, d==31
-saturate d = c+1 // OK, d==31
-
-saturate x:boolean = c // same as x = c!=0
-
-var lhs:(x1:u8, x2:u12) // 9 + 13 bits in signed == 22bits
-lhs@[] = 0x1FF:u22
-assert lhs.x1 == 0xFF and lhs.x2==1
-```
-
 To convert between tuples, an explicit setter is needed unless the tuple fields
 names, order, and types match.
 

@@ -49,14 +49,20 @@ The Verilog high impedance `z` is not supported. A `bus` construct must be used 
 
 Like in many HDLs, Pyrope has unknowns `?`. The x-propagation is a source of
 complexity in most hardware models. Pyrope has `x` or `?` to be compatible with
-Verilog existing designs. The advice is not to use `x` besides `match` statement
-pattern matching. It is much better to use the default value (zero or empty
-string), but sometimes it is easier to use `nil` when converting Verilog code
-to Pyrope code. The `nil` means that the numeric value is invalid. If any
-operation is performed with `nil`, the result is an assertion failure. The only
-thing allowed to do with nil is to copy it. While the `nil` behaves like an
-invalid value, the `0sb?` behaves like an unknown value that still can be used
-in arithmetic operations. E.g: `0sb? | 1` is `1` but `nil | 1` is an assertion error.
+Verilog existing designs. This means that inside the Pyrope compiler, the
+constant operations with unknowns are compatible with Verilog semantics. When
+the simulation is performed, the expectation is to randomly generate a 0 or 1
+for each unknown (`?`) bit.
+
+
+The advice is not to use `x` besides `match` statement pattern matching. It is
+much better to use the default value (zero or empty string), but sometimes it
+is easier to use `nil` when converting Verilog code to Pyrope code. The `nil`
+means that the numeric value is invalid. If any operation is performed with
+`nil`, the result is an assertion failure. The only thing allowed to do with
+nil is to copy it. While the `nil` behaves like an invalid value, the `0sb?`
+behaves like an unknown value that still can be used in arithmetic operations.
+E.g: `0sb? | 1` is `1` but `nil | 1` is an assertion error.
 
 
 Notice that `nil` is a state in the integer basic type, it is not a new type by
@@ -87,9 +93,9 @@ b = 'simpler here'
 Integers and strings can be converted back and forth:
 
 ```
-let a:string = "127"
-let b:int    = a     // same as let b = int(a)
-let c:string = b     // same as let c = string(b)
+a:string := "127"
+b:int    := a     // same as b := int(a)
+c:string := b     // same as c := string(b)
 assert a == c
 assert b == 0x7F
 assert a == b        // compile error, 'a' and 'b' have different types
@@ -218,7 +224,7 @@ section](06-functions.md) has more details on the allowed syntax.
 
 
 ```
-let f = fun(a,b) { ret a + b }
+f := fun(a,b) { ret a + b }
 ```
 
 Pyrope classifies lambdas as follows:
@@ -232,8 +238,7 @@ Pyrope classifies lambdas as follows:
 * `procedure` is a lambda that is not a `function`. It can have combination and
   non-combinational (register/memories).
 
-* `method` is a lambda (`function` or `procedure`) that updates tuple fields. A
-  `method` can only update one tuple.
+* `method` is a lambda (`function` or `procedure`) that updates another variable.
 
 * `module` is a lambda that has a physical instance. Lambdas are either inlined
   or modules.
@@ -284,11 +289,11 @@ can exist per expression.
 
 
 ```
-var a = fcall() + 1               // OK
-let x = pcall() + a               // OK, proc combined with variable read
-let b = fcall(a) + 10 + pcall(a)  // OK
-var d = t.pcall() + pcall2(b)     // compile error, multiple procedure calls
-let y = t.pcall() + t.pcall()     // compile error, multiple procedure calls
+a := fcall() + 1               // OK
+x := pcall() + a               // OK, proc combined with variable read
+b := fcall(a) + 10 + pcall(a)  // OK
+d := t.pcall() + pcall2(b)     // compile error, multiple procedure calls
+y := t.pcall() + t.pcall()     // compile error, multiple procedure calls
 ```
 
 
@@ -298,7 +303,7 @@ side-effects. In a way, expression code blocks can be seen as a type of
 
 
 ```
-var a =       {var d=3 ; last d+1}    + 100 // OK
+a := {d:=3 ; last d+1} + 100 // OK
 assert a == (3+1+100)
 assert a == {3+1+100}  // same, expression evaluated as 104 and returned
 ```
@@ -384,37 +389,37 @@ statements, or the `and_then` and `or_else` operations must be used.
 
 === "Incorrect code with side-effects"
     ```
-    var r1 = pcall1() or  pcall2()  // compile error, non-deterministic
+    r1 := pcall1() or  pcall2()  // compile error, non-deterministic
 
 
-    var r2 = pcall1() and pcall2()  // compile error, non-deterministic
+    r2 := pcall1() and pcall2()  // compile error, non-deterministic
 
 
-    var r3 = pcall1() +   pcall2()  // compile error
+    r3 := pcall1() +   pcall2()  // compile error
     // compile error only if pcall1/pcall2 can have side effects
     ```
 
 === "Alternative 1"
     ```
-    var r1 = fcall1()
-    r1 = fcall2() unless r1
+    r1 := fcall1()
+    r1  = fcall2() unless r1
 
-    var r2 = fcall1()
-    r2 = fcall2() when r2
+    r2 := fcall1()
+    r2  = fcall2() when r2
 
-    var r3 = fcall1()
+    r3 := fcall1()
     r3 += fcall2()
     ```
 
 === "Alternative 2"
     ```
-    var r1 = fcall1() or_else fcall2()
+    r1 := fcall1() or_else fcall2()
 
 
-    var r2 = fcall1() and_then fcall2()
+    r2 := fcall1() and_then fcall2()
 
 
-    var r3 = fcall1()
+    r3 := fcall1()
     r3 += fcall2()
     ```
 
@@ -453,4 +458,53 @@ Each of the basic gates operate always over signed integers like Pyrope, but
 their semantics vary. A more detailed explanation is available at [LiveHD cell
 type section](/livehd/05-lgraph/#cell-type).
 
+
+## Variable mutability
+
+In programming languages, an immutable variable means that during the variable
+scope, the variable name is mapped to a given value and the value can not
+change.
+
+A mutable variable allows to change the variable name contents. Mutability is
+independent of compile time constant and the value can change every time that
+the scope is started. Since in Pyrope the every lambda is called every cycle,
+an immutable variable can have different values each cycle. This is consistent
+with programming languages like rust where a function can have an immutable
+variable with different values at each call.
+
+
+These are the rules to decide between mutable and immutable variables:
+
+* Immutable:
+  * First character is upper case. E.g: `Mutable_var` or `A`
+  * Assigned with a `<-`. E.g: `foo <- 3`
+* Mutable:
+  * Assigned with a `:=`. E.g: `bar := 3` or `barbar := _` or `bar2:u32 = 3`
+
+Mutable variables can update the contents with `=`.
+
+```
+a  = 3        // compile error, no previous let or var
+
+b := 3
+b  = 5        // OK
+b += 1        // OK
+
+c:u3 <- _     // OK immutable with deferred value (just scope declaration)
+if runtime {
+  c <- 3
+}else{
+  c <- 5
+}
+
+d <- "hello"  // OK
+d = "bar"     // compile error, 'd' is immutable
+d := "bar"    // compile error, 'd' already declared
+
+e := _        // OK, no type or default value, just scope declaration
+e:u32 = 33    // OK
+
+Foo := 33     // compiler error, nicer to say 'Foo <- 33' or 'foo := 33'
+Foo  = 33     // compiler error, nicer to say 'Foo <- 33'
+```
 
