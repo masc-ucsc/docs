@@ -13,35 +13,34 @@ has a different set of rules constraining the variable visibility. Overall, the
 variable/field is visible from declaration until the end of scope.
 
 
-Pyrope does not use keywords like `var` or `let` to declare a variable. Instead
-it uses the mutable (`:=`) or immutable (`<-`) assignments for variable
-declaration. This means that a declaration must have an assignment value. `_`
-is used to specify the default value (`false` for boolean, `0` for integer,
-`""` for string, undefined lambda for lambda, and `0..=0` for range).
+Pyrope uses `var` or `let` to declare a variable, but all the declarations must
+have a value. `_` is used to specify the default value (`false` for boolean,
+`0` for integer, `""` for string, undefined lambda for lambda, and `0..=0` for
+range).
 
 
 In all the cases, variable declaration is either:
-* `variable [:type] <- expression`
-* `variable [:type] := expression`
+* `let variable [:type] = expression`
+* `var variable [:type] = expression`
 
-In a tuple scope, `variable [:type] = expression` is equivalent to `variable
-[:type] := expression` because tuples do not have variable updates, and
+In a tuple scope, `variable [:type] = expression` is equivalent to `var variable
+[:type] = expression` because tuples do not have variable updates, and
 therefore there is no need to distinguish between `variable[:type] = expr` (mutate
-update) and `variable[:type] := expr` (declaration).
+update) and `var variable[:type] = expr` (declaration).
 
 
 === "Code Block scope"
 
     ```
     assert a == 3        // compile error, undefined variable 'a'
-    a := 3
+    var a = 3
     {
       assert a == 3
       a = 33             // OK. assign 33
       a:int = 33         // OK, assign 33 and check that 'a' has type int
-      b <- 4
-      a <- 3333          // compile error, variable shadowing
-      a := 33            // compile error, variable shadowing
+      let b = 4
+      let a = 3333       // compile error, variable shadowing
+      var a = 33         // compile error, variable shadowing
     }
     assert b == 3        // compile error, undefined variable 'b'
     ```
@@ -50,41 +49,41 @@ update) and `variable[:type] := expr` (declaration).
 
     ```
     assert a == 3        // compile error, undefined variable 'a'
-    a := 3
-    f1 <- fun[a]() {
+    var a = 3
+    var x = 10
+    let f1 = fun[a,x=a+1]() {
       assert a == 3
-      a = 33             // compile error, upper scope are always immutable
-      b <- 4
-      a <- 3333          // compile error, variable shadowing
-      a := 33            // compile error, variable shadowing
+      a = 33             // compile error, upper scope is immutable
+      x = 300            // compile error, capture/inputs are immutable
+      let b = 4
+      let a = 3333       // compile error, variable shadowing
+      var a = 33         // compile error, variable shadowing
       assert a == 3333
     }
+    f1()
+    assert x == 10
     assert b == 3        // compile error, undefined variable 'b'
 
-    f2 <- fun() {        // restrict scope
+    let f2 = fun() {     // restrict scope
       assert a == 3      // compile error, undefined variable 'a'
     }
-    f3 <- fun[ff<-a]() { // restrict scope
+    let f3 = fun[ff=a]() { // restrict scope
       assert ff == 3     // OK
       ff = 3             // compile error, immutable variable
-    }
-    f4 <- fun[ff:=a]() { // restrict scope
-      assert ff == 3     // OK
-      ff = 3             // OK
     }
     ```
 
 === "Tuple scope"
 
     ```
-    a := 3
-    r1 <- (
-      ,a = a+1           // same as a := a+1
+    var a = 3
+    let r1 = (
+      ,a = a+1           // same as var a = a+1
       ,c = {assert a == 3; assert self.a==4; 50}
     )
     r1.a = 33            // compile error, 'r1' is immutable variable
 
-    r2 := (a:=100, c<-(a=a+1, e=self.a+30))
+    var r2 = (a=100, let c=(a=a+1, e=self.a+30))
     assert r2 == (a=100,c=(a=101, e=131))  // checks values not mutability
     r2.a = 33            // OK
     r2.c.a = 33          // compile error, 'r2.c' is immutable variable
@@ -100,6 +99,14 @@ update) and `variable[:type] := expr` (declaration).
 
 * A variable is visible from definition until the end of scope in program order.
 
+
+Since the captures and lambda inputs are always immutable, it is not allowed to
+declare them as `var` and redundant to declare them as `let`.
+
+```
+let f3 = fun(var x) { x + 1 }    // compile error, inputs are immutable
+let f2 = fun[var x](z) { x + z } // compile error, captures are immutable
+```
 
 ## Basic types
 
@@ -132,12 +139,12 @@ different constraints):
 * `int(a..<b)`: integer basic type constrained to be between `a` and `b`.
 
 ```
-a:int         := xx // any value, no constrain
-b:unsigned    := xx // only positive values
-c:u13         := xx // only from 0 to 1<<13
-d:int(20..=30):= xx // only values from 20 to 30 (both included)
-d:int(-5..<6) := xx // only values from -5 to 6 (6 not included)
-e:int(-1,0)   := xx // 1 bit integer: -1 or 0
+var a:int         = _ // any value, no constrain
+var b:unsigned    = _ // only positive values
+var c:u13         = _ // only from 0 to 1<<13
+var d:int(20..=30)= _ // only values from 20 to 30 (both included)
+var d:int(-5..<6) = _ // only values from -5 to 6 (6 not included)
+var e:int(-1,0)   = _ // 1 bit integer: -1 or 0
 ```
 
 Integers can have 3 value (`0`,`1`,`?`) expression or a `nil`. Section
@@ -159,17 +166,17 @@ boolean will raise an assertion when the integer has undefined bits (`?`) or
 `nil`.
 
 ```
-b <- true
-c <- 3
+let b = true
+let c = 3
 
-if c    { call(x) }     // compile error, 'c' is not a boolean expression
-if c!=0 { call(x) }     // OK
+if c    { call(x) }  // compile error, 'c' is not a boolean expression
+if c!=0 { call(x) }  // OK
 
-d := b or false // OK
-e := c or false // compile error, 'c' is not a boolean
+var d = b or false   // OK
+var e = c or false   // compile error, 'c' is not a boolean
 
-e <- 0xfeed
-if e@[3] {      // OK bit extraction for single bit returns a boolean
+let e = 0xfeed
+if e@[3] {           // OK, bit extraction for single bit returns a boolean
   call(x)
 }
 
@@ -184,8 +191,8 @@ String input typecase is valid, but anything different than ("0", "1", "-1",
 Logical and arithmetic operations can not be mixed.
 
 ```
-x <- a and b
-y <- x + 1    // compile error: 'x' is a boolean, '1' is integer
+let x = a and b
+let y = x + 1    // compile error: 'x' is a boolean, '1' is integer
 ```
 
 ### Lambda
@@ -215,14 +222,14 @@ size in the tuple can be unknown.
 * `[first..]` is the same as `[first..=-1]`.
 
 ```
-a <- (1,2,3)
+let a = (1,2,3)
 assert a[0..] == (1,2,3)
 assert a[1..] == (2,3)
 assert a[..=1] == (1,2)
 assert a[..<2] == (1,2)
 assert a[1..<10] == (2,3)
 
-b <- 0b0110_1001
+let b = 0b0110_1001
 assert b@[1..]        == 0b0110_100
 assert b@[1..=-1]     == 0b0110_100
 assert b@[1..=-2]     == 0b0110_100  // unsigned result from bit selector
@@ -231,7 +238,7 @@ assert b@[1..=-3]     == 0sb10_100
 assert b@[1..<-3]     == 0b0_100
 assert b@[0]          == false
 
-c <- 1..=3
+let c = 1..=3
 assert int(c) == 0b1110
 assert range(0b01_1100) == 2..=4
 ```
@@ -285,19 +292,19 @@ creation. The difference is that a type should be an immutable variable, and
 therefore it is recommended to start with Uppercase.
 
 ```
-bund1 := (color:string, value:s33)
+var bund1 = (color:string, value:s33)
 x:bund1        = _      // OK, declare x of type bund1 with default values
 bund1.color    = "red"  // OK
 bund1.is_green = fun(self) { ret self.color == "green" }
 x.color        = "blue" // OK
 
-typ <- (color:string, value:s33, is_green:fun(self) = _)
+let typ = (color:string, value:s33, is_green:fun(self) = _)
 y:typ        = _        // OK
 typ.color    = "red"    // compile error
 typ.is_green = fun(self) { ret self.color == "green" }
 y.color      = "red"    // OK
 
-bund3 <- (color:string, value:s33)
+let bund3 = (color:string, value:s33)
 z:bund3        = _                 // OK
 bund3.color    = "red"             // compile error
 bund3.is_green = fun(self) { ... } // compile error
@@ -328,7 +335,7 @@ the variable `does` comply with the type specified.
 
 
 ```
-a := true  // infer a is a boolean
+var a = true  // infer a is a boolean
 
 foo = a:boolean or false // checks that 'a' is a boolean
 ```
@@ -363,7 +370,7 @@ that can be done with attributes: set, check, read.
 
 * Check: when associated to a variable type but not in the left-hand-side of an
   assigment. The attribute is an expression that must evaluate true only at
-  this statement. E.g: `tmp := yy:$(comptime) + xx`
+  this statement. E.g: `var tmp = yy:$(comptime) + xx`
 
 * Read: when used directly in an assertion or debug statement. `assert xx.$bits > 30`
 
@@ -376,8 +383,8 @@ are not allowed to affect results.
 
 ```
 // attribute set
-foo:$(comptime=true) := xx         // enforce that foo is comptime true always
-bar:$(comptime) := xx              // same as previous statement
+var foo:$(comptime=true) = xx      // enforce that foo is comptime true always
+var bar:$(comptime) = xx           // same as previous statement
 yyy = xx                           // yyy does not check comptime
 yyy.$comptime = true               // now, checks that 'yyy` is comptime
 
@@ -396,11 +403,11 @@ assert tmp.$bits < 30 and !tmp.$comptime
 
 ```
 read_state = fun(x) {
-  f:$(comptime) u32 <- x  // f is compile time or a compile error is generated
-  ret f                   // f should be compile time constant
+  let f:$(comptime) u32 = x // f is compile time or a error is generated
+  ret f                     // f should be compile time constant
 }
 
-foo := read_state(zz) // foo will be compile time constant
+var foo = read_state(zz) // foo will be compile time constant
 ```
 
 Pyrope allows to assign the attribute to a statement to avoid repeating the
@@ -437,9 +444,9 @@ semantic. To understand the potential Pyrope syntax, this is a hypothetical
 `$poison` attribute that marks tuple.
 
 ```
-bad <- (a=3,b:$(poison)=4)
+let bad = (a=3,b:$(poison)=4)
 
-b <- bad.b
+let b = bad.b
 
 assert b.$poison and b==4
 ```
@@ -539,17 +546,17 @@ set/check/read the compile time status. This means that the value must be
 constant at compile time or a compile error is generated.
 
 ```
-a:$(comptime) <- 1     // obviously comptime
+let a:$(comptime) = 1     // obviously comptime
 b:$(comptime) = a + 2  // OK too
-c:$(comptime) <- rand  // compile error, 'c' is not compile time constant
+let c:$(comptime) = rand  // compile error, 'c' is not compile time constant
 ```
 
 To avoid too frequent comptime directives, Pyrope treats all the variables that
 start with uppercase as compile time constants.
 
 ```
-Xconst1 := 1      // obvious comptime
-Xvar2   := rand   // compile error, 'Xvar2' is not compile time constant
+var Xconst1 = 1      // obvious comptime
+var Xvar2   = rand   // compile error, 'Xvar2' is not compile time constant
 ```
 
 ### debug attribute
@@ -566,8 +573,8 @@ This guarantees that `debug` variables, or statements, do not have any
 side-effects beyond debug statements.
 
 ```
-a := (b:$(debug)=2, c = 3) // a.b is a debug variable
-c:$(debug) <- 3
+var a = (b:$(debug)=2, c = 3) // a.b is a debug variable
+let c:$(debug) = 3
 ```
 
 Assignments to debug variables also bypass protection access. This means that
@@ -578,8 +585,8 @@ all the results as debug, it allows to read any public/private variable/field.
 ```
 x:(_priv=3, zz=4) = _
 
-tmp <- x._priv         // compile error
-tmp:$(debug) <- x.priv // OK
+let tmp = x._priv         // compile error
+let tmp:$(debug) = x.priv // OK
 
 assert x._priv == 3    // OK, assert is a debug statement
 ```
@@ -592,8 +599,8 @@ persistence across cycles the `reg` type must be used.
 
 
 ```
-counter:reg := 10
-not_count   := 20
+var counter:reg u32 = 10
+var not_a_reg:u32   = 20
 ```
 
 In `reg`, the right-hand side of the initialization (`10` in the
@@ -612,11 +619,11 @@ The private has different meaning depending on when it is applied:
 * When is applied to a tuple entry (`(_field = 3)`), it means that the tuple
   entry can not be accessed outside the tuple. 
 
-* When is applied to a `pipestage` variable (`_foo := 3`), it means that the
+* When is applied to a `pipestage` variable (`_foo`), it means that the
   variable is not pipelined to the next type stage. Section
   [pipestage](06c-pipelining.md) has more details.
 
-* When is applied to a pyrope file upper scope variable (`_top_reg:reg := 4`),
+* When is applied to a pyrope file upper scope variable (`var _top_reg:reg = _`),
   it means that an `import` command or register reference can not access it
   across files. Section [typesystem](07-typesystem.md) has more details.
 
@@ -729,7 +736,7 @@ assert y@[]@+[] == 3
 assert y@[0..=5]@+[] == 3
 assert y@[0..=6]@+[] == 4
 
-z     := 0b0110
+var z     = 0b0110
 z@[0] = 1
 assert z == 0b0111
 z@[0] = 0b11 // compile error, '0b11` overflows the maximum allowed value of `z@[0]`
@@ -750,7 +757,7 @@ effectively concatenating the bits in `tup` but the tuple fields can be
 optimized making the resulting constant to be unexpected.
 
 ```
-tup := (a=0xf:u3232, b=0x1:int)  // explicit sizes set
+var tup = (a=0xf:u3232, b=0x1:int)  // explicit sizes set
 assert tup@[] == 0b001_01111
 
 assert (0xF:s8,0x1:s16)@[] == 0x0001_0F 
@@ -781,10 +788,10 @@ the bit selection can not be used to transpose bits. A tuple must be used for
 such an operation.
 
 ```
-v := 0b10
+var v = 0b10
 assert v@[0,1] == v@[1,2] == v@[] == v@[0..=1] == v@[..=1] == 0b10
 
-trans := 0
+var trans = 0
 
 trans@[0] = v@[1]
 trans@[1] = v@[0]
@@ -947,9 +954,9 @@ the time, and the associated logic is removed.
 
 
 ```
-v1:u32 := _                    // v1 is zero every cycle AND not $valid
+var v1:u32 = _                 // v1 is zero every cycle AND not $valid
 assert v1.$valid == false
-v2:u32 := 0                    // v2 is zero every cycle AND     $valid
+var v2:u32 = 0                 // v2 is zero every cycle AND     $valid
 assert v2.$valid == true
 v2.$valid=false                // set valid attribute directly
 
@@ -966,8 +973,8 @@ assert v2?                     // valid even though data is not
 assert v1 != 0                 // usual verilog x logic
 assert v2 != 0                 // usual verilog x logic
 
-res1 <- v1 + 0                 // valid with just unknown 0sb? data
-res2 <- v2 + 0                 // valid with just unknown 0sb? data
+let res1 = v1 + 0              // valid with just unknown 0sb? data
+let res2 = v2 + 0              // valid with just unknown 0sb? data
 
 assert res1?
 assert res2?
@@ -980,14 +987,14 @@ always_assert counter.reset implies !counter?
 `valid` can be overwritten with a method to change the default valid behavior:
 
 ```
-custom <- (
-  ,data:i16 := _
-  ,valid <- fun(self) {
+let custom = (
+  ,data:i16 = _
+  ,valid = fun(self) {
     ret self.data != 33
   }
 )
 
-x:custom := _
+var x:custom = _
 $(comptime) assert x?
 x.data = 33
 $(comptime) assert not x?
@@ -999,19 +1006,19 @@ data-independent. Tuples also can have an optional type, which behaves like
 adding optional to each of the tuple fields.
 
 ```
-complex <- (
-  ,v1:reg string
-  ,v2:string := _
+let complex = (
+  ,v1:reg string = "foo"
+  ,v2:string = _
 
-  ,set := proc(ref self,v) {
+  ,set = proc(ref self,v) {
      self.v1 = v
      self.v2 = v
   }
 )
 
-x1:complex := _
-x2:$(valid = false) complex := 0  // toggle invalid forever, and set zero
-x3:complex := 0
+var x1:complex = _
+var x2:$(valid = false) complex = 0  // toggle invalid forever, and set zero
+var x3:complex = 0
 x3.$valid = false                 // toggle invalid
 
 assert x1.v1 == "" and x1.v2 == ""

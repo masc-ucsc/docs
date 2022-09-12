@@ -5,13 +5,13 @@ sequence fields that can be named.
 
 
 ```
-b := (f1=3,f2=4) // b is named and ordered
-c := (1,d=4)     // c is ordered and unnamed (some entries are not named)
+var b = (f1=3,f2=4) // b is named and ordered
+var c = (1,d=4)     // c is ordered and unnamed (some entries are not named)
 ```
 
 To access fields in a tuple we use the dot `.` or `[]`
 ```
-a := (
+var a = (
   ,r1 = (b=1,c=2)
   ,r2 = (3,4)
 )
@@ -41,7 +41,7 @@ compile time or run-time index.
 There is introspection to check for an existing field with the `has` and `!has` operators.
 
 ```
-a := (foo = 3)
+var a = (foo = 3)
 assert a has 'foo'
 assert !(a has 'bar')
 assert a !has 'bar' // "has no" is the opposite of "has"
@@ -53,8 +53,8 @@ assert a !has 1
 Tuple named fields can have a default type and or contents:
 
 ```
-val := 4
-x := (
+var val = 4
+var x = (
   ,field1=1         // field1 with implicit type and 1 value
   ,field2:string    // field2 with explicit type and "" default value
   ,field3:int = 3   // field3 with explicit type and 3 value
@@ -81,10 +81,10 @@ tuple that has `2` as a unique entry. The second entry in the tuple is `4`".
 The tuple entries are separated by comma (`,`). Extra commas do not add meaning.
 
 ```
-a := (1,2)   // tuple of 2 entries, 1 and 2
-b := (1)     // tuple of 1 entry, 1
-c := 1       // tuple of 1 entry, 1
-d := (,,1,,) // tuple of 1 entry, 1
+var a = (1,2)   // tuple of 2 entries, 1 and 2
+var b = (1)     // tuple of 1 entry, 1
+var c = 1       // tuple of 1 entry, 1
+var d = (,,1,,) // tuple of 1 entry, 1
 assert a.0 == b.0 == c.0 == d.0
 assert a!=b
 assert b == c == d
@@ -97,47 +97,53 @@ Tuples are used in many places:
 * The arguments for a call function are a tuple. E.g: `fcall(1,2)`
 * The return of a function call is always a tuple. E.g: `foo = fcall()`
 * The index for a selector `[...]` is a tuple. As syntax sugar, the tuple parenthesis can be omitted. E.g: `foo@[0,2,3]`
-* The complex type declaration are a tuple. E.g: `Xtype <- (f=1,b:string)`
+* The complex type declaration are a tuple. E.g: `let Xtype = (f=1,b:string)`
 
 
 ## Tuple mutability
 
 The tuple entries can be mutable/immutable and named/unnamed. Tuple entries
 follow the variable mutability rules with the exception that `=` can be
-used and it means to follow the top variable definition mutability.
+used to declare a mutable field. `(a=3)` is equivalent to `(var a=3)`.
 
 
 ```
-c:=(x=1,b<-2, d:=3)
-c.x   = 3  // OK, x inherited the mutable declaration
+var c=(x=1,let b = 2, var d=3)
+c.x   = 3  // OK
 x.foo = 2  // compile error, tuple 'x' does not have field 'foo'
 c.b   = 10 // compile error, 'c.b' is immutable
 c.d   = 30 // OK, d was already mutable type
 
-d<-(x=1, y<-2, z:=3)
-d.x   = 2  // compile error: x inherits the 'immutable' declaration
+let d=(x=1, let y=2, var z=3)
+d.x   = 2  // OK
 d.foo = 3  // compile error, tuple 'd' does not have field foo'
 d.z   = 4  // compile error, 'd' is immutable
+
+var e:d = _
+assert e.x==1 and e.y==2 and e.z==3
+e.x = 30   // OK
+e.y = 30   // compile error, 'e.y' is immutable
+e.z = 30   // OK
 ```
 
 Tuples are always ordered, but they can have unnamed entries. If needed a `_`
 can be used for name or default value during the tuple declaration.
 
 ```
-b := 100
-a := (b:u8, b, b:u8 = _, c<-4)
+var b = 100
+var a = (b:u8, b, b:u8 = _, let c=4) // a.0 and a.1 are unnamed, a.2==a.b 
 a.b = 200
 assert a == (100, 100, 200, 4)
 
-f := (b=3, e<-5)
-f.b = 4             // OK
-f.e = 10            // compile error, `f.e` is immutable
+var f = (b=3, let e=5)
+f.b = 4                 // OK
+f.e = 10                // compile error, `f.e` is immutable
 
-x <- (1,2)
-x[0] = 3            // compile error, 'x' is immutable
-y := (1, _ <- 3)
-y[0] = 100          // OK
-y[1] = 101          // compile error, `y[1]` is immutable
+let x = (1,2)
+x[0] = 3                // compile error, 'x' is immutable
+var y = (1, let _ = 3)  // 2nd field is unnamed (only let allows that)
+y[0] = 100              // OK
+y[1] = 101              // compile error, `y[1]` is immutable
 ```
 
 
@@ -146,23 +152,23 @@ name/types are immutable. It is possible to construct new tuples with the `++`
 (concatenate) and `...` (in-place operator):
 
 ```
-a:=(a=1,b=2)
-b<-(c=3)
+var a=(a=1,b=2)
+let b=(c=3)
 
-ccat1 <- a ++ b
+let ccat1 = a ++ b
 assert ccat1 == (a=1,b=2,c=3)
 assert ccat1 == (1,2,3)
 
-ccat2 := a                // mutable tuple
+var ccat2 = a                // mutable tuple
 a = a ++ (b=20)
 assert ccat2 == (a=1,b=(2,20),c=3)
 assert ccat2 == (1,(2,20),3)
 
-join1 := (...a,...b)
+var join1 = (...a,...b)
 assert join1 == (a=1,b=2,c=3)
 assert join1 == (1,2,3)
 
-join2 := (...a,...(b=20)) // compile error, 'b' already exists
+var join2 = (...a,...(b=20)) // compile error, 'b' already exists
 ```
 
 
@@ -194,7 +200,7 @@ entry name. This is quite useful for function return tuples with a single
 entry.
 
 ```
-x <- (first=(second=3))
+let x = (first=(second=3))
 
 assert x.first.second == 3
 assert x.first        == 3
@@ -210,9 +216,9 @@ assert x.0            == 3
 Tuples are ordered, as such, it is possible to use them as arrays. 
 
 ```
-bund1 := (0,1,2,3,4) // ordered and can be used as an array
+var bund1 = (0,1,2,3,4) // ordered and can be used as an array
 
-bund2 := (bund1,bund1,((10,20),30))
+var bund2 = (bund1,bund1,((10,20),30))
 assert bund2[0][1] == 1
 assert bund2[1][1] == 1
 assert bund2[2][0] == (10,20)
@@ -232,17 +238,17 @@ The Pyrope compile will trigger compile errors for out-of-bound access. It is no
 possible to create an array index that may perform an out of bounds access.
 
 ```
-array := (0,1,2)       // size 3, not 4
-tmp = array[3]            // compile error, out of bounds access
-index := 2
+var array = (0,1,2)       // size 3, not 4
+let tmp = array[3]        // compile error, out of bounds access
+var index = 2
 if runtime {
   index = 4
 }
 // Index can be 2 or 4
 
-res1 := array[index]   // compile error, out of bounds access 
+var res1 = array[index]   // compile error, out of bounds access 
 
-res2 := 0sb?           // Possible code to be compatible with Verilog
+var res2 = 0sb?           // Possible code to be compatible with Verilog
 if index<3 {
   res = array[index]      // OK
 }
@@ -263,12 +269,12 @@ fields that add more subfields. This is the case for overloading. To
 append or concatenate in a given field the `++=` operator can be assigned.
 
 ```
-x := (
+var x = (
   ,ff = 1
   ,ff = 2 // compile error
 )
 
-y := (
+var y = (
   ,ff = 1
   ,ff ++= 2
   ,zz ++= 3
@@ -302,10 +308,11 @@ y = match z {
   in 1,2 { 4 }    // same as: in (1,2) { 4 }
   else { 5 }
 }
-y2 = match 1,z {  // same as: y2 = match (1,z) {
+y2 = match var one=1 ; one ++ z {  // same as: y2 = match (1,z) {
+  == (1,2) { 4 }
 }
 
-addb <- fun(a,b:u32)-> a:u32 { // same as: addb <- fun(a,b:u32)->(a:u32)  
+let addb = fun(a,b:u32)-> a:u32 { // same as: letaddb = fun(a,b:u32)->(a:u32)  
   a = a + b
 }
 ```
@@ -314,14 +321,11 @@ A named tuple parenthesis can be omitted on the left-hand side of an assignment.
 to mutate or declare multiple variables at once. 
 
 ```
-a:=0
-b:=1
-
-a,b = (2,3)
+var a,b = (2,3)
 assert a==2 and b==3
 
-c,d := 1        // compile error, 2 entry tuple in lhs
-c,d := (1,2)
+var c,d = 1        // compile error, 2 entry tuple in lhs
+var c,d = (1,2)    // OK
 assert c == 1 and d == 2
 ```
 
@@ -334,31 +338,40 @@ shadow existing variable entries.
 
 
 ```
-a <- "foo"
-Err <- :enum(a,b)         // compile error, 'a' is a shadow variable
-Good <- :enum(a=_,'b',c)  // OK
+let a = "foo"
+let Err  = :enum(a  ,b  ,c)  // compile error, 'a' is a shadow variable
+let Good = :enum(a=_,'b',c)  // OK
 ```
 
 The reason is to avoid confusion between tuple and enum that use similar
-tuple syntax. In the `err` example, it is unclear if the intention is to have
-`err.foo` or `err.a`.
+tuple syntax. In the `Err` example, it is unclear if the intention is to have
+`Err.foo` or `Err.a`.
+
+If an external variable wants to be used as a index, there has to be an explicit
+expression that returns a string type.
+
+```
+let a = "field"
+let My_enum = :("x" ++ a, 'bar')
+assert My_enum.xfield != My_enum.bar
+```
 
 The shadow variable constrain does not happen if the enum has a non-default
 value. Another solution is to move the enum declaration ahead of the shadowing
 variables, or to declare the entry as a string literal.
 
 ```
-a <- 10
-b <- 20
-c <- 30
+let a = 10
+let b = 20
+let c = 30
 
-v <- (a,b,c)
+let v = (a,b,c)
 assert v == (10,20,30)
 
-En <- :enum(a=1,b=2,c=300)
+let En = :enum(a=1,b=2,c=300)
 assert e.a == 1 and e.b == 2 and e.c == 300
 
-x <- e.a
+let x = e.a
 puts "x is {}", x  // prints: "x is e.a"
 ```
 
@@ -369,7 +382,7 @@ set, the 2nd the 2nd bit set. If an entry has a value, the next entry uses
 the next free bit.
 
 ```
-V3 <- :enum(
+let V3 = :enum(
    ,a
    ,b=5
    ,c
@@ -384,7 +397,7 @@ Each entry tries to find a new bit. In the case of the hierarchy, the lower
 hierarchy level bits are kept.
 
 ```
-Animal <- :enum(
+let Animal = :enum(
   ,bird=(eagle, parrot)
   ,mammal=(rat, human)
 )
@@ -410,7 +423,7 @@ programming languages, but this only works with non-hierarchical enumerates
 when a `:int` type is used.
 
 ```
-V3:int <- :enum( // V3 has type :int
+let V3:int = :enum( // V3 has type :int
    ,a
    ,b=5
    ,c
@@ -428,7 +441,7 @@ Enumerates of the same type can perform bitwise binary operations
 (and/or/xor/nand/xnor/xnor) and set operators (in/!in).
 
 ```
-human_rat <- Animal.mammal.rat | Animal.mammal.human  // union op
+let human_rat = Animal.mammal.rat | Animal.mammal.human  // union op
 
 assert Animal.mammal      in human_rat
 assert Animal.mammal.rat  in human_rat

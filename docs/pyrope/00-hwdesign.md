@@ -245,7 +245,7 @@ software programmer may expect:
 === "Problematic code"
 
     ```pyrope
-    result := 0
+    var result = 0
     if some_opcode {
       result = do_division(a,b)
     }else{
@@ -256,9 +256,9 @@ software programmer may expect:
 === "Possible solution"
 
     ```pyrope
-    result := 0
-    result1 = do_division(a,b)
-    result2 = do_multiplication(a,b)
+    var result = 0
+    var result1 = do_division(a,b)
+    var result2 = do_multiplication(a,b)
     if some_opcode {
       result = result1
     }else{
@@ -316,14 +316,14 @@ be expected in a software API.
 === "Problematic code"
 
     ```pyrope
-    c = mul(a,b)
+    var c = mul(a,b)
     assert c == a * b // assert fails!!
     ```
 
 === "HLS possible solution"
 
     ```pyrope
-    c = mul(a,b)
+    var c = mul(a,b)
     assert c == a#[-1] * b#[-1] // read last cycle #[-1] a and b
     ```
 

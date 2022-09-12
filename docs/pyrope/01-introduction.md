@@ -58,9 +58,9 @@ Populate the Pyrope code
 
     src/gcd.prp:
     ```pyrope linenums="1"
-    gcd := proc (cmd:(a:uint,b:uint)?)->(z:uint?) {
-      x:reg := 0
-      y:reg := 0
+    var gcd = proc (cmd:(a:uint,b:uint))->(z:uint) {
+      var x:reg = 0
+      var y:reg = 0
       if cmd? {
         x,y = cmd
       }elif x > y { 
@@ -75,7 +75,7 @@ Populate the Pyrope code
     for a in 1..=100 {
       for b in 1..=100 {
         test "check.gcd({},{})",a,b {
-          z :=# gcd(a,b)
+          let z =# gcd(a,b)
 
           waitfor z?
 

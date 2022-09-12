@@ -93,9 +93,9 @@ b = 'simpler here'
 Integers and strings can be converted back and forth:
 
 ```
-a:string := "127"
-b:int    := a     // same as b := int(a)
-c:string := b     // same as c := string(b)
+var a:string = "127"
+var b:int    = a     // same as var b = int(a)
+var c:string = b     // same as var c = string(b)
 assert a == c
 assert b == 0x7F
 assert a == b        // compile error, 'a' and 'b' have different types
@@ -224,7 +224,7 @@ section](06-functions.md) has more details on the allowed syntax.
 
 
 ```
-f := fun(a,b) { ret a + b }
+var f = fun(a,b) { ret a + b }
 ```
 
 Pyrope classifies lambdas as follows:
@@ -289,11 +289,11 @@ can exist per expression.
 
 
 ```
-a := fcall() + 1               // OK
-x := pcall() + a               // OK, proc combined with variable read
-b := fcall(a) + 10 + pcall(a)  // OK
-d := t.pcall() + pcall2(b)     // compile error, multiple procedure calls
-y := t.pcall() + t.pcall()     // compile error, multiple procedure calls
+var a = fcall() + 1               // OK
+var x = pcall() + a               // OK, proc combined with variable read
+var b = fcall(a) + 10 + pcall(a)  // OK
+var d = t.pcall() + pcall2(b)     // compile error, multiple procedure calls
+var y = t.pcall() + t.pcall()     // compile error, multiple procedure calls
 ```
 
 
@@ -303,7 +303,7 @@ side-effects. In a way, expression code blocks can be seen as a type of
 
 
 ```
-a := {d:=3 ; last d+1} + 100 // OK
+var a = {var d=3 ; last d+1} + 100 // OK
 assert a == (3+1+100)
 assert a == {3+1+100}  // same, expression evaluated as 104 and returned
 ```
@@ -389,37 +389,37 @@ statements, or the `and_then` and `or_else` operations must be used.
 
 === "Incorrect code with side-effects"
     ```
-    r1 := pcall1() or  pcall2()  // compile error, non-deterministic
+    var r1 = pcall1() or  pcall2()  // compile error, non-deterministic
 
 
-    r2 := pcall1() and pcall2()  // compile error, non-deterministic
+    var r2 = pcall1() and pcall2()  // compile error, non-deterministic
 
 
-    r3 := pcall1() +   pcall2()  // compile error
+    var r3 = pcall1() +   pcall2()  // compile error
     // compile error only if pcall1/pcall2 can have side effects
     ```
 
 === "Alternative 1"
     ```
-    r1 := fcall1()
+    var r1 = fcall1()
     r1  = fcall2() unless r1
 
-    r2 := fcall1()
+    var r2 = fcall1()
     r2  = fcall2() when r2
 
-    r3 := fcall1()
+    var r3 = fcall1()
     r3 += fcall2()
     ```
 
 === "Alternative 2"
     ```
-    r1 := fcall1() or_else fcall2()
+    var r1 = fcall1() or_else fcall2()
 
 
-    r2 := fcall1() and_then fcall2()
+    var r2 = fcall1() and_then fcall2()
 
 
-    r3 := fcall1()
+    var r3 = fcall1()
     r3 += fcall2()
     ```
 
@@ -477,34 +477,30 @@ These are the rules to decide between mutable and immutable variables:
 
 * Immutable:
   * First character is upper case. E.g: `Mutable_var` or `A`
-  * Assigned with a `<-`. E.g: `foo <- 3`
+  * Assigned with a `let`. E.g: `let foo = 3`
 * Mutable:
-  * Assigned with a `:=`. E.g: `bar := 3` or `barbar := _` or `bar2:u32 = 3`
+  * Assigned with a `var`. E.g: `var bar = 3` or `var barbar = _`.
 
-Mutable variables can update the contents with `=`.
+Both mutable and immutable declarations must have an assigned value. The type
+default value is `_` (`0` integer, `""` string, `false` boolean....)
 
 ```
 a  = 3        // compile error, no previous let or var
 
-b := 3
+var b = 3
 b  = 5        // OK
 b += 1        // OK
 
-c:u3 <- _     // OK immutable with deferred value (just scope declaration)
-if runtime {
-  c <- 3
-}else{
-  c <- 5
-}
+let cu3 = if runtime { 3 }else{ 5 }
 
-d <- "hello"  // OK
-d = "bar"     // compile error, 'd' is immutable
-d := "bar"    // compile error, 'd' already declared
+let d = "hello"  // OK
+d = "bar"        // compile error, 'd' is immutable
+var d = "bar"    // compile error, 'd' already declared
 
-e := _        // OK, no type or default value, just scope declaration
-e:u32 = 33    // OK
+var e = _        // OK, no type or default value, just scope declaration
+e:u32 = 33       // OK
 
-Foo := 33     // compiler error, nicer to say 'Foo <- 33' or 'foo := 33'
-Foo  = 33     // compiler error, nicer to say 'Foo <- 33'
+var Foo = 33     // compiler error, 'let Foo = 33'
+Foo  = 33        // compiler error, `Foo` already declared as immutable
 ```
 

@@ -9,7 +9,7 @@ simulation runtime, and formal verification time.
 
 There are 5 main verification statements:
 
-* `assert`: The condition should be true at runtime. If `comptime assert`, the
+* `assert`: The condition should be true at runtime. If `$(comptime) assert`, the
   condition must be true at compile time.
 
 * `assume`: Similar to assert, but allows the tool to simplify code based on it
@@ -35,12 +35,12 @@ There are 5 main verification statements:
 ```pyrope
 a = 3
 assert a == 3          // checked at runtime (or compile time)
-comptime assert a == 3 // checked at compile time
+$(comptime) assert a == 3 // checked at compile time
 
 verify a < 4           // checked at runtime and verification
 assume b > 3           // may optimize and perform a runtime check
 
-restrict "cond1" when foo < 1 and foo >3 {
+restrict "cond1" where foo < 1 and foo >3 {
    verify bar == 4  // only checked at verification, restricting conditions
 }
 
@@ -49,10 +49,10 @@ let fun2 = fun(a,b) { ret ~(~a | ~b) }
 lec fun1, fun2
 ```
 
-To guard an assertion against being checked unless some condition happens, you
-can use the `when/unless` statement modifier or the `implies` logic. All the
-verification statements (`assert`, `assume`, `verify`) can have an error
-message.
+A whole statement is conditionally executed using the `when`/`unless` gate expression.
+This is useful to gate verification statements (`assert`, `assume`, `verify`)
+that can have spurious error messages under some conditions.
+
 
 ```pyrope
 a = 0
@@ -61,7 +61,7 @@ if cond {
 }
 assert cond implies a == 3, "the branch was taken, so it must be 3??"
 assert a == 3, "the same error" when   cond
-verify a == 0, "the same error" unless cond
+assert a == 0, "the same error" unless cond
 ```
 
 
@@ -69,7 +69,7 @@ The recommendation is to write as many `assert` and `assume` as possible. If
 something can not happen, writing the `assume` has the advantage of allowing
 the synthesis tool to generate more efficient code.
 
-In a way, most type checks have equivalent `comptime assert` checks.
+In a way, most type checks have equivalent `$(comptime) assert` checks.
 
 ## Asserts and reset
 
@@ -81,7 +81,7 @@ and checks always independent of the reset wires.
 
 
 ```
-reg memory:u33[] = (1,2,3) // may take cycles to load this contents
+var memory:reg []u33 = (1,2,3) // may take cycles to load this contents
 
 assert memory[0] == 1 // not checked during reset
 
