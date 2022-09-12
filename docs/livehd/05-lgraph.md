@@ -6,9 +6,9 @@
 
 
 
-The LGraph can be built directly with passes like Yosys, or through LNAST to
-LGraph translations. The LNAST builds a gated-SSA which is translated to
-LGraph. Understanding the LGraph is needed if you want to build a LiveHD pass.
+The LGraph is built directly through LNAST to LGraph translations. The LNAST
+builds a gated-SSA which is translated to LGraph. Understanding the LGraph is
+needed if you want to build a LiveHD pass.
 
 
 LGraph is a graph or netlist where each vertex is called a node, and it has a
@@ -26,9 +26,8 @@ Every node pin has an affiliated node pid. In the code, every node_pin has a
 `Port_ID`.
 
 
-A pair of driver pin and sink pin constitutes an edge. In the following API
-example, an edge is connected from a driver pin (pid1) to a sink pin (pid3).
-The bitwidth of the driver pin determines the edge bitwidth.
+A pair of driver pin and sink pin constitutes an edge.  The bitwidth of the
+driver pin determines the edge bitwidth.
 
 
 ### Node, Node_pin, and Edge Construction
@@ -58,7 +57,7 @@ new_node = lg->create_node_const(value)
 
 ```cpp
 driver_pin = new_node.setup_driver_pin();
-//note: when you know the node type only has one output pin
+//note: every cell in LGraph has only one driver pin, pin0
 
 ```
 
@@ -69,11 +68,12 @@ sink_pin = new_node.setup_sink_pin()
 //note: when you know the node type only has one input pin
 ```
 
-- setup driver pin for pin_x of a node
-
+- setup sink pin for pin_x of a node, for more information, please refer to the
+  Cell type section. For quick reference of the sink pin names of each cell
+  type, please see
+  [cell.cpp](https://github.com/masc-ucsc/livehd/blob/master/lgraph/cell.cpp)
 ```cpp
-driver_pin = new_node.setup_driver_pin("some_name")
-//note: when you know the pid, same as sink_pin
+sink_pin = new_node.setup_sink_pin("some_name")
 ```
 
 - add an edge between driver_pin and sink_pin
@@ -278,19 +278,19 @@ precision. Each HDL may have different semantics, the Verilog is to showcase
 the specifics because it is a popular HDL.
 
 
-All the cell types are in `core/cell.hpp`. The type enumerate is called
-`Ntype`. In general the nodes have a single output with the exception of
-complex nodes like subgraphs or memories. The inputs is a string in lower case
-or upper case. Upper case ('A') means that many edges (or output drivers) can
-connect to the same node input or sink pin, lower case ('a') means that only a
-driver can connect to the input or sink pin.
+All the cell types are in `core/cell.hpp` and `core/cell.cpp`. The type
+enumerate is called `Ntype`. In general the nodes have a single output with the
+exception of complex nodes like subgraphs or memories. The inputs is a string in
+lower case or upper case. Upper case ('A') means that many edges (or output
+drivers) can connect to the same node input or sink pin, lower case ('a') means
+that only a driver can connect to the input or sink pin.
 
 
 Each cell type can be called directly with Pyrope using a low level RTL syntax.
 This is useful for debugging not for general use as it can result in less
 efficient LNAST code.
 
-An example of a multi-driver sink pin is the `sum` cell which can do `Y=3+20+a0+a3`
+An example of a multi-driver sink pin is the `Sum` cell which can do `Y=3+20+a0+a3`
 where `A_{0} = 3`, `A_{1} = 20`, `A_{2} = a0`, and `A_{3} = a3`. Another way to
 represent in valid Pyrope RTL syntax is:
 
@@ -298,7 +298,7 @@ represent in valid Pyrope RTL syntax is:
 Y = __sum(A=(3,20,a0,a3))
 ```
 
-An example if single driver sink pin is the `sra` cell which can do `Y=20>>3`.
+An example if single driver sink pin is the `SRA` cell which can do `Y=20>>3`.
 It is lower case because only one driver pin can connect to 'a' and 'b'. Another way
 to represent a valid Pyrope RTL syntax is:
 
@@ -667,52 +667,6 @@ propagation to indicate that those bits are useless.
 
 #### Peephole Optimizations
 
-### Ntype_op::Tposs
-
-Every value is signed but some times a value must be treated as unsigned.
-
-The Tposs operator stands for To Positive Signed. It does nothing if the input
-is signed and positive, but behaves like concatenating a zero bit to the most
-significant bit of the input value. The result is an always positive value.
-
-```{.graph .center caption="Ntype_op::Tposs LGraph Node."}
-digraph Unsigned {
-    rankdir=LR;
-    size="1,0.5"
-
-    node [shape = circle]; Unsigned;
-    node [shape = point ]; q0
-    node [shape = point ]; q
-
-    q0 -> Unsigned [ label ="a" ];
-    Unsigned  -> q [ label = "Y" ];
-}
-```
-
-#### Forward Propagation
-
-- $Y     = \begin{cases} a               & a \get 0 \\
-                         a.mask+a+1      & otherwise \end{cases}$
-- $Y.max = \begin{cases} a.max           & a.min \get 0 \\
-                         a.mask          & otherwise \end{cases}$
-- $Y.min = 0$
-
-#### Backward Propagation
-
-- $a.max = Y.max $
-- $a.min = -Y.max-1 $
-
-#### Other Considerations
-
-It is important to notice that Ntype_op::Tposs is different from a absolute
-calculation. It is like a concatenating a zero to convert the signed values.
-
-#### Peephole Optimizations
-
-- `Y = Tposs(a)` becomes `Y= a` when `a.min>=0`
-- `Y = And(Tposs(a),a.mask)` becomes `Y= a`
-- `Y = And(Tposs(a),b)` can become `Y= Tposs(And(a,b))`
-- `Y = Tposs(const)` becomes `Y=const` when `const>=0`
 
 ### Comparators
 

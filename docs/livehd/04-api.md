@@ -1,15 +1,12 @@
 # C++ API
 
 LiveHD is built on C++17, LGraph and LNAST are the two key data structures
-inside LiveHD to support new hardware design.  Besides LNAST and LGraph, there
-are other data structures like `mmap_lib::str`.
-
+inside LiveHD to support new hardware design.  
 * [LGraph](05-lgraph.md) stands for Live Graph. It is graph or netlist data
   structure at the core of LiveHD.
 * [LNAST](06-lnast.md) stands for Language Neutral AST. It is an Abstract
   Syntax Tree (AST) designed to be simple but to allow the translation from
   multiple languages like CHIRRTL, Verilog, and Pyrope.
-* [mmap_lib::str](07-mmapstr.md) to provide persistent strings
 
 
 

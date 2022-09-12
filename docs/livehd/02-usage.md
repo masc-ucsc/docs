@@ -129,4 +129,12 @@ livehd> lgraph.match |> <pass name>
   $ bazel build -c dbg //inou/yosys:all
   $./bazel-bin/inou/yosys/yosys2
   ```
+### Parallel Compilation
+LiveHD support parallel compilation, it will set the thread number to the
+highest available resources in your system. To manually set the compilation thread  
+number, for example, 1, set the following environment variable
+```
+export LIVEHD_THREADS=1
+```
+
 
