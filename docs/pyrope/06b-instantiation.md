@@ -1,9 +1,10 @@
 
 # Instantiation
 
-Instantiation is the process of translating from Pyrope to a representative set
+Instantiation is the process of translating from Pyrope to an equivalent set
 of gates. The gates could be simplified or further optimized by later compiler
-passes or optimization steps.
+passes or optimization steps. This section provides an overview of how the
+major Pyrope syntax constructs translate to gates.
 
 
 ## Conditionals
@@ -12,15 +13,38 @@ Conditional statements like `if/else` and `match` translate to multiplexers
 (muxes).
 
 
-A trivial `if`/`else` with all the options covered is a simple mux.
+A trivial `if/else` with all the options covered is a simple mux.
 
 ```
-var res
+var res:s4 = _
 if cond {
   res = a
 }else{
   res = b
 }
+
+// RTL equivalent (bus of 4 bits in a,b,res2)
+var res2:s4 = __mux(cond,b,a)
+
+lec res, res2
+```
+
+An expression `if/else` is also a mux.
+
+```
+var res = if cond { a }else{ b }
+
+// RTL equivalent
+var res2 = __mux(cond,b,a)
+
+lec res, res2
+```
+
+The `when/unless` is also a mux.
+
+```
+var res = a
+res = b unless cond
 
 // RTL equivalent
 var res2 = __mux(cond,b,a)
@@ -29,7 +53,7 @@ lec res, res2
 ```
 
 Chaining `if`/`elif` creates a chain of muxes. If not all the inputs are
-covered the value from before the `if` is used. If the variable did not exist,
+covered, the value from before the `if` is used. If the variable did not exist,
 a compile error is generated.
 
 ```
@@ -63,13 +87,15 @@ unique if cond1 {
 // RTL equivalent
 var sel = (!cond1 and !cond2, cond1, cond2)@[]  // one hot encode
 var res2= __hotmux(sel, a, b, c)
-assume !(cond1 and cond2)          // one hot check
+assume !(cond1 and cond2)                       // one hot check
 
 lec res, res2
 ```
 
-The `match` is similar to the `unique if` but also checks that one of the options is
-enabled, which allows further optimizations.
+The `match` is similar to the `unique if` but also checks that one of the
+options is enabled, which allows further optimizations. From a Verilog designer
+point of view, the `match` is a "full parallel" and the `unique if` is a
+"parallel". Both are checked at verification and optimized at synthesis.
 
 ```
 var res = a
@@ -94,10 +120,10 @@ lec res, res2
 
 ## Optional expression
 
-Valid or options are computed for each assignment and passed to every lambda
+Valid or optionals are computed for each assignment and passed to every lambda
 call. Each variable has an associated valid bit, but it is removed if never
 read, and it is always true unless the variables are assigned in conditionals
-or not short-circuit (`and_then`/`or_else`) expressions.
+or non-short-circuit (`and_then`/`or_else`) expressions.
 
 
 === "Short-circuit expression"
@@ -147,6 +173,30 @@ or not short-circuit (`and_then`/`or_else`) expressions.
     lec lhs?, lhs2_v
     ```
 
+=== "Lambda call (inlined)"
+
+    ```
+    let f = fun(a,b) { ret if a == 0 { 3 }else{ b } }
+
+    var lhs = c
+    if cond {
+       lhs = f(a,b)
+    }
+
+    // RTL equivalent
+    let a_cond = __not(__ror(a))             // a == 0
+    let tmp    = __mux(a_cond, b, 3)         // if a_cond { 3 }else{ b }
+    var lhs2   = c
+    lhs2       = __mux(cond, x, tmp)
+
+    let tmp_v  = __mux(a_cond, a?, __and(a?,b?)) // a? or (a==0 and b?)
+
+    let lhs2_v = __mux(cond, c?, tmp_v)
+
+    lec lhs , lhs2
+    lec lhs?, lhs2_v
+    ```
+
 
 ## Optional lambdas
 
@@ -164,26 +214,26 @@ should behave like if the lambda were inlined in the conditional place. Since
 functions have no side effects, it is also equivalent to call the lambda before
 the conditional path, and assign the return value inside the conditional path
 only. Special care must be handled for the `puts` which is allowed in
-functions. The `puts` should not be called if the function is conditionally
-called.
+functions. The `puts` is not called if the function is conditionally called and
+the condition is false.
 
 
 === "Conditional proc call"
 
     ```
-    pub case_1_counter = proc(runtime)->(res) {
+    let case_1_counter = proc(runtime)->(res) {
 
-      reg r:(
-        ,reg total
+      var r:reg (
+        ,total:reg u16           // r is reg, everything is reg
         ,increase = fun(a) {
           puts "hello"
 
           let res = self.total
-          self.total = u16(res+a)
+          self.total:$(wrap) = res+a
 
           ret res
         }
-      )
+      ) = _
 
       if runtime == 2 {
         res = r.increase(3)
@@ -196,31 +246,31 @@ called.
 === "Pyrope inline equivalent"
 
     ```
-    pub case_1_counter = proc(runtime)->(res) {
+    let case_1_counter = proc(runtime)->(res) {
 
-      reg r:(
-        ,reg total
+      var r:reg (
+        ,total:reg u16
         ,increase = fun(a) {
           puts "hello"
 
           let res = self.total
-          self.total = u16(res+a)
+          self.total:$(wrap) = res+a
 
           ret res
         }
-      )
+      ) = _
 
       if runtime == 2 {
         puts "hello"
 
         let res = r.total
-        r.total = u16(res+3)
+        r.total:$(wrap) = res+3
         res = res
       }elif runtime == 4 {
         puts "hello"
 
         let res = r.total
-        r.total = u16(res+9)
+        r.total:$(wrap)= res+9
         res = res
       }
     }
@@ -308,97 +358,135 @@ simulation/synthesis.
 
 
 ```
-reg r:u16 = 3 // reset sets r to 3
-r = 2         // non-reset assignment
+var r:reg u16 = 3 // reset sets r to 3
+r = 2             // non-reset assignment
 
-reg array:u16[] = (1,2,3,4)  // reset values
+var array:reg []u16 = (1,2,3,4)  // reset values
 
-reg r2:u128 = conf.get("my_data.for.r2")
+var r2:reg u128 = conf.get("my_data.for.r2")
 
-reg array:[] = conf.get("some.conf.hex.dump")
+var array:reg[] = conf.get("some.conf.hex.dump")
 ```
 
-When a state machine is needed to execute for several cycles a tuple with an
-`always_reset` must be created and assigned to the register[s] that use it.
+
+The assignment during declaration to a register is always the reset value. If
+the assignment is a method, the method is called every cycle during reset.
 
 ```
-reg array:tag[1024] = (
-  ,clock=my_clock
+var array:reg $(clock=my_clock) [1024]tag = proc(ref self) {
+  reset_iter:reg $(reset=false) u10 = 0sb? // no reset flop
 
-  ,always_reset = fun(ref self) {
-     reg reset_iter:u10 = (reset="") // no reset flop
+  self[reset_iter].state = I
 
-     self[reset_iter].state = I
-
-     reset_iter = u10(reset_iter + 1)
-  }
-)
+  reset_iter:$(wrap) = reset_iter + 1
+}
 ```
 
-All registers and memories can have a `always_reset` overload  method. If a tuple is
-called as a register state, the reset field is also called.
 
-To guarantee determinism, the following reset call constrains are applied:
-
-* Synchronous reset statements can not read the contents of other registers
-  with synchronous resets. Synchronous reset method can read asynchronous reset
-  methods.
-
-* Asynchronous resets can not read other reset values.
-
-* Reset method (`always_reset`) can read other resets if the reset signal is
-  different.
+Since the reset can be high many cycles, it may be practical/necessary to have
+a reset inside the reset procedure. To guarantee determinism, any register
+inside the reset procedure can be either asynchrnous reset or a register
+without reset signal.
 
 
 ```
-reg my_flop:u32[8] ++ (
-  ,always_reset = proc(ref self) {
-    reg reset_counter:u3 ++ (async=true) // async is only posedge reset
+var my_flop:reg [8]u32 = proc(ref self) {
+  var reset_counter:reg $(async=true) u3 = _ // async is only posedge reset
 
-    self[reset_counter] = reset_counter
-    wrap reset_counter += 1
-  }
-)
+  self[reset_counter] = reset_counter
+  reset_counter:$(wrap) += 1
+}
 ```
 
-Similarly a tuple can have a reset when assigned to a register:
+A related functionality and constrains happen when a tuple have some register
+fields and some non-register fields. The same reset procedure is called every
+cycle Similarly a tuple can have a reset when assigned to a register.
 
-```
-type My_update = (
-  ,counter:u32
-  ,state:u2
-  ,always_reset = proc(self) {
-    self.state = 2
-    self.counter = 33
-  }
-)
 
-reg my_flop2:My_update 
-```
+=== "Mixed tuple reset with constants"
 
-Registers have the following configuration options:
+    ```
+    let Mix_tup = (
+      ,flag:reg boolean
+      ,state: u2
+    )
+
+    var x:Mux_tup = (false,1)  // 0 used at reset, 1 used every cycle
+
+    assert x.flag implies x.state == 2
+
+    x.state = 0
+    if x.flag {
+      x.state = 2
+    }
+    x.flag = true
+    ```
+
+=== "Mixed tuple reset with method"
+
+    ```
+    let Mix_tup = (
+      ,flag:reg boolean
+      ,state: u2
+    )
+
+    var x:Mux_tup = proc(ref self) {
+      self.flag  = proc(ref self) { self = false }  // reset code
+      self.state = 2                                // every cycle code
+    }
+
+    assert x.flag implies x.state == 2
+
+    x.state = 0
+    if x.flag {
+      x.state = 2
+    }
+    ```
+
+Registers have the following attributes:
 
 * `async`: false by default, selects an asynchronous reset
-* `posedge`: true by default, selects a posedge or negnedge flop
-* `reset`: connected to `reset` by default
+* `initial`: reset value when reset is high
 * `clock`: connected to `clock` by default
+* `reset`: connected to `reset` by default
+* `negreset`: active low reset signal
+* `posclk`: true by default, selects a posedge or negnedge flop
+* `retime`: allow to retime across the register
 
 A sample of asynchronous reset with different reset and clock signal
 
 ```
-reg my_asyn_other_reg:u8 ++ (
+var my_asyn_other_reg:reg $(
   ,async = true
   ,clock = ref clk2    // ref to connect, not read clk2 value
   ,reset = ref reset33 // ref to connect, not read current reset33 value
-) = 33 // initialized to 33 at reset
+) u8 = 33 // initialized to 33 at reset
 
 
 if my_async_other_reg == 33 {
   my_async_other_reg = 4
 }
 
-assert my_async_other_reg in [4,33]
+assert my_async_other_reg in (4,33)
 ```
+
+### retime
+
+Values stored in registers (flop or latches) and memories (synchronous or
+asynchronous) can not be used in compiler optimization passes. The reason is that
+a scan chain is allowed to replace the values.
+
+
+The `retime` attribute indicates that the register/memory can be replicated and
+used for optimization. Copy values can propagate through `retime`
+register/memories.
+
+
+A register or memory without explicit `$(retime)` can only be optimized away
+if there is no read AND no write to the register. Even just having writes the
+register is preserved because it can be used to read values with the
+scan-chain.
+
 
 ### Execution code
 
@@ -430,33 +518,58 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
 
 
     ```
-    pub let inner = fun(z,y)->(a,h) {
+    let inner = fun(z,y)->(a,h) {
       a =   y & z
       h = !(y & z)
     }
 
-    pub let top2 = fun(a,b)->(c,d) {
+    let top2 = fun(a,b)->(c,d) {
       let x= inner(y=a,z=b)
       c = x.a
       d = x.h
     }
     ```
 
-=== "Pyrope alternative"
+=== "Pyrope alternative I"
 
     ```
-    type inner_t = (
-      ,pub set = fun(ref self, z,y) {
+    let Inner_t = (
+      ,set = proc(ref self, z,y) {
         self.a =   y & z
         self.h = !(y & z)
       }
     )
 
-    pub let top2 = fun(a,b)->(c,d) {
-      let foo:inner_t = (y=a,z=b)
-      c = foo.a
-      d = foo.h
-    }
+    let Top2_t = (
+      ,set = proc(ref self,a,b) {
+        let foo:Inner_t = (y=a,z=b)
+        
+        self.c = foo.a
+        self.d = foo.h
+      }
+    )
+
+    let top:Top2_t = (a,b)
+    ```
+
+=== "Pyrope alternative II"
+
+    ```
+    let Inner_t = (
+      ,set = proc(ref self, z,y) {
+        self.a =   y & z
+        self.h = !(y & z)
+      }
+    )
+
+    let Top2_t = (
+      ,foo:Inner_t = _
+      ,set = proc(ref self,a,b) {
+        self.c, self.d = self.foo(y=a,z=b)
+      }
+    )
+
+    let top:Top2_t = (a,b)
     ```
 
 
@@ -473,12 +586,12 @@ The pipestage directive (`#>`) automatically creates pipeline resources.
 ```
 if cond {
   var p1 = inp1
-  var out
+  var out = _
 
   {
-    var l1 = inp1 + 1
+    var _l1 = inp1 + 1
 
-    pub var p2 = inp1 + 2
+    var p2 = inp1 + 2
   } #> {
     out = p1 + p2
   }
@@ -489,14 +602,14 @@ if cond {
 // Non pipestage equivalent
 if cond {
   var p1 = inp1
-  var out
+  var out = _
 
   {
-    reg p1r
-    reg p2r
+    var p1r:reg = _
+    var p2r:reg = _
 
-    var l1 = inp1 + 1
-    pub var p2 = inp1 + 2 // now pub has no special meaning
+    var _l1 = inp1 + 1    // private
+    var p2 = inp1 + 2     // public
 
     out = p1r + p2r       // registered values
 
@@ -512,24 +625,25 @@ if cond {
 
 
 ```
-reg a = 3
-a = u16(a+1)
+var a:reg u4 = 3
+a:$(saturate) = a+1
 
-reg b = 4
+var b:reg = 4
 if cond {
-  reg c
+  var c:reg = _           // weird as reg, but legal syntax
   c = b + 1
   b = 5
 }
 
 // RTL equivalent
-a_qpin = __flop(reset=reset, clk=clk, reset_value=3, din=a.__last_value)
-a      = __sum(A=(a_qpin, 1))
+a_qpin = __flop(reset=ref reset, clk=ref clk, initial=3, din=a.__last_value)
+tmp    = __sum(A=(a_qpin, 1))
+a      = __mux(tmp[4], tmp@[0..=3], 0xF)    // saturate, not wrap
 
-b_qpin = __flop(reset=reset, clk=clk, reset_value=4, din=b.__last_value)
+b_qpin = __flop(reset=ref reset, clk=ref clk, initial=4, din=b.__last_value)
 b      = __mux(cond, b_qpin, 5)
 
-c_cond_qpin = __flop(reset=reset, clk=clk, din=c_cond.__last_value)
+c_cond_qpin = __flop(reset=ref reset, clk=ref clk, initial=0, din=c_cond.__last_value)
 c_cond      = __sum(A=(b, 1))
 ```
 

@@ -45,9 +45,9 @@ RTL interface.
 
 The async memories behave like tuples/arrays but there is a small difference,
 the persistence of state between clock cycles. To be persistent across clock
-cycles, this is achieved with a `reg` declaration. When a variable is declared
+cycles, this is achieved with a `:reg` declaration. When a variable is declared
 with `var` the contents are lost at the end of the cycle, when declared with
-`reg` the contents are preserved across cycles.
+`:reg` the contents are preserved across cycles.
 
 
 In most cases, the arrays and async memories can be inferred automatically. The
@@ -55,15 +55,15 @@ maximum/minimum value on the index effectively sets the size and the default
 initialization is zero.
 
 ```
-reg mem:[]
+var mem:reg [] = 0
 mem[3]   = something // async memory
-var array:[]
+var array:[] = _
 array[3] = something // array no cross cycles persistence
 ```
 
 ```
-var index:u7
-var index2:u6
+var index:u7 = _
+var index2:u6 = _
 
 array[index] = something
 some_result  = array[index2+3]
@@ -74,10 +74,10 @@ In the previous example, the compiler infers that the bundle at most has 127 ent
 There are several constructs to declare arrays or async memories:
 
 ```
-reg mem1:i8[16] = 3       // mem 16bit memory initialized to 3 with type i8
-reg mem2:i8[16]           // mem 16bit memory initialized to 0 with type i8
+var mem1:reg [16]i8 = 3   // mem 16bit memory initialized to 3 with type i8
+var mem2:reg [16]i8 = _   // mem 16bit memory initialized to 0 with type i8
 var mem3:[] = 0sb?        // array infer size and type, 0sb? initialized
-var mem4:[13]             // array 13 entries size, initialized to zero
+var mem4:[13] = 0         // array 13 entries size, initialized to zero
 ```
 
 Pyrope allows slicing of bundles and hence arrays.
@@ -93,7 +93,7 @@ Since bundles are multi-dimensional, arrays or async memories are multi-dimensio
 ```
 a[3][4] = 1
 
-var b:u8[4][8] = 13
+var b:[4][8]u8 = 13
 
 assert b[2][7] == 13
 assert b[2][10]      // compile error, '10' is out of bound access for 'b[2]'
@@ -106,25 +106,25 @@ triggered.
 
 === "Pyrope array syntax"
     ```
-    var mem1:u5[4][8] = 0
-    comptime var reset_value:u5[3][8]  // only used during reset
+    var mem1:[4][8]u5 = 0
+    var reset_value:$(comptime) [3][8]u5 = _ // only used during reset
     for i in 0..<3 {
       for j in 0..<8 {
         reset_value[i][j] = j
       }
     }
-    reg mem2 = reset_value   // infer async mem u5[3][8]
+    var mem2:reg = reset_value   // infer async mem u5[3][8]
     ```
 
 === "Explicit initialization"
     ```
-    var mem:( 
+    var mem = ( 
       ,(u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0))
       ,(u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0))
       ,(u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0))
       ,(u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0))
     )
-    reg mem2:( 
+    var mem2:reg = ( 
       ,(u5(0), u5(1), u5(2), u5(3), u5(4), u5(5), u5(6), u5(7))
       ,(u5(0), u5(1), u5(2), u5(3), u5(4), u5(5), u5(6), u5(7))
       ,(u5(0), u5(1), u5(2), u5(3), u5(4), u5(5), u5(6), u5(7))
@@ -157,9 +157,9 @@ is a typical decode stage from an in-order CPU:
 
 === "Flop the inputs"
     ```
-    reg rf:i64[32]
+    var rf:reg [32]i64 = 0sb?   // random initialized
 
-    reg a:(addr1:u5, addr2:u5)
+    var a:reg (addr1:u5, addr2:u5) = (0,0)
 
     data_rs1 = rf[a.addr1]
     data_rs2 = rf[a.addr2]
@@ -169,9 +169,9 @@ is a typical decode stage from an in-order CPU:
 
 === "Flop the outputs"
     ```
-    reg rf:i64[32]
+    var rf:[32]i64 = 0sb?
 
-    reg a:(data1:i64, data2:i64)
+    var a:reg (data1:i64, data2:i64) = _
 
     data_rs1 = a.data1
     data_rs2 = a.data2
@@ -254,7 +254,7 @@ multi-dimensional arrays.
 
 ```
 let flatten = fun(...arr) {
-  var res
+  var res = 0
   for i in arr {
     res ++= i
   }
@@ -272,24 +272,23 @@ with tuples or by requiring an enumerate.
 
 
 ```
-var x1:u3[2] = (0,1)
+var x1:[2]u3 = (0,1)
 assert x1[0] == 0 and x1[1] == 1
 
-enum X = (
+var X:int = :enum(  // sequential enum, not one hot enum
   ,t1
   ,t2
   ,t3
 )
 
-var x2:u3[X]
+var x2:[X]u3 = _
 x2[X.t1] = 0
 x2[X.t2] = 1
 x2[0]              // compile error, only enum index
 
+var x3:[-8..<7]u3 = _  // accept signed values
 
-var x3:u3[-8..<7]  // accept signed values
-
-var x4:u3[100..<132]
+var x4:[100..<132]u3 = _
 
 assert x4[100] == 0
 assert x4[3]       // compile error, out of bounds index

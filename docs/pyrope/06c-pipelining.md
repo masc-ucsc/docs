@@ -18,30 +18,42 @@ not provide guarantees that the register will not be split into multiple
 registers.
 
 
-In this example, `my_flop1_q and my_flop2_q` are equivalent.
+The explicit connection likely requires constructs like `defer_read` to connect
+the flop `q` pin.
 
-```
-my_flop1_q = __flop(din=my_din, reset=my_rst, clock=my_clk
-                   ,enable=my_enable, posclk=true, initial=3, async=false)
 
-reg my_flop2 = (reset=my_rst, clock=my_clk, posclk=true, initial=3, async=false)
-let my_flop2_q = my_flop2
+=== "Structural flop style"
+    ```
+    defer_read var counter_next:$(wrap) u8 = counter_q + 1
 
-if my_enable {
-  my_flop2 = my_din
-}
-```
+    let counter_q = __flop(din=counter_next, reset=my_rst, clock=my_clk
+                       ,enable=my_enable, posclk=true, initial=3, async=false)
+    ```
+
+=== "Pyrope style"
+    ```
+    var counter:reg $(reset=my_rst, clock=my_clk, posclk=true, async=false) u8 = 3
+    assert counter == counter#[0]  // counter still has the q value
+
+    if my_enable {
+      counter:$(wrap) = counter + 1
+    }
+    ```
+
 
 Flops have `din` and a `q` pin. At the beginning of the cycle both `din` and
 `q` have the same value, but as the `din` is updated with "next cycle" `q`
 value their contents may be different. Different HDLs have different syntax to
-distinguish between `din` and `q` pin. In Verilog is common to have a coding
-style guideline that gives a different name to the din variables than to the q
-variables (E.g: `something_q` vs `something_next`).
+distinguish between `din` and `q` pin. In Verilog, it is common to have a
+coding style guideline that gives a different name to the din variables than to
+the q variables (E.g: `counter_q` vs `counter_next`). The structural flop style
+is a legal Pyrope code using these type of names.
 
-In Pyrope the `something` points to the `din` pin. This is the value to
-update.  To have the `q` pin contents there are two ways. Read it before being
-updated, or use the pipeline directive `something#[0]`.
+
+In a more friendly Pyrope style, a register like `counter` starts with the `q`
+pin each cycle. The last value written to `counter` connects to the `din`. It
+is always possible to access the `q` pin/value directly with  pipeline
+directives `something#[0]`.
 
 
 If the register is accessed with the `-1` cycle (`#something#[-1]`), the flop will
@@ -52,14 +64,10 @@ Latches are possible but with the direct RTL instantiation. Latches have
 a `din` and `enable` pin like a flop, but just one option `posclk`.
 
 ```
-my_latch_q = __latch(din=my_din, enable=my_enable, posclk=true)
+var my_latch_q = __latch(din=my_din, enable=my_enable, posclk=true)
 ```
 
 ## Pipestage
-
-One of the fundamental differences between most programming languages and
-hardware description languages is that pipelining is a fundamental feature that
-must be used in hardware but not in software designs.
 
 
 Pyrope has a `pipestage` statement that helps to create simple pipeline stages.
@@ -81,12 +89,12 @@ The syntax for pipestage:
 
 The semantics of `pipestage` are as follows:
 
-* Explicitly declared registers are not affected by `pipestage`
+* Explicitly declared registers (`var foo:reg`) are not affected by `pipestage`
 
 * Variables declared before are "pipelined" inside each of the `pipestage` scopes.
 
-* Variables declared in the stage `i` are pipelined to all the stages after `i`
-  when they are locally declared `pub`.
+* Variables declared in a stage are pipelined to all the following stages
+  unless the variable is private (`var _priv_example=3`)
 
 * The pipelined variables are not visible in the scope after the `pipestage`
   sequence.
@@ -104,13 +112,12 @@ assert i==0 or (i#[-1] + 1 == i)
 let i_let = i
 
 var i_var0 = i
-var i_var1
-i_var1 = i
+var i_var1 = i
 
-reg i_reg0 = i   // initialization only
-reg i_reg1
-i_reg1 = i       // every cycle
+var i_reg0:reg = i        // initialization only
+var i_reg1:reg i_reg0 = _
 
+i_reg1 = i                // every cycle
 
 {
   assert i == i#[0]       // i#[0] is unflop input (or first defined) value
@@ -121,12 +128,12 @@ i_reg1 = i       // every cycle
   assert 0 == i_reg0
   assert i == i_reg1
 
-  let local_var = 3
+  let _local_var = 3
 
-  pub let pub_var = 100 + i
+  let pub_var = 100 + i
 
 } #> {
-  assert local_var!=0       // compile error, local_var is not in scope
+  assert _local_var!=0      // compile error, _local_var is not in scope
   assert pub_var == 100 + i // pipelined pub_var
 
   // both inputs and variables flop, so asserts hold
@@ -147,7 +154,8 @@ assert pub_var != 0 // compile error, pub_var is not in scope
 ## Retiming
 
 The registers manually inserted with the `reg` directive are preserved
-and annotated so that synthesis retiming can not change them.
+and annotated so that synthesis retiming can not change them. This means
+that by default register can not be duplicated or logic can move around.
 
 
 A register can be marked with the `retime` flag, in which case the synthesis
@@ -168,7 +176,7 @@ The registers automatically inserted with the `pipestage` command are marked
 with `retime` true. Additionally, retime can be set in any register:
 
 ```
-reg my_reg:(retime=true,clock=my_clk)
+var my_reg:reg $(retime=true,clock=my_clk) = 0
 ```
 
 
@@ -181,9 +189,9 @@ the conceptual problems of integrating them:
 
 === "Pipestage"
     ```
-    pub let block = proc (in1,in2)->(out) {
+    let block = proc(in1,in2)->(out) {
       {
-        pub let tmp = in1 * in2
+        let tmp = in1 * in2
       } #> {
         assert true // nothing to do, but one statement required
         // extra cycle for multiply
@@ -198,21 +206,23 @@ the conceptual problems of integrating them:
 
 === "Explicit Stages"
     ```
-    let add1 = proc (a,b) { // 1 cycle add
-      reg r
-      let rr = r // get flop value
+    add1 = proc(a,b) {     // 1 cycle add
+      var r:reg = _
+      let rr = r           // get flop value
       r = a+b
       ret rr
     }
-    let mul3 = proc (a,b){ // 3 cycle multiply
-      reg reg1, reg2, reg3
+    let mul3 = proc(a,b) { // 3 cycle multiply
+      var reg1:reg = _
+      var reg2:reg = _
+      var reg3:reg = _
       reg3 = reg2
       reg2 = reg1
       reg1 = a * b
       ret reg3
     }
 
-    pub let block = proc (in1,in2)->(out) {
+    let block = proc(in1,in2)->(out) {
       let x =# mul3(in1, in2)
       out   =# add1(x,in3)
     }
@@ -304,7 +314,7 @@ is error-prone because it requires knowing exactly the number of cycles for
 === "Pipestage"
     ```
     {
-      pub tmp = in1 * in2
+      let tmp = in1 * in2
     } #> {
       assert true
       // extra cycle for multiply

@@ -469,8 +469,17 @@ A mutable variable allows to change the variable name contents. Mutability is
 independent of compile time constant and the value can change every time that
 the scope is started. Since in Pyrope the every lambda is called every cycle,
 an immutable variable can have different values each cycle. This is consistent
-with programming languages like rust where a function can have an immutable
+with non hardware programming languages where a function can have an immutable
 variable with different values at each call.
+
+!!! Observation
+
+    Pyrope tries to keep semantics consistent with traditional software design
+    language. By design, whenever possible it behaves like non-hardware
+    languages (C or Rust or Java) but without pointers, memory, and recursion.
+    There are few exceptions to allow hardware specific requirements like
+    reset, cycle update, and pipelining.
+    
 
 
 These are the rules to decide between mutable and immutable variables:

@@ -23,34 +23,34 @@ The basic behavior of `does` is explained in (Type
 equivalance)[07-typesystem.md#Type_equivalence].
 
 ```
-type Animal = (
-  ,pub let legs:int
-  ,var name= "unnamed"
-  ,pub let say_name = fun() { puts name }
+let Animal = (
+  ,legs:int = _
+  ,name= "unnamed"
+  ,say_name = fun() { puts name }
 )
 
-type Dog extends Animal with (
-  ,pub var set = proc(ref self) { self.legs = 4 }
+let Dog = Animal ++ (
+  ,set = proc(ref self) { self.legs = 4 }
   ,bark = fun() { puts "bark bark" }
 )
 
-type Bird extends Animal with (
-  ,seeds_eaten:int
+let Bird = Animal ++ (
+  ,seeds_eaten:int = _
 
-  ,pub var set = proc(ref self)  { self.legs = 2 }
-  ++ proc(ref self, a:Animal)    { self.legs = 2 ; name = "bird animal" }
+  ,set = proc(ref self)  { self.legs = 2 }
+      ++ proc(ref self, a:Animal)    { self.legs = 2 ; name = "bird animal" }
   ,eat_seeds = proc(ref self, n) { self.seeds_eaten += n }
 )
 
-type Greyhound = Dog ++ ( // also extends Dog
+let Greyhound = Dog ++ ( // also extends Dog
   ,race = fun() { puts "running fast" }
 )
 ```
 
 ```
-var a:Animal
-var b:Bird
-var d:Dog
+var a:Animal = _
+var b:Bird = _
+var d:Dog = _
 
 d = a // compile error, 'a does d' is false
 b = a // OK, explicit setter in Bird for Animal
@@ -72,9 +72,9 @@ issue of mutable containers can not exists.
 
 
 ```
-var a_vec:Animal[]
-var b_vec:Bird[]
-var d_vec:Dog[]
+var a_vec:[]Animal = _
+var b_vec:[]Bird = _
+var d_vec:[]Dog = _
 
 a_vec[0] = d:Dog    // OK
 a_vec[1] = b:Bird   // OK
@@ -89,13 +89,13 @@ b_vec[0] = g:Greyhound  // OK, explicit conversion
 b_vec[0] = b:Bird       // OK, 'b does b'
 b_vec[0] = a:Animal     // OK, explicit conversion
 
-pub do_animal_vec = fun(a_vec:Animal[])->(r:Animal[]) {
+let do_animal_vec = fun(a_vec:[]Animal)->(r:[]Animal) {
   r = a_vec
   r[0] = d:Dog  // OK `d does r[0]`
 }
 
-var x = do_animal_vec(b_vec:Bird[]) // OK
-assert x does :Animal[]  // not :Bird[]
+var x = do_animal_vec(b_vec:[]Bird) // OK
+assert x does :[]Animal  // not :[]Bird
 ```
 
 ### Basic types
@@ -106,21 +106,19 @@ should match. Since every element is a type of one, read/writing a named tuple
 of one does not need the field, and hence it allows to create different types:
 
 ```
-type Age = (
-  ,pub var age:int
+let Age = (
+  ,age:int = _
 )
-type Weight = (
-  ,pub var weight:int
+let Weight = (
+  ,weight:int = _
 )
 
-assert not (Age does Weight)
+assert Age !does Weight
 
-var a:Age
-a = 3      // same as a.0 = 3
+var a:Age = 3
 assert a == a.age == a.0 == 3
 
-var w:Weight
-w = 100    // same as w.0 = 100
+var w:Weight = 100
 
 let err = a == w // compile error, not (a equals w) or overload
 ```
@@ -146,8 +144,8 @@ each combination of infered types or the lambda must be inlined in the caller.
 
 
 ```
-type fa_t = fun(a:Animal)->()
-type fd_t = fun(d:Dog)->()
+let fa_t = :fun(a:Animal)->()
+let fd_t:fun(d:Dog)->() = _    // same, different style
 
 let call_animal = fun(a:Animal)->() {
    puts a.name // OK
@@ -157,8 +155,8 @@ let call_dog = fun(d:Dog)->() {
 }
 
 let f_a = fun(fa:fa_t) { 
-  var a:Animal
-  var d:Dog
+  var a:Animal = _
+  var d:Dog = _
   fa(a)  // OK
   fa(d)  // OK, `d does Animal` is true
 }
@@ -166,8 +164,8 @@ f_a(call_animal) // OK
 f_a(call_dog)    // compile error, `fa_t does call_dog` is false
 
 let f_d = fun(fd:fd_t) { 
-  var a:Animal
-  var d:Dog
+  var a:Animal = _
+  var d:Dog = _
   fd(a)  // compile error, `a does Dog` is false
   fd(d)  // OK
 }
@@ -252,20 +250,20 @@ If the intention is to intercept, the lambda must be added at the head of the
 tuple entry.
 
 ```
-type base = (
-  ,pub var fun1 = fun() { 1 }         // catch all
-  ,pub var fun2 = fun() { 2 }         // catch all
-  ,pub var fun3 = fun() { 3 }         // catch all
+let base = (
+  ,fun1 = fun() { 1 }         // catch all
+  ,fun2 = fun() { 2 }         // catch all
+  ,fun3 = fun() { 3 }         // catch all
 )
-type ext extends base with (
-  ,pub var fun1 =   fun (a,b){ 4 }  // overwrite allowed with extends
-  ,pub var fun2 ++= fun (a,b){ 5 }  // append
-  ,pub var fun2 ++= fun ()   { 6 }  // append
-  ,pub var fun3 =   fun(a,b) { 7 } ++ base.fun3 // prepend
-  ,pub var fun3 =   fun()    { 8 } ++ base.fun3 // prepend
+let ext = base ++ (
+  ,fun1 =   fun (a,b){ 4 }  // overwrite allowed with extends
+  ,fun2 ++= fun (a,b){ 5 }  // append
+  ,fun2 ++= fun ()   { 6 }  // append
+  ,fun3 =   fun(a,b) { 7 } ++ base.fun3 // prepend
+  ,fun3 =   fun()    { 8 } ++ base.fun3 // prepend
 )
 
-var t:ext
+var t:ext = _
 
 // t.fun1 only has ext.fun1
 assert t.fun1(a=1,b=2) == 4
@@ -283,8 +281,8 @@ assert t.fun3() == 8     // ext.fun3 catches all ahead of ext.fun3
 A more traditional "overload" calling the is possible by calling the lambda directly:
 
 ```
-type x extends base with (
-  ,pub var fun1 = fun() { ret base.fun1() + 100 }
+let x = base ++ (
+  ,fun1 = fun() { ret base.fun1() + 100 }
 )
 ```
 
@@ -335,7 +333,7 @@ var fun_list = fun(a,b){ ret a+b}
 fun_list ++= fun(a,b,c){ ret a+b+c }
 fun_list ++= fun(a,b,c,d){ ret a+b+c+d }
 
-assert fun_list.size()
+assert fun_list.$size
 
 assert fun_list(1,2) == 3
 assert fun_list(1,2,4) == 7

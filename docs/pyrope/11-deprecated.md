@@ -27,7 +27,7 @@ Bundles do not allow an index with another bundle unless it is a trivial bundle
 
 === "Bundle index (not allowed)"
 
-    ```
+    ```old
     type Person = (name:string, age:u32)
     var a = (one:Person, two:Person)
 
@@ -38,7 +38,7 @@ Bundles do not allow an index with another bundle unless it is a trivial bundle
 === "Current legal Pyrope"
 
     ```
-    type Person = (name:string, age:u32)
+    let Person = (name:string=_, age:u32=_)
     var a = (one:Person, two:Person)
 
     x = 'one'
@@ -75,18 +75,18 @@ This example explicitly manages the valid output signals.
 
 
 ```pyrope
-let telescope_unit = fun(a:u32,b:u32,start:bool) -> (res:u32?) {
+let telescope_unit = fun(a:u32,b:u32,start:bool) -> (res:u32) {
 
-  reg result_done
-  reg result_flop
+  var result_done:reg = 0
+  var result_flop:reg = 0
 
   if result_done {
     res = result_flop
   }
 
-  reg int_done
-  reg int_flop
-  reg int_b
+  var int_done:reg = _
+  var int_flop:reg = _
+  var int_b:reg = _
 
   if int_done {  // pending work (2 cycle op, can not telescope)
     result_flop = int_flop-int_b
@@ -141,15 +141,15 @@ efficient.
 
 ```pyrope
 // implicit start/end (starts when called)
-let telescope_unit3 = fun(a:u32,b:u32) -> (:u32?) {
+let telescope_unit3 = fun(a:u32,b:u32) -> (:u32) {
 
   {
-    pub let tmp = a+1
+    let tmp = a+1
   } #> {
     if b == 0 {
       ret tmp
     }
-    pub let tmp2 = tmp-b
+    let tmp2 = tmp-b
   } #> {
     ret tmp2
   }

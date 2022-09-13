@@ -754,10 +754,16 @@ When the selected variable is a tuple with many entries, the result of the
 tuple expansion may be unexpected because the compiler can infer bits used
 independently of the type set. This is the case because the `tup@[]` is
 effectively concatenating the bits in `tup` but the tuple fields can be
-optimized making the resulting constant to be unexpected.
+optimized making the resulting constant to be unexpected. The reason is that
+Pyrope integer sizes are max/min constrains to enforce. The compiler can use
+a smaller representation.
+
+
+The only intuitive tuple type cast (`tup@[]`) is when all the tuple fields
+are booleans. Then, it is clear that each entry is one bit in the output.
 
 ```
-var tup = (a=0xf:u3232, b=0x1:int)  // explicit sizes set
+var tup = (a=0xf:u128, b=0x1:int)  // explicit sizes are ignored if optimized
 assert tup@[] == 0b001_01111
 
 assert (0xF:s8,0x1:s16)@[] == 0x0001_0F 
@@ -769,7 +775,8 @@ assert (true)@[]     == 0sb01
 assert (true)@sext[] == -1   
 ```
 
-A more straightforward solution is to explicitly set the bits expected:
+For the non-boolean tuple typecast, the more straightforward solution is to
+explicitly set the bits expected:
 
 ```
 res:u12 = _
@@ -940,7 +947,7 @@ computed as follows:
   the valid is cleared.
 
 
-!!! NOTE
+!!! Observation
     The variable valid calculation is similar to the Elastic 'output_written'
     from [Liam](https://masc.soe.ucsc.edu/docs/memocode17.pdf) but it is not an
     elastic update because it does not consider the abort or retry.

@@ -16,22 +16,22 @@ adjust for performance/constraints like size, area, FPGA/ASIC. Type systems
 could help in these areas.
 
 
-## Types vs `comptime assert`
+## Types vs `$(comptime) assert`
 
-To understand the type check, it is useful to see an equivalent `comptime
+To understand the type check, it is useful to see an equivalent `$(comptime)
 assert` translation. The type system has two components: type synthesis and
-type check. The type check can be understood as a `comptime assert`.
+type check. The type check can be understood as a `$(comptime) assert`.
 
 
-After type synthesis, each variable has an associated type. In Pyrope, for each
-assignment, the type checks that the left-hand side (LHS) has a compatible type with
+After type synthesis, each variable has an associated type. Pyrope checks that
+for each each assignment, the left-hand side (LHS) has a compatible type with
 the right-hand side (RHS) of the expression. Additional type checks happen when
-variables have a type check explicitly set (`var:type`) in the rhs expression.
+variables have a type check explicitly set (`variable:type`) in the rhs expression.
 
 
 Although the type system is not implemented with asserts, it is an equivalent
 way to understand the type system "check" behavior.  Although it is possible to
-declare just the `comptime assert` for type checks, the recommendation is to
+declare just the `$(comptime) assert` for type checks, the recommendation is to
 use the explicit Pyrope type syntax because it is more readable and easier to
 optimize.
 
@@ -41,14 +41,14 @@ optimize.
     ```
     var b = "hello"
 
-    var a:u32
+    var a:u32 = 0
 
     a += 1
 
     a = b                       // incorrect
 
 
-    var dest:u32
+    var dest:u32 = 0
 
     dest = foo:u16 + v:u8
     ```
@@ -58,15 +58,15 @@ optimize.
     ```
     var b = "hello"
 
-    var a:u32
+    var a:u32 = 0
 
     a += 1
-    comptime assert a does u32
+    $(comptime) assert a does u32
     a = b                       // incorrect
-    comptime assert a does u32
+    $(comptime) assert b does u32  // fails
 
-    var dest:u32
-    comptime assert (dest does u32) and (foo does u16) and (v does u8)
+    var dest:u32 = 0
+    $(comptime) assert (dest does u32) and (foo does u16) and (v does u8)
     dest = foo:u16 + v:u8
     ```
 
@@ -76,54 +76,55 @@ optimize.
 Each variable can be a basic type. In addition, each variable can have a set of
 constraints from the type system. Pyrope type system constructs to handle types:
 
-* `type` keyword allows declaring types.
+* `var` and `let` allows declaring types.
 
 * `a does b`: Checks 'a' is a superset or equal to 'b'. In the future, the
   Unicode character "\u02287" could be used as an alternative to `does` (`a`
 &#8839 `b`).
 
 * `a:b` is equivalent to `a does b` for type check, but it is also used by type
-  synthesis.
+  synthesis when used in the left-hand-side of assignments.
 
 * `a equals b`: Checks that `a does b` and `b does a`. Effectively checking
   that they have the same type. Notice that this is not like checking for
-  logical equivalence, just type equivalence.
+  logical equivalence, just type equivalence. 
 
 ```
-type t1 = (a:int=1  , b:string)
-type t2 = (a:int=100, b:string)
-var  v1 = (a=33     , b="hello")
+let t1 = (a:int=1  , b:string)
+let t2 = (a:int=100, b:string)
+var v1 = (a=33     , b="hello")
 
-comptime assert t1 equals t2
-comptime assert t1 equals v1
+let f1 = fun() {
+  ret (a=33     , b="hello")
+}
+
+assert t1    equals t2
+assert t1    equals v1
+assert f1    equals t1
+assert f1()  equals t1
+assert :f1  !equals t1
+assert :t1   equals t2
 ```
 
 
+`equals` and `does` check for types. Sometimes, the type can have a function
+call and you do not want to call it. The solution in this case is to use the
+`:type` to avoid the function call.
 
-While the `var` statement declares a new variable instance that can also have
-an associated type, the `type` statement declares a type without any instance.
 
-```
-type a1 = u32                 // same as 'type a1:u32'
-type a2 = int(max=33,min=-5)  // same as 'type a2:int(-5,33)'
-type a3 = (
-    ,var name:string
-    ,var age:u8
-    )
-```
-
-The puts command understands types.
+Since the `puts` command understands types, it can be used on any variable, and
+it is able to print/dump the results.
 
 ```
-type at=int(33..)     // number bigger than 32
-type bt=(
-  ,var c:string
-  ,var d=100
+let At = :int(33..)      // number bigger than 32
+let Bt=(
+  ,c:string
+  ,d=100
   ,let set = fun(ref self, ...args) { self.c = args }
 )
 
-var a:at=40
-var v:bt="hello"
+var a:At=40
+var b:Bt="hello"
 puts "a:{} or {}", a, at // a:40 or 33
 puts "b:{}", b           // b:(c="hello",d=100)
 ```
@@ -138,42 +139,46 @@ These are the detailed rules for the `a does b` operator depending on the `a` an
 * false when `a` and `b` are different basic types (`boolean`, `fun`,
   `integer`, `proc`, `range`, `string`, `enums`).
 
-* true when `a` and `b` are `boolean` or `string`.
+* true when `a` and `b` have the same basic type of either `boolean` or `string`.
 
 * true when `a` and `b` are `enum` and `a` has all the possible enumerates
   fields in `b` with the same value.
 
-* `a.max>=b.max and a.min<=b.min` when `a` and `b` are integers
+* `a.max>=b.max and a.min<=b.min` when `a` and `b` are integers. The `max/min`
+  are previously constrained values in left-hand-side statements, or inferred
+  from right-hand-side if no lhs type is specified.
 
 * `(a@[] & b@[]) == b@[]` when `a` and `b` are `range`. This means that the `a`
   range has at least all the values in `b` range.
 
 * There are two cases for tuples. If all the tuple entries are named, `a does
-  b` is true if for all the root fields in `b` the `a.field does b.field`.
-  When either `a` or `b` have unnamed fields, for each field in `b` the name
-  and also position should match. The conclusion is that if the field has no name, only position should match.
+  b` is true if for all the root fields in `b` the `a.field does b.field`. When
+  either `a` or `b` have unnamed fields, for each field in `b` the name but
+  also position should match. The conclusion is that if any field has no name,
+  all the fields should match by position and/or name if available.
 
-* `a does b` is false if the explicit array size of `a` is smaller than the explicit array size of `b`. If the size check is true, the array entry type is checked. `:x[] does :y[]` is false when `x does y` is false.
+* `a does b` is false if the explicit array size of `a` is smaller than the
+  explicit array size of `b`. If the size check is true, the array entry type
+  is checked. `:[]x does :[]y` is false when `:x does :y` is false.
 
-* The lambdas have a more complicated set of rules explained later. It
-  distinguishes between lambda call and lambda reference.
+* The lambdas have a more complicated set of rules explained later. 
 
 ```
-assert     (a:int(max=33,min=0) does (a:int(20,5)))
-assert not (a:int(max=33,min=0) does (a:int(50,5)))
+assert (a:int(max=33,min=0) does (a:int(20,5)))
+assert (a:int(max=33,min=0) !does (a:int(50,5)))
 
-assert     (a:string,b:int) does (a:"hello", b:33)
-assert not ((b:int,a:string) does (a:"hello", b:33)) // order maters in tuples
+assert  (a:string,b:int) does (a:"hello", b:33)
+assert ((b:int,a:string) !does (a:"hello", b:33)) // order maters in tuples
 
-assert      :fun(x,xxx2)->(y,z) does :fun(x     )->(y,z)
-assert not (:fun(x     )->(y,z) does :fun(x,xxx2)->(y,z))
+assert  :fun(x,xxx2)->(y,z) does :fun(x     )->(y,z)
+assert (:fun(x     )->(y,z) !does :fun(x,xxx2)->(y,z))
 ```
 
 For named tuples, this code shows some of the corner cases:
 
 ```
-type t1 = (a:string, b:int)
-type t2 = (b:int, a:string)
+let t1 = (a:string, b:int)
+let t2 = (b:int, a:string)
 
 var a:t1  = ("hello", 3)     // OK
 var a1:t1 = (3, "hello")     // compile error, positions do not match
@@ -193,36 +198,43 @@ different functionality functions could be `equals`.
 ```
 let a = fun() { ret 1 }
 let b = fun() { ret 2 }
-assert a equals :fun()
-assert a != b
-assert a equals b
-assert not (a equals fun() { ret 1 }) // different arguments
-```
+assert a !equals :fun()    // 1 !equals :fun()
+assert :a equals :fun()    // :fun() { ret 1 } equals :fun()
 
+assert a != b              // 1 != 2
+assert a equals b          // 1 equals 2
+
+assert :a equals :fun()
+```
 
 ## Nominal type check
 
 
 Pyrope has structural type checking, but there is a keyword `is` that allows to
 check that the type name matches `a is b` returns true if the type of `a` has
-the same name as the type of `b`. This can be used in places like function
-calls to check that the type name matches. Instrad of `v:tp`, Pyrope also
-accepts `v is tp`. `:` checks that `v` has structural type compatible with
-`tp`. `is` checks that `v` has exactly the type `tp`.
+the same name as the type of `b`. The `a is b` is a boolean expression, not a type
+check assignment like `a:b`. This means that it can be used in `where` statements
+or any conditional code.
 
 ```
-type X1 = (b:u32)
-type X2 = (b:u32)
+let X1 = (b:u32)
+let X2 = (b:u32)
 
-let t1 = (b=3):X1  // OK
-let t2 = (b=3):X2  // OK
-let t3 = (b=3) is X2  // compile error
-let t4:X1 = (b=3)
+let t1:X1 = (b=3)
+let t2:X2 = (b=3)
+assert (b=3) !is :X2     // same as (b=3) !is X2
+assert t1 equals t2
+assert t1 !is t2
 
-y1 = t4:X1    // OK
-y2 = t4:X2    // OK
-y3 = t4 is X1 // OK
-y4 = t4 is X2 // compile error
+let t4:X1 = (b=5)
+
+assert t4  equals t1
+assert t4  is     t1
+assert t4 !is     t2
+
+let f2 = fun(x) where x is :X1 {
+  ret x.b + 1
+}
 ```
 
 ## Enums with types
@@ -233,12 +245,12 @@ tuple is that the enumerate values must be known at compile time.
 
 
 ```
-type Rgb = (
-  ,let c:u24
-  ,let set = proc(ref self, c) { self.c = c }
+let Rgb = (
+  ,c:u24
+  ,set = proc(ref self, c) { self.c = c }
 )
 
-enum Color:Rgb = (
+let Color:Rgb = :enum(
   ,Yellow   = 0xffff00
   ,Red      = 0xff0000
   ,Green    = Rgb(0x00ff00) // alternative redundant syntax
@@ -262,8 +274,8 @@ types.
 
 
 ```
-enum  e_type = (str:String = "hello",num=22)
-union u_type = (str:String, num:int)         // No default value in union
+let e_type = :enum(str:String = "hello",num=22)
+let u_type = :union(str:String, num:int)         // No default value in union
 
 var uu:u_type = (str="hello2")
 assert uu.str == "hello2"
@@ -272,7 +284,7 @@ assert uu.num == 0x32_6f_6c_6c_65_68 // ASCII for 2 e l l o h
 uu.num = 0x65
 assert uu.str == "o"
 assert uu.num == 0x65
-var ee:e_type
+var ee:e_type = e_type.str
 ```
 
 
@@ -302,52 +314,72 @@ variable has an assigned size smaller than the operand results.
 
 The programmer can specify the maximum number of bits, or the maximum value range.
 The programmer can not specify the exact number of bits because the compiler has
-the option to optimize the design.
+the option to optimize the design. 
 
-Pyrope code can set or access the bitwidth pass results for each variable.
 
-* `__max`: the maximum number
-* `__min`: the minimum number
-* `__sbits`: the number of bits to represent the value
-* `__ubits`: the number of bits. The variable must be always positive or a compile error.
+In fact, internally Pyrope only tracks the `max` and `min` value. When the
+`sbits/ubits` is used, it is converted to a `max/min` range. Pyrope code can
+set or access the bitwidth attributes for each integer variable.
+
+* `$max`: the maximum number
+* `$min`: the minimum number
+* `$sbits`: the number of bits to represent the value
+* `$ubits`: the number of bits. The variable must be always positive or a compile error.
+
+
+Internally, Pyrope has 2 sets of `max/min`. The constrained and the current.
+The constrained is set during type declaration. The current is computed based
+on the possible max/min value given the current path/values. The current should
+never exceed the constrained or a compile error is generated. Similarly, the
+current should be bound to a given size or a compile error is generated.
+
+
+The constrained does not need to be specifed. In this case, the hardware will
+use whatever current value is found. This allows to write code that adjust to
+the needed number of integer bits.
+
+When the attributes are read, it reads the current. it does not read the constrained.
 
 ```pyrope
-var val:u8 // designer constraints a to be between 0 and 255
-val = 3    // val has 3 bits (0sb011 all the numbers are signed)
+var val:u8 = 0   // designer constraints a to be between 0 and 255
+assert val.$sbits == 0
 
-val = 300  // compile error, '300' overflows the maximum allowed value of 'val'
+val = 3          // val has 3 bits (0sb011 all the numbers are signed)
 
-val = 0x1F0@[0..<val.__ubits] // explicitly select bits to not overflow
-assert val == 240
+val = 300        // compile error, '300' overflows the maximum allowed value of 'val'
 
-wrap val = 0x1F0   // Drop bits from 0x1F0 to fit in maximum 'val' allowed bits
-assert val == 240
+val = 1          // max=1,min=1 sbits=2, ubits=1
+assert val.$ubits == 1 and val.$min==1 and val.$max==1 and val.$sbits==2
+
+val:$(wrap) = 0x1F0 // Drop bits from 0x1F0 to fit in constrained type 
+assert val == 240 == 0xF0
 
 val = u8(0x1F0)    // same
 assert val == 0xF0
 ```
 
-
-Pyrope leverages LiveHD bitwidth pass [stephenson_bitwidth] to compute the
-maximum and minimum value of each variable. For each operation, the maximum and
-minimum are computed. For control-flow divergences, the worst possible path is
-considered.
+Pyrope leverages LiveHD bitwidth pass to compute the maximum and minimum value
+of each variable. For each operation, the maximum and minimum are computed. For
+control-flow divergences, the worst possible path is considered.
 
 ```
-a = 3                      // max:3, min:3
+var a = 3                  // a: current(max=3,min=3) constrain()
+var c:int(0..=10) = _      // c: current(max=0,min=0) constrain(max=10,min=0)
 if b {
-  c = a+1                  // max:4, min:4
+  c = a+1                  // c: current(max=4,min=4) constrain(max=10,min=0)
 }else{
-  c = a                    // max:3, min:3
+  c = a                    // c: current(max=3,min=3) constrain(max=10,min=0)
 }
-e.__sbits = 4              // max:3, min:-4
-e = 3                      // max:3, min:3
-d = c                      // max:4, min:3
+                           // c: current(max=4,min=3) constrain(max=10,min=0)
+
+var e:$(sbits = 4) = _     // e: current(max=0,min=0) constrain(max=7,min=-8)
+e = 2                      // e: current(max=2,min=2) constrain(max=7,min=-8)
+var d = c                  // d: current(max=4,min=3) constrain()
 if d==4 {
-  d = e + 1                // max:4, min:4
+  d = e + 1                // d: current(max=3,min=3) constrain()
 }
-g = d                      // max:4, min:3
-h = c@[0,1]                // max:3, min:0
+var g:u3 = d               // g: current(max=4,min=3) constrain(max=7,min=0)
+var h = c@[0,1]            // h: current(max=3,min=0) constrain()
 ```
 
 
@@ -372,7 +404,7 @@ if cmd? {
 }
                 // merging: x.max = x.max ; x.min = 0
                 // merging: y.max = y.max ; y.min = 0
-                // converged becauze x and y is same or smaller at beginning
+                // converged because x and y is same or smaller at beginning
 ```
 
 The bitwidth pass may not converge to find a valid size even with narrowing.
@@ -380,7 +412,8 @@ In this case, the programmer must insert a typecast or operation to constrain
 the bitwidth by typecasting. For example, this could work:
 
 ```
-reg x,y
+var x:reg = 0
+var y:reg = 0
 if cmd? {
   x,y = cmd
 }elif x > y {
@@ -388,8 +421,8 @@ if cmd? {
 }else{
   y = y - x
 }
-wrap x:cmd.a = x  // use cmd.a type for x, and drop bits as needed
-y = cmd.b(y)  // typecast y to cmd.b type (this can add a mux)
+x:$(wrap) cmd.a = x  // use cmd.a type for x, and drop bits as needed
+y = cmd.b(y)         // typecast y to cmd.b type (this can add a mux)
 ```
 
 ## Typecasting
@@ -399,29 +432,28 @@ To convert between tuples, an explicit setter is needed unless the tuple fields
 names, order, and types match.
 
 ```
-type at=(c:string,d:u32)
-type bt=(c:string,d:u100)
+let at=(c:string,d:u32)
+let bt=(c:string,d:u100)
 
-type ct=(
-  ,var d:u32
-  ,var c:string
-) // different order
-type dt=(
-  ,var d:u32
-  ,var c:string
-  ,let set = proc (ref self, x:at) { self.d = x.d ; self.c = x.c }
+let ct=(
+  ,d:u32    = _
+  ,c:string = _
+) 
+// different order
+let dt=(
+  ,d:u32    = _
+  ,c:string = _
+  ,set = proc (ref self, x:at) { self.d = x.d ; self.c = x.c }
 )
 
 var b:bt=(c="hello", d=10000)
-var a:at
+var a:at=_
 
-a = b // OK c is string, and 10000 fits in u32
+a = b          // OK c is string, and 10000 fits in u32
 
-var c:ct
-c = a // compile error, different order
+var c:ct= a    // OK even different order because all names match
 
-var d:dt
-d = a // OK, call intitial to type cast
+var d:dt = a   // OK, call intitial to type cast
 ```
 
 
@@ -436,23 +468,23 @@ access them. In several languages, there are different constructs to build them
 immutable, new methods can be added like in mixin.
 
 ```
-type Say_mixin = (
-  ,let say = fun(s) { puts s }
+let Say_mixin = (
+  ,say = fun(s) { puts s }
 )
 
-type Say_hi_mixin = (
-  ,let say_hi  = fun() {self.say("hi {}", self.name) }
-  ,let say_bye = fun() {self.say("bye {}", self.name) }
+let Say_hi_mixin = (
+  ,say_hi  = fun() {self.say("hi {}", self.name) }
+  ,say_bye = fun() {self.say("bye {}", self.name) }
 )
 
-type User = (
-  ,var name:string
-  ,let set = proc(ref self, n:string) { self.name = n }
+let User = (
+  ,name:string = _
+  ,set = proc(ref self, n:string) { self.name = n }
 )
 
-type Mixing_all = Say_mixin ++ Say_hi_mixin ++ User
+let Mixing_all = Say_mixin ++ Say_hi_mixin ++ User
 
-var a:Mixing_all("Julius Caesar")
+var a:Mixing_all="Julius Caesar"
 a.say_hi()
 ```
 
@@ -479,58 +511,54 @@ An issue with mixin is when more than one tuple has the `set` method. If the
 tuples are concatenated with `...` and error is triggered, if the tuples are
 concatenated with `++` the methods are overridden when declared with `var`.
 Neither is the expected solution.  A smaller issue with mixins is that
-`comptime assert X extends Y` should be inserted when implementing an
+`$(comptime) assert X does Y` should be inserted when implementing an
 interface.
 
 
 Without supporting OOP, but providing a more familiar abstract or trait
-interface, Pyrope provides the `extends` keyword. It checks that the new
+interface, Pyrope provides the `does` keyword. It checks that the new
 type extends the functionality undefined and allows to use of methods defined.
-The constructor (`set`) can call the parent constructor with the `super` keyword.
 
 This is effectively a mixin with checks that some methods should be
 implemented.
 
 ```
-type Shape = (
-  ,name:string
-  ,area         :fun (self )->(:i32)     // defined but unimplemented 
-  ,increase_size:proc(ref self, x:i12)   // defined but unimplemented 
+let Shape = (
+  ,name:string = _
+  ,area:fun (self )->(:i32)  = _            // defined but unimplemented 
+  ,increase_size:proc(ref self, x:i12) = _  // defined but unimplemented 
 
-  ,set =proc(ref self, name ) { self.name = name } // implemented, use =
+  ,set=proc(ref self, name ) { self.name = name } // implemented, use =
+  ,say_name=fun(self) { puts "name:{}", name }
 )
 
-type Circle extends Shape with (
-  ,set = proc(ref self) { super("circle") }
+let Circle = (
+  ,set           = proc(ref self) { Shape.set("circle") }
   ,increase_size = proc(ref self, x:i12) { self.rad *= x }
-  ,rad:i32
+  ,rad:i32       = _
   ,area = fun(self) -> (:i32) {
      let pi = import("math").pi
      ret pi * self.rad * self.rad
   }
-)
+):Shape
 ```
 
-Like most type checks, the `extends` can be translated for a `comptime
-assert`. An equivalent "Circle" functionality:
+An equivalent "Circle" functionality:
 
 ```
-type Circle = (
-  ,rad:i32
-  ,name = "Circle"
+let Circle = (
+  ,set         = proc(ref self) { self.name = "circle" }
+  ,name:string = _
+  ,rad:i32     = _
   ,area = fun() -> (:i32) {
      let pi = import("math").pi
      ret pi * self.rad * self.rad
   }
   ,increase_size = proc(ref self, a:i12) { self.rad *= a }
+  ,say_name=fun(self) { puts "name:{}", name }
 )
-comptime assert Circle does Shape
+$(comptime) assert Circle does Shape
 ```
-
-The `extends` differs from a tuple concatenation (`++` or `...tup`) by
-checking that the base methods are implemented. It can be seen as a syntax
-sugar for `...tup` and a compile time `does` type check.
-
 
 ## Instrospection
 
@@ -581,7 +609,7 @@ There are several uses for introspection, but for example, it is possible to bui
 function that returns a randomly mutated tuple.
 
 ```
-randomize = debug fun(ref self) {
+let randomize:$(debug) = fun(ref self) {
   let rnd = import "prp/rnd"
   for i in ref self {
     if i equals :int {
@@ -594,7 +622,7 @@ randomize = debug fun(ref self) {
 }
 
 let x = (a=1,b=true,c="hello")
-let y = x.randomize()
+let y = x.randomize
 
 assert x.a==1 and x.b==true and x.c=="hello"
 cover  y.a!=1
@@ -603,7 +631,7 @@ assert y.c=="hello"  // string is not supposed to mutate in randomize()
 ```
 
 
-## Global variables
+## Global scope
 
 There are no global variables or functions in Pyrope. Variable scope is
 restricted by code block `{ ... }` and/or the file. Each Pyrope file is a
@@ -625,15 +653,15 @@ Any call to a function or tuple outside requires a prior `import` statement.
 
 ```
 // file: src/my_fun.prp
-pub let fun1    = fun(a,b) { a+b }
-pub let fun2    = fun(a) {
-  pub let inside = fun() { ret 3 }
+let fun1    = fun(a,b) { a+b }
+let fun2    = fun(a) {
+  let inside = fun() { ret 3 }
   ret a
 }
-pub let another = fun(a) { ret a }
+let another = fun(a) { ret a }
 
-pub let mytup = (
-  ,pub let call3 = fun() { puts "call called" }
+let mytup = (
+  ,call3 = fun() { puts "call called" }
 )
 ```
 
@@ -653,7 +681,7 @@ x.call3()                // prints call called
 ```
 
 The `import` points to a file [setup code](06b-instantiation.md#setup-code)
-list of pub variables or types. The setup code corresponds to the "top" scope
+list of public variables or types. The setup code corresponds to the "top" scope
 in the imported file. The import statement can only be executed during the
 setup phase. The import allows for cyclic dependencies between files as long as
 there is no true cyclic dependency between variables. This means that "false"
@@ -683,10 +711,10 @@ use a different library version than xx/bb/cc if the library is provided by yy,
 or use a default one from the xx directory.
 
 ```
-a = import "prj1/file1"
-b = import "file1"        // import xxx_fun from file1 in the local project
-c = import "file2"        // import the functions from local file2
-d = import "prj2/file3"   // import the functions from project prj2 and file3
+let a = import "prj1/file1"
+let b = import "file1"        // import xxx_fun from file1 in the local project
+let c = import "file2"        // import the functions from local file2
+let d = import "prj2/file3"   // import the functions from project prj2 and file3
 ```
 
 Many languages have a "using" or "import" or "include" command that includes
@@ -695,10 +723,10 @@ allow that, but it is possible to use a mixin to add the imported functionality
 to a tuple.
 
 ```
-b = import "prp/Number"
-a = import "fancy/Number_mixin"
+let b = import "prp/Number"
+var a = import "fancy/Number_mixin"
 
-type Number = b ++ a // patch the default Number class
+let Number = b ++ a // patch the default Number class
 
 var x:Number = 3
 ```
@@ -720,7 +748,7 @@ import functions or variables.
 let do_increase = proc() {
   reg counter
 
-  wrap counter:u32 = counter + 1
+  counter:$(wrap) u32 = counter + 1
 }
 
 let do_debug = proc() {
@@ -761,8 +789,8 @@ reg uart_addr:u32
 assert 0x400 > uart_addr >= 0x300
 
 // file local.prp
-pub let setup_xx = proc() {
-  let xx = regref "uart_addr"
+let setup_xx = proc() {
+  var xx = regref "uart_addr"
   for i,index in ref xx {    // ref in for to allow element updates
     i = 0x300+index*0x10     // sets uart_addr to 0x300, 0x310, 0x320...
   }
@@ -791,8 +819,8 @@ overwrite an existing value. The peek/poke use the same reference as `import`
 or register reference.
 
 ```
-type bpred = ( // complex predictor
-  ,pub let taken = fun(){ ret self.some_table[som_var] >=0 }
+let bpred = ( // complex predictor
+  ,let taken = fun(){ ret self.some_table[som_var] >=0 }
 )
 
 test "mocking taken branches" {
@@ -817,7 +845,7 @@ is also the "constructor" for the object.
 ```
 var f1:XXX = (3,2)
 var f2:XXX = XXX(3,2)
-var f3:XXX
+var f3:XXX = _
 
 f3 = (3,2)
 assert f3 == f2 == f1
@@ -830,15 +858,15 @@ method is the getter (`get`).
 
 
 ```
-type some_obj = (
+let some_obj = (
   ,a1:string
-  ,pub a2 = (
-    ,_val:u32                                  // hidden field
+  ,a2 = (
+    ,_val:u32 = _                              // hidden field
 
-    ,pub var get=fun(self) { self._val + 100 } // getter
+    ,get=fun(self) { self._val + 100 }         // getter
     ,set=proc(ref self, x) { self._val = x+1 } // setter
   )
-  ,pub var set = proc(ref self, a,b){          // setter
+  ,set = proc(ref self, a,b){                  // setter
     self.a1      = a
     self.a2._val = b
   }
@@ -857,17 +885,17 @@ The getter method can be [overloaded](06-functions.md#Overloading). This allows
 to customize by return type:
 
 ```
-type showcase = (
-  ,pub var v:int
-  ,pub var get ++= fun(self)->(:string) where self.i>100 {
+let showcase = (
+  ,v:int = _
+  ,get ++= fun(self)->(:string) where self.i>100 {
     ret "this is a big number" ++ string(v)
   }
-  ,pub var get ++= fun(self)->(:int) {
+  ,get ++= fun(self)->(:int) {
     ret v
   }
 )
 
-var s:showcase
+var s:showcase = _
 s.v = 3
 let foo:string = s // compile error, no matching getter
 s.v = 100
@@ -879,12 +907,11 @@ Like all the lambdas, the getter method can also be overloaded on the return typ
 In this case, it allows building typecast per type.
 
 ```
-type my_obj = (
-  ,val:u32
-  ,pub var get 
-    = fun(self)->(:string ){ ret string(self.val) }
-   ++ fun(self)->(:boolean){ ret self.val != 0    }
-   ++ fun(self)->(:int    ){ ret self.val         }
+let my_obj = (
+  ,val:u32 = _
+  ,get = fun(self)->(:string ){ ret string(self.val) }
+      ++ fun(self)->(:boolean){ ret self.val != 0    }
+      ++ fun(self)->(:int    ){ ret self.val         }
 )
 ```
 
@@ -898,11 +925,11 @@ comparators. When non-provided the `lt` (Less Than) is a compile error, and the
 
 
 ```
-type t=(
-  ,pub var v
-  ,pub let set = proc(ref self) { self.v = a }
-  ,pub let lt = fun(self,other)->(:boolean){ self.v  < other.v }
-  ,pub let eq = fun(self,other)            { self.v == other.v } // infer ret
+let t=(
+  ,v:string = _
+  ,set = proc(ref self) { self.v = a }
+  ,lt = fun(self,other)->(:boolean){ self.v  < other.v }
+  ,eq = fun(self,other)            { self.v == other.v } // infer ret
 )
 
 var m1:t = 10
@@ -935,7 +962,7 @@ file during the setup phase to decide configuration parameters.
 ```
 let cfg = __read_json()
 
-pub let ext = if cfg.foo.bar == 3 {
+let ext = if cfg.foo.bar == 3 {
    foo
 }else{
    bar
@@ -952,7 +979,7 @@ can pass many inputs/outputs and has permission to mutate values. Any call to a
 method with two underscores `__` is either a basic gate or a C++ function.
 
 ```
-type __my_typed_cpp = fun(a,b)->(e)
+let __my_typed_cpp = :fun(a,b)->(e)
 ```
 
 Type defining non-Pyrope code is good to catch errors and also because declaring

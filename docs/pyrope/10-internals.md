@@ -19,7 +19,7 @@ is buffered and ordered at the end of the cycle to be deterministic.
 The only source of non-determinism is non-Pyrope (C++) calls from `procedures`
 executed at different pipeline stages. The pipeline stages could be executed in
 any order, it is just that the same order must be repeated deterministically
-during simulation. The non-Pyrope calls must be `comptime` to affect
+during simulation. The non-Pyrope calls must be `$(comptime)` to affect
 synthesis. So the synthesis is deterministic, but the testing like cosimulation
 may not.
 
@@ -258,23 +258,6 @@ Assume allows more freedom, without dangerous Verilog x-optimizations:
     ```
 
 
-## Registers and Memories
-
-Values stored in registers (flop or latches) and memories (synchronous or
-asynchronous) can not be used in compiler optimization passes. The reason is that
-a scan chain is allowed to replace the values.
-
-
-The `retime` directive indicates that the register/memory can be replicated and
-used for optimization. Copy values can propagate through `retime`
-register/memories.
-
-
-A register or memory without explicit `retime=true` can only be optimized away
-if there is no read AND no write to the register. Even just having writes the
-register is preserved because it can be used to read values with the
-scan-chain.
-
 ## LNAST optimization
 
 The compiler has three IR levels: The high level is the parse AST, the
@@ -315,10 +298,10 @@ depending on the LNAST node:
     - trivial identity simplification for existing node, also performed as
       instruction combining proceeds. E.g: `a^a == a`, `a-a=0` ... 
 
-+ If the node is a `comptime` trigger a compile error unless all the inputs are
++ If the node is a `$(comptime)` trigger a compile error unless all the inputs are
   constant
 
-    - `comptime asserts` should satisfy the condition or a compile error is
+    - `$(comptime) asserts` should satisfy the condition or a compile error is
       generated
 
 + If the node is a loop (`for`/`while`) that has at least one iteration expand
@@ -411,15 +394,17 @@ the Pyrope main ones to address and learn more about the language.
 
 ### Shadowing
 
-Pyrope does not allow shadowing, but you can still have it with tuples
+Pyrope does not allow shadowing, but you can still have it with tuples. To
+access the tuple field, the `self.field` is always required. This avoid the
+problem of true shadowing.
 
 ```
 let f1 = fun() { 1 }
 
 let tup = (
-  ,let f1 = fun() { 2 }
+  ,f1 = fun() { 2 }
 
-  ,let code = fun() {
+  ,code = fun() {
      assert self.f1() == 2
      assert f1() == 1
   }
@@ -440,7 +425,7 @@ execution.
     ```
     var x_s = 10
 
-    pub call_captured = fun[x_s]() {
+    let call_captured = fun[x_s]() {
       ret fun[x_s]() {
         assert x_s == 10
         ret x_s
@@ -513,10 +498,10 @@ may do this implementation.
 
       var addX = (
         ,a: i32 = a                        // copy value, runtime or comptime
-        ,pub let get = fun(self, x: i32) {
+        ,get = fun(self, x: i32) {
           ret x + self.a
         }
-      }
+      )
 
       a += 100;
 
@@ -524,7 +509,7 @@ may do this implementation.
     }
 
     test "plain closure" {
-      var a: i32 = 1
+      var a:i32 = 1
       a += 1
 
       let addX = fun[a](x: i32) { // Same behaviour as closure with tuple
@@ -577,11 +562,11 @@ var x = 3
 
 let f1 = fun[x]()->(:int){
    assert x == 3
-   var x    // compile error. Shadow captured x
+   var x = _    // compile error. Shadow captured x
    ret 200
 }
 let f2 = fun()->(:int){
-   var x    // OK, no captures 'x' variable
+   var x = _    // OK, no captures 'x' variable
    x = 100
    ret x
 }
@@ -635,15 +620,15 @@ there is no initial value set.
 
 
 ```
-type X_t = (
-  ,var i1 = (
+let X_t = (
+  ,i1 = (
     ,i1_field:u32 = 1
     ,i2_field:u32 = 2
     ,set = proc(ref self, a) {
        self.i1_field = a
     }
   )
-  ,var i2 = (
+  ,i2 = (
     ,i1_field:i32 = 11
     ,set = proc(ref self, a) {
        self.i1_field = a
@@ -653,7 +638,7 @@ type X_t = (
 
 var top = (
   ,set = proc(ref self) {
-    var x:X_t
+    var x:X_t = _
     assert x.i1.i1_field == 1
     assert x.i1.i2_field == 2
     assert x.i2.i1_field == 11
@@ -829,23 +814,22 @@ let reverse = fun(x:uint)->(total:uint) {
     total  |= x@[i]
   }
 }
-assert reverse(0b10110) = 0b01101
+assert reverse(0b10110) == 0b01101
 ```
 
 ### Initialization
 
-Registers and variables are initialized to zero by default, but the reset logic
+Registers and variables are must always specify the initialization value, but the reset logic
 can change to a more traditional Verilog with uninitialized (`0sb?`) contents.
 Since the evaluation of unknowns will be done with randomly generated values
-for each `?` bit, the assertions should fail depending on the smulation seed.
+for each `?` bit, the assertions should fail depending on the simulation seed.
 
 
 ```
-reg r_ver = (
-  ,always_reset = proc(ref self) { self = 0sb? }
-)
-reg r
-var v
+var r_ver:reg = 0sb?
+
+var r:reg = _
+var v = _
 
 assert v == 0 and r == 0
 
@@ -864,7 +848,7 @@ var arr:[] = (0,1,2,3,4,5,6,7)
 
 assert_always arr[0] == 0 and arr[7] == 7  // always works
 
-reg mem:[] = (0,1,2,3,4,5,6,7)
+var mem:reg [] = (0,1,2,3,4,5,6,7)
 
 assert_always mem[7] == 7                  // FAIL, this may fail during reset
 assert_always mem[7] == 7 unless mem.reset // OK
@@ -893,10 +877,10 @@ let e2 = call_defer args         // compile error, args needs arguments
 assert x0  == 3                  // nothing printed
 assert x1  == 3                  // nothing printed
 
-let x2 = call_now ref here       // prints "here"
-let e3 = call_now ref args       // compile error, args needs arguments
-let x3 = call_defer ref here     // nothing printed
-let x4 = call_defer ref args     // nothing printed
+let x2 = call_now(ref here)      // prints "here"
+let e3 = call_now(ref args)      // compile error, args needs arguments
+let x3 = call_defer(ref here)    // nothing printed
+let x4 = call_defer(ref args)    // nothing printed
 assert x2  == 3                  // nothing printed
 assert x3  == 3                  // prints "here"
 assert x4  == 1                  // compile error, args needs arguments
@@ -924,17 +908,8 @@ if if x == 3 { true }else{ false } {
 
 ### Legal but weird
 
-The variable `http` has a type `8080` followed by a comment
-(`//masc.soe.ucsc.edu`)
-
-```
-let http:8080//masc.soe.ucsc.edu
-
-assert http equals :8080 // http variable has type 8080
-```
-
-There is no `--` operator in Pyrope, but there is a `-` which can be followed
-by a negative number `-3`.
+There is no `--` operator in Pyrope, but there is a `-` which can
+be followed by a negative number `-3`.
 
 ```
 let v = (3)--3
