@@ -94,8 +94,18 @@ To display the content of the LGraph IR (Pyrope as the example)
 
 `inou.pyrope files:foo.prp |> pass.lnast_tolg |> lgraph.dump`
 
-### Graphviz LGraph IR Dump
 
+### LGraph serialization
+To serialize the content of the LGraph IR (Pyrope as the example), default path is `lgdb`
+`inou.pyrope files:foo.prp |> pass.lnast_tolg |> lgraph.save`
+
+
+### LGraph deserialization
+To deserialize a stored LGraph, and pass it to some lgraph passes 
+`lgraph.open name:foo |> pass.cprop |> pass.bitwidth |> inou.cgen.verilog odir:tmp`
+
+
+### Graphviz LGraph IR Dump
 To display the content of the LGraph IR (Pyrope after the `cprop` pass as the example)
 `inou.pyrope files:foo.prp |> pass.lnast_tolg |> pass.cprop |> inou.graphviz.from`
 
@@ -107,6 +117,8 @@ To display the content of the LGraph IR (Pyrope after the `cprop` pass as the ex
   livehd> lgraph.match |> lgraph.dump
   ```
   `lgraph.match` picks up any LGraphs matching the regex passed (or everything if no regex is provided) and treats every single one as the top of the hierarchy, whereas `lgraph.open name:<root module>` will just open the root module as the top of the hierarchy.
+
+
 
 
 ### Running a custom pass
