@@ -128,29 +128,35 @@ let err = a == w // compile error, not (a equals w) or overload
 
 While performing assignments checks that the left-hand-side tuple fields are
 fully populated (`x=y`) by checking that `y does x`. The same check happens for
-the lambda calls but not for lambda references.
+the lambda calls, but a slightly check is performed when a lambda is passed as
+an argument.
 
 
-Lambda calls (`f(a1,a2)->(r1,r2)`) to defined lambdas (`f = fun(ad1:ad1_t,
-ad2)->(rd1:rd1_t, rd2)`) always checks the calling arguments `(a1,a2) does
-(ad1:ad1_t, ad2)`. The return tuple is used in the type inference. In
+For each lambda call (`ret_val = f(a1,a2)`), the type system check against the
+defined lambda (`f = fun(ad1:ad1_t, ad2)->(rd1:rd1_t, rd2)`). In this case, the
+check for the calling arguments (`(a1,a2) does (:ad1_t, :())`) should be
+satisfied. Notice that some of the inputs (`ad2`) have no defined type, so those
+unspecified arguments always satisfies by the type check. 
+
+The return tuple is also used in the type system (`ret_val does (:rd1_t,
+:())`), the check is the same as in an assignment (`lhs does rhs`). In
 overloading cases explained later, the return type could also be part of the
-call check.
+overloading check.
 
 
-The type is inferred for arguments and return values. If the lambda definition
+The type can be inferred for arguments and return values. If the lambda definition
 has no type (`ad2` and `rd2`). A "different" implementation lambda exist for
-each combination of infered types or the lambda must be inlined in the caller.
+each combination of inferred types or the lambda must be inlined in the caller.
 
 
 ```
 let fa_t = :fun(a:Animal)->()
-let fd_t:fun(d:Dog)->() = _    // same, different style
+let fd_t = :fun(d:Dog)->()
 
 let call_animal = fun(a:Animal)->() {
    puts a.name // OK
 }
-let call_dog = fun(d:Dog)->() {
+let call_dog:fd_t = fun(d:Dog)->() {    // OK to add type in lhs
    d.bark()    // OK
 }
 
@@ -176,7 +182,7 @@ f_d(call_dog)    // OK
 
 For fully named calls, when all the arguments have names, the argument position
 is not considered in the `does` check. In a way, the call arguments for
-`(a=1,b=2) does (b=2,a=1)`. This consistent with the tuple check semantics. The
+`(a=1,b=2) does (b=2,a=1)` is true. This is consistent with the tuple check semantics. The
 difference happens when the lambda definition has a in-place operator (`...`).
 Only one in-place operator are allowed per lambda definition `(a,b,...x,c)`,
 the `does` operator uses name and position like in unnamed tuples even if all
@@ -209,28 +215,43 @@ m("1","here",2,3)          // compile error, x has 3 fields
 
 For all the checks that are not function reference or in-place, the `x does y`
 check could be summarized as `x` is a superset of `y`. `x` has all the
-functionality of `y` and more. In a more formal compiler nomenclature `x does
+functionality of `y` and maybe more. In a more formal compiler nomenclature `x does
 y` applied to tuples is called a covariant relationship. It is covariant
 because adding the same extra fields to both `x` and `y` keeps the semantics
 (`((foo=3,...x) does (foo=3,...y)) == x does y`). This allows to extend the
 tuple semantics and the relationship is preserved.
 
 
-When `x` and `y` are composed in a function reference, the relationship is not
-covariant but contravariant. `Dog does Animal` is true, but
-`:fun(x:Dog)->() does :fun(x:Animal)->()` is false. The reason is shown in the
-previous example. The a `fun(fd:fd_t)` can be called with `call_animal` because
-the fields accessed by `call_animal` are only a subset of `Dog` and hence if
-called inside `f_d` it can handle the `Dog` type. The opposite is not the case.
+When `x` and `y` are in a lambda passed as reference to another lambda (lambda
+reference), the relationship is not covariant but contravariant. `Dog does
+Animal` is true, but `:fun(x:Dog)->() does :fun(x:Animal)->()` is false. The
+reason is shown in the previous example. The `fun(fd:fd_t)` can be called
+with `call_animal` because the fields accessed by `call_animal` are only a
+subset of `Dog` and hence if called inside `f_d` it can handle the `Dog` type.
+The opposite is not the case.
 
 
 `:fun(x1)->(x2) does :fun(y1)->y2` check is equivalent to `(y1 does x1) and (x2
 does y2)`.
 
 
-In progamming languages, this is usually called that the function arguments are
-contravariant and the return type is covariant. In Pyrope, the return type
-could be used to infer unless overloading is used.
+
+
+Given a lambda passed as argument (`:fun(x:fun(c:c_t)->(d:d_t))->(y)`), the
+check when passing the lambda as argument to `x` a function like
+`fun(w:w_t)->(z:z_t)`. In this case, the `:fun(:w_t)->(:z_t) does
+fun(:c_t)->(:d_t)` is a contravariant test for inputs and covariant for
+outputs. This makes it equivalent to `(:c_t does :w_t) and (:z_t does :d_t)`.
+
+
+If the same type is used as input and output is an equivalence check (`((a does
+b) and (b does a)) == (a equals b)`). In programming languages this is called
+an invariance or bivariance.
+
+
+Pyrope uses the typical check in modern languages where the function arguments
+are contravariant and the return type is covariant. In Pyrope, the return type
+is checked in the covariant and contravariant checks.
 
 
 
