@@ -351,16 +351,13 @@ synthesis flow to read timing delays.
 
 
 Pyrope does not specify the attributes, the compiler flow specifies them.
-Reading or writing attributes should not affect a logical equivalence check,
-but they can affect the quality of results AND assertion/debug statements.
-Since attributes can affect assertions, they can stop/abort the compilation. In
-a way, if the program compiles with attributes (no assertion failure), dropping
-all the attributes should result in an equivalent program although it may be
-less efficient.
+Reading attributes should not affect a logical equivalence check. Writing
+attributes can have a side-effect because it can change bits use for
+wrap/saturate or change pins like reset/clock in registers. Additionally,
+attributes can affect assertions, so they can stop/abort the compilation. 
 
 
-Attributes are simple identifiers that start with `$`. The are three operations
-that can be done with attributes: set, check, read.
+The are three operations that can be done with attributes: set, check, read.
 
 * Set: when associated to a variable type in the left-hand-side of an
   assignment or directly accessed. If a variable definition, this binds the
@@ -368,22 +365,28 @@ that can be done with attributes: set, check, read.
   changes attribute value, a direct assignment is possible E.g: `foo::[max=300]
   = 4` or `baz.::[attr] = 10` 
 
-* Check: when associated to a type property in the left-hand-side of an
-  assignment. The attribute is an expression that must evaluate true only at
-  this statement. E.g: `var tmp = yy::[comptime] + xx`
+* Check: when associated to a type property in the right-hand-side of an
+  assignment. The attribute is a comma separated list of boolean expression
+  that must evaluate true only at this statement. E.g: `var tmp =
+  yy::[comptime, attr2>0] + xx`
 
 * Read: a direct read of an attribute value is possible with `variable.field.::[attribute]`
 
 
 The attribute set, writes a value to the attribute. If no value is given a
 boolean `true` is set. The attribute checks are expressions that must evaluate
-true. The attribute reads can be used in assertions or debug statements, but
-are not allowed to affect results.
+true. 
+
+
+Since conditional code can depend on an attribute, which results in executing a
+different code sequence that can lead to the change of the attribute. This can
+create a iterative process. It is up to the compiler to handle this, but the
+most logical is to trigger a compile error if there is no fast convergence.
 
 
 ```
 // attribute set
-var foo::[comptime=true] = xx      // enforce that foo is comptime true always
+var foo:u32:[comptime=true] = xx   // enforce that foo is comptime true always
 var bar::[comptime] = xx           // same as previous statement
 yyy = xx                           // yyy does not check comptime
 yyy::[comptime=true] = xx          // now, checks that 'yyy` is comptime
@@ -467,8 +470,11 @@ passes:
 * `valid`, `retry`: for elastic pipelines
 
 
-Attributes control fields like the default reset and clock signal. This allows to change
-the control inside procedures.
+Attributes control fields like the default reset and clock signal. This allows
+to change the control inside procedures. Notice that this means that attributes
+are passed by reference. This is not a value copy, but a pass by reference.
+This is needed because when connecting things like a reset, we want to connect
+to the reset wire, not the current reset value.
 
 ```
 let counter = proc(en, width) {
