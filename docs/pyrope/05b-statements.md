@@ -97,7 +97,7 @@ a += 1 when false             // never executes
 assert a == 3
 assert a == 1000 when a > 10  // assert never executed either
 
-var my:reg = 3 when some_condition  // no register declared otherwise
+reg my = 3 when some_condition  // no register declared otherwise
 
 ret "fail" unless success_condition
 ```
@@ -357,7 +357,7 @@ equivalent. The difference is that defer_read does not insert a register.
 
 
 ```
-var counter:reg u32 = _
+reg counter:u32 = _
 
 let counter_m1 = counter#[-1] // last cycle
 let counter_0  = counter#[0]  // current cycle 
@@ -390,7 +390,7 @@ var x = 100
 defer_write x = a
 a = 200
 
-$(comptime) assert x == 100
+cassert x == 100
 defer_read assert x == 1
 ```
 

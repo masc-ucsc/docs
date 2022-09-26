@@ -354,7 +354,7 @@ var fun_list = fun(a,b){ ret a+b}
 fun_list ++= fun(a,b,c){ ret a+b+c }
 fun_list ++= fun(a,b,c,d){ ret a+b+c+d }
 
-assert fun_list.$size
+assert fun_list.::[size]
 
 assert fun_list(1,2) == 3
 assert fun_list(1,2,4) == 7

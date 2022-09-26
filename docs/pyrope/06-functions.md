@@ -48,13 +48,13 @@ a lambda is to have access to a local variable with a definition or to "import"
 a variable from another file.
 
 ```
-let _a_3   = {   3 }     // just scope, not a lambda. Scope is evaluate now
-let _a_fun = fun() { 4 } // local function, when just_4 is called 4 is returned
+let a_3   = {   3 }      // just scope, not a lambda. Scope is evaluate now
+let a_fun = fun() { 4 }  // local function, when just_4 is called 4 is returned
 
 let fun3 = fun(){ 5 }    // public lambda that can be imported by other files
 
 let x = a_3()            // compile error, explicit call not posible in scope
-let x = a_fun()          // OK, explicit call
+let x = a_fun()          // OK, explicit call needed when no arguments
 
 assert a_3 equals 3
 assert :a_fun equals :fun()
@@ -113,7 +113,7 @@ var y = (
   ,inc1 = fun (ref self) { self.val = u32(self.val + 1) }
 )
 
-let my_log:$(debug) = fun (...inp) {
+let my_log::[debug] = fun (...inp) {
   print "loging:"
   for i in inp {
     print " {}", i
@@ -165,7 +165,9 @@ let div2 = fun (...x){ x.0 / x.1 }    // unnamed input tuple
 
 let noarg = fun () { ret 33 }         // explicit no args
 
-assert noarg == 33 == noarg()
+assert 33 == noarg()
+                      
+assert noarg == 33 // compile error, `noarg()` needed for calls without arguments
 
 a=div(3  , 4  , 3)       // compile error, div has 2 inputs
 b=div(self=8, b=4)       // OK, 2
@@ -179,6 +181,7 @@ h=div2(8, 4, 3)          // OK, 2 (3rd arg is not used)
 i=8.div2(4,3)            // compile error, no self in div2
 
 j=(8,4)  |> div2         // OK, 2, same as div2(8,4)
+j=(8,4)  |> div2()       // OK, 2, same as div2(8,4)
 k=(4)    |> div2(8)      // OK, 2, same as div2(8,4)
 l=(4,33) |> div2(8)      // OK, 2, same as div2(8,4,33)
 m=4      |> div2 8       // compile error, parenthesis needed for complex call
@@ -217,63 +220,69 @@ contents, a `ref self` must be passed as input.
 ```
 var tup2 = (
   ,val:u8 = _
-  ,upd = proc(ref self) { self.val:$(saturate) += 1 }
+  ,upd = proc(ref self) { self.val::[saturate] += 1 }
   ,calc = fun(self) { self.val}
 )
 ```
 
+A lambda call uses parenthesis (`foo() or foo(1,2)`). The parenthesis can be
+avoid in tree conditions: (1) arguments are passed in a simple function call
+statement; (2) after a pipeline directive; (3) the variable has a getter method
+(`get`).
+
+```
+no_arg_fun()     // must use explicit parenthesis/called
+arg_fun 1,2      // parenthesis are optional
+arg_fun(1,2)     // OK too
+(1,2) |> arg_fun // OK too, it is after |>
+
+var intercepted:(
+ ,field:u32
+ ,get=fun(self) { ret self.field + 1 }
+ ,set=fun(ref self,v ) { self.field = v }
+) = 0
+
+cassert intercepted == 1  // will call get method without explicit call
+cassert intercepted.field == 0
+```
 
 ## Pass by Reference
 
 Pyrope arguments are by value, unless the `ref` keyword is used. Pass by
-reference is needed in three main cases: (1) allow methods to a update tuple
-passed as argument; (2) pass variables to functions without needing to copy
-values like registers; (3) avoid lambda calls when passed as argument.
+reference is needed to avoid the copy by value of the function call. Unlike
+non-hardware languages, there is no performance overhead in passing by value.
+The reason for passing as reference is to allow the lambda to operate over the
+passed argument. If modified, it behaves like if it were an implicit output.
+This is quite useful for large objects like memories to avoid the copy.
 
-In all those cases, the pass by reference behaves like if the calling lambda
-were inlined in the caller lambda. The `ref` keyword must be explicit in the
-lambda input definition but also in the lambda call. The lambda outputs can not
-have a `ref` modifier.
+
+The pass by reference behaves like if the calling lambda were inlined in the
+caller lambda. The `ref` keyword must be explicit in the lambda input
+definition but also in the lambda call. The lambda outputs can not have a `ref`
+modifier.
+
+No logical or arithmetic operation can be done with a `ref`. As a result, it
+is only useful for lambda arguments. 
 
 
 ```
 let inc1 = fun(ref a) { a += 1 }
 
 let x = 3
-inc1(ref x)       // compile error, no mutable access to x inside inc1
+inc1(ref x)       // compile error, `x` is immutable but modified inside inc1
 
 var y = 3
 inc1(ref y)
 assert y == 4
 
 let banner = fun() { puts "hello"  }
-let execute_method = fun(ref fn) {
-  fn() // prints hello
+let execute_method = fun(fn) {
+  fn() // prints hello when banner passed as argument
 }
 
-execute_method(ref banner) // OK
-execute_method(banner)     // compile error, ref explicitly expected
+execute_method(banner)     // OK
 ```
 
-A lambda will be called whenever used, no need to have an explicit `()`. The
-only exception is when the `ref` keyword is used.
-
-Adding a `ref` before a lambda call delays the call. It it is a variable, it
-delays the call to the getter/setter too.
-
-No logical or arithmetic operation can be done with a `ref`. As a result, this
-is useful to assign to a new variable or to pass a lambda as arguments to
-another lambda.
-
-
-```
-let f1 = fun() { puts "here" }
-
-let f2a = f1      // prints here
-
-let f2b = ref f1  // no call
-let xx = f2b      // prints here
-```
 
 ## Output tuple
 
@@ -367,7 +376,7 @@ counter.inc(2)             // compile error, multiple inc options
 assert 44.inc(2) == 8
 
 counter.val = 5
-let mul = ref inc
+let mul = inc
 counter.mul(2)             // call the new mul method with UFCS
 assert counter.val == 10
 

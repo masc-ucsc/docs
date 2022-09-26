@@ -9,10 +9,10 @@ simulation runtime, and formal verification time.
 
 There are 5 main verification statements:
 
-* `assert`: The condition should be true at runtime. If `$(comptime) assert`, the
+* `assert/cassert`: The condition should be true at runtime. If `cassert`, the
   condition must be true at compile time.
 
-* `assume`: Similar to assert, but allows the tool to simplify code based on it
+* `assume/cassume`: Similar to assert, but allows the tool to simplify code based on it
   (it has optimization side-effects).
 
 * `verify`: Similar to assert, but it is potentially slow to check, so it is
@@ -31,11 +31,18 @@ There are 5 main verification statements:
   implementation bit.
 
 
+The `cassert` are syntax suggar for a defined comptime assert. Since it is so
+common, it is part of the basic syntax like `assert`.
+
+```pyrope
+let cassert::[comptime] = assert
+let cassume::[comptime] = assume
+```
 
 ```pyrope
 a = 3
 assert a == 3          // checked at runtime (or compile time)
-$(comptime) assert a == 3 // checked at compile time
+cassert a == 3         // checked at compile time
 
 verify a < 4           // checked at runtime and verification
 assume b > 3           // may optimize and perform a runtime check
@@ -69,7 +76,7 @@ The recommendation is to write as many `assert` and `assume` as possible. If
 something can not happen, writing the `assume` has the advantage of allowing
 the synthesis tool to generate more efficient code.
 
-In a way, most type checks have equivalent `$(comptime) assert` checks.
+In a way, most type checks have equivalent `cassert` checks.
 
 ## Asserts and reset
 
@@ -81,7 +88,7 @@ and checks always independent of the reset wires.
 
 
 ```
-var memory:reg []u33 = (1,2,3) // may take cycles to load this contents
+reg memory:[]u33 = (1,2,3) // may take cycles to load this contents
 
 assert memory[0] == 1 // not checked during reset
 

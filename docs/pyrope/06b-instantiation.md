@@ -223,13 +223,13 @@ the condition is false.
     ```
     let case_1_counter = proc(runtime)->(res) {
 
-      var r:reg (
-        ,total:reg u16           // r is reg, everything is reg
+      reg r (
+        ,reg total:u16           // r is reg, everything is reg
         ,increase = fun(a) {
           puts "hello"
 
           let res = self.total
-          self.total:$(wrap) = res+a
+          self.total::[wrap] = res+a
 
           ret res
         }
@@ -248,13 +248,13 @@ the condition is false.
     ```
     let case_1_counter = proc(runtime)->(res) {
 
-      var r:reg (
-        ,total:reg u16
+      reg r (
+        ,reg total:u16
         ,increase = fun(a) {
           puts "hello"
 
           let res = self.total
-          self.total:$(wrap) = res+a
+          self.total::[wrap] = res+a
 
           ret res
         }
@@ -264,13 +264,13 @@ the condition is false.
         puts "hello"
 
         let res = r.total
-        r.total:$(wrap) = res+3
+        r.total::[wrap] = res+3
         res = res
       }elif runtime == 4 {
         puts "hello"
 
         let res = r.total
-        r.total:$(wrap)= res+9
+        r.total::[wrap]= res+9
         res = res
       }
     }
@@ -358,14 +358,14 @@ simulation/synthesis.
 
 
 ```
-var r:reg u16 = 3 // reset sets r to 3
+reg r:u16 = 3 // reset sets r to 3
 r = 2             // non-reset assignment
 
-var array:reg []u16 = (1,2,3,4)  // reset values
+reg array:[]u16 = (1,2,3,4)  // reset values
 
-var r2:reg u128 = conf.get("my_data.for.r2")
+reg r2:u128 = conf.get("my_data.for.r2")
 
-var array:reg[] = conf.get("some.conf.hex.dump")
+reg array:[] = conf.get("some.conf.hex.dump")
 ```
 
 
@@ -373,12 +373,12 @@ The assignment during declaration to a register is always the reset value. If
 the assignment is a method, the method is called every cycle during reset.
 
 ```
-var array:reg $(clock=my_clock) [1024]tag = proc(ref self) {
-  reset_iter:reg $(reset=false) u10 = 0sb? // no reset flop
+reg array:[1024]tag:[clock=my_clock] = proc(ref self) {
+  reg reset_iter:u10:[reset=false] = 0sb? // no reset flop
 
   self[reset_iter].state = I
 
-  reset_iter:$(wrap) = reset_iter + 1
+  reset_iter::[wrap] = reset_iter + 1
 }
 ```
 
@@ -390,11 +390,11 @@ without reset signal.
 
 
 ```
-var my_flop:reg [8]u32 = proc(ref self) {
-  var reset_counter:reg $(async=true) u3 = _ // async is only posedge reset
+reg my_flop:[8]u32 = proc(ref self) {
+  reg reset_counter:u3:[async=true] = _ // async is only posedge reset
 
   self[reset_counter] = reset_counter
-  reset_counter:$(wrap) += 1
+  reset_counter::[wrap] += 1
 }
 ```
 
@@ -407,7 +407,7 @@ cycle Similarly a tuple can have a reset when assigned to a register.
 
     ```
     let Mix_tup = (
-      ,flag:reg boolean
+      ,reg flag:bool = false
       ,state: u2
     )
 
@@ -426,8 +426,8 @@ cycle Similarly a tuple can have a reset when assigned to a register.
 
     ```
     let Mix_tup = (
-      ,flag:reg boolean
-      ,state: u2
+      ,reg flag:bool = false
+      ,state:u2
     )
 
     var x:Mux_tup = proc(ref self) {
@@ -456,11 +456,11 @@ Registers have the following attributes:
 A sample of asynchronous reset with different reset and clock signal
 
 ```
-var my_asyn_other_reg:reg $(
+reg my_asyn_other_reg:u8:[
   ,async = true
   ,clock = ref clk2    // ref to connect, not read clk2 value
   ,reset = ref reset33 // ref to connect, not read current reset33 value
-) u8 = 33 // initialized to 33 at reset
+] = 33 // initialized to 33 at reset
 
 
 if my_async_other_reg == 33 {
@@ -482,7 +482,7 @@ used for optimization. Copy values can propagate through `retime`
 register/memories.
 
 
-A register or memory without explicit `$(retime)` can only be optimized away
+A register or memory without explicit `:[retime]` attribute can only be optimized away
 if there is no read AND no write to the register. Even just having writes the
 register is preserved because it can be used to read values with the
 scan-chain.
@@ -605,8 +605,8 @@ if cond {
   var out = _
 
   {
-    var p1r:reg = _
-    var p2r:reg = _
+    reg p1r = _
+    reg p2r = _
 
     var _l1 = inp1 + 1    // private
     var p2 = inp1 + 2     // public
@@ -625,12 +625,12 @@ if cond {
 
 
 ```
-var a:reg u4 = 3
-a:$(saturate) = a+1
+reg a:u4 = 3
+a::[saturate] = a+1
 
-var b:reg = 4
+reg b = 4
 if cond {
-  var c:reg = _           // weird as reg, but legal syntax
+  reg c = _           // weird as reg, but legal syntax
   c = b + 1
   b = 5
 }

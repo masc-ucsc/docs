@@ -19,7 +19,7 @@ is buffered and ordered at the end of the cycle to be deterministic.
 The only source of non-determinism is non-Pyrope (C++) calls from `procedures`
 executed at different pipeline stages. The pipeline stages could be executed in
 any order, it is just that the same order must be repeated deterministically
-during simulation. The non-Pyrope calls must be `$(comptime)` to affect
+during simulation. The non-Pyrope calls must be `::[comptime]` to affect
 synthesis. So the synthesis is deterministic, but the testing like cosimulation
 may not.
 
@@ -298,11 +298,10 @@ depending on the LNAST node:
     - trivial identity simplification for existing node, also performed as
       instruction combining proceeds. E.g: `a^a == a`, `a-a=0` ... 
 
-+ If the node is a `$(comptime)` trigger a compile error unless all the inputs are
++ If the node is a `::[comptime]` trigger a compile error unless all the inputs are
   constant
 
-    - `$(comptime) asserts` should satisfy the condition or a compile error is
-      generated
+    - `cassert` should satisfy the condition or a compile error is generated
 
 + If the node is a loop (`for`/`while`) that has at least one iteration expand
   the loop. This is an iterative process because the loop exit condition may
@@ -826,9 +825,9 @@ for each `?` bit, the assertions should fail depending on the simulation seed.
 
 
 ```
-var r_ver:reg = 0sb?
+reg r_ver = 0sb?
 
-var r:reg = _
+reg r = _
 var v = _
 
 assert v == 0 and r == 0
@@ -848,7 +847,7 @@ var arr:[] = (0,1,2,3,4,5,6,7)
 
 assert_always arr[0] == 0 and arr[7] == 7  // always works
 
-var mem:reg [] = (0,1,2,3,4,5,6,7)
+reg mem:[] = (0,1,2,3,4,5,6,7)
 
 assert_always mem[7] == 7                  // FAIL, this may fail during reset
 assert_always mem[7] == 7 unless mem.reset // OK
@@ -859,20 +858,21 @@ assert mem[7] == 7                         // OK, not checked during reset
 ### Unexpected calls
 
 
-Lambdas are called always unless a `ref` keyword is added that passes the
-lambda reference.
+Passing a lambda argument with a `ref` does not have any side effect because
+lambdas without arguments need to be explicitly called or just passed as
+reference.
 
 
 ```
 let args = fun(x) { puts "args:{}", b ; ret 1}
 let here = fun()  { puts "here" ; ret 3}
 
-let call_now   = fun(f:fun){ ret f } 
-let call_defer = fun(f:fun){ ret ref f } 
+let call_now   = fun(f:fun){ ret f() } 
+let call_defer = fun(f:fun){ ret f   } 
 
 let x0 = call_now here           // prints "here"
 let e1 = call_now args           // compile error, args needs arguments
-let x1 = call_defer here         // prints "here"
+let x1 = call_defer here         // nothing printed
 let e2 = call_defer args         // compile error, args needs arguments
 assert x0  == 3                  // nothing printed
 assert x1  == 3                  // nothing printed
@@ -882,17 +882,11 @@ let e3 = call_now(ref args)      // compile error, args needs arguments
 let x3 = call_defer(ref here)    // nothing printed
 let x4 = call_defer(ref args)    // nothing printed
 assert x2  == 3                  // nothing printed
-assert x3  == 3                  // prints "here"
+assert x3()  == 3                // prints "here"
+assert x3  == 3                  // compile error, explicit call needed
 assert x4  == 1                  // compile error, args needs arguments
 assert x4("xx") == 1             // prints "args:xx"
 
-```
-
-The `ref` is not needed if the lambda defition itself is the argument passed.
-
-```
-let x5 = call_now(fun() {here})  // nothing printed
-assert x3 == 3                   // prints here
 ```
 
 

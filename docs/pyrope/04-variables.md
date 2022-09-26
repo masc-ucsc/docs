@@ -337,7 +337,7 @@ the variable `does` comply with the type specified.
 ```
 var a = true  // infer a is a boolean
 
-foo = a:boolean or false // checks that 'a' is a boolean
+foo = a:bool or false // checks that 'a' is a boolean
 ```
 
 ## Attributes
@@ -351,7 +351,7 @@ synthesis flow to read timing delays.
 
 
 Pyrope does not specify the attributes, the compiler flow specifies them.
-Reading or writing attributes should not affect a logical equivalance check,
+Reading or writing attributes should not affect a logical equivalence check,
 but they can affect the quality of results AND assertion/debug statements.
 Since attributes can affect assertions, they can stop/abort the compilation. In
 a way, if the program compiles with attributes (no assertion failure), dropping
@@ -363,19 +363,19 @@ Attributes are simple identifiers that start with `$`. The are three operations
 that can be done with attributes: set, check, read.
 
 * Set: when associated to a variable type in the left-hand-side of an
-  assignment. If a variable definition, this binds the attribute with all the
-  use cases of the variable. Otherwise, it only does the check for the given
-  statement. If the variable just changes attribute value, a direct assignment
-  is possible E.g: `foo:$(max=300) = 4` or `foo.$max = 300 ; foo = 4`
+  assignment or directly accessed. If a variable definition, this binds the
+  attribute with all the use cases of the variable. If the variable just
+  changes attribute value, a direct assignment is possible E.g: `foo::[max=300]
+  = 4` or `baz.::[attr] = 10` 
 
-* Check: when associated to a variable type but not in the left-hand-side of an
-  assigment. The attribute is an expression that must evaluate true only at
-  this statement. E.g: `var tmp = yy:$(comptime) + xx`
+* Check: when associated to a type property in the left-hand-side of an
+  assignment. The attribute is an expression that must evaluate true only at
+  this statement. E.g: `var tmp = yy::[comptime] + xx`
 
-* Read: when used directly in an assertion or debug statement. `assert xx.$bits > 30`
+* Read: a direct read of an attribute value is possible with `variable.field.::[attribute]`
 
 
-The attribute set, writes a value to the atttribute. If no value is given a
+The attribute set, writes a value to the attribute. If no value is given a
 boolean `true` is set. The attribute checks are expressions that must evaluate
 true. The attribute reads can be used in assertions or debug statements, but
 are not allowed to affect results.
@@ -383,72 +383,65 @@ are not allowed to affect results.
 
 ```
 // attribute set
-var foo:$(comptime=true) = xx      // enforce that foo is comptime true always
-var bar:$(comptime) = xx           // same as previous statement
+var foo::[comptime=true] = xx      // enforce that foo is comptime true always
+var bar::[comptime] = xx           // same as previous statement
 yyy = xx                           // yyy does not check comptime
-yyy.$comptime = true               // now, checks that 'yyy` is comptime
+yyy::[comptime=true] = xx          // now, checks that 'yyy` is comptime
 
 // attribute check
 if bar == 3 {
-  tmp = bar:$(comptime == true)    // check that this use of bar is comptime
-  tmp = bar:$(comptime)            // same as previous statement
-  tmp = bar ; assert bar.$comptime // same as previous statements
+  tmp = bar::[comptime == true]    // check that this use of bar is comptime
+  tmp = bar::[comptime]            // same as previous statement
+  tmp = bar ; assert bar.::[comptime] // same as previous statements
 }
                                    // bar/foo may not be comptime
 
 // attribute read
-assert tmp.$bits < 30 and !tmp.$comptime
+assert tmp.::[bits] < 30 and !tmp.::[comptime]
 ```
 
 
 ```
 read_state = fun(x) {
-  let f:$(comptime) u32 = x // f is compile time or a error is generated
-  ret f                     // f should be compile time constant
+  let f:u32:[comptime] = x // f is compile time or a error is generated
+  ret f                    // f should be compile time constant
 }
 
 var foo = read_state(zz) // foo will be compile time constant
 ```
 
-Pyrope allows to assign the attribute to a statement to avoid repeating the
-same attribute multiple times. In which case, it applies the attribute to the
-left-hand-side of any assigment, return values, and checks for any expression
-without assignment. The following two examples of statement attribute are
-equivalent.
+Pyrope allows to assign the attribute to a variable or a function call. Not to
+statements because it is confusing if applied to the condition or all the
+sub-statements.
 
-=== "Statement attribute"
+```
+if cond::[comptime] {    // cond is checked to be compile time constant
+  x::[comptime] = a +1   // x is set to be compile time constant
+}else{
+  x::[comptime] = b      // x is set to be compile time constant
+}
 
-    ```
-    $(comptime)
-    if cond {                // cond is checked to be compile time constant
-      x = a + 1              // x is set to be compile time constant
-    }else{
-      x = b                  // x is set to be compile time constant
-    }
-    ```
 
-=== "Explicit multiple attributes"
+if cond.::[comptime] {  // checks if cond is compute at comptime
+  let v = cond
+  if cond {
+    puts "cond is compile time and true"
+  }
+}
+```
 
-    ```
-    
-    if cond:$(comptime) {    // cond is checked to be compile time constant
-      x:$(comptime) = a +1   // x is set to be compile time constant
-    }else{
-      x:$(comptime) = b      // x is set to be compile time constant
-    }
-    ```
 
 The programmer could create custom attributes but then a LiveHD compiler pass
 to deal with the new attribute is needed to handle based on their specific
 semantic. To understand the potential Pyrope syntax, this is a hypothetical
-`$poison` attribute that marks tuple.
+`::[poison]` attribute that marks tuple.
 
 ```
-let bad = (a=3,b:$(poison)=4)
+let bad = (a=3,b::[poison]=4)
 
 let b = bad.b
 
-assert b.$poison and b==4
+assert b.::[poison] and b==4
 ```
 
 In the future, the compiler may implement some of the following attributes, as
@@ -463,7 +456,7 @@ passes:
 * `deprecated`: to generate special warnigns about usage
 * `pipeline`: pipeline related information
 * `donttouch`: do not touch/optimize away
-* `keep`: similar to the donttouch but nicer syntax
+* `keep`: same as donttouch but shorter
 * `max_load`, `max_fanout`, `max_cap`: synthesis optimization hints
 * `inp_delay`, `out_delay`: synthesis optimizations hints
 * `max_delay`, `min_delay`: synthesis optimizations checked at simulation
@@ -473,6 +466,23 @@ passes:
 * `left_of`, `right_of`, `top_of`, `bottom_of`, `align_with`: placement hints
 * `valid`, `retry`: for elastic pipelines
 
+
+Attributes control fields like the default reset and clock signal. This allows to change
+the control inside procedures.
+
+```
+let counter = proc(en, width) {
+  reg value:uint:[bits=width] = 0
+  value = value + 1
+  ret value
+}
+
+let counter2::[clock=clk1]=counter
+let counter3::[reset=rst2]=counter
+
+var ctr2 =# counter2(my_enable)
+var ctr3 =# counter3(my_enable)
+```
 
 In the long term, the goal is to have any synthesis directive that can affect
 the correctness of the result to be part of the design specification so that it
@@ -504,13 +514,14 @@ syntax sugar for direct attribute set.
 
 ```
 opt1:uint(300) = 0
-opt2:$(min=0,max=300) = 0     // same
-opt3:int(0..=300) = 0         // same
+opt2:int:[min=0,max=300] = 0  // same
+opt3::[min=0,max=300] = 0     // same
+opt4:int(0..=300) = 0         // same
 
-assert opt1.$ubits == 0       // opt1 initialized to 0, so 0 bits
+assert opt1.::[ubits] == 0    // opt1 initialized to 0, so 0 bits
 opt1 = 200
-assert opt1.$ubits == 8       // last assignment needs 9 sbits or 8 ubits
-tmp  = opt1:$(ubits==8) + 1   // expression AND assert opt1.$ubits==8 check
+assert opt1.::[ubits] == 8    // last assignment needs 9 sbits or 8 ubits
+tmp  = opt1::[ubits==8] + 1   // expression AND assert opt1.::[ubits]==8 check
 ```
 
 The wrap/saturate are attributes that only make sense for attribute set. There
@@ -521,22 +532,22 @@ a:u32 = 100
 b:u10 = 0
 c:u5  = 0
 d:u5  = 0
-w:$(wrap) u5 = 0    // attribute set for all the 'w' uses
+w:u5:[wrap] = 0     // attribute set for all the 'w' uses
 
 b = a               // OK, o precision lost
-c:$(wrap) = a       // OK, same as c = a@[0..<5] (Since 100 is 0b1100100, c==4)
+c::[wrap] = a       // OK, same as c = a@[0..<5] (Since 100 is 0b1100100, c==4)
 c = a               // compile error, 100 overflows the maximum value of 'c'
 w = a               // OK, 'w' has a wrap set at declaration
 
-c:$(saturate) = a   // OK, c == 31
+c::[saturate] = a   // OK, c == 31
 c = 31
 d = c + 1           // compile error, '32' overflows the maximum value of 'd'
 
-d:$(wrap) = c + 1   // OK d == 0
-d:$(saturate) = c+1 // OK, d==31
-d:$(saturate) = c+1 // OK, d==31
+d::[wrap] = c + 1   // OK d == 0
+d::[saturate] = c+1 // OK, d==31
+d::[saturate] = c+1 // OK, d==31
 
-x:$(saturate) boolean = c // compile error, saturate only allowed in integers
+x::[saturate] boolean = c // compile error, saturate only allowed in integers
 ```
 
 ### comptime attribute
@@ -546,9 +557,9 @@ set/check/read the compile time status. This means that the value must be
 constant at compile time or a compile error is generated.
 
 ```
-let a:$(comptime) = 1     // obviously comptime
-b:$(comptime) = a + 2  // OK too
-let c:$(comptime) = rand  // compile error, 'c' is not compile time constant
+let a::[comptime] = 1     // obviously comptime
+b::[comptime] = a + 2     // OK too
+let c::[comptime] = rand  // compile error, 'c' is not compile time constant
 ```
 
 To avoid too frequent comptime directives, Pyrope treats all the variables that
@@ -573,8 +584,8 @@ This guarantees that `debug` variables, or statements, do not have any
 side-effects beyond debug statements.
 
 ```
-var a = (b:$(debug)=2, c = 3) // a.b is a debug variable
-let c:$(debug) = 3
+var a = (b::[debug]=2, c = 3) // a.b is a debug variable
+let c::[debug] = 3
 ```
 
 Assignments to debug variables also bypass protection access. This means that
@@ -586,7 +597,7 @@ all the results as debug, it allows to read any public/private variable/field.
 x:(_priv=3, zz=4) = _
 
 let tmp = x._priv         // compile error
-let tmp:$(debug) = x.priv // OK
+let tmp::[debug] = x.priv // OK
 
 assert x._priv == 3    // OK, assert is a debug statement
 ```
@@ -599,8 +610,8 @@ persistence across cycles the `reg` type must be used.
 
 
 ```
-var counter:reg u32 = 10
-var not_a_reg:u32   = 20
+reg counter:u32   = 10
+var not_a_reg:u32 = 20
 ```
 
 In `reg`, the right-hand side of the initialization (`10` in the
@@ -623,7 +634,7 @@ The private has different meaning depending on when it is applied:
   variable is not pipelined to the next type stage. Section
   [pipestage](06c-pipelining.md) has more details.
 
-* When is applied to a pyrope file upper scope variable (`var _top_reg:reg = _`),
+* When is applied to a pyrope file upper scope variable (`reg _top_reg = _`),
   it means that an `import` command or register reference can not access it
   across files. Section [typesystem](07-typesystem.md) has more details.
 
@@ -962,14 +973,12 @@ the time, and the associated logic is removed.
 
 ```
 var v1:u32 = _                 // v1 is zero every cycle AND not $valid
-assert v1.$valid == false
+assert v1.::[valid] == false
 var v2:u32 = 0                 // v2 is zero every cycle AND     $valid
-assert v2.$valid == true
-v2.$valid=false                // set valid attribute directly
+assert v2.::[valid] == true
 
-$(comptime)
-assert v1?
-assert not v2?
+cassert v1?
+cassert not v2?
 
 assert v1 == 0 and v2 == 3     // data still same as usual
 
@@ -986,7 +995,7 @@ let res2 = v2 + 0              // valid with just unknown 0sb? data
 assert res1?
 assert res2?
 
-counter:reg u32 = 0
+reg counter:u32 = 0
 
 always_assert counter.reset implies !counter?
 ```
@@ -1002,9 +1011,10 @@ let custom = (
 )
 
 var x:custom = _
-$(comptime) assert x?
+
+cassert x?       // compile time assert
 x.data = 33
-$(comptime) assert not x?
+cassert not x?
 ```
 
 
@@ -1014,7 +1024,7 @@ adding optional to each of the tuple fields.
 
 ```
 let complex = (
-  ,v1:reg string = "foo"
+  ,reg v1:string = "foo"
   ,v2:string = _
 
   ,set = proc(ref self,v) {
@@ -1024,9 +1034,9 @@ let complex = (
 )
 
 var x1:complex = _
-var x2:$(valid = false) complex = 0  // toggle invalid forever, and set zero
+var x2:complex:[valid = false] = 0  // toggle invalid forever, and set zero
 var x3:complex = 0
-x3.$valid = false                 // toggle invalid
+x3.::[valid] = false                // toggle invalid
 
 assert x1.v1 == "" and x1.v2 == ""
 assert not x2? and not x2.v1? and not v2.v2?

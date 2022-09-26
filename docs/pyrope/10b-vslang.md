@@ -142,3 +142,16 @@ let AnObject = (
 )
 ```
 
+## Typescript
+
+Pyrope has a type system quite similar to Typescript, but there are significant
+differences. The main is that Pyrope does not allow union types.
+
+
+There are also difference in some semantics. For example, Typescript `"foo" in
+bar` is equivalent to the `bar has "foo"` in Pyrope. Both check if entry `foo`
+exists in the tuple `bar` (`bar.foo`). There is no Typescript equivalent to the
+Pyrope `"foo" in bar` which checks if `bar` is a tuple with an entry equal to
+string `"foo"`.
+
+

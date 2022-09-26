@@ -45,9 +45,9 @@ RTL interface.
 
 The async memories behave like tuples/arrays but there is a small difference,
 the persistence of state between clock cycles. To be persistent across clock
-cycles, this is achieved with a `:reg` declaration. When a variable is declared
+cycles, this is achieved with a `reg` declaration. When a variable is declared
 with `var` the contents are lost at the end of the cycle, when declared with
-`:reg` the contents are preserved across cycles.
+`reg` the contents are preserved across cycles.
 
 
 In most cases, the arrays and async memories can be inferred automatically. The
@@ -55,7 +55,7 @@ maximum/minimum value on the index effectively sets the size and the default
 initialization is zero.
 
 ```
-var mem:reg [] = 0
+reg mem:[] = 0
 mem[3]   = something // async memory
 var array:[] = _
 array[3] = something // array no cross cycles persistence
@@ -74,8 +74,8 @@ In the previous example, the compiler infers that the bundle at most has 127 ent
 There are several constructs to declare arrays or async memories:
 
 ```
-var mem1:reg [16]i8 = 3   // mem 16bit memory initialized to 3 with type i8
-var mem2:reg [16]i8 = _   // mem 16bit memory initialized to 0 with type i8
+reg mem1:[16]i8 = 3   // mem 16bit memory initialized to 3 with type i8
+reg mem2:[16]i8 = _   // mem 16bit memory initialized to 0 with type i8
 var mem3:[] = 0sb?        // array infer size and type, 0sb? initialized
 var mem4:[13] = 0         // array 13 entries size, initialized to zero
 ```
@@ -107,13 +107,13 @@ triggered.
 === "Pyrope array syntax"
     ```
     var mem1:[4][8]u5 = 0
-    var reset_value:$(comptime) [3][8]u5 = _ // only used during reset
+    var reset_value:[3][8]u5:[comptime] = _ // only used during reset
     for i in 0..<3 {
       for j in 0..<8 {
         reset_value[i][j] = j
       }
     }
-    var mem2:reg = reset_value   // infer async mem u5[3][8]
+    reg mem2 = reset_value   // infer async mem u5[3][8]
     ```
 
 === "Explicit initialization"
@@ -124,7 +124,7 @@ triggered.
       ,(u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0))
       ,(u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0))
     )
-    var mem2:reg = ( 
+    reg mem2 = ( 
       ,(u5(0), u5(1), u5(2), u5(3), u5(4), u5(5), u5(6), u5(7))
       ,(u5(0), u5(1), u5(2), u5(3), u5(4), u5(5), u5(6), u5(7))
       ,(u5(0), u5(1), u5(2), u5(3), u5(4), u5(5), u5(6), u5(7))
@@ -157,9 +157,9 @@ is a typical decode stage from an in-order CPU:
 
 === "Flop the inputs"
     ```
-    var rf:reg [32]i64 = 0sb?   // random initialized
+    reg rf:[32]i64 = 0sb?   // random initialized
 
-    var a:reg (addr1:u5, addr2:u5) = (0,0)
+    reg a:(addr1:u5, addr2:u5) = (0,0)
 
     data_rs1 = rf[a.addr1]
     data_rs2 = rf[a.addr2]
@@ -171,7 +171,7 @@ is a typical decode stage from an in-order CPU:
     ```
     var rf:[32]i64 = 0sb?
 
-    var a:reg (data1:i64, data2:i64) = _
+    reg a:(data1:i64, data2:i64) = _
 
     data_rs1 = a.data1
     data_rs2 = a.data2

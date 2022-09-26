@@ -24,7 +24,7 @@ the flop `q` pin.
 
 === "Structural flop style"
     ```
-    defer_read var counter_next:$(wrap) u8 = counter_q + 1
+    defer_read var counter_next:u8:[wrap] = counter_q + 1
 
     let counter_q = __flop(din=counter_next, reset=my_rst, clock=my_clk
                        ,enable=my_enable, posclk=true, initial=3, async=false)
@@ -32,11 +32,11 @@ the flop `q` pin.
 
 === "Pyrope style"
     ```
-    var counter:reg $(reset=my_rst, clock=my_clk, posclk=true, async=false) u8 = 3
+    reg counter:u8:[reset=my_rst, clock=my_clk, posclk=true, async=false]= 3
     assert counter == counter#[0]  // counter still has the q value
 
     if my_enable {
-      counter:$(wrap) = counter + 1
+      counter::[wrap] = counter + 1
     }
     ```
 
@@ -89,7 +89,7 @@ The syntax for pipestage:
 
 The semantics of `pipestage` are as follows:
 
-* Explicitly declared registers (`var foo:reg`) are not affected by `pipestage`
+* Explicitly declared registers (`reg foo`) are not affected by `pipestage`
 
 * Variables declared before are "pipelined" inside each of the `pipestage` scopes.
 
@@ -114,8 +114,8 @@ let i_let = i
 var i_var0 = i
 var i_var1 = i
 
-var i_reg0:reg = i        // initialization only
-var i_reg1:reg i_reg0 = _
+reg i_reg0 = i        // initialization only
+reg i_reg1:i_reg0 = _
 
 i_reg1 = i                // every cycle
 
@@ -176,7 +176,7 @@ The registers automatically inserted with the `pipestage` command are marked
 with `retime` true. Additionally, retime can be set in any register:
 
 ```
-var my_reg:reg $(retime=true,clock=my_clk) = 0
+reg my_reg::[retime=true,clock=my_clk] = 0
 ```
 
 
@@ -207,15 +207,15 @@ the conceptual problems of integrating them:
 === "Explicit Stages"
     ```
     add1 = proc(a,b) {     // 1 cycle add
-      var r:reg = _
+      reg r  = _
       let rr = r           // get flop value
       r = a+b
       ret rr
     }
     let mul3 = proc(a,b) { // 3 cycle multiply
-      var reg1:reg = _
-      var reg2:reg = _
-      var reg3:reg = _
+      reg reg1 = _
+      reg reg2 = _
+      reg reg3 = _
       reg3 = reg2
       reg2 = reg1
       reg1 = a * b

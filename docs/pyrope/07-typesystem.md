@@ -16,11 +16,11 @@ adjust for performance/constraints like size, area, FPGA/ASIC. Type systems
 could help in these areas.
 
 
-## Types vs `$(comptime) assert`
+## Types vs `cassert`
 
-To understand the type check, it is useful to see an equivalent `$(comptime)
-assert` translation. The type system has two components: type synthesis and
-type check. The type check can be understood as a `$(comptime) assert`.
+To understand the type check, it is useful to see an equivalent `casser`
+translation. The type system has two components: type synthesis and type check.
+The type check can be understood as a `cassert`.
 
 
 After type synthesis, each variable has an associated type. Pyrope checks that
@@ -31,7 +31,7 @@ variables have a type check explicitly set (`variable:type`) in the rhs expressi
 
 Although the type system is not implemented with asserts, it is an equivalent
 way to understand the type system "check" behavior.  Although it is possible to
-declare just the `$(comptime) assert` for type checks, the recommendation is to
+declare just the `cassert` for type checks, the recommendation is to
 use the explicit Pyrope type syntax because it is more readable and easier to
 optimize.
 
@@ -61,12 +61,12 @@ optimize.
     var a:u32 = 0
 
     a += 1
-    $(comptime) assert a does u32
+    cassert a does u32
     a = b                       // incorrect
-    $(comptime) assert b does u32  // fails
+    cassert b does u32  // fails
 
     var dest:u32 = 0
-    $(comptime) assert (dest does u32) and (foo does u16) and (v does u8)
+    cassert (dest does u32) and (foo does u16) and (v does u8)
     dest = foo:u16 + v:u8
     ```
 
@@ -120,7 +120,7 @@ let At = :int(33..)      // number bigger than 32
 let Bt=(
   ,c:string
   ,d=100
-  ,let set = fun(ref self, ...args) { self.c = args }
+  ,set = fun(ref self, ...args) { self.c = args }
 )
 
 var a:At=40
@@ -342,16 +342,16 @@ When the attributes are read, it reads the current. it does not read the constra
 
 ```pyrope
 var val:u8 = 0   // designer constraints a to be between 0 and 255
-assert val.$sbits == 0
+assert val.::[sbits] == 0
 
 val = 3          // val has 3 bits (0sb011 all the numbers are signed)
 
 val = 300        // compile error, '300' overflows the maximum allowed value of 'val'
 
 val = 1          // max=1,min=1 sbits=2, ubits=1
-assert val.$ubits == 1 and val.$min==1 and val.$max==1 and val.$sbits==2
+assert val.::[ubits] == 1 and val.::[min]==1 and val.::[max]==1 and val.::[sbits]==2
 
-val:$(wrap) = 0x1F0 // Drop bits from 0x1F0 to fit in constrained type 
+val::[wrap] = 0x1F0 // Drop bits from 0x1F0 to fit in constrained type 
 assert val == 240 == 0xF0
 
 val = u8(0x1F0)    // same
@@ -372,7 +372,7 @@ if b {
 }
                            // c: current(max=4,min=3) constrain(max=10,min=0)
 
-var e:$(sbits = 4) = _     // e: current(max=0,min=0) constrain(max=7,min=-8)
+var e::[sbits = 4] = _     // e: current(max=0,min=0) constrain(max=7,min=-8)
 e = 2                      // e: current(max=2,min=2) constrain(max=7,min=-8)
 var d = c                  // d: current(max=4,min=3) constrain()
 if d==4 {
@@ -412,8 +412,8 @@ In this case, the programmer must insert a typecast or operation to constrain
 the bitwidth by typecasting. For example, this could work:
 
 ```
-var x:reg = 0
-var y:reg = 0
+reg x = 0
+reg y = 0
 if cmd? {
   x,y = cmd
 }elif x > y {
@@ -421,8 +421,8 @@ if cmd? {
 }else{
   y = y - x
 }
-x:$(wrap) cmd.a = x  // use cmd.a type for x, and drop bits as needed
-y = cmd.b(y)         // typecast y to cmd.b type (this can add a mux)
+x:cmd.a:[wrap] = x  // use cmd.a type for x, and drop bits as needed
+y = cmd.b(y)        // typecast y to cmd.b type (this can add a mux)
 ```
 
 ## Typecasting
@@ -511,7 +511,7 @@ An issue with mixin is when more than one tuple has the `set` method. If the
 tuples are concatenated with `...` and error is triggered, if the tuples are
 concatenated with `++` the methods are overridden when declared with `var`.
 Neither is the expected solution.  A smaller issue with mixins is that
-`$(comptime) assert X does Y` should be inserted when implementing an
+`cassert X does Y` should be inserted when implementing an
 interface.
 
 
@@ -557,7 +557,7 @@ let Circle = (
   ,increase_size = proc(ref self, a:i12) { self.rad *= a }
   ,say_name=fun(self) { puts "name:{}", name }
 )
-$(comptime) assert Circle does Shape
+cassert Circle does Shape
 ```
 
 ## Instrospection
@@ -609,12 +609,12 @@ There are several uses for introspection, but for example, it is possible to bui
 function that returns a randomly mutated tuple.
 
 ```
-let randomize:$(debug) = fun(ref self) {
+let randomize::[debug] = fun(ref self) {
   let rnd = import "prp/rnd"
   for i in ref self {
     if i equals :int {
       i = rnd.between(i.__max,i.__min)
-    }elif i equals :boolean {
+    }elif i equals :bool {
       i = rnd.boolean()
     }
   }
@@ -746,9 +746,9 @@ import functions or variables.
 
 ```
 let do_increase = proc() {
-  reg counter
+  reg counter = 0
 
-  counter:$(wrap) u32 = counter + 1
+  counter:u32:[wrap] = counter + 1
 }
 
 let do_debug = proc() {
@@ -785,7 +785,7 @@ set a different value for each uart base register.
 
 ```
 // file remote.prp
-reg uart_addr:u32
+reg uart_addr:u32 = _
 assert 0x400 > uart_addr >= 0x300
 
 // file local.prp
@@ -861,7 +861,7 @@ method is the getter (`get`).
 let some_obj = (
   ,a1:string
   ,a2 = (
-    ,_val:u32 = _                              // hidden field
+    ,_val:u32 = _                               // hidden field
 
     ,get=fun(self) { self._val + 100 }         // getter
     ,set=proc(ref self, x) { self._val = x+1 } // setter
@@ -877,7 +877,6 @@ var x:some_obj = ("hello", 3)
 assert x.a1 == "hello"
 assert x.a2 == 103
 x.a2 = 5
-assert x.a2.get == 106
 ```
 
 
@@ -910,8 +909,8 @@ In this case, it allows building typecast per type.
 let my_obj = (
   ,val:u32 = _
   ,get = fun(self)->(:string ){ ret string(self.val) }
-      ++ fun(self)->(:boolean){ ret self.val != 0    }
-      ++ fun(self)->(:int    ){ ret self.val         }
+       ++ fun(self)->(:bool){ ret self.val != 0    }
+       ++ fun(self)->(:int    ){ ret self.val         }
 )
 ```
 
@@ -928,7 +927,7 @@ comparators. When non-provided the `lt` (Less Than) is a compile error, and the
 let t=(
   ,v:string = _
   ,set = proc(ref self) { self.v = a }
-  ,lt = fun(self,other)->(:boolean){ self.v  < other.v }
+  ,lt = fun(self,other)->(:bool){ self.v  < other.v }
   ,eq = fun(self,other)            { self.v == other.v } // infer ret
 )
 

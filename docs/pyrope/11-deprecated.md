@@ -77,16 +77,16 @@ This example explicitly manages the valid output signals.
 ```pyrope
 let telescope_unit = fun(a:u32,b:u32,start:bool) -> (res:u32) {
 
-  var result_done:reg = 0
-  var result_flop:reg = 0
+  reg result_done = 0
+  reg result_flop = 0
 
   if result_done {
     res = result_flop
   }
 
-  var int_done:reg = _
-  var int_flop:reg = _
-  var int_b:reg = _
+  reg int_done = _
+  reg int_flop = _
+  reg int_b = _
 
   if int_done {  // pending work (2 cycle op, can not telescope)
     result_flop = int_flop-int_b

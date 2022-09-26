@@ -59,8 +59,8 @@ Populate the Pyrope code
     src/gcd.prp:
     ```pyrope linenums="1"
     var gcd = proc (cmd:(a:uint,b:uint))->(z:uint) {
-      var x:reg = 0
-      var y:reg = 0
+      reg x = 0
+      reg y = 0
       if cmd? {
         x,y = cmd
       }elif x > y { 
