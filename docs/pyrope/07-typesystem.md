@@ -207,6 +207,38 @@ assert a equals b          // 1 equals 2
 assert :a equals :fun()
 ```
 
+## Type check with values
+
+Many programming languages have a `match` with structural checking. Pyrope
+`does` allows to do so, but it is also quite common to filter/match for a given
+value in the tuple. This is not possible with `does` because it ignores all the
+field values. Pyrope has a `case` that extends the `does` comparison and also
+checks that for the matching fields, the value is the same.
+
+A `a case b` is equivalent to `b does a` and for each value in `b` there has
+to be the same value in `a`.
+
+
+```
+cassert (a:u32=0, b:bool) does (a:u32, c:string="hello", b=false)
+cassert (a:u32=0, c:string="hello", b=false) case (a = 0, b:bool=_)
+
+cassert (a:u32=0, c:string="hello", b=false) !case (a:u32 = 1 , b:bool=_   )
+cassert (a:u32=0, c:string="hello", b=false) !case (a:bool = _, b:bool=_   )
+cassert (a:u32=0, c:string="hello", b=false) !case (a = 0     , b     =true)
+
+match (a=1,b=3) {
+  case (a=1) { cassert true }
+  else { cassert false }
+}
+
+match let t=(a=1,b=3); t {
+  case (a=1,c=4) { cassert false }
+  case (b=_,a=1) { cassert t.b==3 and t.a==1 }
+  else { cassert false }
+}
+```
+
 ## Nominal type check
 
 
