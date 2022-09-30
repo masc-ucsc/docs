@@ -767,42 +767,11 @@ z@[0] = 0b11 // compile error, '0b11` overflows the maximum allowed value of `z@
     E.g: `0xFF@&[0..<8] == -1`.
 
 
-When the selected variable is a tuple with many entries, the result of the
-tuple expansion may be unexpected because the compiler can infer bits used
-independently of the type set. This is the case because the `tup@[]` is
-effectively concatenating the bits in `tup` but the tuple fields can be
-optimized making the resulting constant to be unexpected. The reason is that
-Pyrope integer sizes are max/min constrains to enforce. The compiler can use
-a smaller representation.
 
+The bit selection operator only works with ranges, boolean, and integers. It
+does not work with tuples or strings. For converting in these object a `union:`
+must be used.
 
-The only intuitive tuple type cast (`tup@[]`) is when all the tuple fields
-are booleans. Then, it is clear that each entry is one bit in the output.
-
-```
-var tup = (a=0xf:u128, b=0x1:int)  // explicit sizes are ignored if optimized
-assert tup@[] == 0b001_01111
-
-assert (0xF:s8,0x1:s16)@[] == 0x0001_0F 
-assert (0xF:u8,0x1:u16)@[] == 0x0002_0F  // 0xF needs 9 signed bits
-
-assert (true,false,true,false,false,true )@[]     == 0sb0100101 == 0b100101
-assert (true,false,true,false,false,true )@sext[] == 0sb100101
-assert (true)@[]     == 0sb01
-assert (true)@sext[] == -1   
-```
-
-For the non-boolean tuple typecast, the more straightforward solution is to
-explicitly set the bits expected:
-
-```
-res:u12 = _
-
-res@[0..<8]= 0x0F
-res@[9..]  = 0x1
-
-assert res == 0b1_00001111 == 0x1_0F
-```
 
 Another important characteristic of the bit selection is that the order of the
 bits on the selection does not affect the result. Internally, it is a bitmask

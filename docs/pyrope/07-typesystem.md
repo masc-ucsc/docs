@@ -296,43 +296,7 @@ if y == Color.Red {
 ```
 
 
-## union
 
-Union shares syntax with enums with types declaration, but the usage and
-functionality is quite different. Enums do not allow to update values and
-unions are tuples with multiple labels sharing a single storage location. Since
-the `union` holds values, it can be used to explicitly convert between field
-types.
-
-
-```
-let e_type = :enum(str:String = "hello",num=22)
-let u_type = :union(str:String, num:int)         // No default value in union
-
-var uu:u_type = (str="hello2")
-assert uu.str == "hello2"
-assert uu.num == 0x32_6f_6c_6c_65_68 // ASCII for 2 e l l o h
-
-uu.num = 0x65
-assert uu.str == "o"
-assert uu.num == 0x65
-var ee:e_type = e_type.str
-```
-
-
-As a reference, `enums` allow to compare for field but not update enum entries.
-
-```
-ee = u_type.String          // OK
-ee.str = "new_string"       // compile error, enum is immutable
-
-match ee {
- == e_type.str { }
- == e_type.num { }
-}
-
-
-```
 
 ## Bitwidth
 
@@ -457,6 +421,66 @@ x:cmd.a:[wrap] = x  // use cmd.a type for x, and drop bits as needed
 y = cmd.b(y)        // typecast y to cmd.b type (this can add a mux)
 ```
 
+## union
+
+Union shares syntax with enums with types declaration, but the usage and
+functionality is quite different. Enums do not allow to update values and
+unions are tuples with multiple labels sharing a single storage location. Since
+the `union` holds values, it can be used to explicitly convert between field
+types.
+
+
+```
+let e_type = :enum(str:String = "hello",num=22)
+let u_type = :union(str:String, num:int)         // No default value in union
+
+var uu:u_type = (str="hello2")
+assert uu.str == "hello2"
+assert uu.num == 0x32_6f_6c_6c_65_68 // ASCII for 2 e l l o h
+
+uu.num = 0x65
+assert uu.str == "o"
+assert uu.num == 0x65
+var ee:e_type = e_type.str
+```
+
+
+As a reference, `enums` allow to compare for field but not update enum entries.
+
+```
+ee = u_type.String          // OK
+ee.str = "new_string"       // compile error, enum is immutable
+
+match ee {
+ == e_type.str { }
+ == e_type.num { }
+}
+```
+
+
+A key property of unions is that it respects the integer bit size in
+declaration. Pyrope optimizes the bitwidth, but it respects the union sizes to
+allow conversion between fields.
+
+```
+let Conv_t = :union(
+  ,f1:u6
+  ,a=(msb:u1, mid:u4, lsb:s1)
+)
+
+var b:Conv_t = (f1=0b1_0010_1)
+cassert b.a.msb == 1
+cassert b.a.mid == 2
+cassert b.a.lsb == -1
+
+b.a.mid = 7
+cassert b.f1 == 0b1_0111_1
+```
+
+Since `union` needs to convert between types and know the sizes, all the fields
+should have a known size at declaration. Type inference does not work in unions
+which after all can not have default values.
+
 ## Typecasting
 
 
@@ -487,7 +511,6 @@ var c:ct= a    // OK even different order because all names match
 
 var d:dt = a   // OK, call intitial to type cast
 ```
-
 
 ## Traits and mixin
 
