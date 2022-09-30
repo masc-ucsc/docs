@@ -329,6 +329,17 @@ var c,d = (1,2)    // OK
 assert c == 1 and d == 2
 ```
 
+One thing to remember is that the `=` separates the statement in two parts
+(left and right), this is not the case with type or attributes that always
+apply to the immediatly declared variable or item.
+
+```
+let c = 4
+let x,b = true, c:u3 // assign x=true, b=4 AND check that c is type u3
+
+cassert x == true
+cassert b == 4 
+```
 
 ## enums
 

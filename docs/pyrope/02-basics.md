@@ -122,6 +122,8 @@ belongs to a new statement.
 a = 1
   + 3         // 1st stmt
 b,c = (1,3)   // 2nd stmt
+cassert a == 4 and b == 1 and c == 3
+
 d = 1 +       // compile error
     3         // compile error
 ```
@@ -491,7 +493,8 @@ These are the rules to decide between mutable and immutable variables:
   * Assigned with a `var`. E.g: `var bar = 3` or `var barbar = _`.
 
 Both mutable and immutable declarations must have an assigned value. The type
-default value is `_` (`0` integer, `""` string, `false` boolean....)
+default value is `_` (`0` integer, `""` string, `false` boolean, `nil`
+otherwise)
 
 ```
 a  = 3        // compile error, no previous let or var
@@ -511,5 +514,23 @@ e:u32 = 33       // OK
 
 var Foo = 33     // compiler error, 'let Foo = 33'
 Foo  = 33        // compiler error, `Foo` already declared as immutable
+```
+
+When the variable is a tuple or a range style, the default initialization is
+`nil`. `0sb?` can not be applied to ranges or tuples value because it is
+restricted for integers. `nil` should be used in those cases.
+
+```
+var tup = nil
+
+if cond::[comptime] {
+  tup = (a=1,b=2)
+}else{
+  tup = (a=1,b:u4=3,c=3)
+}
+
+cassert tup.a == 1
+cassert cond implies tup.b==2
+cassert !cond implies tup.b==3
 ```
 
