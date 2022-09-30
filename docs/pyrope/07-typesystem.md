@@ -421,6 +421,15 @@ x:cmd.a:[wrap] = x  // use cmd.a type for x, and drop bits as needed
 y = cmd.b(y)        // typecast y to cmd.b type (this can add a mux)
 ```
 
+
+Pyrope uses signed integers for all the operations and transformations, but
+when the code is optimized it does not need to waste bits when the most
+significant bit is known to be always zero (positive numbers like u4). The
+verilog code generation or the synthesis netlist uses the bitwidth pass to
+remove the extra unnecessary bit when it is guaranteed to be zero. This
+effectively "packs" the encoding.
+
+
 ## union
 
 Union shares syntax with enums with types declaration, but the usage and
@@ -480,6 +489,13 @@ cassert b.f1 == 0b1_0111_1
 Since `union` needs to convert between types and know the sizes, all the fields
 should have a known size at declaration. Type inference does not work in unions
 which after all can not have default values.
+
+
+One important property of the union is that it respects the number of bits
+using max/min as in bitwidth. This means that if a field has an unsigned like
+`u7`, it expects to be packed to just 7 bits as unsigned, not the 8 bits signed
+with the most significant bit set to zero. The numbers will operate as signed
+but the conversion uses the packed representation.
 
 ## Typecasting
 
