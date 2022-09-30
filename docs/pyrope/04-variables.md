@@ -458,6 +458,7 @@ passes:
 * `critical`: synthesis time criticality
 * `deprecated`: to generate special warnigns about usage
 * `pipeline`: pipeline related information
+* `private`: variable/field not visible to import/regref
 * `donttouch`: do not touch/optimize away
 * `keep`: same as donttouch but shorter
 * `max_load`, `max_fanout`, `max_cap`: synthesis optimization hints
@@ -468,7 +469,6 @@ passes:
 * `reset`: indicate a signal/input is a reset wire
 * `left_of`, `right_of`, `top_of`, `bottom_of`, `align_with`: placement hints
 * `valid`, `retry`: for elastic pipelines
-
 
 Attributes control fields like the default reset and clock signal. This allows
 to change the control inside procedures. Notice that this means that attributes
@@ -628,8 +628,8 @@ it can be declared as immutable.
 ## Public vs private
 
 All variables are public by default. To declare a variable private within
-the tuple or file an underscore must be used (`_private` vs `public`).
-
+the tuple or file an underscore must be used (`_private` vs `public`) or
+explicitly use the `private` attribute explicitly like in languages like Ruby.
 
 The private has different meaning depending on when it is applied:
 
@@ -640,9 +640,10 @@ The private has different meaning depending on when it is applied:
   variable is not pipelined to the next type stage. Section
   [pipestage](06c-pipelining.md) has more details.
 
-* When is applied to a pyrope file upper scope variable (`reg _top_reg = _`),
-  it means that an `import` command or register reference can not access it
-  across files. Section [typesystem](07-typesystem.md) has more details.
+* When is applied to a pyrope file upper scope variable (`reg _top_reg = 0` or
+  `reg top_reg::[private] = 0`), it means that an `import` command or register
+  reference can not access it across files. Section
+  [typesystem](07-typesystem.md) has more details.
 
 
 ## Operators
