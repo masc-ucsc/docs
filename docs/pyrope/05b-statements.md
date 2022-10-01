@@ -231,7 +231,7 @@ assert b == (2,3,4,5,6)
 ### Code block control
 
 Code block control statements allow changing the control flow for `lambdas`,
-`for`, and `while` statements. When the control flow is changed, some allow
+`for`, `loop`, and `while` statements. When the control flow is changed, some allow
 returning a value (`ret`, `brk`, `cont`) and others do not (`return`, `break`,
 `continue`).
 
@@ -247,16 +247,17 @@ returning a value (`ret`, `brk`, `cont`) and others do not (`return`, `break`,
   generated.
 
 * `brk` behaves like `break` but a return tuple is provided. This is maybe
-  needed when the `for` or `while` is used in an expression or comprehension.
-  In addition, the `brk` can be used in expression code blocks. The `brk` is
-  equivalent to a `ret` but terminates the closest `for`/`while` code block.
+  needed when the `for` is used in an expression or comprehension. Notice that
+  neither `loop` or `while` can be used as expressions. In addition, the `brk`
+  can be used in expression code blocks. The `brk` is equivalent to a `ret` but
+  terminates the closest `for` code block.
 
-* `continue` looks for the closest `for`/`while` code block. The `continue`
+* `continue` looks for the closest `for`/`while`/`loop` code block. The `continue`
   will perform the next loop iteration. If no upper loop is found, a compile
   error is generated.
 
 * `cont` behaves like the `continue` but a tuple is provided. The `cont` is
-  used with comprehensions, and the tuple provided is added to the
+  used with `for` comprehensions, and the tuple provided is added to the
   comprehension result.
 
 
@@ -315,15 +316,29 @@ let y = {         // expr scope1
 assert y == (33+200)
 ```
 
-## while
+## while/loop
 
 `while cond { [stmts]+ }` is a typical while loop found in most programming
 languages. The only difference is that like with loops, the while must be fully
-unrolled at compilation time.
+unrolled at compilation time. The `loop { [stmts]+ }` is equivalent to a `while
+true { [stmts]+ }`.
 
 
 Like `if`/`match`, the `while` condition can have a sequence of statements with
 variable declarations visible only inside the while statements.
+
+```
+// a do while contruct does not exist, but a loop is quite clean/close
+
+var a = 0
+loop {
+  puts "a:{}",a
+
+  a += 1
+
+  break unless a < 10 
+} // do{ ... }while(a<10)
+```
 
 ## defer 
 
