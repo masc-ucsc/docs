@@ -1,4 +1,39 @@
-# Assertions
+# Verification
+
+Verification covers the language constructs and special support to ease design verification.
+
+
+## Testing
+
+Pyrope has the `test [message [,args]+] ( [stmts+] }`. 
+
+==== "Many parallel tests"
+    ```
+    let add = fun(a,b) { ret a+b }
+
+    for a in 0..=20 {
+      for b in 0..=20 {
+        test "checking add({},{})", a,b {
+           cassert a+b == add(a,b)
+        }
+      }
+    }
+    ```
+
+==== "Single large test"
+    ```
+    let add = fun(a,b) { ret a+b }
+
+    test "checking add" {
+      for a in 0..=20 {
+        for b in 0..=20 {
+           cassert a+b == add(a,b)
+        }
+      }
+    }
+    ```
+
+## Assertions
 
 Assertions are considered debug statements. This means that they can not
 have side effects on non-debug statements.
@@ -140,4 +175,7 @@ tested.
 The `cover` allows to not be true a given cycle. To allow the same in a
 `covercase`, the designer can add `coverase GRP, true`. This is a true always
 cover point for the indicated cover group.
+
+## Monitor
+
 

@@ -16,22 +16,22 @@ var a = (
   ,r2 = (3,4)
 )
 // tuple position is from left to right
-assert a.r1 == (1,2) and a.r2 == (3,4)
-assert a.0  == (1,2) and a[1] == (3,4)
+cassert a.r1 == (1,2) and a.r2 == (3,4)
+cassert a.0  == (1,2) and a[1] == (3,4)
 
 // different ways to access the same field
-assert a.r1.c    == 2
-assert a['r1'].c == 2
-assert a.r1.1    == 2
-assert a.r1[1]   == 2
-assert a[0][1]   == 2
-assert a[0]['c'] == 2
-assert a['r1.c'] == 2
-assert a['r1.1'] == 2
-assert a['0.c']  == 2
-assert a['0.1']  == 2
-assert a.0.c     == 2
-assert a.0.1     == 2
+cassert a.r1.c    == 2
+cassert a['r1'].c == 2
+cassert a.r1.1    == 2
+cassert a.r1[1]   == 2
+cassert a[0][1]   == 2
+cassert a[0]['c'] == 2
+cassert a['r1.c'] == 2
+cassert a['r1.1'] == 2
+cassert a['0.c']  == 2
+cassert a['0.1']  == 2
+cassert a.0.c     == 2
+cassert a.0.1     == 2
 ```
 
 The only main difference between `a.0` (dot) and `a[0]` (select) access is that
@@ -42,12 +42,12 @@ There is introspection to check for an existing field with the `has` and `!has` 
 
 ```
 var a = (foo = 3)
-assert a has 'foo'
-assert !(a has 'bar')
-assert a !has 'bar' // "has no" is the opposite of "has"
-assert a has 0
-assert a !has 1
-assert a !has 1
+cassert a has 'foo'
+cassert !(a has 'bar')
+cassert a !has 'bar' // "has no" is the opposite of "has"
+cassert a has 0
+cassert a !has 1
+cassert a !has 1
 ```
 
 Tuple named fields can have a default type and or contents:
@@ -55,10 +55,10 @@ Tuple named fields can have a default type and or contents:
 ```
 var val = 4
 var x = (
-  ,field1=1         // field1 with implicit type and 1 value
-  ,field2:string    // field2 with explicit type and "" default value
-  ,field3:int = 3   // field3 with explicit type and 3 value
-  ,val              // unnamed field with value `val` (4)
+  ,field1=1           // field1 with implicit type and 1 value
+  ,field2:string = _  // field2 with explicit type and "" default value
+  ,field3:int = 3     // field3 with explicit type and 3 value
+  ,val                // unnamed field with value `val` (4)
 )
 ```
 
@@ -85,9 +85,9 @@ var a = (1,2)   // tuple of 2 entries, 1 and 2
 var b = (1)     // tuple of 1 entry, 1
 var c = 1       // tuple of 1 entry, 1
 var d = (,,1,,) // tuple of 1 entry, 1
-assert a.0 == b.0 == c.0 == d.0
-assert a!=b
-assert b == c == d
+cassert a.0 == b.0 == c.0 == d.0
+cassert a!=b
+cassert b == c == d
 ```
 
 A tuple with a single entry element is called a scalar. 
