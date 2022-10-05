@@ -58,18 +58,17 @@ Populate the Pyrope code
 
     src/gcd.prp:
     ```pyrope linenums="1"
-    var gcd = proc (cmd:(a:uint,b:uint))->(z:uint) {
-      reg x = 0
-      reg y = 0
-      if cmd? {
-        x,y = cmd
-      }elif x > y { 
-        x = x - y 
-      }else{ 
-        y = y - x 
+    var gcd = proc (cmd:(a:uint,b:uint))->(reg x:uint) {
+      x = a
+      y = b
+
+      while y!=0 #>[] {
+        if x > y { 
+          x -= y 
+        }else{ 
+          y -= x 
+        }
       }
-      z  = x
-      z? = y == 0
     }
 
     for a in 1..=100 {
@@ -86,7 +85,7 @@ Populate the Pyrope code
     ```
 
     src/my_cpp_gcd.cpp
-    ```c++ linenums="26"
+    ```c++ linenums="25"
     void my_gcd_cpp(const Lbundle &inp, Lbundle &out) {
       assert(inp.has_const("v1") && inp.has_const("v2"));
 

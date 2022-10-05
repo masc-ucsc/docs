@@ -7,7 +7,7 @@ Verification covers the language constructs and special support to ease design v
 
 Pyrope has the `test [message [,args]+] ( [stmts+] }`. 
 
-==== "Many parallel tests"
+=== "Many parallel tests"
     ```
     let add = fun(a,b) { ret a+b }
 
@@ -20,7 +20,7 @@ Pyrope has the `test [message [,args]+] ( [stmts+] }`.
     }
     ```
 
-==== "Single large test"
+=== "Single large test"
     ```
     let add = fun(a,b) { ret a+b }
 
