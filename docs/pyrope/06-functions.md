@@ -43,25 +43,28 @@ flattened `lambda`.
 `functions` are combinational logic, but `procedures` can have inputs and/or
 outputs registerd or just be a generic pure combinational function.
 
-===="Combinational (fun)"
+=== "Combinational (fun)"
     ```
     let add=fun(a,b)->(res) {
       res = a+b
     }
     ```
-===="Combinational (proc)"
+
+=== "Combinational (proc)"
     ```
     let add=proc(a,b)->(res) {  // nicer to use fun, but proc works
       res = a+b
     }
     ```
-===="Inputs Registerd (proc)"
+
+=== "Inputs Registerd (proc)"
     ```
     let add=proc(reg a, reg b)->(res) {
       res = a+b
     }
     ```
-===="Outputs Registerd (proc)"
+
+=== "Outputs Registerd (proc)"
     ```
     let add=proc(a, b)->(reg res) {
       res = a+b
