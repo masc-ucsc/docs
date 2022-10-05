@@ -40,6 +40,34 @@ lambda visible at synthesis call hierarchy. A `non-module` is an inlined or
 flattened `lambda`.
 
 
+`functions` are combinational logic, but `procedures` can have inputs and/or
+outputs registerd or just be a generic pure combinational function.
+
+===="Combinational (fun)"
+    ```
+    let add=fun(a,b)->(res) {
+      res = a+b
+    }
+    ```
+===="Combinational (proc)"
+    ```
+    let add=proc(a,b)->(res) {  // nicer to use fun, but proc works
+      res = a+b
+    }
+    ```
+===="Inputs Registerd (proc)"
+    ```
+    let add=proc(reg a, reg b)->(res) {
+      res = a+b
+    }
+    ```
+===="Outputs Registerd (proc)"
+    ```
+    let add=proc(a, b)->(reg res) {
+      res = a+b
+    }
+    ```
+
 ## Declaration
 
 Only anonymous lambdas are supported, this means that there is no global

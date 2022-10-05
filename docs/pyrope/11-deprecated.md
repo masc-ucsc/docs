@@ -135,7 +135,7 @@ satisfied.
  puts "{}-{}+1 is {}", a, b, res1.res
 ```
 
-An alternative implementation is using the `#>` keyword. The disadvantage is
+An alternative implementation is using the `#>[]` keyword. The disadvantage is
 that two operations could finish on the same cycle, and the circuits are not as
 efficient.
 
@@ -145,12 +145,12 @@ let telescope_unit3 = fun(a:u32,b:u32) -> (:u32) {
 
   {
     let tmp = a+1
-  } #> {
+  } #>[] {
     if b == 0 {
       ret tmp
     }
     let tmp2 = tmp-b
-  } #> {
+  } #>[] {
     ret tmp2
   }
 }

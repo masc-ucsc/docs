@@ -580,8 +580,65 @@ are advantages to each approach but the code quality should be the same.
 ## Pipestages
 
 
-The pipestage directive (`#>`) automatically creates pipeline resources.
+The pipestage directive (`#>[cycles]{  }`) automatically creates a fully
+pipeline design with `cycles` pipeline depth. `cycles` must be bigger or equal
+than 1 and known at compile time. When `cycles` is not specified a `1` value is
+assumed.
 
+The pipestage directive can also be applied to `while` and `loop` constructs to
+replace the default scope. In this case, the loop becames a state machine with
+`cycles` the maximum number of simultaneous loop iterations. It effectively
+means that number of units or state machines that can perform the loop
+simultaneously.
+
+
+=== "Fully Pipelined"
+    ```
+    let mul3=proc(a,b)->res {
+      let tmp = a*b
+      #>[3] {
+        res = tmp
+      }
+    }
+    ```
+=== "State-machine"
+    ```
+    let mul_slow=proc(a,b)->res {
+
+      let result  = 0
+      let rest    = a
+
+      while rest >= b #>[4]{
+        rest = rest - b
+        result += 1
+      }
+
+      res = result
+    }
+    ```
+=== "Slow 1 Stage"
+    ```
+    let mul1=proc(a,b)->(reg res) {
+      res = a*b
+    }
+    ```
+=== "Slow 1 Stage (alt syntax)"
+    ```
+    let mul1=proc(a,b)->(res) {
+      #>[1] {
+        res = a*b
+      }
+    }
+    ```
+=== "Pure Combinatinal"
+    ```
+    let mul0=proc(a,b)->(res) {
+      res = a*b
+    }
+    ```
+
+To understand the fully pipelined behavior, the following shows the pipestage
+against the more direct implementation with registers.
 
 ```
 if cond {
@@ -592,7 +649,7 @@ if cond {
     var _l1 = inp1 + 1
 
     var p2 = inp1 + 2
-  } #> {
+  } #>[] {
     out = p1 + p2
   }
 

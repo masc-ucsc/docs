@@ -78,7 +78,7 @@ The syntax for pipestage:
 
 {
   // stage 0 scope
-} #> {
+} #>[] {
   // stage 1 scope
 } ... {
   // stage n scope
@@ -132,7 +132,7 @@ i_reg1 = i                // every cycle
 
   let pub_var = 100 + i
 
-} #> {
+} #>[] {
   assert _local_var!=0      // compile error, _local_var is not in scope
   assert pub_var == 100 + i // pipelined pub_var
 
@@ -150,6 +150,25 @@ i_reg1 = i                // every cycle
 assert pub_var != 0 // compile error, pub_var is not in scope
 ```
 
+
+Pipelining is one of the challenges of designing hardware. Even a simple pipestage
+code can result in incorrect hardware. The reason is that if two pipestage blocks
+generate an output simultaneously, there is no way to generate both outputs. The
+result is a compile or simulation error.
+
+```
+let bad_code = proc(inp)->(o1,o2) {
+
+  {
+    o1 = 1
+    o2 = inp + 1  // o2? iff bad_code called this cycle and inp? is valid
+  } #>[1] {
+    o1 = 2        // compile error, o1 driven simultaneous from multiple stages
+    o2 = inp + 2  // may be OK if inp is not valid every cycle
+  }
+
+}
+```
 
 ## Retiming
 
@@ -192,13 +211,7 @@ the conceptual problems of integrating them:
     let block = proc(in1,in2)->(out) {
       {
         let tmp = in1 * in2
-      } #> {
-        assert true // nothing to do, but one statement required
-        // extra cycle for multiply
-      } #> {
-        assert true
-        // extra cycle for multiply
-      } #> {
+      } #>[3] {
         out = tmp + in1#[0]
       }
     }
@@ -315,13 +328,7 @@ is error-prone because it requires knowing exactly the number of cycles for
     ```
     {
       let tmp = in1 * in2
-    } #> {
-      assert true
-      // extra cycle for multiply
-    } #> {
-      assert true
-      // extra cycle for multiply
-    } #> {
+    } #>[3] {
       out = tmp + in1
     }
     ```

@@ -484,7 +484,7 @@ will preserve the value, the inputs may change value.
       {
         let a = 1 + input
         puts "printed every cycle input={}", a
-      } #> {
+      } #>[] {
         puts "also every cycle a={}",a  // printed on cycle later
       }
     }
@@ -514,8 +514,8 @@ The `waitfor` command is equivalent to a `while` with a `step`.
     assert total == 3 and a_cond
     ```
 
-The main reason for using the `step` is that the equivalent `#>` does not work
-in loops.
+The main reason for using the `step` is that the "equivalent" `#>[1]` is a more
+structured construct.
 
 * `peek` allows to read any flop, and lambda input or output
 
