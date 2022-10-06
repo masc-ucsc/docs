@@ -347,6 +347,49 @@ let x1,x2 = ret3()
 assert x1   == 3 and x2   == 4
 assert x1.a == 3 and x2.b == 4
 ```
+
+## Attributes
+
+Variables can have attributes, but `procedures` can also have them. Procedure
+attributes have only one direction from inside the method to outside/caller.
+They can be used to signal out of band information about the procedude. Attributes
+can only be `integer`, `bool`, or `string`. Depending on the type, they are
+initialized to `0`, `false`, or `""`.
+
+
+The procedure attribute is stored in the variable that keeps the lambda. This
+means that it can be checked before or after the lambda call, and that
+different variables can point to the same procedure but keep different
+attributes.
+
+
+```
+let p1 = proc(a)->(res) {
+  ::[zero_found] = ::[zero_found] or a == 0
+
+   res = a + 1
+}
+
+let p2 = p1      // copy
+let p3 = ref p1  // reference
+
+test "testing p1" {
+  assert p1.::[zero_found] == false
+  assert p2.::[zero_found] == false
+
+  cassert p1(3) == 4
+  assert p1.::[zero_found] == false
+
+  cassert p1(0) == 1
+  assert p1.zero_found == true
+
+  cassert p1(50) == 51
+  assert p1.::[zero_found] == true
+  assert p2.::[zero_found] == false
+  assert p3.::[zero_found] == true
+}
+```
+
 ## Methods
 
 Pyrope arguments are by value, unless the `ref` keyword is used. `ref` is

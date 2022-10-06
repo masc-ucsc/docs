@@ -805,14 +805,14 @@ var x:Number = 3
 ### Register reference
 
 
-While import "copies" the importent contents, `regref` or Register reference
-allows to reference (not copy) an existing register in the call hierarchy.
+While import "copies" the contents, `regref` or Register reference allows to
+reference (not copy) an existing register in the call hierarchy.
 
 
-The syntax of `regref` is similar to `import` but import looks through Pyrope
-files. `regref` looks through the instantiation hierarchy for matching register
-names. `regdef` only can get a reference to a register, it can not be used to
-import functions or variables.
+The syntax of `regref` is similar to `import` but the semantics are very different.
+While `import` looks through Pyrope files, `regref` looks through the instantiation
+hierarchy for matching register names. `regdef` only can get a reference to a
+register, it can not be used to import functions or variables.
 
 
 ```
@@ -856,14 +856,17 @@ set a different value for each uart base register.
 
 ```
 // file remote.prp
-reg uart_addr:u32 = _
-assert 0x400 > uart_addr >= 0x300
+
+let xxx = proc(some,code) {
+  reg uart_addr:u32 = _
+  assert 0x400 > uart_addr >= 0x300
+}
 
 // file local.prp
 let setup_xx = proc() {
-  var xx = regref "uart_addr"
-  for i,index in ref xx {    // ref in for to allow element updates
-    i = 0x300+index*0x10     // sets uart_addr to 0x300, 0x310, 0x320...
+  var xx = regref "uart_addr" // match xxx.uart_addr if xxx is in hierarchy
+  for i,index in ref xx {     // ref in for to allow element updates
+    i = 0x300+index*0x10      // sets uart_addr to 0x300, 0x310, 0x320...
   }
 }
 ```

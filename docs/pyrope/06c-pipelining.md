@@ -70,16 +70,25 @@ var my_latch_q = __latch(din=my_din, enable=my_enable, posclk=true)
 ## Pipestage
 
 
-Pyrope has a `pipestage` statement that helps to create simple pipeline stages.
-The syntax for pipestage:
+Pyrope has a `pipestage` statement (`#>identifier[cycles]`) that helps to
+create simple pipeline stages. The `identifier` and `[cycles]` are optional,
+but with present the identifier is a local procedure attribute to indicate how
+many free slots are available. The total number of slots or pipeline stages is
+indicated by `cycles`.
 
 ```pseudoprp
 // variables/register before
 
 {
   // stage 0 scope
-} #>[] {
+} #> {               // no identifier, 1 stage by default
   // stage 1 scope
+} #>[2] {            // no identifier, 2 stages
+  // stage 2-3 scope
+} #>free_stage {     // 'free_stage' identifier, 1 stages
+  // stage 4 scope
+} #>free2[1] {       // 'free2' identifier, 1 stages
+  // stage 5 scope
 } ... {
   // stage n scope
 }
@@ -132,7 +141,7 @@ i_reg1 = i                // every cycle
 
   let pub_var = 100 + i
 
-} #>[] {
+} #> {
   assert _local_var!=0      // compile error, _local_var is not in scope
   assert pub_var == 100 + i // pipelined pub_var
 
@@ -151,24 +160,133 @@ assert pub_var != 0 // compile error, pub_var is not in scope
 ```
 
 
+The pipestage accept the `clock` and `posclk` attributes from register to allow
+the selection of different clock signal. Notice that it does not allow `reset`
+or `latch` or `async` because it does not require reset logic.
+
+
 Pipelining is one of the challenges of designing hardware. Even a simple pipestage
 code can result in incorrect hardware. The reason is that if two pipestage blocks
 generate an output simultaneously, there is no way to generate both outputs. The
 result is a compile or simulation error.
 
 ```
-let bad_code = proc(inp)->(o1,o2) {
+let bad_code = proc(my_clk, inp)->(o1,o2) {
 
   {
     o1 = 1
     o2 = inp + 1  // o2? iff bad_code called this cycle and inp? is valid
-  } #>[1] {
+  } #>[1,clock=my_clk] {
     o1 = 2        // compile error, o1 driven simultaneous from multiple stages
     o2 = inp + 2  // may be OK if inp is not valid every cycle
   }
 
 }
 ```
+
+## Pipestage with loops
+
+
+The pipestage directive (`#>identifier[cycles]{  }`) automatically creates a fully
+pipeline design with `cycles` pipeline depth. `cycles` must be bigger or equal
+than 1 and known at compile time. When `cycles` is not specified a `1` value is
+assumed.
+
+Pipestage can be applied to `while` and `loop` statements, not to `for`
+statements because `for` must be fully unrolled at compile time.
+
+When applied to loops, the loop becames a state machine with `cycles` the
+maximum number of simultaneous loop iterations. It effectively means that
+number of units or state machines that can perform the loop simultaneously.
+The identifier becomes a procedure attribute.
+
+
+=== "Fully Pipelined"
+    ```
+    let mul3=proc(a,b)->res {
+      let tmp = a*b
+      #>[3] {
+        res = tmp
+      }
+    }
+    ```
+=== "State-machine"
+    ```
+    let mul_slow=proc(a,b)->res {
+
+      let result  = 0
+      let rest    = a
+
+      while rest >= b #>[4]{
+        rest = rest - b
+        result += 1
+      }
+
+      res = result
+    }
+    ```
+=== "Slow 1 Stage"
+    ```
+    let mul1=proc(a,b)->(reg res) {
+      res = a*b
+    }
+    ```
+=== "Slow 1 Stage (alt syntax)"
+    ```
+    let mul1=proc(a,b)->(res) {
+      #>[1] {
+        res = a*b
+      }
+    }
+    ```
+=== "Pure Combinatinal"
+    ```
+    let mul0=proc(a,b)->(res) {
+      res = a*b
+    }
+    ```
+
+To understand the fully pipelined behavior, the following shows the pipestage
+against the more direct implementation with registers.
+
+```
+if cond {
+  var p1 = inp1
+  var out = _
+
+  {
+    var _l1 = inp1 + 1
+
+    var p2 = inp1 + 2
+  } #> {
+    out = p1 + p2
+  }
+
+  res = out
+}
+
+// Non pipestage equivalent
+if cond {
+  var p1 = inp1
+  var out = _
+
+  {
+    reg p1r = _
+    reg p2r = _
+
+    var _l1 = inp1 + 1    // private
+    var p2 = inp1 + 2     // public
+
+    out = p1r + p2r       // registered values
+
+    p1r = p1
+    p2r = p2
+  }
+
+  res = out
+}
+```
+
 
 ## Retiming
 
@@ -347,3 +465,90 @@ is error-prone because it requires knowing exactly the number of cycles for
     before. This same syntax can be used with assertions similar to the Verilog
     `$past(v, cycles)`.
 
+
+## ALU example
+
+
+Pipestages allow to build fully pipelined structures but also non-pipelined
+state machines when applied to loops. This creates potential contention that the
+designer must decide how to manage. This contention can be propagated outside
+the procedure with attributes.
+
+
+The ALU example illustrates the contention by creating an ALU with 3 different
+pipelines (add,mul,div) that have different latencies and contention.
+
+
+```
+let quick_log2 = fun(a) {
+
+  cassert a>=1
+
+  var i = 1
+  var v = 0
+  while i < a::[bits] {
+    v |= i
+    i *= 2
+  }
+
+  ret v
+}
+
+let div=proc(a,b,id)->(res,id) {
+  loop #>free_div_units[4] {
+    ret (a >> quick_log2(b), id) when b@+[] == 1
+    #>[5] {
+      res = (a/b, id)
+    }
+  }
+}
+
+let mul=proc(a,b,id)->(res, id) {
+  #>pending_counter[3] {
+    res = a*b
+    id  = id
+  }
+}
+
+let add=proc(a,b,id)->(res,id) {
+  #>[1] {
+    res = a+b
+    id  = id
+  }
+}
+
+let alu = proc(a,b,op, id)->(res,id) {
+
+  ::[total_free_units] = 1 + mul::[pending_counter] + div::[free_div_units]
+  ::[div_units] = div::[free_div_units]
+
+  match op {
+    == OP.div {
+      assert div::[free_div_units]>0
+      res,id = div(a,b,id)
+    }
+    == OP.mul { res,id = mul(a,b,id) }
+    == OP.add { res,id = add(a,b,id) }
+  }
+
+}
+
+test "alu too many div" {
+
+ cassert alu::[total_free_units] == (1+3+4)
+
+ let r1 = alu(13,3, OP.div, 1)
+ assert alu.div_units==3
+ let r2 = alu(13,3, OP.div, 2)
+ assert alu.div_units==2
+ let r3 = alu(13,3, OP.div, 3)
+ assert alu.div_units==1
+ let r4 = alu(13,3, OP.div, 4)
+ assert alu.div_units==0
+
+ assert !r1? and !r2? and !r3? and !r4? // still invalid
+
+ let r5 = alu(13,4, OP.mul,5)
+ cassert mul::[pending_counter] == 2
+}
+```

@@ -484,7 +484,7 @@ will preserve the value, the inputs may change value.
       {
         let a = 1 + input
         puts "printed every cycle input={}", a
-      } #>[] {
+      } #> {
         puts "also every cycle a={}",a  // printed on cycle later
       }
     }

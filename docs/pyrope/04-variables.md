@@ -464,7 +464,7 @@ passes:
 * `max_load`, `max_fanout`, `max_cap`: synthesis optimization hints
 * `inp_delay`, `out_delay`: synthesis optimizations hints
 * `max_delay`, `min_delay`: synthesis optimizations checked at simulation
-* `multicycle`: synthesis optimizations checked at simulation
+* `multicycle`: number of cycles for optimizations checked at simulation
 * `clock`: indicate a signal/input is a clock wire
 * `reset`: indicate a signal/input is a reset wire
 * `left_of`, `right_of`, `top_of`, `bottom_of`, `align_with`: placement hints

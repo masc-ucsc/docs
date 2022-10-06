@@ -62,7 +62,7 @@ Populate the Pyrope code
       x = a
       y = b
 
-      while y!=0 #>[] {
+      while y!=0 #> {
         if x > y { 
           x -= y 
         }else{ 
