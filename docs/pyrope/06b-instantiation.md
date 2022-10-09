@@ -223,7 +223,7 @@ the condition is false.
     ```
     let case_1_counter = proc(runtime)->(res) {
 
-      reg r (
+      let r = (
         ,reg total:u16           // r is reg, everything is reg
         ,increase = fun(a) {
           puts "hello"
@@ -233,7 +233,7 @@ the condition is false.
 
           ret res
         }
-      ) = _
+      )
 
       if runtime == 2 {
         res = r.increase(3)
@@ -248,7 +248,7 @@ the condition is false.
     ```
     let case_1_counter = proc(runtime)->(res) {
 
-      reg r (
+      let r = (
         ,reg total:u16
         ,increase = fun(a) {
           puts "hello"
@@ -258,7 +258,7 @@ the condition is false.
 
           ret res
         }
-      ) = _
+      )
 
       if runtime == 2 {
         puts "hello"
