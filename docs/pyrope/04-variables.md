@@ -403,15 +403,37 @@ if bar == 3 {
 assert tmp.::[bits] < 30 and !tmp.::[comptime]
 ```
 
+The attribute check is like a type check, both can be converted to assertions,
+but the syntax is cleaner.
 
-```
-read_state = fun(x) {
-  let f:u32:[comptime] = x // f is compile time or a error is generated
-  ret f                    // f should be compile time constant
-}
 
-var foo = read_state(zz) // foo will be compile time constant
-```
+=== "Attribute Check"
+    ```
+    let x = y::[cond,bar==3] + 1
+
+    read_state = fun(x) {
+      let f:u32:[comptime] = x // f is compile time or a error is generated
+      ret f                    // f should be compile time constant
+    }
+
+    var foo = read_state(zz) // foo will be compile time constant
+    ```
+
+=== "Assertion Equivalent Check"
+    ```
+    let x = y + 1
+    cassert y.::[cond]
+    cassert y.::[bar]==3
+
+    read_state = fun(x) {
+      let f = x
+      cassert f does u32
+      cassert f.::[comptime]
+      ret f
+    }
+
+    var foo = read_state(zz) // foo will be compile time constant
+    ```
 
 Pyrope allows to assign the attribute to a variable or a function call. Not to
 statements because it is confusing if applied to the condition or all the

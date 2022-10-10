@@ -60,7 +60,7 @@ Populate the Pyrope code
     ```pyrope linenums="1"
     var gcd = proc (cmd:(a:uint,b:uint))->(reg x:uint) {
       x = a
-      y = b
+      reg y = b
 
       while y!=0 #> {
         if x > y { 
