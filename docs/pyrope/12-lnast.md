@@ -7,10 +7,14 @@ useful to have a more "formal" description of the language semantics.
 
 ## Variable names
 
-Temporal variables that do not need to SSA (single assignment) start with 3
-underscores (`___foo`). Program variables names that do not need SSA (`let`) use
-`_._foo`. Special variable names like the ones needing an underscore use double
-ticky in the name `_foo here`.
+LNAST does not rename variables to be SSA, it relies in a symbol table to track
+past entries. Nevertheless, to reduce amount of tracking information when a
+variable starts with underscores (`___foo` or `_._foo`), the variable can not
+be updated, BUT it is still legal to update tuple fields inside `___foo` like
+`___foo.bar = 3`. Program variables names that do not need SSA (`let`) can use
+`_._foo` to reduce tracking. Special variable names like the ones needing an
+underscore use double tick in the name `_foo here`. Those are special variables
+names that do not allow to use compact tuple representation like `foo here.field`.
 
 === "Pyrope"
     ```
