@@ -81,7 +81,8 @@ nodes, which can only be `stmts`.
 A `stmts` node represents a sequence of statements.
 
 ```
-<stmts> --| <assign>
+<stmts> --| <const>     : scope name
+          | <assign>
           | <plus>
           | <func_def>
           | ...
@@ -94,15 +95,11 @@ An `if` node represents a conditional branch, which can be a statement or an
 expression.
 
 ```
-<if> --| <stmts>  : if condition computation
-       | <ref>    : if condition variable
-       | <stmts>  : if branch
-
-       | <stmts>  : elif condition computation (can be empty stmts)    \
-       | <const>  : elif condition variable    (can be constant)        0..N times
-       | <stmts>  : elif branch                                        /
-       
-       | <stmts>  : else branch
+<if> --| <ref/const> : if condition variable
+       | <stmts>     : if branch
+       | <ref/const> : elif condition variable  \  N times
+       | <stmts>     : elif branch              /
+       | <stmts>     : else branch
 ```
 
 #### `uif`
@@ -110,15 +107,11 @@ Unique `if`. Similar to `if`, but add additional assertions to check if at most 
 is true.
 
 ```
-<uif> --| <stmts>  : if condition computation
-        | <ref>    : if condition variable
-        | <stmts>  : if branch
- 
-        | <stmts>  : elif condition computation (can be empty stmts)    \
-        | <const>  : elif condition variable    (can be constant)        0..N times
-        | <stmts>  : elif branch                                        /
-        
-        | <stmts>  : else branch
+<uif> --| <ref/const> : if condition variable
+        | <stmts>     : if branch
+        | <ref/const> : elif condition variable  \  N times
+        | <stmts>     : elif branch              /
+        | <stmts>     : else branch
 ```
 
 #### `for`
@@ -126,8 +119,7 @@ A `for` node represents a for-loop over a `range` or `tuple`. Note that the loop
 must be unrolled during compilation.
 
 ```
-<for> --| <stmts> : setup code
-        | <ref>   : iterator variable
+<for> --| <ref>   : iterator variable
         | <ref>   : iterated variable (tuple or range)
         | <stmts> : for-loop body
 ```
@@ -136,24 +128,18 @@ must be unrolled during compilation.
 A `func_def` node represents a functional block with input/output arguments.
 
 ```
-<func_def> --| <stmts>  : setup code  \
-             | <ref>    : argument     \
-             | <ref>    : argument      Mixing setup codes/arguments
-             | <stmts>  : setup code   /
-             | <ref>    : argument    /
-
-             | <stmts>  : function body
+<func_def> --| <ref/const> : input arguments
+             | <ref/const> : output arguments
+             | <stmts>     : function body
 ```
 
 #### `func_call`
 A `func_call` node represents an instantiation of a functional block. 
 
 ```
-<func_call> --| <stmts> : setup code  \
-              | <ref>   : argument     \
-              | <stmts> : setup code    Mixing setup codes/arguments
-              | <ref>   : argument     /
-              | <ref>   : argument    /
+<func_call> --| <ref/const> : Lvalue
+              | <ref>       : function reference
+              | <ref/const> : input arguments
 ```
 
 #### `assign`
@@ -161,10 +147,8 @@ An `assign` node represents a variable assignment. Note that the Rvalue can only
 be a `const` or `ref`.
 
 ```
-<assign> --| <ref>            : Rvalue
-           | <ref> or <const> : Lvalue
-
-           | <ref> or <const> : delay   - optional
+<assign> --| <ref>       : Lvalue
+           | <ref/const> : Rvalue
 ```
 
 #### `dp_assign`
@@ -172,14 +156,10 @@ the "lhs := rhs" assignment (dp_assign) is like the "=" assignment but there is 
 for overflow. If the rhs has more bits than the lhs, the upper bits will be
 dropped.
 
-
-
 ```
-<dp_assign> --| <ref>            : Rvalue
-              | <ref> or <const> : Lvalue
+<dp_assign> --| <ref>       : Lvalue
+              | <ref/const> : Rvalue
 ```
-
-
 
 ### Primitives
 #### `const`
@@ -207,30 +187,30 @@ Range.
 ### Unary Expressions
 
 ```
-<op> --| <ref>            : Rvalue
-       | <ref> or <const> : Lvalue
+<op> --| <ref>       : Lvalue
+       | <ref/const> : Rvalue
 ```
 #### `bit_not`
-Bitwise not. Flip all Lvalue bits.
+Bitwise not. Flip all Rvalue bits.
 #### `reduce_or`
 Or all Lvalue bits.
 #### `logical_not`
-Logical Not. Flip Lvalue where Lvalue must be a boolean.
+Logical Not. Flip Rvalue where Rvalue must be a boolean.
 
 ### Binary Expressions
 
 ```
-<op> --| <ref>            : Rvalue
-       | <ref> or <const> : L-1
-       | <ref> or <const> : L-2
+<op> --| <ref>       : Lvalue
+       | <ref/const> : R-1
+       | <ref/const> : R-2
 ```
 
 #### `mod`
-Modulo of L-1 over L-2.
+Modulo of R-1 over R-2.
 #### `shl`
-Left-shift L-1 by L-2.
+Left-shift R-1 by R-2.
 #### `sra`
-Right-shift L-1 by L-2.
+Right-shift R-1 by R-2.
 #### `ne`
 Not equal to.
 #### `eq`
@@ -247,12 +227,12 @@ Greater than or equal to.
 ### N-ary Expressions
 
 ```
-<op> --| <ref>            : Rvalue
-       | <ref> or <const> : L-1     \
-       | <ref> or <const> : L-2      \
-       | <ref> or <const> : L-3       2 or more values
-       | ...                         /
-       | <ref> or <const> : L-N     /
+<op> --| <ref>       : Lvalue
+       | <ref/const> : R-1     \
+       | <ref/const> : R-2      \
+       | <ref/const> : R-3       2 or more values
+       | ...                    /
+       | <ref/const> : R-N     /
 ```
 
 #### `bit_and`
@@ -262,49 +242,53 @@ Bitwise or.
 #### `bit_xor`
 Bitwise xor.
 #### `plus`
-Summation of L's.
+Summation of R-1 to R-N.
 #### `minus`
-L-1 minus summation of L-2 to L-N.
+R-1 minus summation of R-2 to R-N.
 #### `mult`
-Product of L's.
+Product of R-1 to R-N.
 #### `div`
-L-1 divided by product of L-2 to L-N
+R-1 divided by product of R-2 to R-N
 
 ### Tuples
 #### `tuple_concat`
 ```
-<tuple_concat> --| <ref> : Rvalue
-                 | <ref> : L-1 (tuple)
-                 | <ref> : L-2 (tuple)
+<tuple_concat> --| <ref> : Lvalue
+                 | <ref> : R-1 (tuple)
+                 | <ref> : R-2 (tuple)
+                 | ...
+                 | <ref> : R-N (tuple)
 ```
 
 #### `tuple_add`
 ```
-<tuple_add> --| <ref> : Rvalue
-              | <assign> --| <ref>    \ Field 0
-                           | <ref>    /
-              | <assign> --| <ref>    \ Field 1
-                           | <const>  /
+<tuple_add> --| <ref> : Lvalue
+              | <ref/const>
+              | <assign> --| <ref>       \ Field 0
+                           | <ref/const> /
+              | <assign> --| <ref>       \ Field 1
+                           | <ref/const> /
               |  ...
-              | <assign> --| <ref>    \ Field N
-                           | <ref>    /
+              | <assign> --| <ref>       \ Field N
+                           | <ref/const> /
 ```
 
 #### `tuple_set`
 ```
-<tuple_set> --| <ref>            : Rvalue
-              | <ref> or <const> : 1st-level selection   \
-              | ...                                       0..N selections
-              | <ref> or <const> : nth-level selection   /
-              | <ref> or <const> : Lvalue
+<tuple_set> --| <ref>        : Lvalue
+              | <ref/<const> : 1st-level selection   \
+              | ...                                   1..N selections
+              | <ref/<const> : Nth-level selection   /
+              | <ref/<const> : Rvalue
 ```
 
 #### `tuple_get`
 ```
-<tuple_get> --| <ref>            : Lvalue
-              | <ref> or <const> : 1st-level selection   \
-              | ...                                       0..N selections
-              | <ref> or <const> : nth-level selection   /
+<tuple_get> --| <ref>       : Lvalue
+              | <ref>       : Rvalue (selected from this value)
+              | <ref/const> : 1st-level selection   \
+              | ...                                  1..N selections
+              | <ref/const> : Nth-level selection   /
 ```
 
 # Module Input, Output, and Register Declaration
