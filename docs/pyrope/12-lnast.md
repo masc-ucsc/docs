@@ -228,3 +228,71 @@ Tuple concatenation does not use `plus` but the `tup_concat` operator.
       ref    ___4
     ```
 
+## Attributes
+
+There are 3 main operations with attributes: set, get, check. Each has
+a corresponding LNAST node.
+
+Attribute set are in left-hand-side of assignments which can also be in tuple entries.
+
+=== "Pyrope"
+    ```
+    a::[f=3,b] = 1
+    x = (x::[y=7]=2, 4)
+    ```
+
+=== "LNAST direct"
+    ```
+    assign
+      ref a
+      const 1
+    attr_set
+      ref a
+      const f
+      const 3
+    attr_set
+      ref a
+      const b
+      const true
+
+    tup_add
+      ref ___1
+      assign
+        ref x
+        const 2
+      const 4
+
+    attr_set
+      ref ___1
+      const x
+      const y
+      const 7
+
+    assign
+      ref x
+      ref ___1
+    ```
+
+=== "LNAST optimized"
+    ```
+    assign
+      ref a
+      const 1
+    attr_set
+      ref a.f
+      const 3
+    attr_set
+      ref a.b
+      const true
+
+    tup_add
+      ref x
+      assign
+        ref x
+        const 2
+      const 4
+
+    attr_set
+      ref x.x.y
+      const 7
+    ```
