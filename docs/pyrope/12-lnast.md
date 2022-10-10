@@ -63,12 +63,18 @@ ticky in the name `_foo here`.
 ## Tuples
 
 Tuples are "ordered" sequences that can be named. There are LNAST tuple
-specific nodes (`tup_add`,`tup_get`, `tup_concat`) but in many cases the direct
-LNAST operations can handle tuples directly.
+specific nodes (`tup_add`, `tup_set`, `tup_get`, `tup_concat`) but in many
+cases the direct LNAST operations can handle tuples directly.
+
+* `tup_add` creates a new tuple with entries
+* `tup_set` adds/updates a field to an existing tuple.
+* `tup_get` gets the contents of a tuple entry
+* `tup_concat` concatenates two or more tuples
 
 To indicate the tuple position, identifiers can have `:pos:name`. For example
 `x.:3:foo = 2` is legal. It is the same as `x[3] = 2` or `x.foo=2` and check
 that entry `3` has label `foo`. This allows to create more compact LNAST.
+Direct access in operations like `plus` behave like a `tup_set` or `tup_get`.
 
 
 === "Tuple in Pyrope"
@@ -230,8 +236,10 @@ Tuple concatenation does not use `plus` but the `tup_concat` operator.
 
 ## Attributes
 
-There are 3 main operations with attributes: set, get, check. Each has
-a corresponding LNAST node.
+There are 3 main operations with attributes: set, get, check. Each has a
+corresponding LNAST node (`attr_set`, `attr_get`, `attr_check`). Later compiler
+passes decide what operation to perform in the attr depending on the attribute
+type.
 
 Attribute set are in left-hand-side of assignments which can also be in tuple entries.
 
@@ -279,10 +287,12 @@ Attribute set are in left-hand-side of assignments which can also be in tuple en
       ref a
       const 1
     attr_set
-      ref a.f
+      ref a
+      const f
       const 3
     attr_set
-      ref a.b
+      ref a
+      const b      // attribute field can not join first ref
       const true
 
     tup_add
@@ -293,6 +303,56 @@ Attribute set are in left-hand-side of assignments which can also be in tuple en
       const 4
 
     attr_set
-      ref x.x.y
+      ref x.x
+      const y
       const 7
     ```
+
+Attribute get are always right-hand-side
+
+=== "Pyrope"
+    ```
+    let x = a::[f==3,b] + 1
+    var x = (let z=x::[y], 4::[foo])
+    ```
+
+=== "LNAST"
+    ```
+    plus
+      ref ___1
+      ref a
+      const 1
+
+    attr_get
+      ref ___2
+      ref a
+      const f
+
+    equal
+      ref ___3
+      ref ___2
+      const 3
+
+    attr_check
+      ref a
+      ref ___3
+    attr_check
+      ref b
+      const b
+
+    tup_add
+      ref ___4
+      let
+        ref z
+        ref x
+      const 4
+
+    attr_check
+      ref x
+      const y
+
+    attr_check
+      const 4
+      const foo
+    ```
+
