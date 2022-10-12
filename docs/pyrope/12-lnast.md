@@ -146,13 +146,13 @@ Tuples can have a `let` in declaration to indicate that the field is immutable.
     assign
       ref    ___t1
       const  2
-    plus     
+    plus
       ref    ___t2
       const  1
       const  1
     tup_add:
       ref     a
-      assign  
+      assign
         ref     b
         ref     __t1
       let
@@ -165,7 +165,7 @@ Tuples can have a `let` in declaration to indicate that the field is immutable.
     var
       ref    a.:0:b
       const  2
-    plus     
+    plus
       ref    ___2
       const  1
       const  1
@@ -187,7 +187,7 @@ Tuple concatenation does not use `plus` but the `tup_concat` operator.
     assign
       ref    ___1
       const  2
-    plus     
+    plus
       ref    ___2
       const  1
       const  1
@@ -217,7 +217,7 @@ Tuple concatenation does not use `plus` but the `tup_concat` operator.
     var
       ref    a.:0:
       const  2
-    plus     
+    plus
       ref    ___2
       const  1
       const  1
@@ -360,3 +360,141 @@ Attribute get are always right-hand-side
       const foo
     ```
 
+### Sticky Attributes
+
+
+Once a variable gets assigned an attribute, the attribute stays with the
+variable and any variables that got a direct copy. The only way to remove it is
+with arithmetic operations and/or bit selection.
+
+
+```
+let foo::[attr1=2] = 3
+
+var foo2 = foo
+cassert foo2.::[attr1] == 2
+
+let foo3 = foo@[]
+cassert foo3 !has ::[attr1]
+
+var xx = 4
+xx::[attr2=5] = 1
+
+let xx2 = xx
+cassert xx2.::[attr2] == 5
+cassert xx2 has ::[attr2]
+
+let xx3 = xx + 0
+cassert xx3 !has ::[attr2]
+```
+
+## Bit Selection
+
+
+Pyrope has several bit selection operations. The default maps `get_mask` and `set_mask` LNAST nodes:
+
+
+=== "Pyrope"
+    ```
+    foo@[1,2] = xx
+    yy = foo@[5] + xx@[1..<4]
+    ```
+
+=== "LNAST"
+    ```
+    tup_add
+      ref ___t
+      const 1
+      const 2
+
+    set_mask
+      ref foo
+      ref ___t
+      ref xx
+
+    get_mask
+      ref ___3
+      ref foo
+      const 5
+
+    range
+      ref ___4
+      const 1
+      const 5
+
+    get_mask
+      ref ___5
+      ref xx
+      ref ___4
+
+    add
+      ref yy
+      ref ___4
+      ref ___5
+    ```
+
+It is possible to use a `foo@sext[range]` to perform a bit selection with sign
+extension. The `sext` LNAST node is equivalent to the Lgraph `sext` that has 2
+inputs. The variable and from what bit to perform sign-extension. This means
+that the LNAST translation needs a `get_mask` and a `sext` node. The `sext`,
+`+`, `|`, `^` bit selection modifiers can only be applied to right-hand-side
+operations.
+
+
+=== "Pyrope"
+    ```
+    let t1 = foo@sext[..=4]
+    let t2 = foo@|[..=4]
+    let t3 = foo@&[..=4]
+    let t4 = foo@^[..=4]
+    let t5 = foo@+[..=4]
+    ```
+
+=== "LNAST"
+    ```
+    range
+      ref ___r
+      const 0
+      const 4
+
+    get_mask
+      ref ___t
+      ref foo
+      ref ___r
+
+    sext
+      ref ___t1
+      ref ___t
+      const 4
+    let
+      ref t1
+      ref ___t1
+
+    reduce_or
+      ref ___t2
+      ref ___t
+    let
+      ref t2
+      ref ___t2
+
+    reduce_and       // reduce_and(x) == (sext(x) == -1)
+      ref ___t3
+      ref ___t
+    let
+      ref t3
+      ref ___t3
+
+    reduce_xor
+      ref ___t4
+      ref ___t
+    let
+      ref t4
+      ref ___t4
+
+    popcount
+      ref ___t5
+      ref ___t
+    let
+      ref t5
+      ref ___t5
+    ```
