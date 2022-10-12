@@ -275,7 +275,7 @@ with tuples or by requiring an enumerate.
 var x1:[2]u3 = (0,1)
 assert x1[0] == 0 and x1[1] == 1
 
-var X:int = :enum(  // sequential enum, not one hot enum
+var X = :int:enum(  // sequential enum, not one hot enum (explicit type)
   ,t1
   ,t2
   ,t3

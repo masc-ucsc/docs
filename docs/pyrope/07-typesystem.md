@@ -271,9 +271,10 @@ let f2 = fun(x) where x is :X1 {
 
 ## Enums with types
 
-Enumerates (enums) create a number for each entry in a set of identifiers. Pyrope
-also allows associating a tuple or type for each entry. Another difference from a
-tuple is that the enumerate values must be known at compile time.
+Enumerates (enums) create a number for each entry in a set of identifiers.
+Pyrope also allows associating a tuple or type for each entry. Another
+difference from a tuple is that the enumerate values must be known at compile
+time. 
 
 
 ```
@@ -282,7 +283,7 @@ let Rgb = (
   ,set = proc(ref self, c) { self.c = c }
 )
 
-let Color:Rgb = :enum(
+let Color = :Rgb:enum(
   ,Yellow   = 0xffff00
   ,Red      = 0xff0000
   ,Green    = Rgb(0x00ff00) // alternative redundant syntax
@@ -296,6 +297,28 @@ if y == Color.Red {
 ```
 
 
+It is also possible to support an algebraic data type with enums. This requires
+each enumerate entry to have an associated type. In can also be seen as a union
+type, where the enumerate has to be either of the enum entries where each is
+associated to a type.
+
+```
+let ADT = :enum(
+  ,Person = :(eats:string)
+  ,Robot  = :(charges_with:string)
+)
+
+let nourish = fun(x:ADT) {
+  match x {
+    == ADT.Person { puts "eating:{}"  , x.eats         }
+    == ADT.Robot  { puts "charging:{}", x.charges_with }
+  }
+}
+
+test "my main" {
+  (_:Person="pizza", _:Robot="electricity").each(nourish)
+}
+```
 
 
 ## Bitwidth

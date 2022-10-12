@@ -24,7 +24,7 @@ names that do not allow to use compact tuple representation like `foo here.field
     ```
 
 === "LNAST direct"
-    ```
+    ```lnast
     plus
       ref ___1
       const 3
@@ -46,7 +46,7 @@ names that do not allow to use compact tuple representation like `foo here.field
     ```
 
 === "LNAST optimized"
-    ```
+    ```lnast
     plus
       ref ___1
       const 3
@@ -88,7 +88,7 @@ Direct access in operations like `plus` behave like a `tup_set` or `tup_get`.
     ```
 
 === "LNAST direct"
-    ```
+    ```lnast
     assign  :
         ref     : x
         const   : 3
@@ -117,7 +117,7 @@ Direct access in operations like `plus` behave like a `tup_set` or `tup_get`.
     ```
 
 === "LNAST Optimized"
-    ```
+    ```lnast
     assign  :
         ref     : x
         const   : 3
@@ -142,7 +142,7 @@ Tuples can have a `let` in declaration to indicate that the field is immutable.
     ```
 
 === "LNAST direct"
-    ```
+    ```lnast
     assign
       ref    ___t1
       const  2
@@ -161,7 +161,7 @@ Tuples can have a `let` in declaration to indicate that the field is immutable.
     ```
 
 === "LNAST Optimized"
-    ```
+    ```lnast
     var
       ref    a.:0:b
       const  2
@@ -183,7 +183,7 @@ Tuple concatenation does not use `plus` but the `tup_concat` operator.
     ```
 
 === "LNAST direct"
-    ```
+    ```lnast
     assign
       ref    ___1
       const  2
@@ -213,7 +213,7 @@ Tuple concatenation does not use `plus` but the `tup_concat` operator.
     ```
 
 === "LNAST optimized"
-    ```
+    ```lnast
     var
       ref    a.:0:
       const  2
@@ -254,7 +254,7 @@ Attribute set are in left-hand-side of assignments which can also be in tuple en
     ```
 
 === "LNAST direct"
-    ```
+    ```lnast
     assign
       ref a
       const 1
@@ -286,7 +286,7 @@ Attribute set are in left-hand-side of assignments which can also be in tuple en
     ```
 
 === "LNAST optimized"
-    ```
+    ```lnast
     assign
       ref a
       const 1
@@ -321,7 +321,7 @@ Attribute get are always right-hand-side
     ```
 
 === "LNAST"
-    ```
+    ```lnast
     plus
       ref ___1
       ref a
@@ -401,7 +401,7 @@ Pyrope has several bit selection operations. The default maps `get_mask` and `se
     ```
 
 === "LNAST"
-    ```
+    ```lnast
     tup_add
       ref ___t
       const 1
@@ -451,7 +451,7 @@ operations.
     ```
 
 === "LNAST"
-    ```
+    ```lnast
     range
       ref ___r
       const 0

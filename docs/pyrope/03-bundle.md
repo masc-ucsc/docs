@@ -355,8 +355,8 @@ shadow existing variable entries.
 
 ```
 let a = "foo"
-let Err  = :enum(a  ,b  ,c)  // compile error, 'a' is a shadow variable
-let Good = :enum(a=_,'b',c)  // OK
+let Err  = ::enum(a  ,b  ,c)  // compile error, 'a' is a shadow variable
+let Good = ::enum(a=_,'b',c)  // OK
 ```
 
 The reason is to avoid confusion between tuple and enum that use similar
@@ -384,7 +384,7 @@ let c = 30
 let v = (a,b,c)
 assert v == (10,20,30)
 
-let En = :enum(a=1,b=2,c=300)
+let En = :int:enum(a=1,b=2,c=300)
 assert e.a == 1 and e.b == 2 and e.c == 300
 
 let x = e.a
@@ -398,14 +398,23 @@ set, the 2nd the 2nd bit set. If an entry has a value, the next entry uses
 the next free bit.
 
 ```
-let V3 = :enum(
+let V3 = ::enum(
    ,a
    ,b=5
    ,c
 )
-assert V3.a == 1
-assert V3.b == 5
-assert V3.c == 2
+cassert V3.a == 1
+cassert V3.b == 5
+cassert V3.c == 2
+
+let V4 = :int:enum( // when integer is the enum type, it is the typical enum
+   ,a
+   ,b=5
+   ,c
+)
+cassert V4.a == 0
+cassert V4.b == 5
+cassert V4.c == 6
 ```
 
 Enum can accept hierarchical tuples. Each enum level follows the same algorithm.
@@ -413,21 +422,21 @@ Each entry tries to find a new bit. In the case of the hierarchy, the lower
 hierarchy level bits are kept.
 
 ```
-let Animal = :enum(
+let Animal = ::enum(
   ,bird=(eagle, parrot)
   ,mammal=(rat, human)
 )
 
-assert Animal.bird.eagle != Animal.mammal
-assert Animal.bird != Animal.mammal.human
-assert Animal.bird == Animal.bird.parrot
+cassert Animal.bird.eagle != Animal.mammal
+cassert Animal.bird != Animal.mammal.human
+cassert Animal.bird == Animal.bird.parrot
 
-assert Animal.bird         == 0b000001
-assert Animal.bird.eagle   == 0b000011
-assert Animal.bird.parrot  == 0b000101
-assert Animal.mammal       == 0b001000
-assert Animal.mammal.rat   == 0b011000
-assert Animal.mammal.human == 0b101000
+cassert Animal.bird         == 0b000001
+cassert Animal.bird.eagle   == 0b000011
+cassert Animal.bird.parrot  == 0b000101
+cassert Animal.mammal       == 0b001000
+cassert Animal.mammal.rat   == 0b011000
+cassert Animal.mammal.human == 0b101000
 ```
 
 In general, if there is no value specified in an entry, the number of bits is
@@ -436,21 +445,22 @@ equivalent to the number of entries in the tuple.
 
 It is possible to use a sequence that is more consistent with traditional
 programming languages, but this only works with non-hierarchical enumerates
-when a `:int` type is used.
+when an integer type (`:int`, `:u32`, `:i4` ...) is used.
 
 ```
-let V3:int = :enum( // V3 has type :int
+let V5 = :int:enum( // V5 has type :int
    ,a
    ,b=5
    ,c
 )
-assert V3.a == 0
-assert V3.b == 5
-assert V3.c == 6
+cassert V5.a == 0
+cassert V5.b == 5
+cassert V5.c == 6
 ```
 
 The same syntax is used for enums to different objects. The hierarchy is not
 allowed when an ordered numbering is requested.
+
 
 
 Enumerates of the same type can perform bitwise binary operations
