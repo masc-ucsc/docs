@@ -420,7 +420,7 @@ Pyrope has several bit selection operations. The default maps `get_mask` and `se
     range
       ref ___4
       const 1
-      const 5
+      const 3
 
     get_mask
       ref ___5
@@ -498,3 +498,175 @@ operations.
       ref t5
       ref ___t5
     ```
+
+## match
+
+The match statement behaves like a `unique if` but it also checks that at least
+one of the paths is taken. This means that if the `else` exists in the match,
+it behaves like a `unique if`. If the else does not exist, an `else { assert
+false }` is created.
+
+
+=== "Pyrope"
+    ```
+    var z = 0
+    match x {
+     == 3 { z = 1 }
+     in 4..<6 { z = 2 }
+    }
+
+    match x {
+     <  5 { z = 1 }
+     else { z = 3 }
+    }
+    ```
+
+=== "LNAST"
+    ```lnast
+    var
+      ref z
+      const 0
+
+    eq
+      ref ___0
+      ref x
+      const 3
+    range
+      ref ___2
+      const 4
+      const 5
+    in
+      ref ___1
+      ref x
+      ref ___2
+    unique_if
+      ref ___1
+      stmts
+        assign
+          ref z
+          const 1
+      ref ___2
+      stmts
+        assign
+          ref z
+          const 2
+      stmts
+        call
+          ref ___3
+          ref assert
+          const false
+
+    lt
+      ref ___4
+      ref x
+      const 5
+    unique_if
+      ref ___4
+      stmts
+        assign
+          ref z
+          const 1
+      stmts
+        assign
+          ref z
+          const 3
+    ```
+
+## Scope
+
+Like most languages Pyrope has variable scope, but it does not allow variable
+shadowing. This section showcases some cases on how the scope is generated.
+
+
+New variables can have a statement scope for `if`, `while`, and `match`
+statements.
+
+=== "Pyrope"
+    ```
+    if var x=3; x<4 {
+      cassert x==3
+    }
+    while var z=1; x {
+      x -= 1
+    }
+    var z=0
+    match var x=2 ; z+x {
+      == 2 { cassert true  }
+      != 7 { cassert true  }
+      else { cassert false }
+    }
+    ```
+
+=== "LNAST"
+    ```lnast
+    stmts
+      var
+        ref x
+        const 3
+      lt
+        ref ___1
+        ref x
+        const 4
+      if
+        ref ___1
+        stmts
+          eq
+            ref ___2
+            ref x
+            const 3
+          call
+            ref ___0
+            ref cassert
+            ref ___2
+
+    stmts
+      var
+        ref x
+        const 1
+      while
+        ref x
+        stmts
+          sub
+            ref x
+            ref x
+            const 1
+
+    var
+      ref z
+      const 0
+    stmts
+      var
+        ref x
+        const 2
+      add
+        ref ___3
+        ref z
+        ref x
+      eq
+        ref ___t1
+        ref ___3
+        const 2
+      ne
+        ref ___t2
+        ref ___3
+        const 7
+      unique_if
+        ref ___t1
+        stmts
+          call
+            ref ___4
+            ref cassert
+            const true
+        ref ___t2
+        stmts
+          call
+            ref ___5
+            ref cassert
+            const true
+        stmts
+          call
+            ref ___6
+            ref cassert
+            const false
+    ```
+
