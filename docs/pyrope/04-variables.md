@@ -1025,7 +1025,7 @@ let complex = (
   ,reg v1:string = "foo"
   ,v2:string = _
 
-  ,set = proc(ref self,v) {
+  ,setter = proc(ref self,v) {
      self.v1 = v
      self.v2 = v
   }

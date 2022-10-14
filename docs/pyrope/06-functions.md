@@ -269,8 +269,8 @@ arg_fun(1,2)     // OK too
 
 var intercepted:(
  ,field:u32
- ,get=fun(self) { ret self.field + 1 }
- ,set=fun(ref self,v ) { self.field = v }
+ ,getter=fun(self) { ret self.field + 1 }
+ ,setter=fun(ref self,v ) { self.field = v }
 ) = 0
 
 cassert intercepted == 1  // will call get method without explicit call

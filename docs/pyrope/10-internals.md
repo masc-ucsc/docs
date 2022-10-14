@@ -497,7 +497,7 @@ may do this implementation.
 
       var addX = (
         ,a: i32 = a                        // copy value, runtime or comptime
-        ,get = fun(self, x: i32) {
+        ,getter = fun(self, x: i32) {
           ret x + self.a
         }
       )
@@ -623,20 +623,20 @@ let X_t = (
   ,i1 = (
     ,i1_field:u32 = 1
     ,i2_field:u32 = 2
-    ,set = proc(ref self, a) {
+    ,setter = proc(ref self, a) {
        self.i1_field = a
     }
   )
   ,i2 = (
     ,i1_field:i32 = 11
-    ,set = proc(ref self, a) {
+    ,setter = proc(ref self, a) {
        self.i1_field = a
     }
   )
 )
 
 var top = (
-  ,set = proc(ref self) {
+  ,setter = proc(ref self) {
     var x:X_t = _
     assert x.i1.i1_field == 1
     assert x.i1.i2_field == 2

@@ -87,7 +87,7 @@ constraints from the type system. Pyrope type system constructs to handle types:
 
 * `a equals b`: Checks that `a does b` and `b does a`. Effectively checking
   that they have the same type. Notice that this is not like checking for
-  logical equivalence, just type equivalence. 
+  logical equivalence, just type equivalence.
 
 ```
 let t1 = (a:int=1  , b:string)
@@ -120,7 +120,7 @@ let At = :int(33..)      // number bigger than 32
 let Bt=(
   ,c:string
   ,d=100
-  ,set = fun(ref self, ...args) { self.c = args }
+  ,setter = fun(ref self, ...args) { self.c = args }
 )
 
 var a:At=40
@@ -132,7 +132,7 @@ puts "b:{}", b           // b:(c="hello",d=100)
 ### Type equivalence
 
 
-The `does` operator is the base to compare types. It follows structural typing rules. 
+The `does` operator is the base to compare types. It follows structural typing rules.
 These are the detailed rules for the `a does b` operator depending on the `a` and `b` fields:
 
 
@@ -161,7 +161,7 @@ These are the detailed rules for the `a does b` operator depending on the `a` an
   explicit array size of `b`. If the size check is true, the array entry type
   is checked. `:[]x does :[]y` is false when `:x does :y` is false.
 
-* The lambdas have a more complicated set of rules explained later. 
+* The lambdas have a more complicated set of rules explained later.
 
 ```
 assert (a:int(max=33,min=0) does (a:int(20,5)))
@@ -274,13 +274,13 @@ let f2 = fun(x) where x is :X1 {
 Enumerates (enums) create a number for each entry in a set of identifiers.
 Pyrope also allows associating a tuple or type for each entry. Another
 difference from a tuple is that the enumerate values must be known at compile
-time. 
+time.
 
 
 ```
 let Rgb = (
   ,c:u24
-  ,set = proc(ref self, c) { self.c = c }
+  ,setter = proc(ref self, c) { self.c = c }
 )
 
 let Color = :Rgb:enum(
@@ -333,7 +333,7 @@ variable has an assigned size smaller than the operand results.
 
 The programmer can specify the maximum number of bits, or the maximum value range.
 The programmer can not specify the exact number of bits because the compiler has
-the option to optimize the design. 
+the option to optimize the design.
 
 
 In fact, internally Pyrope only tracks the `max` and `min` value. When the
@@ -370,7 +370,7 @@ val = 300        // compile error, '300' overflows the maximum allowed value of 
 val = 1          // max=1,min=1 sbits=2, ubits=1
 assert val.::[ubits] == 1 and val.::[min]==1 and val.::[max]==1 and val.::[sbits]==2
 
-val::[wrap] = 0x1F0 // Drop bits from 0x1F0 to fit in constrained type 
+val::[wrap] = 0x1F0 // Drop bits from 0x1F0 to fit in constrained type
 assert val == 240 == 0xF0
 
 val = u8(0x1F0)    // same
@@ -533,12 +533,12 @@ let bt=(c:string,d:u100)
 let ct=(
   ,d:u32    = _
   ,c:string = _
-) 
+)
 // different order
 let dt=(
   ,d:u32    = _
   ,c:string = _
-  ,set = proc (ref self, x:at) { self.d = x.d ; self.c = x.c }
+  ,setter = proc (ref self, x:at) { self.d = x.d ; self.c = x.c }
 )
 
 var b:bt=(c="hello", d=10000)
@@ -573,7 +573,7 @@ let Say_hi_mixin = (
 
 let User = (
   ,name:string = _
-  ,set = proc(ref self, n:string) { self.name = n }
+  ,setter = proc(ref self, n:string) { self.name = n }
 )
 
 let Mixing_all = Say_mixin ++ Say_hi_mixin ++ User
@@ -601,7 +601,7 @@ not `let` field. The `...` concatenates and but triggers a compile error if the
 same field appears twice.
 
 
-An issue with mixin is when more than one tuple has the `set` method. If the
+An issue with mixin is when more than one tuple has the `setter` method. If the
 tuples are concatenated with `...` and error is triggered, if the tuples are
 concatenated with `++` the methods are overridden when declared with `var`.
 Neither is the expected solution.  A smaller issue with mixins is that
@@ -619,15 +619,15 @@ implemented.
 ```
 let Shape = (
   ,name:string = _
-  ,area:fun (self )->(:i32)  = _            // defined but unimplemented 
-  ,increase_size:proc(ref self, x:i12) = _  // defined but unimplemented 
+  ,area:fun (self )->(:i32)  = _            // defined but unimplemented
+  ,increase_size:proc(ref self, x:i12) = _  // defined but unimplemented
 
-  ,set=proc(ref self, name ) { self.name = name } // implemented, use =
+  ,setter=proc(ref self, name ) { self.name = name } // implemented, use =
   ,say_name=fun(self) { puts "name:{}", name }
 )
 
 let Circle = (
-  ,set           = proc(ref self) { Shape.set("circle") }
+  ,setter           = proc(ref self) { super = "circle" }
   ,increase_size = proc(ref self, x:i12) { self.rad *= x }
   ,rad:i32       = _
   ,area = fun(self) -> (:i32) {
@@ -641,7 +641,7 @@ An equivalent "Circle" functionality:
 
 ```
 let Circle = (
-  ,set         = proc(ref self) { self.name = "circle" }
+  ,setter      = proc(ref self) { self.name = "circle" }
   ,name:string = _
   ,rad:i32     = _
   ,area = fun() -> (:i32) {
@@ -694,8 +694,8 @@ this:
 ```
 let x = fn(args)
 
-let x = for i in fn { last i(args) when (i.__inp does :args) 
-                                    and (i.__out does :x   ) 
+let x = for i in fn { last i(args) when (i.__inp does :args)
+                                    and (i.__out does :x   )
                                     and (i.__where(args)   ) }
 ```
 
@@ -859,7 +859,7 @@ variable. Pyrope only allows you to reference registers by unique name. Verilog
 hierarchical reference is not popular for 2 main reasons: (1) It is considered
 "not nice" to bypass the module interface and touch an internal variable; (2)
 some tools do not support it as synthesizable; (3) the evaluation order is not
-clear because the execution order of the modules is not defined. 
+clear because the execution order of the modules is not defined.
 
 
 Allowing only a single lambda to update registers avoids the evaluation order
@@ -875,7 +875,7 @@ having a register is called in multiple places, only one can write, and the
 others are reading the update. It is useful to have configuration registers. In
 this case, multiple instances of the same register can have different values.
 As an illustrative example, a UART can have a register and the controller can
-set a different value for each uart base register. 
+set a different value for each uart base register.
 
 ```
 // file remote.prp
@@ -935,8 +935,10 @@ always concatenates a tuple or a String, `[]` indexes a tuple.
 
 ## Properties: Getter/Setter
 
-The getter/setter allow to have properties for each variable. The setter
-is also the "constructor" for the object.
+Pyrope tuples do not have default constructor, but it has a setter method that
+allows to intercept any assignment. The symmetric getter method is called
+whenever the tuple is read. Since each variable or tuple field is also a tuple,
+the getter/setter allow to intercept any variable/field.
 
 
 ```
@@ -950,8 +952,8 @@ assert f3 == f2 == f1
 
 Encapsulation can be achieved with explicit methods (initialize/setXXX/getXXX).
 This creates problems with overloading or exposing variables. It is possible to
-create a tuple where the initialization is the setter (`set`) and the default
-method is the getter (`get`).
+create a tuple where the initialization is the setter (`setter`) and the default
+method is the getter (`getter`).
 
 
 ```
@@ -960,10 +962,10 @@ let some_obj = (
   ,a2 = (
     ,_val:u32 = _                               // hidden field
 
-    ,get=fun(self) { self._val + 100 }         // getter
-    ,set=proc(ref self, x) { self._val = x+1 } // setter
+    ,getter=fun(self) { self._val + 100 }
+    ,setter=proc(ref self, x) { self._val = x+1 }
   )
-  ,set = proc(ref self, a,b){                  // setter
+  ,setter = proc(ref self, a,b){                  // setter
     self.a1      = a
     self.a2._val = b
   }
@@ -983,10 +985,10 @@ to customize by return type:
 ```
 let showcase = (
   ,v:int = _
-  ,get ++= fun(self)->(:string) where self.i>100 {
+  ,getter ++= fun(self)->(:string) where self.i>100 {
     ret "this is a big number" ++ string(v)
   }
-  ,get ++= fun(self)->(:int) {
+  ,getter ++= fun(self)->(:int) {
     ret v
   }
 )
@@ -1005,10 +1007,42 @@ In this case, it allows building typecast per type.
 ```
 let my_obj = (
   ,val:u32 = _
-  ,get = fun(self)->(:string ){ ret string(self.val) }
+  ,getter = fun(self)->(:string ){ ret string(self.val) }
        ++ fun(self)->(:bool){ ret self.val != 0    }
        ++ fun(self)->(:int    ){ ret self.val         }
 )
+```
+
+### Default setter value
+
+All the variable declarations need a explicit assigned value. The `_` allows to
+pick the default value based on the type. If the type is an integer, the `_` is equivalent
+to a zero. If the type is a boolean, the default or `_` is false. For more complicated
+tuple types, the setter will be called without any value.
+
+
+```
+let fint:int = _
+cassert fint == 0
+
+var fbool:bool = _
+cassert fbool == 0
+
+let Tup = (
+  ,v:string = _  // default to empty
+  ,setter = fun(ref self) { // no args
+     cassert self.v == ""
+     self.v = "empty"
+  } ++ fun(ref self, v) {
+     self.v = v
+  }
+)
+
+var x:Tup = _
+cassert x.v == "empty"
+
+x = "Padua"
+cassert x.v == "Padua"
 ```
 
 ## Compare
@@ -1023,7 +1057,7 @@ comparators. When non-provided the `lt` (Less Than) is a compile error, and the
 ```
 let t=(
   ,v:string = _
-  ,set = proc(ref self) { self.v = a }
+  ,setter = proc(ref self) { self.v = a }
   ,lt = fun(self,other)->(:bool){ self.v  < other.v }
   ,eq = fun(self,other)            { self.v == other.v } // infer ret
 )

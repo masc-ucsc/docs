@@ -534,14 +534,14 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
 
     ```
     let Inner_t = (
-      ,set = proc(ref self, z,y) {
+      ,setter = proc(ref self, z,y) {
         self.a =   y & z
         self.h = !(y & z)
       }
     )
 
     let Top2_t = (
-      ,set = proc(ref self,a,b) {
+      ,setter = proc(ref self,a,b) {
         let foo:Inner_t = (y=a,z=b)
         
         self.c = foo.a
@@ -556,7 +556,7 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
 
     ```
     let Inner_t = (
-      ,set = proc(ref self, z,y) {
+      ,setter = proc(ref self, z,y) {
         self.a =   y & z
         self.h = !(y & z)
       }
@@ -564,7 +564,7 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
 
     let Top2_t = (
       ,foo:Inner_t = _
-      ,set = proc(ref self,a,b) {
+      ,setter = proc(ref self,a,b) {
         self.c, self.d = self.foo(y=a,z=b)
       }
     )

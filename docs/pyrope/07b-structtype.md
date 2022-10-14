@@ -30,14 +30,14 @@ let Animal = (
 )
 
 let Dog = Animal ++ (
-  ,set = proc(ref self) { self.legs = 4 }
+  ,setter = proc(ref self) { self.legs = 4 }
   ,bark = fun() { puts "bark bark" }
 )
 
 let Bird = Animal ++ (
   ,seeds_eaten:int = _
 
-  ,set = proc(ref self)  { self.legs = 2 }
+  ,setter = proc(ref self)  { self.legs = 2 }
       ++ proc(ref self, a:Animal)    { self.legs = 2 ; name = "bird animal" }
   ,eat_seeds = proc(ref self, n) { self.seeds_eaten += n }
 )
