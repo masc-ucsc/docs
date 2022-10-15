@@ -499,6 +499,261 @@ operations.
       ref ___t5
     ```
 
+## Direct LNAST/Lgraph call
+
+
+A direct Lgraph call can be done with `__cell` where `cell` is the Lgraph cell
+like `plus`, `LUT`, `memory`. In LNAST this is translated like a lambda call.
+
+
+=== "Pyrope"
+    ```
+    let foo = 3
+    let bar = 300
+    let b = __plus(1,2,foo,bar)
+    ```
+
+=== "LNAST"
+    ```
+    let
+      ref foo
+      const 3
+    let
+      ref bar
+      const 300
+    tup_add
+      ref ___0
+      const 1
+      const 2
+      ref foo
+      ref bar
+    fcall
+      ref b
+      ref __plus
+      ref ___0
+    ```
+
+A direct LNAST call can be done calling an LNAST method, where the first entry
+is the root LNAST node, and rest follow a tree syntax with strings.
+
+=== "Pyrope"
+    ```
+    LNAST("let", ("ref", "x"), ("const", "5"))
+    ```
+
+=== "LNAST"
+    ```
+    let
+      ref x
+      const 5
+    ```
+
+## Basic Operators
+
+Basic operators are binary or unary operators in Pyrope that have a one-to-one
+translation to LNAST nodes.
+
+### Unary
+
+* `!a` or `not a` translates to `lnot`
+* `~a` translates to `not`
+* `-a` translates to `minus(0,a)`
+
+### Binary Integer
+
+* `a + b` translates to `plus`
+* `a - b` translates to `minus`
+* `a * b` translates to `mult`
+* `a / b` translates to `div`
+* `a & b` translates to `and`
+* `a | b` translates to `or`
+* `a ^ b` translates to `xor`
+* `a >> b` translates to `sra`
+* `a << b` translates to `shl`
+
+
+There is a `mod` LNAST operator that performs module operations. It does not
+have a direct Pyrope syntax, but it can be called directly `__mod(a,b)`.
+
+### Binary Boolean
+
+* `a and b` translated to `land`
+* `a or b` translates to `lor`
+
+
+## Complex Operators
+
+Complex operators are binary operators in Pyrope that require more than one
+LNAST statement.
+
+### Binary Integer
+
+Binary nand (`x=a ~& b`):
+```lnast
+and
+  ref ___0
+  ref a
+  ref b
+not
+  ref x
+  ref ___0
+```
+
+Binary nor (`x=a ~| b`):
+```lnast
+or
+  ref ___0
+  ref a
+  ref b
+not
+  ref x
+  ref ___0
+```
+
+Binary xor (`x=a ~^ b`):
+```lnast
+xor
+  ref ___0
+  ref a
+  ref b
+not
+  ref x
+  ref ___0
+```
+
+Logical shift right (`x = a@[] >> b`):
+```lnast
+get_mask
+  ref ___0
+  ref a
+sra
+  ref x
+  ref ___0
+  ref b
+```
+
+### Binary logical
+
+
+Logical implication (`x = a implies b`):
+```lnast
+not
+  ref ___0
+  ref a
+lor
+  ref x
+  ref ___0
+  ref b
+```
+
+Logical nand (`x = a !and b`):
+```lnast
+land
+  ref ___0
+  ref a
+  ref b
+not
+  ref x
+  ref ___0
+```
+
+Logical nor (`x = a !or b`):
+```lnast
+lor
+  ref ___0
+  ref a
+  ref b
+not
+  ref x
+  ref ___0
+```
+
+Logical not implication (`x = a !implies b`):
+```lnast
+not
+  ref ___0
+  ref b
+land
+  ref x
+  ref a
+  ref ___0
+```
+
+
+Short-circuit boolean (`and_then`/`or_else`)
+
+The short-circuit boolean prevent expressions from being evaluated. This only
+matters if there is a procedure call, but at LNAST it is not possible to know
+due to getter overload. As a result, the sequence of statments is translated to
+a sequence of nested if statements. 
+
+=== "Pyrope"
+    ```
+    a = b and_then c and_then (d or e)
+    ```
+=== "LNAST"
+  ```lnast
+  land
+    ref ___0
+    ref b
+    ref c
+  assign
+    ref a
+    ref ___0
+  if
+    ref ___0
+    stmts
+      lor ___1
+        ref d
+        ref e
+      assign
+        ref a
+        ref ___1
+  ```
+
+=== "Pyrope"
+    ```
+    a = b or_else c or_else (d and e)
+    ```
+=== "LNAST"
+  ```lnast
+  lor
+    ref ___0
+    ref b
+    ref c
+  assign
+    ref a
+    ref ___0
+  if
+    ref ___0
+    stmts
+    stmts  // else only
+      land
+        ref ___1
+        ref d
+        ref e
+      assign
+        ref a
+        ref ___1
+  ```
+
+### Tuple/Set operators
+
+* `a in b` is element `a` in tuple `b`
+* `a !in b` true when element `a` is not in tuple `b`
+
+*TODO*
+
+### Type operators
+
+* `a does b` is the tuple structure of `a` a subset of `b`
+* `a equals b` same as `(a does b) and (b does a)`
+* `a case b` same as `cassert a does b` and for each `b` field with a defined value,
+  the value matches `a` (`nil`, `0sb?` are undefined values)
+* `a is b` is a nominal type check. Equivalent to `a::[typename] == b::[typename]`
+
+*TODO*
+
 ## match
 
 The match statement behaves like a `unique if` but it also checks that at least
@@ -551,7 +806,7 @@ false }` is created.
           ref z
           const 2
       stmts
-        call
+        fcall
           ref ___3
           ref assert
           const false
@@ -614,7 +869,7 @@ statements.
             ref ___2
             ref x
             const 3
-          call
+          fcall
             ref ___0
             ref cassert
             ref ___2
@@ -653,18 +908,18 @@ statements.
       unique_if
         ref ___t1
         stmts
-          call
+          fcall
             ref ___4
             ref cassert
             const true
         ref ___t2
         stmts
-          call
+          fcall
             ref ___5
             ref cassert
             const true
         stmts
-          call
+          fcall
             ref ___6
             ref cassert
             const false

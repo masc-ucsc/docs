@@ -491,6 +491,7 @@ passes:
 * `reset`: indicate a signal/input is a reset wire
 * `left_of`, `right_of`, `top_of`, `bottom_of`, `align_with`: placement hints
 * `valid`, `retry`: for elastic pipelines
+* `typename`: type name at variable declaration
 
 Attributes control fields like the default reset and clock signal. This allows
 to change the control inside procedures. Notice that this means that attributes
@@ -694,8 +695,9 @@ All the operators work over signed integers.
 * `a ~& b` bitwise nand
 * `a ~| b` bitwise nor
 * `a ~^ b` bitwise xnor
-* `a >> b` shift right
-* `a << b` shift left
+* `a >> b` arithmetic right shift
+* `a@[] >> b` logical right shift
+* `a << b` left shift
 
 ### Binary Boolean operators
 
@@ -706,7 +708,7 @@ All the operators work over signed integers.
 * `a !or b` logical nor
 * `a !implies b` logical not implication
 
-### Set operators
+### Tuple/Set operators
 
 * `a in b` is element `a` in tuple `b`
 * `a !in b` true when element `a` is not in tuple `b`
@@ -714,6 +716,16 @@ All the operators work over signed integers.
 Most operations behave as expected when applied to signed unlimited precision
 integers. 
 
+### Type operators
+
+* `a does b` is the tuple structure of `a` a subset of `b`
+* `a equals b` same as `(a does b) and (b does a)`
+* `a case b` same as `cassert a does b` and for each `b` field with a defined value,
+  the value matches `a` (`nil`, `0sb?` are undefined values)
+* `a is b` is a nominal type check. Equivalent to `a::[typename] == b::[typename]`
+
+Each type operator also has the negated `(a !does b) == !(a does b)`, `(a
+!equals b) == !(a equals b)`, `a !case b == !(a case b)`
 
 ### Reduce and bit selection operators
 
@@ -859,7 +871,7 @@ widely expected precedence.
 |:-----------:|:-----------:|-------------:|
 | 1          | unary       | not ! ~ ? |
 | 2          | mult/div    | *, /         |
-| 3          | other binary | ..,^, &, -,+, ++, <<, >> |
+| 3          | other binary | ..,^, &, -,+, ++, <<, >>, in, does, has, case, equals |
 | 4          | comparators |    <, <=, ==, !=, >=, > |
 | 5          | logical     | and, or, implies |
 

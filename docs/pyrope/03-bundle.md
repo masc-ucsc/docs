@@ -368,8 +368,8 @@ expression that returns a string type.
 
 ```
 let a = "field"
-let My_enum = :("x" ++ a, 'bar')
-assert My_enum.xfield != My_enum.bar
+let My_non_enum = ("x" ++ a, 'bar')
+cassert My_non_enum[0] == "xfield"  and My_non_enum[1] == 'bar'
 ```
 
 The shadow variable constrain does not happen if the enum has a non-default
@@ -439,8 +439,8 @@ cassert Animal.mammal.rat   == 0b011000
 cassert Animal.mammal.human == 0b101000
 ```
 
-In general, if there is no value specified in an entry, the number of bits is
-equivalent to the number of entries in the tuple.
+In general, for each leaf enum, the number of bits is equivalent to the number
+of entries in the leaf tuple.
 
 
 It is possible to use a sequence that is more consistent with traditional

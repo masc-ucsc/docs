@@ -54,7 +54,7 @@ There are 5 main verification statements:
   checked only when formal verification is enabled. Simulation can also check
   for this, but because it is slow, it may not be active by default.
 
-* `restrict`: Constraints or restrictions beyond to check a subset of the
+* `restrict`: Constraints or restricts beyond to check a subset of the
   valid space. It only affects the verify command. The restrict command
   accepts a list of conditions to restrict.
 

@@ -365,7 +365,7 @@ attributes.
 
 ```
 let p1 = proc(a)->(res) {
-  ::[zero_found] = ::[zero_found] or a == 0
+  ::[my_zero_found] = ::[my_zero_found] or a == 0
 
    res = a + 1
 }
@@ -374,19 +374,19 @@ let p2 = p1      // copy
 let p3 = ref p1  // reference
 
 test "testing p1" {
-  assert p1.::[zero_found] == false
-  assert p2.::[zero_found] == false
+  assert p1.::[my_zero_found] == false
+  assert p2.::[my_zero_found] == false
 
   cassert p1(3) == 4
-  assert p1.::[zero_found] == false
+  assert p1.::[my_zero_found] == false
 
   cassert p1(0) == 1
-  assert p1.zero_found == true
+  assert p1.my_zero_found == true
 
   cassert p1(50) == 51
-  assert p1.::[zero_found] == true
-  assert p2.::[zero_found] == false
-  assert p3.::[zero_found] == true
+  assert p1.::[my_zero_found] == true
+  assert p2.::[my_zero_found] == false
+  assert p3.::[my_zero_found] == true
 }
 ```
 

@@ -215,13 +215,14 @@ value in the tuple. This is not possible with `does` because it ignores all the
 field values. Pyrope has a `case` that extends the `does` comparison and also
 checks that for the matching fields, the value is the same.
 
-A `a case b` is equivalent to `b does a` and for each value in `b` there has
-to be the same value in `a`.
+A `a case b` is equivalent to `cassert b does a` and for each defined value in
+`b` there has to be the same value in `a`. This can be used in any expression
+but it is quite useful for `match ... case` patterns.
 
 
 ```
 cassert (a:u32=0, b:bool) does (a:u32, c:string="hello", b=false)
-cassert (a:u32=0, c:string="hello", b=false) case (a = 0, b:bool=_)
+cassert (a:u32=0, c:string="hello", b=false) case (a = 0, b:bool) // b is nil
 
 cassert (a:u32=0, c:string="hello", b=false) !case (a:u32 = 1 , b:bool=_   )
 cassert (a:u32=0, c:string="hello", b=false) !case (a:bool = _, b:bool=_   )
@@ -244,9 +245,32 @@ match let t=(a=1,b=3); t {
 
 Pyrope has structural type checking, but there is a keyword `is` that allows to
 check that the type name matches `a is b` returns true if the type of `a` has
-the same name as the type of `b`. The `a is b` is a boolean expression, not a type
-check assignment like `a:b`. This means that it can be used in `where` statements
-or any conditional code.
+the same name as the type of `b`. The `a is b` is a boolean expression like `a
+does b`, not a `a:b` type check. This means that it can be used in `where`
+statements or any conditional code.
+
+`a is b` is equivalent to check the `a` variable declaration type name against
+the `b` variable declaration type name. If their declaration had no type, the
+inferred type name is used.
+
+```
+let a = 3
+let b = 200
+cassert a is b
+
+let c:u32 = 10
+cassert a !is c
+cassert a::[typename] == "int" and c::[typename] == "u32"
+
+let d:u32 = nil
+cassert c is d
+
+let e = (a:u32=1)
+let f:(a:u32) = 33
+cassert e is f
+```
+
+Since it checks equivalence, when `a is b == b is a`.
 
 ```
 let X1 = (b:u32)
