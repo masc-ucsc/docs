@@ -862,7 +862,7 @@ programmer should explicitly indicate the precedence. The exception is for
 widely expected precedence.
 
 * Unary operators (not,!,~,?) bind stronger than binary operators (+,++,-,*...)
-* Comparators can be chained (a==c<=d) same as (a==c and c<=d)
+* Comparators can be chained (a<=c<=d) same as (a<=c and c<=d)
 * mult/div precedence is only against +,- operators.
 * Parenthesis can be avoided when a expression left-to-right has the same
   result as right-to-left.
@@ -917,16 +917,25 @@ i = a == 3 <= b == d
 assert i == (a==3 and 3<=b and b == d)
 ```
 
+Comparators can be chained, but only when they follow the same type.
+
+```
+assert a <= b <= c  // same as a<=b and b<=c
+assert a == b <= c  // compile error, chained only allowed with same comparator
+```
+
 ## Optional
 
 The `?` is used by several languages to handle optional or null pointer
 references. In non-hardware languages, `?` is used to check if there is valid
-data or a null pointer.
+data or a null pointer. This is the same as checking the `::[valid]` attribute
+with a more friendly syntax.
 
 
 Pyrope does not have null pointers or memory associated management. Pyrope uses
-`?` to handle "valid" data. Instead, the data is left to behave without the
+`?` to handle `::[valid]` data. Instead, the data is left to behave without the
 optional, but there is a new "valid" field associated with each tuple entry.
+Notice that it is not for each tuple level but each tuple entry.
 
 
 There are 4 explicitly interact with valids:
@@ -945,22 +954,23 @@ computed as follows:
 
 * Each cycle the `valid` is set for non-register variables initialization[^clear].
 
-* Registers set the valid after reset, but may have `valid==false` for a few
-  cycles during reset.
+* Registers set the valid after reset, but if the reset clears the valid, there
+  is not guaranteed on `::[valid]` during reset.
 
 * Left-hand side variables `valids` are set to the and-gate of all the variable
   valids used in the expression
 
 * Reading from a memory/array is always a valid contents. Even during reset.
 
-* Writing to a register updates the register valid based on the din valid
+* Writing to a register updates the register valid based on the din valid, or
+  when the `::[valid]` is explicitly cleared.
 
 * conditionals (`if`) update valids independently for each path
 
 * A tuple field has the valid set to false if any of the parent tuple fields is
   invalid
 
-* The valid computation can be overwritten with the `$valid` attribute. This
+* The valid computation can be overwritten with the `::[valid]` attribute. This
   is possible even during reset.
 
 
@@ -1063,5 +1073,74 @@ assert not x2? and x2.v1 == "" and x2.v2 == "hello"
 x2 = "world"
 
 assert x2? and x2?.v1 == "world" and x2.v1 == "world"
+```
+
+
+## Variable Initialization
+
+
+Variable initialization indicates the default value set every cycle and the
+optional (`::[valid]` attribute).
+
+
+The `let` and `var` statements require an initialization value for each cycle.
+Pyrope only has undefined values unless explicitly indicated. A variable has an
+undefined value if and only if the value is set to `nil` or all the bits are
+unknown (`0sb?`). Undefined variables always have invalid optional
+(`::[valid==false]`), and defined can have valid or invalid optional.
+
+
+On any assignment (`v = _`) where the rhs is a single underscore `_`, the
+variable is assigned the default value (`0` for integer, `false` for boolean,
+`""` for string, `nil` otherwise) and set to invalid optional.
+
+
+```
+var a:int = _
+cassert a==0 and a.::[valid] == false and not a?
+
+var b:int = 0
+cassert b==0 and b::[valid] and b?
+b = nil
+cassert b==nil and b.::[valid] == false and not b?
+
+var c:fun(a1) = _
+cassert c == nil and c::[valid==false]
+c = fun(a1) { cassert true }
+cassert c!= nil and c::[valid]
+
+var d = ()                       // empty tuple
+cassert d != nil and d::[valid]
+
+var e:int = nil
+cassert e==nil and e::[valid==false] and not e?
+e = 0
+cassert e==0 and e::[valid] and e?
+```
+
+The same rules apply when a tuple or a type is declared.
+
+```
+let a = "foo"
+
+var at1 = (
+  ,a:string 
+)
+cassert at1[0] == "foo"
+cassert at1 !has "a"    // at1.a undefined
+
+var at2 = (
+  ,a:string = _
+)
+cassert at2.a == ""  and at2.a.::[valid]==false
+at2.a = "torrellas"
+cassert at2.a == "torrellas" and at2[0] == "torrellas"
+
+var at3:at2 = _
+cassert at3.a == ""  and at3.a.::[valid]==false
+
+var at4:at2 = (a="josep")
+cassert at4.a == "josep"  and at4.a.::[valid] and at4.::[valid]
+
 ```
 

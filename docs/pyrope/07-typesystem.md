@@ -575,108 +575,6 @@ var c:ct= a    // OK even different order because all names match
 var d:dt = a   // OK, call intitial to type cast
 ```
 
-## Traits and mixin
-
-There is no object inheritance in Pyrope, but tuples allow to build mixin and
-composition with traits.
-
-A mixin is when an object or class can add methods and the parent object can
-access them. In several languages, there are different constructs to build them
-(E.g: an include inside a class in Ruby). Since Pyrope tuples are not
-immutable, new methods can be added like in mixin.
-
-```
-let Say_mixin = (
-  ,say = fun(s) { puts s }
-)
-
-let Say_hi_mixin = (
-  ,say_hi  = fun() {self.say("hi {}", self.name) }
-  ,say_bye = fun() {self.say("bye {}", self.name) }
-)
-
-let User = (
-  ,name:string = _
-  ,setter = proc(ref self, n:string) { self.name = n }
-)
-
-let Mixing_all = Say_mixin ++ Say_hi_mixin ++ User
-
-var a:Mixing_all="Julius Caesar"
-a.say_hi()
-```
-
-Mixin is very expressive by allowing redefining methods. If two tuples have
-the same field a tuple with the concatenated values will be created. This is
-likely an error with basic types but useful to handle explicit method overload.
-
-
-In a way, mixin just adds methods from two tuples to create a new tuple. In
-programming languages with object-oriented programming (OOP), there are many
-keywords (`virtual`, `final`, `override`, `static`...) to constrain how methods can be
-updated/changed. In Pyrope, the `let` and `var` keywords can be added to any tuple
-field. The `let` makes the entry immutable when applied to a method, it behaves like
-a `final` keyword in most languages.
-
-
-There are also two ways to concatenate tuples in Pyrope. `bun1 ++ bun2` and
-`(...bun1, ...bun2)`. The difference is that `++` concatenates and replaces any
-not `let` field. The `...` concatenates and but triggers a compile error if the
-same field appears twice.
-
-
-An issue with mixin is when more than one tuple has the `setter` method. If the
-tuples are concatenated with `...` and error is triggered, if the tuples are
-concatenated with `++` the methods are overridden when declared with `var`.
-Neither is the expected solution.  A smaller issue with mixins is that
-`cassert X does Y` should be inserted when implementing an
-interface.
-
-
-Without supporting OOP, but providing a more familiar abstract or trait
-interface, Pyrope provides the `does` keyword. It checks that the new
-type extends the functionality undefined and allows to use of methods defined.
-
-This is effectively a mixin with checks that some methods should be
-implemented.
-
-```
-let Shape = (
-  ,name:string = _
-  ,area:fun (self )->(:i32)  = _            // defined but unimplemented
-  ,increase_size:proc(ref self, x:i12) = _  // defined but unimplemented
-
-  ,setter=proc(ref self, name ) { self.name = name } // implemented, use =
-  ,say_name=fun(self) { puts "name:{}", name }
-)
-
-let Circle = (
-  ,setter           = proc(ref self) { super = "circle" }
-  ,increase_size = proc(ref self, x:i12) { self.rad *= x }
-  ,rad:i32       = _
-  ,area = fun(self) -> (:i32) {
-     let pi = import("math").pi
-     ret pi * self.rad * self.rad
-  }
-):Shape
-```
-
-An equivalent "Circle" functionality:
-
-```
-let Circle = (
-  ,setter      = proc(ref self) { self.name = "circle" }
-  ,name:string = _
-  ,rad:i32     = _
-  ,area = fun() -> (:i32) {
-     let pi = import("math").pi
-     ret pi * self.rad * self.rad
-  }
-  ,increase_size = proc(ref self, a:i12) { self.rad *= a }
-  ,say_name=fun(self) { puts "name:{}", name }
-)
-cassert Circle does Shape
-```
 
 ## Instrospection
 
@@ -953,11 +851,11 @@ test "mocking taken branches" {
 
 ## Operator overloading
 
-There is no operator overload in Pyrope. `+` always adds Numbers, `++`
-always concatenates a tuple or a String, `[]` indexes a tuple.
+There is no operator overload in Pyrope. `+` always adds Numbers, `++` always
+concatenates a tuple or a String, `and` is always for boolean types,...
 
 
-## Properties: Getter/Setter
+## Getter/Setter method
 
 Pyrope tuples do not have default constructor, but it has a setter method that
 allows to intercept any assignment. The symmetric getter method is called
@@ -1069,7 +967,7 @@ x = "Padua"
 cassert x.v == "Padua"
 ```
 
-## Compare
+## Compare method
 
 
 The comparator operations (`==`, `!=`, `<=`,...) need to be overloaded for most

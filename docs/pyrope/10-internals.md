@@ -816,47 +816,7 @@ let reverse = fun(x:uint)->(total:uint) {
 assert reverse(0b10110) == 0b01101
 ```
 
-### Initialization
-
-Registers and variables are must always specify the initialization value, but the reset logic
-can change to a more traditional Verilog with uninitialized (`0sb?`) contents.
-Since the evaluation of unknowns will be done with randomly generated values
-for each `?` bit, the assertions should fail depending on the simulation seed.
-
-
-```
-reg r_ver = 0sb?
-
-reg r = _
-var v = _
-
-assert v == 0 and r == 0
-
-assert !(r_ver != 0)    // it will randomly fail
-assert !(r_ver == 0)    // it will randomly fail
-assert !(r_ver != 0sb?) // it will randomly fail
-assert !(r_ver == 0sb?) // it will randomly fail
-```
-
-
-The reset for arrays may take several cycles to take effect, this can
-lead to unexpected results during the reset period.
-
-```
-var arr:[] = (0,1,2,3,4,5,6,7)
-
-assert_always arr[0] == 0 and arr[7] == 7  // always works
-
-reg mem:[] = (0,1,2,3,4,5,6,7)
-
-assert_always mem[7] == 7                  // FAIL, this may fail during reset
-assert_always mem[7] == 7 unless mem.reset // OK
-assert mem[7] == 7                         // OK, not checked during reset
-```
-
-
 ### Unexpected calls
-
 
 Passing a lambda argument with a `ref` does not have any side effect because
 lambdas without arguments need to be explicitly called or just passed as

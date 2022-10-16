@@ -434,6 +434,153 @@ test "check equiv" {
 }
 ```
 
+## Traits and mixin
+
+There is no object inheritance in Pyrope, but tuples allow to build mixin and
+composition with traits.
+
+A mixin is when an object or class can add methods and the parent object can
+access them. In several languages, there are different constructs to build them
+(E.g: an include inside a class in Ruby). Since Pyrope tuples are not
+immutable, new methods can be added like in mixin.
+
+```
+let Say_mixin = (
+  ,say = fun(s) { puts s }
+)
+
+let Say_hi_mixin = (
+  ,say_hi  = fun() {self.say("hi {}", self.name) }
+  ,say_bye = fun() {self.say("bye {}", self.name) }
+)
+
+let User = (
+  ,name:string = _
+  ,setter = proc(ref self, n:string) { self.name = n }
+)
+
+let Mixing_all = Say_mixin ++ Say_hi_mixin ++ User
+
+var a:Mixing_all="Julius Caesar"
+a.say_hi()
+```
+
+Mixin is very expressive by allowing redefining methods. If two tuples have
+the same field a tuple with the concatenated values will be created. This is
+likely an error with basic types but useful to handle explicit method overload.
+
+
+In a way, mixin just adds methods from two tuples to create a new tuple. In
+programming languages with object-oriented programming (OOP), there are many
+keywords (`virtual`, `final`, `override`, `static`...) to constrain how methods can be
+updated/changed. In Pyrope, the `let` and `var` keywords can be added to any tuple
+field. The `let` makes the entry immutable when applied to a method, it behaves like
+a `final` keyword in most languages.
+
+
+There are also two ways to concatenate tuples in Pyrope. `t1 ++ t2` and
+`(...t1, ...t2)`:
+
+* `t1 ++ t2` concatenates each field in both tuples. A compile error is
+  generated if `t1` field is a `let` with a defined value, and `t2` has also
+the same defined field.
+
+
+* `(...t1, ...t2)` inserts in-place, triggers a compile error if the same field
+  appears in both tuples and it is defined in both.
+
+
+It is important to notice that when one of the tuples as an entry, it can have
+an undefined value (`nil` or `0sb?`).  If the entry value is undefined, the
+concatenate (`++`) does not trigger a compile error. This is quite useful for
+defining interfaces because the default value for a function is `nil`.
+
+```
+let Interface = (
+  ,let add:fun(ref self, x) = _ // nil or undefined method
+  ,let sub = fun(ref self,x ) = { self.add(-x) }
+)
+
+Interface.add(3)                // compile error, undefined method
+
+let My_obj = (
+  ,val1:u8 = 0
+  ,let add = fun(ref self, x) { self.val += x }
+) ++ Interface                  // OK, but not recommended
+
+let My_obj2 = (
+  ,...Interface                 // recommended
+  ,val1:u8 = 0
+  ,let add = fun(ref self, x) { self.val += x }
+)
+cassert My_obj equals My_obj2   // same behavioir no defined overlap fiels
+
+let xx:My_obj = _               // default initialization
+
+cassert xx.val1 == 0
+xx.add(3)
+cassert xx.val1 == 3
+xx.sub(2)
+cassert xx.val1 == 1
+```
+
+Pyrope does not directly check that all the undefined methods are implemented,
+but this will trigger a compile error whenever the undefined method is used.
+This is different from most static type languages, but a bit closer to
+dynamically typed languages. The difference is that the check is at compile
+time, but an error happens ONLY if the method is used anywhere in the
+instantiated project.
+
+
+To build tuples that implement the functionality of other tuples, the recommended
+technique is to use the in-place operator. It checks that there is no defined overlap
+between both tuples.
+
+
+An issue with in-place operator is when more than one tuple has the `setter`
+method. If the tuples are concatenated with `...` and error is triggered, if
+the tuples are concatenated with `++` it does not check if methods overlap.
+Neither is the expected solution for a mixin. 
+
+
+The solution is to remove fields from the in-place concatenation and to
+explicitly create the new methods with some support method.
+
+
+```
+let exclude = fun(o,...a) {
+  let new_tup = ()
+  for e,idx,key in o {
+    // create single tupe and append to preserve key and position order
+    let sing_tup = ()
+    sing_tup[key] = e
+    new_tup ++= sing_tup unless key in o
+  }
+  ret new_tup
+}
+
+let Shape = (
+  ,name:string = _
+  ,area:fun (self )->(:i32)  = _            // undefined 
+  ,increase_size:proc(ref self, x:i12) = _  // undefined 
+
+  ,setter=proc(ref self, name ) { self.name = name } // implemented, use =
+  ,say_name=fun(self) { puts "name:{}", name }
+)
+
+let Circle = (
+  ,...exclude(Shape,'setter')
+  
+  ,setter        = proc(ref self) { Circle.setter(this, "circle") }
+  ,increase_size = proc(ref self, x:i12) { self.rad *= x }
+  ,rad:i32       = _
+  ,area = fun(self) -> (:i32) {
+     let pi = import("math").pi
+     ret pi * self.rad * self.rad
+  }
+):Shape  // extra check that the exclude did not remove too many fields
+```
+
 ## Row type
 
 Pyrope has structural typing, but also allows to infer the types. The where

@@ -294,3 +294,49 @@ assert x4[100] == 0
 assert x4[3]       // compile error, out of bounds index
 ```
 
+### Reset and Initialization
+
+Like the `let` and `var` statements, `reg` statements require an initialization
+value. While `let/var` initialize every cycle, the `reg` initialization is the
+value to set during reset.
+
+
+Like in `let/var` cases, the reset/initialization value can use the traditional
+Verilog uninitialized (`0sb?`) contents. The Pyrope semantics for any bit with
+`?` value is to respect arithmetic Verilog semantics at compile time, but to
+randomly generate a zero/ones for each simulation. As a result assertions can
+fail with unknowns.
+
+
+```
+reg r_ver = 0sb?
+
+reg r = _
+var v = _
+
+assert v == 0 and r == 0
+
+assert !(r_ver != 0)    // it will randomly fail
+assert !(r_ver == 0)    // it will randomly fail
+assert !(r_ver != 0sb?) // it will randomly fail
+assert !(r_ver == 0sb?) // it will randomly fail
+```
+
+
+The reset for arrays may take several cycles to take effect, this can lead to
+unexpected results during the reset period. Memories and registers are randomly
+initialized before reset during simulation. There is no guarantee of zero
+initialization before reset.
+
+```
+var arr:[] = (0,1,2,3,4,5,6,7)
+
+assert_always arr[0] == 0 and arr[7] == 7  // may FAIL during reset
+
+reg mem:[] = (0,1,2,3,4,5,6,7)
+
+assert_always mem[7] == 7                  // may FAIL during reset
+assert_always mem[7] == 7 unless mem.reset // OK
+assert mem[7] == 7                         // OK, not checked during reset
+```
+
