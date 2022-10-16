@@ -498,7 +498,7 @@ defining interfaces because the default value for a function is `nil`.
 ```
 let Interface = (
   ,let add:fun(ref self, x) = _ // nil or undefined method
-  ,let sub = fun(ref self,x ) = { self.add(-x) }
+  ,let sub = fun(ref self,x ) { self.add(-x) }
 )
 
 Interface.add(3)                // compile error, undefined method

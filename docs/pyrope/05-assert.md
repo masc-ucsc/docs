@@ -113,24 +113,6 @@ the synthesis tool to generate more efficient code.
 
 In a way, most type checks have equivalent `cassert` checks.
 
-## Asserts and reset
-
-In hardware is common to have an undefined state during the reset period. To
-avoid unnecessary assertion failures, if any of the inputs depends on a
-register directly or indirectly, the assertion is not checked when the reset is
-high for the given registers. An `assert_always` ignores the reset condition,
-and checks always independent of the reset wires.
-
-
-```
-reg memory:[]u33 = (1,2,3) // may take cycles to load this contents
-
-assert memory[0] == 1 // not checked during reset
-
-assert_always memory[1] == 2 // may fail during reset
-assert_always memory[1] == 2 unless memory.reset  // should not fail
-```
-
 
 ## Coverage
 
@@ -176,6 +158,66 @@ The `cover` allows to not be true a given cycle. To allow the same in a
 `covercase`, the designer can add `coverase GRP, true`. This is a true always
 cover point for the indicated cover group.
 
+
+## Reset and verification
+
+In hardware is common to have an undefined state during the reset period. To
+avoid unnecessary assertion failures, if any of the inputs depends on a
+register directly or indirectly, the assertion is not checked when the reset is
+high for the given registers. An `assert_always` ignores the reset condition,
+and checks always independent of the reset wires.
+
+
+To provide assert/assume during reset, Pyrope provides a `assert_always`,
+`cassert_always`, `assume_always`, `cassume_always`, `covercase_always`, and
+`cover_always`.
+
+```
+reg memory:[]u33 = (1,2,3) // may take cycles to load this contents
+
+assert memory[0] == 1 // not checked during reset
+
+assert_always memory[1] == 2 // may fail during reset
+assert_always memory[1] == 2 unless memory.reset  // should not fail
+```
+
+## Random
+
+Random number generation are quite useful for verification. Pyrope provides
+easy interfaces to generate "compile time" (`::[crand]`) and "simulation time"
+random number (`::[rand]`) generation.
+
+
+```
+let x:u8 = _
+
+for i in 1..<100 {
+  cassert 0 <= x.::[crand]  <= 255
+}
+
+let get_rand_0_2556 = fun(a:u8) {
+  ret a.::[rand]
+}
+```
+
+Both rand and crand look at the set type max/min value and create a randon value
+between them. rand picks randomly in boolean and enumerate types, but it triggers
+a compile error for string, range, and lambda types.
+
+When applied to a tuple, it randomly picks an entry from the tuple.
+
+```
+let a = (1,2,3,b=4)
+let x = a.::[rand]
+
+cassert x==1 or x==2 or x==3 or x==4
+cassert x.b==4 when x==4
+```
+
+The simulation random number is considered a `::[debug]` statement, this means
+that it can not have an impact on synthesis or a compile error is generated.
+
 ## Monitor
 
+TODO
 

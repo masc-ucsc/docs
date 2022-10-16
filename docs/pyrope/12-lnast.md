@@ -514,7 +514,7 @@ like `plus`, `LUT`, `memory`. In LNAST this is translated like a lambda call.
     ```
 
 === "LNAST"
-    ```
+    ```lnast
     let
       ref foo
       const 3
@@ -542,7 +542,7 @@ is the root LNAST node, and rest follow a tree syntax with strings.
     ```
 
 === "LNAST"
-    ```
+    ```lnast
     let
       ref x
       const 5
@@ -924,4 +924,19 @@ statements.
             ref cassert
             const false
     ```
+
+## puts/print/format
+
+All the string variables must be known at compile time, but it is still OK to
+pass strings as arguments to simulation functions that have no side-effects in
+the running sumulation like `puts` and `print`.
+
+`format` returns a string, so it must be solved at compile time. This means
+that the LNAST passes should have a `format` implementation to allow copy
+propagation to proceed.
+
+The LNAST translation for all these instructions is just a normal function
+call. The `format` must be executed at compile time and propagate/copy as
+needed. The `puts`/`print` should generate simulation calls but not synthesis
+code.
 

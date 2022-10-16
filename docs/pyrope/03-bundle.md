@@ -346,11 +346,17 @@ cassert x == true
 cassert b == 4 
 ```
 
-## enums
+## Enumerate (`::enum`)
 
-Enums use the familiar tuple structure, but there is a significant difference.
-The following case generates an enum compile error because the enum entries
-shadow existing variable entries.
+Enumerates, or enums for short, use the familiar tuple structure, but there is
+a significant difference in initialization. Enums get assigned values, tuples
+need explicit value initialization.
+
+
+Tuples require a default value must be provided for each entry, the enum does
+not need it unless an entry shadows an existing variable. The following case
+generates an enum compile error because the enum entries shadow existing
+variable entries.
 
 
 ```
@@ -359,8 +365,8 @@ let Err  = ::enum(a  ,b  ,c)  // compile error, 'a' is a shadow variable
 let Good = ::enum(a=_,'b',c)  // OK
 ```
 
-The reason is to avoid confusion between tuple and enum that use similar
-tuple syntax. In the `Err` example, it is unclear if the intention is to have
+The reason is to avoid confusion between tuple and enum that use similar tuple
+syntax. In the `Err` example, it is unclear if the intention is to have
 `Err.foo` or `Err.a`.
 
 If an external variable wants to be used as a index, there has to be an explicit

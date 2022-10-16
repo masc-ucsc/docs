@@ -492,6 +492,7 @@ passes:
 * `left_of`, `right_of`, `top_of`, `bottom_of`, `align_with`: placement hints
 * `valid`, `retry`: for elastic pipelines
 * `typename`: type name at variable declaration
+* `rand` and `crand`: simulation and compile time random number generation
 
 Attributes control fields like the default reset and clock signal. This allows
 to change the control inside procedures. Notice that this means that attributes
@@ -1091,9 +1092,12 @@ unknown (`0sb?`). Undefined variables always have invalid optional
 
 
 On any assignment (`v = _`) where the rhs is a single underscore `_`, the
-variable is assigned the default value (`0` for integer, `false` for boolean,
-`""` for string, `nil` otherwise) and set to invalid optional.
+variable optional is set to false, and it is assigned the default value:
 
+* `0` for integer
+* `false` for boolean
+* `""` for string
+* `nil` otherwise
 
 ```
 var a:int = _
