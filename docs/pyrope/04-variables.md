@@ -477,6 +477,7 @@ passes:
 * `file`: to print the file where the variable was declared
 * `loc`: line of code information
 * `delay`: synthesis time delay
+* `debug` (sticky): variable use for debug only, not synthesis allowed
 * `critical`: synthesis time criticality
 * `deprecated`: to generate special warnigns about usage
 * `pipeline`: pipeline related information
@@ -493,6 +494,7 @@ passes:
 * `valid`, `retry`: for elastic pipelines
 * `typename`: type name at variable declaration
 * `rand` and `crand`: simulation and compile time random number generation
+* `let` and `var`: is the variable declared as `let` and/or `var`
 
 Attributes control fields like the default reset and clock signal. This allows
 to change the control inside procedures. Notice that this means that attributes

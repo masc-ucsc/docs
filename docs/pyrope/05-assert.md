@@ -58,12 +58,6 @@ There are 5 main verification statements:
   valid space. It only affects the verify command. The restrict command
   accepts a list of conditions to restrict.
 
-* `lec`: It is a formal verification step that checks that all the arguments are
-  logically equivalent. The difference with `verify` is that it also accepts
-  functions (only). `lec` does not include the reset state. The first argument
-  is the gold model, the rest are implementation. This matters because the gold
-  model unknown output bit checks against any value for the equivalent
-  implementation bit.
 
 
 The `cassert` are syntax suggar for a defined comptime assert. Since it is so
@@ -85,10 +79,6 @@ assume b > 3           // may optimize and perform a runtime check
 restrict "cond1" where foo < 1 and foo >3 {
    verify bar == 4  // only checked at verification, restricting conditions
 }
-
-let fun1 = fun(a,b) { ret a | b}
-let fun2 = fun(a,b) { ret ~(~a | ~b) }
-lec fun1, fun2
 ```
 
 A whole statement is conditionally executed using the `when`/`unless` gate expression.
@@ -113,6 +103,38 @@ the synthesis tool to generate more efficient code.
 
 In a way, most type checks have equivalent `cassert` checks.
 
+## LEC
+
+The `lec` command is a formal verification step that checks that all the
+arguments are logically equivalent. The difference with `verify` is that it
+also accepts functions (only). `lec` does not include the reset state. The
+first argument is the gold model, the rest are implementation. This matters
+because the gold model unknown output bit checks against any value for the
+equivalent implementation bit.
+
+```
+let fun1 = fun(a,b) { ret a | b}
+let fun2 = fun(a,b) { ret ~(~a | ~b) }
+lec fun1, fun2
+```
+
+In addition, there is the `lec_valid` command. It is similar to `lec` but it
+checks the optional or valid (`::[valid]`) from the output. It can take several
+cycles to show the same result.
+
+```
+let mul2 = proc(a,b) -> (reg out) {
+  reg pipe1 = _
+
+  out = pipe1
+
+  pipe1 = a*b
+}
+
+let mul0 = fun(a,b)->(out) { out = a*b }
+
+lec_valid mul0, mult2
+```
 
 ## Coverage
 

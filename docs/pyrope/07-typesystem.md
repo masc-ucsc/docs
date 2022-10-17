@@ -575,6 +575,9 @@ var c:ct= a    // OK even different order because all names match
 var d:dt = a   // OK, call intitial to type cast
 ```
 
+* To string: The `format` allows to convert any type/tuple to a string.
+* To integer: `variable@[]` for string, range, and bool, union otherwise.
+* `union` allows to convert across types by specifying the size explicitly.
 
 ## Instrospection
 

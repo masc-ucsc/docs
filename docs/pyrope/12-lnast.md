@@ -240,10 +240,10 @@ Tuple concatenation does not use `plus` but the `tup_concat` operator.
 
 ## Attributes
 
-There are 3 main operations with attributes: set, get, check. Each has a
-corresponding LNAST node (`attr_set`, `attr_get`, `attr_check`). Later compiler
-passes decide what operation to perform in the attr depending on the attribute
-type.
+There are 3 main operations with attributes: set, get, check. The set/get have
+a corresponding LNAST node (`attr_set`, `attr_get`), the check uses `attr_get`
+and `cassert` calls. Later compiler passes decide what operation to perform in
+the attr depending on the attribute type.
 
 Attribute set are in left-hand-side of assignments which can also be in tuple entries.
 
@@ -337,12 +337,20 @@ Attribute get are always right-hand-side
       ref ___2
       const 3
 
-    attr_check
-      ref a
+    fcall
+      ref ___emtpy0
+      ref cassert
       ref ___3
-    attr_check
-      ref b
+
+    attr_get
+      ref ___33
+      ref a
       const b
+
+    fcall
+      ref ___emtpy1
+      ref cassert
+      ref ___33
 
     tup_add
       ref ___4
@@ -351,13 +359,25 @@ Attribute get are always right-hand-side
         ref x
       const 4
 
-    attr_check
+    attr_get
+      ref ___44
       ref x
       const y
 
-    attr_check
+    fcall
+      ref ___emtpy2
+      ref cassert
+      ref ___44
+
+    attr_get
+      ref ___55
       const 4
       const foo
+
+    fcall
+      ref ___emtpy2
+      ref cassert
+      ref ___55
     ```
 
 ### Sticky Attributes
@@ -388,10 +408,27 @@ let xx3 = xx + 0
 cassert xx3 !has ::[attr2]
 ```
 
+Attributes are not sticky by default, but some like `::[debug]` is a sticky
+attribute. This means that if any of the elements in any operation has a debug
+attribute, the result also has a debug attribute. There is no way to remove
+these attributes.
+
+```
+let d::[debug] = 3
+
+var a = d + 100
+
+cassert a.::[debug]  // debug is sticky
+```
+
 ## Bit Selection
 
 
-Pyrope has several bit selection operations. The default maps `get_mask` and `set_mask` LNAST nodes:
+Pyrope has several bit selection operations. The default maps `get_mask` and
+`set_mask` LNAST nodes. One important thing is that both `get_mask` and
+`set_mask` operate over a MASK. This means that it is a one-hot encoding if a
+single bit is operated. The one-hot encoding can be created with a `range` or
+with a `shl` operator.
 
 
 === "Pyrope"
@@ -400,10 +437,59 @@ Pyrope has several bit selection operations. The default maps `get_mask` and `se
     yy = foo@[5] + xx@[1..<4]
     ```
 
-=== "LNAST"
+=== "LNAST direct"
     ```lnast
+    shl
+      ref ___c1
+      const 1
+      const 1
+
+    shl
+      ref ___c2
+      const 1
+      const 2
+
     tup_add
       ref ___t
+      ref ___c1
+      ref ___c2
+
+    set_mask
+      ref foo
+      ref ___t
+      ref xx
+
+    range
+      ref ___c5
+      const 5
+      const 5
+
+    get_mask
+      ref ___3
+      ref foo
+      ref ___c5
+
+    range
+      ref ___4
+      const 1
+      const 3
+
+    get_mask
+      ref ___5
+      ref xx
+      ref ___4
+
+    add
+      ref yy
+      ref ___4
+      ref ___5
+    ```
+
+=== "LNAST optimized"
+    ```lnast
+    shl
+      ref ___t
+      const 1
       const 1
       const 2
 
