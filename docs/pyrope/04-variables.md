@@ -702,6 +702,16 @@ All the operators work over signed integers.
 * `a@[] >> b` logical right shift
 * `a << b` left shift
 
+In the previous operations, `a` and `b` need to be integers. The exception is
+`a << b` where `b` can be a tuple. The `<<` allows having multiple values
+provided by a tuple on the right-hand side or amount. This is useful to create
+one-hot encodings.
+
+```
+cassert 1<<(1,4,3) == 0b01_1010
+```
+
+
 ### Binary Boolean operators
 
 * `a and b` logical and
@@ -719,7 +729,57 @@ All the operators work over signed integers.
 Most operations behave as expected when applied to signed unlimited precision
 integers. 
 
+The `a in b` checks if values of `a` are in `b`. Notice that both can be tuples.
+If `a` is a named tuple, the entries in `b` match by name, and then contents. If `a` is unnamed,
+it matches only contents.
+
+```
+cassert (1,2) in (0,1,3,2,4)
+cassert (1,2) in (a=0,b=1,c=3,2,e=4)
+cassert (a=2) !in (1,2,3)
+cassert (a=2) in (1,a=2,c=3)
+cassert (a=1,2) in (3,2,4,a=1)
+cassert (a=1,2) !in (1,2,4,a=4)
+cassert (a=1) !in (a=(1,2))
+```
+
+The `a in b` has to deal with undefined values (`nil`, `0sb?`). The LHS with an undefined
+will be true if the RHS has the same named entry either defined or undefined.
+
+```
+cassert (x=nil,c=3) in (x=3,c=3)
+cassert (x=nil,c=3) in (x=nil,c=3,d=4)
+cassert (c=3)      !in (c=nil,d=4)
+```
+
+* `a ++ b` concatenate two tuples. If field appears in both, concatenate field. The a field is
+defined in one tupe and undefined in the other, the undefined value is not concatenated.
+
+```
+cassert ((a=1,c=3) ++ (a=1,b=2,c=nil)) == (a=(1,1), c=3, b=2)
+cassert ((1,2) ++ (a=2,nil,5)) == (1,2,a=2,5)
+cassert ((x=1) ++ (a=2,nil,5)) == (x=1,a=2,nil,5)
+
+cassert ((x=1,b=2) ++ (x=0sb?,3)) == (x=1,b=2,3)
+```
+
+* `(,...b)` in-place insert `b`. Behaves like `a ++ b` but it triggers a
+  compile error if both have the same defined named field.
+
+```
+cassert (1,b=2,...(3,c=3),6) == (1,b=2,3,c=3,6)
+cassert (1,b=2,...(nil,c=3),0sb?,6) == (1,b=2,nil,c=3,0sb?,6)
+```
+
+
 ### Type operators
+
+* `a has b` checks if `a` tuple has the `b` field where `b` is a string or
+  integer (position).
+
+```
+cassert((a=1,b=2) has "a")
+```
 
 * `a does b` is the tuple structure of `a` a subset of `b`
 * `a equals b` same as `(a does b) and (b does a)`
@@ -729,6 +789,39 @@ integers.
 
 Each type operator also has the negated `(a !does b) == !(a does b)`, `(a
 !equals b) == !(a equals b)`, `a !case b == !(a case b)`
+
+The `does` performs just name matching when the LHS is a named tuple. It
+reverts to name and position matching when some of the LHS entries are unnamed.
+
+```
+cassert (a=1,b=3) does (b=100,a=333,e=40,5)
+cassert (a=1,3) does (a=100,300,b=333,e=40,5)
+cassert (a=1,3) !does (b=100,300,a=333,e=40,5)
+```
+
+A `a case b` is equivalent to `cassert b does a` and for each defined value in
+`b` there has to be the same value in `a`. This can be used in any expression
+but it is quite useful for `match ... case` patterns.
+
+```
+match (a=1,b=3) {
+  case (a=1) { cassert true }
+  else { cassert false }
+}
+
+match let t=(a=1,b=3); t {
+  case (a=1  ,c=4) { cassert false }
+  case (b=nil,a=1) { cassert t.b==3 and t.a==1 }
+  else { cassert false }
+}
+```
+
+An `x = a case b` can be translated to:
+
+```
+cassert b does a
+x = b in a
+```
 
 ### Reduce and bit selection operators
 
@@ -829,34 +922,6 @@ trans@[1] = v@[0]
 assert trans == 0b01
 ```
 
-### Operator with Tuples
-
-Some operators can also have tuples as input and/or outputs.
-
-* `a ++ b` concatenate two tuples. If field appears in both, concatenate field
-* `(,...b)` in-place insert `b`. Compile error if both have the same named
-  field
-* `a << b` shift left. `b` can be a tuple
-* `a has b` checks if `a` tuple has the `b` field where `b` is a string or
-  integer (position).
-* `a in b` checks if `a` values are in `b`
-
-The `<<` allows having multiple values provided by a tuple on the right-hand
-side or amount. This is useful to create one-hot encodings.
-
-```
-assert((a=1,b=2) ++ (c=3    ) == (a=1    ,b=2,c=3))
-assert((a=1,b=2) ++ (a=3,c=4) == (a=(1,3),b=2,c=4))
-
-assert((a=1,b=2,3,...(e=4,5)) == (a=1,b=2,3,e=4,5))
-
-assert((a=1,b=2) has "a")
-
-assert(2 in (a=1,b=2))
-assert((2,5) in (a=1,b=2,4,5))
-
-assert 1<<(1,4,3) == 0b01_1010
-```
 
 ## Precedence
 

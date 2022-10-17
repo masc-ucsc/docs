@@ -215,29 +215,17 @@ value in the tuple. This is not possible with `does` because it ignores all the
 field values. Pyrope has a `case` that extends the `does` comparison and also
 checks that for the matching fields, the value is the same.
 
-A `a case b` is equivalent to `cassert b does a` and for each defined value in
-`b` there has to be the same value in `a`. This can be used in any expression
-but it is quite useful for `match ... case` patterns.
 
+The previous explanation of `a does b` and `a case b` ignored types. When types
+are present, both need to match type.
 
 ```
 cassert (a:u32=0, b:bool) does (a:u32, c:string="hello", b=false)
 cassert (a:u32=0, c:string="hello", b=false) case (a = 0, b:bool) // b is nil
 
-cassert (a:u32=0, c:string="hello", b=false) !case (a:u32 = 1 , b:bool=_   )
-cassert (a:u32=0, c:string="hello", b=false) !case (a:bool = _, b:bool=_   )
+cassert (a:u32=0, c:string="hello", b=false) !case (a:u32 = 1 , b:bool=nil )
+cassert (a:u32=0, c:string="hello", b=false) !case (a:bool=nil, b:bool=nil )
 cassert (a:u32=0, c:string="hello", b=false) !case (a = 0     , b     =true)
-
-match (a=1,b=3) {
-  case (a=1) { cassert true }
-  else { cassert false }
-}
-
-match let t=(a=1,b=3); t {
-  case (a=1,c=4) { cassert false }
-  case (b=_,a=1) { cassert t.b==3 and t.a==1 }
-  else { cassert false }
-}
 ```
 
 ## Nominal type check
@@ -998,6 +986,7 @@ It is also possible to provide a custom `ge` (Greater Than). The `ge` is redunda
 with the `lt` and `eq` (`(a >= b) == (a==b or b<a)`) but it allows to have more
 efficient implemetations:
 
+For integer operations, the Pyrope should result to the following equivalent Lgraph:
 
 * `a == b` is `__eq(a,b)`
 * `a != b` is `__not(__eq(a,b))`
@@ -1006,6 +995,10 @@ efficient implemetations:
 * `a <= b` is `__lt(a,b) | __eq(a,b)` (without `ge`) or `__ge(b,a)`
 * `a >= b` is `__lt(b,a) | __eq(a,b)` (without `ge`) or `__ge(a,b)`
 
+The comparator `a == b` when `a` or `b` are tuples is equivalent to:
+```
+cassert (a==b) == ((a in b) and (b in a) and (a equals b))
+```
 
 ## Non-Pyrope (C++) calls
 

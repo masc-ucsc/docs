@@ -825,20 +825,146 @@ a sequence of nested if statements.
 
 ### Tuple/Set operators
 
-* `a in b` is element `a` in tuple `b`
-* `a !in b` true when element `a` is not in tuple `b`
+The `in` operator does not have a Lgraph equivalent becuase it is type
+dependent: tuple, range, or enumerate. The range and enumerate can get
+translated to an AND gate over the bitcode translation, but the tuple check
+requires a tuple check.
 
-*TODO*
+```
+let tup=(1,2,3)
+let ran=1..<5
+let enu=::enum(a,b=(x,y),c)
+
+cassert 2 in tup
+cassert 3 in ran
+cassert enu.b.x in enu.b
+```
+
+The resul is a common `in` LNAST operation that gets different functionality
+dependent on the input type.
+
+
+=== "Pyrope"
+    ```
+    c = a in b
+    d = a !in b
+    ```
+
+=== "LNAST"
+    ```lnast
+    in
+      ref c
+      ref a
+      ref b
+    not
+      ref d
+      ref c
+    ```
+
+There are two tuple concatenate operator  `a ++ b` and `(a,...b)`. `x=a++b` translates to:
+
+```lnast
+tup_concat
+  ref x
+  ref a
+  ref b
+```
+
+The inplace concatenate is equivalent but it has a check (`cassert`) to detect overlap. After the concatenation,
+the fields in `a` and `b` should be found in the result `x` or there was an overlap.
+
+`x=(a,..b)` translates to:
+```lnast
+tup_concat
+  ref x
+  ref a
+  ref b
+in
+  ref ___1
+  ref a
+  ref x
+in
+  ref ___2
+  ref b
+  ref x
+land
+  ref ___3
+  ref ___1
+  ref ___2
+fcall
+  ref ___0
+  ref cassert
+  ref ___3
+```
 
 ### Type operators
 
-* `a does b` is the tuple structure of `a` a subset of `b`
-* `a equals b` same as `(a does b) and (b does a)`
-* `a case b` same as `cassert a does b` and for each `b` field with a defined value,
-  the value matches `a` (`nil`, `0sb?` are undefined values)
-* `a is b` is a nominal type check. Equivalent to `a::[typename] == b::[typename]`
+To check if a field name or position exists in a tuple, `x = a has b` translates:
+```lnast
+has
+  ref x
+  ref a
+  ref b
+```
 
-*TODO*
+To check the tuple structure, Pyrope has `a does b`. It returns true if the
+tuple of `a` a subset of `b`. `x = a does b` translates to:
+```lnast
+does
+  ref x
+  ref a
+  ref b
+```
+
+To check equality of tuples `x = a equals b` same as `x = (a does b) and (b does a)`. Translates to:
+```lnast
+does
+  ref ___0
+  ref a
+  ref b
+does
+  ref ___1
+  ref b
+  ref a
+land
+  ref x
+  ref ___0
+  ref ___1
+```
+
+The `a case b` does match operation. `a case b` same as `cassert b does a` and
+for each `b` field with a defined value, the value matches `a` (`nil`, `0sb?`
+are undefined values). `x = a case b` translates to:
+```lnast
+does
+  ref ___0
+  ref b
+  ref a
+fcall
+  ref ___1
+  ref cassert
+  ref ___0
+in
+  ref x
+  ref b
+  ref a
+```
+
+To perform a nominal type check, the attributes can be accessed directly. `x = a is b` translates to:
+```lnast
+attr_get
+  ref ___0
+  ref a
+  const typename
+attr_get
+  ref ___1
+  ref b
+  const typename
+eq
+  ref x
+  ref ___0
+  ref ___1
+```
 
 ## match
 
