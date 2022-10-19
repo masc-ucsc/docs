@@ -729,9 +729,9 @@ cassert 1<<(1,4,3) == 0b01_1010
 Most operations behave as expected when applied to signed unlimited precision
 integers. 
 
-The `a in b` checks if values of `a` are in `b`. Notice that both can be tuples.
-If `a` is a named tuple, the entries in `b` match by name, and then contents. If `a` is unnamed,
-it matches only contents.
+The `a in b` checks if values of `a` are in `b`. Notice that both can be
+tuples. If `a` is a named tuple, the entries in `b` match by name, and then
+contents. If `a` is unnamed, it matches only contents by position.
 
 ```
 cassert (1,2) in (0,1,3,2,4)

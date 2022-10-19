@@ -165,7 +165,7 @@ exceptions that avoid naming arguments:
 
 * If the argument is a single letter
 
-* If the type system can distinguish between unnamed arguments
+* If the type system can distinguish between unnamed arguments (no ambiguity)
 
 * The calling variable name has the same as an argument
 

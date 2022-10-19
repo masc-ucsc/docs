@@ -848,25 +848,86 @@ concatenates a tuple or a String, `and` is always for boolean types,...
 
 ## Getter/Setter method
 
-Pyrope tuples do not have default constructor, but it has a setter method that
-allows to intercept any assignment. The symmetric getter method is called
-whenever the tuple is read. Since each variable or tuple field is also a tuple,
-the getter/setter allow to intercept any variable/field.
+Pyrope tuples can use the same syntax as a lambda call or a direct assignment.
+Both the assignment and the lambda call follow the same rules for ambiguity as
+the default lambda calls. This means that fields must be named unless single
+character names, or variable name matches argument name, or there is no type
+ambiguity.
+
+```
+let Typ1 = (
+  ,a:string = "none"
+  ,b:u32    = 0
+)
+
+let v:Typ1 = Typ1(a="foo", b=33)
+let w      = Typ1(a="foo", b=33)
+let x:Typ1 = (a="foo", b=33)      // OK, named construction
+let y:Typ1 = ("foo", 33)          // OK, because no conflict by type
+var z:Typ1 = _                    // default values
+cassert z.a == "none" and z.b == 0
+z = ("foo",33)
+
+cassert v==w==x==y==z
+```
+
+Pyrope allows a setter method to intercept assignments or construction. The same
+setter method is called in all the previous cases.
+
+The setter method can use single character arguments for array index, but they must
+respect the declaration order.
 
 
 ```
-var f1:XXX = (3,2)
-var f2:XXX = XXX(3,2)
-var f3:XXX = _
+let Typ2 = (
+  ,a:string = "none"
+  ,b:u32    = 0
+  ,setter = proc(ref self, a, b) { self.a = a ; self.b = b }
+)
 
-f3 = (3,2)
-assert f3 == f2 == f1
+var x:Typ2 = _
+var y:Typ2 = _
+
+x["hello"] = 44
+y = ("hello",44)
+cassert x==y
 ```
 
-Encapsulation can be achieved with explicit methods (initialize/setXXX/getXXX).
-This creates problems with overloading or exposing variables. It is possible to
-create a tuple where the initialization is the setter (`setter`) and the default
-method is the getter (`getter`).
+The symmetric getter method is called whenever the tuple is read. Since each
+variable or tuple field is also a tuple, the getter/setter allow to intercept
+any variable/field. The same array rule applies to the getter.
+
+
+```
+let My_2_elem = (
+  ,data:[2]string = _
+  ,setter = proc(ref self, x:uint(0..<2), v:string) {
+    self.data[x] = v
+  } ++ proc(ref self, v:My_2_elem) {
+    self.data = v.data
+  }
+  ,getter = fun(self) { ret self.data 
+  } ++ fun(self, i:uint) {
+    ret self.data[i]
+  }
+)
+
+var v:My_2_elem = _
+var x:My_2_elem = _
+
+v = (x=0, "hello")
+v[1] = "world"
+
+cassert v[0] == "hello"
+cassert v == ("hello", "world")  // not 
+
+let z = v
+cassert z !equals v   // v has v.data, z does not
+```
+
+
+The getter/setter can also be used to intercept and/or modify the value
+set/returned.
 
 
 ```
@@ -898,20 +959,21 @@ to customize by return type:
 ```
 let showcase = (
   ,v:int = _
-  ,getter ++= fun(self)->(:string) where self.i>100 {
-    ret "this is a big number" ++ string(v)
-  }
-  ,getter ++= fun(self)->(:int) {
-    ret v
+  ,getter = fun(self)->(:string) where self.i>10 {
+    ret format("this is a big {} number", self.v)
+  } ++ fun(self)->(:int) {
+    ret self.v
   }
 )
 
 var s:showcase = _
 s.v = 3
-let foo:string = s // compile error, no matching getter
-s.v = 100
+let r1:string = s // compile error, no matching getter
+let r2:int    = s // OK
 
-let foo:string = s // compile error, no matching getter
+s.v = 100
+let r3:string = s // OK
+cassert r3 == "this is a bit 100 number"
 ```
 
 Like all the lambdas, the getter method can also be overloaded on the return type.
@@ -943,7 +1005,7 @@ cassert fbool == 0
 
 let Tup = (
   ,v:string = _  // default to empty
-  ,setter = fun(ref self) { // no args
+  ,setter = fun(ref self) { // no args, default setter for _
      cassert self.v == ""
      self.v = "empty"
   } ++ fun(ref self, v) {
@@ -982,6 +1044,62 @@ assert m1 <= m2 and m1 != m2 and m2 > m1 and m2 >= m1
 ```
 
 
+The default tuple comparator (`a == b`) compares values, not types like `a does
+b`, but a compile error is created unless `a equals b` returns true. This means
+that a comparison by tuple position suffices even for named tuples.
+
+```
+let t1=(
+  ,long_name:string = "foo"
+  ,b=33
+)
+let t2=(
+  ,b=33
+  ,long_name:string = "foo"
+)
+let t3=(
+  ,33
+  ,long_name:string = "foo"
+)
+
+cassert t1==t2
+cassert t1 !equals t3
+let x = t1==t3           // compile error, t1 !equals t3
+```
+
+The comparator `a == b` when `a` or `b` are tuples is equivalent to:
+```
+cassert (a==b) == ((a in b) and (b in a))
+cassert a equals b
+```
+
+With the `eq` overload, it is possible to compare named and unnamed tuples.
+
+```
+let t1=(
+  ,long_name:string = "foo"
+  ,b=33
+)
+let t2=(
+  ,xx_a=33
+  ,yy_b = "foo"
+  ,eq = fun(self, o:t1) {
+    ret self.xx_a == o.b and self.xx_y == o.long_name
+  } ++ fun(self, o:t2) {
+    ret self.xx_a == o.xx_a and self.xx_y == o.xx_y
+  }
+)
+
+cassert t1==t2 and t2==t1
+```
+
+Since `a == b` can compare two different objects, it is not clear if `a.eq` or `b.eq` method
+is called. Pyrope has the following rule:
+
+* If only one of the two has a defined method, that method is called.
+* If both have defined methods, they should have the same set of `eq` methods or a compile error is created.
+
+
 It is also possible to provide a custom `ge` (Greater Than). The `ge` is redundant
 with the `lt` and `eq` (`(a >= b) == (a==b or b<a)`) but it allows to have more
 efficient implemetations:
@@ -995,10 +1113,6 @@ For integer operations, the Pyrope should result to the following equivalent Lgr
 * `a <= b` is `__lt(a,b) | __eq(a,b)` (without `ge`) or `__ge(b,a)`
 * `a >= b` is `__lt(b,a) | __eq(a,b)` (without `ge`) or `__ge(a,b)`
 
-The comparator `a == b` when `a` or `b` are tuples is equivalent to:
-```
-cassert (a==b) == ((a in b) and (b in a) and (a equals b))
-```
 
 ## Non-Pyrope (C++) calls
 

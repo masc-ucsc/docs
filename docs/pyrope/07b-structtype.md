@@ -6,6 +6,7 @@ Typescript, but there are some difference simplifications like not references,
 everything is passed by value, no union types.
 
 
+
 ## Type Check
 
 
@@ -126,6 +127,35 @@ let err = a == w // compile error, not (a equals w) or overload
 
 ### Lambda
 
+
+A way to classify a language is to look at the generics and lambda calls.
+Languages can have type constraints or type classes. Type classes (Hakell,
+Rust, Swift) specify the "consent" of argumetns or return types allowed for
+lambda or generic. Type constrains (C++, typescript) constraints the arguments
+or return types allowed. Pyrope follows a type constraint approach.
+
+The following `f` method has no constraints on the input arguments. It can pass
+anything, but constraints the return value to be an integer.
+
+```
+let f = fun(a,b) -> (r:int) { r = xx(a) + xx(b) }
+```
+
+The type can be inferred for arguments and return values. If the lambda
+definition has no type constraints. A "different" implementation lambda exist
+for each combination of inferred types. It behaves like if the the lambda were
+inlined in the caller.
+
+
+The constraints can be different per type, or use a more familiar generic syntax.
+The `f1` example constraints `a` and `b` arguments to have a type that
+satisfies `(a does Some_type_class) and (b does Some_type_class)`.
+
+```
+let f1 = fun<T:Some_type_class>(a:T,b:T) -> (r:int) { r = xx(a) + xx(b) }
+```
+
+
 While performing assignments checks that the left-hand-side tuple fields are
 fully populated (`x=y`) by checking that `y does x`. The same check happens for
 the lambda calls, but a slightly check is performed when a lambda is passed as
@@ -143,10 +173,6 @@ The return tuple is also used in the type system (`ret_val does (:rd1_t,
 overloading cases explained later, the return type could also be part of the
 overloading check.
 
-
-The type can be inferred for arguments and return values. If the lambda definition
-has no type (`ad2` and `rd2`). A "different" implementation lambda exist for
-each combination of inferred types or the lambda must be inlined in the caller.
 
 
 ```
@@ -465,17 +491,18 @@ var a:Mixing_all="Julius Caesar"
 a.say_hi()
 ```
 
-Mixin is very expressive by allowing redefining methods. If two tuples have
-the same field a tuple with the concatenated values will be created. This is
-likely an error with basic types but useful to handle explicit method overload.
+Mixin is very expressive by allowing redefining methods. If two tuples have the
+same field a tuple, the concatenated operator (`++`) will create an entry with
+two or more sub-entries. This is likely an error with basic types but useful to
+handle explicit method overload.
 
 
-In a way, mixin just adds methods from two tuples to create a new tuple. In
-programming languages with object-oriented programming (OOP), there are many
-keywords (`virtual`, `final`, `override`, `static`...) to constrain how methods can be
-updated/changed. In Pyrope, the `let` and `var` keywords can be added to any tuple
-field. The `let` makes the entry immutable when applied to a method, it behaves like
-a `final` keyword in most languages.
+In a way, the concatenate just adds methods from two tuples to create a new
+tuple. In programming languages with object-oriented programming (OOP), there
+are many keywords (`virtual`, `final`, `override`, `static`...) to constrain
+how methods can be updated/changed. In Pyrope, the `let` and `var` keywords can
+be added to any tuple field. The `let` makes the entry immutable when applied
+to a method, it behaves like a `final` keyword in most languages.
 
 
 There are also two ways to concatenate tuples in Pyrope. `t1 ++ t2` and

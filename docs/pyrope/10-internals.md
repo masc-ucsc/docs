@@ -3,6 +3,39 @@
 This section of the document provides a series of disconnected topics about the
 compiler internals that affects semantics.
 
+## Tuple operations
+
+
+There are 3 basic operations/checks with tuples that affect many other
+operations: `a in b`, `a does b`, and lambda call rules.
+
+* `a in b` allows to work when `b` is a name/unnamed tuple even when `a` is named.
+
+* `a does b` requires `b` to be named consistent with names in `a`.
+
+* lambda call matches the arguments with the definition in a third different set of rules.
+
+
+```
+cassert (a=1) in (1,a=1,3)
+cassert (a=1) !does (1,a=1,3)
+
+let f = fun(a) { puts "{}",a }
+let g = fun(long, short) { puts "{}",long }
+
+f(a=1)             // OK
+f(1)               // OK
+
+g(long=1, short=1) // OK
+g(1,1)             // compile error
+let long=1
+g(long, short=1)   // OK
+let short=1
+g(long, short)     // OK
+```
+
+Operators like `a == b`, `a case b`, `a equals b`, ... built on top of the previous functionality.
+
 ## Determinism
 
 Pyrope is designed to be deterministic. This means that the result is always
