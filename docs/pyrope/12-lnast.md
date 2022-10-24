@@ -456,6 +456,7 @@ with a `shl` operator.
 
     set_mask
       ref foo
+      ref foo
       ref ___t
       ref xx
 
@@ -494,6 +495,7 @@ with a `shl` operator.
       const 2
 
     set_mask
+      ref foo
       ref foo
       ref ___t
       ref xx
@@ -966,6 +968,188 @@ eq
   ref ___1
 ```
 
+## if/unique if
+
+
+Like many modern languages, `if` accepts not only a boolean expression but a
+sequence of statements. Like C++17, before a condition, there can be a sequence
+of statements that can include variable declarations. Pyrope variables initial
+statement declarations are visiable in the `if` and `else` statements like
+C++17 does.
+
+
+A special constraint from Pyrope is that the initial statements and condition
+check can not have side-effects. Hence, they can not have `procedure` calls,
+only `function` calls.
+
+=== "Pyrope"
+    ```
+    var total=3
+    if var x=3; x<3 {
+      total+=x
+    }elif var z=3; z<4 {
+      total+=x+z
+    }
+    ```
+
+=== "Pyrope Equivalent"
+    ```
+    var total=3
+    {
+      var x=3
+      if x<3 {
+        total+=x
+      }else{
+        var z=3
+        if z<4 {
+          total+=x+z
+        }
+      }
+    }
+    ```
+
+=== "C++17 equivalent"
+    ```
+    int total=3;
+    if (int x=3; x<3) {
+      total+=x;
+    }else if (int z=3; z<4) {
+      total+=x+z;
+    }
+    ```
+
+Pyrope has `if` and `unique if`. The difference is that `unique if` guarantees
+that only one of the branch conditions is taken. It is possible to have all the
+conditions not taken. This allows synthesis optimizations because it implies
+that the condition is a one-hot encoding.
+
+
+=== "Pyrope"
+    ```
+    if var x=a ; x<3 {
+      t = 100+x               // z not in scope
+    }elif var z = x+c ; z>5 {
+      t = 200+z+x             // z and x in scope
+    }
+    ```
+
+=== "LNAST"
+    ```
+    stmts
+      var
+        ref x
+        ref a
+      lt
+        ref ___1
+        ref x
+        const 3
+      if
+        ref ___1
+        stmts
+          add
+            ref t
+            const 100
+            ref x
+        stmts
+          add
+            ref ___2
+            ref x
+            ref c
+          var
+            ref z
+            ref ___2
+          gt
+            ref ___3
+            ref z
+            const 5
+          if
+            ref ___3
+            stmts
+              add
+                ref t
+                const 200
+                ref z
+                ref x
+    ```
+
+The `unique if` is similar, but all the conditions include and `assume`
+directive to be checked. This means that the conditions must be checked even if
+the `else` is not reached. This is fine because neither the statements nor the
+condition checks are allowed to have side-effects.
+
+
+An important limitation of `unique if` is that only the first condition can
+have initial statement. It is not allowed to have initialization statements in
+the `elif` conditions.
+
+=== "Pyrope"
+    ```
+
+
+
+
+
+    unique if a<3 {
+      y = 10
+    }elif a>40 {  // not allowed to do 'elif var z=40; a>z'
+      y = 20+x
+    }
+    ```
+
+=== "Pyrope Equivalent"
+    ```
+    let tmp1 = a<3
+    let tmp2 = a>40
+    let tmp3 = 1<<(tmp1,tmp2)
+    assume tmp3@+[]<=1        // at most one bit set
+
+    if tmp1 {
+      y = 10
+    }elif tmp2 {
+      y = 20+x
+    }
+    ```
+
+=== "LNAST"
+    ```
+    lt
+      ref ___1
+      ref z
+      const 3
+    gt
+      ref ___2
+      ref a
+      const 40
+    shl           // create one-hot encoding
+      ref ___3
+      const 1
+      ref ___1
+      ref ___2
+    popcount
+      ref ___4
+      ref ___3
+    le
+      ref ___5
+      ref ___4
+      const 1
+    fcall
+      ref nil
+      ref assume
+      ref ___5
+    if
+      ref ___1
+      stmts
+        assign
+          ref y
+          const 10
+      ref ___2
+      stmts
+        add
+          ref y
+          const 20
+          ref x
+    ```
+
 ## match
 
 The match statement behaves like a `unique if` but it also checks that at least
@@ -1006,7 +1190,25 @@ false }` is created.
       ref ___1
       ref x
       ref ___2
-    unique_if
+
+    shl
+      ref ___3
+      const 1
+      ref ___1
+      ref ___2
+    popcount
+      ref ___4
+      ref ___3
+    le
+      ref ___5
+      ref ___4
+      const 1
+    fcall
+      ref nil
+      ref assume
+      ref ___5
+
+    if
       ref ___1
       stmts
         assign
@@ -1019,16 +1221,32 @@ false }` is created.
           const 2
       stmts
         fcall
-          ref ___3
+          ref ___6
           ref assert
           const false
 
+    // 2nd match
     lt
-      ref ___4
+      ref ___6
       ref x
       const 5
-    unique_if
-      ref ___4
+    shl
+      ref ___7
+      const 1
+      ref ___6
+    popcount
+      ref ___8
+      ref ___7
+    le
+      ref ___9
+      ref ___8
+      const 1
+    fcall
+      ref nil
+      ref assume
+      ref ___9
+    if
+      ref ___6
       stmts
         assign
           ref z
@@ -1117,7 +1335,23 @@ statements.
         ref ___t2
         ref ___3
         const 7
-      unique_if
+      shl           // create one-hot encoding
+        ref ___x
+        const 1
+        ref ___t1
+        ref ___t2
+      popcount
+        ref ___y
+        ref ___x
+      le
+        ref ___z
+        ref ___y
+        const 1
+      fcall
+        ref nil
+        ref assume
+        ref ___z
+      if
         ref ___t1
         stmts
           fcall
