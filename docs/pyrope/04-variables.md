@@ -469,32 +469,6 @@ let b = bad.b
 assert b.::[poison] and b==4
 ```
 
-In the future, the compiler may implement some of the following attributes, as
-such, these attribute names are reserved and not allowed for custom attribute
-passes:
-
-* `inline`, `noinline`: to indicate if a module is inlined
-* `file`: to print the file where the variable was declared
-* `loc`: line of code information
-* `delay`: synthesis time delay
-* `debug` (sticky): variable use for debug only, not synthesis allowed
-* `critical`: synthesis time criticality
-* `deprecated`: to generate special warnigns about usage
-* `pipeline`: pipeline related information
-* `private`: variable/field not visible to import/regref
-* `donttouch`: do not touch/optimize away
-* `keep`: same as donttouch but shorter
-* `max_load`, `max_fanout`, `max_cap`: synthesis optimization hints
-* `inp_delay`, `out_delay`: synthesis optimizations hints
-* `max_delay`, `min_delay`: synthesis optimizations checked at simulation
-* `multicycle`: number of cycles for optimizations checked at simulation
-* `clock`: indicate a signal/input is a clock wire
-* `reset`: indicate a signal/input is a reset wire
-* `left_of`, `right_of`, `top_of`, `bottom_of`, `align_with`: placement hints
-* `valid`, `retry`: for elastic pipelines
-* `typename`: type name at variable declaration
-* `rand` and `crand`: simulation and compile time random number generation
-* `let` and `var`: is the variable declared as `let` and/or `var`
 
 Attributes control fields like the default reset and clock signal. This allows
 to change the control inside procedures. Notice that this means that attributes
@@ -524,6 +498,38 @@ can be checked during simulation/verification.
 There are 3 main classes of a attributes that all the Pyrope compilers should
 always implement: Bitwidth, comptime, debug.
 
+### Variable Attribute list
+
+In the future, the compiler may implement some of the following attributes, as
+such, these attribute names are reserved and not allowed for custom attribute
+passes:
+
+* `inline`, `noinline`: to indicate if a module is inlined
+* `file`: to print the file where the variable was declared
+* `loc`: line of code information
+* `delay`: synthesis time delay
+* `debug` (sticky): variable use for debug only, not synthesis allowed
+* `critical`: synthesis time criticality
+* `deprecated`: to generate special warnigns about usage
+* `pipeline`: pipeline related information
+* `private`: variable/field not visible to import/regref
+* `donttouch`: do not touch/optimize away
+* `keep`: same as donttouch but shorter
+* `max_load`, `max_fanout`, `max_cap`: synthesis optimization hints
+* `inp_delay`, `out_delay`: synthesis optimizations hints
+* `max_delay`, `min_delay`: synthesis optimizations checked at simulation
+* `multicycle`: number of cycles for optimizations checked at simulation
+* `clock`: indicate a signal/input is a clock wire
+* `reset`: indicate a signal/input is a reset wire
+* `left_of`, `right_of`, `top_of`, `bottom_of`, `align_with`: placement hints
+* `valid`, `retry`: for elastic pipelines
+* `typename`: type name at variable declaration
+* `rand` and `crand`: simulation and compile time random number generation
+* `let` and `var`: is the variable declared as `let` and/or `var`
+* `warn`: is a boolean what when set to false disables compile warnings for associated variable
+
+Registers and other objects may have additional attributes.
+
 
 ### Bitwidth attribute
 
@@ -531,13 +537,13 @@ To set constrains on integer arithmetic operations, the compiler has a set
 of bitwidth related attributes:
 
 
-* `$max`: the maximum value allowed
-* `$min`: the minimum value allowed
-* `$ubits`: Maximum number of bits to represent the unsigned value. The number must be positive or zero
-* `$sbits`: Maximum number of bits, and the number can be negative
-* `$wrap`: allows to drop bits that do not fit on the left-hand side. It performs sign
+* `max`: the maximum value allowed
+* `min`: the minimum value allowed
+* `ubits`: Maximum number of bits to represent the unsigned value. The number must be positive or zero
+* `sbits`: Maximum number of bits, and the number can be negative
+* `wrap`: allows to drop bits that do not fit on the left-hand side. It performs sign
   extension if needed.
-* `$saturate` keeps the maximum or minimum (negative integer) that fits on the
+* `saturate` keeps the maximum or minimum (negative integer) that fits on the
   left-hand side.
 
 
