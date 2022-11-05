@@ -860,11 +860,13 @@ let Typ1 = (
   ,b:u32    = 0
 )
 
-let v:Typ1 = Typ1(a="foo", b=33)
-let w      = Typ1(a="foo", b=33)
-let x:Typ1 = (a="foo", b=33)      // OK, named construction
+let w      = Typ1(a="foo", b=33)  // OK
+let x:Typ1 = (a="foo", b=33)      // OK, same as before
+
+let v:Typ1 = Typ1(a="foo", b=33)  // OK, but redundant Typ1
 let y:Typ1 = ("foo", 33)          // OK, because no conflict by type
-var z:Typ1 = _                    // default values
+
+var z:Typ1 = _                    // OK, default field values
 cassert z.a == "none" and z.b == 0
 z = ("foo",33)
 
@@ -885,8 +887,8 @@ let Typ2 = (
   ,setter = proc(ref self, a, b) { self.a = a ; self.b = b }
 )
 
-var x:Typ2 = _
-var y:Typ2 = _
+var x:Typ2 = (a="x", b=0)
+var y:Typ2 = (a="x", b=0)
 
 x["hello"] = 44
 y = ("hello",44)
@@ -905,11 +907,11 @@ let My_2_elem = (
     self.data[x] = v
   } ++ proc(ref self, v:My_2_elem) {
     self.data = v.data
-  }
-  ,getter = fun(self) { ret self.data 
-  } ++ fun(self, i:uint) {
-    ret self.data[i]
-  }
+    } ++ proc(ref self) { // default _ assignment
+      self.data = _
+    }
+  ,getter = fun(self)         { ret self.data    } 
+         ++ fun(self, i:uint) { ret self.data[i] }
 )
 
 var v:My_2_elem = _
@@ -1007,17 +1009,23 @@ let Tup = (
   ,v:string = _  // default to empty
   ,setter = fun(ref self) { // no args, default setter for _
      cassert self.v == ""
-     self.v = "empty"
+     self.v = "empty33"
   } ++ fun(ref self, v) {
      self.v = v
   }
 )
 
 var x:Tup = _
-cassert x.v == "empty"
+cassert x.v == "empty33"
 
 x = "Padua"
 cassert x.v == "Padua"
+
+var y = Tup()
+cassert y.v == "empty33"
+
+y = "ucsc"
+cassert y.v == "ucsc"
 ```
 
 ## Compare method
