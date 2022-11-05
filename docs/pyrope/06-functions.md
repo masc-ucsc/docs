@@ -80,7 +80,7 @@ a variable from another file.
 
 ```
 let a_3   = {   3 }      // just scope, not a lambda. Scope is evaluate now
-let a_fun = fun() { 4 }  // local function, when just_4 is called 4 is returned
+let a_fun = fun() { 4 }  // when a_fun is called 4 is returned
 
 let fun3 = fun(){ 5 }    // public lambda that can be imported by other files
 
@@ -122,7 +122,7 @@ The lambda definition has the following fields:
   [overload](07b-structtype.md#lambda_overloading) has more details.
 
 ```
-var add:fun() = _
+var add:fun(...x) = _
 add = fun (...x) { x.0+x.1+x.2 }      // no IO specified
 add = fun (a,b,c){ a+b+c }            // constrain inputs to a,b,c
 add = fun (a,b,c){ a+b+c }            // same
@@ -133,7 +133,7 @@ add = fun (a,b:a,c:a){ a+b+c }        // constrain inputs to have same type
 add = fun <T>(a:T,b:T,c:T){ a+b+c }   // same
 
 x = 2
-var add2:fun2() = _
+var add2:fun2(a) = _
 add2 = fun       (a){   x + a }    // compile error, undefined 'x'
 add2 = fun[     ](a){   x + a }    // compile error, undefined 'x'
 add2 = fun[x    ](a){   x + a }    // explicit capture x
@@ -232,19 +232,23 @@ var tup = (
   ,let f1 = fun(self) { ret 1 }
 )
 
-let f1 = fun (self){ ret 2 }
+let f1 = fun (self){ ret 2 }   // compile error, f1 shadows tup.f1
 let f2 = fun (self){ ret 3 }
 
-assert f1()         == 2  // compile error, missing argument
-assert f1(tup)      == 2
-assert 4.f1()       == 2
+assert f1()         != 0  // compile error, missing argument
+assert f1(tup)      != 0  // compile error, f1 shadowing (tup.f1 and f1)
+assert 4.f1()       != 0  // compile error, f1 can be called for tup, so shadow
+assert tup.f1()     != 0  // compile error, f1 is shadowing
+
+assert (fun[tup] { tup.f1() })() // OK, function restricted scope for f1
+
 assert (4:tup).f1() == 1
 assert 4.f2()       == 3  // UFCS call
 assert tup.f1()     == 1
 ```
 
 The keyword `self` is used to indicate that the function is accessing a tuple.
-It is usually passed as the first argument. If the procedure modifies the tuple
+`self` is required to be the first argument. If the procedure modifies the tuple
 contents, a `ref self` must be passed as input.
 
 
@@ -288,9 +292,9 @@ This is quite useful for large objects like memories to avoid the copy.
 
 
 The pass by reference behaves like if the calling lambda were inlined in the
-caller lambda. The `ref` keyword must be explicit in the lambda input
-definition but also in the lambda call. The lambda outputs can not have a `ref`
-modifier.
+caller lambda while still respecting the lambda scope. The `ref` keyword must
+be explicit in the lambda input definition but also in the lambda call. The
+lambda outputs can not have a `ref` modifier.
 
 No logical or arithmetic operation can be done with a `ref`. As a result, it
 is only useful for lambda arguments. 
