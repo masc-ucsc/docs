@@ -423,6 +423,8 @@ cassert V4.b == 5
 cassert V4.c == 6
 ```
 
+### Hierarchical Enumerates
+
 Enum can accept hierarchical tuples. Each enum level follows the same algorithm.
 Each entry tries to find a new bit. In the case of the hierarchy, the lower
 hierarchy level bits are kept.
@@ -478,5 +480,25 @@ let human_rat = Animal.mammal.rat | Animal.mammal.human  // union op
 assert Animal.mammal      in human_rat
 assert Animal.mammal.rat  in human_rat
 assert Animal.bird       !in human_rat
+```
+
+### Enumerate and String
+
+
+To convert a string back and forth to an enumerate, explicit typecast is needed
+but possible.
+
+
+```
+let E3 = :enum(
+  ,l1=(
+    ,l1a
+    ,l1b
+    )
+  ,l2
+  )
+cassert string(E3.l1.l1a) == "E3.l1.l1a"
+cassert string(E3.l1) == "E3.l1"
+cassert E3("l1.l2") == E3.l1.l2
 ```
 

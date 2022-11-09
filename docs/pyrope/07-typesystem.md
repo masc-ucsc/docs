@@ -990,6 +990,7 @@ let my_obj = (
 )
 ```
 
+
 ### Default setter value
 
 All the variable declarations need a explicit assigned value. The `_` allows to
@@ -1027,6 +1028,31 @@ cassert y.v == "empty33"
 y = "ucsc"
 cassert y.v == "ucsc"
 ```
+
+### Array getter/setter
+
+Array index also use the setter or getter methods.
+
+```
+var my_arr = (
+  ,vector:[16]u8 = 0
+  ,getter = fun(self, idx:u4) {
+     ret self.vector[idx]
+  }
+  ,setter = proc(ref self, idx:u4, val:u8) {
+     self.vector[idx] = val
+  } ++ proc(ref self) {
+     // default
+  }
+)
+
+my_arr[3] = 300           // calls setter
+cassert my_add[3] == 300  // calls getter
+```
+
+Unlike languages like C++, the setter is only called if there is a new value
+assigned. This means that the index must always be in the left-hand-side of an
+assignment.
 
 ## Compare method
 
