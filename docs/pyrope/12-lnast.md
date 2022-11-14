@@ -134,6 +134,50 @@ Direct access in operations like `plus` behave like a `tup_set` or `tup_get`.
         const   : 1
     ```
 
+
+`tup_set` and `tup_get` can access through several levels in one command.
+`tup_add` does not allow recursive entrances, it requires intermediate tuple
+construction. `attr_get` and `attr_set` follow the same syntax as
+`tup_get`/`tup_set`.
+
+=== "Pyrope"
+    ```
+    x = tup[1].foo[xx]
+    tup[4].foo[yy] = y
+
+    z = (foo=(bar=1))
+    ```
+
+=== "LNAST"
+    ```
+    tup_get
+      ref x
+      ref tup
+      const 1
+      const foo
+      ref xx
+
+    tup_set
+      ref tup
+      const 4
+      const foo
+      ref yy
+      ref y
+
+    tup_add
+      ref ___1
+      assign
+        ref bar
+        const 1
+
+    tup_add
+      ref z
+      assign
+        ref foo
+        ref ___1
+    ```
+
+
 Tuples can have a `let` in declaration to indicate that the field is immutable.
 
 === "Tuple in Pyrope"
@@ -1257,6 +1301,8 @@ false }` is created.
           const 3
     ```
 
+
+
 ## Scope
 
 Like most languages Pyrope has variable scope, but it does not allow variable
@@ -1369,6 +1415,198 @@ statements.
             ref ___6
             ref cassert
             const false
+    ```
+
+## while/loop/for
+
+
+Pyrope has `loop`, `while`, and `for` constructs to handle different types of loops.
+In all the cases, the loops must be expanded at LNAST compile time. In LNAST, there
+is only `loop` construct.
+
+=== "Pyrope loop"
+    ```
+    loop var i=0 {
+      i += 1
+      break when i==3
+    }
+    ```
+
+=== "LNAST"
+    ```
+    stmts
+      var
+        ref i
+        const 0
+      loop
+        add
+          ref i
+          ref i
+          const 1
+        eq
+          ref ___1
+          ref i
+          const 3
+        if
+          ref ___1
+          stmts
+            break
+    ```
+
+
+=== "Pyrope while"
+    ```
+    while var i=0 ; i!=3 {
+      i += 1
+    }
+    ```
+
+=== "LNAST"
+    ```
+    stmts
+      var
+        ref i
+        const 0
+      loop
+        neq
+          ref ___1
+          ref i
+          const 3
+        not
+          ref ___2
+          ref ___1
+        if
+          ref ___2
+          stmts
+            break
+    ```
+
+The `for` construct is also a loop, but it can have element, index, and key in the iterator. Also, it can allow a `ref` to mutate the contents.
+
+=== "Pyrope for"
+    ```
+    for i,index,key in tup {
+      mycall(i,index,key)
+    }
+    ```
+=== "Pyrope ref for"
+    ```
+    for i,index,key in ref tup {
+      mycall(i,index,key)
+      i = 0
+    }
+    ```
+=== "LNAST for"
+    ```
+    attr_get
+      ref ___tup_size
+      ref tup
+      const size
+    gt
+      ref ___2
+      ref ___tup_size
+      const 0
+    if
+      ref ___2
+      stmts
+        var
+          ref i
+          ref _
+        var
+          ref index
+          const 0
+        var
+          ref key
+          const ""
+        loop
+          attr_get
+            ref key
+            ref tup
+            ref index
+            const "key"
+          tup_get
+            ref i
+            ref tup
+            ref index
+          tup_add
+            ref ___6
+            ref i
+            ref index
+            ref key
+          fcall
+            ref ___empty
+            ref mycall
+            ref ___6
+          add
+            ref index
+            ref index
+            const 1
+          eq
+            ref ___3
+            ref ___tup_size
+            ref index
+          if
+            ref ___3
+            stmts
+              break
+    ```
+=== "LNAST ref for"
+    ```
+    attr_get
+      ref ___tup_size
+      ref tup
+      const size
+    gt
+      ref ___2
+      ref ___tup_size
+      const 0
+    if
+      ref ___2
+      stmts
+        var
+          ref i
+          ref _
+        var
+          ref index
+          const 0
+        var
+          ref key
+          const ""
+        loop
+          attr_get
+            ref key
+            ref tup
+            ref index
+            const "key"
+          tup_get
+            ref i
+            ref tup
+            ref index
+          tup_add
+            ref ___6
+            ref i
+            ref index
+            ref key
+          fcall
+            ref ___empty
+            ref mycall
+            ref ___6
+          tup_set
+            ref tup
+            ref index
+            ref i
+          add
+            ref index
+            ref index
+            const 1
+          eq
+            ref ___3
+            ref ___tup_size
+            ref index
+          if
+            ref ___3
+            stmts
+              break
     ```
 
 ## puts/print/format

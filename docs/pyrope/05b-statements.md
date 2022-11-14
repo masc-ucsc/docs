@@ -396,8 +396,12 @@ if counter == 10 {
 }
 ```
 
-The `defer_write` delays the write/updates to the end of the cycle but uses
-the current value.
+The `defer_write` delays the write/updates to the end of the cycle but
+uses/reads the current value. In a way, the right-hand-side of the assignment
+is perform now, the left-hand-side is delayed to the end of the current cycle.
+
+If there are `defer_read` and `defer_write`, the defered writes are performed
+before the defered reads.
 
 ```
 var a = 1

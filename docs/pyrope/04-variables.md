@@ -504,28 +504,30 @@ In the future, the compiler may implement some of the following attributes, as
 such, these attribute names are reserved and not allowed for custom attribute
 passes:
 
-* `inline`, `noinline`: to indicate if a module is inlined
-* `file`: to print the file where the variable was declared
-* `loc`: line of code information
-* `delay`: synthesis time delay
-* `debug` (sticky): variable use for debug only, not synthesis allowed
+* `clock`: indicate a signal/input is a clock wire
 * `critical`: synthesis time criticality
+* `debug` (sticky): variable use for debug only, not synthesis allowed
+* `delay`: synthesis time delay
 * `deprecated`: to generate special warnigns about usage
+* `donttouch`: do not touch/optimize away
+* `file`: to print the file where the variable was declared
+* `inline`, `noinline`: to indicate if a module is inlined
+* `inp_delay`, `out_delay`: synthesis optimizations hints
+* `keep`: same as donttouch but shorter
+* `key`: variable/entry key name
+* `left_of`, `right_of`, `top_of`, `bottom_of`, `align_with`: placement hints
+* `let` and `var`: is the variable declared as `let` and/or `var`
+* `loc`: line of code information
+* `max_delay`, `min_delay`: synthesis optimizations checked at simulation
+* `max_load`, `max_fanout`, `max_cap`: synthesis optimization hints
+* `multicycle`: number of cycles for optimizations checked at simulation
 * `pipeline`: pipeline related information
 * `private`: variable/field not visible to import/regref
-* `donttouch`: do not touch/optimize away
-* `keep`: same as donttouch but shorter
-* `max_load`, `max_fanout`, `max_cap`: synthesis optimization hints
-* `inp_delay`, `out_delay`: synthesis optimizations hints
-* `max_delay`, `min_delay`: synthesis optimizations checked at simulation
-* `multicycle`: number of cycles for optimizations checked at simulation
-* `clock`: indicate a signal/input is a clock wire
-* `reset`: indicate a signal/input is a reset wire
-* `left_of`, `right_of`, `top_of`, `bottom_of`, `align_with`: placement hints
-* `valid`, `retry`: for elastic pipelines
-* `typename`: type name at variable declaration
 * `rand` and `crand`: simulation and compile time random number generation
-* `let` and `var`: is the variable declared as `let` and/or `var`
+* `reset`: indicate a signal/input is a reset wire
+* `size`: Number of entries in tuple or array
+* `typename`: type name at variable declaration
+* `valid`, `retry`: for elastic pipelines
 * `warn`: is a boolean what when set to false disables compile warnings for associated variable
 
 Registers and other objects may have additional attributes.
@@ -533,7 +535,7 @@ Registers and other objects may have additional attributes.
 
 ### Bitwidth attribute
 
-To set constrains on integer arithmetic operations, the compiler has a set
+To set constrains on integer, boolean, range, and struct basic types, the compiler has a set
 of bitwidth related attributes:
 
 
