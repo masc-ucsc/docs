@@ -1318,7 +1318,7 @@ statements.
       cassert x==3
     }
     while var z=1; x {
-      x -= 1
+      x -= z
     }
     var z=0
     match var x=2 ; z+x {
@@ -1352,15 +1352,17 @@ statements.
 
     stmts
       var
-        ref x
+        ref z
         const 1
-      while
-        ref x
-        stmts
-          sub
-            ref x
-            ref x
-            const 1
+      loop
+        if
+          ref x
+          stmts
+            break
+        sub
+          ref x
+          ref x
+          ref z
 
     var
       ref z
@@ -1453,6 +1455,7 @@ is only `loop` construct.
             break
     ```
 
+The `while` translates to a `loop` with a `break` statement.
 
 === "Pyrope while"
     ```
@@ -1608,6 +1611,11 @@ The `for` construct is also a loop, but it can have element, index, and key in t
             stmts
               break
     ```
+
+
+The `for` comprehensions behave similarly, but the `cont`/`brk` statements have
+the value that must be concatenated (`tup_concat`) to the result. If the last
+statement is an expression, the value is contatenated.
 
 ## puts/print/format
 
