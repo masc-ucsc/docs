@@ -89,49 +89,81 @@ Direct access in operations like `plus` behave like a `tup_set` or `tup_get`.
 
 === "LNAST direct"
     ```lnast
-    assign  :
-        ref     : x
-        const   : 3
-    assign  :
-        ref     : ___t1
-        const   : 2
-    plus    :
-        ref     : ___t2
-        ref     : x
-        const   : 1
-    plus    :
-        ref     : ___t3
-        ref     : ___t1
-        const   : 1
-    tup_add:
-        ref     : a
-        assign  :
-            ref     : b
-            ref     : __t1
-        assign  :
-            ref     : x
-            ref     : ___t2
-        assign  :
-            ref     : y
-            ref     : ___t4
+    assign
+      ref      x
+      const    3
+    assign
+      ref      ___t1
+      const    2
+    plus
+      ref      ___t2
+      ref      x
+      const    1
+    plus
+      ref      ___t3
+      ref      ___t1
+      const    1
+    tup_add
+      ref      a
+      var
+        ref      b
+        ref      __t1
+      var
+        ref      x
+        ref      ___t2
+      var
+        ref      y
+        ref      ___t4
     ```
 
-=== "LNAST Optimized"
+=== "LNAST optimized"
     ```lnast
-    assign  :
-        ref     : x
-        const   : 3
-    assign    :
-        ref     : a.:0:b
-        ref     : 2
-    plus    :
-        ref     : a.:1:x
-        ref     : x
-        const   : 1
-    plus    :
-        ref     : a.:2:y
-        const   : a.:0:b
-        const   : 1
+    assign
+      ref      x
+      const    3
+    plus
+      ref      ___t2
+      ref      x
+      const    1
+    plus
+      ref      ___t3
+      ref      ___t1
+      const    1
+    tup_add
+      ref      a
+      var
+        ref      b
+        const   2
+      var
+        ref      x
+        ref      ___t2
+      var
+        ref      y
+        ref      ___t4
+    ```
+
+=== "LNAST Alternative"
+    ```lnast
+    assign
+      ref      x
+      const    3
+    var
+      ref      a.0b
+      ref      2
+    plus
+      ref      ___t1
+      ref      x
+      const    1
+    var
+      ref      a.1x
+      ref      ___t1
+    plus
+      ref      ___t2
+      const    a.0b
+      const    1
+    var
+      ref     a.2y
+      ref     ___t2
     ```
 
 
@@ -166,13 +198,13 @@ construction. `attr_get` and `attr_set` follow the same syntax as
 
     tup_add
       ref ___1
-      assign
+      var
         ref bar
         const 1
 
     tup_add
       ref z
-      assign
+      var
         ref foo
         ref ___1
     ```
@@ -196,7 +228,7 @@ Tuples can have a `let` in declaration to indicate that the field is immutable.
       const  1
     tup_add:
       ref     a
-      assign
+      var
         ref     b
         ref     __t1
       let
@@ -313,7 +345,7 @@ Attribute set are in left-hand-side of assignments which can also be in tuple en
 
     tup_add
       ref ___1
-      assign
+      var
         ref x
         const 2
       const 4
@@ -345,7 +377,7 @@ Attribute set are in left-hand-side of assignments which can also be in tuple en
 
     tup_add
       ref x
-      assign
+      var
         ref x
         const 2
       const 4
@@ -427,6 +459,24 @@ Attribute get are always right-hand-side
 ### Sticky Attributes
 
 
+Attributes can be sticky or not. A sticky attribute "polutes" or keeps
+the attribute to the left-hand-side expression. Non-sticky attributes
+do not affect or propagate.
+
+
+Attributes are not sticky by default, but some like `::[debug]` is a sticky
+attribute. This means that if any of the elements in any operation has a debug
+attribute, the result also has a `::[debug]` attribute. There is no way to
+remove these attributes.
+
+```
+let d::[debug] = 3
+
+var a = d + 100
+
+cassert a.::[debug]  // debug is sticky
+```
+
 Once a variable gets assigned an attribute, the attribute stays with the
 variable and any variables that got a direct copy. The only way to remove it is
 with arithmetic operations and/or bit selection.
@@ -452,18 +502,6 @@ let xx3 = xx + 0
 cassert xx3 !has ::[attr2]
 ```
 
-Attributes are not sticky by default, but some like `::[debug]` is a sticky
-attribute. This means that if any of the elements in any operation has a debug
-attribute, the result also has a debug attribute. There is no way to remove
-these attributes.
-
-```
-let d::[debug] = 3
-
-var a = d + 100
-
-cassert a.::[debug]  // debug is sticky
-```
 
 ## Bit Selection
 
@@ -817,7 +855,7 @@ Short-circuit boolean (`and_then`/`or_else`)
 The short-circuit boolean prevent expressions from being evaluated. This only
 matters if there is a procedure call, but at LNAST it is not possible to know
 due to getter overload. As a result, the sequence of statments is translated to
-a sequence of nested if statements. 
+a sequence of nested if statements.
 
 === "Pyrope"
     ```
