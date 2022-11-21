@@ -141,7 +141,7 @@ efficient.
 
 ```pyrope
 // implicit start/end (starts when called)
-let telescope_unit3 = fun(a:u32,b:u32) -> (:u32) {
+let telescope_unit3 = fun(a:u32,b:u32) -> (_:u32) {
 
   {
     let tmp = a+1

@@ -96,7 +96,7 @@ let do_animal_vec = fun(a_vec:[]Animal)->(r:[]Animal) {
 }
 
 var x = do_animal_vec(b_vec:[]Bird) // OK
-assert x does :[]Animal  // not :[]Bird
+assert x does _:[]Animal  // not :[]Bird
 ```
 
 ### Basic types
@@ -176,8 +176,8 @@ overloading check.
 
 
 ```
-let fa_t = :fun(a:Animal)->()
-let fd_t = :fun(d:Dog)->()
+let fa_t:fun(a:Animal)->() = _
+let fd_t:fun(d:Dog)->() = _
 
 let call_animal = fun(a:Animal)->() {
    puts a.name // OK
@@ -217,12 +217,12 @@ then checks the rest to the in-place with the relative order left.
 
 
 ```
-let m = fun(a:integer,...x:(:string,c:int,d), y:integer)->() { 
+let m = fun(a:integer,...x:(_:string,c:int,d), y:integer)->() { 
   assert a == 1
   assert x.0 == "here"
   assert x.1 == 2 == x.c
   assert y == 3
-  if d does :integer { // inferred type
+  if d does _:integer { // inferred type
     assert d == 33
   }else{
     assert d == "x"
@@ -250,14 +250,14 @@ tuple semantics and the relationship is preserved.
 
 When `x` and `y` are in a lambda passed as reference to another lambda (lambda
 reference), the relationship is not covariant but contravariant. `Dog does
-Animal` is true, but `:fun(x:Dog)->() does :fun(x:Animal)->()` is false. The
+Animal` is true, but `:fun(x:Dog)->() does _:fun(x:Animal)->()` is false. The
 reason is shown in the previous example. The `fun(fd:fd_t)` can be called
 with `call_animal` because the fields accessed by `call_animal` are only a
 subset of `Dog` and hence if called inside `f_d` it can handle the `Dog` type.
 The opposite is not the case.
 
 
-`:fun(x1)->(x2) does :fun(y1)->y2` check is equivalent to `(y1 does x1) and (x2
+`:fun(x1)->(x2) does _:fun(y1)->y2` check is equivalent to `(y1 does x1) and (x2
 does y2)`.
 
 
@@ -265,9 +265,9 @@ does y2)`.
 
 Given a lambda passed as argument (`:fun(x:fun(c:c_t)->(d:d_t))->(y)`), the
 check when passing the lambda as argument to `x` a function like
-`fun(w:w_t)->(z:z_t)`. In this case, the `:fun(:w_t)->(:z_t) does
-fun(:c_t)->(:d_t)` is a contravariant test for inputs and covariant for
-outputs. This makes it equivalent to `(:c_t does :w_t) and (:z_t does :d_t)`.
+`fun(w:w_t)->(z:z_t)`. In this case, the `:fun(:w_t)->(_:z_t) does
+fun(:c_t)->(_:d_t)` is a contravariant test for inputs and covariant for
+outputs. This makes it equivalent to `(_:c_t does _:w_t) and (_:z_t does _:d_t)`.
 
 
 If the same type is used as input and output is an equivalence check (`((a does
@@ -339,7 +339,7 @@ all the variables are tuples of size one too, the following rules apply to any
 lambda call:
 
 
-* Given a lambda call `f(a:a_t)->(:r_t)` with defined call and return types.
+* Given a lambda call `f(a:a_t)->(_:r_t)` with defined call and return types.
   Iterate and pick all the lambda definitions `f(x)->(y)` that satisfy `x does
   a_t and y does r_t` using the previously explained lambda checks.
 
@@ -380,7 +380,7 @@ var fun_list = fun(a,b){ ret a+b}
 fun_list ++= fun(a,b,c){ ret a+b+c }
 fun_list ++= fun(a,b,c,d){ ret a+b+c+d }
 
-assert fun_list.::[size] == 3    // 3 lambda entries in fun_list
+assert fun_list.[size] == 3    // 3 lambda entries in fun_list
 
 assert fun_list(1,2) == 3
 assert fun_list(1,2,4) == 7
@@ -409,9 +409,9 @@ assert f1(  1,  2) == 103  // first in list
 For typed calls:
 
 ```
-var fo = fun(a:int,b:string)->(:bool)  { ret true    }
-  fo ++= fun(a:int,b:int   )->(:bool)  { ret false   }
-  fo ++= fun(a:int,b:int   )->(:string){ ret "hello" }
+var fo = fun(a:int,b:string)->(_:bool)  { ret true    }
+  fo ++= fun(a:int,b:int   )->(_:bool)  { ret false   }
+  fo ++= fun(a:int,b:int   )->(_:string){ ret "hello" }
 
 let a = fo(3,hello)
 assert a == true
@@ -588,7 +588,7 @@ let exclude = fun(o,...a) {
 
 let Shape = (
   ,name:string = _
-  ,area:fun (self )->(:i32)  = _            // undefined 
+  ,area:fun (self )->(_:i32)  = _            // undefined 
   ,increase_size:proc(ref self, x:i12) = _  // undefined 
 
   ,setter=proc(ref self, name ) { self.name = name } // implemented, use =
@@ -601,7 +601,7 @@ let Circle = (
   ,setter        = proc(ref self) { Circle.setter(this, "circle") }
   ,increase_size = proc(ref self, x:i12) { self.rad *= x }
   ,rad:i32       = _
-  ,area = fun(self) -> (:i32) {
+  ,area = fun(self) -> (_:i32) {
      let pi = import("math").pi
      ret pi * self.rad * self.rad
   }

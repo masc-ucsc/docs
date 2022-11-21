@@ -100,10 +100,9 @@ let f1 = fun() {
 
 assert t1    equals t2
 assert t1    equals v1
-assert f1    equals t1
 assert f1()  equals t1
-assert :f1  !equals t1
-assert :t1   equals t2
+assert _:f1 !equals t1
+assert _:t1  equals t2
 ```
 
 
@@ -116,9 +115,9 @@ Since the `puts` command understands types, it can be used on any variable, and
 it is able to print/dump the results.
 
 ```
-let At = :int(33..)      // number bigger than 32
+let At:int(33..) = _      // number bigger than 32
 let Bt=(
-  ,c:string
+  ,c:string = _
   ,d=100
   ,setter = fun(ref self, ...args) { self.c = args }
 )
@@ -148,7 +147,7 @@ These are the detailed rules for the `a does b` operator depending on the `a` an
   are previously constrained values in left-hand-side statements, or inferred
   from right-hand-side if no lhs type is specified.
 
-* `(a@[] & b@[]) == b@[]` when `a` and `b` are `range`. This means that the `a`
+* `(a@[..] & b@[..]) == b@[..]` when `a` and `b` are `range`. This means that the `a`
   range has at least all the values in `b` range.
 
 * There are two cases for tuples. If all the tuple entries are named, `a does
@@ -159,19 +158,19 @@ These are the detailed rules for the `a does b` operator depending on the `a` an
 
 * `a does b` is false if the explicit array size of `a` is smaller than the
   explicit array size of `b`. If the size check is true, the array entry type
-  is checked. `:[]x does :[]y` is false when `:x does :y` is false.
+  is checked. `_:[]x does _:[]y` is false when `_:x does _:y` is false.
 
 * The lambdas have a more complicated set of rules explained later.
 
 ```
-assert (a:int(max=33,min=0) does (a:int(20,5)))
-assert (a:int(max=33,min=0) !does (a:int(50,5)))
+assert (a:int:(max=33,min=0) does (a:int(20,5)))
+assert (a:int(0..=33)       !does (a:int(50,5)))
 
 assert  (a:string,b:int) does (a:"hello", b:33)
 assert ((b:int,a:string) !does (a:"hello", b:33)) // order maters in tuples
 
-assert  :fun(x,xxx2)->(y,z) does :fun(x     )->(y,z)
-assert (:fun(x     )->(y,z) !does :fun(x,xxx2)->(y,z))
+assert  _:fun(x,xxx2)->(y,z) does _:fun(x     )->(y,z)
+assert (_:fun(x     )->(y,z) !does _:fun(x,xxx2)->(y,z))
 ```
 
 For named tuples, this code shows some of the corner cases:
@@ -198,13 +197,12 @@ different functionality functions could be `equals`.
 ```
 let a = fun() { ret 1 }
 let b = fun() { ret 2 }
-assert a !equals :fun()    // 1 !equals :fun()
-assert :a equals :fun()    // :fun() { ret 1 } equals :fun()
+assert a equals _:fun()    // 1 !equals :fun()
 
-assert a != b              // 1 != 2
-assert a equals b          // 1 equals 2
+assert a() != b()              // 1 != 2
+assert a() equals b()          // 1 equals 2
 
-assert :a equals :fun()
+assert _:a equals _:fun()
 ```
 
 ## Type check with values
@@ -266,7 +264,7 @@ let X2 = (b:u32)
 
 let t1:X1 = (b=3)
 let t2:X2 = (b=3)
-assert (b=3) !is :X2     // same as (b=3) !is X2
+assert (b=3) !is X2  // same as (b=3) !is X2
 assert t1 equals t2
 assert t1 !is t2
 
@@ -276,7 +274,7 @@ assert t4  equals t1
 assert t4  is     t1
 assert t4 !is     t2
 
-let f2 = fun(x) where x is :X1 {
+let f2 = fun(x) where x is X1 {
   ret x.b + 1
 }
 ```
@@ -295,11 +293,11 @@ let Rgb = (
   ,setter = proc(ref self, c) { self.c = c }
 )
 
-let Color = :Rgb:enum(
-  ,Yellow   = 0xffff00
-  ,Red      = 0xff0000
-  ,Green    = Rgb(0x00ff00) // alternative redundant syntax
-  ,Blue     = Rgb(0x0000ff)
+let Color:enum = (
+  ,Yellow:Rgb = 0xffff00
+  ,Red:Rgb    = 0xff0000
+  ,Green      = Rgb(0x00ff00) // alternative 
+  ,Blue       = Rgb(0x0000ff)
 )
 
 var y:Color = Color.Red
@@ -315,9 +313,9 @@ type, where the enumerate has to be either of the enum entries where each is
 associated to a type.
 
 ```
-let ADT = :enum(
-  ,Person = :(eats:string)
-  ,Robot  = :(charges_with:string)
+let ADT:enum = (
+  ,Person:(eats:string) = _
+  ,Robot:(charges_with:string) = _
 )
 
 let nourish = fun(x:ADT) {
@@ -373,14 +371,14 @@ When the attributes are read, it reads the current. it does not read the constra
 
 ```pyrope
 var val:u8 = 0   // designer constraints a to be between 0 and 255
-assert val.::[sbits] == 0
+assert val.[sbits] == 0
 
 val = 3          // val has 3 bits (0sb011 all the numbers are signed)
 
 val = 300        // compile error, '300' overflows the maximum allowed value of 'val'
 
 val = 1          // max=1,min=1 sbits=2, ubits=1
-assert val.::[ubits] == 1 and val.::[min]==1 and val.::[max]==1 and val.::[sbits]==2
+assert val.[ubits] == 1 and val.[min]==1 and val.[max]==1 and val.[sbits]==2
 
 val::[wrap] = 0x1F0 // Drop bits from 0x1F0 to fit in constrained type
 assert val == 240 == 0xF0
@@ -465,18 +463,20 @@ remove the extra unnecessary bit when it is guaranteed to be zero. This
 effectively "packs" the encoding.
 
 
-## union
+## union/variant
 
-Union shares syntax with enums with types declaration, but the usage and
+Union/variant share syntax with enums with types declaration, but the usage and
 functionality is quite different. Enums do not allow to update values and
-unions are tuples with multiple labels sharing a single storage location. Since
-the `union` holds values, it can be used to explicitly convert between field
-types.
+unions/variant are tuples with multiple labels sharing a single storage
+location. The difference between `union` and `variant` is that union can be
+used for a typecast to convert between values, the variant is the same but it
+does not allow bit convertion. It tracks the type from the assignment, and an
+error is generated if the incorrect type is accesed.
 
 
 ```
-let e_type = :enum(str:String = "hello",num=22)
-let u_type = :union(str:String, num:int)         // No default value in union
+let e_type:enum  = (str:String = "hello",num=22)
+let u_type:union = [str:String, num:int]         // No default value in union
 
 var uu:u_type = (str="hello2")
 assert uu.str == "hello2"
@@ -501,16 +501,15 @@ match ee {
 }
 ```
 
-
 A key property of unions is that it respects the integer bit size in
 declaration. Pyrope optimizes the bitwidth, but it respects the union sizes to
 allow conversion between fields.
 
 ```
-let Conv_t = :union(
+let Conv_t:union = [
   ,f1:u6
-  ,a=(msb:u1, mid:u4, lsb:s1)
-)
+  ,a=[msb:u1, mid:u4, lsb:s1]
+]
 
 var b:Conv_t = (f1=0b1_0010_1)
 cassert b.a.msb == 1
@@ -564,7 +563,7 @@ var d:dt = a   // OK, call intitial to type cast
 ```
 
 * To string: The `format` allows to convert any type/tuple to a string.
-* To integer: `variable@[]` for string, range, and bool, union otherwise.
+* To integer: `variable@[..]` for string, range, and bool, union otherwise.
 * `union` allows to convert across types by specifying the size explicitly.
 
 ## Instrospection
@@ -584,9 +583,9 @@ assert a['c'] equals u32
 assert   a has 'c'
 assert !(a has 'foo')
 
-assert a.__id == 'a'
-assert a.0.__id == ':0:b' and a.b.__id == ':0:b'
-assert a.1.__id == ':1:c' and a.c.__id == ':1:c'
+assert a.[id] == 'a'
+assert a.0.[id] == ':0:b' and a.b.[id] == ':0:b'
+assert a.1.[id] == ':1:c' and a.c.[id] == ':1:c'
 ```
 
 Function definitions allocate a tuple, which allows to introspect the
@@ -596,9 +595,9 @@ at declaration.
 
 ```
 let fu = fun(a,b=2) -> (c) where a>10 { c = a + b }
-assert fu.__inp equals (a,b)
-assert fu.__out equals (c)
-assert fu.__where(a=200) and !fu.__where(a=1)
+assert fu.[inp] equals (a,b)
+assert fu.[out] equals (c)
+assert fu.[where](a=200) and !fu.[where](a=1)
 ```
 
 This means that when ignoring named vs unnamed calls, overloading behaves like
@@ -607,9 +606,9 @@ this:
 ```
 let x = fn(args)
 
-let x = for i in fn { last i(args) when (i.__inp does :args)
-                                    and (i.__out does :x   )
-                                    and (i.__where(args)   ) }
+let x = for i in fn { last i(args) when (i.[inp] does args)
+                                    and (i.[out] does x   )
+                                    and (i.[where](args)   ) }
 ```
 
 There are several uses for introspection, but for example, it is possible to build a
@@ -619,9 +618,9 @@ function that returns a randomly mutated tuple.
 let randomize::[debug] = fun(ref self) {
   let rnd = import "prp/rnd"
   for i in ref self {
-    if i equals :int {
-      i = rnd.between(i.__max,i.__min)
-    }elif i equals :bool {
+    if i equals _:int {
+      i = rnd.between(i.[max],i.[min])
+    }elif i equals _:bool {
       i = rnd.boolean()
     }
   }
@@ -961,9 +960,9 @@ to customize by return type:
 ```
 let showcase = (
   ,v:int = _
-  ,getter = fun(self)->(:string) where self.i>10 {
+  ,getter = fun(self)->(_:string) where self.i>10 {
     ret format("this is a big {} number", self.v)
-  } ++ fun(self)->(:int) {
+  } ++ fun(self)->(_:int) {
     ret self.v
   }
 )
@@ -984,9 +983,9 @@ In this case, it allows building typecast per type.
 ```
 let my_obj = (
   ,val:u32 = _
-  ,getter = fun(self)->(:string ){ ret string(self.val) }
-       ++ fun(self)->(:bool){ ret self.val != 0    }
-       ++ fun(self)->(:int    ){ ret self.val         }
+  ,getter = fun(self)->(_:string ){ ret string(self.val) }
+       ++ fun(self)->(_:bool){ ret self.val != 0    }
+       ++ fun(self)->(_:int    ){ ret self.val         }
 )
 ```
 
@@ -1067,7 +1066,7 @@ comparators. When non-provided the `lt` (Less Than) is a compile error, and the
 let t=(
   ,v:string = _
   ,setter = proc(ref self) { self.v = a }
-  ,lt = fun(self,other)->(:bool){ self.v  < other.v }
+  ,lt = fun(self,other)->(_:bool){ self.v  < other.v }
   ,eq = fun(self,other)            { self.v == other.v } // infer ret
 )
 
@@ -1175,7 +1174,7 @@ can pass many inputs/outputs and has permission to mutate values. Any call to a
 method with two underscores `__` is either a basic gate or a C++ function.
 
 ```
-let __my_typed_cpp = :fun(a,b)->(e)
+let __my_typed_cpp:fun(a,b)->(e) = _
 ```
 
 Type defining non-Pyrope code is good to catch errors and also because declaring

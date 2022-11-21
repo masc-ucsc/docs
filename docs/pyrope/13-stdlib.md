@@ -14,7 +14,7 @@ cassert prp.plus(1,2,3) == 6
 
 Library code:
 ```
-let plus = fun(...a:int)->(:int) {
+let plus = fun(...a:int)->(_:int) {
   var r = 0
   for e in a {
     r += e
@@ -36,7 +36,7 @@ cassert p.len(x) == 3
 
 Library code:
 ```
-let len = fun(x) { ret x.::[size] }
+let len = fun(x) { ret x.[size] }
 ```
 
 ### map
@@ -83,12 +83,12 @@ cassrt (1,2,3).reduce(prp.plus) == 6
 Library code:
 
 ```
-let reduce = fun(op:fun<T>(a:T,b:T)->(:T), ...x) {
-  ret x when x.::[size] <= 1
+let reduce = fun(op:fun<T>(a:T,b:T)->(_:T), ...x) {
+  ret x when x.[size] <= 1
 
   var res = x[0]
   for i in x[1..] {
-    res = fun(res, i)
+    res = op(res, i)
   }
   ret res
 }

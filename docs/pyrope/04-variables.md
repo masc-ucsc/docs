@@ -256,7 +256,7 @@ possible when both begin and end of the range are fully specified.
 assert((0..<30 by 10) == (0,10,20)) // ranges and tuples can combined
 assert((1..=3) ++ 4 == (1,2,3,4))   // tuple and range ops become a tuple
 assert 1..=3 == (1,2,3)
-assert((1..=3)@[] == 0b1110)        // convert range to integer with @[]
+assert((1..=3)@[..] == 0b1110)      // convert range to integer with @[..]
 ```
 
 ### String
@@ -270,7 +270,7 @@ a = 'cad'              // c is 0x63, a is 0x61, and d is 0x64
 b = 0x64_61_63
 assert a == string(b)  // typecast number to string
 assert int(a) == b     // typecast string to number
-assert a@[] == b       // typecast string to number
+assert a@[..] == b     // typecast string to number
 ```
 
 Like ranges, strings can also be seen as a tuple, and when tuple operations are
@@ -363,14 +363,14 @@ The are three operations that can be done with attributes: set, check, read.
   assignment or directly accessed. If a variable definition, this binds the
   attribute with all the use cases of the variable. If the variable just
   changes attribute value, a direct assignment is possible E.g: `foo::[max=300]
-  = 4` or `baz.::[attr] = 10` 
+  = 4` or `baz.[attr] = 10` 
 
 * Check: when associated to a type property in the right-hand-side of an
   assignment. The attribute is a comma separated list of boolean expression
   that must evaluate true only at this statement. E.g: `var tmp =
   yy::[comptime, attr2>0] + xx`
 
-* Read: a direct read of an attribute value is possible with `variable.field.::[attribute]`
+* Read: a direct read of an attribute value is possible with `variable.field.[attribute]`
 
 
 The attribute set, writes a value to the attribute. If no value is given a
@@ -395,12 +395,12 @@ yyy::[comptime=true] = xx          // now, checks that 'yyy` is comptime
 if bar == 3 {
   tmp = bar::[comptime == true]    // check that this use of bar is comptime
   tmp = bar::[comptime]            // same as previous statement
-  tmp = bar ; assert bar.::[comptime] // same as previous statements
+  tmp = bar ; assert bar.[comptime] // same as previous statements
 }
                                    // bar/foo may not be comptime
 
 // attribute read
-assert tmp.::[bits] < 30 and !tmp.::[comptime]
+assert tmp.[bits] < 30 and !tmp.[comptime]
 ```
 
 The attribute check is like a type check, both can be converted to assertions,
@@ -422,13 +422,13 @@ but the syntax is cleaner.
 === "Assertion Equivalent Check"
     ```
     let x = y + 1
-    cassert y.::[cond]
-    cassert y.::[bar]==3
+    cassert y.[cond]
+    cassert y.[bar]==3
 
     read_state = fun(x) {
       let f = x
       cassert f does u32
-      cassert f.::[comptime]
+      cassert f.[comptime]
       ret f
     }
 
@@ -447,7 +447,7 @@ if cond::[comptime] {    // cond is checked to be compile time constant
 }
 
 
-if cond.::[comptime] {  // checks if cond is compute at comptime
+if cond.[comptime] {  // checks if cond is compute at comptime
   let v = cond
   if cond {
     puts "cond is compile time and true"
@@ -466,7 +466,7 @@ let bad = (a=3,b::[poison]=4)
 
 let b = bad.b
 
-assert b.::[poison] and b==4
+assert b.[poison] and b==4
 ```
 
 
@@ -486,8 +486,8 @@ let counter = proc(en, width) {
 let counter2::[clock=clk1]=counter
 let counter3::[reset=rst2]=counter
 
-var ctr2 =# counter2(my_enable)
-var ctr3 =# counter3(my_enable)
+var ctr2 =#[..] counter2(my_enable)
+var ctr3 =#[..] counter3(my_enable)
 ```
 
 In the long term, the goal is to have any synthesis directive that can affect
@@ -508,6 +508,7 @@ passes:
 * `critical`: synthesis time criticality
 * `debug` (sticky): variable use for debug only, not synthesis allowed
 * `delay`: synthesis time delay
+* `defer`: for reads, it means last value written. For assigns, it means defer write
 * `deprecated`: to generate special warnigns about usage
 * `donttouch`: do not touch/optimize away
 * `file`: to print the file where the variable was declared
@@ -558,10 +559,10 @@ opt2:int:[min=0,max=300] = 0  // same
 opt3::[min=0,max=300] = 0     // same
 opt4:int(0..=300) = 0         // same
 
-assert opt1.::[ubits] == 0    // opt1 initialized to 0, so 0 bits
+assert opt1.[ubits] == 0    // opt1 initialized to 0, so 0 bits
 opt1 = 200
-assert opt1.::[ubits] == 8    // last assignment needs 9 sbits or 8 ubits
-tmp  = opt1::[ubits==8] + 1   // expression AND assert opt1.::[ubits]==8 check
+assert opt1.[ubits] == 8    // last assignment needs 9 sbits or 8 ubits
+tmp  = opt1::[ubits==8] + 1   // expression AND assert opt1.[ubits]==8 check
 ```
 
 The wrap/saturate are attributes that only make sense for attribute set. There
@@ -707,7 +708,7 @@ All the operators work over signed integers.
 * `a ~| b` bitwise nor
 * `a ~^ b` bitwise xnor
 * `a >> b` arithmetic right shift
-* `a@[] >> b` logical right shift
+* `a@[..] >> b` logical right shift
 * `a << b` left shift
 
 In the previous operations, `a` and `b` need to be integers. The exception is
@@ -873,7 +874,7 @@ This is not the case for the xor-reduce and pop-count. These two operations are
 size insensitive for positive numbers but sensitive for negative numbers. E.g:
 pop-count of 0sb111 is different than 0sb111111. When the variable is negative
 a close range must be used. Alternatively, a `zext` must be used to select
-bits accordingly. E.g: `variable@[0..=3]@+[]` does a `zext` and the positive result
+bits accordingly. E.g: `variable@[0..=3]@+[..]` does a `zext` and the positive result
 is passed to the pop-count. The compiler could infer the size and compute, but
 it is considered non-intuitive for programmers.
 
@@ -884,13 +885,13 @@ y = 0s1_0110   // negative
 assert x@[0,2] == 0b10
 assert y@[100,200]       == 0b11   and x@[100,200]       == 0
 assert y@sext[0,100,200] == 0sb110 and x@sext[1,100,200] == 0b001
-assert x@|[] == -1
+assert x@|[..] == -1
 assert x@&[0,1] == 0
 assert x@+[0..=5] == x@+[0..<100] == 3
 assert y@+[0..=5]  // compile error, 'y' can be negative
-assert y@[]@+[] == 3
-assert y@[0..=5]@+[] == 3
-assert y@[0..=6]@+[] == 4
+assert y@[..]@+[..] == 3
+assert y@[0..=5]@+[..] == 3
+assert y@[0..=6]@+[..] == 4
 
 var z     = 0b0110
 z@[0] = 1
@@ -901,7 +902,7 @@ z@[0] = 0b11 // compile error, '0b11` overflows the maximum allowed value of `z@
 !!!Note
     It is important to remember that in Pyrope all the operations use signed
     numbers. This means that an and-reduce over any positive number is always going
-    to be zero because the most significant bit is zero, E.g: `0xFF@&[] == 0`. In
+    to be zero because the most significant bit is zero, E.g: `0xFF@&[..] == 0`. In
     some cases, a close-range will be needed if the intention is to ignore the sign.
     E.g: `0xFF@&[0..<8] == -1`.
 
@@ -921,7 +922,7 @@ such an operation.
 
 ```
 var v = 0b10
-assert v@[0,1] == v@[1,2] == v@[] == v@[0..=1] == v@[..=1] == 0b10
+assert v@[0,1] == v@[1,2] == v@[..] == v@[0..=1] == v@[..=1] == 0b10
 
 var trans = 0
 
@@ -1069,9 +1070,9 @@ the time, and the associated logic is removed.
 
 ```
 var v1:u32 = _                 // v1 is zero every cycle AND not $valid
-assert v1.::[valid] == false
+assert v1.[valid] == false
 var v2:u32 = 0                 // v2 is zero every cycle AND     $valid
-assert v2.::[valid] == true
+assert v2.[valid] == true
 
 cassert v1?
 cassert not v2?
@@ -1132,7 +1133,7 @@ let complex = (
 var x1:complex = _
 var x2:complex:[valid = false] = 0  // toggle invalid forever, and set zero
 var x3:complex = 0
-x3.::[valid] = false                // toggle invalid
+x3.[valid] = false                // toggle invalid
 
 assert x1.v1 == "" and x1.v2 == ""
 assert not x2? and not x2.v1? and not v2.v2?
@@ -1176,12 +1177,12 @@ variable optional is set to false, and it is assigned the default value:
 
 ```
 var a:int = _
-cassert a==0 and a.::[valid] == false and not a?
+cassert a==0 and a.[valid] == false and not a?
 
 var b:int = 0
 cassert b==0 and b::[valid] and b?
 b = nil
-cassert b==nil and b.::[valid] == false and not b?
+cassert b==nil and b.[valid] == false and not b?
 
 var c:fun(a1) = _
 cassert c == nil and c::[valid==false]
@@ -1211,15 +1212,15 @@ cassert at1 !has "a"    // at1.a undefined
 var at2 = (
   ,a:string = _
 )
-cassert at2.a == ""  and at2.a.::[valid]==false
+cassert at2.a == ""  and at2.a.[valid]==false
 at2.a = "torrellas"
 cassert at2.a == "torrellas" and at2[0] == "torrellas"
 
 var at3:at2 = _
-cassert at3.a == ""  and at3.a.::[valid]==false
+cassert at3.a == ""  and at3.a.[valid]==false
 
 var at4:at2 = (a="josep")
-cassert at4.a == "josep"  and at4.a.::[valid] and at4.::[valid]
+cassert at4.a == "josep"  and at4.a.[valid] and at4.[valid]
 
 ```
 

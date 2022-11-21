@@ -53,21 +53,26 @@ function return.
 
 
 Pyrope defers the statements not to the end of the scope but to the end of the
-clock cycle. Even more important, it can defer the reads or the writes. These
-are constructs not existing in software but needed in hardware because it is
-necessary to connect blocks. Following the control flow from the top only allows
-to connect forward. Some contructs like connecting a ring require a "backward edge".
-The `defer_read` and `defer_write` allow such type of constructs.
+clock cycle. The defer delays the "write" until the end of the clock cycle, the
+defer does not defer the reads, just the write or update. To read the value
+from the end of the cycle an attribute `variable.[defer]` must be used.
 
 
-From a non-HDL point of view, the semantics are quite weird. A `defer_read x =
-a` means that `x` sees "future" or end of cycle contents of `a` and it can be
-used now. But if you think about hardware it is something happening on the same
-cycle, and the design may need the value to compute. Obviously, something like
-`defer_read a = a + 1` can lead to what it is known as a combination loop in
-hardware. Pyrope should have combination loop detectors and notify as compiler
-error because they are not allowed in most designs. 
+These are constructs not existing in software but needed in hardware because it
+is necessary to connect blocks. Following the control flow from the top only
+allows to connect forward. Some contructs like connecting a ring require a
+"backward edge". The attribute `[defer]` allow such type of constructs.
 
+```
+var a = 1
+var b = 2
+
+cassert a==1 and b==2
+b::[defer] = a
+cassert a==1 and b==2
+
+cassert b.[defer] == 1
+```
 
 ### Pipelining
 

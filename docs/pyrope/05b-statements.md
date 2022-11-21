@@ -342,16 +342,17 @@ loop {
 
 ## defer 
 
-A `defer_read` keyword can be added before assignments or function calls. This
-keyword effectively means that the statement on the right-hand side reads the last
-values from the end of the current cycle. This is needed if we need to have any
-loop in connecting blocks. It is also useful for delaying assertion checks to
-the end of the function.
+A `defer` attribute can be applied to variables. When used to read a variable,
+it returns the last values written to the variable the end of the current
+cycle. This is needed if we need to have any loop in connecting blocks. The
+`defer` applied to a write, delays the write update to the end of the cycle.
+The delayed writes happen before the delayed reads. This is also for delaying
+assertion checks to the end of the cycle like post condition checks.
 
 ```
 var c = 10
-defer_read assert b == 33    // behaves like a postcondition
-defer_read b = c
+assert b.[defer] == 33    // behaves like a postcondition
+b = c.[defer]
 assert b == 33
 c += 20
 c += 3
@@ -359,17 +360,16 @@ c += 3
 
 To connect the `ring` function calls in a loop.
 ```
-defer_read f1 = ring(a, f4)
+f1 = ring(a, f4.[defer])
 f2 = ring(b, f1)
 f3 = ring(c, f2)
 f4 = ring(d, f3)
 ```
 
 If the intention is to read the result after being a flop, there is no need to
-use the `defer_read`, a normal register access could do it. If the read
-variables are registers, the `defer_read ... = var` and the `var#[0]` is
-equivalent. The difference is that defer_read does not insert a register.
-
+use the `defer`, a normal register access could do it. If the read
+variables are registers, the `flop#[0]` is not the same as `defer`. The `flop#[0]`
+reads the value before any update, the `defer` read, gets values after updates.
 
 ```
 reg counter:u32 = _
@@ -379,7 +379,7 @@ let counter_0  = counter#[0]  // current cycle
 let counter_1  = counter#[1]  // last cycle
 let counter_2  = counter#[2]  // last last cycle cycle 
 
-defer_read deferred = counter
+var deferred = counter.[defer]
 
 if counter < 100 {
   counter += 1
@@ -396,21 +396,33 @@ if counter == 10 {
 }
 ```
 
-The `defer_write` delays the write/updates to the end of the cycle but
-uses/reads the current value. In a way, the right-hand-side of the assignment
-is perform now, the left-hand-side is delayed to the end of the current cycle.
+The `defer` can also be applied to write/updates to the end of the cycle but
+uses/reads the current value. In a way, the assignment is delayed to the end of
+the current cycle. If there are many defers to the same variable, they are
+ordered in program order.
 
-If there are `defer_read` and `defer_write`, the defered writes are performed
-before the defered reads.
+```
+var a = 1
+assert a == 1 and a.[defer] == 200
+
+a::[defer] = 100
+assert a == 1 and a.[defer] == 200
+
+a::[defer] = 200
+assert a == 1 and a.[defer] == 200
+```
+
+If there are `defer` reads and `defer` assignments, the defered writes are
+performed before the defered reads.
 
 ```
 var a = 1
 var x = 100
-defer_write x = a
+x::[defer] = a
 a = 200
 
 cassert x == 100
-defer_read assert x == 1
+assert x.[defer] == 1
 ```
 
 ## Testing (`test`)

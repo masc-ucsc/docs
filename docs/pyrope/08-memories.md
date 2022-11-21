@@ -204,7 +204,7 @@ mem.latency = (1, 1, 1)
 mem.wensize = 1 // we bit (no write mask)
 mem.rdport  = (-1,1,0) // 0 WR, !=0 -> RD
 
-res =# __memory(mem)
+res =#[..] __memory(mem)
 
 q0 = res.0
 q1 = res.1
@@ -230,7 +230,7 @@ memory attributes:
 * `posclk`: Positive edge clock memory. The default is `true` but it can be set to `false`.
 
 
-Multi cycle memories are pipelined elements, and using them requires the `=#` assignment
+Multi cycle memories are pipelined elements, and using them requires the `=#[..]` assignment
 and the same rules as pipeline flops apply (See [pipelining](06b-pipelining.md)).
 
 
@@ -275,11 +275,11 @@ with tuples or by requiring an enumerate.
 var x1:[2]u3 = (0,1)
 assert x1[0] == 0 and x1[1] == 1
 
-var X = :int:enum(  // sequential enum, not one hot enum (explicit type)
-  ,t1
+var X:enum = [  
+  ,t1 = 0 // sequential enum, not one hot enum (explicit assign)
   ,t2
   ,t3
-)
+]
 
 var x2:[X]u3 = _
 x2[X.t1] = 0

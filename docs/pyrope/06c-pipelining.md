@@ -18,16 +18,22 @@ not provide guarantees that the register will not be split into multiple
 registers.
 
 
-The explicit connection likely requires constructs like `defer_read` to connect
+The explicit connection likely requires constructs like `.[defer]` to connect
 the flop `q` pin.
 
 
 === "Structural flop style"
     ```
-    defer_read var counter_next:u8:[wrap] = counter_q + 1
+    var counter_next:u8:[wrap] = _
 
-    let counter_q = __flop(din=counter_next, reset=my_rst, clock=my_clk
-                       ,enable=my_enable, posclk=true, initial=3, async=false)
+    let counter_q = __flop(din=counter_next.[defer] // defer to get last update
+                       ,reset=my_rst, clock=my_clk
+                       ,enable=my_enable            // enable control
+                       ,posclk=true
+                       ,initial=3                   // reset value
+                       ,async=false)
+
+    counter_next = counter_q + 1
     ```
 
 === "Pyrope style"
@@ -354,15 +360,15 @@ the conceptual problems of integrating them:
     }
 
     let block = proc(in1,in2)->(out) {
-      let x =# mul3(in1, in2)
-      out   =# add1(x,in3)
+      let x =#[..] mul3(in1, in2)
+      out   =#[..] add1(x,in3)
     }
     ```
 
 In general, `#` is used when dealing with registers. The previous example use
 `procedures` (`proc ... {...}`) instead of `functions` (`fun ... {...}`) because functions
 only have combinational logic. When the procedures are called, the assigned
-variable needs the `=#`. This is to explicitly indicate to Pyrope that the
+variable needs the `=#[..]`. This is to explicitly indicate to Pyrope that the
 function called (`mul3`, `add1`) can have pipeline outputs. This helps the tool
 but more importantly the programmer because it helps to check assumptions about
 the function connections. The typical assignment `=` only connects
@@ -392,7 +398,7 @@ it is left up to the programmer to understand and check the potential pipeline
 stages inside `add1` and `mul3`. This lack of pipelining awareness in the
 language syntax is common in most HDLs.
 
-In Pyrope, the `=#` must be used when there is any path that starts from the
+In Pyrope, the `=#[..]` must be used when there is any path that starts from the
 inputs of the function passes through a pipeline stage to generate the
 assignment. If all the paths have exactly 1 flop in between, it is a 1 stage
 pipeline, if some paths have 2 flops and others 3, it is a 2 or 3 pipeline
@@ -400,7 +406,7 @@ stages. Sometimes, there are loops, and the tool has 1 to infinite pipeline
 stages.
 
 
-The default pipeline assignment `=#` just checks that it is possible to have
+The default pipeline assignment `=#[..]` just checks that it is possible to have
 pipeline stages between the module/function inputs and the assignment value. To
 restrict the check, it accepts a range. E.g: `=#[3]` means that there are
 exactly 3 flops or cycles between inputs and the assignment. `=#[0..<4]` means
@@ -408,12 +414,12 @@ that there are between 0 and 3 cycles, and open range could be used when there
 are loops (E.g: `=#[2..]`).
 
 ```
-let x = mul3(in1, in2)     // compile error: 'mul3' is pipelined
-let x =# mul3(in1, in2)    // OK
-out  =# add1(x,in3)        // OK (in3 has 0 cycles, x has 3 cycles)
-out  =#[1] add1(x,in3)     // compile error: 'x' is pipelined with '3' cycles
-out  =#[3] add1(x,in3)     // compile error: 'in3' is pipelined with '1' cycle
-out  =#[1..<4] add1(x,in3) // OK
+let x = mul3(in1, in2)      // compile error: 'mul3' is pipelined
+let x =#[..] mul3(in1, in2) // OK
+out  =#[..] add1(x,in3)     // OK (in3 has 0 cycles, x has 3 cycles)
+out  =#[1] add1(x,in3)      // compile error: 'x' is pipelined with '3' cycles
+out  =#[3] add1(x,in3)      // compile error: 'in3' is pipelined with '1' cycle
+out  =#[1..<4] add1(x,in3)  // OK
 ```
 
 
@@ -454,9 +460,9 @@ is error-prone because it requires knowing exactly the number of cycles for
 === "Explicitly added pipeline stages"
 
     ```
-    x =# mul3(in1, in2)
+    x =#[..] mul3(in1, in2)
     y = in1#[-3]
-    out =# add1(a=x,b=y)    // connect in1 from -3 cycles
+    out =#[..] add1(a=x,b=y)    // connect in1 from -3 cycles
     ```
 
 !!! Observation
@@ -486,7 +492,7 @@ let quick_log2 = fun(a) {
 
   var i = 1
   var v = 0
-  while i < a::[bits] {
+  while i < a.[bits] {
     v |= i
     i *= 2
   }
@@ -496,7 +502,7 @@ let quick_log2 = fun(a) {
 
 let div=proc(a,b,id)->(res,id) {
   loop #>free_div_units[4] {
-    ret (a >> quick_log2(b), id) when b@+[] == 1
+    ret (a >> quick_log2(b), id) when b@+[..] == 1
     #>[5] {
       res = (a/b, id)
     }
@@ -519,12 +525,12 @@ let add=proc(a,b,id)->(res,id) {
 
 let alu = proc(a,b,op, id)->(res,id) {
 
-  ::[total_free_units] = 1 + mul::[pending_counter] + div::[free_div_units]
-  ::[div_units] = div::[free_div_units]
+  self.[total_free_units] = 1 + mul.[pending_counter] + div.[free_div_units]
+  self.[div_units] = div.[free_div_units]
 
   match op {
     == OP.div {
-      assert div::[free_div_units]>0
+      assert div.[free_div_units]>0
       res,id = div(a,b,id)
     }
     == OP.mul { res,id = mul(a,b,id) }
@@ -535,7 +541,7 @@ let alu = proc(a,b,op, id)->(res,id) {
 
 test "alu too many div" {
 
- cassert alu::[total_free_units] == (1+3+4)
+ cassert alu.[total_free_units] == (1+3+4)
 
  let r1 = alu(13,3, OP.div, 1)
  assert alu.div_units==3
@@ -549,6 +555,6 @@ test "alu too many div" {
  assert !r1? and !r2? and !r3? and !r4? // still invalid
 
  let r5 = alu(13,4, OP.mul,5)
- cassert mul::[pending_counter] == 2
+ cassert mul.[pending_counter] == 2
 }
 ```

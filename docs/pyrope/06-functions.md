@@ -87,8 +87,8 @@ let fun3 = fun(){ 5 }    // public lambda that can be imported by other files
 let x = a_3()            // compile error, explicit call not posible in scope
 let x = a_fun()          // OK, explicit call needed when no arguments
 
-assert a_3 equals 3
-assert :a_fun equals :fun()
+assert a_3() equals 3
+assert a_fun equals _:fun()
 assert a_fun() equals 4
 assert a_fun() == 4      // calls to eval the function
 ```
@@ -158,7 +158,7 @@ assert f(33:u22,100:u22)
 my_log a, false, x+1
 ```
 
-## Arguments
+## Argument Naming
 
 Input arguments must be named. E.g: `fcall(a=2,b=3)` There are the following
 exceptions that avoid naming arguments:
@@ -240,7 +240,8 @@ assert f1(tup)      != 0  // compile error, f1 shadowing (tup.f1 and f1)
 assert 4.f1()       != 0  // compile error, f1 can be called for tup, so shadow
 assert tup.f1()     != 0  // compile error, f1 is shadowing
 
-assert (fun[tup] { tup.f1() })() // OK, function restricted scope for f1
+let xx = fun[tup] { tup.f1() } // OK, function restricted scope for f1
+assert xx()
 
 assert (4:tup).f1() == 1
 assert 4.f2()       == 3  // UFCS call
@@ -283,6 +284,14 @@ cassert intercepted.field == 0
 
 ## Pass by Reference
 
+Pyrope is an HDL, and as such, there are not memory allocation issues. This
+means that all the arguments are pass by value and the language has value
+semantics. In other words, there is not need to worry about ownership or
+move/forward semantics like in C++/Rust. All the arguments are always by value.
+Nevertheless, sometimes is useful to pass a reference to an array/register so
+that it can be updated/accessed on different lambdas.
+
+
 Pyrope arguments are by value, unless the `ref` keyword is used. Pass by
 reference is needed to avoid the copy by value of the function call. Unlike
 non-hardware languages, there is no performance overhead in passing by value.
@@ -296,8 +305,9 @@ caller lambda while still respecting the lambda scope. The `ref` keyword must
 be explicit in the lambda input definition but also in the lambda call. The
 lambda outputs can not have a `ref` modifier.
 
-No logical or arithmetic operation can be done with a `ref`. As a result, it
-is only useful for lambda arguments. 
+
+No logical or arithmetic operation can be done with a `ref`. As a result, it is
+only useful for lambda input arguments. 
 
 
 ```
@@ -369,28 +379,28 @@ attributes.
 
 ```
 let p1 = proc(a)->(res) {
-  ::[my_zero_found] = ::[my_zero_found] or a == 0
+  self.[my_zero_found] or= (a == 0)
 
-   res = a + 1
+  res = a + 1
 }
 
 let p2 = p1      // copy
 let p3 = ref p1  // reference
 
 test "testing p1" {
-  assert p1.::[my_zero_found] == false
-  assert p2.::[my_zero_found] == false
+  assert p1.[my_zero_found] == false
+  assert p2.[my_zero_found] == false
 
   cassert p1(3) == 4
-  assert p1.::[my_zero_found] == false
+  assert p1.[my_zero_found] == false
 
   cassert p1(0) == 1
   assert p1.my_zero_found == true
 
   cassert p1(50) == 51
-  assert p1.::[my_zero_found] == true
-  assert p2.::[my_zero_found] == false
-  assert p3.::[my_zero_found] == true
+  assert p1.[my_zero_found] == true
+  assert p2.[my_zero_found] == false
+  assert p3.[my_zero_found] == true
 }
 ```
 

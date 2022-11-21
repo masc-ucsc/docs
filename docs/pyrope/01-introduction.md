@@ -74,7 +74,7 @@ Populate the Pyrope code
     for a in 1..=100 {
       for b in 1..=100 {
         test "check.gcd({},{})",a,b {
-          let z =# gcd(a,b)
+          let z =#[..] gcd(a,b)
 
           waitfor z?
 

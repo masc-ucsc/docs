@@ -214,11 +214,11 @@ random number (`::[rand]`) generation.
 let x:u8 = _
 
 for i in 1..<100 {
-  cassert 0 <= x.::[crand]  <= 255
+  cassert 0 <= x.[crand]  <= 255
 }
 
 let get_rand_0_2556 = fun(a:u8) {
-  ret a.::[rand]
+  ret a.[rand]
 }
 ```
 
@@ -230,7 +230,7 @@ When applied to a tuple, it randomly picks an entry from the tuple.
 
 ```
 let a = (1,2,3,b=4)
-let x = a.::[rand]
+let x = a.[rand]
 
 cassert x==1 or x==2 or x==3 or x==4
 cassert x.b==4 when x==4

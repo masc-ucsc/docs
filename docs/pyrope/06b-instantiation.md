@@ -85,9 +85,9 @@ unique if cond1 {
 } // no res in else
 
 // RTL equivalent
-var sel = (!cond1 and !cond2, cond1, cond2)@[]  // one hot encode
+var sel = (!cond1 and !cond2, cond1, cond2)@[..]  // one hot encode
 var res2= __hotmux(sel, a, b, c)
-assume !(cond1 and cond2)                       // one hot check
+assume !(cond1 and cond2)                         // one hot check
 
 lec res, res2
 ```
@@ -109,7 +109,7 @@ match x {
 let cond1 = x == c1
 let cond2 = x == c2
 let cond3 = x == c3
-var sel = (cond1, cond2, !cond1 and !cond2)@[]  // one hot encode (no cond3)
+var sel = (cond1, cond2, !cond1 and !cond2)@[..]  // one hot encode (no cond3)
 var res2= __hotmux(sel, b, c, d)
 assume  ( cond1 and !cond2 and !cond3)
      or (!cond1 and  cond2 and !cond3)
@@ -224,7 +224,7 @@ the condition is false.
     let case_1_counter = proc(runtime)->(res) {
 
       let r = (
-        ,reg total:u16           // r is reg, everything is reg
+        ,reg total:u16 = _          // r is reg, everything is reg
         ,increase = fun(a) {
           puts "hello"
 
@@ -249,7 +249,7 @@ the condition is false.
     let case_1_counter = proc(runtime)->(res) {
 
       let r = (
-        ,reg total:u16
+        ,reg total:u16 = _
         ,increase = fun(a) {
           puts "hello"
 
@@ -592,14 +592,14 @@ if cond {
 }
 
 // RTL equivalent
-a_qpin = __flop(reset=ref reset, clk=ref clk, initial=3, din=a.__last_value)
+a_qpin = __flop(reset=ref reset, clk=ref clk, initial=3, din=a.[defer])
 tmp    = __sum(A=(a_qpin, 1))
 a      = __mux(tmp[4], tmp@[0..=3], 0xF)    // saturate, not wrap
 
-b_qpin = __flop(reset=ref reset, clk=ref clk, initial=4, din=b.__last_value)
+b_qpin = __flop(reset=ref reset, clk=ref clk, initial=4, din=b.[defer])
 b      = __mux(cond, b_qpin, 5)
 
-c_cond_qpin = __flop(reset=ref reset, clk=ref clk, initial=0, din=c_cond.__last_value)
+c_cond_qpin = __flop(reset=ref reset, clk=ref clk, initial=0, din=c_cond.[defer])
 c_cond      = __sum(A=(b, 1))
 ```
 

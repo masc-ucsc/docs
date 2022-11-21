@@ -592,12 +592,12 @@ Capture values must be explicit, or no capture happens. This means that
 ```
 var x = 3
 
-let f1 = fun[x]()->(:int){
+let f1 = fun[x]()->(_:int){
    assert x == 3
    var x = _    // compile error. Shadow captured x
    ret 200
 }
-let f2 = fun()->(:int){
+let f2 = fun()->(_:int){
    var x = _    // OK, no captures 'x' variable
    x = 100
    ret x
@@ -611,7 +611,7 @@ Capture variables pass the value at capture time:
 var x = 3
 var y = 10
 
-let fun2 = fun[y]()->(:int){
+let fun2 = fun[y]()->(_:int){
   y = 100              // compile error, y is immutable when captured
   var x  = 200
   ret y + x
@@ -808,22 +808,22 @@ assert v@[3..=4] == 0b010 == v@[3,4]
 assert v@[4..=3 by -1] == 0b010
 assert v@[4,3] == v@[3,4] == 0b010
 
-let tmp1 = (v@[4], v@[3])@[]  // typecast from 
-let tmp2 = (v@[3], v@[4])@[]
+let tmp1 = (v@[4], v@[3])@[..]  // typecast from 
+let tmp2 = (v@[3], v@[4])@[..]
 let tmp3 = v@[3,4]
 assert tmp1 == 0b01
 assert tmp2 == 0b100
 assert tmp3 == 0b10
 
-let tmp1s = (v@sext[4], v@sext[3])@[]  // typecast from 
-let tmp2s = (v@sext[3], v@sext[4])@[]
+let tmp1s = (v@sext[4], v@sext[3])@[..]  // typecast from 
+let tmp2s = (v@sext[3], v@sext[4])@[..]
 let tmp3s = v@[4,3]
 assert tmp1s == 0b01
 assert tmp2s == 0b10
 assert tmp3s == 0b10
 
-let tmp1ss = (v@sext[4], v@sext[3])@sext[]  // typecast from 
-let tmp2ss = (v@sext[3], v@sext[4])@sext[]
+let tmp1ss = (v@sext[4], v@sext[3])@sext[..]  // typecast from 
+let tmp2ss = (v@sext[3], v@sext[4])@sext[..]
 let tmp3ss = v@sext[3,4]
 assert tmp1ss == 0b01  ==  1
 assert tmp2ss == 0sb10 == -2

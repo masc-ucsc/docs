@@ -181,7 +181,7 @@ construction. `attr_get` and `attr_set` follow the same syntax as
     ```
 
 === "LNAST"
-    ```
+    ```lnast
     tup_get
       ref x
       ref tup
@@ -474,7 +474,7 @@ let d::[debug] = 3
 
 var a = d + 100
 
-cassert a.::[debug]  // debug is sticky
+cassert a.[debug]  // debug is sticky
 ```
 
 Once a variable gets assigned an attribute, the attribute stays with the
@@ -486,20 +486,20 @@ with arithmetic operations and/or bit selection.
 let foo::[attr1=2] = 3
 
 var foo2 = foo
-cassert foo2.::[attr1] == 2
+cassert foo2.[attr1] == 2
 
-let foo3 = foo@[]
-cassert foo3 !has ::[attr1]
+let foo3 = foo@[..]
+cassert foo3 !has _::[attr1]
 
 var xx = 4
 xx::[attr2=5] = 1
 
 let xx2 = xx
-cassert xx2.::[attr2] == 5
-cassert xx2 has ::[attr2]
+cassert xx2.[attr2] == 5
+cassert xx2 has _::[attr2]
 
 let xx3 = xx + 0
-cassert xx3 !has ::[attr2]
+cassert xx3 !has _::[attr2]
 ```
 
 
@@ -791,7 +791,7 @@ not
   ref ___0
 ```
 
-Logical shift right (`x = a@[] >> b`):
+Logical shift right (`x = a@[..] >> b`):
 ```lnast
 get_mask
   ref ___0
@@ -917,7 +917,7 @@ requires a tuple check.
 ```
 let tup=(1,2,3)
 let ran=1..<5
-let enu=::enum(a,b=(x,y),c)
+let enu:enum = [a,b=(x,y),c]
 
 cassert 2 in tup
 cassert 3 in ran
@@ -1091,7 +1091,7 @@ only `function` calls.
     ```
 
 === "C++17 equivalent"
-    ```
+    ```c++
     int total=3;
     if (int x=3; x<3) {
       total+=x;
@@ -1116,7 +1116,7 @@ that the condition is a one-hot encoding.
     ```
 
 === "LNAST"
-    ```
+    ```lnast
     stmts
       var
         ref x
@@ -1183,7 +1183,7 @@ the `elif` conditions.
     let tmp1 = a<3
     let tmp2 = a>40
     let tmp3 = 1<<(tmp1,tmp2)
-    assume tmp3@+[]<=1        // at most one bit set
+    assume tmp3@+[..]<=1        // at most one bit set
 
     if tmp1 {
       y = 10
@@ -1193,7 +1193,7 @@ the `elif` conditions.
     ```
 
 === "LNAST"
-    ```
+    ```lnast
     lt
       ref ___1
       ref z
@@ -1466,31 +1466,27 @@ is only `loop` construct.
 
 === "Pyrope loop"
     ```
-    loop var i=0 {
+    loop {
       i += 1
       break when i==3
     }
     ```
 
 === "LNAST"
-    ```
-    stmts
-      var
+    ```lnast
+    loop
+      add
         ref i
-        const 0
-      loop
-        add
-          ref i
-          ref i
-          const 1
-        eq
-          ref ___1
-          ref i
-          const 3
-        if
-          ref ___1
-          stmts
-            break
+        ref i
+        const 1
+      eq
+        ref ___1
+        ref i
+        const 3
+      if
+        ref ___1
+        stmts
+          break
     ```
 
 The `while` translates to a `loop` with a `break` statement.
@@ -1503,7 +1499,7 @@ The `while` translates to a `loop` with a `break` statement.
     ```
 
 === "LNAST"
-    ```
+    ```lnast
     stmts
       var
         ref i
@@ -1538,7 +1534,7 @@ The `for` construct is also a loop, but it can have element, index, and key in t
     }
     ```
 === "LNAST for"
-    ```
+    ```lnast
     attr_get
       ref ___tup_size
       ref tup
@@ -1592,7 +1588,7 @@ The `for` construct is also a loop, but it can have element, index, and key in t
               break
     ```
 === "LNAST ref for"
-    ```
+    ```lnast
     attr_get
       ref ___tup_size
       ref tup
