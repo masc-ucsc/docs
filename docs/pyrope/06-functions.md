@@ -163,11 +163,11 @@ my_log a, false, x+1
 Input arguments must be named. E.g: `fcall(a=2,b=3)` There are the following
 exceptions that avoid naming arguments:
 
-* If the argument is a single letter
-
 * If the type system can distinguish between unnamed arguments (no ambiguity)
 
-* The calling variable name has the same as an argument
+* If there is an argument/call match. The calling variable name has the same as an argument
+
+* If the argument is a single letter, and there is no argument/call match, the position is used
 
 * `self` does not need to be named (first argument position)
 
