@@ -206,23 +206,32 @@ f_d(call_dog)    // OK
 ```
 
 
-For fully named calls, when all the arguments have names, the argument position
-is not considered in the `does` check. In a way, the call arguments for
-`(a=1,b=2) does (b=2,a=1)` is true. This is consistent with the tuple check semantics. The
-difference happens when the lambda definition has a in-place operator (`...`).
-Only one in-place operator are allowed per lambda definition `(a,b,...x,c)`,
-the `does` operator uses name and position like in unnamed tuples even if all
-the fields are named. First, it matches the position and names provided, and
-then checks the rest to the in-place with the relative order left.
+In tuple comparisons, `does` and `==`, the tuple field position is not used
+when both tuples are fully named. If tuple field is unnamed, both existing
+names and positions should match in the comparison.  For fully named tuples,
+when all the fields have names,  `(a=1,b=2) does (b=2,a=1)` is true. 
+
+
+The same rule also applies to lambda calls. If all the arguments are named, the
+relative call argument position is independent. If an argument is an expression
+or unnamed, the position is important.
+
+
+A special case is the in-place operator (`...`) during lambda definition.  Even
+for fully named tuples, the position is used.  One one in-place operator is
+allowed per lambda definition `(a,b,...x,c)`, the `does` operator uses name and
+position like in unnamed tuples even if all the fields are named. First, it
+matches the position and names provided, and then checks the rest to the
+in-place with the relative order left.
 
 
 ```
-let m = fun(a:integer,...x:(_:string,c:int,d), y:integer)->() { 
+let m = fun(a:int,...x:(_:string,c:int,d), y:int)->() { 
   assert a == 1
   assert x.0 == "here"
   assert x.1 == 2 == x.c
   assert y == 3
-  if d does _:integer { // inferred type
+  if d does int { // inferred type
     assert d == 33
   }else{
     assert d == "x"
@@ -234,7 +243,7 @@ m(a=1,"here",2,"x",3)       // OK
 m(a=1,"here",c=2,"x",3)     // OK
 m(a=1,"here",c=2,33,y=3)    // OK
 
-m("1","here",2,33,3)       // compile error, a:integer
+m("1","here",2,33,3)       // compile error, a:int
 m("1","here",2,3)          // compile error, x has 3 fields
 ```
 

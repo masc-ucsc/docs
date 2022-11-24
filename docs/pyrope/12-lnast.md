@@ -1668,39 +1668,39 @@ code.
 
 ## Lambda call
 
-A lambda call arguments requires do not always require to be named when the
-variable used matches the calling argument. This means that the arguments tuple
-must be named for all the arguments unless an argument is an expression.
+A lambda call arguments requires do not always require to be named like when a
+variable used matches a calling argument. To support the matching while
+processing the LNAST, the arguments tuple must be named for all the arguments
+unless an argument is an expression.
 
 
 === "Pyrope"
-        ```
-        x = fcall(a,b=3,foo,1+2)
-        ```
-
+    ```
+    x = fcall(a,b=3,foo,1+2)
+    ```
 === "LNAST"
-        ```
-        add
-          ref ___t
-          const 1
-          const 2
+    ```lnast
+    add
+      ref ___t
+      const 1
+      const 2
 
-        tup_add
-          ref ___args
-          let
-            ref a
-            ref a
-          let
-            ref b
-            const 3
-          let
-            ref foo
-            ref foo
-          ref ___t
+    tup_add
+      ref ___args
+      let
+        ref a
+        ref a
+      let
+        ref b
+        const 3
+      let
+        ref foo
+        ref foo
+      ref ___t
 
-        fcall
-          ref x
-          ref fcall
-          ref ___args
-        ```
+    fcall
+      ref x
+      ref fcall
+      ref ___args
+    ```
 
