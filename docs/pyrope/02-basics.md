@@ -90,6 +90,20 @@ b = 'simpler here'
 * `\uNNNN`: hexadecimal 16-bit Unicode character UTF-8 encoded (4 digits)
 
 
+Pyrope allows string interpolation but only for variables, not expressions. The style
+is like C++ fmt::format which allows an identifier. When the identifier is provided
+the string is processed acordingly.
+
+```
+let num       = 2
+let color     = "blue"
+let extension = "s"
+
+let txt = "I have {num:d} {color} potato{extension}"
+cassert "I have 2 blue potatos"
+```
+
+
 Integers and strings can be converted back and forth:
 
 ```

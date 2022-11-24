@@ -1657,14 +1657,50 @@ All the string variables must be known at compile time, but it is still OK to
 pass strings as arguments to simulation functions that have no side-effects in
 the running sumulation like `puts` and `print`.
 
-`format` returns a string, so it must be solved at compile time. This means
-that the LNAST passes should have a `format` implementation to allow copy
-propagation to proceed.
+`format` uses C++ fmt::format syntax and returns a string, so it must be solved
+at compile time. This means that the LNAST passes should have a `format`
+implementation to allow copy propagation to proceed.
 
 The LNAST translation for all these instructions is just a normal function
 call. The `format` must be executed at compile time and propagate/copy as
 needed. The `puts`/`print` should generate simulation calls but not synthesis
 code.
+
+
+For string interpolation, a call for `__fmt_format` must be performed.
+
+=== "Pyrope"
+    ```
+    let num = 1
+    let color = "blue"
+    let extension = "s"
+
+    txt = "I have {num:d} {color} potato{extension}"
+    ```
+=== "LNAST"
+    ```lnast
+    let
+      ref num
+      const 1
+    let
+      ref color
+      const blue
+    let
+      ref extension
+      const s
+
+    tup_add
+      ref ___tmp
+      const "I have {0:d} {1} potato{2}"
+      ref num
+      ref color
+      ref extension
+
+    fcall
+      ref txt
+      ref __fmt_format
+      ref ___tmp
+    ```
 
 ## Lambda call
 
