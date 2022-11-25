@@ -1032,7 +1032,7 @@ computed as follows:
 * Each cycle the `valid` is set for non-register variables initialization[^clear].
 
 * Registers set the valid after reset, but if the reset clears the valid, there
-  is not guaranteed on `::[valid]` during reset.
+  is not guaranteed on attribute `[valid]` during reset.
 
 * Left-hand side variables `valids` are set to the and-gate of all the variable
   valids used in the expression
@@ -1040,14 +1040,14 @@ computed as follows:
 * Reading from a memory/array is always a valid contents. Even during reset.
 
 * Writing to a register updates the register valid based on the din valid, or
-  when the `::[valid]` is explicitly cleared.
+  when the attribute `[valid]` is explicitly cleared.
 
 * conditionals (`if`) update valids independently for each path
 
 * A tuple field has the valid set to false if any of the parent tuple fields is
   invalid
 
-* The valid computation can be overwritten with the `::[valid]` attribute. This
+* The valid computation can be overwritten with the `[valid]` attribute. This
   is possible even during reset.
 
 
@@ -1069,9 +1069,9 @@ the time, and the associated logic is removed.
 
 
 ```
-var v1:u32 = _                 // v1 is zero every cycle AND not $valid
+var v1:u32 = _                 // v1 is zero every cycle AND not valid
 assert v1.[valid] == false
-var v2:u32 = 0                 // v2 is zero every cycle AND     $valid
+var v2:u32 = 0                 // v2 is zero every cycle AND     valid
 assert v2.[valid] == true
 
 cassert v1?
@@ -1097,23 +1097,25 @@ reg counter:u32 = 0
 always_assert counter.reset implies !counter?
 ```
 
-`valid` can be overwritten with a method to change the default valid behavior:
+`valid` can be overwritten by the setter method:
 
 ```
 let custom = (
   ,data:i16 = _
-  ,valid = fun(self) {
-    ret self.data != 33
+  ,setter = proc(ref self, v) {
+    self.data = v
+    self.[valid] = v != 33
   }
 )
 
 var x:custom = _
 
-cassert x?       // compile time assert
+cassert x?
 x.data = 33
 cassert not x?
+x.data = 100
+cassert x?
 ```
-
 
 The contents of the tuple field do not affect the field valid bit. It is
 data-independent. Tuples also can have an optional type, which behaves like
@@ -1131,9 +1133,9 @@ let complex = (
 )
 
 var x1:complex = _
-var x2:complex:[valid = false] = 0  // toggle invalid forever, and set zero
+var x2:complex:[valid=false] = 0  // toggle valid, and set zero
 var x3:complex = 0
-x3.[valid] = false                // toggle invalid
+x3.[valid] = false                // set invalid
 
 assert x1.v1 == "" and x1.v2 == ""
 assert not x2? and not x2.v1? and not v2.v2?
