@@ -1028,7 +1028,7 @@ y = "ucsc"
 cassert y.v == "ucsc"
 ```
 
-### Array getter/setter
+### Array/Tuple getter/setter
 
 Array index also use the setter or getter methods.
 
@@ -1041,17 +1041,46 @@ var my_arr = (
   ,setter = proc(ref self, idx:u4, val:u8) {
      self.vector[idx] = val
   } ++ proc(ref self) {
-     // default
+     // default constructor declaration
   }
 )
 
 my_arr[3] = 300           // calls setter
+my_arr.3  = 300           // calls setter
 cassert my_add[3] == 300  // calls getter
+cassert my_add.3  == 300  // calls getter
 ```
 
 Unlike languages like C++, the setter is only called if there is a new value
 assigned. This means that the index must always be in the left-hand-side of an
 assignment.
+
+
+If the getter/setter uses a string argument, this also allows to access tuple fields.
+
+```
+let Point = (
+  ,_x:int = 0  // private
+  ,_y:int = 0  // private
+
+  ,setter = proc(ref self, x:int, y:int) {
+    self._x = x
+    self._y = y
+  }
+
+  ,getter = proc(self, idx:string) {
+    match idx {
+     == 'x' { self._x }
+     == 'y' { self._y }
+    }
+  }
+)
+
+let p:Point = (1,2)
+
+cassert p['x'] == 1 and p['y'] == 2
+cassert p.x == 1 and p.y == 2
+```
 
 ## Compare method
 

@@ -73,7 +73,7 @@ name all the fields or quote as strings:
 ```
 var x=100
 
-var tup1 = ('x',y=4) // 
+var tup1 = ('x',y=4)
 var tup2 = (x,y=4)
 
 cassert tup1[0] == 'x'

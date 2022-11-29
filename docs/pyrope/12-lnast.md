@@ -64,6 +64,47 @@ names that do not allow to use compact tuple representation like `foo here.field
       const 2
     ```
 
+The three LNAST nodes to set values in variables are `let`/`var`/`assign`. Each can have
+types and/or attributes.
+
+=== "Pyrope"
+    ```
+    let a:u2:[foo] = b:u1:[bar]
+
+    x:u2:[foo] = y:u1:[bar]
+    ```
+
+=== "LNAST"
+    ```lnast
+    set
+      ref a
+        prim_type_uint
+          const 2
+        attr_ref_set
+          const foo
+          const true
+      ref b
+        prim_type_uint
+          const 2
+        attr_check
+          const bar
+          const true
+
+    assign
+      ref x
+        prim_type_uint
+          const 2
+        attr_ref_set
+          const foo
+          const true
+      ref y
+        prim_type_uint
+          const 2
+        attr_check
+          const bar
+          const true
+    ```
+
 ## Tuples
 
 Tuples are "ordered" sequences that can be named. There are LNAST tuple
@@ -165,7 +206,6 @@ Direct access in operations like `plus` behave like a `tup_set` or `tup_get`.
       ref     a.2y
       ref     ___t2
     ```
-
 
 `tup_set` and `tup_get` can access through several levels in one command.
 `tup_add` does not allow recursive entrances, it requires intermediate tuple
@@ -316,145 +356,142 @@ Tuple concatenation does not use `plus` but the `tup_concat` operator.
 
 ## Attributes
 
-There are 3 main operations with attributes: set, get, check. The set/get have
-a corresponding LNAST node (`attr_set`, `attr_get`), the check uses `attr_get`
-and `cassert` calls. Later compiler passes decide what operation to perform in
-the attr depending on the attribute type.
+There are 3 main operations with attributes: set, get, check, but 4 types of
+LNAST nodes (`attr_get`/`attr_set` and `attr_ref_set`/`attr_ref_check`).
+`attr_get`/`attr_set` operate at the root level and have the same syntax as
+`tup_set`/`tup_get` but the last entry is an attribute name.
+`attr_ref_set`/`attr_ref_check` are sub-nodes of `ref`, as such they operate
+over the associated `ref` node destination.
+
+`attr_ref_check` only works comparing equal to a `const` or `ref`. More complex
+attribute comparisons needs `attr_get` and `casserts` to operate. 
 
 Attribute set are in left-hand-side of assignments which can also be in tuple entries.
 
 === "Pyrope"
     ```
     a::[f=3,b] = 1
-    x = (x::[y=7]=2, 4)
+    x = (y::[z=7]=2, 4)
     ```
 
 === "LNAST direct"
     ```lnast
     assign
       ref a
+        attr_ref_set
+          const f
+          const 3
+        attr_ref_set
+          const b
+          const true
       const 1
-    attr_set
-      ref a
-      const f
-      const 3
-    attr_set
-      ref a
-      const b
-      const true
 
     tup_add
       ref ___1
       var
-        ref x
+        ref y
+          attr_ref_set
+            const z
+            const 7
         const 2
       const 4
-
-    attr_set
-      ref ___1
-      const x
-      const y
-      const 7
 
     assign
       ref x
       ref ___1
     ```
 
-=== "LNAST optimized"
-    ```lnast
-    assign
-      ref a
-      const 1
-    attr_set
-      ref a
-      const f
-      const 3
-    attr_set
-      ref a
-      const b      // attribute field can not join first ref
-      const true
-
-    tup_add
-      ref x
-      var
-        ref x
-        const 2
-      const 4
-
-    attr_set
-      ref x.x
-      const y
-      const 7
-    ```
-
-Attribute get are always right-hand-side
+Attribute checks are always right-hand-side. The constraint in all the cases is
+that an attribute name can be check against an expression but only 3 basic
+comparisons are valid (`[attr==(expr)` or `[attr]` or `[!attr]`). The
+expression can not use other attribute fields. If complex relationships must be
+checked between attributes a `cassert` must be used.
 
 === "Pyrope"
     ```
-    let x = a::[f==3,b] + 1
-    var x = (let z=x::[y], 4::[foo])
+    var x = (let z=x::[!y], 4::[foo])
+    let y = a::[f==3,b] + 1
     ```
 
-=== "LNAST"
+=== "LNAST option 1"
     ```lnast
-    plus
-      ref ___1
-      ref a
-      const 1
-
-    attr_get
-      ref ___2
-      ref a
-      const f
-
-    equal
-      ref ___3
-      ref ___2
-      const 3
-
-    fcall
-      ref ___emtpy0
-      ref cassert
-      ref ___3
-
-    attr_get
-      ref ___33
-      ref a
-      const b
-
-    fcall
-      ref ___emtpy1
-      ref cassert
-      ref ___33
+    assign
+      ref ___tmp
+      const 4
 
     tup_add
       ref ___4
       let
         ref z
         ref x
+          attr_ref_check
+            const y
+            const false
+      ref ___tmp
+        attr_ref_check
+          const foo
+          const true
+    var
+      ref x
+      ref ___4
+
+    plus
+      ref ___1
+      ref a
+        attr_ref_check
+          const f
+          const 3
+        attr_ref_check
+          const b
+          const true
+      const 1
+    let
+      ref y
+      ref ___1
+    ```
+
+=== "LNAST option 2"
+    ```lnast
+    tup_add
+      ref ___4
+      let
+        ref z
+        ref x
+          attr_ref_check
+            const y
+            const false
       const 4
 
     attr_get
-      ref ___44
-      ref x
-      const y
-
-    fcall
-      ref ___emtpy2
-      ref cassert
-      ref ___44
-
-    attr_get
-      ref ___55
+      ref ___no_attr_const_check
       const 4
       const foo
 
     fcall
-      ref ___emtpy2
+      ref ___0
       ref cassert
-      ref ___55
+      ref ___no_attr_const_check
+
+    var
+      ref x
+      ref ___4
+
+    plus
+      ref ___1
+      ref a
+        attr_ref_check
+          const f
+          const 3
+        attr_ref_check
+          const b
+          const true
+      const 1
+    let
+      ref y
+      ref ___1
+
     ```
+
 
 ### Sticky Attributes
 
@@ -464,18 +501,48 @@ the attribute to the left-hand-side expression. Non-sticky attributes
 do not affect or propagate.
 
 
-Attributes are not sticky by default, but some like `::[debug]` is a sticky
+Attributes are not sticky by default, but some like `.[debug]` is a sticky
 attribute. This means that if any of the elements in any operation has a debug
-attribute, the result also has a `::[debug]` attribute. There is no way to
+attribute, the result also has a `.[debug]` attribute. There is no way to
 remove these attributes.
 
-```
-let d::[debug] = 3
+=== "Pyrope"
+    ```
+    let d::[debug] = 3
 
-var a = d + 100
+    var a = d + 100
 
-cassert a.[debug]  // debug is sticky
-```
+    cassert a.[debug]  // debug is sticky
+    ```
+
+=== "LNAST"
+    ```lnast
+    let
+      ref d
+        attr_ref_set
+          const debug
+          const true
+      const 3
+
+    plus
+      ___tmp
+      ref d
+      const 100
+
+    var
+      ref a
+      ref ___tmp
+
+    attr_get
+      ref ___get
+      ref a
+      const debug
+
+    fcall
+      ___unused
+      ref cassert
+      ref ___get
+    ```
 
 Once a variable gets assigned an attribute, the attribute stays with the
 variable and any variables that got a direct copy. The only way to remove it is
