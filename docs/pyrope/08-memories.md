@@ -131,7 +131,7 @@ triggered.
     )
     ```
 
-## Sync Memories
+## Sync memories
 
 Pyrope asynchronous memories provide the result of the read address and update
 their contents on the same cycle. This means that traditional SRAM arrays can
@@ -211,23 +211,7 @@ q1 = res.1
 
 ```
 
-The previous code directly instantiates a memory and passes the configuration. The
-memory attributes:
-
-* `addr`: Address ports for the memory. In the example port 0 is `raddr0`, and port 2 is `wraddr`
-* `bits`: The number of bits for each memory entry
-* `size`: The number of entries. Total size in bits is $size x bits$.
-* `clock`: Optional clock pin, `clock` by default. A bundle is possible to specify the clock for each address port.
-* `din`: Data in port. The read ports must be hardwired to a constant like `0`.
-* `enable`: Enable bundle for each memory port
-* `fwd`: Forwarding guaranteed (true/false). If fwd is false, there is no guarantee, it can have fwd or not.
-* `latency`: Number of cycles (`0` or `1`) when the read is performed
-* `wensize`: Write enable size allows to have a write mask. The default value
-  is 1, a wensize of 2 means that there are 2 bits in the `enable` for each
-  port. a wensize 2 with 2 ports has a total of 2+2+2 enable bits. Bit 0 of the
-  enable controls the lower bits of the memory entry selected.
-* `rdport`: Indicates which of the ports are read and which are written ports.
-* `posclk`: Positive edge clock memory. The default is `true` but it can be set to `false`.
+The previous code directly instantiates a memory and passes the configuration. 
 
 
 Multi cycle memories are pipelined elements, and using them requires the `=#[..]` assignment
@@ -275,11 +259,11 @@ with tuples or by requiring an enumerate.
 var x1:[2]u3 = (0,1)
 assert x1[0] == 0 and x1[1] == 1
 
-var X:enum = [  
+var X=enum(
   ,t1 = 0 // sequential enum, not one hot enum (explicit assign)
   ,t2
   ,t3
-]
+)
 
 var x2:[X]u3 = _
 x2[X.t1] = 0
@@ -294,7 +278,7 @@ assert x4[100] == 0
 assert x4[3]       // compile error, out of bounds index
 ```
 
-### Reset and Initialization
+### Reset and initialization
 
 Like the `let` and `var` statements, `reg` statements require an initialization
 value. While `let/var` initialize every cycle, the `reg` initialization is the

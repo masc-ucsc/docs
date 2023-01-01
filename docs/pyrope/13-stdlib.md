@@ -25,7 +25,7 @@ let plus = fun(...a:int)->(_:int) {
 
 ## Array/Tuple operators
 
-### Size of Length
+### Size of length
 
 Sample use:
 ```

@@ -23,10 +23,11 @@ In all the cases, variable declaration is either:
 * `let variable [:type] = expression`
 * `var variable [:type] = expression`
 
-In a tuple scope, `variable [:type] = expression` is equivalent to `var variable
-[:type] = expression` because tuples do not have variable updates, and
-therefore there is no need to distinguish between `variable[:type] = expr` (mutate
-update) and `var variable[:type] = expr` (declaration).
+In a tuple scope, `variable [:type] = expression` is equivalent to `var
+variable [:type] = expression`. This is to avoid the most common case
+where tuple fields are frequently declared `var` not `let`. This is
+different from lambda captures that declare a new variable but they are
+always immutable (`let`).
 
 
 === "Code Block scope"
@@ -53,12 +54,11 @@ update) and `var variable[:type] = expr` (declaration).
     var x = 10
     let f1 = fun[a,x=a+1]() {
       assert a == 3
-      a = 33             // compile error, upper scope is immutable
+      a = 33             // compile error, capture/inputs are immutable
       x = 300            // compile error, capture/inputs are immutable
       let b = 4
       let a = 3333       // compile error, variable shadowing
       var a = 33         // compile error, variable shadowing
-      assert a == 3333
     }
     f1()
     assert x == 10
@@ -79,7 +79,7 @@ update) and `var variable[:type] = expr` (declaration).
     var a = 3
     let r1 = (
       ,a = a+1           // same as var a = a+1
-      ,c = {assert a == 3; assert self.a==4; 50}
+      ,c = {assert a == 3 and self.a==4; 50}
     )
     r1.a = 33            // compile error, 'r1' is immutable variable
 
@@ -498,7 +498,7 @@ can be checked during simulation/verification.
 There are 3 main classes of a attributes that all the Pyrope compilers should
 always implement: Bitwidth, comptime, debug.
 
-### Variable Attribute list
+### Variable attribute list
 
 In the future, the compiler may implement some of the following attributes, as
 such, these attribute names are reserved and not allowed for custom attribute
@@ -531,12 +531,54 @@ passes:
 * `valid`, `retry`: for elastic pipelines
 * `warn`: is a boolean what when set to false disables compile warnings for associated variable
 
-Registers and other objects may have additional attributes.
+### Registers and pipestage attribute list
 
+Registers have the following attributes:
 
-### Bitwidth attribute
+* `async`: false by default, selects an asynchronous reset
+* `initial`: reset value when reset is high
+* `clock`: connected to `clock` by default
+* `reset`: connected to `reset` by default
+* `negreset`: active low reset signal
+* `posclk`: true by default, selects a posedge or negnedge flop
+* `retime`: allow to retime across the register
 
-To set constrains on integer, boolean, range, and struct basic types, the compiler has a set
+Pipestage accept the same register attributes but also two more:
+
+* `lat`: latency for the pipestage
+* `num`: Number of unitsi used when the pipestage is not fully pipelined.
+
+### Memories attribute list
+
+Memories are arrays with persistence like registers. As such, some of the attributes
+are similar to registers, but unlike registers they can have multiple clocks.
+
+* `addr`: Tuple of address ports for the memory.
+* `bits`: The number of bits for each memory entry
+* `size`: The number of entries. Total size in bits is $size x bits$.
+* `clock`: Optional clock pin, `clock` by default. A tuple is possible to specify the clock for each address port.
+* `din`: Tuple for memory data in port. The read ports must be hardwired to `0`.
+* `enable`: Tuple for each memory port. Write or read enable (read ports can have enable too).
+* `fwd`: Forwarding guaranteed (true/false). If fwd is false, there is no guarantee, it can have fwd or not.
+* `latency`: Number of cycles (`0` or `1`) when the read is performed
+* `wensize`: Write enable size allows to have a write mask. The default value
+  is 1, a wensize of 2 means that there are 2 bits in the `enable` for each
+  port. a wensize 2 with 2 ports has a total of 2+2+2 enable bits. Bit 0 of the
+  enable controls the lower bits of the memory entry selected.
+* `rdport`: Indicates which of the ports are read and which are written ports.
+* `posclk`: Positive edge clock memory for all the memory clocks. The default is `true` but it can be set to `false`.
+
+### Lambda attribute list
+
+Lambda attributes allow [Introspection](07-typesystem.md#Introspection) which requires some attributes.
+
+* `inputs`: returns the input tuple from the lambda
+* `outputs`: returns the input tuple from the lambda
+* `where`: returns the lambda used in the `where` clause
+
+### Bitwidth attribute list
+
+To set constrains on integer, boolean, and range basic types, the compiler has a set
 of bitwidth related attributes:
 
 
@@ -695,7 +737,7 @@ All the operators work over signed integers.
 * `~a` bitwise negation
 * `-a` arithmetic negation
 
-### Binary Integer operators
+### Binary integer operators
 
 * `a + b` addition
 * `a - b` substraction
@@ -721,7 +763,7 @@ cassert 1<<(1,4,3) == 0b01_1010
 ```
 
 
-### Binary Boolean operators
+### Binary boolean operators
 
 * `a and b` logical and
 * `a or b` logical or
@@ -1155,7 +1197,7 @@ assert x2? and x2?.v1 == "world" and x2.v1 == "world"
 ```
 
 
-## Variable Initialization
+## Variable initialization
 
 
 Variable initialization indicates the default value set every cycle and the

@@ -493,7 +493,7 @@ checked between attributes a `cassert` must be used.
     ```
 
 
-### Sticky Attributes
+### Sticky attributes
 
 
 Attributes can be sticky or not. A sticky attribute "polutes" or keeps
@@ -570,7 +570,7 @@ cassert xx3 !has _::[attr2]
 ```
 
 
-## Bit Selection
+## Bit selection
 
 
 Pyrope has several bit selection operations. The default maps `get_mask` and
@@ -785,7 +785,7 @@ is the root LNAST node, and rest follow a tree syntax with strings.
       const 5
     ```
 
-## Basic Operators
+## Basic operators
 
 Basic operators are binary or unary operators in Pyrope that have a one-to-one
 translation to LNAST nodes.
@@ -796,7 +796,7 @@ translation to LNAST nodes.
 * `~a` translates to `not`
 * `-a` translates to `minus(0,a)`
 
-### Binary Integer
+### Binary integer
 
 * `a + b` translates to `plus`
 * `a - b` translates to `minus`
@@ -812,18 +812,18 @@ translation to LNAST nodes.
 There is a `mod` LNAST operator that performs module operations. It does not
 have a direct Pyrope syntax, but it can be called directly `__mod(a,b)`.
 
-### Binary Boolean
+### Binary boolean
 
 * `a and b` translated to `land`
 * `a or b` translates to `lor`
 
 
-## Complex Operators
+## Complex operators
 
 Complex operators are binary operators in Pyrope that require more than one
 LNAST statement.
 
-### Binary Integer
+### Binary integer
 
 Binary nand (`x=a ~& b`):
 ```lnast
@@ -984,7 +984,7 @@ requires a tuple check.
 ```
 let tup=(1,2,3)
 let ran=1..<5
-let enu:enum = [a,b=(x,y),c]
+let enu = enum(a,b=(x,y),c)
 
 cassert 2 in tup
 cassert 3 in ran

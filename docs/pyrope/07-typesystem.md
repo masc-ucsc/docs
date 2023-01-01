@@ -123,7 +123,13 @@ let Bt=(
 )
 
 var a:At=40
+var a2 = At(40)
+cassert a == a2
+
 var b:Bt="hello"
+var b2 = Bt("hello")
+cassert b == b2
+
 puts "a:{} or {}", a, at // a:40 or 33
 puts "b:{}", b           // b:(c="hello",d=100)
 ```
@@ -293,7 +299,7 @@ let Rgb = (
   ,setter = proc(ref self, c) { self.c = c }
 )
 
-let Color:enum = (
+let Color = enum(
   ,Yellow:Rgb = 0xffff00
   ,Red:Rgb    = 0xff0000
   ,Green      = Rgb(0x00ff00) // alternative 
@@ -313,7 +319,7 @@ type, where the enumerate has to be either of the enum entries where each is
 associated to a type.
 
 ```
-let ADT:enum = (
+let ADT=enum(
   ,Person:(eats:string) = _
   ,Robot:(charges_with:string) = _
 )
@@ -463,36 +469,39 @@ remove the extra unnecessary bit when it is guaranteed to be zero. This
 effectively "packs" the encoding.
 
 
-## union/variant
+## Variants
 
-Union/variant share syntax with enums with types declaration, but the usage and
+
+Pyrope supports variants but not unions. The difference between `union` and
+`variant` is that union can be used for a typecast to convert between values,
+the variant is the same but it does not allow bit convertion. It tracks the
+type from the assignment, and an error is generated if the incorrect type is
+accesed. Pyrope requires explicit type conversion with bitwise operations.
+
+
+Variant shares syntax with enums with types declaration, but the usage and
 functionality is quite different. Enums do not allow to update values and
-unions/variant are tuples with multiple labels sharing a single storage
-location. The difference between `union` and `variant` is that union can be
-used for a typecast to convert between values, the variant is the same but it
-does not allow bit convertion. It tracks the type from the assignment, and an
-error is generated if the incorrect type is accesed.
+variants are tuples with multiple labels sharing a single storage location. 
+
+
+The main advantage of variant is to save space. This means that the most
+typical use is in combination with registers or memories, when alternative
+types can be stored across cycles.
 
 
 ```
-let e_type:enum  = (str:String = "hello",num=22)
-let u_type:union = [str:String, num:int]         // No default value in union
+let e_type=enum(str:String = "hello",num=22)
+let v_type=variant(str:String, num:int)       // No default value in variant
 
-var uu:u_type = (str="hello2")
-assert uu.str == "hello2"
-assert uu.num == 0x32_6f_6c_6c_65_68 // ASCII for 2 e l l o h
-
-uu.num = 0x65
-assert uu.str == "o"
-assert uu.num == 0x65
-var ee:e_type = e_type.str
+var vv:v_type = (num=0x65)
+cassert vv.num == 0x64
+let xx = vv.str             // compile or simulation error
 ```
-
 
 As a reference, `enums` allow to compare for field but not update enum entries.
 
 ```
-ee = u_type.String          // OK
+var ee = e_type
 ee.str = "new_string"       // compile error, enum is immutable
 
 match ee {
@@ -501,35 +510,6 @@ match ee {
 }
 ```
 
-A key property of unions is that it respects the integer bit size in
-declaration. Pyrope optimizes the bitwidth, but it respects the union sizes to
-allow conversion between fields.
-
-```
-let Conv_t:union = [
-  ,f1:u6
-  ,a=[msb:u1, mid:u4, lsb:s1]
-]
-
-var b:Conv_t = (f1=0b1_0010_1)
-cassert b.a.msb == 1
-cassert b.a.mid == 2
-cassert b.a.lsb == -1
-
-b.a.mid = 7
-cassert b.f1 == 0b1_0111_1
-```
-
-Since `union` needs to convert between types and know the sizes, all the fields
-should have a known size at declaration. Type inference does not work in unions
-which after all can not have default values.
-
-
-One important property of the union is that it respects the number of bits
-using max/min as in bitwidth. This means that if a field has an unsigned like
-`u7`, it expects to be packed to just 7 bits as unsigned, not the 8 bits signed
-with the most significant bit set to zero. The numbers will operate as signed
-but the conversion uses the packed representation.
 
 ## Typecasting
 
@@ -566,9 +546,9 @@ var d:dt = a   // OK, call intitial to type cast
 * To integer: `variable@[..]` for string, range, and bool, union otherwise.
 * `union` allows to convert across types by specifying the size explicitly.
 
-## Instrospection
+## Introspection
 
-Instrospection is possible for tuples.
+Introspection is possible for tuples.
 
 ```
 a = (b=1,c:u32=2)
@@ -595,8 +575,8 @@ at declaration.
 
 ```
 let fu = fun(a,b=2) -> (c) where a>10 { c = a + b }
-assert fu.[inp] equals (a,b)
-assert fu.[out] equals (c)
+assert fu.[inp] equals ('a','b')
+assert fu.[out] equals ('c')
 assert fu.[where](a=200) and !fu.[where](a=1)
 ```
 

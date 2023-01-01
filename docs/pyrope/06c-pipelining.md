@@ -76,27 +76,35 @@ var my_latch_q = __latch(din=my_din, enable=my_enable, posclk=true)
 ## Pipestage
 
 
-Pyrope has a `pipestage` statement (`#>identifier[cycles]`) that helps to
-create simple pipeline stages. The `identifier` and `[cycles]` are optional,
-but with present the identifier is a local procedure attribute to indicate how
-many free slots are available. The total number of slots or pipeline stages is
-indicated by `cycles`.
+Pyrope has a `pipestage` statement (`#>identifier[fsm_configuration]`) that
+helps to create simple pipeline stages. The `identifier[fsm_configuration]` is
+optional and the default meaning is a fully pipelined 1 pipeline stage depth.
+It is the same as saying `_[lat=1]`. The identifier can be accessed as an
+attribute to count the pipestage utilization.
 
-```pseudoprp
+The fsm configuration can have `lat` (number of pipeline stages or latency) or
+`num` (number of units). The number of units is only needed when the code is
+not fully pipelined in combination with loop constructs like `while`, `for`,
+and `loop`.
+
+The `num` sets the number of units. The hardware will not back pressure, but an
+assertion will fail during simulation if the number of units is overflowed.
+`num` only makes sense when the latency (`lat`) is more than 1.
+
+
+```
 // variables/register before
 
 {
   // stage 0 scope
 } #> {               // no identifier, 1 stage by default
   // stage 1 scope
-} #>[2] {            // no identifier, 2 stages
+} #>foo[2] {            // no identifier, 2 stages
   // stage 2-3 scope
-} #>free_stage {     // 'free_stage' identifier, 1 stages
+} #>bar[1] {     // 'free_stage' identifier, 1 stages
   // stage 4 scope
-} #>free2[1] {       // 'free2' identifier, 1 stages
+} #> {
   // stage 5 scope
-} ... {
-  // stage n scope
 }
 
 // variables/register after pipestage
@@ -182,7 +190,7 @@ let bad_code = proc(my_clk, inp)->(o1,o2) {
   {
     o1 = 1
     o2 = inp + 1  // o2? iff bad_code called this cycle and inp? is valid
-  } #>[1,clock=my_clk] {
+  } #>my_pipe[lat=1,clock=my_clk] {
     o1 = 2        // compile error, o1 driven simultaneous from multiple stages
     o2 = inp + 2  // may be OK if inp is not valid every cycle
   }
@@ -211,7 +219,7 @@ The identifier becomes a procedure attribute.
     ```
     let mul3=proc(a,b)->res {
       let tmp = a*b
-      #>[3] {
+      #>full_case[lat=3,num=3] { // Same as full_case[lat=3]
         res = tmp
       }
     }
@@ -223,7 +231,7 @@ The identifier becomes a procedure attribute.
       let result  = 0
       let rest    = a
 
-      while rest >= b #>[4]{
+      while rest >= b #>_[lat=1,num=4] {  // lat=1 is latency per iteration
         rest = rest - b
         result += 1
       }
@@ -240,7 +248,7 @@ The identifier becomes a procedure attribute.
 === "Slow 1 Stage (alt syntax)"
     ```
     let mul1=proc(a,b)->(res) {
-      #>[1] {
+      #>full_case_again[lat=1] { 
         res = a*b
       }
     }
@@ -335,7 +343,7 @@ the conceptual problems of integrating them:
     let block = proc(in1,in2)->(out) {
       {
         let tmp = in1 * in2
-      } #>[3] {
+      } #>some_id[lat=3] {
         out = tmp + in1#[0]
       }
     }
@@ -452,7 +460,7 @@ is error-prone because it requires knowing exactly the number of cycles for
     ```
     {
       let tmp = in1 * in2
-    } #>[3] {
+    } #>fully_pipe[lat=3] {
       out = tmp + in1
     }
     ```
@@ -503,21 +511,21 @@ let quick_log2 = fun(a) {
 let div=proc(a,b,id)->(res,id) {
   loop #>free_div_units[4] {
     ret (a >> quick_log2(b), id) when b@+[..] == 1
-    #>[5] {
+    #>my_fsm[lat=5,num=1] {
       res = (a/b, id)
     }
   }
 }
 
 let mul=proc(a,b,id)->(res, id) {
-  #>pending_counter[3] {
+  #>pending_counter[lat=3,num=2] {
     res = a*b
     id  = id
   }
 }
 
 let add=proc(a,b,id)->(res,id) {
-  #>[1] {
+  #>add_counter[lat=1] {         // Fully pipeline, num not specified
     res = a+b
     id  = id
   }
@@ -525,7 +533,11 @@ let add=proc(a,b,id)->(res,id) {
 
 let alu = proc(a,b,op, id)->(res,id) {
 
-  self.[total_free_units] = 1 + mul.[pending_counter] + div.[free_div_units]
+  self.[total_free_units] = 1 
+     + mul.[pending_counter] 
+     + div.[free_div_units]
+     + add.[add_counter]
+
   self.[div_units] = div.[free_div_units]
 
   match op {
@@ -536,7 +548,6 @@ let alu = proc(a,b,op, id)->(res,id) {
     == OP.mul { res,id = mul(a,b,id) }
     == OP.add { res,id = add(a,b,id) }
   }
-
 }
 
 test "alu too many div" {

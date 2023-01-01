@@ -292,7 +292,7 @@ order of evaluation. Only `and_then`, `or_else` or complex constructs like
 `if/else`, `match`, `for` have evaluation order.
 
 
-## Setup vs Reset vs Execution
+## Setup vs reset vs execution
 
 In a normal programming language, the Von Neumann PC specifies clear semantics
 on when the code is executed. The language could also have a macro or template
@@ -442,16 +442,6 @@ cycle Similarly a tuple can have a reset when assigned to a register.
       x.state = 2
     }
     ```
-
-Registers have the following attributes:
-
-* `async`: false by default, selects an asynchronous reset
-* `initial`: reset value when reset is high
-* `clock`: connected to `clock` by default
-* `reset`: connected to `reset` by default
-* `negreset`: active low reset signal
-* `posclk`: true by default, selects a posedge or negnedge flop
-* `retime`: allow to retime across the register
 
 A sample of asynchronous reset with different reset and clock signal
 

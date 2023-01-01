@@ -15,7 +15,7 @@ nests of 'if' and 'for' loops. This results in a difficult code to get right.
 The plan is to add something like this feature in the future, once a cleaner implementation is designed.
 
 
-## Fluid Pipelines
+## Fluid pipelines
 
 The plan is to re-add the fluid pipelines syntax, but all the other features must be added first.
 
@@ -135,7 +135,7 @@ satisfied.
  puts "{}-{}+1 is {}", a, b, res1.res
 ```
 
-An alternative implementation is using the `#>[cycles]` keyword. The disadvantage is
+An alternative implementation is using the `#>identifier[lat=cycles]` keyword. The disadvantage is
 that two operations could finish on the same cycle, and the circuits are not as
 efficient.
 
@@ -145,7 +145,7 @@ let telescope_unit3 = fun(a:u32,b:u32) -> (_:u32) {
 
   {
     let tmp = a+1
-  } #>[1] {
+  } #>one_pipe[lat=1] {
     if b == 0 {
       ret tmp
     }

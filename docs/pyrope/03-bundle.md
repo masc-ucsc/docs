@@ -80,20 +80,24 @@ cassert tup1[0] == 'x'
 cassert tup2[0] == 100
 ```
 
-To require named tuples and avoiding the string quotes, a `[ ]` can be used instead:
+Some constructs like enumerates and attributes typically pass identifiers
+without assigning a value. The problem is that the syntax becomes not so
+"nice".  To address these cases, Pyrope does not use a variable reference but a
+"string" in the enumerate (`enum(a,b=3)`) and attribute (`foo::[attr]`,
+`foo.[attr]`). In these constructs, a reference can be enforced with `...var`
 
 ```
-var x=100
+let aa = 3
+let a = enum(aa,b=3)
+cassert a==b
 
-var tup1 = ('x', y=4)
-var tup3 = [x,y=4]
-cassert tup1 == tup3
+cassert x.[size] == x.['size']
+
+let zz= "size"
+cassert x.[...zz] == x.[size]
 ```
 
-The squared tuple is very convenient when declaring enumerates or attributes.
-
-
-## Everything is a Tuple
+## Everything is a tuple
 
 In Pyrope everything is a Tuple, and it has some implications that this
 section tries to clarify.
@@ -242,7 +246,7 @@ assert x.0            == 3
 ```
 
 
-## Tuples vs Arrays
+## Tuples vs arrays
 
 Tuples are ordered, as such, it is possible to use them as arrays. 
 
@@ -377,64 +381,39 @@ cassert x == true
 cassert b == 4 
 ```
 
-## Enumerate (`:enum`)
+## Enumerate (`enum`)
 
 Enumerates, or enums for short, use the familiar tuple structure, but there is
 a significant difference in initialization. Enums require named tuples, but in
 most cases the named tupled should not have a set value. Enums automatically
 assigns values, tuples need explicit value initialization.
 
-
-Tuples have two main forms `(value, field=value)` and `[field, field=value]`.
-The `[]` does not look for the current variable scope contents when setting
-`field`. This means that they must be used for enumeration declaration. `()`
-tuples require a default value must be provided for each entry
-
-
-The following case generates an enum compile error because the enum entries
-shadow existing variable entries.
-
 ```
-let a = "foo"
-let test1:enum = [a  ,b  ,c]    // OK
-let test2:enum = (a=_,'b','c')  // OK, but conversome (not recommended)
-let Err  :enum = (a,b,c)        // compile error, enum require named fields
+let b = "foo"
+let c = 1
+let test1     = enum(a=c,b)    // OK
+let something = (b)            // OK
+cassert something == "foo"
+cassert test1.a != test1.b
+cassert test1.a==1 and test1.b==2
 ```
 
-The reason is to avoid confusion between tuple and enum that use similar tuple
-syntax. In the `Err` example, it is unclear if the intention is to have
-`Err.foo` or `Err.a`.
+The `enum` keyword does not reference scope variables unless the reference is
+on the right-hand-side.
 
 
 If an external variable wants to be used as a field, there has to be an explicit
-expression that returns a string type.
+expression with a string type or a named tuple.
 
 ```
 let a = "field"
-let My_non_enum = ("x" ++ a, 'bar')
-cassert My_non_enum[0] == "xfield"  and My_non_enum[1] == 'bar'
+let c = (foo=4)
+let my_other_enum = enum(...a,b=3,...c)
+cassert my_other_enum.field != my_other_enum.b
+cassert my_other_enum.b   == 3
+cassert my_other_enum.foo == 4
+cassert my_other_enum.foo != my_other_enum.b
 ```
-
-
-The shadow variable constrain does not happen if the enum has a non-default
-value. Another solution is to move the enum declaration ahead of the shadowing
-variables, or to declare the entry as a string literal.
-
-```
-let a = 10
-let b = 20
-let c = 30
-
-let v = (a,b,c)
-assert v == (10,20,30)
-
-let En:enum = (a=1,b=2,c=300)
-assert e.a == 1 and e.b == 2 and e.c == 300
-
-let x = e.a
-puts "x is {}", x  // prints: "x is e.a"
-```
-
 
 The enum default values are NOT like typical non-hardware languages. The enum
 auto-created values use a one-hot encoding. The first entry has the first bit
@@ -444,36 +423,36 @@ traditional enumerate sequence.
 
 
 ```
-let V3:enum = [
+let V3 = enum(
    ,a
    ,b
    ,c
-]
+)
 cassert V3.a == 1
 cassert V3.b == 2
 cassert V3.c == 4
 
-let V4:enum = [
+let V4 = enum(
    ,a
    ,b=5
    ,c
-]
+)
 cassert V4.a == 0
 cassert V4.b == 5
 cassert V4.c == 6
 ```
 
-### Hierarchical Enumerates
+### Hierarchical enumerates
 
 Enum can accept hierarchical tuples. Each enum level follows the same algorithm.
 Each entry tries to find a new bit. In the case of the hierarchy, the lower
 hierarchy level bits are kept.
 
 ```
-let Animal:enum = [
-  ,bird  =[eagle, parrot]
-  ,mammal=[rat  , human ]
-]
+let Animal = enum(
+  ,bird  =(eagle, parrot)
+  ,mammal=(rat  , human )
+)
 
 cassert Animal.bird.eagle != Animal.mammal
 cassert Animal.bird != Animal.mammal.human
@@ -496,11 +475,11 @@ programming languages, but this only works with non-hierarchical enumerates
 when an integer type (`:int`, `:u32`, `:i4` ...) is used.
 
 ```
-let V5:enum = [
+let V5=enum(
    ,a
    ,b=5
    ,c
-]
+)
 cassert int(V5.a) == 0
 cassert int(V5.b) == 5
 cassert int(V5.c) == 6
@@ -529,13 +508,13 @@ To convert a string back and forth to an enumerate, explicit typecast is needed
 but possible.
 
 ```
-let E3:enum = [
-  ,l1=[
+let E3=enum(
+  ,l1=(
     ,l1a
     ,l1b
-    ]
+    )
   ,l2
-  ]
+  )
 cassert string(E3.l1.l1a) == "E3.l1.l1a"
 cassert string(E3.l1) == "E3.l1"
 cassert E3("l1.l2") == E3.l1.l2

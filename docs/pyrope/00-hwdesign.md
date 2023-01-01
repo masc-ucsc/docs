@@ -193,7 +193,7 @@ This section goes over several of the leading hardware artifacts that tend to
 be exist in most HDLs independent of the syntax.
 
 
-### Instantiation vs Execution
+### Instantiation vs execution
 
 
 Hardware designers decide the gates are instantiated[^5a] in the design, while
@@ -347,7 +347,7 @@ verification.
     pipelining.
 
 
-### Simulation vs. Synthesis
+### Simulation vs synthesis
 
 
 Hardware designs tend to have extensive verification infrastructures. The

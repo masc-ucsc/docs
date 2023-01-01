@@ -158,7 +158,7 @@ assert f(33:u22,100:u22)
 my_log a, false, x+1
 ```
 
-## Argument Naming
+## Argument naming
 
 Input arguments must be named. E.g: `fcall(a=2,b=3)` There are the following
 exceptions that avoid naming arguments:
@@ -282,7 +282,7 @@ cassert intercepted == 1  // will call get method without explicit call
 cassert intercepted.field == 0
 ```
 
-## Pass by Reference
+## Pass by reference
 
 Pyrope is an HDL, and as such, there are not memory allocation issues. This
 means that all the arguments are pass by value and the language has value

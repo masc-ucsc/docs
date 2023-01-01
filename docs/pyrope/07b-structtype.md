@@ -7,7 +7,7 @@ everything is passed by value, no union types.
 
 
 
-## Type Check
+## Type check
 
 
 The `x does y` checks that `x` does the same as `y` and maybe more. It type
@@ -472,7 +472,7 @@ test "check equiv" {
 ## Traits and mixin
 
 There is no object inheritance in Pyrope, but tuples allow to build mixin and
-composition with traits.
+composition.
 
 A mixin is when an object or class can add methods and the parent object can
 access them. In several languages, there are different constructs to build them
@@ -519,17 +519,41 @@ There are also two ways to concatenate tuples in Pyrope. `t1 ++ t2` and
 
 * `t1 ++ t2` concatenates each field in both tuples. A compile error is
   generated if `t1` field is a `let` with a defined value, and `t2` has also
-the same defined field.
+  the same defined field.
 
 
-* `(...t1, ...t2)` inserts in-place, triggers a compile error if the same field
-  appears in both tuples and it is defined in both.
+* `(...t1, ...t2)` inserts in-place, triggers a compile error if the same
+  public field appears in both tuples and it is defined in both. `private`
+  fields are privatized and hence do not trigger overload failure.
 
 
-It is important to notice that when one of the tuples as an entry, it can have
-an undefined value (`nil` or `0sb?`).  If the entry value is undefined, the
-concatenate (`++`) does not trigger a compile error. This is quite useful for
-defining interfaces because the default value for a function is `nil`.
+```
+let Int1 = (
+  ,private var counter:int = 0
+  ,add = proc(ref self, v) { self.counter += v }
+  ,get = fun(self) -> (_:int) { self.counter }
+  ,api_pending: proc(ref self, x:int) -> (o:string) = _
+)
+
+let Int2 = (
+  ,private var counter:int = 0
+  ,accumulate = proc(ref self, v) { self.counter += v ; ret self.counter }
+  ,api_pending:proc(ref self, x:string) -> (o:string) = _
+)
+
+let Combined = (...Int1, ...Int2
+  ,api_pending = proc(ref self, x:int) -> (o:string) {
+    self.add(x)
+    ret string(self.accumulate(self.get()))
+  }
+)
+```
+
+It is also important to notice that when one of the tuples as an entry, it can
+have an undefined value (`nil` or `0sb?`).  If the entry value is undefined,
+neither concatenate (`++`) or in-place insert (`...`) trigger a compile error.
+This is quite useful for defining interfaces because the default value for a
+function is `nil`.
 
 ```
 let Interface = (
@@ -619,12 +643,13 @@ let Circle = (
 
 ## Row type
 
-Pyrope has structural typing, but also allows to infer the types. The where
+Pyrope has structural typing, but also allows to infer the types. The `where`
 statement can be used to implement some functionality that resembles the row
-type inference.
+type inference. The `where` clause is followed by a list of comma separated
+conditions that must evaluate true for the function to be valid.
 
 ```
-let rotate = fun(a) where a has 'x' and a has 'y' {
+let rotate = fun(a) where a has 'x', a has 'y' and_then a.y!=30 {
   var r = a
   r.x = a.y
   r.y = a.x
@@ -633,7 +658,7 @@ let rotate = fun(a) where a has 'x' and a has 'y' {
 ```
 
 The previous rotate function is difficult to implement with a traditional
-structural typing `fun(a:(let x, let y))` will restrict the type to have just
-`x` and `y` fields.
+structural typing.
+
 
 

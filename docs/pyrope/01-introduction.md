@@ -23,7 +23,7 @@ Pyrope is a modern hardware description language, with these focus points:
     - Allows Pyrope 2 Verilog, edit Verilog, Verilog 2 Pyrope, edit Pyrope...
     - Static checks as long as they not produce false positives
 
-## Hello World
+## Hello world
 
 Create a directory for the project:
 ```bash
@@ -58,7 +58,7 @@ Populate the Pyrope code
 
     src/gcd.prp:
     ```pyrope linenums="1"
-    var gcd = proc (cmd:(a:uint,b:uint))->(reg x:uint) {
+    var gcd = proc (a:uint,b:uint)->(reg x:uint) {
       x = a
       reg y = b
 

@@ -97,7 +97,7 @@ there is no concept of "reference/pointer" which is a common source of
 dependences.
 
 
-### Register Reference
+### Register reference
 
 Register reference (`regfef`) can create a dependence update between files, but this is
 not a source of non-determinism because only one file can perform updates for
@@ -417,7 +417,7 @@ processed locally, and then a global top pass is performed.
   by Ras Bodik et al.
 
 
-## Programming Warts
+## Programming warts
 
 In programming languages, warts are small code fragments that have unexpected
 or not great behavior. Every language has its warts. This section tries to list
