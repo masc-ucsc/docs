@@ -87,6 +87,59 @@ Pyrope has several constructs to help that do not apply to non-HDL,
 [pipelining](06c-pipelining.md) has most of the pipelining specific syntax.
 
 
+## Swift
+
+There are many diffirences with Swift, but this section just highlights a couple because it helps
+to understand the Pyrope semantics.
+
+
+### Protocol vs Pyrope constrains
+
+Swift protocols resemble type classes. As such require consent for implementing
+a functionality. Pyrope resembles C++ concepts that constraint functionality.
+
+```swift
+func add<T>(a:T, b:T) -> T { a + b }  // compile error
+func add<T:Numeric>(a:T, b:T) -> T { a + b }
+```
+
+```
+let add = fun(a,b) { a + b }            // OK, no constrains
+let add = fun<T:int>(a:T,b:T) { a + b } // constrain both to have same type
+```
+
+When a protocol defines an interface, in Swift:
+
+```swift
+protocol Shape {
+  func name()      -> String
+  func area()      -> Float
+  func perimeter() -> Float
+}
+
+class Rectangle : Shape {  }
+class Circle    : Shape {  }
+
+func print_share_info<T:Shape>(_ s:T) {
+
+}
+```
+
+In Pyrope:
+```
+let Shape = (
+  ,name:fun(self)->(_:string)    = _
+  ,area:fun(self)->(_:Float)     = _  // NOTE: Pyrope does not have float type
+  ,perimeter:fun(self)->(_:Float)= _
+)
+
+let Rectangle:(...Shape,...OtherAPI) = (...some_code_here)
+let Circle:Shape = (...some_code_here) 
+
+let print_share_info = fun(s:Shape) { }
+```
+
+
 ## Rust
 
 Rust is not an HDL, as such it has to deal with many other issues like memory. This section is just

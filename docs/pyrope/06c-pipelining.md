@@ -117,7 +117,7 @@ The semantics of `pipestage` are as follows:
 * Variables declared before are "pipelined" inside each of the `pipestage` scopes.
 
 * Variables declared in a stage are pipelined to all the following stages
-  unless the variable is private (`var _priv_example=3`)
+  unless the variable is private (`var priv_example::[private]=3`)
 
 * The pipelined variables are not visible in the scope after the `pipestage`
   sequence.
@@ -288,10 +288,10 @@ if cond {
     reg p1r = _
     reg p2r = _
 
-    var _l1 = inp1 + 1    // private
-    var p2 = inp1 + 2     // public
+    var l1::[private] = inp1 + 1  // private
+    var p2 = inp1 + 2             // public
 
-    out = p1r + p2r       // registered values
+    out = p1r + p2r               // registered values
 
     p1r = p1
     p2r = p2

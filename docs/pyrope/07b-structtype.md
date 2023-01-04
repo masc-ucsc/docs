@@ -131,8 +131,8 @@ let err = a == w // compile error, not (a equals w) or overload
 A way to classify a language is to look at the generics and lambda calls.
 Languages can have type constraints or type classes. Type classes (Hakell,
 Rust, Swift) specify the "consent" of argumetns or return types allowed for
-lambda or generic. Type constrains (C++, typescript) constraints the arguments
-or return types allowed. Pyrope follows a type constraint approach.
+lambda or generic. Type constrains (C++, typescript, Pyrope) constraints the
+arguments or return types allowed. Pyrope follows a type constraint approach.
 
 The following `f` method has no constraints on the input arguments. It can pass
 anything, but constraints the return value to be an integer.
@@ -158,7 +158,7 @@ let f1 = fun<T:Some_type_class>(a:T,b:T) -> (r:int) { r = xx(a) + xx(b) }
 
 While performing assignments checks that the left-hand-side tuple fields are
 fully populated (`x=y`) by checking that `y does x`. The same check happens for
-the lambda calls, but a slightly check is performed when a lambda is passed as
+the lambda calls, but the check is performed when a lambda is passed as
 an argument.
 
 
@@ -290,7 +290,7 @@ is checked in the covariant and contravariant checks.
 
 
 
-## Lambda Overloading
+## Lambda overloading
 
 Pyrope does not have global scope for defined lambdas. Instead, all the lambda
 must reside in a local variable or must be "imported". Nevertheless, a local
@@ -298,12 +298,17 @@ variable can have multiple lambdas. It is similar to Odin's "explicit procedure
 overloading". This section explains how is the overloading selection in this
 case.
 
-When overloading, lambdas are typically added at the end `++=` of the tuple.
+
+By overloading, this section refers to typical ad-hoc polymorphism where the same
+function/procedure name can have different functionality for different types.
+
+
+For Pyrope overloading, lambdas are typically added at the end `++=` of the tuple.
 This means that it is NOT overwriting an existing functionality, but providing
 a new call capability.
 
-If the intention is to intercept, the lambda must be added at the head of the
-tuple entry.
+There is a priority of overloading in the tuple order. If the intention is to
+intercept, the lambda must be added at the head of the tuple entry.
 
 ```
 let base = (
@@ -469,6 +474,59 @@ test "check equiv" {
 }
 ```
 
+### Parametric polymorphism 
+
+Add-hoc polymorphism overloads a function, and parametric polymorphism allows to 
+parametrize types based on arguments.
+
+```
+let Param_type = fun(a) { ret (xx:a = _) }
+
+let x:Param_type(string) = (xx="hello")
+let x:Param_type(int)    = (xx=130)
+```
+
+### Summary polymorphism
+
+
+Subtype polymorphism: A subtype provides functionality/api for another super type.
+```
+let Animal = (
+  ,speak:fun(self) = _
+)
+let Cat: Animal = (
+  ,speak = fun(self) { puts "meaow" }
+)
+let Bird: Animal = (
+  ,speak = fun(self) { puts "pio pio" }
+)
+```
+
+Parametric polymorphism: Same function works for many types
+```
+let smallest = fun(...a) {
+  let x = a[0]
+  for i in a[1..] {
+    x = i when i < x
+  }
+  ret x
+}
+```
+
+Ad-hoc polymorphism: capacity to overload the same lambda name with different types.
+```
+let speak = fun(a:Bird) { puts "pio pio"  } 
+         ++ fun(a:Cat) { puts "meaow" }
+```
+
+Coercion polymorphism: Capacity to cast a type to another
+```
+let Type1 = (
+  ,setter = fun(ref self, a:int) {  }
+)
+let a:Type1 = 33
+```
+
 ## Traits and mixin
 
 There is no object inheritance in Pyrope, but tuples allow to build mixin and
@@ -529,14 +587,14 @@ There are also two ways to concatenate tuples in Pyrope. `t1 ++ t2` and
 
 ```
 let Int1 = (
-  ,private var counter:int = 0
+  ,var counter:int:[private] = 0
   ,add = proc(ref self, v) { self.counter += v }
   ,get = fun(self) -> (_:int) { self.counter }
   ,api_pending: proc(ref self, x:int) -> (o:string) = _
 )
 
 let Int2 = (
-  ,private var counter:int = 0
+  ,var counter:int:[private] = 0
   ,accumulate = proc(ref self, v) { self.counter += v ; ret self.counter }
   ,api_pending:proc(ref self, x:string) -> (o:string) = _
 )
@@ -659,6 +717,8 @@ let rotate = fun(a) where a has 'x', a has 'y' and_then a.y!=30 {
 
 The previous rotate function is difficult to implement with a traditional
 structural typing.
+
+
 
 
 

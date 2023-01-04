@@ -218,8 +218,11 @@ unknowns are randomly translated to 0 or 1 at initialization.
 ## Assume directive
 
 
-The `assume` directive is like an `assert` but it also allows compiler optimizations.
-In a way, it is a safer version of Verilog `?`.
+The `assume` directive is like an `assert` but it also allows compiler
+optimizations. In a way, it is a safer version of Verilog `?`. Unlike other
+languages like C++23, Pyrope `assume` verifies at simulation time that the
+`assume` is correct. This means that the `assume` is checked like an `assert`
+but it allows the compiler to optimize based on the condition.
 
 
 === "Verilog x-optimization"

@@ -248,7 +248,9 @@ assert x.0            == 3
 
 ## Tuples vs arrays
 
-Tuples are ordered, as such, it is possible to use them as arrays. 
+Tuples are ordered, as such, it is possible to use them as arrays. Tuples and
+arrays share most behavior/operations, the key difference is that arrays are
+unnamed with the same type for all the entries.
 
 ```
 var bund1 = (0,1,2,3,4) // ordered and can be used as an array

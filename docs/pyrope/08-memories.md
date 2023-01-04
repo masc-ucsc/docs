@@ -100,9 +100,10 @@ assert b[2][10]      // compile error, '10' is out of bound access for 'b[2]'
 ```
 
 It is possible to initialize the async memory with an array. The initialization
-of async memories happens whenever `reset` is set on the system. Notice that
-the memories reset value must be a `comptime` or a compilation error will be
-triggered.
+of async memories happens whenever `reset` is set on the system. A key difference
+between arrays (no clock) and memories is that arrays initialization value must
+be `comptime` while `memories` and `reg` can have a sequence of statements to
+generate a reset value. 
 
 === "Pyrope array syntax"
     ```

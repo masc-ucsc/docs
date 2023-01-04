@@ -704,23 +704,21 @@ it can be declared as immutable.
 
 ## Public vs private
 
-All variables are public by default. To declare a variable private within
-the tuple or file an underscore must be used (`_private` vs `public`) or
-explicitly use the `private` attribute explicitly like in languages like Ruby.
+All variables are public by default. To declare a variable private within the
+tuple or file the `private` attribute must be set.
 
 The private has different meaning depending on when it is applied:
 
-* When is applied to a tuple entry (`(_field = 3)`), it means that the tuple
+* When applied to a tuple entry (`(field::[private] = 3)`), it means that the 
   entry can not be accessed outside the tuple. 
 
-* When is applied to a `pipestage` variable (`_foo`), it means that the
+* When applied to a `pipestage` variable (`var foo::[private] = 3`), it means that the
   variable is not pipelined to the next type stage. Section
   [pipestage](06c-pipelining.md) has more details.
 
-* When is applied to a pyrope file upper scope variable (`reg _top_reg = 0` or
-  `reg top_reg::[private] = 0`), it means that an `import` command or register
-  reference can not access it across files. Section
-  [typesystem](07-typesystem.md) has more details.
+* When is applied to a pyrope file upper scope variable (`reg top_reg:[private]
+  = 0`), it means that an `import` command or register reference can not access
+  it across files. Section [typesystem](07-typesystem.md) has more details.
 
 
 ## Operators

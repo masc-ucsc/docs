@@ -472,16 +472,24 @@ effectively "packs" the encoding.
 ## Variants
 
 
-Pyrope supports variants but not unions. The difference between `union` and
-`variant` is that union can be used for a typecast to convert between values,
-the variant is the same but it does not allow bit convertion. It tracks the
-type from the assignment, and an error is generated if the incorrect type is
-accesed. Pyrope requires explicit type conversion with bitwise operations.
+A Pyrope variant is the equivalent of an union type. A variant type spifices a
+set of types allowed for a given variable. In Pyrope, a variant looks like a
+tuple where each entry has a different type. Unlike tuples all the "space" or
+bits used are shared because the tuple can have only one entry with data at a
+given time.
 
 
-Variant shares syntax with enums with types declaration, but the usage and
-functionality is quite different. Enums do not allow to update values and
-variants are tuples with multiple labels sharing a single storage location. 
+Pyrope supports variants but not unions. The difference between typical (like
+C++) `union` and `variant` is that union can be used for a typecast to convert
+between values, the variant is the same but it does not allow bit convertion.
+It tracks the type from the assignment, and an error is generated if the
+incorrect type is accesed. Pyrope requires explicit type conversion with
+bitwise operations.
+
+
+Variant shares syntax with enums declaration, but the usage and functionality
+is quite different. Enums do not allow to update values and variants are tuples
+with multiple labels sharing a single storage location. 
 
 
 The main advantage of variant is to save space. This means that the most
@@ -491,11 +499,32 @@ types can be stored across cycles.
 
 ```
 let e_type=enum(str:String = "hello",num=22)
-let v_type=variant(str:String, num:int)       // No default value in variant
+let v_type=variant(str:String, num:int) // No default value in variant
 
 var vv:v_type = (num=0x65)
 cassert vv.num == 0x64
-let xx = vv.str             // compile or simulation error
+let xx = vv.str                         // compile or simulation error
+```
+
+
+The variant variable allows to explicitly or implicitly access the subtype.
+Variants may not be solved at compile time, and the error will be a simulation
+error. A `comptime` directive can force a compile time-only variant.
+
+```
+let Vtype=variant(str:String,num:int,b:bool)
+
+let x1a:Vtype = "hello"                 // implicit variant type
+let x1b:Vtype = (str="hello")           // explicit variant type
+
+var x2:Vtype:[comptime] = "hello"       // comptime
+
+cassert x1a.str == "hello" and x1a == "hello"
+cassert x1b.str == "hello" and x1b == "hello"
+
+let err1 = x1a.num                      // compile or simulation error
+let err2 = x1b.b                        // compile or simulation error
+let err3 = x2.num                       // compile error
 ```
 
 As a reference, `enums` allow to compare for field but not update enum entries.
@@ -969,6 +998,21 @@ let my_obj = (
 )
 ```
 
+### Attribute setter/getter value
+
+The setter/getter can also access attributes:
+
+```
+var obj1::[attr1] = (
+  ,data:int = _
+  ,setter = fun(ref self, v) {
+    if v.[attr2] {
+      self.data.[attr3] = 33
+    }
+    cassert self.[attr1] 
+  }
+)
+```
 
 ### Default setter value
 
@@ -1040,18 +1084,18 @@ If the getter/setter uses a string argument, this also allows to access tuple fi
 
 ```
 let Point = (
-  ,_x:int = 0  // private
-  ,_y:int = 0  // private
+  ,priv_x:int:[private] = 0
+  ,priv_y:int:[private] = 0
 
   ,setter = proc(ref self, x:int, y:int) {
-    self._x = x
-    self._y = y
+    self.priv_x = x
+    self.priv_y = y
   }
 
   ,getter = proc(self, idx:string) {
     match idx {
-     == 'x' { self._x }
-     == 'y' { self._y }
+     == 'x' { self.priv_x }
+     == 'y' { self.priv_y }
     }
   }
 )
@@ -1059,7 +1103,7 @@ let Point = (
 let p:Point = (1,2)
 
 cassert p['x'] == 1 and p['y'] == 2
-cassert p.x == 1 and p.y == 2
+cassert p.x == 1 and p.y == 2          // compile error
 ```
 
 ## Compare method
