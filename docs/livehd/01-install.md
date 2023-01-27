@@ -8,13 +8,9 @@ Although LiveHD should run on most common Linux distributions, it is heavily tes
 
 The following programs are assumed to be present when building LiveHD:
 
-- GCC 8+ or Clang 8+ (C++17 support is required)
+- GCC 10+ or Clang 10+ (C++17 support is required)
 - Bazel
 - python3
-
-The following programs are optional:
-
-- pandoc (for better viewing of markdown documentation)
 
 It is also assumed that bash is used to compile LiveHD.
 
@@ -40,10 +36,34 @@ clang++ --version
 git clone https://github.com/masc-ucsc/livehd
 ```
 
-**Install Bazel**
+**Install Bazel**isk
 
-- For Debian-derived distros (including Ubuntu and Kali), follow [these](https://docs.bazel.build/versions/master/install-ubuntu.html) instructions.
-- For Arch-derived distros, install the `bazel` package with `sudo pacman -Syu bazel`.
+Bazelisk is a wrapper around bazel that allows you to use a specific version.
+
+If you do not have system permissions, you can install a local bazelisk
+
+```sh
+npm install  @bazel/bazelisk
+alias bazel=$(pwd)/node_modules/\@bazel/bazelisk/bazelisk.js
+```
+
+You can also install it directly if you have administrative permissions:
+
+macos:
+```sh
+brew install bazelisk.
+```
+
+Linux:
+```sh
+go install github.com/bazelbuild/bazelisk@latest
+export PATH=$PATH:$(go env GOPATH)/bin
+```
+
+Arch linux:
+```sh
+pacaur -S bazelisk  # or yay or paru installers
+```
 
 **Build LiveHD**
 
@@ -52,16 +72,9 @@ LiveHD has several build options, detailed below. All three should result in a w
 A binary will be created in `livehd/bazel-bin/main/lgshell`.
 
 ```sh
-bazel build //main:all # fast build, no debug symbols, slow execution (default)
-bazel build //main:all -c opt # fastest execution speed, no debug symbols, no assertions
-bazel build //main:all -c dbg # moderate execution speed, debug symbols
-```
-
-**Install pandoc (optional)**
-
-```sh
-sudo pacman -Syu pandoc      # (Arch)
-sudo apt-get install pandoc  # (Kali/Debian/Ubuntu)
+bazel build       //main:all # fast build, no debug symbols, slow execution (default)
+bazel build -copt //main:all # fastest execution speed, no debug symbols, no assertions
+bazel build -cdbg //main:all # moderate execution speed, debug symbols
 ```
 
 ## Potential issues
@@ -97,3 +110,4 @@ Make sure to have enough memory (4+GB at least)
 ## Next Steps
 
 To start using LiveHD, check out [Usage](02-usage.md). If you're interested in working on LiveHD, refer to [Creating a pass](11-pass.md).
+
