@@ -86,6 +86,45 @@ complexity in HDLs.
 Pyrope has several constructs to help that do not apply to non-HDL,
 [pipelining](06c-pipelining.md) has most of the pipelining specific syntax.
 
+## C++
+
+Pyrope and C++ are quite different in syntax, but some nice C++23 syntax has
+similarities for Pyrope.
+
+```c++
+auto max_gap_count(std::vector<int> nums) {
+    std::ranges::sort(nums, std::greater{});
+    auto const diffs = nums
+        | std::views::adjacent_transform<2>(std::minus{});
+    return std::ranges::count(diffs, std::ranges::max(diffs));
+}
+```
+
+```
+let max_gap_count = fun(nums) {
+  let max  = import("std").max
+  let sort = import("std").sort
+  let adjacent_transform = fun(a,num,f) {
+    var res = ()
+    for i in 0..<a.length by num {
+      res ++= f(a[i..+num])
+    }
+    ret res
+  }
+  let count = fun(a,b) {
+    var r = 0
+    for i in a {
+      r += 1 when i == b
+    }
+    ret r
+  }
+
+  ret numbers
+     |> sort(fun(a,b) { a<b })
+     |> adjacent_transform(num=2, fun(a,b) { a-b } )
+     |> fun(a) { count(a, a.max) }
+}
+```
 
 ## Swift
 

@@ -215,13 +215,13 @@ with unknowns, but only for arrays and memories explicitly non initialized
 contents. The semantics on the generated simulator are similar to CHISEL, any
 unknowns are randomly translated to 0 or 1 at initialization.
 
-## Assume directive
+## Optimize directive
 
 
-The `assume` directive is like an `assert` but it also allows compiler
+The `optimize` directive is like an `assert` but it also allows compiler
 optimizations. In a way, it is a safer version of Verilog `?`. Unlike other
-languages like C++23, Pyrope `assume` verifies at simulation time that the
-`assume` is correct. This means that the `assume` is checked like an `assert`
+languages like C++23, Pyrope `optimize` verifies at simulation time that the
+`optimize` is correct. This means that the `optimize` is checked like an `assert`
 but it allows the compiler to optimize based on the condition.
 
 
@@ -241,7 +241,7 @@ but it allows the compiler to optimize based on the condition.
 === "Pyrope `match`"
 
     ```
-    assume sel==1 or sel==2 or sel==4 // not needed. match sets it
+    optimize sel==1 or sel==2 or sel==4 // not needed. match sets it
     match sel {
       == 0b001 { f = i0 }
       == 0b010 { f = i2 }
@@ -258,7 +258,7 @@ but it allows the compiler to optimize based on the condition.
     ```
 
 
-Assume allows more freedom, without dangerous Verilog x-optimizations:
+Optimize allows more freedom, without dangerous Verilog x-optimizations:
 
 === "Bad Verilog x-optimization"
     ```verilog
@@ -276,10 +276,10 @@ Assume allows more freedom, without dangerous Verilog x-optimizations:
     res = array[b]
     ```
 
-=== "Pyrope assume"
+=== "Pyrope optimize"
 
     ```
-    assume a != 0
+    optimize a != 0
 
 
     if (1 + a) != 1 { // always false
@@ -288,7 +288,7 @@ Assume allows more freedom, without dangerous Verilog x-optimizations:
       out = 3
     }
 
-    assume b != 3 
+    optimize b != 3 
     // array = (1,2,3,4,5,6,7,8)
     res = array[b]
     ```
@@ -732,7 +732,8 @@ assert x == "0sb10?"
 
 The `for` expects a tuple, and iterates over the tuple. This can lead to some
 unexpected behaviour. The most strange is that ranges are always from smallest
-to largest, so they do not allow to create a decreasing iterator.
+to largest. It is not legal to do a `5..<0` range, the solution is to use a
+`to` which creates a tuple not a range.
 
 
 ```
@@ -767,13 +768,13 @@ for i,idx in r {
   assert v == i
 }
 
-let r2=4..=2 by -1
-assert r == r2
+let r2=4 to 2 by -1
+assert r2 == (4,3,2)
 for i,idx in r2 {
   let v = match idx {
-   == 0 { 2 }
+   == 0 { 4 }
    == 1 { 3 }
-   == 2 { 4 }
+   == 2 { 2 }
   }
   assert v == i
 }
@@ -866,10 +867,10 @@ let here = fun()  { puts "here" ; ret 3}
 let call_now   = fun(f:fun){ ret f() } 
 let call_defer = fun(f:fun){ ret f   } 
 
-let x0 = call_now here           // prints "here"
-let e1 = call_now args           // compile error, args needs arguments
-let x1 = call_defer here         // nothing printed
-let e2 = call_defer args         // compile error, args needs arguments
+let x0 = call_now(here)          // prints "here"
+let e1 = call_now(args)          // compile error, args needs arguments
+let x1 = call_defer(here)        // nothing printed
+let e2 = call_defer(args)        // compile error, args needs arguments
 assert x0  == 3                  // nothing printed
 assert x1  == 3                  // nothing printed
 

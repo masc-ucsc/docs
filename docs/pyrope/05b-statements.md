@@ -374,10 +374,10 @@ reads the value before any update, the `defer` read, gets values after updates.
 ```
 reg counter:u32 = _
 
-let counter_m1 = counter#[-1] // last cycle
+let counter_m1 = counter#[1]  // compile error, #[1] only allowed for debug
 let counter_0  = counter#[0]  // current cycle 
-let counter_1  = counter#[1]  // last cycle
-let counter_2  = counter#[2]  // last last cycle cycle 
+let counter_1  = counter#[-1] // last cycle
+let counter_2  = counter#[-2] // last last cycle cycle 
 
 var deferred = counter.[defer]
 
@@ -389,10 +389,9 @@ if counter < 100 {
 
 if counter == 10 {
   assert deferred   == 10
-  assert counter_0  == 10
-  assert counter_1  ==  9
-  assert counter_2  ==  8
-  assert counter_m1 ==  9
+  assert counter_0  ==  9
+  assert counter_1  ==  8
+  assert counter_2  ==  7
 }
 ```
 

@@ -47,25 +47,23 @@ There are 5 main verification statements:
 * `assert/cassert`: The condition should be true at runtime. If `cassert`, the
   condition must be true at compile time.
 
-* `assume/cassume`: Similar to assert, but allows the tool to simplify code based on it
-  (it has optimization side-effects).
+* `optimize/coptimize`: Similar to assert, but allows the tool to simplify code
+  based on it (it has optimization side-effects).
 
 * `verify`: Similar to assert, but it is potentially slow to check, so it is
   checked only when formal verification is enabled. Simulation can also check
   for this, but because it is slow, it may not be active by default.
 
-* `restrict`: Constraints or restricts beyond to check a subset of the
-  valid space. It only affects the verify command. The restrict command
-  accepts a list of conditions to restrict.
-
-
+* `assume`: Constraints or restricts beyond to check a subset of the valid
+  space. It only affects the `verify` and `assert` command, not the `optimize`.
+  The `assume` command accepts a list of conditions to restrict.
 
 The `cassert` are syntax suggar for a defined comptime assert. Since it is so
 common, it is part of the basic syntax like `assert`.
 
 ```pyrope
 let cassert::[comptime] = assert
-let cassume::[comptime] = assume
+let coptimize::[comptime] = optimize
 ```
 
 ```pyrope
@@ -74,15 +72,15 @@ assert a == 3          // checked at runtime (or compile time)
 cassert a == 3         // checked at compile time
 
 verify a < 4           // checked at runtime and verification
-assume b > 3           // may optimize and perform a runtime check
+optimize b > 3         // may optimize and perform a runtime check
 
-restrict "cond1" where foo < 1 and foo >3 {
+assume "cond1" where foo < 1 and foo >3 {
    verify bar == 4  // only checked at verification, restricting conditions
 }
 ```
 
 A whole statement is conditionally executed using the `when`/`unless` gate expression.
-This is useful to gate verification statements (`assert`, `assume`, `verify`)
+This is useful to gate verification statements (`assert`, `optimize`, `verify`)
 that can have spurious error messages under some conditions.
 
 
@@ -97,8 +95,8 @@ assert a == 0, "the same error" unless cond
 ```
 
 
-The recommendation is to write as many `assert` and `assume` as possible. If
-something can not happen, writing the `assume` has the advantage of allowing
+The recommendation is to write as many `assert` and `optimize` as possible. If
+something can not happen, writing the `optimize` has the advantage of allowing
 the synthesis tool to generate more efficient code.
 
 In a way, most type checks have equivalent `cassert` checks.
@@ -190,8 +188,8 @@ high for the given registers. An `assert_always` ignores the reset condition,
 and checks always independent of the reset wires.
 
 
-To provide assert/assume during reset, Pyrope provides a `assert_always`,
-`cassert_always`, `assume_always`, `cassume_always`, `covercase_always`, and
+To provide assert/optimize during reset, Pyrope provides a `assert_always`,
+`cassert_always`, `optimize_always`, `coptimize_always`, `covercase_always`, and
 `cover_always`.
 
 ```

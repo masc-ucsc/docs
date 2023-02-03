@@ -1221,7 +1221,7 @@ that the condition is a one-hot encoding.
                 ref x
     ```
 
-The `unique if` is similar, but all the conditions include and `assume`
+The `unique if` is similar, but all the conditions include and `optimize`
 directive to be checked. This means that the conditions must be checked even if
 the `else` is not reached. This is fine because neither the statements nor the
 condition checks are allowed to have side-effects.
@@ -1250,7 +1250,7 @@ the `elif` conditions.
     let tmp1 = a<3
     let tmp2 = a>40
     let tmp3 = 1<<(tmp1,tmp2)
-    assume tmp3@+[..]<=1        // at most one bit set
+    optimize tmp3@+[..]<=1        // at most one bit set
 
     if tmp1 {
       y = 10
@@ -1283,7 +1283,7 @@ the `elif` conditions.
       const 1
     fcall
       ref nil
-      ref assume
+      ref optimize
       ref ___5
     if
       ref ___1
@@ -1354,7 +1354,7 @@ false }` is created.
       const 1
     fcall
       ref nil
-      ref assume
+      ref optimize
       ref ___5
 
     if
@@ -1392,7 +1392,7 @@ false }` is created.
       const 1
     fcall
       ref nil
-      ref assume
+      ref optimize
       ref ___9
     if
       ref ___6
@@ -1502,7 +1502,7 @@ statements.
         const 1
       fcall
         ref nil
-        ref assume
+        ref optimize
         ref ___z
       if
         ref ___t1

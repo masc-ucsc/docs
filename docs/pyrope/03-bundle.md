@@ -327,7 +327,7 @@ assert y == (ff=(1,2),zz=3)
 Parenthesis marks the beginning and the end of a tuple. Those parentheses can
 be avoided for an unnamed tuple in some cases:
 
-* When doing a simple function call after an assignment or at the beginning of a line.
+* When doing a simple function call at the beginning of a line.
 * When used inside a selector `[...]`.
 * When used after an `in` operator followed by a `{` like in a `for` and `match` statements.
 * For the inputs in a match statement.
@@ -335,7 +335,6 @@ be avoided for an unnamed tuple in some cases:
 
 ```
 fcall 1,2         // same as: fcall(1,2)
-x = fcall 1,2     // same as: x = fcall(1,2)
 b = xx[1,2]       // same as: xx[(1,2)]
 
 for a in 1,2,3 {  // same as: for a in (1,2,3) {

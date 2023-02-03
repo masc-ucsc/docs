@@ -237,13 +237,40 @@ assert b@sext[1..=-2] == 0sb110_100
 assert b@[1..=-3]     == 0sb10_100
 assert b@[1..<-3]     == 0b0_100
 assert b@[0]          == false
+```
 
+
+A range is not the same as a tuple with all the elements, it is rather an
+integer with bits sets according to the range values. Range typecase only
+accepts integers as input. If the intention is to create a tuple with default
+values the `to` operators must be used. The `to` is inclusive like `a..=b`
+range~\footnote{In English, Pascal, scala the 0 to 10 is an inclusive range.}
+
+```
 let c = 1..=3
 assert int(c) == 0b1110
 assert range(0b01_1100) == 2..=4
+
+let d = 1 to 3
+assert d == (1,2,3)
+assert int(d) != 0         // compile error, tuple typecast is not allowed
 ```
 
-Range typecase only accepts integers as input.
+Both ranges and `to` operators accept a `by` to change the step.
+```
+assert int(0..=10 by 2) == 0b101_0101_0101
+assert  0 to 10 by  2 == ( 0,2,4,6,8,10)
+assert 10 to  0 by -2 == (10,8,6,4,2, 0)
+```
+
+Since the range is an integer, a decreasing range should have the same meaning
+that an increasing range (`1..=3 == 3..=1`) but to avoid mistakes/confusions,
+Pyrope generates a compile error in decreasing ranges.
+
+```
+assert 5..=0       // compile error, only positive ranges allowed
+assert 5..=0 by -1 // compile error, only positive ranges allowed
+```
 
 A closed range can be converted to a single integer or a tuple. A range
 encoded as an integer is a set of one-hot encodings. As such, there is no

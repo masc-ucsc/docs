@@ -87,7 +87,7 @@ unique if cond1 {
 // RTL equivalent
 var sel = (!cond1 and !cond2, cond1, cond2)@[..]  // one hot encode
 var res2= __hotmux(sel, a, b, c)
-assume !(cond1 and cond2)                         // one hot check
+optimize !(cond1 and cond2)                       // one hot check
 
 lec res, res2
 ```
@@ -111,9 +111,9 @@ let cond2 = x == c2
 let cond3 = x == c3
 var sel = (cond1, cond2, !cond1 and !cond2)@[..]  // one hot encode (no cond3)
 var res2= __hotmux(sel, b, c, d)
-assume  ( cond1 and !cond2 and !cond3)
-     or (!cond1 and  cond2 and !cond3)
-     or (!cond1 and !cond2 and  cond3)    // one hot check (no else allowed)
+optimize ( cond1 and !cond2 and !cond3)
+      or (!cond1 and  cond2 and !cond3)
+      or (!cond1 and !cond2 and  cond3)    // one hot check (no else allowed)
 
 lec res, res2
 ```

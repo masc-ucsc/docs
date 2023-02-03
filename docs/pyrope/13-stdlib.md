@@ -8,7 +8,7 @@ All the LNAST node have an associated function matching name to simplify the
 creation of operations: `plus`, `minus`, `mult`, `div`, `mod`, `ror`... 
 
 ```
-let prp = import "prp"
+let prp = import("prp")
 cassert prp.plus(1,2,3) == 6
 ```
 

@@ -625,7 +625,7 @@ function that returns a randomly mutated tuple.
 
 ```
 let randomize::[debug] = fun(ref self) {
-  let rnd = import "prp/rnd"
+  let rnd = import("prp/rnd")
   for i in ref self {
     if i equals _:int {
       i = rnd.between(i.[max],i.[min])
@@ -682,15 +682,15 @@ let mytup = (
 
 ```
 // file: src/user.prp
-a = import "my_fun/*fun*"
+a = import("my_fun/*fun*")
 a.fun1(a=1,b=2)         // OK
 a.another(a=1,2)        // compile error, 'another' is not an imported function
 a.fun2.inside()         // compile error, `inside` is not in top scope variable
 
-let fun1 = import "my_fun/fun1"
+let fun1 = import("my_fun/fun1")
 lec fun1, a.fun1
 
-x = import "my_fun/mytup"
+x = import("my_fun/mytup")
 
 x.call3()                // prints call called
 ```
@@ -726,10 +726,10 @@ use a different library version than xx/bb/cc if the library is provided by yy,
 or use a default one from the xx directory.
 
 ```
-let a = import "prj1/file1"
-let b = import "file1"        // import xxx_fun from file1 in the local project
-let c = import "file2"        // import the functions from local file2
-let d = import "prj2/file3"   // import the functions from project prj2 and file3
+let a = import("prj1/file1")
+let b = import("file1")       // import xxx_fun from file1 in the local project
+let c = import("file2")       // import the functions from local file2
+let d = import("prj2/file3")  // import the functions from project prj2 and file3
 ```
 
 Many languages have a "using" or "import" or "include" command that includes
@@ -738,8 +738,8 @@ allow that, but it is possible to use a mixin to add the imported functionality
 to a tuple.
 
 ```
-let b = import "prp/Number"
-var a = import "fancy/Number_mixin"
+let b = import("prp/Number")
+var a = import("fancy/Number_mixin")
 
 let Number = b ++ a // patch the default Number class
 
@@ -767,7 +767,7 @@ let do_increase = proc() {
 }
 
 let do_debug = proc() {
-  let cntr = regref "do_increase/counter"
+  let cntr = regref("do_increase/counter")
 
   puts "The counter value is {}", cntr
 }
@@ -808,7 +808,7 @@ let xxx = proc(some,code) {
 
 // file local.prp
 let setup_xx = proc() {
-  var xx = regref "uart_addr" // match xxx.uart_addr if xxx is in hierarchy
+  var xx = regref("uart_addr")// match xxx.uart_addr if xxx is in hierarchy
   for i,index in ref xx {     // ref in for to allow element updates
     i = 0x300+index*0x10      // sets uart_addr to 0x300, 0x310, 0x320...
   }

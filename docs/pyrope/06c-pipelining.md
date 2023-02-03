@@ -65,6 +65,10 @@ directives `something#[0]`.
 If the register is accessed with the `-1` cycle (`#something#[-1]`), the flop will
 insert an additional pipeline to access 1 cycle before flop contents.
 
+It is also possible to use positive values (`variable#[3]`) which means the
+value in the future 3 cycles, but this is only allowed in debug statements like
+`assert` or `puts`.
+
 
 Latches are possible but with the direct RTL instantiation. Latches have 
 a `din` and `enable` pin like a flop, but just one option `posclk`.
