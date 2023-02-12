@@ -262,7 +262,7 @@ returning a value (`ret`, `brk`, `cont`) and others do not (`return`, `break`,
 
 
 ```
-var total = ()
+var total:[] = _
 for a in 1..=10 {
   continue when a == 2
   total ++= a
@@ -276,7 +276,7 @@ if true {
 }
 
 a = 3
-var total2 = ()
+var total2:[] = _
 while a>0 {
   total2 ++= a
   break when a == 2    // exit if scope

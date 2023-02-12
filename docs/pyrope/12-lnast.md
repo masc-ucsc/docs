@@ -613,6 +613,7 @@ with a `shl` operator.
       ref ___c5
       const 5
       const 5
+      const 1
 
     get_mask
       ref ___3
@@ -623,6 +624,7 @@ with a `shl` operator.
       ref ___4
       const 1
       const 3
+      const 1
 
     get_mask
       ref ___5
@@ -658,6 +660,7 @@ with a `shl` operator.
       ref ___4
       const 1
       const 3
+      const 1
 
     get_mask
       ref ___5
@@ -693,6 +696,7 @@ operations.
       ref ___r
       const 0
       const 4
+      const 1
 
     get_mask
       ref ___t
@@ -1046,6 +1050,66 @@ fcall
   ref ___0
   ref cassert
   ref ___3
+```
+
+### Tuple to operator
+
+The `to` is an iterator but instead of a range, it creates a tuple.
+
+
+`tmp = a to b by c` translates to:
+```lnast
+to
+  ref tmp
+  ref a
+  ref b
+  ref c
+```
+
+`tmp = 3 to b` translates to:
+```lnast
+to
+  ref tmp
+  const 3
+  ref b
+  const 1
+```
+
+### Range operator
+
+Ranges can be open or closed. The closed ranges have the start/end/step
+defined.
+
+`x = a..<=b by 2` translates to:
+```lnast
+range
+  ref x
+  ref a
+  ref b
+  const 2
+```
+
+`x = a..<=b by 2` translates to:
+```lnast
+range
+  ref x
+  ref a
+  ref b
+  const 2
+```
+
+`x = a..<b` translates to:
+```lnast
+sub
+  ref tmp
+  ref b
+  ref 1
+
+range
+  ref x
+  ref a
+  ref tmp
+  const 1
 ```
 
 ### Type operators

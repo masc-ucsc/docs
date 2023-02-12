@@ -110,18 +110,20 @@ let f2 = fun[var x](z) { x + z } // compile error, captures are immutable
 
 ## Basic types
 
-Pyrope has 7 basic types:
+Pyrope has 8 basic types:
 
 * `boolean`: either `true` or `false`
 * `enum`: enumerated
-* `proc` and `fun`: A procedure or a function
-* `integer`: which is signed integer of unlimited precision
+* `fun`: A function or pure combinational lambda
+* `int`: which is signed integer of unlimited precision
+* `proc`: A procedure or lambda with state/clock or side-effects
 * `range`: A one hot encoding of values `1..=3 == 0b1110`
 * `string`: which is a sequence of characters
+* `variant`: An union without typecast
 
 
-All the types except the function can be converted back and
-forth to an integer.
+All the types except the function can be converted back and forth to an
+integer.
 
 
 ### Integer or `int`
@@ -195,7 +197,7 @@ let x = a and b
 let y = x + 1    // compile error: 'x' is a boolean, '1' is integer
 ```
 
-### Lambda
+### Lambda (`fun`/`proc`)
 
 Lambdas have several options (see [Functions](06-functions.md)), but from a
 high level they provide a sequence of statements and they have a tuple for
@@ -244,7 +246,10 @@ A range is not the same as a tuple with all the elements, it is rather an
 integer with bits sets according to the range values. Range typecase only
 accepts integers as input. If the intention is to create a tuple with default
 values the `to` operators must be used. The `to` is inclusive like `a..=b`
-range~\footnote{In English, Pascal, scala the 0 to 10 is an inclusive range.}
+range[^1].
+
+[^1]: In English, and most languages like Pascal, Scala the 0 to 10 is an
+  inclusive range.
 
 ```
 let c = 1..=3
@@ -261,6 +266,7 @@ Both ranges and `to` operators accept a `by` to change the step.
 assert int(0..=10 by 2) == 0b101_0101_0101
 assert  0 to 10 by  2 == ( 0,2,4,6,8,10)
 assert 10 to  0 by -2 == (10,8,6,4,2, 0)
+assert (for i in 0..=10 by 2 { cont i }) == (0,2,4,6,8,10)
 ```
 
 Since the range is an integer, a decreasing range should have the same meaning
@@ -801,6 +807,7 @@ cassert 1<<(1,4,3) == 0b01_1010
 
 * `a in b` is element `a` in tuple `b`
 * `a !in b` true when element `a` is not in tuple `b`
+* `a to b by c` returns a tuple with integers between `a` and `b` with step of `c`
 
 Most operations behave as expected when applied to signed unlimited precision
 integers. 
@@ -1015,7 +1022,7 @@ widely expected precedence.
 |:-----------:|:-----------:|-------------:|
 | 1          | unary       | not ! ~ ? |
 | 2          | mult/div    | *, /         |
-| 3          | other binary | ..,^, &, -,+, ++, <<, >>, in, does, has, case, equals |
+| 3          | other binary | ..,^, &, -,+, ++, <<, >>, in, does, has, case, equals, to |
 | 4          | comparators |    <, <=, ==, !=, >=, > |
 | 5          | logical     | and, or, implies |
 
@@ -1233,7 +1240,7 @@ The `let` and `var` statements require an initialization value for each cycle.
 Pyrope only has undefined values unless explicitly indicated. A variable has an
 undefined value if and only if the value is set to `nil` or all the bits are
 unknown (`0sb?`). Undefined variables always have invalid optional
-(`::[valid==false]`), and defined can have valid or invalid optional.
+(`.[valid]==false`), and defined can have valid or invalid optional.
 
 
 On any assignment (`v = _`) where the rhs is a single underscore `_`, the
@@ -1249,22 +1256,23 @@ var a:int = _
 cassert a==0 and a.[valid] == false and not a?
 
 var b:int = 0
-cassert b==0 and b::[valid] and b?
+cassert b==0 and b.[valid] and b?
 b = nil
 cassert b==nil and b.[valid] == false and not b?
 
 var c:fun(a1) = _
-cassert c == nil and c::[valid==false]
+cassert c == nil and c.[valid]==false
 c = fun(a1) { cassert true }
-cassert c!= nil and c::[valid]
+cassert c!= nil and c.[valid]
 
-var d = ()                       // empty tuple
-cassert d != nil and d::[valid]
+var d:[] = _               // empty tuple
+cassert d != nil and d.[valid]
+cassert d[0] == nil and !d[0].[valid]
 
 var e:int = nil
-cassert e==nil and e::[valid==false] and not e?
+cassert e==nil and !e.[valid] and not e?
 e = 0
-cassert e==0 and e::[valid] and e?
+cassert e==0 and e.[valid] and e?
 ```
 
 The same rules apply when a tuple or a type is declared.
