@@ -258,7 +258,10 @@ returning a value (`ret`, `brk`, `cont`) and others do not (`return`, `break`,
 
 * `cont` behaves like the `continue` but a tuple is provided. The `cont` is
   used with `for` comprehensions, and the tuple provided is added to the
-  comprehension result.
+  comprehension result. 
+
+* While the `ret`/`return` exist the current lambda, the
+  `cont`/`continue`/`brk`/`break` exist the current scope.
 
 
 ```
@@ -475,7 +478,6 @@ randomization outside the test statement increases the number of tests:
 `test` code blocks are allowed to use special statements not available outside
 testing blocks:
 
-
 * `step [ncycles]` advances the simulation for several cycles. The local variables
 will preserve the value, the inputs may change value.
 
@@ -530,11 +532,14 @@ The `waitfor` command is equivalent to a `while` with a `step`.
     ```
 
 The main reason for using the `step` is that the "equivalent" `#>[1]` is a more
-structured construct.
+structured construct. The `step` behaves more like a "yield" in that the next
+call or cycle it will continue from there. The `#>[1]` directive adds a
+pipeline structure which means that it can be started each cycle. Calling a
+lambda that has called a `step` and still has not finished should result in a
+simulation assertion failure.
 
 * `peek` allows to read any flop, and lambda input or output
 
 * `poke` is similar to `peek` but allows to set a value on any flop and lambda
   input/output.
-
 

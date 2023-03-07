@@ -27,7 +27,7 @@ the flop `q` pin.
     var counter_next:u8:[wrap] = _
 
     let counter_q = __flop(din=counter_next.[defer] // defer to get last update
-                       ,reset=my_rst, clock=my_clk
+                       ,reset_pin=my_rst, clock_pin=my_clk
                        ,enable=my_enable            // enable control
                        ,posclk=true
                        ,initial=3                   // reset value
@@ -38,7 +38,7 @@ the flop `q` pin.
 
 === "Pyrope style"
     ```
-    reg counter:u8:[reset=my_rst, clock=my_clk, posclk=true, async=false]= 3
+    reg counter:u8:[reset_pin=my_rst, clock_pin=my_clk, posclk=true]= 3
     assert counter == counter#[0]  // counter still has the q value
 
     if my_enable {

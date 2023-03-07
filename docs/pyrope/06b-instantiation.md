@@ -197,6 +197,56 @@ or non-short-circuit (`and_then`/`or_else`) expressions.
     lec lhs?, lhs2_v
     ```
 
+## Lambda calls
+
+Lambda calls are either inlined or become a specific instance (module). When
+the instance is located in a conditional path, the instance is moved to the
+main scope toggling the inputs valid attribute `::[valid=false]`. The instance
+has the assigned variable name. If the instance is a `var`, the variable name
+can be the SSA name.
+
+=== "Lambda call"
+    ```
+    let sub = proc(a,b)->(x) {
+      let tmp = sum(a,b)       // instance tmp,sum
+
+      x = sum(tmp,3)           // instance x,sum
+    }
+
+    let top = proc(a,b,c)->(x) {
+
+     x = sub(a,b).x
+     if c {
+       let tmp=3
+       x += sub(b,tmp).x
+     }
+    }
+    ```
+
+=== "Instance"
+    ```
+    let sub = proc(a,b)->(x) {
+      let tmp = sum(a,b)       // instance tmp
+
+      x = sum(tmp,3)           // instance x
+    }
+
+    let top = proc(a,b,c)->(x) {
+
+     x = sub(a,b).x           // instance x
+
+     let x_0 = _
+     let sub_arg_0 = _
+     let sub_arg_1 = _
+     if c {
+       let tmp=3
+       sub_arg_0 = b
+       sub_arg_1 = tmp
+       x += x_0.[defer]       // use defer (instance after conditional code)
+     }
+     x_0 = sub(sub_arg_0,sub_arg_1).x   // instance x_0 (SSA)
+    }
+    ```
 
 ## Optional lambdas
 
@@ -373,8 +423,8 @@ The assignment during declaration to a register is always the reset value. If
 the assignment is a method, the method is called every cycle during reset.
 
 ```
-reg array:[1024]tag:[clock=my_clock] = proc(ref self) {
-  reg reset_iter:u10:[reset=false] = 0sb? // no reset flop
+reg array:[1024]tag:[clock_pin=my_clock] = proc(ref self) {
+  reg reset_iter:u10:[reset_pin=false] = 0sb? // no reset flop
 
   self[reset_iter].state = I
 

@@ -217,7 +217,8 @@ are 3 ways to specify a closed range:
   elements, it is equivalent to write `first..<(first+last)`.
 
 When used inside selectors (`[range]`) the ranges can be open (no first/last specified)
-or use negative numbers. The negative number is to specify the distance from last.
+or use negative numbers. Ranges only work with positive numbers, a negative
+number is to specify the distance from last.
 
 * `[first..<-val]` is the same as `[first..<(last-val+1)]`. The advantage is that the `last` or
 size in the tuple can be unknown.
@@ -261,11 +262,20 @@ assert d == (1,2,3)
 assert int(d) != 0         // compile error, tuple typecast is not allowed
 ```
 
+In most cases, the range can be used in contructs like `for` but this is not
+the case if it needs to iterate over negative values, or have a reverse order
+traversal. In those cases, the `a to b` operator must be used.
+
+
 Both ranges and `to` operators accept a `by` to change the step.
 ```
 assert int(0..=10 by 2) == 0b101_0101_0101
 assert  0 to 10 by  2 == ( 0,2,4,6,8,10)
 assert 10 to  0 by -2 == (10,8,6,4,2, 0)
+
+assert -1 to 2 == (-1,0,1,2)
+let x = -1..=2                         // compile error, negative value range
+
 assert (for i in 0..=10 by 2 { cont i }) == (0,2,4,6,8,10)
 ```
 
@@ -516,8 +526,8 @@ let counter = proc(en, width) {
   ret value
 }
 
-let counter2::[clock=clk1]=counter
-let counter3::[reset=rst2]=counter
+let counter2::[clock_pin=clk1]=counter
+let counter3::[reset_pin=rst2]=counter
 
 var ctr2 =#[..] counter2(my_enable)
 var ctr3 =#[..] counter3(my_enable)
@@ -1299,5 +1309,34 @@ cassert at3.a == ""  and at3.a.[valid]==false
 var at4:at2 = (a="josep")
 cassert at4.a == "josep"  and at4.a.[valid] and at4.[valid]
 
+```
+
+Conditional path affect variable initialization and values. If all the
+conditional passes assign a value, the valid will be true. If only one path
+assigns a value, the valid will be set only on that path, but the data may
+always have the path.
+
+```
+var x=_
+var y=2
+var z=_
+if rand {
+  x = 3
+  y = 4
+  z = 5
+}else{
+  z = 6
+}
+assert x==3  // Simplified due to the _ initialization
+assert rand      implies x.[valid]
+assert x.[valid] implies rand
+
+assert y.[valid]
+assert  rand implies y == 4
+assert !rand implies y == 2
+
+assert z.[valid]
+assert  rand implies z == 5
+assert !rand implies z == 6
 ```
 
