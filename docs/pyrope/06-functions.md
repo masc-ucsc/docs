@@ -167,7 +167,7 @@ exceptions that avoid naming arguments:
 
 * If there is an argument/call match. The calling variable name has the same as an argument
 
-* If the argument is a single letter, and there is no argument/call match, the position is used
+* If the argument is a single letter, and there is no name match, only position is used
 
 * `self` does not need to be named (first argument position)
 

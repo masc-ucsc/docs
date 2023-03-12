@@ -316,12 +316,12 @@ initialization before reset.
 ```
 var arr:[] = (0,1,2,3,4,5,6,7)
 
-assert_always arr[0] == 0 and arr[7] == 7  // may FAIL during reset
+always assert arr[0] == 0 and arr[7] == 7  // may FAIL during reset
 
 reg mem:[] = (0,1,2,3,4,5,6,7)
 
-assert_always mem[7] == 7                  // may FAIL during reset
-assert_always mem[7] == 7 unless mem.reset // OK
+always assert mem[7] == 7                  // may FAIL during reset
+always assert mem[7] == 7 unless mem.reset // OK
 assert mem[7] == 7                         // OK, not checked during reset
 ```
 

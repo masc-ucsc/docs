@@ -1113,30 +1113,31 @@ There are 4 explicitly interact with valids:
 The optional or valid attached to each variable and tuple field is implicitly
 computed as follows:
 
-* Each cycle the `valid` is set for non-register variables initialization[^clear].
+* Non-register variables are initialized with valid unless `_` is used in the
+  initialization which explicitly clears the valid attribute.
 
 * Registers set the valid after reset, but if the reset clears the valid, there
-  is not guaranteed on attribute `[valid]` during reset.
+  is not guaranteed on attribute `[valid]` during reset. If the register does
+  not have a reset signal, the register is always valid unless explicitly
+  cleared.
 
 * Left-hand side variables `valids` are set to the and-gate of all the variable
   valids used in the expression
 
-* Reading from a memory/array is always a valid contents. Even during reset.
+* memory/arrays do not tend to have reset signals. As such they are always
+  valid unless the memory has explicit reset code. In which case the valid
+  behaves like in flops.
 
 * Writing to a register updates the register valid based on the din valid, or
-  when the attribute `[valid]` is explicitly cleared.
+  when the attribute `[valid]` is explicitly managed.
 
 * conditionals (`if`) update valids independently for each path
 
-* A tuple field has the valid set to false if any of the parent tuple fields is
+* A tuple field has the valid set to false if any of the tuple fields is
   invalid
 
 * The valid computation can be overwritten with the `[valid]` attribute. This
   is possible even during reset.
-
-
-[^clear]: Non-register variables are initialized, but when initialized to `_`
-  the valid is cleared.
 
 
 !!! Observation
@@ -1150,6 +1151,16 @@ the only way to have a non-valid is if the inputs to the lambda are invalid or
 if the valid is explicitly clear. The rules are designed to have no overhead
 when valid are not used. The compiler should detect that the valid is true all
 the time, and the associated logic is removed.
+
+
+Most statements evaluate independent of the valid expression. Expressions will
+evaluate the same if any of the inputs is valid or invalid. The valid attribute
+is computed in parallel to avoid being in the critical path. The exception are
+the verification statements like asserts and printing statatements like `puts`.
+These statements are gated or not performed if any of the inputs is invalid. To
+ignore the valid check, the `always` command can be appended before and as a
+result the statments will evaluate every cycle independent of the reset/valid
+status.
 
 
 ```
@@ -1178,7 +1189,7 @@ assert res2?
 
 reg counter:u32 = 0
 
-always_assert counter.reset implies !counter?
+always assert counter.reset implies !counter?
 ```
 
 `valid` can be overwritten by the setter method:
