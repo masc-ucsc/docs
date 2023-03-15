@@ -668,7 +668,7 @@ explicitly create the new methods with some support method.
 ```
 let exclude = fun(o,...a) {
   let new_tup = ()
-  for e,idx,key in o {
+  for idx,key,e in o {
     // create single tupe and append to preserve key and position order
     let sing_tup = ()
     sing_tup[key] = e

@@ -183,7 +183,7 @@ for i in 0..<100 {
 }
 
 var bund = (1,2,3,4)
-for i,index in bund {
+for index,i in bund {
   assert bund[j] == i
 }
 ```
@@ -191,7 +191,7 @@ for i,index in bund {
 ```
 let b = (a=1,b=3,c=5,7,11)
 
-for i,index,key in b {
+for index,key,i in b {
   assert i==1  implies (index==0 and key == 'a')
   assert i==3  implies (index==1 and key == 'b')
   assert i==5  implies (index==2 and key == 'c')

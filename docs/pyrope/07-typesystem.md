@@ -808,9 +808,9 @@ let xxx = proc(some,code) {
 
 // file local.prp
 let setup_xx = proc() {
-  var xx = regref("uart_addr")// match xxx.uart_addr if xxx is in hierarchy
-  for i,index in ref xx {     // ref in for to allow element updates
-    i = 0x300+index*0x10      // sets uart_addr to 0x300, 0x310, 0x320...
+  var xx = regref("uart_addr") // match xxx.uart_addr if xxx is in hierarchy
+  for index,val in ref xx {    // ref in for to allow element updates
+    val = 0x300+index*0x10     // sets uart_addr to 0x300, 0x310, 0x320...
   }
 }
 ```

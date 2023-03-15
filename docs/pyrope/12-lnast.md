@@ -1653,15 +1653,15 @@ The `for` construct is also a loop, but it can have element, index, and key in t
 
 === "Pyrope for"
     ```
-    for i,index,key in tup {
-      mycall(i,index,key)
+    for index,key,value in tup {
+      mycall(value,index,key)
     }
     ```
 === "Pyrope ref for"
     ```
-    for i,index,key in ref tup {
-      mycall(i,index,key)
-      i = 0
+    for index,key,value in ref tup {
+      mycall(value,index,key)
+      value = 0
     }
     ```
 === "LNAST for"
@@ -1678,7 +1678,7 @@ The `for` construct is also a loop, but it can have element, index, and key in t
       ref ___2
       stmts
         var
-          ref i
+          ref value
           ref _
         var
           ref index
@@ -1693,14 +1693,14 @@ The `for` construct is also a loop, but it can have element, index, and key in t
             ref index
             const "key"
           tup_get
-            ref i
+            ref value
             ref tup
             ref index
           tup_add
             ref ___6
-            ref i
             ref index
             ref key
+            ref value
           fcall
             ref ___empty
             ref mycall
@@ -1732,7 +1732,7 @@ The `for` construct is also a loop, but it can have element, index, and key in t
       ref ___2
       stmts
         var
-          ref i
+          ref value
           ref _
         var
           ref index
@@ -1747,14 +1747,14 @@ The `for` construct is also a loop, but it can have element, index, and key in t
             ref index
             const "key"
           tup_get
-            ref i
             ref tup
             ref index
+            ref value
           tup_add
             ref ___6
-            ref i
             ref index
             ref key
+            ref value
           fcall
             ref ___empty
             ref mycall
@@ -1762,7 +1762,7 @@ The `for` construct is also a loop, but it can have element, index, and key in t
           tup_set
             ref tup
             ref index
-            ref i
+            ref value
           add
             ref index
             ref index
