@@ -13,6 +13,15 @@ lower = (addra << 4) + 8
 upper = ((addra + 1) << 4) - 1
 post_addra = h_rdata@[lower..=upper]
 
+// Pyrope GPT-4 created:
+
+// Calculate lower and upper bounds for the address range
+let lower_bound: u32 = (addra << 4) + 8
+let upper_bound: u32 = ((addra + 1) << 4) - 1
+
+// Extract data from h_rdata within the specified address range
+let post_processed_addra: u32 = h_rdata@[lower_bound..=upper_bound]
+
 
 // No .U all over
 // No different = and := assign

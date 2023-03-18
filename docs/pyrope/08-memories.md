@@ -243,7 +243,7 @@ let flatten = fun(...arr) {
   for i in arr {
     res ++= i
   }
-  ret res
+  return res
 }
 
 assert flatten(d2) == (1,2,3,4)

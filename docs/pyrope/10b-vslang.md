@@ -109,17 +109,17 @@ let max_gap_count = fun(nums) {
     for i in 0..<a.length by num {
       res ++= f(a[i..+num])
     }
-    ret res
+    return res
   }
   let count = fun(a,b) {
     var r = 0
     for i in a {
       r += 1 when i == b
     }
-    ret r
+    return r
   }
 
-  ret numbers
+  return numbers
      |> sort(fun(a,b) { a<b })
      |> adjacent_transform(num=2, fun(a,b) { a-b } )
      |> fun(a) { count(a, a.max) }
@@ -219,10 +219,10 @@ let AnObject = (
 let f1 = proc(ref self:AnObject) -> :i32 { // unnamed output tuple
   let res = self.v
   self.v += 1
-  ret res
+  return res
 }
 let f2 = fun(self:AnObject) -> :i32 {
-  ret self.v
+  return self.v
 }
 ```
 

@@ -95,7 +95,7 @@ let t2 = (a:int=100, b:string)
 var v1 = (a=33     , b="hello")
 
 let f1 = fun() {
-  ret (a=33     , b="hello")
+  return (a=33     , b="hello")
 }
 
 assert t1    equals t2
@@ -201,8 +201,8 @@ Ignoring the value is what makes `equals` different from `==`. As a result
 different functionality functions could be `equals`.
 
 ```
-let a = fun() { ret 1 }
-let b = fun() { ret 2 }
+let a = fun() { 1 }
+let b = fun() { 2 }
 assert a equals _:fun()    // 1 !equals :fun()
 
 assert a() != b()              // 1 != 2
@@ -281,7 +281,7 @@ assert t4  is     t1
 assert t4 !is     t2
 
 let f2 = fun(x) where x is X1 {
-  ret x.b + 1
+  x.b + 1
 }
 ```
 
@@ -613,11 +613,16 @@ This means that when ignoring named vs unnamed calls, overloading behaves like
 this:
 
 ```
-let x = fn(args)
+let x:u32 = fn(a1,a2)
 
-let x = for i in fn { last i(args) when (i.[inp] does args)
-                                    and (i.[out] does x   )
-                                    and (i.[where](args)   ) }
+let model_poly_call = fun(fn, ...args)->(out) {
+  for f in fn {
+     continue unless f.[inp] does args
+     continue unless f.[out] does out
+     return f(args) when i.[where](args)
+  }
+}
+let x:u32 = model_poly_call(fn, a1, a2)
 ```
 
 There are several uses for introspection, but for example, it is possible to build a
@@ -633,7 +638,7 @@ let randomize::[debug] = fun(ref self) {
       i = rnd.boolean()
     }
   }
-  ret self
+  self
 }
 
 let x = (a=1,b=true,c="hello")
@@ -670,10 +675,10 @@ Any call to a function or tuple outside requires a prior `import` statement.
 // file: src/my_fun.prp
 let fun1    = fun(a,b) { a+b }
 let fun2    = fun(a) {
-  let inside = fun() { ret 3 }
-  ret a
+  let inside = fun() { 3 }
+  a
 }
-let another = fun(a) { ret a }
+let another = fun(a) { a }
 
 let mytup = (
   ,call3 = fun() { puts "call called" }
@@ -838,7 +843,7 @@ or register reference.
 
 ```
 let bpred = ( // complex predictor
-  ,let taken = fun(){ ret self.some_table[som_var] >=0 }
+  ,let taken = fun(){ self.some_table[som_var] >=0 }
 )
 
 test "mocking taken branches" {
@@ -918,8 +923,8 @@ let My_2_elem = (
     } ++ proc(ref self) { // default _ assignment
       self.data = _
     }
-  ,getter = fun(self)         { ret self.data    } 
-         ++ fun(self, i:uint) { ret self.data[i] }
+  ,getter = fun(self)         { self.data    } 
+         ++ fun(self, i:uint) { self.data[i] }
 )
 
 var v:My_2_elem = _
@@ -970,9 +975,9 @@ to customize by return type:
 let showcase = (
   ,v:int = _
   ,getter = fun(self)->(_:string) where self.i>10 {
-    ret format("this is a big {} number", self.v)
+    format("this is a big {} number", self.v)
   } ++ fun(self)->(_:int) {
-    ret self.v
+    self.v
   }
 )
 
@@ -992,9 +997,9 @@ In this case, it allows building typecast per type.
 ```
 let my_obj = (
   ,val:u32 = _
-  ,getter = fun(self)->(_:string ){ ret string(self.val) }
-       ++ fun(self)->(_:bool){ ret self.val != 0    }
-       ++ fun(self)->(_:int    ){ ret self.val         }
+  ,getter = fun(self)->(_:string ){ string(self.val) }
+       ++ fun(self)->(_:bool){ self.val != 0    }
+       ++ fun(self)->(_:int    ){ self.val         }
 )
 ```
 
@@ -1060,7 +1065,7 @@ Array index also use the setter or getter methods.
 var my_arr = (
   ,vector:[16]u8 = 0
   ,getter = fun(self, idx:u4) {
-     ret self.vector[idx]
+     self.vector[idx]
   }
   ,setter = proc(ref self, idx:u4, val:u8) {
      self.vector[idx] = val
@@ -1120,7 +1125,7 @@ let t=(
   ,v:string = _
   ,setter = proc(ref self) { self.v = a }
   ,lt = fun(self,other)->(_:bool){ self.v  < other.v }
-  ,eq = fun(self,other)            { self.v == other.v } // infer ret
+  ,eq = fun(self,other)            { self.v == other.v } // infer return
 )
 
 var m1:t = 10
@@ -1170,9 +1175,9 @@ let t2=(
   ,xx_a=33
   ,yy_b = "foo"
   ,eq = fun(self, o:t1) {
-    ret self.xx_a == o.b and self.xx_y == o.long_name
+    return self.xx_a == o.b and self.xx_y == o.long_name
   } ++ fun(self, o:t2) {
-    ret self.xx_a == o.xx_a and self.xx_y == o.xx_y
+    return self.xx_a == o.xx_a and self.xx_y == o.xx_y
   }
 )
 

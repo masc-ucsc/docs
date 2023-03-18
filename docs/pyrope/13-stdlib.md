@@ -19,7 +19,7 @@ let plus = fun(...a:int)->(_:int) {
   for e in a {
     r += e
   }
-  ret r
+  r
 }
 ```
 
@@ -36,7 +36,7 @@ cassert p.len(x) == 3
 
 Library code:
 ```
-let len = fun(x) { ret x.[size] }
+let len = fun(x) { x.[size] }
 ```
 
 ### map
@@ -52,7 +52,7 @@ cassert x.map(fun(i){ i+1 }) == (2,3,4)
 Library code:
 ```
 let map = fun<T>(f:fun(a:T),...x:[]T) {
-  ret for e in x { f(e) }
+  return f(e) for e in x
 }
 ```
 
@@ -67,8 +67,8 @@ cassert (1,2,3).filter(fun(i){ i!=2 }) == (1,3)
 Library code:
 
 ```
-let map = fun<T>(f:fun(a:T),...x:[]T) {
-  ret for e in x { if f(e) { cont x } }
+let filter = fun<T>(f:fun(a:T)->(_:Bool),...x:[]T) {
+  return e for e in x if not f(e)
 }
 ```
 
@@ -84,13 +84,13 @@ Library code:
 
 ```
 let reduce = fun(op:fun<T>(a:T,b:T)->(_:T), ...x) {
-  ret x when x.[size] <= 1
+  return x when x.[size] <= 1
 
   var res = x[0]
   for i in x[1..] {
     res = op(res, i)
   }
-  ret res
+  return res
 }
 ```
 

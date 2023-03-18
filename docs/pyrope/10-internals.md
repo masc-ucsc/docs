@@ -461,9 +461,9 @@ execution.
     var x_s = 10
 
     let call_captured = fun[x_s]() {
-      ret fun[x_s]() {
+      return fun[x_s]() {
         assert x_s == 10
-        ret x_s
+        return x_s
       }
     }
 
@@ -522,7 +522,7 @@ may do this implementation.
     ```
     let j = 1
     let b = fun[j](x:i32)-> :i32 {
-      ret x+j
+      return x+j
     }
 
     assert b(1) == 2
@@ -534,7 +534,7 @@ may do this implementation.
       var addX = (
         ,a: i32 = a                        // copy value, runtime or comptime
         ,getter = fun(self, x: i32) {
-          ret x + self.a
+          return x + self.a
         }
       )
 
@@ -548,7 +548,7 @@ may do this implementation.
       a += 1
 
       let addX = fun[a](x: i32) { // Same behaviour as closure with tuple
-        ret x + a
+        return x + a
       }
 
       a += 100;
@@ -598,12 +598,12 @@ var x = 3
 let f1 = fun[x]()->(_:int){
    assert x == 3
    var x = _    // compile error. Shadow captured x
-   ret 200
+   return 200
 }
 let f2 = fun()->(_:int){
    var x = _    // OK, no captures 'x' variable
    x = 100
-   ret x
+   return x
 }
 ```
 
@@ -617,7 +617,7 @@ var y = 10
 let fun2 = fun[y]()->(_:int){
   y = 100              // compile error, y is immutable when captured
   var x  = 200
-  ret y + x
+  return y + x
 }
 x = 1000
 assert fun2() == 203
@@ -861,11 +861,11 @@ reference.
 
 
 ```
-let args = fun(x) { puts "args:{}", b ; ret 1}
-let here = fun()  { puts "here" ; ret 3}
+let args = fun(x) { puts "args:{}", b ; 1}
+let here = fun()  { puts "here" ; 3}
 
-let call_now   = fun(f:fun){ ret f() } 
-let call_defer = fun(f:fun){ ret f   } 
+let call_now   = fun(f:fun){ return f() } 
+let call_defer = fun(f:fun){ return f   } 
 
 let x0 = call_now(here)          // prints "here"
 let e1 = call_now(args)          // compile error, args needs arguments

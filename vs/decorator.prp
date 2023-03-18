@@ -16,5 +16,34 @@ let add = fun(...args) {
   ret total
 }
 
-filter 1, 2, 100, fun(a) { ret a < 30 } |> add
+let total = filter(1, 2, 100, fun(a) { ret a < 30 } ) |> add
+
+
+----
+
+let filter = fun<T>(...args:T[],fn:fun(a:T)->bool) {
+  ret for i in args {
+    cont i when fun(i)
+  }
+}
+
+let add = fun(...args) {
+  let total = args[0]
+  for i in args[1..] {
+    total += i
+  }
+  ret total
+}
+
+let total = filter(1, 2, 100, fun(a) { ret a < 30 } ) |> add
+
+
+----
+GPT-4 prefers a more Python like comprehensions
+
+
+fun<T> filter(args: T[], predicate: fun(a: T) -> bool) -> T[] {
+    ret [i for i in args if predicate(i)]
+}
+
 

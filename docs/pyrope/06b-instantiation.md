@@ -176,7 +176,7 @@ or non-short-circuit (`and_then`/`or_else`) expressions.
 === "Lambda call (inlined)"
 
     ```
-    let f = fun(a,b) { ret if a == 0 { 3 }else{ b } }
+    let f = fun(a,b) { if a == 0 { 3 }else{ b } }
 
     var lhs = c
     if cond {
@@ -281,7 +281,7 @@ the condition is false.
           let res = self.total
           self.total::[wrap] = res+a
 
-          ret res
+          res
         }
       )
 
@@ -306,7 +306,7 @@ the condition is false.
           let res = self.total
           self.total::[wrap] = res+a
 
-          ret res
+          res
         }
       )
 

@@ -147,11 +147,11 @@ let telescope_unit3 = fun(a:u32,b:u32) -> (_:u32) {
     let tmp = a+1
   } #>one_pipe[lat=1] {
     if b == 0 {
-      ret tmp
+      return tmp
     }
     let tmp2 = tmp-b
   } #> {
-    ret tmp2
+    return tmp2
   }
 }
 ```

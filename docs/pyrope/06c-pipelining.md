@@ -359,7 +359,7 @@ the conceptual problems of integrating them:
       reg r  = _
       let rr = r           // get flop value
       r = a+b
-      ret rr
+      return rr
     }
     let mul3 = proc(a,b) { // 3 cycle multiply
       reg reg1 = _
@@ -368,7 +368,7 @@ the conceptual problems of integrating them:
       reg3 = reg2
       reg2 = reg1
       reg1 = a * b
-      ret reg3
+      return reg3
     }
 
     let block = proc(in1,in2)->(out) {
@@ -509,12 +509,12 @@ let quick_log2 = fun(a) {
     i *= 2
   }
 
-  ret v
+  return v
 }
 
 let div=proc(a,b,id)->(res,id) {
   loop #>free_div_units[4] {
-    ret (a >> quick_log2(b), id) when b@+[..] == 1
+    return (a >> quick_log2(b), id) when b@+[..] == 1
     #>my_fsm[lat=5,num=1] {
       res = (a/b, id)
     }

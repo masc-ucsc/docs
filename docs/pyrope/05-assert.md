@@ -91,8 +91,8 @@ equivalent implementation bit.
     follows."
 
 ```
-let fun1 = fun(a,b) { ret a | b}
-let fun2 = fun(a,b) { ret ~(~a | ~b) }
+let fun1 = fun(a,b) { a | b}
+let fun2 = fun(a,b) { ~(~a | ~b) }
 lec fun1, fun2
 ```
 
@@ -201,7 +201,7 @@ for i in 1..<100 {
 }
 
 let get_rand_0_2556 = fun(a:u8) {
-  ret a.[rand]
+  a.[rand]
 }
 ```
 
@@ -228,7 +228,7 @@ Pyrope has the `test [message [,args]+] ( [stmts+] }`.
 
 === "Many parallel tests"
     ```
-    let add = fun(a,b) { ret a+b }
+    let add = fun(a,b) { a+b }
 
     for a in 0..=20 {
       for b in 0..=20 {
@@ -241,7 +241,7 @@ Pyrope has the `test [message [,args]+] ( [stmts+] }`.
 
 === "Single large test"
     ```
-    let add = fun(a,b) { ret a+b }
+    let add = fun(a,b) { a+b }
 
     test "checking add" {
       for a in 0..=20 {

@@ -99,7 +99,7 @@ assert a == 1000 when a > 10  // assert never executed either
 
 reg my = 3 when some_condition  // no register declared otherwise
 
-ret "fail" unless success_condition
+return "fail" unless success_condition
 ```
 
 Complex assignments like `a |> b(1) |> c` can not be gated because it is not
@@ -118,10 +118,10 @@ variables have scope from definition until the end of the code block.
 
 
 Code blocks are different from lambdas. A lambda consists of a code block but
-it has several differences. In lambdas, variables defined in upper scopes are
-accessed inside as immutable copies only when captured by scope, inputs and
-outputs could be constrained, and the `ret`/`return` statements finish a lambda
-not a code block.
+it has several differences. In lambdas, (1) variables defined in upper scopes
+are accessed inside as immutable copies only when captured by scope; (2) inputs
+and outputs could be constrained, and (3) the `return` statement finishes a
+lambda not a code block.
 
 
 The main features of code blocks:
@@ -135,12 +135,9 @@ The main features of code blocks:
   order](02-basics.md#evaluation-order) provides more details on expressions
   evaluation order.
 
-* When used in an expression or lambda, the last statement in the code block
-  can be an expression.
-
-* `brk/break` vs `ret/return`: Some code blocks, not lambda, can be terminated
-  with the `brk/break` statement. A `ret/return` statement terminates the
-  lambda, not the expression code block.
+* When used in an expression or lambda, the last statement in the lambda code
+  block can be an expression. It is not needed to add the `return` keyword in
+  this case.
 
 ```
 {
@@ -163,8 +160,18 @@ if {let a=1+yy; 13<a} {
   some_code()
 }
 
-let z3 = 1 + { if true { brk 3  } else { assert false } }
-assert z4 == 4
+let doit = fun(f,a) {
+  let x = f(a)
+  assert x == 7
+  return 3
+}
+
+let z3 = doit(fun(a) { 
+  assert a!=0
+  return 7             // exist the current lambda
+  100                  // never reached statement
+}, 33)
+cassert z3 == 3
 ```
 
 ## Loop (`for`)
@@ -202,16 +209,14 @@ for index,key,i in b {
 
 
 The `for` can also be used in an expression that allows building comprehensions
-to initialize arrays. To indicate the values to add in the comprehensions there
-are `cont`, `brk`, or the last expression in the `for` code block.
+to initialize arrays. Pyrope uses a comprehension similar to Julia or Python.
 
 ```
 var c = for i in 1..<5 { var xx = i }  // compile error, no expression
-var c = for i in 0..<5 { cont i }
-var d = for i in 0..<5 { i }
-var 2 = for i in 0..<5 { brk i }
-assert c == (0,1,2,3,4) == d
-assert e == (0)
+var d = i for i in 0..<5 
+var e = i for i in 0..<5 if i
+assert (0,1,2,3,4) == d
+assert e == (1,2,3,4)
 ```
 
 The iterating element is copied by value, if the intention is to iterate over a
@@ -230,38 +235,19 @@ assert b == (2,3,4,5,6)
 
 ### Code block control
 
-Code block control statements allow changing the control flow for `lambdas`,
-`for`, `loop`, and `while` statements. When the control flow is changed, some allow
-returning a value (`ret`, `brk`, `cont`) and others do not (`return`, `break`,
-`continue`).
-
+Code block control statements allow changing the control flow for `lambdas` and
+loop statements (`for`, `loop`, and `while`). `return` can have a value.
 
 * `return` exits or terminates the current lambda. The current output variables
-  are provided as the `lambda` output.
+  are provided as the `lambda` output. If a tuple is provided, the tuple is the
+  returned value, the output variables are not used.
 
-* `ret` behaves like `return` but requires a tuple. The tuple is the returned
-  value, the output variables are not used.
+* `break` terminates the closest inner loop (`for`/`while`/`loop`). If none is
+  found, a compile error is generated.
 
-* `break` terminates the closest higher code block that belongs to an
-  expression, a `for`, or a `while`. If neither is found, a compile error is
-  generated.
-
-* `brk` behaves like `break` but a return tuple is provided. This is maybe
-  needed when the `for` is used in an expression or comprehension. Notice that
-  neither `loop` or `while` can be used as expressions. In addition, the `brk`
-  can be used in expression code blocks. The `brk` is equivalent to a `ret` but
-  terminates the closest `for` code block.
-
-* `continue` looks for the closest `for`/`while`/`loop` code block. The `continue`
-  will perform the next loop iteration. If no upper loop is found, a compile
-  error is generated.
-
-* `cont` behaves like the `continue` but a tuple is provided. The `cont` is
-  used with `for` comprehensions, and the tuple provided is added to the
-  comprehension result. 
-
-* While the `ret`/`return` exist the current lambda, the
-  `cont`/`continue`/`brk`/`break` exist the current scope.
+* `continue` looks for the closest inner loop (`for`/`while`/`loop`) code
+  block. The `continue` will perform the next loop iteration. If no inner loop
+  is found, a compile error is generated.
 
 
 ```
@@ -288,35 +274,9 @@ while a>0 {
   assert false         // never executed
 }
 assert total2 == (3,2)
-```
 
-`ret`, `brk`, and `cont` statements can have a tuple. This is only useful when
-the statements are used in an expression.
-
-```
-total = for i in 1..=9 {
-  cont  i+10 when i < 3
-  brk  i+20 when i > 5
-}
-assert total == (11, 12, 3, 4, 5, 26)
-
-let v = fun() { ret 4 }
-assert v == 4
-
-let y = {         // expr scope1
-  var d=1 
-  brk {          // start expr scope2, brk finishes scope1
-    if true { 
-      brk 33     // finishes scope2
-      assert false 
-    } else { 
-      brk d
-      assert false 
-    }
-  } + 200 
-  assert false
-}
-assert y == (33+200)
+total = i+10 for i in 1..=9 if i<3
+assert total == (11, 12)
 ```
 
 ## while/loop
@@ -447,7 +407,7 @@ randomization outside the test statement increases the number of tests:
 
 === "Parallel tests"
     ```
-    let add = fun(a,b) { ret a+b }
+    let add = fun(a,b) { a+b }
 
     for i in 0..<10 { // 10 tests
       let a = (-30..<100).rand
@@ -461,7 +421,7 @@ randomization outside the test statement increases the number of tests:
 
 === "Single test"
     ```
-    let add = fun(a,b) { ret a+b }
+    let add = fun(a,b) { a+b }
 
     test "test 10 additions" {
       for i in 0..<10 { // 10 tests

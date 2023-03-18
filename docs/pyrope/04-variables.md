@@ -276,7 +276,7 @@ assert 10 to  0 by -2 == (10,8,6,4,2, 0)
 assert -1 to 2 == (-1,0,1,2)
 let x = -1..=2                         // compile error, negative value range
 
-assert (for i in 0..=10 by 2 { cont i }) == (0,2,4,6,8,10)
+assert (i for i in 0..=10 by 2) == (0,2,4,6,8,10)
 ```
 
 Since the range is an integer, a decreasing range should have the same meaning
@@ -338,13 +338,13 @@ therefore it is recommended to start with Uppercase.
 var bund1 = (color:string, value:s33)
 x:bund1        = _      // OK, declare x of type bund1 with default values
 bund1.color    = "red"  // OK
-bund1.is_green = fun(self) { ret self.color == "green" }
+bund1.is_green = fun(self) { self.color == "green" }
 x.color        = "blue" // OK
 
 let typ = (color:string, value:s33, is_green:fun(self) = _)
 y:typ        = _        // OK
 typ.color    = "red"    // compile error
-typ.is_green = fun(self) { ret self.color == "green" }
+typ.is_green = fun(self) { self.color == "green" }
 y.color      = "red"    // OK
 
 let bund3 = (color:string, value:s33)
@@ -456,7 +456,7 @@ but the syntax is cleaner.
 
     read_state = fun(x) {
       let f:u32:[comptime] = x // f is compile time or a error is generated
-      ret f                    // f should be compile time constant
+      return f                 // f should be compile time constant
     }
 
     var foo = read_state(zz) // foo will be compile time constant
@@ -472,7 +472,7 @@ but the syntax is cleaner.
       let f = x
       cassert f does u32
       cassert f.[comptime]
-      ret f
+      f
     }
 
     var foo = read_state(zz) // foo will be compile time constant
@@ -523,7 +523,7 @@ to the reset wire, not the current reset value.
 let counter = proc(en, width) {
   reg value:uint:[bits=width] = 0
   value = value + 1
-  ret value
+  value
 }
 
 let counter2::[clock_pin=clk1]=counter

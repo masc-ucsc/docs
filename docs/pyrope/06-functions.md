@@ -152,7 +152,7 @@ let my_log::[debug] = fun (...inp) {
   puts
 }
 
-let f = fun<X>(a:X,b:X){ ret a+b }   // enforces a and b with same type
+let f = fun<X>(a:X,b:X){ a+b }   // enforces a and b with same type
 assert f(33:u22,100:u22)
 
 my_log a, false, x+1
@@ -194,7 +194,7 @@ the pipe the argument tuple is concatenated.
 let div  = fun (self,b) { self / b }  // named input tuple
 let div2 = fun (...x){ x.0 / x.1 }    // unnamed input tuple
 
-let noarg = fun () { ret 33 }         // explicit no args
+let noarg = fun () { 33 }         // explicit no args
 
 assert 33 == noarg()
                       
@@ -229,11 +229,11 @@ but only explicit one as explained later.
 
 ```
 var tup = (
-  ,let f1 = fun(self) { ret 1 }
+  ,let f1 = fun(self) { 1 }
 )
 
-let f1 = fun (self){ ret 2 }   // compile error, f1 shadows tup.f1
-let f2 = fun (self){ ret 3 }
+let f1 = fun (self){ 2 }   // compile error, f1 shadows tup.f1
+let f2 = fun (self){ 3 }
 
 assert f1()         != 0  // compile error, missing argument
 assert f1(tup)      != 0  // compile error, f1 shadowing (tup.f1 and f1)
@@ -274,7 +274,7 @@ arg_fun(1,2)     // OK too
 
 var intercepted:(
  ,field:u32
- ,getter=fun(self) { ret self.field + 1 }
+ ,getter=fun(self) { self.field + 1 }
  ,setter=fun(ref self,v ) { self.field = v }
 ) = 0
 
@@ -431,7 +431,7 @@ var a_1 = (
   ,x:u10
   ,let f1 = fun(ref self,x)->(self) { // BOTH ref self and return self is OK
     self.x = x 
-    ret self
+    self
   }
 )
 
@@ -504,7 +504,7 @@ it can be error-prone.
       ,foo = fun () {
          bar = fun() { puts "bar" }
          puts "mem.foo"
-         ret (bar=bar)
+         return (bar=bar)
       }
     )
     b = 3
@@ -531,7 +531,7 @@ it can be error-prone.
       ,foo = fun () {
          bar = fun() { puts "bar" }
          puts "mem.foo"
-         ret (bar=bar)
+         return (bar=bar)
       }
     )
     b = 3
@@ -563,7 +563,7 @@ let fib1 = fun(n) where n==0 {0}
 assert fib1(10) == 55
 
 let fib2 = fun(n) {
-  ret match n {
+  return match n {
     == 0 {0}
     == 1 {1}
     else {fib2(n-1) + fib2(n-2)}

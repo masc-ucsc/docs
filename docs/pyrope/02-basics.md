@@ -242,7 +242,7 @@ section](06-functions.md) has more details on the allowed syntax.
 
 
 ```
-var f = fun(a,b) { ret a + b }
+var f = fun(a,b) { a + b }
 ```
 
 Pyrope naming for consistency:

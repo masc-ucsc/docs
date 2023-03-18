@@ -343,7 +343,7 @@ A more traditional "overload" calling the is possible by calling the lambda dire
 
 ```
 let x = base ++ (
-  ,fun1 = fun() { ret base.fun1() + 100 }
+  ,fun1 = fun() { return base.fun1() + 100 }
 )
 ```
 
@@ -390,9 +390,9 @@ every call but this result in not so maintanable code.
 
 
 ```
-var fun_list = fun(a,b){ ret a+b}
-fun_list ++= fun(a,b,c){ ret a+b+c }
-fun_list ++= fun(a,b,c,d){ ret a+b+c+d }
+var fun_list = fun(a,b){ a+b}
+fun_list ++= fun(a,b,c){ a+b+c }
+fun_list ++= fun(a,b,c,d){ a+b+c+d }
 
 assert fun_list.[size] == 3    // 3 lambda entries in fun_list
 
@@ -402,18 +402,18 @@ assert fun_list(1,2,4,5) == 12
 assert fun_list(1,2,4,5,6) == 18 // compile error, no function with 5 args
 
 
-fun_list ++= fun(a,b){ ret 100}
+fun_list ++= fun(a,b){ 100}
 assert fun_list(1,2) == 3
 
-fun_list = fun(a,b){ ret 200} ++ fun_list
+fun_list = fun(a,b){ 200} ++ fun_list
 assert fun_list(1,2) == 200
 ```
 
 For untyped named argument calls:
 
 ```
-var f1 = fun(a,b){ ret a+b+100 }
-  f1 ++= fun(x,y){ ret x+y+200 }
+var f1 = fun(a,b){ a+b+100 }
+  f1 ++= fun(x,y){ x+y+200 }
 
 assert f1(a=1,b=2) == 103
 assert f1(x=1,y=2) == 203
@@ -423,9 +423,9 @@ assert f1(  1,  2) == 103  // first in list
 For typed calls:
 
 ```
-var fo = fun(a:int,b:string)->(_:bool)  { ret true    }
-  fo ++= fun(a:int,b:int   )->(_:bool)  { ret false   }
-  fo ++= fun(a:int,b:int   )->(_:string){ ret "hello" }
+var fo = fun(a:int,b:string)->(_:bool)  { true    }
+  fo ++= fun(a:int,b:int   )->(_:bool)  { false   }
+  fo ++= fun(a:int,b:int   )->(_:string){ "hello" }
 
 let a = fo(3,hello)
 assert a == true
@@ -441,28 +441,28 @@ assert c == "hello"
 For conditional argument calls:
 
 ```
-var f1 = fun(a,b)      where a >  40 { ret b+100    }
-      ++ fun(a,b)->(x) where x > 300 { ret b+200    } // output x
-      ++ fun(a,b)->(a) where a >  20 { ret b+300    } // input a
-      ++ fun(a,b)->(x) where x >  10 { ret b+400    } // output x
-      ++ fun(a,b)                    { ret a+b+1000 } // default
+var f1 = fun(a,b)      where a >  40 { b+100    }
+      ++ fun(a,b)->(x) where x > 300 { b+200    } // output x
+      ++ fun(a,b)->(a) where a >  20 { b+300    } // input a
+      ++ fun(a,b)->(x) where x >  10 { b+400    } // output x
+      ++ fun(a,b)                    { a+b+1000 } // default
 
 var fun_manual = fun(a,b){  // equivalent but not as maintenable
   if a>40 {
-    ret b+100
+    return b+100
   }
   let x = b + 200
   if x>300 {
-    ret (x=x)
+    return (x=x)
   }
   if a>20 {
-    ret b+300
+    return b+300
   }
   let tmp = a + b
   if tmp >10 {
-    ret (a=tmp)
+    return (a=tmp)
   }
-  ret a+b+1000
+  return a+b+1000
 }
 
 test "check equiv" {
@@ -480,7 +480,7 @@ Add-hoc polymorphism overloads a function, and parametric polymorphism allows to
 parametrize types based on arguments.
 
 ```
-let Param_type = fun(a) { ret (xx:a = _) }
+let Param_type = fun(a) { return (xx:a = _) }
 
 let x:Param_type(string) = (xx="hello")
 let x:Param_type(int)    = (xx=130)
@@ -509,7 +509,7 @@ let smallest = fun(...a) {
   for i in a[1..] {
     x = i when i < x
   }
-  ret x
+  return x
 }
 ```
 
@@ -595,14 +595,14 @@ let Int1 = (
 
 let Int2 = (
   ,var counter:int:[private] = 0
-  ,accumulate = proc(ref self, v) { self.counter += v ; ret self.counter }
+  ,accumulate = proc(ref self, v) { self.counter += v ; return self.counter }
   ,api_pending:proc(ref self, x:string) -> (o:string) = _
 )
 
 let Combined = (...Int1, ...Int2
   ,api_pending = proc(ref self, x:int) -> (o:string) {
     self.add(x)
-    ret string(self.accumulate(self.get()))
+    string(self.accumulate(self.get()))
   }
 )
 ```
@@ -674,7 +674,7 @@ let exclude = fun(o,...a) {
     sing_tup[key] = e
     new_tup ++= sing_tup unless key in o
   }
-  ret new_tup
+  new_tup
 }
 
 let Shape = (
@@ -694,7 +694,7 @@ let Circle = (
   ,rad:i32       = _
   ,area = fun(self) -> (_:i32) {
      let pi = import("math").pi
-     ret pi * self.rad * self.rad
+     return pi * self.rad * self.rad
   }
 ):Shape  // extra check that the exclude did not remove too many fields
 ```
@@ -711,7 +711,7 @@ let rotate = fun(a) where a has 'x', a has 'y' and_then a.y!=30 {
   var r = a
   r.x = a.y
   r.y = a.x
-  ret r
+  return r
 }
 ```
 
