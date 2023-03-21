@@ -94,3 +94,11 @@ let reduce = fun(op:fun<T>(a:T,b:T)->(_:T), ...x) {
 }
 ```
 
+### TODO
+
+ It would be nice to have the same methods (and names) as the c++20 `std::views`
+ adaptors so that it is easier for developers to get familiar. E.g: filter,
+ transform, drop, join, split, reverse, common, counted...
+
+ https://en.cppreference.com/w/cpp/ranges
+

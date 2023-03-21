@@ -15,27 +15,24 @@ simulation runtime, and formal verification time.
 
 There are 5 main verification statements:
 
-* `assert/cassert`: The condition should be true at runtime. If `cassert`, the
-  condition must be true at compile time.
+* `assert` and `cassert` are used to specify conditions that should hold true.
+  `cassert` is required to hold true at compile time and `assert` can be
+  checked either at compile or runtime if too slow to check. If the condition
+  doesn't hold, an error is raised. 
 
-* `optimize/coptimize`: Similar to assert, but allows the tool to simplify code
-  based on it (it has optimization side-effects).
+* `optimize` is exactly like `assert`, but it also allows the tool to simplify
+  code based on the given conditions. This can lead to more efficient code
+  generation. While unproven `assert` can be enabled/disabled during
+  simulation, `optimize` can not be disabled because it can lead to incorrect
+  simulation state.
 
-* `verify`: Similar to assert, but it is potentially slow to check, so it is
-  checked only when formal verification is enabled. Simulation can also check
-  for this, but because it is slow, it may not be active by default.
+* `requires` is statement that can be placed in lambdas. The clause specifies
+  pre conditions to be true when the lambda is called. `requires` allows for code
+  optimizations like `optimize` statement.
 
-* `assume`: Constraints or restricts beyond to check a subset of the valid
-  space. It only affects the `verify` and `assert` command, not the `optimize`.
-  The `assume` command accepts a list of conditions to restrict.
+* `ensures` is a statement similar to `requires` but the clause specifies a
+  post condition. `ensures` allows code optimizations like `optimize` statement.
 
-The `cassert` are syntax suggar for a defined comptime assert. Since it is so
-common, it is part of the basic syntax like `assert`.
-
-```pyrope
-let cassert::[comptime] = assert
-let coptimize::[comptime] = optimize
-```
 
 ```pyrope
 a = 3
@@ -47,6 +44,14 @@ optimize b > 3         // may optimize and perform a runtime check
 
 assume "cond1" where foo < 1 and foo >3 {
    verify bar == 4  // only checked at verification, restricting conditions
+}
+
+let max_not_zero(a,b) -> (res) 
+  requires a>0
+  requires b>0
+  ensures res==a or res==b {
+
+  res = if a>b {a} else {b}
 }
 ```
 
@@ -174,7 +179,7 @@ Adding the `always` modifier before the assert/coverage keywords guarantees
 that the check is performed every cycle independent of the valid attribute.
 
 To provide assert/optimize during reset, Pyrope provides a `always assert`,
-`always cassert`, `always optimize`, `always coptimize`, `always covercase`, and
+`always cassert`, `always optimize`, `always covercase`, and
 `always cover`.
 
 ```
