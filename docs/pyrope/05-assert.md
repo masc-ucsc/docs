@@ -42,11 +42,7 @@ cassert a == 3         // checked at compile time
 verify a < 4           // checked at runtime and verification
 optimize b > 3         // may optimize and perform a runtime check
 
-assume "cond1" where foo < 1 and foo >3 {
-   verify bar == 4  // only checked at verification, restricting conditions
-}
-
-let max_not_zero(a,b) -> (res) 
+let max_not_zero = fun(a,b) -> (res) 
   requires a>0
   requires b>0
   ensures res==a or res==b {

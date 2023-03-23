@@ -302,7 +302,7 @@ let Rgb = (
 let Color = enum(
   ,Yellow:Rgb = 0xffff00
   ,Red:Rgb    = 0xff0000
-  ,Green      = Rgb(0x00ff00) // alternative 
+  ,Green      = Rgb(0x00ff00) // alternative
   ,Blue       = Rgb(0x0000ff)
 )
 
@@ -489,7 +489,7 @@ bitwise operations.
 
 Variant shares syntax with enums declaration, but the usage and functionality
 is quite different. Enums do not allow to update values and variants are tuples
-with multiple labels sharing a single storage location. 
+with multiple labels sharing a single storage location.
 
 
 The main advantage of variant is to save space. This means that the most
@@ -908,10 +908,61 @@ y = ("hello",44)
 cassert x==y
 ```
 
+Tuples can be multi-dimensional, and the index can handle multiple indexes at once.
+
+```
+let Matrix8x8 = (
+  ,data:[8][8]u16 = _
+  ,setter = fun(ref self, x:int(0,7), y:int(0,7), v:u16) {
+    self.data[x][y] = v
+  } ++ fun(ref self, x:int(0,7), v:u16) {
+    for ent in ref data[x] {
+      ent = v
+    }
+  } ++ fun(ref self) { // default initialization
+    for ent in ref data {
+      ent = 0
+    }
+  }
+)
+
+let m:Matrix8x8 = _
+cassert m.data[0][3] == 0
+
+m[1,2] = 100
+cassert m.data[1][2] == 100
+m[1] = 3
+cassert m.data[1][2] == 3
+m[4][5] = 33
+cassert m.data[4][5] == 33
+
+m[1] = 40
+cassert m[1] == (3,40,3,3,3,3,3,3)
+```
+
+The default `getter`/`setter` allows for indexing each of the dimentions and returns
+a slice of the object. Since they can be overwritten, the explicit overload selects
+which to pick.
+
+```
+let Matrix2x2 = (
+  ,data:[2][2]u16 = _
+  ,getter = fun(ref self, x:int(0,2), y:int(0,2)) {
+    self.data[x][y] + 1
+  }
+
+)
+
+let n:Matrix2x2 = _
+n.data[0][1] = 2      // default setter
+
+cassert n[0][1] == 3  // getter does + 1
+cassert n[0] == (0,3) // compile error, no getter for fun(ref self, x)
+```
+
 The symmetric getter method is called whenever the tuple is read. Since each
 variable or tuple field is also a tuple, the getter/setter allow to intercept
 any variable/field. The same array rule applies to the getter.
-
 
 ```
 let My_2_elem = (
@@ -923,7 +974,7 @@ let My_2_elem = (
     } ++ proc(ref self) { // default _ assignment
       self.data = _
     }
-  ,getter = fun(self)         { self.data    } 
+  ,getter = fun(self)         { self.data    }
          ++ fun(self, i:uint) { self.data[i] }
 )
 
@@ -934,7 +985,7 @@ v = (x=0, "hello")
 v[1] = "world"
 
 cassert v[0] == "hello"
-cassert v == ("hello", "world")  // not 
+cassert v == ("hello", "world")  // not
 
 let z = v
 cassert z !equals v   // v has v.data, z does not
@@ -1014,7 +1065,7 @@ var obj1::[attr1] = (
     if v.[attr2] {
       self.data.[attr3] = 33
     }
-    cassert self.[attr1] 
+    cassert self.[attr1]
   }
 )
 ```
