@@ -83,6 +83,26 @@ match let one=1 ; one ++ (2) {
 }
 ```
 
+Since the `==` is the most common condition in the `match` statement, it can be
+ommitted.
+
+```
+for x in 1 to 5 {
+  let v1 = match x {
+    3 { "three" }
+    4 { "four" }
+    else { "neither"}
+  }
+
+  let v2 = match x {
+    == 3 { "three" }
+    == 4 { "four" }
+    else { "neither"}
+  }
+  cassert v1 == v2
+}
+```
+
 ## Gate statements (`when`/`unless`)
 
 A simple statement like assignments, variable declarations, and function calls
