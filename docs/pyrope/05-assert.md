@@ -34,12 +34,20 @@ There are 5 main verification statements:
   post condition. `ensures` allows code optimizations like `optimize` statement.
 
 
+Hardware setups always have an extensive CI/verification setup. This means that
+run-time assertion failures are OK, better compile time to reduce design time,
+but OK at simulation time. This means that in things like type check, if it may
+be OK but not possible to prove, the compiler can decide to insert an assert
+instead of forcing a code structure change. To enforce that an assertion is
+checked only at compile time a `cassert` must be used. `assert`, `requires`,
+`ensures` can be checked at runtime if not possible to check at compile time.
+
+
 ```pyrope
 a = 3
 assert a == 3          // checked at runtime (or compile time)
 cassert a == 3         // checked at compile time
 
-verify a < 4           // checked at runtime and verification
 optimize b > 3         // may optimize and perform a runtime check
 
 let max_not_zero = fun(a,b) -> (res) 
@@ -52,7 +60,7 @@ let max_not_zero = fun(a,b) -> (res)
 ```
 
 A whole statement is conditionally executed using the `when`/`unless` gate expression.
-This is useful to gate verification statements (`assert`, `optimize`, `verify`)
+This is useful to gate verification statements (`assert`, `optimize`)
 that can have spurious error messages under some conditions.
 
 
@@ -76,11 +84,11 @@ In a way, most type checks have equivalent `cassert` checks.
 ## LEC
 
 The `lec` command is a formal verification step that checks that all the
-arguments are logically equivalent. The difference with `verify` is that it
-also accepts functions (only). `lec` does not include the reset state. The
-first argument is the gold model, the rest are implementation. This matters
-because the gold model unknown output bit checks against any value for the
-equivalent implementation bit.
+arguments are logically equivalent. `lec` only works for combinational logic,
+so does not need to worry about state or reset signals. The first argument is
+the gold model, the rest are implementation. This matters because the gold
+model unknown output bit checks against any value for the equivalent
+implementation bit.
 
 
 !!! NOTE
