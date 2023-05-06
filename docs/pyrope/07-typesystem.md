@@ -425,7 +425,7 @@ understand, the comments show the max/min bitwidth computations.
 
 ```
 if cmd? {
-  x,y = cmd     // x.max=cmd.a.max; x.min = 0 (uint) ; ....
+  (x,y) = cmd   // x.max=cmd.a.max; x.min = 0 (uint) ; ....
 }elif x > y {
                 // narrowing: x.min = y.min + 1 = 1
                 // narrowing: y.max = x.min - 1
@@ -450,7 +450,7 @@ the bitwidth by typecasting. For example, this could work:
 reg x = 0
 reg y = 0
 if cmd? {
-  x,y = cmd
+  (x,y) = cmd
 }elif x > y {
   x = x - y
 }else{
@@ -814,8 +814,10 @@ let xxx = proc(some,code) {
 // file local.prp
 let setup_xx = proc() {
   var xx = regref("uart_addr") // match xxx.uart_addr if xxx is in hierarchy
-  for index,val in ref xx {    // ref in for to allow element updates
+  var index = 0
+  for val in ref xx {          // ref does not allow enumerate
     val = 0x300+index*0x10     // sets uart_addr to 0x300, 0x310, 0x320...
+    index += 1
   }
 }
 ```

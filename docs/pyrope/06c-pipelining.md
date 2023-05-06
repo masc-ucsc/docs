@@ -547,10 +547,10 @@ let alu = proc(a,b,op, id)->(res,id) {
   match op {
     == OP.div {
       assert div.[free_div_units]>0
-      res,id = div(a,b,id)
+      (res,id) = div(a,b,id)
     }
-    == OP.mul { res,id = mul(a,b,id) }
-    == OP.add { res,id = add(a,b,id) }
+    == OP.mul { (res,id) = mul(a,b,id) }
+    == OP.add { (res,id) = add(a,b,id) }
   }
 }
 

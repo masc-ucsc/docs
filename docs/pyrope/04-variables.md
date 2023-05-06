@@ -59,8 +59,9 @@ always immutable (`let`).
       let b = 4
       let a = 3333       // compile error, variable shadowing
       var a = 33         // compile error, variable shadowing
+      return b+3
     }
-    f1()
+    assert f1() == 7
     assert x == 10
     assert b == 3        // compile error, undefined variable 'b'
 

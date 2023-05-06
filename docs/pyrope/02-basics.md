@@ -100,7 +100,7 @@ let color     = "blue"
 let extension = "s"
 
 let txt = "I have {num:d} {color} potato{extension}"
-cassert "I have 2 blue potatos"
+cassert txt == "I have 2 blue potatos"
 ```
 
 
@@ -133,13 +133,14 @@ like `or`, `and`) value or an open parenthesis (`(`), the rest of the line
 belongs to a new statement.
 
 ```
+var (a,b,c,d) = _
 a = 1
-  + 3         // 1st stmt
-b,c = (1,3)   // 2nd stmt
+  + 3           // 1st stmt
+(b,c) = (1,3)   // 2nd stmt
 cassert a == 4 and b == 1 and c == 3
 
-d = 1 +       // compile error
-    3         // compile error
+d = 1 +         // OK, but not formatted to style
+    3
 ```
 
 This functionality allows parallelizing the parsing and elaboration in Pyrope.
@@ -160,6 +161,7 @@ as strings.
 ```
 `foo is . strange!\nidentifier` = 4
 `for` = 3
+cassert `for`+1 == `foo is . strange!\nidentifier`
 ```
 
 Using the backtick, Pyrope can use any string as an identifier, even reserved

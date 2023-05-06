@@ -26,8 +26,9 @@ Functions operate only over combinational logic. They can not have any
 synthesis side-effect. This means the function outputs are only a function of
 the function inputs. Any external call can only affect `debug` statements not
 the synthesizable code. `functions` resemble `pure functions` in normal
-programming languages, but they are allowed to have side effects on
-non-synthesizable code.
+programming languages. In pure functions, the function results depend only on
+the input parameters. In Pyrope, they are allowed to have side effects on debug
+code (non-synthesizable).
 
 
 Non-function lambdas are called `procedures` or `methods`. The only difference
@@ -357,9 +358,8 @@ assert a2 == 1   // NOT a2.a == 1
 let a3 = ret3()
 assert a3.a == 3 and a2.b == 4
 
-let x1,x2 = ret3()
+let (x1,x2) = ret3()
 assert x1   == 3 and x2   == 4
-assert x1.a == 3 and x2.b == 4
 ```
 
 ## Attributes

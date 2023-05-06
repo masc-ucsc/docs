@@ -738,7 +738,7 @@ to largest. It is not legal to do a `5..<0` range, the solution is to use a
 
 ```
 let s:string="hell"
-for idx,i in s {
+for (idx,i) in s.enumerate() {
   let v = match idx {
    == 0 { "h" }
    == 1 { "e" }
@@ -749,7 +749,7 @@ for idx,i in s {
 }
 
 let t = (1,2,3)
-for idx,i in t {
+for (idx,i) in t.enumerate() {
   let v = match idx {
    == 0 { 1 }
    == 1 { 2 }
@@ -759,7 +759,7 @@ for idx,i in t {
 }
 
 let r=2..<5
-for idx,i in r {
+for (idx,i) in r.enumerate() {
   let v = match idx {
    == 0 { 2 }
    == 1 { 3 }
@@ -770,7 +770,7 @@ for idx,i in r {
 
 let r2=4 to 2 by -1
 assert r2 == (4,3,2)
-for idx,i in r2 {
+for (idx,i) in r2.enumerate() {
   let v = match idx {
    == 0 { 4 }
    == 1 { 3 }
@@ -791,7 +791,7 @@ for i in 2..<5 {
   assert v == ri
 }
 
-for idx,i in 123 {
+for (idx,i) in enumerate(123) {
   assert i == 123 and idx==0
 }
 ```

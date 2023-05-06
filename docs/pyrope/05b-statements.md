@@ -210,23 +210,29 @@ for i in 0..<100 {
 }
 
 var bund = (1,2,3,4)
-for index,i in bund {
+for (index,i) in bund.enumerate() {
   assert bund[j] == i
 }
 ```
 
 ```
 let b = (a=1,b=3,c=5,7,11)
+assert b.keys() == ('a', 'b', 'c', '', '')
+assert b.enumerate() == ((0,1), (1,3), (2,5), (3,7), (4,11))
+let xx= zip(b.keys(), b.enumerate()) 
+cassert xx == (('a',0,a=1), ('b',1,b=3), ('c',2,c=5), ('',3,7), ('',4,11))
 
-for index,key,i in b {
+for (key,index,i) in zip(keys(b),b.enumerate()) {
   assert i==1  implies (index==0 and key == 'a')
   assert i==3  implies (index==1 and key == 'b')
   assert i==5  implies (index==2 and key == 'c')
   assert i==7  implies (index==3 and key == '' )
   assert i==11 implies (index==4 and key == '' )
 }
-```
 
+let c = ((1,a=3), b=4, c=(x=1,y=6))
+assert c.enumerate() == ((0,(1,a=3)), (1,b=4), (2,c=(x=1,y=6)))
+```
 
 The `for` can also be used in an expression that allows building comprehensions
 to initialize arrays. Pyrope uses a comprehension similar to Julia or Python.
@@ -241,8 +247,9 @@ assert e == (1,2,3,4)
 
 The iterating element is copied by value, if the intention is to iterate over a
 vector or array to modify the contents, a `ref` must be used. Only the element
-is mutable, the index or key are always immutable. The mutable for can not be
-used in comprehensions.
+is mutable. When a `ref` is used, it must be a variable reference, not a
+function call return (value). The mutable for can not be used in
+comprehensions.
 
 ```
 b = (1,2,3,4,5)

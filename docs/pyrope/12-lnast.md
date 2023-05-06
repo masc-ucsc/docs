@@ -1653,14 +1653,14 @@ The `for` construct is also a loop, but it can have element, index, and key in t
 
 === "Pyrope for"
     ```
-    for index,key,value in tup {
+    for (index,key,value) in enumerate(key(tup)) {
       mycall(value,index,key)
     }
     ```
 === "Pyrope ref for"
     ```
-    for index,key,value in ref tup {
-      mycall(value,index,key)
+    for value in ref tup {
+      mycall(value)
       value = 0
     }
     ```

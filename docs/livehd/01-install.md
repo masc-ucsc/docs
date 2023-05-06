@@ -56,6 +56,10 @@ brew install bazelisk.
 
 Linux:
 ```sh
+npm install -g @bazel/bazelisk
+```
+
+```sh
 go install github.com/bazelbuild/bazelisk@latest
 export PATH=$PATH:$(go env GOPATH)/bin
 ```

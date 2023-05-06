@@ -605,7 +605,7 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
     let Top2_t = (
       ,foo:Inner_t = _
       ,setter = proc(ref self,a,b) {
-        self.c, self.d = self.foo(y=a,z=b)
+        (self.c, self.d) = self.foo(y=a,z=b)
       }
     )
 

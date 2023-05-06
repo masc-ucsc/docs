@@ -360,14 +360,15 @@ allowed to avoid the parenthesis at the right-hand-side of the statement. The
 reason is that it is a bit confusing.
 
 ```
-var a,b = 2,3       // compile error, right-hand-side must be a tuple (2,3)
-var a,b = (2,3)
+var a,b = (2,3)    // compile error, left-hand-side must be a tuple (a,b)
+var (a,b) = 2,3    // compile error, right-hand-side must be a tuple (2,3)
+var (a,b) = (2,3)
 assert a==2 and b==3
 
-var c,d = 1..=2    // compile error, range is a single entry assignment
+var (c,d) = 1..=2  // compile error, range is a single entry assignment
 var c = 1..=2      // OK
-var c,d = 1        // compile error, 2 entry tuple in lhs, same in rhs
-var c,d = (1,2)    // OK
+var (c,d) = 1      // compile error, 2 entry tuple in lhs, same in rhs
+var (c,d) = (1,2)  // OK
 assert c == 1 and d == 2
 ```
 
@@ -377,7 +378,7 @@ apply to the immediatly declared variable or item.
 
 ```
 let c = 4
-let x,b = (true, c:u3) // assign x=true, b=4 AND check that c is type u3
+let (x,b) = (true, c:u3) // assign x=true, b=4 AND check that c is type u3
 
 cassert x == true
 cassert b == 4 

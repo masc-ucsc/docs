@@ -15,12 +15,12 @@ for arg in ARGV
         in_code = !in_code
         if in_code and (line =~ /```$/ or line =~ /pyrope/)
           in_pyrope = true
-          #puts
+          #puts "Another code sample:"
           #puts "```"
         else
           in_pyrope = false
           #puts "```"
-          #puts
+          puts
         end
         next
       end
