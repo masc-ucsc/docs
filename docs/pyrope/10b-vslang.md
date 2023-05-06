@@ -106,7 +106,7 @@ let max_gap_count = fun(nums) {
   let sort = import("std").sort
   let adjacent_transform = fun(a,num,f) {
     var res:[] = _
-    for i in 0..<a.length by num {
+    for i in 0..<a.length step num {
       res ++= f(a[i..+num])
     }
     return res

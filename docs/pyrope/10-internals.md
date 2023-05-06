@@ -768,7 +768,7 @@ for (idx,i) in r.enumerate() {
   assert v == i
 }
 
-let r2=4 to 2 by -1
+let r2=4..=2 step -1
 assert r2 == (4,3,2)
 for (idx,i) in r2.enumerate() {
   let v = match idx {
@@ -809,7 +809,7 @@ assert v@[4] == 1       // unsigned output
 assert v@sext[4] == -1  // signed output
 
 assert v@[3..=4] == 0b010 == v@[3,4]
-assert v@[4..=3 by -1] == 0b010
+assert v@[4..=3 step -1] == 0b010
 assert v@[4,3] == v@[3,4] == 0b010
 
 let tmp1 = (v@[4], v@[3])@[..]  // typecast from 

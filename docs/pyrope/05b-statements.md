@@ -87,7 +87,7 @@ Since the `==` is the most common condition in the `match` statement, it can be
 ommitted.
 
 ```
-for x in 1 to 5 {
+for x in 1..=5 {
   let v1 = match x {
     3 { "three" }
     4 { "four" }

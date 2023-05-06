@@ -244,40 +244,38 @@ assert b@[0]          == false
 ```
 
 
-A range is not the same as a tuple with all the elements, it is rather an
-integer with bits sets according to the range values. Range typecase only
-accepts integers as input. If the intention is to create a tuple with default
-values the `to` operators must be used. The `to` is inclusive like `a..=b`
-range[^1].
+A range is a separate tuple. As such it can not directly compare with 
+tupes. It requires an explicit conversion. If the range does not contain
+negative values, it can be converted to an integer back and forth which
+corresponds to a one-hot encoding.
 
-[^1]: In English, and most languages like Pascal, Scala the 0 to 10 is an
-  inclusive range.
+Range type cast from integers use the same one-hot encoding. It is not possible
+to type cast from tuple to range, but it is possible from range to tuple. 
 
 ```
 let c = 1..=3
 assert int(c) == 0b1110
 assert range(0b01_1100) == 2..=4
 
-let d = 1 to 3
-assert d == (1,2,3)
-assert int(d) != 0         // compile error, tuple typecast is not allowed
+assert range(1,2,3)            // compile error, typecast not allowed
+assert (1,2,3) == tuple(1..=3)
 ```
 
-In most cases, the range can be used in contructs like `for` but this is not
-the case if it needs to iterate over negative values, or have a reverse order
-traversal. In those cases, the `a to b` operator must be used.
+In most cases, the range can be used in contructs like `for` for positive and
+negative numbers. The `tuple` typecast is not needed, but if placed the
+semantic is the same. The same `tuple` typecast is also optional when doing a
+comparison. Both ranges a `step` to change the step.
 
-
-Both ranges and `to` operators accept a `by` to change the step.
 ```
-assert int(0..=10 by 2) == 0b101_0101_0101
-assert  0 to 10 by  2 == ( 0,2,4,6,8,10)
-assert 10 to  0 by -2 == (10,8,6,4,2, 0)
+assert   int(0..=10 step  2) == 0b101_0101_0101
+assert tuple(0..=10 step  2) == ( 0,2,4,6,8,10)
+assert tuple(10..=0 step -2) == (10,8,6,4,2, 0)
+assert      (10..=0 step -2) == (10,8,6,4,2, 0)
 
-assert -1 to 2 == (-1,0,1,2)
-let x = -1..=2                         // compile error, negative value range
+assert -1..=2 == (-1,0,1,2)
+let x = -1..=2
 
-assert (i for i in 0..=10 by 2) == (0,2,4,6,8,10)
+assert (i for i in 0..=10 step 2) == (0,2,4,6,8,10)
 ```
 
 Since the range is an integer, a decreasing range should have the same meaning
@@ -285,19 +283,19 @@ that an increasing range (`1..=3 == 3..=1`) but to avoid mistakes/confusions,
 Pyrope generates a compile error in decreasing ranges.
 
 ```
-assert 5..=0       // compile error, only positive ranges allowed
-assert 5..=0 by -1 // compile error, only positive ranges allowed
+assert 5..=0                           // compile error, 5 + 1 never reaches 0
+assert 5..=0 step -1 == (5,4,3,2,1,0)
 ```
 
 A closed range can be converted to a single integer or a tuple. A range
 encoded as an integer is a set of one-hot encodings. As such, there is no
 order, but in Pyrope, ranges always have the order from smallest to largest.
-The `by expr` can be added to indicate a step or step function. This is only
+The `step expr` can be added to indicate a step or step function. This is only
 possible when both begin and end of the range are fully specified.
 
 
 ```
-assert((0..<30 by 10) == (0,10,20)) // ranges and tuples can combined
+assert((0..<30 step 10) == (0,10,20)) // ranges and tuples can combined
 assert((1..=3) ++ 4 == (1,2,3,4))   // tuple and range ops become a tuple
 assert 1..=3 == (1,2,3)
 assert((1..=3)@[..] == 0b1110)      // convert range to integer with @[..]
@@ -818,7 +816,8 @@ cassert 1<<(1,4,3) == 0b01_1010
 
 * `a in b` is element `a` in tuple `b`
 * `a !in b` true when element `a` is not in tuple `b`
-* `a to b by c` returns a tuple with integers between `a` and `b` with step of `c`
+* `tuple(a)` converts `a` to tuple, `a` can be a boolean, range, integer,
+  string, or already a tuple
 
 Most operations behave as expected when applied to signed unlimited precision
 integers. 

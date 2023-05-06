@@ -2,12 +2,18 @@
 
 Tuples are a basic construct in Pyrope. Tuples are defined as an "ordered"
 sequence fields that can be named. Arrays/memories are a subcategory of tuples
-by requiring all the entries to have the same type
-
+by requiring all the entries to have the same type. Internally, there is
+not a difference between tuples and arrays, but it is possible to check
+that all the fields are the same (hence array) by using brackets instead of parenthesis.
 
 ```
 var b = (f1=3,f2=4) // b is named and ordered
 var c = (1,d=4)     // c is ordered and unnamed (some entries are not named)
+
+var d = (1,2,3,4)     // array or tuple
+assert d == [1,2,3,4] // the [] also check that all the fields have same type
+
+assert (true,1) != [true,1]  // compile error, true is not the same type as 1
 ```
 
 To access fields in a tuple we use the dot `.` or `[]`
