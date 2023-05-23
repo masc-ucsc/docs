@@ -8,7 +8,7 @@ Although LiveHD should run on most common Linux distributions, it is heavily tes
 
 The following programs are assumed to be present when building LiveHD:
 
-- GCC 10+ or Clang 10+ (C++17 support is required)
+- GCC 12+ or Clang 12+ (C++20 support is required)
 - Bazel
 - python3
 
