@@ -12,7 +12,7 @@ which lambda to call.
 
 
 !!! Observation
-    
+
     Allowing multiple version of the same library/code is supported by Pyrope.
     It looks like a strange feature from a software point of view, but it is
     common in hardware to have different blocks designed/verified at different
@@ -49,11 +49,19 @@ outputs registerd or just be a generic pure combinational function.
     let add=fun(a,b)->(res) {
       res = a+b
     }
+
+    fun add(a,b)->(res) {  // Same as let add=fun(a,b)->(res)
+      res = a+b
+    }
     ```
 
 === "Combinational (proc)"
     ```
     let add=proc(a,b)->(res) {  // nicer to use fun, but proc works
+      res = a+b
+    }
+
+    proc add(a,b)->(res) {  // same
       res = a+b
     }
     ```
@@ -63,6 +71,10 @@ outputs registerd or just be a generic pure combinational function.
     let add=proc(reg a, reg b)->(res) {
       res = a+b
     }
+
+    proc add(reg a, reg b)->(res) { // same
+      res = a+b
+    }
     ```
 
 === "Outputs Registerd (proc)"
@@ -70,14 +82,20 @@ outputs registerd or just be a generic pure combinational function.
     let add=proc(a, b)->(reg res) {
       res = a+b
     }
+
+    proc add(a, b)->(reg res) { // same
+      res = a+b
+    }
     ```
 
 ## Declaration
 
-Only anonymous lambdas are supported, this means that there is no global
-scope for functions, procedures, or modules. The only way for a file to access
-a lambda is to have access to a local variable with a definition or to "import"
-a variable from another file.
+Only anonymous lambdas are supported, this means that there is no global scope
+for functions, procedures, or modules. The only way for a file to access a
+lambda is to have access to a local variable with a definition or to "import" a
+variable from another file. The more familiar `fun name` or `proc name`
+declaration is also valid, but it is syntax sugar and equivalent to `let name =
+fun`.
 
 ```
 let a_3   = {   3 }      // just scope, not a lambda. Scope is evaluate now
@@ -198,7 +216,7 @@ let div2 = fun (...x){ x.0 / x.1 }    // unnamed input tuple
 let noarg = fun () { 33 }         // explicit no args
 
 assert 33 == noarg()
-                      
+
 assert noarg == 33 // compile error, `noarg()` needed for calls without arguments
 
 a=div(3  , 4  , 3)       // compile error, div has 2 inputs
@@ -308,7 +326,7 @@ lambda outputs can not have a `ref` modifier.
 
 
 No logical or arithmetic operation can be done with a `ref`. As a result, it is
-only useful for lambda input arguments. 
+only useful for lambda input arguments.
 
 
 ```
@@ -420,6 +438,7 @@ let Nested_call = (
   ,let outter= proc(ref self) {  self.x = 100 ; self.inner(); self.x = 5 }
   ,let inner = fun(self) { assert self.x == 100 }
   ,let faulty = proc(self) { self.x = 55 } // compile error, immutable self
+  ,proc okcall(ref self) { self.x = 55 }   // equivalent to let okcall=proc
 )
 ```
 
@@ -430,7 +449,7 @@ variable return.
 var a_1 = (
   ,x:u10
   ,let f1 = fun(ref self,x)->(self) { // BOTH ref self and return self is OK
-    self.x = x 
+    self.x = x
     self
   }
 )
@@ -442,7 +461,7 @@ assert a_1.x == 3 and a_2.x == 4
 // Same behavior as in a function with UFCS
 fun2 = fun (ref self, x) { self.x = x }
 
-a_1.fun2(10)    
+a_1.fun2(10)
 var a_3 = a_1.fun2(20)
 assert a_1 == 10 and a_3 == 20
 ```
