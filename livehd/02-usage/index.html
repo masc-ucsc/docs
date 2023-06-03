@@ -1,0 +1,1273 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../01-install/">
+      
+      
+        <link rel="next" href="../03-memory/">
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.15">
+    
+    
+      
+        <title>Usage - LiveHD and Pyrope</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.26e3688c.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ecc896b0.min.css">
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CFira+Code:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Fira Code"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/table.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#usage" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LiveHD and Pyrope" class="md-header__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LiveHD and Pyrope
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Usage
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+            
+              <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3Z"/></svg>
+              </label>
+            
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_2">
+            
+              <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6zm0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4zM7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+              </label>
+            
+          
+        </form>
+      
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LiveHD and Pyrope" class="md-nav__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    LiveHD and Pyrope
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        LiveHD and Pyrope
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+          Livehd
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Livehd
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00-intro/" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-install/" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Usage
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Usage
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#sample-usage" class="md-nav__link">
+    Sample usage
+  </a>
+  
+    <nav class="md-nav" aria-label="Sample usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#general-concepts" class="md-nav__link">
+    General concepts
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#starting-and-exiting-the-shell" class="md-nav__link">
+    Starting and exiting the shell
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verilog-compilation" class="md-nav__link">
+    Verilog Compilation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyrope-compilation" class="md-nav__link">
+    Pyrope Compilation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#firrtl-compilation" class="md-nav__link">
+    FIRRTL Compilation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#textual-lnast-ir-dump" class="md-nav__link">
+    Textual LNAST IR Dump
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#textual-lgraph-ir-dump" class="md-nav__link">
+    Textual LGraph IR Dump
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lgraph-serialization" class="md-nav__link">
+    LGraph serialization
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lgraph-deserialization" class="md-nav__link">
+    LGraph deserialization
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#graphviz-lgraph-ir-dump" class="md-nav__link">
+    Graphviz LGraph IR Dump
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-a-custom-pass" class="md-nav__link">
+    Running a custom pass
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#low-level-directed-build" class="md-nav__link">
+    Low level directed build
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parallel-compilation" class="md-nav__link">
+    Parallel Compilation
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-memory/" class="md-nav__link">
+        Memory and concurrency
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-api/" class="md-nav__link">
+        C++ API
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-lgraph/" class="md-nav__link">
+        LGraph
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-lnast/" class="md-nav__link">
+        LNAST
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-bazel/" class="md-nav__link">
+        Bazel build
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10b-3rdparty/" class="md-nav__link">
+        3rd Party
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../11-pass/" class="md-nav__link">
+        Creating a Pass
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../12-github/" class="md-nav__link">
+        GitHub Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../13-style/" class="md-nav__link">
+        Coding Style
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          Pyrope
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Pyrope
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/00-hwdesign/" class="md-nav__link">
+        Hardware Design
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/01-introduction/" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/02-basics/" class="md-nav__link">
+        Basic syntax
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/03-bundle/" class="md-nav__link">
+        Tuples
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/04-variables/" class="md-nav__link">
+        Variables and types
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/05-assert/" class="md-nav__link">
+        Verification
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/05b-statements/" class="md-nav__link">
+        Statements
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/06-functions/" class="md-nav__link">
+        Lambdas
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/06b-instantiation/" class="md-nav__link">
+        Instantiation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/06c-pipelining/" class="md-nav__link">
+        Pipelining
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/07-typesystem/" class="md-nav__link">
+        Type system
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/07b-structtype/" class="md-nav__link">
+        Structural Typing
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/08-memories/" class="md-nav__link">
+        Memories
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/09-stdlib/" class="md-nav__link">
+        Pyrope std lib
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/10-internals/" class="md-nav__link">
+        Internals
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/10b-vslang/" class="md-nav__link">
+        vs Other Languages
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/11-deprecated/" class="md-nav__link">
+        Deprecated or Future
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/12-lnast/" class="md-nav__link">
+        LNAST
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/13-stdlib/" class="md-nav__link">
+        Pyrope Standard Library
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#sample-usage" class="md-nav__link">
+    Sample usage
+  </a>
+  
+    <nav class="md-nav" aria-label="Sample usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#general-concepts" class="md-nav__link">
+    General concepts
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#starting-and-exiting-the-shell" class="md-nav__link">
+    Starting and exiting the shell
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verilog-compilation" class="md-nav__link">
+    Verilog Compilation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyrope-compilation" class="md-nav__link">
+    Pyrope Compilation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#firrtl-compilation" class="md-nav__link">
+    FIRRTL Compilation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#textual-lnast-ir-dump" class="md-nav__link">
+    Textual LNAST IR Dump
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#textual-lgraph-ir-dump" class="md-nav__link">
+    Textual LGraph IR Dump
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lgraph-serialization" class="md-nav__link">
+    LGraph serialization
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lgraph-deserialization" class="md-nav__link">
+    LGraph deserialization
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#graphviz-lgraph-ir-dump" class="md-nav__link">
+    Graphviz LGraph IR Dump
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-a-custom-pass" class="md-nav__link">
+    Running a custom pass
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#low-level-directed-build" class="md-nav__link">
+    Low level directed build
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parallel-compilation" class="md-nav__link">
+    Parallel Compilation
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h1>
+<p>This is a high level description of how to use LiveHD.</p>
+<h2 id="sample-usage">Sample usage<a class="headerlink" href="#sample-usage" title="Permanent link">&para;</a></h2>
+<p>Below are some sample usages of the LiveHD shell (lgshell). A bash prompt is
+indicated by <code>$</code>, an lgshell prompt is indicated by <code>livehd&gt;</code>, and a Yosys
+prompt is indicated by a <code>yosys&gt;</code>. Lgshell supports color output and
+autocompletion using the tab key.</p>
+<h3 id="general-concepts">General concepts<a class="headerlink" href="#general-concepts" title="Permanent link">&para;</a></h3>
+<p>Currently, LiveHD can interface Verilog, FIRRTL, and Pyrope HDLs through
+different front-end commands. After the parsing step, the HDL source can
+be be transformed into LiveHD's internal intermediate representations, LNAST and
+LGraph, and perform mid-end optimizations based on the two IRs, and generates
+the optimized (or synthesized) Verilog code at the back-end. </p>
+<h3 id="starting-and-exiting-the-shell">Starting and exiting the shell<a class="headerlink" href="#starting-and-exiting-the-shell" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>$ ./bazel-bin/main/lgshell
+livehd&gt; help
+  ...
+livehd&gt; help pass.sample
+livehd&gt; exit
+</code></pre></div>
+<h3 id="verilog-compilation">Verilog Compilation<a class="headerlink" href="#verilog-compilation" title="Permanent link">&para;</a></h3>
+<p>The following uses Verilog as the example to demonstrate the compilations
+commands.  It imports a Verilog file with a specified the database path,
+translates to the LNAST IR, lowers the LNAST IR to LGraph IR, executes some
+compiler optimizations, and generates the optimized Verilog code to the <code>tmp</code>
+directory. By default, a database called <code>lgdb</code> will be set in the <code>livehd</code>
+directory to store the internal representations, but users can optionally
+specify a prefered path. </p>
+<div class="highlight"><pre><span></span><code>livehd&gt; inou.liveparse path:/your/path/lgdb_foo files:/your/path/bar.v |&gt; inou.verilog |&gt; pass.lnast_tolg |&gt; pass.cprop |&gt; pass.bitwidth |&gt; inou.cgen.verilog odir:tmp
+</code></pre></div>
+<p>A command <code>lgraph.match</code> can also be used to specify a (sub)hierarchy to operate
+over, which can then be moved from pass to pass using the pipe (<code>|&gt;</code>) operator.</p>
+<p>When Verilog file(s) are compiled through a series of commands in lgshell, if a
+problem occurs while compiling Verilog files (due to a syntax error, use of
+un-synthesizable Verilog, or something else), the corresponding error will be
+printed. Once a hierarchy has been created, other lgshell commands can read,
+modify, or export this hierarchy freely.</p>
+<h3 id="pyrope-compilation">Pyrope Compilation<a class="headerlink" href="#pyrope-compilation" title="Permanent link">&para;</a></h3>
+<p>The Pyrope compilation flow is similar to the Verilog commands except the
+front-end Pyrope parser pass <code>inou.pyrope</code></p>
+<div class="highlight"><pre><span></span><code>livehd&gt; inou.pyrope path:/your/path/lgdb_foo files:/your/path/bar.prp |&gt; pass.lnast_tolg |&gt; pass.cprop |&gt; pass.bitwidth |&gt; inou.cgen.verilog odir:tmp
+</code></pre></div>
+<p>Additionally, users can compile a Pyrope code with a mid-end command of
+<code>pass.compiler</code> which integrates standard compilation passes in LiveHD such as (1)
+<code>pass.lnast_tolg</code> for IR lowering, (2) <code>pass.cprop</code> for legacy compiler
+optimizations such as copy and constant propagation, peep-hole optimization, deadcode elimination, and high-level data-structure resolving (3) <code>pass.bitwidth</code> for circuit bitwidth optimization.</p>
+<div class="highlight"><pre><span></span><code>livehd&gt; inou.pyrope path:/your/path/lgdb_foo files:/your/path/bar.prp |&gt; pass.compiler |&gt; inou.cgen.verilog odir:tmp
+</code></pre></div>
+<h3 id="firrtl-compilation">FIRRTL Compilation<a class="headerlink" href="#firrtl-compilation" title="Permanent link">&para;</a></h3>
+<p>LiveHD compiles FIRRTL code with the protocal buffer format. Users can reference
+<a href="https://github.com/masc-ucsc/livehd/blob/master/docs/FIRRTL.md">this doc</a>
+to generate the protocol buffers file from Chisel/FIRRTL compiler.</p>
+<p>The LiveHD FIRRTL compiler uses a integrated mid-end commands as explained in
+the previous Pyrope example to compiles the FIRRTL HDL. Set <code>gviz</code> option to
+true to automatically generate the visiual Graphviz for individual steps. Set
+<code>hier</code> option to true for hierarchical Chisel design in most cases. Specify the
+top module name with the <code>top</code> option.</p>
+<div class="highlight"><pre><span></span><code>livehd&gt; inou.firrtl.tolnast path:/your/path/lgdb_foo files:/your/path/bar.pb |&gt; pass.compiler gviz:false top:top_module_name hier:true |&gt; inou.cgen.verilog odir:tmp
+</code></pre></div>
+<h3 id="textual-lnast-ir-dump">Textual LNAST IR Dump<a class="headerlink" href="#textual-lnast-ir-dump" title="Permanent link">&para;</a></h3>
+<p>To display the content of the LNAST IR after parse (Pyrope as the example)</p>
+<p><code>inou.pyrope files:foo.prp |&gt; lnast.dump</code></p>
+<h3 id="textual-lgraph-ir-dump">Textual LGraph IR Dump<a class="headerlink" href="#textual-lgraph-ir-dump" title="Permanent link">&para;</a></h3>
+<p>To display the content of the LGraph IR (Pyrope as the example)</p>
+<p><code>inou.pyrope files:foo.prp |&gt; pass.lnast_tolg |&gt; lgraph.dump</code></p>
+<h3 id="lgraph-serialization">LGraph serialization<a class="headerlink" href="#lgraph-serialization" title="Permanent link">&para;</a></h3>
+<p>To serialize the content of the LGraph IR (Pyrope as the example), default path is <code>lgdb</code>
+<code>inou.pyrope files:foo.prp |&gt; pass.lnast_tolg |&gt; lgraph.save</code></p>
+<h3 id="lgraph-deserialization">LGraph deserialization<a class="headerlink" href="#lgraph-deserialization" title="Permanent link">&para;</a></h3>
+<p>To deserialize a stored LGraph, and pass it to some lgraph passes 
+<code>lgraph.open name:foo |&gt; pass.cprop |&gt; pass.bitwidth |&gt; inou.cgen.verilog odir:tmp</code></p>
+<h3 id="graphviz-lgraph-ir-dump">Graphviz LGraph IR Dump<a class="headerlink" href="#graphviz-lgraph-ir-dump" title="Permanent link">&para;</a></h3>
+<p>To display the content of the LGraph IR (Pyrope after the <code>cprop</code> pass as the example)
+<code>inou.pyrope files:foo.prp |&gt; pass.lnast_tolg |&gt; pass.cprop |&gt; inou.graphviz.from</code></p>
+<ul>
+<li>Print information about an existing LGraph:
+  <div class="highlight"><pre><span></span><code>$ ./bazel-bin/main/lgshell
+livehd&gt; inou.liveparse files:./inou/yosys/tests/trivial.v |&gt; inou.verilog
+livehd&gt; lgraph.match |&gt; lgraph.stats
+livehd&gt; lgraph.match |&gt; lgraph.dump
+</code></pre></div>
+  <code>lgraph.match</code> picks up any LGraphs matching the regex passed (or everything if no regex is provided) and treats every single one as the top of the hierarchy, whereas <code>lgraph.open name:&lt;root module&gt;</code> will just open the root module as the top of the hierarchy.</li>
+</ul>
+<h3 id="running-a-custom-pass">Running a custom pass<a class="headerlink" href="#running-a-custom-pass" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>$ ./bazel-bin/main/lgshell
+livehd&gt; inou.pyrope files:./inou/pyrope/tests/if1.prp
+livehd&gt; lgraph.match |&gt; &lt;pass name&gt;
+</code></pre></div>
+<h3 id="low-level-directed-build">Low level directed build<a class="headerlink" href="#low-level-directed-build" title="Permanent link">&para;</a></h3>
+<ul>
+<li>To compile an individual pass:
+  <div class="highlight"><pre><span></span><code>$ bazel build -c dbg //pass/sample:pass_sample
+$ bazel build -c dbg //inou/yosys:all
+</code></pre></div></li>
+<li>To build a direct Yosys executable that has LiveHD embedded:
+  <div class="highlight"><pre><span></span><code>$ bazel build -c dbg //inou/yosys:all
+$./bazel-bin/inou/yosys/yosys2
+</code></pre></div></li>
+</ul>
+<h3 id="parallel-compilation">Parallel Compilation<a class="headerlink" href="#parallel-compilation" title="Permanent link">&para;</a></h3>
+<p>LiveHD support parallel compilation, it will set the thread number to the
+highest available resources in your system. To manually set the compilation thread<br />
+number, for example, 1, set the following environment variable
+<div class="highlight"><pre><span></span><code>export LIVEHD_THREADS=1
+</code></pre></div></p>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["search.suggest", "navigation.sections", "navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.b4d07000.min.js"></script>
+      
+        <script src="../../javascripts/config.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>

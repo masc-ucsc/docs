@@ -1,0 +1,1693 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../07-typesystem/">
+      
+      
+        <link rel="next" href="../08-memories/">
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.15">
+    
+    
+      
+        <title>Structural Typing - LiveHD and Pyrope</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.26e3688c.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ecc896b0.min.css">
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CFira+Code:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Fira Code"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/table.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#structural-typing" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LiveHD and Pyrope" class="md-header__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LiveHD and Pyrope
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Structural Typing
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+            
+              <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3Z"/></svg>
+              </label>
+            
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_2">
+            
+              <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6zm0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4zM7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+              </label>
+            
+          
+        </form>
+      
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LiveHD and Pyrope" class="md-nav__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    LiveHD and Pyrope
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        LiveHD and Pyrope
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+          Livehd
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Livehd
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/00-intro/" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/01-install/" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/02-usage/" class="md-nav__link">
+        Usage
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/03-memory/" class="md-nav__link">
+        Memory and concurrency
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/04-api/" class="md-nav__link">
+        C++ API
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/05-lgraph/" class="md-nav__link">
+        LGraph
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/06-lnast/" class="md-nav__link">
+        LNAST
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10-bazel/" class="md-nav__link">
+        Bazel build
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10b-3rdparty/" class="md-nav__link">
+        3rd Party
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/11-pass/" class="md-nav__link">
+        Creating a Pass
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/12-github/" class="md-nav__link">
+        GitHub Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/13-style/" class="md-nav__link">
+        Coding Style
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          Pyrope
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Pyrope
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00-hwdesign/" class="md-nav__link">
+        Hardware Design
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-introduction/" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-basics/" class="md-nav__link">
+        Basic syntax
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-bundle/" class="md-nav__link">
+        Tuples
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-variables/" class="md-nav__link">
+        Variables and types
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-assert/" class="md-nav__link">
+        Verification
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05b-statements/" class="md-nav__link">
+        Statements
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-functions/" class="md-nav__link">
+        Lambdas
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06b-instantiation/" class="md-nav__link">
+        Instantiation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06c-pipelining/" class="md-nav__link">
+        Pipelining
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-typesystem/" class="md-nav__link">
+        Type system
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Structural Typing
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Structural Typing
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#type-check" class="md-nav__link">
+    Type check
+  </a>
+  
+    <nav class="md-nav" aria-label="Type check">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#arrays" class="md-nav__link">
+    Arrays
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#basic-types" class="md-nav__link">
+    Basic types
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lambda" class="md-nav__link">
+    Lambda
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lambda-overloading" class="md-nav__link">
+    Lambda overloading
+  </a>
+  
+    <nav class="md-nav" aria-label="Lambda overloading">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parametric-polymorphism" class="md-nav__link">
+    Parametric polymorphism
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#summary-polymorphism" class="md-nav__link">
+    Summary polymorphism
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#traits-and-mixin" class="md-nav__link">
+    Traits and mixin
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#row-type" class="md-nav__link">
+    Row type
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-memories/" class="md-nav__link">
+        Memories
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-stdlib/" class="md-nav__link">
+        Pyrope std lib
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-internals/" class="md-nav__link">
+        Internals
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10b-vslang/" class="md-nav__link">
+        vs Other Languages
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../11-deprecated/" class="md-nav__link">
+        Deprecated or Future
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../12-lnast/" class="md-nav__link">
+        LNAST
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../13-stdlib/" class="md-nav__link">
+        Pyrope Standard Library
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#type-check" class="md-nav__link">
+    Type check
+  </a>
+  
+    <nav class="md-nav" aria-label="Type check">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#arrays" class="md-nav__link">
+    Arrays
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#basic-types" class="md-nav__link">
+    Basic types
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lambda" class="md-nav__link">
+    Lambda
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lambda-overloading" class="md-nav__link">
+    Lambda overloading
+  </a>
+  
+    <nav class="md-nav" aria-label="Lambda overloading">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parametric-polymorphism" class="md-nav__link">
+    Parametric polymorphism
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#summary-polymorphism" class="md-nav__link">
+    Summary polymorphism
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#traits-and-mixin" class="md-nav__link">
+    Traits and mixin
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#row-type" class="md-nav__link">
+    Row type
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="structural-typing">Structural Typing<a class="headerlink" href="#structural-typing" title="Permanent link">&para;</a></h1>
+<p>Pyrope uses structural typing somewhat simular to other languages like
+Typescript, but there are some difference simplifications like not references,
+everything is passed by value, no union types.</p>
+<h2 id="type-check">Type check<a class="headerlink" href="#type-check" title="Permanent link">&para;</a></h2>
+<p>The <code>x does y</code> checks that <code>x</code> does the same as <code>y</code> and maybe more. It type
+system syntax means that <code>x</code> is a subtype of <code>y</code>, or that <code>y</code> is a supertype
+<code>x</code>.</p>
+<p>Using the typical <code>Animal</code>, <code>Dog</code>, <code>Greyhound</code> set of tuples, <code>Dog does Animal</code>
+and <code>Greyhound does Dog</code>, but <code>not (Animal does Dog)</code>.</p>
+<p>Dealing with tuple assignments <code>y = x</code>, a compile error is generated unless the
+type system satisfies <code>y does x</code> or an explicit type conversion is provided.
+The basic behavior of <code>does</code> is explained in (Type
+equivalance)[07-typesystem.md#Type_equivalence].</p>
+<div class="highlight"><pre><span></span><code>let Animal = (
+  ,legs:int = _
+  ,name= &quot;unnamed&quot;
+  ,say_name = fun() { puts name }
+)
+
+let Dog = Animal ++ (
+  ,setter = proc(ref self) { self.legs = 4 }
+  ,bark = fun() { puts &quot;bark bark&quot; }
+)
+
+let Bird = Animal ++ (
+  ,seeds_eaten:int = _
+
+  ,setter = proc(ref self)  { self.legs = 2 }
+      ++ proc(ref self, a:Animal)    { self.legs = 2 ; name = &quot;bird animal&quot; }
+  ,eat_seeds = proc(ref self, n) { self.seeds_eaten += n }
+)
+
+let Greyhound = Dog ++ ( // also extends Dog
+  ,race = fun() { puts &quot;running fast&quot; }
+)
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>var a:Animal = _
+var b:Bird = _
+var d:Dog = _
+
+d = a // compile error, &#39;a does d&#39; is false
+b = a // OK, explicit setter in Bird for Animal
+
+a = d // OK, &#39;d does a&#39; is true
+a = b // OK, &#39;Bird does Animal&#39; is true
+</code></pre></div>
+<p>When the <code>x</code> in <code>x = y</code> is an <code>integer</code> basic type, there is an additional
+check to guarantee that no precision is lost. Otherwise, an explicit <code>wrap</code> or
+<code>drop</code> directive must be used.</p>
+<h3 id="arrays">Arrays<a class="headerlink" href="#arrays" title="Permanent link">&para;</a></h3>
+<p>The same rules of assignments exists for arrays. In Pyrope, arrays can be
+mutable, but they can never be passed by reference. This means that the typical
+issue of mutable containers can not exists. </p>
+<div class="highlight"><pre><span></span><code>var a_vec:[]Animal = _
+var b_vec:[]Bird = _
+var d_vec:[]Dog = _
+
+a_vec[0] = d:Dog    // OK
+a_vec[1] = b:Bird   // OK
+
+d_vec[0] = d:Dog        // OK  &#39;d does d&#39;
+d_vec[0] = g:Greyhound  // OK  &#39;g does d&#39;
+d_vec[0] = b:Bird       // Compile error
+d_vec[0] = a:Animal     // Compile error
+
+b_vec[0] = d:Dog        // OK, explicit conversion
+b_vec[0] = g:Greyhound  // OK, explicit conversion
+b_vec[0] = b:Bird       // OK, &#39;b does b&#39;
+b_vec[0] = a:Animal     // OK, explicit conversion
+
+let do_animal_vec = fun(a_vec:[]Animal)-&gt;(r:[]Animal) {
+  r = a_vec
+  r[0] = d:Dog  // OK `d does r[0]`
+}
+
+var x = do_animal_vec(b_vec:[]Bird) // OK
+assert x does _:[]Animal  // not :[]Bird
+</code></pre></div>
+<h3 id="basic-types">Basic types<a class="headerlink" href="#basic-types" title="Permanent link">&para;</a></h3>
+<p>One of the complains about structural type system is that two types with
+exactly the same tuple fields have the same type. In Pyrope, the field name
+should match. Since every element is a type of one, read/writing a named tuple
+of one does not need the field, and hence it allows to create different types:</p>
+<div class="highlight"><pre><span></span><code>let Age = (
+  ,age:int = _
+)
+let Weight = (
+  ,weight:int = _
+)
+
+assert Age !does Weight
+
+var a:Age = 3
+assert a == a.age == a.0 == 3
+
+var w:Weight = 100
+
+let err = a == w // compile error, not (a equals w) or overload
+</code></pre></div>
+<h3 id="lambda">Lambda<a class="headerlink" href="#lambda" title="Permanent link">&para;</a></h3>
+<p>A way to classify a language is to look at the generics and lambda calls.
+Languages can have type constraints or type classes. Type classes (Hakell,
+Rust, Swift) specify the "consent" of argumetns or return types allowed for
+lambda or generic. Type constrains (C++, typescript, Pyrope) constraints the
+arguments or return types allowed. Pyrope follows a type constraint approach.</p>
+<p>The following <code>f</code> method has no constraints on the input arguments. It can pass
+anything, but constraints the return value to be an integer.</p>
+<div class="highlight"><pre><span></span><code>let f = fun(a,b) -&gt; (r:int) { r = xx(a) + xx(b) }
+</code></pre></div>
+<p>The type can be inferred for arguments and return values. If the lambda
+definition has no type constraints. A "different" implementation lambda exist
+for each combination of inferred types. It behaves like if the the lambda were
+inlined in the caller.</p>
+<p>The constraints can be different per type, or use a more familiar generic syntax.
+The <code>f1</code> example constraints <code>a</code> and <code>b</code> arguments to have a type that
+satisfies <code>(a does Some_type_class) and (b does Some_type_class)</code>.</p>
+<div class="highlight"><pre><span></span><code>let f1 = fun&lt;T:Some_type_class&gt;(a:T,b:T) -&gt; (r:int) { r = xx(a) + xx(b) }
+</code></pre></div>
+<p>While performing assignments checks that the left-hand-side tuple fields are
+fully populated (<code>x=y</code>) by checking that <code>y does x</code>. The same check happens for
+the lambda calls, but the check is performed when a lambda is passed as
+an argument.</p>
+<p>For each lambda call (<code>ret_val = f(a1,a2)</code>), the type system check against the
+defined lambda (<code>f = fun(ad1:ad1_t, ad2)-&gt;(rd1:rd1_t, rd2)</code>). In this case, the
+check for the calling arguments (<code>(a1,a2) does (:ad1_t, :())</code>) should be
+satisfied. Notice that some of the inputs (<code>ad2</code>) have no defined type, so those
+unspecified arguments always satisfies by the type check. </p>
+<p>The return tuple is also used in the type system (<code>ret_val does (:rd1_t,
+:())</code>), the check is the same as in an assignment (<code>lhs does rhs</code>). In
+overloading cases explained later, the return type could also be part of the
+overloading check.</p>
+<div class="highlight"><pre><span></span><code>let fa_t:fun(a:Animal)-&gt;() = _
+let fd_t:fun(d:Dog)-&gt;() = _
+
+let call_animal = fun(a:Animal)-&gt;() {
+   puts a.name // OK
+}
+let call_dog:fd_t = fun(d:Dog)-&gt;() {    // OK to add type in lhs
+   d.bark()    // OK
+}
+
+let f_a = fun(fa:fa_t) { 
+  var a:Animal = _
+  var d:Dog = _
+  fa(a)  // OK
+  fa(d)  // OK, `d does Animal` is true
+}
+f_a(call_animal) // OK
+f_a(call_dog)    // compile error, `fa_t does call_dog` is false
+
+let f_d = fun(fd:fd_t) { 
+  var a:Animal = _
+  var d:Dog = _
+  fd(a)  // compile error, `a does Dog` is false
+  fd(d)  // OK
+}
+f_d(call_animal) // OK, `fd_t does call_animal` is true
+f_d(call_dog)    // OK
+</code></pre></div>
+<p>In tuple comparisons, <code>does</code> and <code>==</code>, the tuple field position is not used
+when both tuples are fully named. If tuple field is unnamed, both existing
+names and positions should match in the comparison.  For fully named tuples,
+when all the fields have names,  <code>(a=1,b=2) does (b=2,a=1)</code> is true. </p>
+<p>The same rule also applies to lambda calls. If all the arguments are named, the
+relative call argument position is independent. If an argument is an expression
+or unnamed, the position is important.</p>
+<p>A special case is the in-place operator (<code>...</code>) during lambda definition.  Even
+for fully named tuples, the position is used.  One one in-place operator is
+allowed per lambda definition <code>(a,b,...x,c)</code>, the <code>does</code> operator uses name and
+position like in unnamed tuples even if all the fields are named. First, it
+matches the position and names provided, and then checks the rest to the
+in-place with the relative order left.</p>
+<div class="highlight"><pre><span></span><code>let m = fun(a:int,...x:(_:string,c:int,d), y:int)-&gt;() { 
+  assert a == 1
+  assert x.0 == &quot;here&quot;
+  assert x.1 == 2 == x.c
+  assert y == 3
+  if d does int { // inferred type
+    assert d == 33
+  }else{
+    assert d == &quot;x&quot;
+  }
+}
+
+m(1,&quot;here&quot;,2,&quot;x&quot;,3)         // OK
+m(a=1,&quot;here&quot;,2,&quot;x&quot;,3)       // OK
+m(a=1,&quot;here&quot;,c=2,&quot;x&quot;,3)     // OK
+m(a=1,&quot;here&quot;,c=2,33,y=3)    // OK
+
+m(&quot;1&quot;,&quot;here&quot;,2,33,3)       // compile error, a:int
+m(&quot;1&quot;,&quot;here&quot;,2,3)          // compile error, x has 3 fields
+</code></pre></div>
+<p>For all the checks that are not function reference or in-place, the <code>x does y</code>
+check could be summarized as <code>x</code> is a superset of <code>y</code>. <code>x</code> has all the
+functionality of <code>y</code> and maybe more. In a more formal compiler nomenclature <code>x does
+y</code> applied to tuples is called a covariant relationship. It is covariant
+because adding the same extra fields to both <code>x</code> and <code>y</code> keeps the semantics
+(<code>((foo=3,...x) does (foo=3,...y)) == x does y</code>). This allows to extend the
+tuple semantics and the relationship is preserved.</p>
+<p>When <code>x</code> and <code>y</code> are in a lambda passed as reference to another lambda (lambda
+reference), the relationship is not covariant but contravariant. <code>Dog does
+Animal</code> is true, but <code>:fun(x:Dog)-&gt;() does _:fun(x:Animal)-&gt;()</code> is false. The
+reason is shown in the previous example. The <code>fun(fd:fd_t)</code> can be called
+with <code>call_animal</code> because the fields accessed by <code>call_animal</code> are only a
+subset of <code>Dog</code> and hence if called inside <code>f_d</code> it can handle the <code>Dog</code> type.
+The opposite is not the case.</p>
+<p><code>:fun(x1)-&gt;(x2) does _:fun(y1)-&gt;y2</code> check is equivalent to <code>(y1 does x1) and (x2
+does y2)</code>.</p>
+<p>Given a lambda passed as argument (<code>:fun(x:fun(c:c_t)-&gt;(d:d_t))-&gt;(y)</code>), the
+check when passing the lambda as argument to <code>x</code> a function like
+<code>fun(w:w_t)-&gt;(z:z_t)</code>. In this case, the <code>:fun(:w_t)-&gt;(_:z_t) does
+fun(:c_t)-&gt;(_:d_t)</code> is a contravariant test for inputs and covariant for
+outputs. This makes it equivalent to <code>(_:c_t does _:w_t) and (_:z_t does _:d_t)</code>.</p>
+<p>If the same type is used as input and output is an equivalence check (<code>((a does
+b) and (b does a)) == (a equals b)</code>). In programming languages this is called
+an invariance or bivariance.</p>
+<p>Pyrope uses the typical check in modern languages where the function arguments
+are contravariant and the return type is covariant. In Pyrope, the return type
+is checked in the covariant and contravariant checks.</p>
+<h2 id="lambda-overloading">Lambda overloading<a class="headerlink" href="#lambda-overloading" title="Permanent link">&para;</a></h2>
+<p>Pyrope does not have global scope for defined lambdas. Instead, all the lambda
+must reside in a local variable or must be "imported". Nevertheless, a local
+variable can have multiple lambdas. It is similar to Odin's "explicit procedure
+overloading". This section explains how is the overloading selection in this
+case.</p>
+<p>By overloading, this section refers to typical ad-hoc polymorphism where the same
+function/procedure name can have different functionality for different types.</p>
+<p>For Pyrope overloading, lambdas are typically added at the end <code>++=</code> of the tuple.
+This means that it is NOT overwriting an existing functionality, but providing
+a new call capability.</p>
+<p>There is a priority of overloading in the tuple order. If the intention is to
+intercept, the lambda must be added at the head of the tuple entry.</p>
+<div class="highlight"><pre><span></span><code>let base = (
+  ,fun1 = fun() { 1 }         // catch all
+  ,fun2 = fun() { 2 }         // catch all
+  ,fun3 = fun() { 3 }         // catch all
+)
+let ext = base ++ (
+  ,fun1 =   fun (a,b){ 4 }  // overwrite allowed with extends
+  ,fun2 ++= fun (a,b){ 5 }  // append
+  ,fun2 ++= fun ()   { 6 }  // append
+  ,fun3 =   fun(a,b) { 7 } ++ base.fun3 // prepend
+  ,fun3 =   fun()    { 8 } ++ base.fun3 // prepend
+)
+
+var t:ext = _
+
+// t.fun1 only has ext.fun1
+assert t.fun1(a=1,b=2) == 4
+t.fun1()                 // compile error, no option without arguments
+
+// t.fun2 has base.fun2 and then ext.fun2
+assert t.fun2(1,2) == 5  // EXACT match of arguments has higher priority
+assert t.fun2() == 2     // base.fun2 catches all ahead of ext.fun2
+
+// t.fun3 has ext.fun3 and then base.fun3
+assert t.fun3(1,2) == 7  // EXACT match of arguments has higher priority
+assert t.fun3() == 8     // ext.fun3 catches all ahead of ext.fun3
+</code></pre></div>
+<p>A more traditional "overload" calling the is possible by calling the lambda directly:</p>
+<div class="highlight"><pre><span></span><code>let x = base ++ (
+  ,fun1 = fun() { return base.fun1() + 100 }
+)
+</code></pre></div>
+<p>To allow overloading the base <code>lambda</code> as <code>var</code>. By concatenating lambdas to a
+variable, we effectively create an unnamed tuple with multiple entries. Since
+all the variables are tuples of size one too, the following rules apply to any
+lambda call:</p>
+<ul>
+<li>
+<p>Given a lambda call <code>f(a:a_t)-&gt;(_:r_t)</code> with defined call and return types.
+  Iterate and pick all the lambda definitions <code>f(x)-&gt;(y)</code> that satisfy <code>x does
+  a_t and y does r_t</code> using the previously explained lambda checks.</p>
+</li>
+<li>
+<p>If the <code>r_t</code> is unknown at call time, use only the call arguments <code>x does
+  a_t</code>. Check that all the matching lambdas have the same defined return type.
+  Otherwise a compile error is generated indicating that the type can not be
+  infered.</p>
+</li>
+<li>
+<p>If the list is empty, generate a compile error (no possible lambda to call).</p>
+</li>
+<li>
+<p>Once a list of ordered modules is found, evaluate the <code>where COND</code>. <code>COND</code>
+  can include inputs, self, and outputs. If a <code>COND</code> is comptime true (no
+  <code>COND</code> is the same as <code>true</code>), stop selecting additional modules. If <code>COND</code>
+  is comptime <code>false</code> remove from the list and continue. All the selected
+  modules will be executed, but the output will be selected based on priority
+  order based on the <code>COND</code> result at runtime.</p>
+</li>
+<li>
+<p>If the list has more than one entry, and any of them is a <code>proc</code>, generate a
+  compile error. Dynamic dispatch only works with functions <code>fun</code>.</p>
+</li>
+</ul>
+<p>If the <code>where COND</code> is not compile time there must be a <code>where true</code> condition
+to catch the default behavior. </p>
+<p>The previous rules imply that Pyrope has some type of dynamic dispatch. The
+types for the inputs and outputs must be known at compile time (static
+dispatch) but the <code>where</code> condition may be known at run-time as long as the
+lambda is immutable (<code>fun</code>).</p>
+<p>The <code>where</code> condition is not considered part of the type system, but a syntax
+sugar to allow several function implementations depending on some condition.
+The alternative and equivalent syntax is to add all the <code>if/else</code> chain at
+every call but this result in not so maintanable code.</p>
+<div class="highlight"><pre><span></span><code>var fun_list = fun(a,b){ a+b}
+fun_list ++= fun(a,b,c){ a+b+c }
+fun_list ++= fun(a,b,c,d){ a+b+c+d }
+
+assert fun_list.[size] == 3    // 3 lambda entries in fun_list
+
+assert fun_list(1,2) == 3
+assert fun_list(1,2,4) == 7
+assert fun_list(1,2,4,5) == 12
+assert fun_list(1,2,4,5,6) == 18 // compile error, no function with 5 args
+
+
+fun_list ++= fun(a,b){ 100}
+assert fun_list(1,2) == 3
+
+fun_list = fun(a,b){ 200} ++ fun_list
+assert fun_list(1,2) == 200
+</code></pre></div>
+<p>For untyped named argument calls:</p>
+<div class="highlight"><pre><span></span><code>var f1 = fun(a,b){ a+b+100 }
+  f1 ++= fun(x,y){ x+y+200 }
+
+assert f1(a=1,b=2) == 103
+assert f1(x=1,y=2) == 203
+assert f1(  1,  2) == 103  // first in list
+</code></pre></div>
+<p>For typed calls:</p>
+<div class="highlight"><pre><span></span><code>var fo = fun(a:int,b:string)-&gt;(_:bool)  { true    }
+  fo ++= fun(a:int,b:int   )-&gt;(_:bool)  { false   }
+  fo ++= fun(a:int,b:int   )-&gt;(_:string){ &quot;hello&quot; }
+
+let a = fo(3,hello)
+assert a == true
+
+let b = fo(3,300)        // first in list return bool
+assert b == false
+
+let c:int = fo(3,300)    // compile error, no lambda fulfills constrains
+let c:string = fo(3,300)
+assert c == &quot;hello&quot;
+</code></pre></div>
+<p>For conditional argument calls:</p>
+<div class="highlight"><pre><span></span><code>var f1 = fun(a,b)      where a &gt;  40 { b+100    }
+      ++ fun(a,b)-&gt;(x) where x &gt; 300 { b+200    } // output x
+      ++ fun(a,b)-&gt;(a) where a &gt;  20 { b+300    } // input a
+      ++ fun(a,b)-&gt;(x) where x &gt;  10 { b+400    } // output x
+      ++ fun(a,b)                    { a+b+1000 } // default
+
+var fun_manual = fun(a,b){  // equivalent but not as maintenable
+  if a&gt;40 {
+    return b+100
+  }
+  let x = b + 200
+  if x&gt;300 {
+    return (x=x)
+  }
+  if a&gt;20 {
+    return b+300
+  }
+  let tmp = a + b
+  if tmp &gt;10 {
+    return (a=tmp)
+  }
+  return a+b+1000
+}
+
+test &quot;check equiv&quot; {
+  for a in -100..=100 {
+    for b in -100..=100 {
+      assert f1(a,b) == fun_manual(a,b)
+    }
+  }
+}
+</code></pre></div>
+<h3 id="parametric-polymorphism">Parametric polymorphism<a class="headerlink" href="#parametric-polymorphism" title="Permanent link">&para;</a></h3>
+<p>Add-hoc polymorphism overloads a function, and parametric polymorphism allows to 
+parametrize types based on arguments.</p>
+<div class="highlight"><pre><span></span><code>let Param_type = fun(a) { return (xx:a = _) }
+
+let x:Param_type(string) = (xx=&quot;hello&quot;)
+let x:Param_type(int)    = (xx=130)
+</code></pre></div>
+<h3 id="summary-polymorphism">Summary polymorphism<a class="headerlink" href="#summary-polymorphism" title="Permanent link">&para;</a></h3>
+<p>Subtype polymorphism: A subtype provides functionality/api for another super type.
+<div class="highlight"><pre><span></span><code>let Animal = (
+  ,speak:fun(self) = _
+)
+let Cat: Animal = (
+  ,speak = fun(self) { puts &quot;meaow&quot; }
+)
+let Bird: Animal = (
+  ,speak = fun(self) { puts &quot;pio pio&quot; }
+)
+</code></pre></div></p>
+<p>Parametric polymorphism: Same function works for many types
+<div class="highlight"><pre><span></span><code>let smallest = fun(...a) {
+  let x = a[0]
+  for i in a[1..] {
+    x = i when i &lt; x
+  }
+  return x
+}
+</code></pre></div></p>
+<p>Ad-hoc polymorphism: capacity to overload the same lambda name with different types.
+<div class="highlight"><pre><span></span><code>let speak = fun(a:Bird) { puts &quot;pio pio&quot;  } 
+         ++ fun(a:Cat) { puts &quot;meaow&quot; }
+</code></pre></div></p>
+<p>Coercion polymorphism: Capacity to cast a type to another
+<div class="highlight"><pre><span></span><code>let Type1 = (
+  ,setter = fun(ref self, a:int) {  }
+)
+let a:Type1 = 33
+</code></pre></div></p>
+<h2 id="traits-and-mixin">Traits and mixin<a class="headerlink" href="#traits-and-mixin" title="Permanent link">&para;</a></h2>
+<p>There is no object inheritance in Pyrope, but tuples allow to build mixin and
+composition.</p>
+<p>A mixin is when an object or class can add methods and the parent object can
+access them. In several languages, there are different constructs to build them
+(E.g: an include inside a class in Ruby). Since Pyrope tuples are not
+immutable, new methods can be added like in mixin.</p>
+<div class="highlight"><pre><span></span><code>let Say_mixin = (
+  ,say = fun(s) { puts s }
+)
+
+let Say_hi_mixin = (
+  ,say_hi  = fun() {self.say(&quot;hi {}&quot;, self.name) }
+  ,say_bye = fun() {self.say(&quot;bye {}&quot;, self.name) }
+)
+
+let User = (
+  ,name:string = _
+  ,setter = proc(ref self, n:string) { self.name = n }
+)
+
+let Mixing_all = Say_mixin ++ Say_hi_mixin ++ User
+
+var a:Mixing_all=&quot;Julius Caesar&quot;
+a.say_hi()
+</code></pre></div>
+<p>Mixin is very expressive by allowing redefining methods. If two tuples have the
+same field a tuple, the concatenated operator (<code>++</code>) will create an entry with
+two or more sub-entries. This is likely an error with basic types but useful to
+handle explicit method overload.</p>
+<p>In a way, the concatenate just adds methods from two tuples to create a new
+tuple. In programming languages with object-oriented programming (OOP), there
+are many keywords (<code>virtual</code>, <code>final</code>, <code>override</code>, <code>static</code>...) to constrain
+how methods can be updated/changed. In Pyrope, the <code>let</code> and <code>var</code> keywords can
+be added to any tuple field. The <code>let</code> makes the entry immutable when applied
+to a method, it behaves like a <code>final</code> keyword in most languages.</p>
+<p>There are also two ways to concatenate tuples in Pyrope. <code>t1 ++ t2</code> and
+<code>(...t1, ...t2)</code>:</p>
+<ul>
+<li>
+<p><code>t1 ++ t2</code> concatenates each field in both tuples. A compile error is
+  generated if <code>t1</code> field is a <code>let</code> with a defined value, and <code>t2</code> has also
+  the same defined field.</p>
+</li>
+<li>
+<p><code>(...t1, ...t2)</code> inserts in-place, triggers a compile error if the same
+  public field appears in both tuples and it is defined in both. <code>private</code>
+  fields are privatized and hence do not trigger overload failure.</p>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><code>let Int1 = (
+  ,var counter:int:[private] = 0
+  ,add = proc(ref self, v) { self.counter += v }
+  ,get = fun(self) -&gt; (_:int) { self.counter }
+  ,api_pending: proc(ref self, x:int) -&gt; (o:string) = _
+)
+
+let Int2 = (
+  ,var counter:int:[private] = 0
+  ,accumulate = proc(ref self, v) { self.counter += v ; return self.counter }
+  ,api_pending:proc(ref self, x:string) -&gt; (o:string) = _
+)
+
+let Combined = (...Int1, ...Int2
+  ,api_pending = proc(ref self, x:int) -&gt; (o:string) {
+    self.add(x)
+    string(self.accumulate(self.get()))
+  }
+)
+</code></pre></div>
+<p>It is also important to notice that when one of the tuples as an entry, it can
+have an undefined value (<code>nil</code> or <code>0sb?</code>).  If the entry value is undefined,
+neither concatenate (<code>++</code>) or in-place insert (<code>...</code>) trigger a compile error.
+This is quite useful for defining interfaces because the default value for a
+function is <code>nil</code>.</p>
+<div class="highlight"><pre><span></span><code>let Interface = (
+  ,let add:fun(ref self, x) = _ // nil or undefined method
+  ,let sub = fun(ref self,x ) { self.add(-x) }
+)
+
+Interface.add(3)                // compile error, undefined method
+
+let My_obj = (
+  ,val1:u8 = 0
+  ,let add = fun(ref self, x) { self.val += x }
+) ++ Interface                  // OK, but not recommended
+
+let My_obj2 = (
+  ,...Interface                 // recommended
+  ,val1:u8 = 0
+  ,let add = fun(ref self, x) { self.val += x }
+)
+cassert My_obj equals My_obj2   // same behavioir no defined overlap fiels
+
+let xx:My_obj = _               // default initialization
+
+cassert xx.val1 == 0
+xx.add(3)
+cassert xx.val1 == 3
+xx.sub(2)
+cassert xx.val1 == 1
+</code></pre></div>
+<p>Pyrope does not directly check that all the undefined methods are implemented,
+but this will trigger a compile error whenever the undefined method is used.
+This is different from most static type languages, but a bit closer to
+dynamically typed languages. The difference is that the check is at compile
+time, but an error happens ONLY if the method is used anywhere in the
+instantiated project.</p>
+<p>To build tuples that implement the functionality of other tuples, the recommended
+technique is to use the in-place operator. It checks that there is no defined overlap
+between both tuples.</p>
+<p>An issue with in-place operator is when more than one tuple has the <code>setter</code>
+method. If the tuples are concatenated with <code>...</code> and error is triggered, if
+the tuples are concatenated with <code>++</code> it does not check if methods overlap.
+Neither is the expected solution for a mixin. </p>
+<p>The solution is to remove fields from the in-place concatenation and to
+explicitly create the new methods with some support method.</p>
+<div class="highlight"><pre><span></span><code>let exclude = fun(o,...a) {
+  let new_tup = ()
+  for (key,idx,e) in zip(o.keys(),o.enumerate()) {
+    // create single tupe and append to preserve key and position order
+    let sing_tup = ()
+    sing_tup[key] = e
+    new_tup ++= sing_tup unless key in o
+  }
+  new_tup
+}
+
+let Shape = (
+  ,name:string = _
+  ,area:fun (self )-&gt;(_:i32)  = _            // undefined 
+  ,increase_size:proc(ref self, x:i12) = _  // undefined 
+
+  ,setter=proc(ref self, name ) { self.name = name } // implemented, use =
+  ,say_name=fun(self) { puts &quot;name:{}&quot;, name }
+)
+
+let Circle = (
+  ,...exclude(Shape,&#39;setter&#39;)
+
+  ,setter        = proc(ref self) { Circle.setter(this, &quot;circle&quot;) }
+  ,increase_size = proc(ref self, x:i12) { self.rad *= x }
+  ,rad:i32       = _
+  ,area = fun(self) -&gt; (_:i32) {
+     let pi = import(&quot;math&quot;).pi
+     return pi * self.rad * self.rad
+  }
+):Shape  // extra check that the exclude did not remove too many fields
+</code></pre></div>
+<h2 id="row-type">Row type<a class="headerlink" href="#row-type" title="Permanent link">&para;</a></h2>
+<p>Pyrope has structural typing, but also allows to infer the types. The <code>where</code>
+statement can be used to implement some functionality that resembles the row
+type inference. The <code>where</code> clause is followed by a list of comma separated
+conditions that must evaluate true for the function to be valid.</p>
+<div class="highlight"><pre><span></span><code>let rotate = fun(a) where a has &#39;x&#39;, a has &#39;y&#39; and_then a.y!=30 {
+  var r = a
+  r.x = a.y
+  r.y = a.x
+  return r
+}
+</code></pre></div>
+<p>The previous rotate function is difficult to implement with a traditional
+structural typing.</p>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["search.suggest", "navigation.sections", "navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.b4d07000.min.js"></script>
+      
+        <script src="../../javascripts/config.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>

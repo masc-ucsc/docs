@@ -1,0 +1,2593 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../03-bundle/">
+      
+      
+        <link rel="next" href="../05-assert/">
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.15">
+    
+    
+      
+        <title>Variables and types - LiveHD and Pyrope</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.26e3688c.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ecc896b0.min.css">
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CFira+Code:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Fira Code"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/table.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#variables-and-types" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LiveHD and Pyrope" class="md-header__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LiveHD and Pyrope
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Variables and types
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+            
+              <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3Z"/></svg>
+              </label>
+            
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_2">
+            
+              <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6zm0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4zM7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+              </label>
+            
+          
+        </form>
+      
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LiveHD and Pyrope" class="md-nav__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    LiveHD and Pyrope
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        LiveHD and Pyrope
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+          Livehd
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Livehd
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/00-intro/" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/01-install/" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/02-usage/" class="md-nav__link">
+        Usage
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/03-memory/" class="md-nav__link">
+        Memory and concurrency
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/04-api/" class="md-nav__link">
+        C++ API
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/05-lgraph/" class="md-nav__link">
+        LGraph
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/06-lnast/" class="md-nav__link">
+        LNAST
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10-bazel/" class="md-nav__link">
+        Bazel build
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10b-3rdparty/" class="md-nav__link">
+        3rd Party
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/11-pass/" class="md-nav__link">
+        Creating a Pass
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/12-github/" class="md-nav__link">
+        GitHub Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/13-style/" class="md-nav__link">
+        Coding Style
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          Pyrope
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Pyrope
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00-hwdesign/" class="md-nav__link">
+        Hardware Design
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-introduction/" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-basics/" class="md-nav__link">
+        Basic syntax
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-bundle/" class="md-nav__link">
+        Tuples
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Variables and types
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Variables and types
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#variable-scope" class="md-nav__link">
+    Variable scope
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basic-types" class="md-nav__link">
+    Basic types
+  </a>
+  
+    <nav class="md-nav" aria-label="Basic types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#integer-or-int" class="md-nav__link">
+    Integer or int
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#boolean" class="md-nav__link">
+    Boolean
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lambda-funproc" class="md-nav__link">
+    Lambda (fun/proc)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#range" class="md-nav__link">
+    Range
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#string" class="md-nav__link">
+    String
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#type-declarations" class="md-nav__link">
+    Type declarations
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#type-checks" class="md-nav__link">
+    Type checks
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#attributes" class="md-nav__link">
+    Attributes
+  </a>
+  
+    <nav class="md-nav" aria-label="Attributes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#variable-attribute-list" class="md-nav__link">
+    Variable attribute list
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#registers-and-pipestage-attribute-list" class="md-nav__link">
+    Registers and pipestage attribute list
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memories-attribute-list" class="md-nav__link">
+    Memories attribute list
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lambda-attribute-list" class="md-nav__link">
+    Lambda attribute list
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bitwidth-attribute-list" class="md-nav__link">
+    Bitwidth attribute list
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#comptime-attribute" class="md-nav__link">
+    comptime attribute
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debug-attribute" class="md-nav__link">
+    debug attribute
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#register" class="md-nav__link">
+    Register
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#public-vs-private" class="md-nav__link">
+    Public vs private
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#operators" class="md-nav__link">
+    Operators
+  </a>
+  
+    <nav class="md-nav" aria-label="Operators">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unary-operators" class="md-nav__link">
+    Unary operators
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#binary-integer-operators" class="md-nav__link">
+    Binary integer operators
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#binary-boolean-operators" class="md-nav__link">
+    Binary boolean operators
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tupleset-operators" class="md-nav__link">
+    Tuple/Set operators
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type-operators" class="md-nav__link">
+    Type operators
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reduce-and-bit-selection-operators" class="md-nav__link">
+    Reduce and bit selection operators
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#precedence" class="md-nav__link">
+    Precedence
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optional" class="md-nav__link">
+    Optional
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variable-initialization" class="md-nav__link">
+    Variable initialization
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-assert/" class="md-nav__link">
+        Verification
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05b-statements/" class="md-nav__link">
+        Statements
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-functions/" class="md-nav__link">
+        Lambdas
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06b-instantiation/" class="md-nav__link">
+        Instantiation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06c-pipelining/" class="md-nav__link">
+        Pipelining
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-typesystem/" class="md-nav__link">
+        Type system
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07b-structtype/" class="md-nav__link">
+        Structural Typing
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-memories/" class="md-nav__link">
+        Memories
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-stdlib/" class="md-nav__link">
+        Pyrope std lib
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-internals/" class="md-nav__link">
+        Internals
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10b-vslang/" class="md-nav__link">
+        vs Other Languages
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../11-deprecated/" class="md-nav__link">
+        Deprecated or Future
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../12-lnast/" class="md-nav__link">
+        LNAST
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../13-stdlib/" class="md-nav__link">
+        Pyrope Standard Library
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#variable-scope" class="md-nav__link">
+    Variable scope
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basic-types" class="md-nav__link">
+    Basic types
+  </a>
+  
+    <nav class="md-nav" aria-label="Basic types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#integer-or-int" class="md-nav__link">
+    Integer or int
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#boolean" class="md-nav__link">
+    Boolean
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lambda-funproc" class="md-nav__link">
+    Lambda (fun/proc)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#range" class="md-nav__link">
+    Range
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#string" class="md-nav__link">
+    String
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#type-declarations" class="md-nav__link">
+    Type declarations
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#type-checks" class="md-nav__link">
+    Type checks
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#attributes" class="md-nav__link">
+    Attributes
+  </a>
+  
+    <nav class="md-nav" aria-label="Attributes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#variable-attribute-list" class="md-nav__link">
+    Variable attribute list
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#registers-and-pipestage-attribute-list" class="md-nav__link">
+    Registers and pipestage attribute list
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memories-attribute-list" class="md-nav__link">
+    Memories attribute list
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lambda-attribute-list" class="md-nav__link">
+    Lambda attribute list
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bitwidth-attribute-list" class="md-nav__link">
+    Bitwidth attribute list
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#comptime-attribute" class="md-nav__link">
+    comptime attribute
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debug-attribute" class="md-nav__link">
+    debug attribute
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#register" class="md-nav__link">
+    Register
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#public-vs-private" class="md-nav__link">
+    Public vs private
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#operators" class="md-nav__link">
+    Operators
+  </a>
+  
+    <nav class="md-nav" aria-label="Operators">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unary-operators" class="md-nav__link">
+    Unary operators
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#binary-integer-operators" class="md-nav__link">
+    Binary integer operators
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#binary-boolean-operators" class="md-nav__link">
+    Binary boolean operators
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tupleset-operators" class="md-nav__link">
+    Tuple/Set operators
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type-operators" class="md-nav__link">
+    Type operators
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reduce-and-bit-selection-operators" class="md-nav__link">
+    Reduce and bit selection operators
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#precedence" class="md-nav__link">
+    Precedence
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optional" class="md-nav__link">
+    Optional
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variable-initialization" class="md-nav__link">
+    Variable initialization
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="variables-and-types">Variables and types<a class="headerlink" href="#variables-and-types" title="Permanent link">&para;</a></h1>
+<p>A variable is an instance of a given type. The type may be inferred from use.
+The basic types are Boolean, lambda, Integer, Range, and String. All those
+types can be combined with tuples.</p>
+<h2 id="variable-scope">Variable scope<a class="headerlink" href="#variable-scope" title="Permanent link">&para;</a></h2>
+<p>Scope constrains variables visibility. There are three types of scope
+delimitation in Pyrope: code block scope, lambda scope, and tuple scope. Each
+has a different set of rules constraining the variable visibility. Overall, the
+variable/field is visible from declaration until the end of scope.</p>
+<p>Pyrope uses <code>var</code> or <code>let</code> to declare a variable, but all the declarations must
+have a value. <code>_</code> is used to specify the default value (<code>false</code> for boolean,
+<code>0</code> for integer, <code>""</code> for string, undefined lambda for lambda, and <code>0..=0</code> for
+range).</p>
+<p>In all the cases, variable declaration is either:
+* <code>let variable [:type] = expression</code>
+* <code>var variable [:type] = expression</code></p>
+<p>In a tuple scope, <code>variable [:type] = expression</code> is equivalent to <code>var
+variable [:type] = expression</code>. This is to avoid the most common case
+where tuple fields are frequently declared <code>var</code> not <code>let</code>. This is
+different from lambda captures that declare a new variable but they are
+always immutable (<code>let</code>).</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Code Block scope</label><label for="__tabbed_1_2">Lambda scope</label><label for="__tabbed_1_3">Tuple scope</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>assert a == 3        // compile error, undefined variable &#39;a&#39;
+var a = 3
+{
+  assert a == 3
+  a = 33             // OK. assign 33
+  a:int = 33         // OK, assign 33 and check that &#39;a&#39; has type int
+  let b = 4
+  let a = 3333       // compile error, variable shadowing
+  var a = 33         // compile error, variable shadowing
+}
+assert b == 3        // compile error, undefined variable &#39;b&#39;
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>assert a == 3        // compile error, undefined variable &#39;a&#39;
+var a = 3
+var x = 10
+let f1 = fun[a,x=a+1]() {
+  assert a == 3
+  a = 33             // compile error, capture/inputs are immutable
+  x = 300            // compile error, capture/inputs are immutable
+  let b = 4
+  let a = 3333       // compile error, variable shadowing
+  var a = 33         // compile error, variable shadowing
+  return b+3
+}
+assert f1() == 7
+assert x == 10
+assert b == 3        // compile error, undefined variable &#39;b&#39;
+
+let f2 = fun() {     // restrict scope
+  assert a == 3      // compile error, undefined variable &#39;a&#39;
+}
+let f3 = fun[ff=a]() { // restrict scope
+  assert ff == 3     // OK
+  ff = 3             // compile error, immutable variable
+}
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>var a = 3
+let r1 = (
+  ,a = a+1           // same as var a = a+1
+  ,c = {assert a == 3 and self.a==4; 50}
+)
+r1.a = 33            // compile error, &#39;r1&#39; is immutable variable
+
+var r2 = (a=100, let c=(a=a+1, e=self.a+30))
+assert r2 == (a=100,c=(a=101, e=131))  // checks values not mutability
+r2.a = 33            // OK
+r2.c.a = 33          // compile error, &#39;r2.c&#39; is immutable variable
+</code></pre></div>
+</div>
+</div>
+</div>
+<ul>
+<li>
+<p>Shadowing is not allowed in lambdas or code blocks. Tuples can redefine
+  (shadow) the same variable but to use inside the tuple, the <code>self</code> keyword
+  must be used always to access tuple scoped variables.</p>
+</li>
+<li>
+<p>Lambdas and tuples upper scope variables are always immutable.</p>
+</li>
+<li>
+<p>Lambdas can restrict upper scope visibility with <code>[]</code>.</p>
+</li>
+<li>
+<p>A variable is visible from definition until the end of scope in program order.</p>
+</li>
+</ul>
+<p>Since the captures and lambda inputs are always immutable, it is not allowed to
+declare them as <code>var</code> and redundant to declare them as <code>let</code>.</p>
+<div class="highlight"><pre><span></span><code>let f3 = fun(var x) { x + 1 }    // compile error, inputs are immutable
+let f2 = fun[var x](z) { x + z } // compile error, captures are immutable
+</code></pre></div>
+<p>Tuple scope is also useful for declaring function default values:</p>
+<div class="highlight"><pre><span></span><code>fun example(a:int, b:int=self.a+5) -&gt; (_:int) {
+  return a+b
+}
+assert example(a=3) == (a+a+5)
+assert example(6,7) == (6+7)
+assert example(6) == (6+6+5)
+assert example(b=3) !=0         // compile error: undefined `a` argument
+</code></pre></div>
+<h2 id="basic-types">Basic types<a class="headerlink" href="#basic-types" title="Permanent link">&para;</a></h2>
+<p>Pyrope has 8 basic types:</p>
+<ul>
+<li><code>boolean</code>: either <code>true</code> or <code>false</code></li>
+<li><code>enum</code>: enumerated</li>
+<li><code>fun</code>: A function or pure combinational lambda</li>
+<li><code>int</code>: which is signed integer of unlimited precision</li>
+<li><code>proc</code>: A procedure or lambda with state/clock or side-effects</li>
+<li><code>range</code>: A one hot encoding of values <code>1..=3 == 0b1110</code></li>
+<li><code>string</code>: which is a sequence of characters</li>
+<li><code>variant</code>: An union without typecast</li>
+</ul>
+<p>All the types except the function can be converted back and forth to an
+integer.</p>
+<h3 id="integer-or-int">Integer or <code>int</code><a class="headerlink" href="#integer-or-int" title="Permanent link">&para;</a></h3>
+<p>Integers have unlimited precision and they are always signed. Unlike most other
+languages, there is only one type for integer (unlimited), but the type system
+allows to add constrains to be checked when assigning the variable contents.
+Notice that the type is the same (<code>u32</code> is the same type as <code>i3</code>, they just have
+different constraints):</p>
+<ul>
+<li><code>int</code>: an unlimited precision integer number.</li>
+<li><code>unsigned</code>: An integer basic type constrained to be a natural number.</li>
+<li><code>u&lt;num&gt;</code>: An integer basic type constrained to be a natural number with a maximum value of <span class="arithmatex">\(2^{\texttt{num}}\)</span>. E.g: <code>u10</code> can go from zero to 1024.</li>
+<li><code>i&lt;num&gt;</code>: an integer 2s complement number with a maximum value of <span class="arithmatex">\(2^{\texttt{num}-1}-1\)</span> and a minimum of <span class="arithmatex">\(-2^{\texttt{num}}\)</span>.</li>
+<li><code>int(a..&lt;b)</code>: integer basic type constrained to be between <code>a</code> and <code>b</code>.</li>
+</ul>
+<div class="highlight"><pre><span></span><code>var a:int         = _ // any value, no constrain
+var b:unsigned    = _ // only positive values
+var c:u13         = _ // only from 0 to 1&lt;&lt;13
+var d:int(20..=30)= _ // only values from 20 to 30 (both included)
+var d:int(-5..&lt;6) = _ // only values from -5 to 6 (6 not included)
+var e:int(-1,0)   = _ // 1 bit integer: -1 or 0
+</code></pre></div>
+<p>Integers can have 3 value (<code>0</code>,<code>1</code>,<code>?</code>) expression or a <code>nil</code>. Section
+<a href="../02-basics/#Integers">Integers</a> has more details, but those values can not be
+part of the type requirement.</p>
+<p>Integer typecast accepts strings as input. The string must be a valid formatted
+Pryope number or an assertion is raised.</p>
+<h3 id="boolean">Boolean<a class="headerlink" href="#boolean" title="Permanent link">&para;</a></h3>
+<p>A boolean is either <code>true</code> or <code>false</code>. Booleans can not mix with integers in
+expressions unless there is an explicit typecast (<code>int(false)==0</code> and
+<code>int(true)==-1</code>) or the integer is a 1 bit signed integer (0 and -1). Unlike
+integers, booleans do not support undefined value. A typecast from integer to
+boolean will raise an assertion when the integer has undefined bits (<code>?</code>) or
+<code>nil</code>.</p>
+<div class="highlight"><pre><span></span><code>let b = true
+let c = 3
+
+if c    { call(x) }  // compile error, &#39;c&#39; is not a boolean expression
+if c!=0 { call(x) }  // OK
+
+var d = b or false   // OK
+var e = c or false   // compile error, &#39;c&#39; is not a boolean
+
+let e = 0xfeed
+if e@[3] {           // OK, bit extraction for single bit returns a boolean
+  call(x)
+}
+
+assert 0 == (int(true)  + 1)  // explicity typecast
+assert 1 == (int(false) + 1)  // explicity typecast
+assert boolean(33) or false   // explicity typecast
+</code></pre></div>
+<p>String input typecase is valid, but anything different than ("0", "1", "-1",
+"true", "TRUE", "t", "false", "FALSE", "f") raises an assertion failure.</p>
+<p>Logical and arithmetic operations can not be mixed.</p>
+<div class="highlight"><pre><span></span><code>let x = a and b
+let y = x + 1    // compile error: &#39;x&#39; is a boolean, &#39;1&#39; is integer
+</code></pre></div>
+<h3 id="lambda-funproc">Lambda (<code>fun</code>/<code>proc</code>)<a class="headerlink" href="#lambda-funproc" title="Permanent link">&para;</a></h3>
+<p>Lambdas have several options (see <a href="../06-functions/">Functions</a>), but from a
+high level they provide a sequence of statements and they have a tuple for
+input and a tuple for output. Lambdas also can capture values from declaration.
+Like strings, lambdas are always immutable objects but they can be assigned
+to mutable variables.</p>
+<h3 id="range">Range<a class="headerlink" href="#range" title="Permanent link">&para;</a></h3>
+<p>Ranges are very useful in hardware description languages to select bits. They
+are 3 ways to specify a closed range:</p>
+<ul>
+<li><code>first..=last</code>: Range from first to the last element, both included</li>
+<li><code>first..&lt;last</code>: Range from first to last, but the last element is not included</li>
+<li><code>first..+size</code>: Range from first to <code>first+size</code>. Since there is <code>size</code>
+  elements, it is equivalent to write <code>first..&lt;(first+last)</code>.</li>
+</ul>
+<p>When used inside selectors (<code>[range]</code>) the ranges can be open (no first/last specified)
+or use negative numbers. Ranges only work with positive numbers, a negative
+number is to specify the distance from last.</p>
+<ul>
+<li><code>[first..&lt;-val]</code> is the same as <code>[first..&lt;(last-val+1)]</code>. The advantage is that the <code>last</code> or
+size in the tuple can be unknown.</li>
+<li><code>[first..]</code> is the same as <code>[first..=-1]</code>.</li>
+</ul>
+<div class="highlight"><pre><span></span><code>let a = (1,2,3)
+assert a[0..] == (1,2,3)
+assert a[1..] == (2,3)
+assert a[..=1] == (1,2)
+assert a[..&lt;2] == (1,2)
+assert a[1..&lt;10] == (2,3)
+
+let b = 0b0110_1001
+assert b@[1..]        == 0b0110_100
+assert b@[1..=-1]     == 0b0110_100
+assert b@[1..=-2]     == 0b0110_100  // unsigned result from bit selector
+assert b@sext[1..=-2] == 0sb110_100
+assert b@[1..=-3]     == 0sb10_100
+assert b@[1..&lt;-3]     == 0b0_100
+assert b@[0]          == false
+</code></pre></div>
+<p>A range is a separate tuple. As such it can not directly compare with 
+tupes. It requires an explicit conversion. If the range does not contain
+negative values, it can be converted to an integer back and forth which
+corresponds to a one-hot encoding.</p>
+<p>Range type cast from integers use the same one-hot encoding. It is not possible
+to type cast from tuple to range, but it is possible from range to tuple. </p>
+<div class="highlight"><pre><span></span><code>let c = 1..=3
+assert int(c) == 0b1110
+assert range(0b01_1100) == 2..=4
+
+assert range(1,2,3)            // compile error, typecast not allowed
+assert (1,2,3) == tuple(1..=3)
+</code></pre></div>
+<p>In most cases, the range can be used in contructs like <code>for</code> for positive and
+negative numbers. The <code>tuple</code> typecast is not needed, but if placed the
+semantic is the same. The same <code>tuple</code> typecast is also optional when doing a
+comparison. Both ranges a <code>step</code> to change the step.</p>
+<div class="highlight"><pre><span></span><code>assert   int(0..=10 step  2) == 0b101_0101_0101
+assert tuple(0..=10 step  2) == ( 0,2,4,6,8,10)
+assert tuple(10..=0 step -2) == (10,8,6,4,2, 0)
+assert      (10..=0 step -2) == (10,8,6,4,2, 0)
+
+assert -1..=2 == (-1,0,1,2)
+let x = -1..=2
+
+assert (i for i in 0..=10 step 2) == (0,2,4,6,8,10)
+</code></pre></div>
+<p>Since the range is an integer, a decreasing range should have the same meaning
+that an increasing range (<code>1..=3 == 3..=1</code>) but to avoid mistakes/confusions,
+Pyrope generates a compile error in decreasing ranges.</p>
+<div class="highlight"><pre><span></span><code>assert 5..=0                           // compile error, 5 + 1 never reaches 0
+assert 5..=0 step -1 == (5,4,3,2,1,0)
+</code></pre></div>
+<p>A closed range can be converted to a single integer or a tuple. A range
+encoded as an integer is a set of one-hot encodings. As such, there is no
+order, but in Pyrope, ranges always have the order from smallest to largest.
+The <code>step expr</code> can be added to indicate a step or step function. This is only
+possible when both begin and end of the range are fully specified.</p>
+<div class="highlight"><pre><span></span><code>assert((0..&lt;30 step 10) == (0,10,20)) // ranges and tuples can combined
+assert((1..=3) ++ 4 == (1,2,3,4))   // tuple and range ops become a tuple
+assert 1..=3 == (1,2,3)
+assert((1..=3)@[..] == 0b1110)      // convert range to integer with @[..]
+</code></pre></div>
+<h3 id="string">String<a class="headerlink" href="#string" title="Permanent link">&para;</a></h3>
+<p>Strings are a basic type, but they can be typecasted to integers using the
+ASCII sequence. The string encoding assigns the lower bits to the first
+characters in the string, each character has 8 bits associated.</p>
+<div class="highlight"><pre><span></span><code>a = &#39;cad&#39;              // c is 0x63, a is 0x61, and d is 0x64
+b = 0x64_61_63
+assert a == string(b)  // typecast number to string
+assert int(a) == b     // typecast string to number
+assert a@[..] == b     // typecast string to number
+</code></pre></div>
+<p>Like ranges, strings can also be seen as a tuple, and when tuple operations are
+performed they are converted to a tuple.</p>
+<div class="highlight"><pre><span></span><code>assert &quot;hello&quot; == (&#39;h&#39;,&#39;e&#39;,&#39;l&#39;,&#39;l&#39;,&#39;o&#39;)
+assert &quot;h&quot; ++ &quot;ell&quot; == (&#39;h&#39;,&#39;e&#39;,&#39;l&#39;,&#39;l&#39;) == &quot;hell&quot;
+</code></pre></div>
+<h2 id="type-declarations">Type declarations<a class="headerlink" href="#type-declarations" title="Permanent link">&para;</a></h2>
+<p>Each variable has a type, either implicit or explicit, and as such, it can be
+used to declare a new type. </p>
+<p>Pyrope does not have a <code>type</code> keyword. Instead it leverages the tuples for type
+creation. The difference is that a type should be an immutable variable, and
+therefore it is recommended to start with Uppercase.</p>
+<div class="highlight"><pre><span></span><code>var bund1 = (color:string, value:s33)
+x:bund1        = _      // OK, declare x of type bund1 with default values
+bund1.color    = &quot;red&quot;  // OK
+bund1.is_green = fun(self) { self.color == &quot;green&quot; }
+x.color        = &quot;blue&quot; // OK
+
+let typ = (color:string, value:s33, is_green:fun(self) = _)
+y:typ        = _        // OK
+typ.color    = &quot;red&quot;    // compile error
+typ.is_green = fun(self) { self.color == &quot;green&quot; }
+y.color      = &quot;red&quot;    // OK
+
+let bund3 = (color:string, value:s33)
+z:bund3        = _                 // OK
+bund3.color    = &quot;red&quot;             // compile error
+bund3.is_green = fun(self) { ... } // compile error
+z.color        = &quot;blue&quot;            // OK
+
+assert x equals typ  // same type structure
+assert z equals typ  // same type structure
+assert x equals z    // same type structure
+
+assert y is typ
+assert typ is typ
+assert z !is bund3 
+assert z !is typ
+assert z !is bund1
+</code></pre></div>
+<p>Adding a method to a tuple with <code>tup.fn = fun...</code> is the same as <code>tup = tup ++
+(fn=fun...)</code>.</p>
+<h2 id="type-checks">Type checks<a class="headerlink" href="#type-checks" title="Permanent link">&para;</a></h2>
+<p>When a type is used in the left-hand-side of a declaration statement, the
+type is set for the whole existence of the variable. It is possible to also
+use type checks outside the variable declaration. Those are to check that
+the variable <code>does</code> comply with the type specified.</p>
+<div class="highlight"><pre><span></span><code>var a = true  // infer a is a boolean
+
+foo = a:bool or false // checks that &#39;a&#39; is a boolean
+</code></pre></div>
+<h2 id="attributes">Attributes<a class="headerlink" href="#attributes" title="Permanent link">&para;</a></h2>
+<p>Attributes is the mechanism that the programmer specifies some special
+checks/functionality that the compiler should perform. Attributes are
+associates to variables either setting an attribute or checking the value. Some
+example of check is to mark statements compile time constant, or read the
+number of bits in an assertion, or placement hints, or even interact with the
+synthesis flow to read timing delays.</p>
+<p>Pyrope does not specify the attributes, the compiler flow specifies them.
+Reading attributes should not affect a logical equivalence check. Writing
+attributes can have a side-effect because it can change bits use for
+wrap/saturate or change pins like reset/clock in registers. Additionally,
+attributes can affect assertions, so they can stop/abort the compilation. </p>
+<p>The are three operations that can be done with attributes: set, check, read.</p>
+<ul>
+<li>
+<p>Set: when associated to a variable type in the left-hand-side of an
+  assignment or directly accessed. If a variable definition, this binds the
+  attribute with all the use cases of the variable. If the variable just
+  changes attribute value, a direct assignment is possible E.g: <code>foo::[max=300]
+  = 4</code> or <code>baz.[attr] = 10</code> </p>
+</li>
+<li>
+<p>Check: when associated to a type property in the right-hand-side of an
+  assignment. The attribute is a comma separated list of boolean expression
+  that must evaluate true only at this statement. E.g: <code>var tmp =
+  yy::[comptime, attr2&gt;0] + xx</code></p>
+</li>
+<li>
+<p>Read: a direct read of an attribute value is possible with <code>variable.field.[attribute]</code></p>
+</li>
+</ul>
+<p>The attribute set, writes a value to the attribute. If no value is given a
+boolean <code>true</code> is set. The attribute checks are expressions that must evaluate
+true. </p>
+<p>Since conditional code can depend on an attribute, which results in executing a
+different code sequence that can lead to the change of the attribute. This can
+create a iterative process. It is up to the compiler to handle this, but the
+most logical is to trigger a compile error if there is no fast convergence.</p>
+<div class="highlight"><pre><span></span><code>// attribute set
+var foo:u32:[comptime=true] = xx   // enforce that foo is comptime true always
+var bar::[comptime] = xx           // same as previous statement
+yyy = xx                           // yyy does not check comptime
+yyy::[comptime=true] = xx          // now, checks that &#39;yyy` is comptime
+
+// attribute check
+if bar == 3 {
+  tmp = bar::[comptime == true]    // check that this use of bar is comptime
+  tmp = bar::[comptime]            // same as previous statement
+  tmp = bar ; assert bar.[comptime] // same as previous statements
+}
+                                   // bar/foo may not be comptime
+
+// attribute read
+assert tmp.[bits] &lt; 30 and !tmp.[comptime]
+</code></pre></div>
+<p>The attribute check is like a type check, both can be converted to assertions,
+but the syntax is cleaner.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Attribute Check</label><label for="__tabbed_2_2">Assertion Equivalent Check</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>let x = y::[cond,bar==3] + 1
+
+read_state = fun(x) {
+  let f:u32:[comptime] = x // f is compile time or a error is generated
+  return f                 // f should be compile time constant
+}
+
+var foo = read_state(zz) // foo will be compile time constant
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>let x = y + 1
+cassert y.[cond]
+cassert y.[bar]==3
+
+read_state = fun(x) {
+  let f = x
+  cassert f does u32
+  cassert f.[comptime]
+  f
+}
+
+var foo = read_state(zz) // foo will be compile time constant
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>Pyrope allows to assign the attribute to a variable or a function call. Not to
+statements because it is confusing if applied to the condition or all the
+sub-statements.</p>
+<div class="highlight"><pre><span></span><code>if cond::[comptime] {    // cond is checked to be compile time constant
+  x::[comptime] = a +1   // x is set to be compile time constant
+}else{
+  x::[comptime] = b      // x is set to be compile time constant
+}
+
+
+if cond.[comptime] {  // checks if cond is compute at comptime
+  let v = cond
+  if cond {
+    puts &quot;cond is compile time and true&quot;
+  }
+}
+</code></pre></div>
+<p>The programmer could create custom attributes but then a LiveHD compiler pass
+to deal with the new attribute is needed to handle based on their specific
+semantic. To understand the potential Pyrope syntax, this is a hypothetical
+<code>::[poison]</code> attribute that marks tuple.</p>
+<div class="highlight"><pre><span></span><code>let bad = (a=3,b::[poison]=4)
+
+let b = bad.b
+
+assert b.[poison] and b==4
+</code></pre></div>
+<p>Attributes control fields like the default reset and clock signal. This allows
+to change the control inside procedures. Notice that this means that attributes
+are passed by reference. This is not a value copy, but a pass by reference.
+This is needed because when connecting things like a reset, we want to connect
+to the reset wire, not the current reset value.</p>
+<div class="highlight"><pre><span></span><code>let counter = proc(en, width) {
+  reg value:uint:[bits=width] = 0
+  value = value + 1
+  value
+}
+
+let counter2::[clock_pin=clk1]=counter
+let counter3::[reset_pin=rst2]=counter
+
+var ctr2 =#[..] counter2(my_enable)
+var ctr3 =#[..] counter3(my_enable)
+</code></pre></div>
+<p>In the long term, the goal is to have any synthesis directive that can affect
+the correctness of the result to be part of the design specification so that it
+can be checked during simulation/verification.</p>
+<p>There are 3 main classes of a attributes that all the Pyrope compilers should
+always implement: Bitwidth, comptime, debug.</p>
+<h3 id="variable-attribute-list">Variable attribute list<a class="headerlink" href="#variable-attribute-list" title="Permanent link">&para;</a></h3>
+<p>In the future, the compiler may implement some of the following attributes, as
+such, these attribute names are reserved and not allowed for custom attribute
+passes:</p>
+<ul>
+<li><code>clock</code>: indicate a signal/input is a clock wire</li>
+<li><code>critical</code>: synthesis time criticality</li>
+<li><code>debug</code> (sticky): variable use for debug only, not synthesis allowed</li>
+<li><code>delay</code>: synthesis time delay</li>
+<li><code>defer</code>: for reads, it means last value written. For assigns, it means defer write</li>
+<li><code>deprecated</code>: to generate special warnigns about usage</li>
+<li><code>donttouch</code>: do not touch/optimize away</li>
+<li><code>file</code>: to print the file where the variable was declared</li>
+<li><code>inline</code>, <code>noinline</code>: to indicate if a module is inlined</li>
+<li><code>inp_delay</code>, <code>out_delay</code>: synthesis optimizations hints</li>
+<li><code>keep</code>: same as donttouch but shorter</li>
+<li><code>key</code>: variable/entry key name</li>
+<li><code>left_of</code>, <code>right_of</code>, <code>top_of</code>, <code>bottom_of</code>, <code>align_with</code>: placement hints</li>
+<li><code>let</code> and <code>var</code>: is the variable declared as <code>let</code> and/or <code>var</code></li>
+<li><code>loc</code>: line of code information</li>
+<li><code>max_delay</code>, <code>min_delay</code>: synthesis optimizations checked at simulation</li>
+<li><code>max_load</code>, <code>max_fanout</code>, <code>max_cap</code>: synthesis optimization hints</li>
+<li><code>multicycle</code>: number of cycles for optimizations checked at simulation</li>
+<li><code>pipeline</code>: pipeline related information</li>
+<li><code>private</code>: variable/field not visible to import/regref</li>
+<li><code>rand</code> and <code>crand</code>: simulation and compile time random number generation</li>
+<li><code>reset</code>: indicate a signal/input is a reset wire</li>
+<li><code>size</code>: Number of entries in tuple or array</li>
+<li><code>typename</code>: type name at variable declaration</li>
+<li><code>valid</code>, <code>retry</code>: for elastic pipelines</li>
+<li><code>warn</code>: is a boolean what when set to false disables compile warnings for associated variable</li>
+</ul>
+<h3 id="registers-and-pipestage-attribute-list">Registers and pipestage attribute list<a class="headerlink" href="#registers-and-pipestage-attribute-list" title="Permanent link">&para;</a></h3>
+<p>Registers have the following attributes:</p>
+<ul>
+<li><code>async</code>: false by default, selects an asynchronous reset</li>
+<li><code>initial</code>: reset value when reset is high</li>
+<li><code>clock</code>: connected to <code>clock</code> by default</li>
+<li><code>reset</code>: connected to <code>reset</code> by default</li>
+<li><code>negreset</code>: active low reset signal</li>
+<li><code>posclk</code>: true by default, selects a posedge or negnedge flop</li>
+<li><code>retime</code>: allow to retime across the register</li>
+</ul>
+<p>Pipestage accept the same register attributes but also two more:</p>
+<ul>
+<li><code>lat</code>: latency for the pipestage</li>
+<li><code>num</code>: Number of unitsi used when the pipestage is not fully pipelined.</li>
+</ul>
+<h3 id="memories-attribute-list">Memories attribute list<a class="headerlink" href="#memories-attribute-list" title="Permanent link">&para;</a></h3>
+<p>Memories are arrays with persistence like registers. As such, some of the attributes
+are similar to registers, but unlike registers they can have multiple clocks.</p>
+<ul>
+<li><code>addr</code>: Tuple of address ports for the memory.</li>
+<li><code>bits</code>: The number of bits for each memory entry</li>
+<li><code>size</code>: The number of entries. Total size in bits is <span class="arithmatex">\(size x bits\)</span>.</li>
+<li><code>clock</code>: Optional clock pin, <code>clock</code> by default. A tuple is possible to specify the clock for each address port.</li>
+<li><code>din</code>: Tuple for memory data in port. The read ports must be hardwired to <code>0</code>.</li>
+<li><code>enable</code>: Tuple for each memory port. Write or read enable (read ports can have enable too).</li>
+<li><code>fwd</code>: Forwarding guaranteed (true/false). If fwd is false, there is no guarantee, it can have fwd or not.</li>
+<li><code>latency</code>: Number of cycles (<code>0</code> or <code>1</code>) when the read is performed</li>
+<li><code>wensize</code>: Write enable size allows to have a write mask. The default value
+  is 1, a wensize of 2 means that there are 2 bits in the <code>enable</code> for each
+  port. a wensize 2 with 2 ports has a total of 2+2+2 enable bits. Bit 0 of the
+  enable controls the lower bits of the memory entry selected.</li>
+<li><code>rdport</code>: Indicates which of the ports are read and which are written ports.</li>
+<li><code>posclk</code>: Positive edge clock memory for all the memory clocks. The default is <code>true</code> but it can be set to <code>false</code>.</li>
+</ul>
+<h3 id="lambda-attribute-list">Lambda attribute list<a class="headerlink" href="#lambda-attribute-list" title="Permanent link">&para;</a></h3>
+<p>Lambda attributes allow <a href="../07-typesystem/#Introspection">Introspection</a> which requires some attributes.</p>
+<ul>
+<li><code>inputs</code>: returns the input tuple from the lambda</li>
+<li><code>outputs</code>: returns the input tuple from the lambda</li>
+<li><code>where</code>: returns the lambda used in the <code>where</code> clause</li>
+</ul>
+<h3 id="bitwidth-attribute-list">Bitwidth attribute list<a class="headerlink" href="#bitwidth-attribute-list" title="Permanent link">&para;</a></h3>
+<p>To set constrains on integer, boolean, and range basic types, the compiler has a set
+of bitwidth related attributes:</p>
+<ul>
+<li><code>max</code>: the maximum value allowed</li>
+<li><code>min</code>: the minimum value allowed</li>
+<li><code>ubits</code>: Maximum number of bits to represent the unsigned value. The number must be positive or zero</li>
+<li><code>sbits</code>: Maximum number of bits, and the number can be negative</li>
+<li><code>wrap</code>: allows to drop bits that do not fit on the left-hand side. It performs sign
+  extension if needed.</li>
+<li><code>saturate</code> keeps the maximum or minimum (negative integer) that fits on the
+  left-hand side.</li>
+</ul>
+<p>The integer type constructor allows to use a range to set max/min, but it is
+syntax sugar for direct attribute set.</p>
+<div class="highlight"><pre><span></span><code>opt1:uint(300) = 0
+opt2:int:[min=0,max=300] = 0  // same
+opt3::[min=0,max=300] = 0     // same
+opt4:int(0..=300) = 0         // same
+
+assert opt1.[ubits] == 0    // opt1 initialized to 0, so 0 bits
+opt1 = 200
+assert opt1.[ubits] == 8    // last assignment needs 9 sbits or 8 ubits
+tmp  = opt1::[ubits==8] + 1   // expression AND assert opt1.[ubits]==8 check
+</code></pre></div>
+<p>The wrap/saturate are attributes that only make sense for attribute set. There
+is not much to check/read besides checking that it was set before.</p>
+<div class="highlight"><pre><span></span><code>a:u32 = 100
+b:u10 = 0
+c:u5  = 0
+d:u5  = 0
+w:u5:[wrap] = 0     // attribute set for all the &#39;w&#39; uses
+
+b = a               // OK, o precision lost
+c::[wrap] = a       // OK, same as c = a@[0..&lt;5] (Since 100 is 0b1100100, c==4)
+c = a               // compile error, 100 overflows the maximum value of &#39;c&#39;
+w = a               // OK, &#39;w&#39; has a wrap set at declaration
+
+c::[saturate] = a   // OK, c == 31
+c = 31
+d = c + 1           // compile error, &#39;32&#39; overflows the maximum value of &#39;d&#39;
+
+d::[wrap] = c + 1   // OK d == 0
+d::[saturate] = c+1 // OK, d==31
+d::[saturate] = c+1 // OK, d==31
+
+x::[saturate] boolean = c // compile error, saturate only allowed in integers
+</code></pre></div>
+<h3 id="comptime-attribute">comptime attribute<a class="headerlink" href="#comptime-attribute" title="Permanent link">&para;</a></h3>
+<p>Pyrope borrows the <code>comptime</code> functionality from Zig. Any variable can
+set/check/read the compile time status. This means that the value must be
+constant at compile time or a compile error is generated.</p>
+<div class="highlight"><pre><span></span><code>let a::[comptime] = 1     // obviously comptime
+b::[comptime] = a + 2     // OK too
+let c::[comptime] = rand  // compile error, &#39;c&#39; is not compile time constant
+</code></pre></div>
+<p>To avoid too frequent comptime directives, Pyrope treats all the variables that
+start with uppercase as compile time constants.</p>
+<div class="highlight"><pre><span></span><code>var Xconst1 = 1      // obvious comptime
+var Xvar2   = rand   // compile error, &#39;Xvar2&#39; is not compile time constant
+</code></pre></div>
+<h3 id="debug-attribute">debug attribute<a class="headerlink" href="#debug-attribute" title="Permanent link">&para;</a></h3>
+<p>In software and more commonly in hardware, it is common to have extra
+statements and state to debug the code. These debug functionality can be more
+than plain assertions, they can also include code.</p>
+<p>The <code>debug</code> attribute marks a mutable or immutable variable. At synthesis, all
+the statements that use a <code>debug</code> can be removed. <code>debug</code> variables can read
+from non debug variables, but non-debug variables can not read from <code>debug</code>.
+This guarantees that <code>debug</code> variables, or statements, do not have any
+side-effects beyond debug statements.</p>
+<div class="highlight"><pre><span></span><code>var a = (b::[debug]=2, c = 3) // a.b is a debug variable
+let c::[debug] = 3
+</code></pre></div>
+<p>Assignments to debug variables also bypass protection access. This means that
+private variables in tuples can be accessed (read-only). Since <code>assert</code> marks
+all the results as debug, it allows to read any public/private variable/field.</p>
+<div class="highlight"><pre><span></span><code>x:(_priv=3, zz=4) = _
+
+let tmp = x._priv         // compile error
+let tmp::[debug] = x.priv // OK
+
+assert x._priv == 3    // OK, assert is a debug statement
+</code></pre></div>
+<h2 id="register">Register<a class="headerlink" href="#register" title="Permanent link">&para;</a></h2>
+<p>Both mutable and immutable variables are created every cycle. To have
+persistence across cycles the <code>reg</code> type must be used.</p>
+<div class="highlight"><pre><span></span><code>reg counter:u32   = 10
+var not_a_reg:u32 = 20
+</code></pre></div>
+<p>In <code>reg</code>, the right-hand side of the initialization (<code>10</code> in the
+counterexample) is called only during reset. In non-register variables, the
+right-hand side is called every cycle. Most of the cases <code>reg</code> is mutable but
+it can be declared as immutable.</p>
+<h2 id="public-vs-private">Public vs private<a class="headerlink" href="#public-vs-private" title="Permanent link">&para;</a></h2>
+<p>All variables are public by default. To declare a variable private within the
+tuple or file the <code>private</code> attribute must be set.</p>
+<p>The private has different meaning depending on when it is applied:</p>
+<ul>
+<li>
+<p>When applied to a tuple entry (<code>(field::[private] = 3)</code>), it means that the 
+  entry can not be accessed outside the tuple. </p>
+</li>
+<li>
+<p>When applied to a <code>pipestage</code> variable (<code>var foo::[private] = 3</code>), it means that the
+  variable is not pipelined to the next type stage. Section
+  <a href="../06c-pipelining/">pipestage</a> has more details.</p>
+</li>
+<li>
+<p>When is applied to a pyrope file upper scope variable (<code>reg top_reg:[private]
+  = 0</code>), it means that an <code>import</code> command or register reference can not access
+  it across files. Section <a href="../07-typesystem/">typesystem</a> has more details.</p>
+</li>
+</ul>
+<h2 id="operators">Operators<a class="headerlink" href="#operators" title="Permanent link">&para;</a></h2>
+<p>There are the typical basic operators found in most common languages except
+exponent operations. The reason is that those are very hardware intensive and a
+library code should be used instead.</p>
+<p>All the operators work over signed integers.</p>
+<h3 id="unary-operators">Unary operators<a class="headerlink" href="#unary-operators" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>!a</code> or <code>not a</code> logical negation</li>
+<li><code>~a</code> bitwise negation</li>
+<li><code>-a</code> arithmetic negation</li>
+</ul>
+<h3 id="binary-integer-operators">Binary integer operators<a class="headerlink" href="#binary-integer-operators" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>a + b</code> addition</li>
+<li><code>a - b</code> substraction</li>
+<li><code>a * b</code> multiplication</li>
+<li><code>a / b</code> division</li>
+<li><code>a &amp; b</code> bitwise and</li>
+<li><code>a | b</code> bitwise or</li>
+<li><code>a ^ b</code> bitwise xor</li>
+<li><code>a ~&amp; b</code> bitwise nand</li>
+<li><code>a ~| b</code> bitwise nor</li>
+<li><code>a ~^ b</code> bitwise xnor</li>
+<li><code>a &gt;&gt; b</code> arithmetic right shift</li>
+<li><code>a@[..] &gt;&gt; b</code> logical right shift</li>
+<li><code>a &lt;&lt; b</code> left shift</li>
+</ul>
+<p>In the previous operations, <code>a</code> and <code>b</code> need to be integers. The exception is
+<code>a &lt;&lt; b</code> where <code>b</code> can be a tuple. The <code>&lt;&lt;</code> allows having multiple values
+provided by a tuple on the right-hand side or amount. This is useful to create
+one-hot encodings.</p>
+<div class="highlight"><pre><span></span><code>cassert 1&lt;&lt;(1,4,3) == 0b01_1010
+</code></pre></div>
+<h3 id="binary-boolean-operators">Binary boolean operators<a class="headerlink" href="#binary-boolean-operators" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>a and b</code> logical and</li>
+<li><code>a or b</code> logical or</li>
+<li><code>a implies b</code> logical implication</li>
+<li><code>a !and b</code> logical nand</li>
+<li><code>a !or b</code> logical nor</li>
+<li><code>a !implies b</code> logical not implication</li>
+</ul>
+<h3 id="tupleset-operators">Tuple/Set operators<a class="headerlink" href="#tupleset-operators" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>a in b</code> is element <code>a</code> in tuple <code>b</code></li>
+<li><code>a !in b</code> true when element <code>a</code> is not in tuple <code>b</code></li>
+<li><code>tuple(a)</code> converts <code>a</code> to tuple, <code>a</code> can be a boolean, range, integer,
+  string, or already a tuple</li>
+</ul>
+<p>Most operations behave as expected when applied to signed unlimited precision
+integers. </p>
+<p>The <code>a in b</code> checks if values of <code>a</code> are in <code>b</code>. Notice that both can be
+tuples. If <code>a</code> is a named tuple, the entries in <code>b</code> match by name, and then
+contents. If <code>a</code> is unnamed, it matches only contents by position.</p>
+<div class="highlight"><pre><span></span><code>cassert (1,2) in (0,1,3,2,4)
+cassert (1,2) in (a=0,b=1,c=3,2,e=4)
+cassert (a=2) !in (1,2,3)
+cassert (a=2) in (1,a=2,c=3)
+cassert (a=1,2) in (3,2,4,a=1)
+cassert (a=1,2) !in (1,2,4,a=4)
+cassert (a=1) !in (a=(1,2))
+</code></pre></div>
+<p>The <code>a in b</code> has to deal with undefined values (<code>nil</code>, <code>0sb?</code>). The LHS with an undefined
+will be true if the RHS has the same named entry either defined or undefined.</p>
+<div class="highlight"><pre><span></span><code>cassert (x=nil,c=3) in (x=3,c=3)
+cassert (x=nil,c=3) in (x=nil,c=3,d=4)
+cassert (c=3)      !in (c=nil,d=4)
+</code></pre></div>
+<ul>
+<li><code>a ++ b</code> concatenate two tuples. If field appears in both, concatenate field. The a field is
+defined in one tupe and undefined in the other, the undefined value is not concatenated.</li>
+</ul>
+<div class="highlight"><pre><span></span><code>cassert ((a=1,c=3) ++ (a=1,b=2,c=nil)) == (a=(1,1), c=3, b=2)
+cassert ((1,2) ++ (a=2,nil,5)) == (1,2,a=2,5)
+cassert ((x=1) ++ (a=2,nil,5)) == (x=1,a=2,nil,5)
+
+cassert ((x=1,b=2) ++ (x=0sb?,3)) == (x=1,b=2,3)
+</code></pre></div>
+<ul>
+<li><code>(,...b)</code> in-place insert <code>b</code>. Behaves like <code>a ++ b</code> but it triggers a
+  compile error if both have the same defined named field.</li>
+</ul>
+<div class="highlight"><pre><span></span><code>cassert (1,b=2,...(3,c=3),6) == (1,b=2,3,c=3,6)
+cassert (1,b=2,...(nil,c=3),0sb?,6) == (1,b=2,nil,c=3,0sb?,6)
+</code></pre></div>
+<h3 id="type-operators">Type operators<a class="headerlink" href="#type-operators" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>a has b</code> checks if <code>a</code> tuple has the <code>b</code> field where <code>b</code> is a string or
+  integer (position).</li>
+</ul>
+<div class="highlight"><pre><span></span><code>cassert((a=1,b=2) has &quot;a&quot;)
+</code></pre></div>
+<ul>
+<li><code>a does b</code> is the tuple structure of <code>a</code> a subset of <code>b</code></li>
+<li><code>a equals b</code> same as <code>(a does b) and (b does a)</code></li>
+<li><code>a case b</code> same as <code>cassert a does b</code> and for each <code>b</code> field with a defined value,
+  the value matches <code>a</code> (<code>nil</code>, <code>0sb?</code> are undefined values)</li>
+<li><code>a is b</code> is a nominal type check. Equivalent to <code>a::[typename] == b::[typename]</code></li>
+</ul>
+<p>Each type operator also has the negated <code>(a !does b) == !(a does b)</code>, <code>(a
+!equals b) == !(a equals b)</code>, <code>a !case b == !(a case b)</code></p>
+<p>The <code>does</code> performs just name matching when the LHS is a named tuple. It
+reverts to name and position matching when some of the LHS entries are unnamed.</p>
+<div class="highlight"><pre><span></span><code>cassert (a=1,b=3) does (b=100,a=333,e=40,5)
+cassert (a=1,3) does (a=100,300,b=333,e=40,5)
+cassert (a=1,3) !does (b=100,300,a=333,e=40,5)
+</code></pre></div>
+<p>A <code>a case b</code> is equivalent to <code>cassert b does a</code> and for each defined value in
+<code>b</code> there has to be the same value in <code>a</code>. This can be used in any expression
+but it is quite useful for <code>match ... case</code> patterns.</p>
+<div class="highlight"><pre><span></span><code>match (a=1,b=3) {
+  case (a=1) { cassert true }
+  else { cassert false }
+}
+
+match let t=(a=1,b=3); t {
+  case (a=1  ,c=4) { cassert false }
+  case (b=nil,a=1) { cassert t.b==3 and t.a==1 }
+  else { cassert false }
+}
+</code></pre></div>
+<p>An <code>x = a case b</code> can be translated to:</p>
+<div class="highlight"><pre><span></span><code>cassert b does a
+x = b in a
+</code></pre></div>
+<h3 id="reduce-and-bit-selection-operators">Reduce and bit selection operators<a class="headerlink" href="#reduce-and-bit-selection-operators" title="Permanent link">&para;</a></h3>
+<p>The reduce operators and bit selection share a common syntax
+<code>variable@op[sel]</code> where:</p>
+<ul>
+<li>
+<p><code>variable</code> is a tuple where all the tuple fields and subfields must have a
+  explicit type size unless the tuple has 1 entry.</p>
+</li>
+<li>
+<p><code>op</code> is the operation to perform</p>
+<ul>
+<li><code>|</code>: or-reduce.</li>
+<li><code>&amp;</code>: and-reduce.</li>
+<li><code>^</code>: xor-reduce or parity check.</li>
+<li><code>+</code>: pop-count.</li>
+<li><code>sext</code>: Sign extends selected bits.</li>
+<li><code>zext</code>: Zero sign extends selected bits (default option)</li>
+</ul>
+</li>
+<li>
+<p><code>sel</code> can be a close-range like <code>1..&lt;=4</code> or <code>(1,4,6)</code> or an open range like
+  <code>3..</code>. Internally, the open range is converted to a close-range based on the
+  variable size.</p>
+</li>
+</ul>
+<p>The or/and/xor reduce have a single bit signed result (not boolean). This means
+that the result can be 0 (<code>0sb0</code>) or -1 (<code>0sb1</code>). pop-count and <code>zext</code> have
+always positive results. <code>sext</code> is a sign-extended, so it can be positive or
+negative.</p>
+<p>If no operator is provided, a <code>zext</code> is used by default. The bit selection without
+operator can also be used on the left-hand side to update a set of bits.</p>
+<p>The or-reduce and and-reduce are always size insensitive. This means that to
+perform the reduction it is not needed to know the number of bits. It could
+pick more or fewer bits and the result is the same. E.g: 0sb111 or 0sb111111
+have the same and/or reduce. This is the reason why both can work with open and
+close ranges.</p>
+<p>This is not the case for the xor-reduce and pop-count. These two operations are
+size insensitive for positive numbers but sensitive for negative numbers. E.g:
+pop-count of 0sb111 is different than 0sb111111. When the variable is negative
+a close range must be used. Alternatively, a <code>zext</code> must be used to select
+bits accordingly. E.g: <code>variable@[0..=3]@+[..]</code> does a <code>zext</code> and the positive result
+is passed to the pop-count. The compiler could infer the size and compute, but
+it is considered non-intuitive for programmers.</p>
+<div class="highlight"><pre><span></span><code>x = 0b1_0110   // positive
+y = 0s1_0110   // negative
+assert x@[0,2] == 0b10
+assert y@[100,200]       == 0b11   and x@[100,200]       == 0
+assert y@sext[0,100,200] == 0sb110 and x@sext[1,100,200] == 0b001
+assert x@|[..] == -1
+assert x@&amp;[0,1] == 0
+assert x@+[0..=5] == x@+[0..&lt;100] == 3
+assert y@+[0..=5]  // compile error, &#39;y&#39; can be negative
+assert y@[..]@+[..] == 3
+assert y@[0..=5]@+[..] == 3
+assert y@[0..=6]@+[..] == 4
+
+var z     = 0b0110
+z@[0] = 1
+assert z == 0b0111
+z@[0] = 0b11 // compile error, &#39;0b11` overflows the maximum allowed value of `z@[0]`
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>It is important to remember that in Pyrope all the operations use signed
+numbers. This means that an and-reduce over any positive number is always going
+to be zero because the most significant bit is zero, E.g: <code>0xFF@&amp;[..] == 0</code>. In
+some cases, a close-range will be needed if the intention is to ignore the sign.
+E.g: <code>0xFF@&amp;[0..&lt;8] == -1</code>.</p>
+</div>
+<p>The bit selection operator only works with ranges, boolean, and integers. It
+does not work with tuples or strings. For converting in these object a <code>union:</code>
+must be used.</p>
+<p>Another important characteristic of the bit selection is that the order of the
+bits on the selection does not affect the result. Internally, it is a bitmask
+that has no order. For the <code>zext</code> and <code>sext</code>, the same order as the input
+variable is respected. This means that <code>var@[1,2] == var@[2,1]</code>. As a result,
+the bit selection can not be used to transpose bits. A tuple must be used for
+such an operation.</p>
+<div class="highlight"><pre><span></span><code>var v = 0b10
+assert v@[0,1] == v@[1,2] == v@[..] == v@[0..=1] == v@[..=1] == 0b10
+
+var trans = 0
+
+trans@[0] = v@[1]
+trans@[1] = v@[0]
+assert trans == 0b01
+</code></pre></div>
+<h2 id="precedence">Precedence<a class="headerlink" href="#precedence" title="Permanent link">&para;</a></h2>
+<p>Pyrope has very shallow precedence, unlike most other languages the
+programmer should explicitly indicate the precedence. The exception is for
+widely expected precedence.</p>
+<ul>
+<li>Unary operators (not,!,~,?) bind stronger than binary operators (+,++,-,*...)</li>
+<li>Comparators can be chained (a&lt;=c&lt;=d) same as (a&lt;=c and c&lt;=d)</li>
+<li>mult/div precedence is only against +,- operators.</li>
+<li>Parenthesis can be avoided when a expression left-to-right has the same
+  result as right-to-left.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th align="center">Priority</th>
+<th align="center">Category</th>
+<th align="right">Main operators in category</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">1</td>
+<td align="center">unary</td>
+<td align="right">not ! ~ ?</td>
+</tr>
+<tr>
+<td align="center">2</td>
+<td align="center">mult/div</td>
+<td align="right">*, /</td>
+</tr>
+<tr>
+<td align="center">3</td>
+<td align="center">other binary</td>
+<td align="right">..,^, &amp;, -,+, ++, &lt;&lt;, &gt;&gt;, in, does, has, case, equals, to</td>
+</tr>
+<tr>
+<td align="center">4</td>
+<td align="center">comparators</td>
+<td align="right">&lt;, &lt;=, ==, !=, &gt;=, &gt;</td>
+</tr>
+<tr>
+<td align="center">5</td>
+<td align="center">logical</td>
+<td align="right">and, or, implies</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code>assert((x or !y) == (x or (!y)) == (x or not y))
+assert((3*5+5) == ((3*5) + 5) == 3*5 + 5)
+
+a = x1 or x2==x3 // same as b = x1 or (x2==x3)
+b = 3 &amp; 4 * 4    // compile error: use parenthesis for explicit precedence
+c = 3
+  &amp; 4 * 4
+  &amp; 5 + 3        // compile error: use parenthesis for explicit precedence
+c2 = 3
+  &amp; (4 * 4)
+  &amp; (5 + 3)      // OK
+
+d = 3 + 3 - 5    // OK, same result right-left
+
+e = 1
+  | 5
+  &amp; 6           // compile error: use parenthesis for explicit precedence
+
+f = (1 &amp; 4)
+  | (1 + 5)
+  | 1
+
+g = 1 + 3
+  * 1 + 2
+  + 5           // OK, but not nice
+
+g1= 1 + (3 * 1)
+  + 2
+  + 5           // OK
+
+g2= (1 + 3)
+  * (1 + 2)
+  + 5           // OK
+
+h = x or y and z// compile error: use parenthesis for explicit precedence
+
+i = a == 3 &lt;= b == d
+assert i == (a==3 and 3&lt;=b and b == d)
+</code></pre></div>
+<p>Comparators can be chained, but only when they follow the same type.</p>
+<div class="highlight"><pre><span></span><code>assert a &lt;= b &lt;= c  // same as a&lt;=b and b&lt;=c
+assert a == b &lt;= c  // compile error, chained only allowed with same comparator
+</code></pre></div>
+<h2 id="optional">Optional<a class="headerlink" href="#optional" title="Permanent link">&para;</a></h2>
+<p>The <code>?</code> is used by several languages to handle optional or null pointer
+references. In non-hardware languages, <code>?</code> is used to check if there is valid
+data or a null pointer. This is the same as checking the <code>::[valid]</code> attribute
+with a more friendly syntax.</p>
+<p>Pyrope does not have null pointers or memory associated management. Pyrope uses
+<code>?</code> to handle <code>::[valid]</code> data. Instead, the data is left to behave without the
+optional, but there is a new "valid" field associated with each tuple entry.
+Notice that it is not for each tuple level but each tuple entry.</p>
+<p>There are 4 explicitly interact with valids:</p>
+<ul>
+<li>
+<p><code>tup.f1?</code> reads the valid for field <code>f1</code> from tuple <code>tup</code></p>
+</li>
+<li>
+<p><code>tup?.f1.f2</code> returns <code>0bs0</code> if tuple fields <code>f1</code> or <code>f2</code> are invalid</p>
+</li>
+<li>
+<p><code>tup.f1? = cond</code> explicitly sets the field <code>f1</code> valid to <code>cond</code></p>
+</li>
+<li>
+<p><code>a = b op c</code> variable <code>a</code> will be valid if <code>b</code> AND <code>c</code> are valid</p>
+</li>
+</ul>
+<p>The optional or valid attached to each variable and tuple field is implicitly
+computed as follows:</p>
+<ul>
+<li>
+<p>Non-register variables are initialized with valid unless <code>_</code> is used in the
+  initialization which explicitly clears the valid attribute.</p>
+</li>
+<li>
+<p>Registers set the valid after reset, but if the reset clears the valid, there
+  is not guaranteed on attribute <code>[valid]</code> during reset. If the register does
+  not have a reset signal, the register is always valid unless explicitly
+  cleared.</p>
+</li>
+<li>
+<p>Left-hand side variables <code>valids</code> are set to the and-gate of all the variable
+  valids used in the expression</p>
+</li>
+<li>
+<p>memory/arrays do not tend to have reset signals. As such they are always
+  valid unless the memory has explicit reset code. In which case the valid
+  behaves like in flops.</p>
+</li>
+<li>
+<p>Writing to a register updates the register valid based on the din valid, or
+  when the attribute <code>[valid]</code> is explicitly managed.</p>
+</li>
+<li>
+<p>conditionals (<code>if</code>) update valids independently for each path</p>
+</li>
+<li>
+<p>A tuple field has the valid set to false if any of the tuple fields is
+  invalid</p>
+</li>
+<li>
+<p>The valid computation can be overwritten with the <code>[valid]</code> attribute. This
+  is possible even during reset.</p>
+</li>
+</ul>
+<div class="admonition observation">
+<p class="admonition-title">Observation</p>
+<p>The variable valid calculation is similar to the Elastic 'output_written'
+from <a href="https://masc.soe.ucsc.edu/docs/memocode17.pdf">Liam</a> but it is not an
+elastic update because it does not consider the abort or retry.</p>
+</div>
+<p>The previous rules will clear a valid only if an expression has no valid, but
+the only way to have a non-valid is if the inputs to the lambda are invalid or
+if the valid is explicitly clear. The rules are designed to have no overhead
+when valid are not used. The compiler should detect that the valid is true all
+the time, and the associated logic is removed.</p>
+<p>Most statements evaluate independent of the valid expression. Expressions will
+evaluate the same if any of the inputs is valid or invalid. The valid attribute
+is computed in parallel to avoid being in the critical path. The exception are
+the verification statements like asserts and printing statatements like <code>puts</code>.
+These statements are gated or not performed if any of the inputs is invalid. To
+ignore the valid check, the <code>always</code> command can be appended before and as a
+result the statments will evaluate every cycle independent of the reset/valid
+status.</p>
+<div class="highlight"><pre><span></span><code>var v1:u32 = _                 // v1 is zero every cycle AND not valid
+assert v1.[valid] == false
+var v2:u32 = 0                 // v2 is zero every cycle AND     valid
+assert v2.[valid] == true
+
+cassert v1?
+cassert not v2?
+
+assert v1 == 0 and v2 == 3     // data still same as usual
+
+v1 = 0sb?                      // OK, poison data
+v2 = 0sb?                      // OK, poison data, and update valid
+assert v2?                     // valid even though data is not
+
+assert v1 != 0                 // usual verilog x logic
+assert v2 != 0                 // usual verilog x logic
+
+let res1 = v1 + 0              // valid with just unknown 0sb? data
+let res2 = v2 + 0              // valid with just unknown 0sb? data
+
+assert res1?
+assert res2?
+
+reg counter:u32 = 0
+
+always assert counter.reset implies !counter?
+</code></pre></div>
+<p><code>valid</code> can be overwritten by the setter method:</p>
+<div class="highlight"><pre><span></span><code>let custom = (
+  ,data:i16 = _
+  ,setter = proc(ref self, v) {
+    self.data = v
+    self.[valid] = v != 33
+  }
+)
+
+var x:custom = _
+
+cassert x?
+x.data = 33
+cassert not x?
+x.data = 100
+cassert x?
+</code></pre></div>
+<p>The contents of the tuple field do not affect the field valid bit. It is
+data-independent. Tuples also can have an optional type, which behaves like
+adding optional to each of the tuple fields.</p>
+<div class="highlight"><pre><span></span><code>let complex = (
+  ,reg v1:string = &quot;foo&quot;
+  ,v2:string = _
+
+  ,setter = proc(ref self,v) {
+     self.v1 = v
+     self.v2 = v
+  }
+)
+
+var x1:complex = _
+var x2:complex:[valid=false] = 0  // toggle valid, and set zero
+var x3:complex = 0
+x3.[valid] = false                // set invalid
+
+assert x1.v1 == &quot;&quot; and x1.v2 == &quot;&quot;
+assert not x2? and not x2.v1? and not v2.v2?
+assert x2.v1 == &quot;&quot; and x2.v2 == &quot;&quot;
+
+assert x2?.v1 == &quot;&quot; and x2?.v1 != &quot;&quot;  // any comparison is false
+
+// When x2? is false, any x2?.foo returns 0sb? with the associated x rules
+
+x2.v2 = &quot;hello&quot; // direct access still OK
+
+assert not x2? and x2.v1 == &quot;&quot; and x2.v2 == &quot;hello&quot;
+
+x2 = &quot;world&quot;
+
+assert x2? and x2?.v1 == &quot;world&quot; and x2.v1 == &quot;world&quot;
+</code></pre></div>
+<h2 id="variable-initialization">Variable initialization<a class="headerlink" href="#variable-initialization" title="Permanent link">&para;</a></h2>
+<p>Variable initialization indicates the default value set every cycle and the
+optional (<code>::[valid]</code> attribute).</p>
+<p>The <code>let</code> and <code>var</code> statements require an initialization value for each cycle.
+Pyrope only has undefined values unless explicitly indicated. A variable has an
+undefined value if and only if the value is set to <code>nil</code> or all the bits are
+unknown (<code>0sb?</code>). Undefined variables always have invalid optional
+(<code>.[valid]==false</code>), and defined can have valid or invalid optional.</p>
+<p>On any assignment (<code>v = _</code>) where the rhs is a single underscore <code>_</code>, the
+variable optional is set to false, and it is assigned the default value:</p>
+<ul>
+<li><code>0</code> for integer</li>
+<li><code>false</code> for boolean</li>
+<li><code>""</code> for string</li>
+<li><code>nil</code> otherwise</li>
+</ul>
+<div class="highlight"><pre><span></span><code>var a:int = _
+cassert a==0 and a.[valid] == false and not a?
+
+var b:int = 0
+cassert b==0 and b.[valid] and b?
+b = nil
+cassert b==nil and b.[valid] == false and not b?
+
+var c:fun(a1) = _
+cassert c == nil and c.[valid]==false
+c = fun(a1) { cassert true }
+cassert c!= nil and c.[valid]
+
+var d:[] = _               // empty tuple
+cassert d != nil and d.[valid]
+cassert d[0] == nil and !d[0].[valid]
+
+var e:int = nil
+cassert e==nil and !e.[valid] and not e?
+e = 0
+cassert e==0 and e.[valid] and e?
+</code></pre></div>
+<p>The same rules apply when a tuple or a type is declared.</p>
+<div class="highlight"><pre><span></span><code>let a = &quot;foo&quot;
+
+var at1 = (
+  ,a:string 
+)
+cassert at1[0] == &quot;foo&quot;
+cassert at1 !has &quot;a&quot;    // at1.a undefined
+
+var at2 = (
+  ,a:string = _
+)
+cassert at2.a == &quot;&quot;  and at2.a.[valid]==false
+at2.a = &quot;torrellas&quot;
+cassert at2.a == &quot;torrellas&quot; and at2[0] == &quot;torrellas&quot;
+
+var at3:at2 = _
+cassert at3.a == &quot;&quot;  and at3.a.[valid]==false
+
+var at4:at2 = (a=&quot;josep&quot;)
+cassert at4.a == &quot;josep&quot;  and at4.a.[valid] and at4.[valid]
+</code></pre></div>
+<p>Conditional path affect variable initialization and values. If all the
+conditional passes assign a value, the valid will be true. If only one path
+assigns a value, the valid will be set only on that path, but the data may
+always have the path.</p>
+<div class="highlight"><pre><span></span><code>var x=_
+var y=2
+var z=_
+if rand {
+  x = 3
+  y = 4
+  z = 5
+}else{
+  z = 6
+}
+assert x==3  // Simplified due to the _ initialization
+assert rand      implies x.[valid]
+assert x.[valid] implies rand
+
+assert y.[valid]
+assert  rand implies y == 4
+assert !rand implies y == 2
+
+assert z.[valid]
+assert  rand implies z == 5
+assert !rand implies z == 6
+</code></pre></div>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["search.suggest", "navigation.sections", "navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.b4d07000.min.js"></script>
+      
+        <script src="../../javascripts/config.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>

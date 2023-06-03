@@ -1,0 +1,1578 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../01-introduction/">
+      
+      
+        <link rel="next" href="../03-bundle/">
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.15">
+    
+    
+      
+        <title>Basic syntax - LiveHD and Pyrope</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.26e3688c.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ecc896b0.min.css">
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CFira+Code:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Fira Code"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/table.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#basic-syntax" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LiveHD and Pyrope" class="md-header__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LiveHD and Pyrope
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Basic syntax
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+            
+              <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3Z"/></svg>
+              </label>
+            
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_2">
+            
+              <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6zm0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4zM7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+              </label>
+            
+          
+        </form>
+      
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LiveHD and Pyrope" class="md-nav__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    LiveHD and Pyrope
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        LiveHD and Pyrope
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+          Livehd
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Livehd
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/00-intro/" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/01-install/" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/02-usage/" class="md-nav__link">
+        Usage
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/03-memory/" class="md-nav__link">
+        Memory and concurrency
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/04-api/" class="md-nav__link">
+        C++ API
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/05-lgraph/" class="md-nav__link">
+        LGraph
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/06-lnast/" class="md-nav__link">
+        LNAST
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10-bazel/" class="md-nav__link">
+        Bazel build
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10b-3rdparty/" class="md-nav__link">
+        3rd Party
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/11-pass/" class="md-nav__link">
+        Creating a Pass
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/12-github/" class="md-nav__link">
+        GitHub Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/13-style/" class="md-nav__link">
+        Coding Style
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          Pyrope
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Pyrope
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00-hwdesign/" class="md-nav__link">
+        Hardware Design
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-introduction/" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Basic syntax
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Basic syntax
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#comments" class="md-nav__link">
+    Comments
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#constants" class="md-nav__link">
+    Constants
+  </a>
+  
+    <nav class="md-nav" aria-label="Constants">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#integers" class="md-nav__link">
+    Integers
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#strings" class="md-nav__link">
+    Strings
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#newlines-and-spaces" class="md-nav__link">
+    Newlines and spaces
+  </a>
+  
+    <nav class="md-nav" aria-label="Newlines and spaces">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#identifiers" class="md-nav__link">
+    Identifiers
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#semicolons" class="md-nav__link">
+    Semicolons
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#printing" class="md-nav__link">
+    Printing
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#functions-and-procedures" class="md-nav__link">
+    Functions and procedures
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#evaluation-order" class="md-nav__link">
+    Evaluation order
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basic-gates" class="md-nav__link">
+    Basic gates
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#initialization" class="md-nav__link">
+    Initialization
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-bundle/" class="md-nav__link">
+        Tuples
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-variables/" class="md-nav__link">
+        Variables and types
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-assert/" class="md-nav__link">
+        Verification
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05b-statements/" class="md-nav__link">
+        Statements
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-functions/" class="md-nav__link">
+        Lambdas
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06b-instantiation/" class="md-nav__link">
+        Instantiation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06c-pipelining/" class="md-nav__link">
+        Pipelining
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-typesystem/" class="md-nav__link">
+        Type system
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07b-structtype/" class="md-nav__link">
+        Structural Typing
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-memories/" class="md-nav__link">
+        Memories
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-stdlib/" class="md-nav__link">
+        Pyrope std lib
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-internals/" class="md-nav__link">
+        Internals
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10b-vslang/" class="md-nav__link">
+        vs Other Languages
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../11-deprecated/" class="md-nav__link">
+        Deprecated or Future
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../12-lnast/" class="md-nav__link">
+        LNAST
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../13-stdlib/" class="md-nav__link">
+        Pyrope Standard Library
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#comments" class="md-nav__link">
+    Comments
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#constants" class="md-nav__link">
+    Constants
+  </a>
+  
+    <nav class="md-nav" aria-label="Constants">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#integers" class="md-nav__link">
+    Integers
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#strings" class="md-nav__link">
+    Strings
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#newlines-and-spaces" class="md-nav__link">
+    Newlines and spaces
+  </a>
+  
+    <nav class="md-nav" aria-label="Newlines and spaces">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#identifiers" class="md-nav__link">
+    Identifiers
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#semicolons" class="md-nav__link">
+    Semicolons
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#printing" class="md-nav__link">
+    Printing
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#functions-and-procedures" class="md-nav__link">
+    Functions and procedures
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#evaluation-order" class="md-nav__link">
+    Evaluation order
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basic-gates" class="md-nav__link">
+    Basic gates
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#initialization" class="md-nav__link">
+    Initialization
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="basic-syntax">Basic syntax<a class="headerlink" href="#basic-syntax" title="Permanent link">&para;</a></h1>
+<h2 id="comments">Comments<a class="headerlink" href="#comments" title="Permanent link">&para;</a></h2>
+<p>Comments begin with <code>//</code>, there are no multi-line comments</p>
+<div class="highlight"><pre><span></span><code>// comment
+a = 3 // another comment
+</code></pre></div>
+<h2 id="constants">Constants<a class="headerlink" href="#constants" title="Permanent link">&para;</a></h2>
+<h3 id="integers">Integers<a class="headerlink" href="#integers" title="Permanent link">&para;</a></h3>
+<p>Pyrope has unlimited precision signed integers. Any literal starting with a
+digit is a likely integer constant.</p>
+<div class="highlight"><pre><span></span><code>0xF_a_0 // 4000 in hexa. Underscores have no meaning
+0b1100  // 12 in binary
+0sb1110 // -2 in binary (sb signed binary)
+33      // 33 in decimal
+0o111   // 73 in octal
+0111    // 111 in decimal (some languages use octal here)
+</code></pre></div>
+<p>Since powers of two are very common, Pyrope decimal integers can use the <code>K</code>, <code>M</code>, <code>G</code>, and <code>T</code> modifiers.</p>
+<div class="highlight"><pre><span></span><code>assert 1K == 1024
+assert 1M == 1024*1024
+assert 1G == 1024*1024*1024
+assert 1T == 1024*1024*1024*1024
+</code></pre></div>
+<p>Several hardware languages support unknown bits (<code>?</code>) or high-impedance (<code>z</code>). Pyrope
+aims at being compatible with synthesizable Verilog, as such <code>?</code> is also supported in
+the binary encoding.</p>
+<div class="highlight"><pre><span></span><code>0b?             // 0 or 1 in decimal
+0sb?            // 0 or -1 in decimal
+0b?0            // 0 or 2 in decimal
+0sb0?0          // 0 or 2 in decimal
+</code></pre></div>
+<p>The Verilog high impedance <code>z</code> is not supported. A <code>bus</code> construct must be used instead.</p>
+<p>Like in many HDLs, Pyrope has unknowns <code>?</code>. The x-propagation is a source of
+complexity in most hardware models. Pyrope has <code>x</code> or <code>?</code> to be compatible with
+Verilog existing designs. This means that inside the Pyrope compiler, the
+constant operations with unknowns are compatible with Verilog semantics. When
+the simulation is performed, the expectation is to randomly generate a 0 or 1
+for each unknown (<code>?</code>) bit.</p>
+<p>The advice is not to use <code>x</code> besides <code>match</code> statement pattern matching. It is
+much better to use the default value (zero or empty string), but sometimes it
+is easier to use <code>nil</code> when converting Verilog code to Pyrope code. The <code>nil</code>
+means that the numeric value is invalid. If any operation is performed with
+<code>nil</code>, the result is an assertion failure. The only thing allowed to do with
+nil is to copy it. While the <code>nil</code> behaves like an invalid value, the <code>0sb?</code>
+behaves like an unknown value that still can be used in arithmetic operations.
+E.g: <code>0sb? | 1</code> is <code>1</code> but <code>nil | 1</code> is an assertion error.</p>
+<p>Notice that <code>nil</code> is a state in the integer basic type, it is not a new type by
+itself, it does not represent an invalid pointer, but rather an invalid integer. Also
+important is that the compiler will guarantee that all the <code>nil</code> are eliminated
+at compile time or a compile error is generated.</p>
+<h3 id="strings">Strings<a class="headerlink" href="#strings" title="Permanent link">&para;</a></h3>
+<p>Pyrope accepts single line strings with a single quote (<code>'</code>) or double quote
+(<code>"</code>).  Single quote does not have escape character, double quote supports escape
+sequences.</p>
+<div class="highlight"><pre><span></span><code>a = &quot;hello \n newline&quot;
+b = &#39;simpler here&#39;
+</code></pre></div>
+<ul>
+<li><code>\n</code>: newline</li>
+<li><code>\\</code>: backslash</li>
+<li><code>\"</code>: double quote</li>
+<li><code>`</code>: backtick quote</li>
+<li><code>\xNN</code>: hexadecimal 8 bit character (2 digits)</li>
+<li><code>\uNNNN</code>: hexadecimal 16-bit Unicode character UTF-8 encoded (4 digits)</li>
+</ul>
+<p>Pyrope allows string interpolation only when double quote is used.
+Nevertheless, when string interpolation is used, the formatting guidelines are
+not allowed. The style is like C++ fmt::format which allows an identifier. When
+the identifier is provided the string is processed accordingly.</p>
+<div class="highlight"><pre><span></span><code>let num       = 2
+let color     = &quot;blue&quot;
+let extension = &quot;s&quot;
+
+let txt1 = &quot;I have {num} {color} potato{extension}&quot;
+let txt2 = format(&#39;I have {:d} {} potato{} &#39;, num, color, extension)
+cassert txt1 == txt2 == &quot;I have 2 blue potatos&quot;
+
+let txt3 = &#39;I have {num}&#39;         // single quote does not do interpolation
+cassert txt3 == &quot;I have \{num\}&quot;  // \{ escapes the interpolation
+</code></pre></div>
+<p>Integers and strings can be converted back and forth:</p>
+<div class="highlight"><pre><span></span><code>var a:string = &quot;127&quot;
+var b:int    = a     // same as var b = int(a)
+var c:string = b     // same as var c = string(b)
+assert a == c
+assert b == 0x7F
+assert a == b        // compile error, &#39;a&#39; and &#39;b&#39; have different types
+</code></pre></div>
+<h2 id="newlines-and-spaces">Newlines and spaces<a class="headerlink" href="#newlines-and-spaces" title="Permanent link">&para;</a></h2>
+<p>Spaces do not have meaning but new lines do. Several programming languages like
+Python use indentation level (spaces) to know the parsing meaning of
+expressions. In Pyrope, spaces do not have meaning, and newlines combined with
+the first token after newline is enough to decide the end of statement.</p>
+<p>By looking at the first character after a new line, it is possible to know if
+the rest of the line belongs to the previous statement or it is a new
+statement.</p>
+<p>If the line starts with an alphanumeric (<code>[a-z0-9]</code> that excludes operators
+like <code>or</code>, <code>and</code>) value or an open parenthesis (<code>(</code>), the rest of the line
+belongs to a new statement.</p>
+<div class="highlight"><pre><span></span><code>var (a,b,c,d) = _
+a = 1
+  + 3           // 1st stmt
+(b,c) = (1,3)   // 2nd stmt
+cassert a == 4 and b == 1 and c == 3
+
+d = 1 +         // OK, but not formatted to style
+    3
+</code></pre></div>
+<p>This functionality allows parallelizing the parsing and elaboration in Pyrope.
+More important, it makes the code more readable, by looking at the beginning of
+the line, it is possible to know if it is a new statement or a continuation of
+the last one. It also helps to standardize the code format by allowing only one
+style.</p>
+<h3 id="identifiers">Identifiers<a class="headerlink" href="#identifiers" title="Permanent link">&para;</a></h3>
+<p>An identifier is any non-reserved keyword that starts with an underscore or an
+alphabetic character. Since Pyrope is designer to support any synthesizable
+Verilog automatic translation, any sequence of characters between backticks
+(`) can form a valid identifier. The identifier uses the same escape sequence
+as strings. </p>
+<div class="highlight"><pre><span></span><code>`foo is . strange!\nidentifier` = 4
+`for` = 3
+cassert `for`+1 == `foo is . strange!\nidentifier`
+</code></pre></div>
+<p>Using the backtick, Pyrope can use any string as an identifier, even reserved
+keywords. Identifiers are case sensitive like Verilog, but the compiler issues
+errors for non ` escaped identifiers that do not follow these conditions in
+order:</p>
+<ul>
+<li>Identifiers with a single character followed by a number can be upper or lower case.</li>
+<li>An all upper case variable must be a compile time constant <code>comptime</code>.</li>
+<li>Types should either: (1) start the first character uppercase and everything
+  else lower case; (2) be all lower case and finish with <code>_t</code>.</li>
+<li>All the other identifiers that start with an alpha character <code>[a-z]</code> are
+  always lower case.</li>
+</ul>
+<h2 id="semicolons">Semicolons<a class="headerlink" href="#semicolons" title="Permanent link">&para;</a></h2>
+<p>Semicolons are not needed to separate statements. In Pyrope, a semicolon (<code>;</code>)
+has the same meaning as a newline. Sometimes it is possible to add
+semicolons to separate statements. Since newlines affect the meaning of the
+program, a semicolon can do too.</p>
+<div class="highlight"><pre><span></span><code>a = 1 ; b = 2
+</code></pre></div>
+<h2 id="printing">Printing<a class="headerlink" href="#printing" title="Permanent link">&para;</a></h2>
+<p>Printing messages is useful for debugging. <code>puts</code> prints a message and the string
+is formatted using the c++20 fmt format. There is an implicit newline printed.
+The same without a newline can be achieved with print.</p>
+<div class="highlight"><pre><span></span><code>a = 1
+puts &quot;Hello a is {}&quot;, a
+</code></pre></div>
+<p>Since many modules can print at the same cycle, it is possible to put a
+relative priority between puts (<code>priority</code>). If no relative priority is
+provided, a default 0 priority is provided. Messages are kept to the end of the
+cycle, and then printed in alphabetical order for a given priority. This is
+done to be deterministic. Higher priority (higher value) are printed after
+lower priority. Messages generated by assertions also get serialized like puts
+statements but have the highest priority.</p>
+<p>To avoid breaking down different <code>puts</code> inside the same method. All the <code>puts</code>
+in a given cycle are shown together.</p>
+<p>This example will print "hello world" even though there are 2 puts/prints in
+different files.</p>
+<div class="highlight"><pre><span></span><code>// src/file1.prp
+puts(priority=2, &quot; world&quot;)
+
+// src/file2.prp
+print(priority=1, &quot;hello&quot;)
+</code></pre></div>
+<p>The available puts/print arguments:
+* <code>priority</code>: relative order to print in a given cycle.
+* <code>file</code>: file to send the message. E.g: <code>stdout</code>, <code>stderr</code>, <code>my_large.log</code>,...</p>
+<p>A related command to the puts is the <code>format</code> it behaves like <code>print</code> but
+returns a string.</p>
+<p><code>puts/print</code> are a bit special. In most languages, IO operations like <code>puts</code> are
+considered to have side-effects. In Pyrope, the <code>puts</code> can not modify the
+behavior of the synthesized code and it is considered a non-side-effect lambda
+call. This allows to have <code>puts</code> calls in <code>functions</code>.</p>
+<h2 id="functions-and-procedures">Functions and procedures<a class="headerlink" href="#functions-and-procedures" title="Permanent link">&para;</a></h2>
+<p>Pyrope only supports anonymous lambdas. A lambda can be assigned to a variable,
+and it can be called as most programmers expect. <a href="../06-functions/">Lambda
+section</a> has more details on the allowed syntax.</p>
+<div class="highlight"><pre><span></span><code>var f = fun(a,b) { a + b }
+</code></pre></div>
+<p>Pyrope naming for consistency:</p>
+<ul>
+<li>
+<p><code>lambda</code> is any sequence of statements grouped in a code block that can be
+  assigned to a variable and called to execute later.</p>
+</li>
+<li>
+<p><code>function</code> is a lambda with only combination statements without non-Pyrope
+  calls.</p>
+</li>
+<li>
+<p><code>procedure</code> is a lambda that can have combination like function but also
+  non-combinational (register/memories). Procedures are a superset of functions.</p>
+</li>
+<li>
+<p><code>method</code> is a lambda (<code>function</code> or <code>procedure</code>) that updates another
+  variable.  The first argument is an explicit <code>self</code>.</p>
+</li>
+<li>
+<p><code>module</code> is a lambda that has a physical instance. Lambdas are either inlined
+  or modules.</p>
+</li>
+</ul>
+<p>lambda are not only restricted to Pyrope code. It is possible to interface with
+non-Pyrope (C++) code, but the calls should respect the same
+<code>procedure</code>/<code>function</code> definition. A C++ <code>function</code> can not update the C++
+internal state or generate output because the simulation/compiler is allowed to
+call it multiple times. This is not the case for C++ <code>procedure</code>.</p>
+<h2 id="evaluation-order">Evaluation order<a class="headerlink" href="#evaluation-order" title="Permanent link">&para;</a></h2>
+<p>Statements are evaluated one after another in program order. The main source of
+conflicts come from expressions.</p>
+<p>The expression evaluation order is important if the elements in the expression
+can have side effects. Pyrope constrains the expressions so that no matter the
+evaluation order, the synthesis result is the same. </p>
+<p>As a reference, languages like C++11 do not have a defined order of evaluation for
+all types of expressions. Calling <code>call1() + call2()</code> is not defined. Either
+<code>call1()</code> first or <code>call2()</code> first.</p>
+<p>In many languages, the evaluation order is defined for logical expressions.
+This is typically called the short-circuit evaluation. Some languages like
+Pascal, Rust, Kotlin have different <code>and/or</code> to express conditional evaluation.
+In Pascal, there is an <code>and/or</code> and <code>and_then/or_else</code> (conditional). In Rust
+<code>&amp;/|</code> and <code>&amp;&amp;/||</code> (conditional). In Kotlin <code>&amp;&amp;/||</code> and <code>and/or</code> (conditional).
+Pyrope uses has the <code>and/or</code> without short-circuit, and the <code>and_then/or_else</code>
+with explicit short-circuit.</p>
+<p>The programmer can explicitly set an evaluation order by using short-circuit
+expressions like <code>and_then</code>, <code>or_else</code>, or control expressions (<code>if/else</code>,
+<code>match</code>, <code>for</code>). An expression can have many <code>function</code> calls because those
+have no side-effects, and hence the evaluation order is not important.</p>
+<p>A <code>procedure</code> is an lambda that can update state internally. It can be through
+a C++ API call, or some synthesizable state. As such, only one <code>procedure</code> call
+can exist per expression.</p>
+<div class="highlight"><pre><span></span><code>var a = fcall() + 1               // OK
+var x = pcall() + a               // OK, proc combined with variable read
+var b = fcall(a) + 10 + pcall(a)  // OK
+var d = t.pcall() + pcall2(b)     // compile error, multiple procedure calls
+var y = t.pcall() + t.pcall()     // compile error, multiple procedure calls
+</code></pre></div>
+<p>Expressions also can have a code blocks (<code>{  }</code>) as long as there are no
+side-effects. In a way, expression code blocks can be seen as a type of
+<code>functions</code> that are called immedialy after definition.</p>
+<div class="highlight"><pre><span></span><code>var a = {var d=3 ; last d+1} + 100 // OK
+assert a == (3+1+100)
+assert a == {3+1+100}  // same, expression evaluated as 104 and returned
+</code></pre></div>
+<p>For most expressions, Pyrope is more restrictive than other languages because
+it wants to be a fully defined deterministic independent of implementation. To
+handle logging/messaging in <code>function</code> calls, Pyrope treats <code>puts</code> as a special
+instruction. Pyrope runtime delays the puts output until the end of the cycle.
+Section (Printing)[02-basics.md#printing] has more details.</p>
+<p>To illustrate the evaluation order, it is useful to see a Verilog example. The
+following Verilog sequence evaluates differently in VCS and Icarus Verilog.
+Pyrope treats <code>puts</code> and assertion messages in a special way. The reason why
+some methods may be called is dependent on the optimization (in this case,
+<code>testing(1)</code> got optimized away by vcs).</p>
+<div class="highlight"><pre><span></span><code><span class="k">module</span><span class="w"> </span><span class="n">test</span><span class="p">();</span>
+
+<span class="k">function</span><span class="w"> </span><span class="n">testing</span><span class="p">(</span><span class="k">input</span><span class="w"> </span><span class="p">[</span><span class="mh">0</span><span class="o">:</span><span class="mh">3</span><span class="p">]</span><span class="w"> </span><span class="n">a</span><span class="p">);</span>
+<span class="w">  </span><span class="k">begin</span>
+<span class="w">    </span><span class="nb">$display</span><span class="p">(</span><span class="s">&quot;test called with %d&quot;</span><span class="p">,</span><span class="n">a</span><span class="p">);</span>
+<span class="w">    </span><span class="n">testing</span><span class="o">=</span><span class="mh">1</span><span class="p">;</span>
+<span class="w">  </span><span class="k">end</span>
+<span class="k">endfunction</span>
+
+<span class="k">initial</span><span class="w"> </span><span class="k">begin</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="mh">0</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">testing</span><span class="p">(</span><span class="mh">1</span><span class="p">))</span><span class="w"> </span><span class="k">begin</span>
+<span class="w">    </span><span class="nb">$display</span><span class="p">(</span><span class="s">&quot;test1&quot;</span><span class="p">);</span>
+<span class="w">  </span><span class="k">end</span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="mh">1</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">testing</span><span class="p">(</span><span class="mh">2</span><span class="p">))</span><span class="w"> </span><span class="k">begin</span>
+<span class="w">    </span><span class="nb">$display</span><span class="p">(</span><span class="s">&quot;test2&quot;</span><span class="p">);</span>
+<span class="w">  </span><span class="k">end</span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="mh">0</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">testing</span><span class="p">(</span><span class="mh">3</span><span class="p">))</span><span class="w"> </span><span class="k">begin</span>
+<span class="w">    </span><span class="nb">$display</span><span class="p">(</span><span class="s">&quot;test3&quot;</span><span class="p">);</span>
+<span class="w">  </span><span class="k">end</span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="mh">1</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">testing</span><span class="p">(</span><span class="mh">4</span><span class="p">))</span><span class="w"> </span><span class="k">begin</span>
+<span class="w">    </span><span class="nb">$display</span><span class="p">(</span><span class="s">&quot;test4&quot;</span><span class="p">);</span>
+<span class="w">  </span><span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Icarus output</label><label for="__tabbed_1_2">VCS output</label><label for="__tabbed_1_3">C++/short-circuit output</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="nb">test</span><span class="w"> </span>called<span class="w"> </span>with<span class="w">  </span><span class="m">1</span>
+<span class="nb">test</span><span class="w"> </span>called<span class="w"> </span>with<span class="w">  </span><span class="m">2</span>
+test2
+<span class="nb">test</span><span class="w"> </span>called<span class="w"> </span>with<span class="w">  </span><span class="m">3</span>
+test3
+<span class="nb">test</span><span class="w"> </span>called<span class="w"> </span>with<span class="w">  </span><span class="m">4</span>
+test4
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="nb">test</span><span class="w"> </span>called<span class="w"> </span>with<span class="w">  </span><span class="m">2</span>
+test2
+<span class="nb">test</span><span class="w"> </span>called<span class="w"> </span>with<span class="w">  </span><span class="m">3</span>
+test3
+<span class="nb">test</span><span class="w"> </span>called<span class="w"> </span>with<span class="w">  </span><span class="m">4</span>
+test4
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="nb">test</span><span class="w"> </span>called<span class="w"> </span>with<span class="w"> </span><span class="m">2</span>
+test2
+<span class="nb">test</span><span class="w"> </span>called<span class="w"> </span>with<span class="w"> </span><span class="m">3</span>
+test3
+test4
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>If an order is needed and a function call can have <code>debug</code> side-effects or
+synthesis side-effects, the statement must be broken down into several
+statements, or the <code>and_then</code> and <code>or_else</code> operations must be used.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:3"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><input id="__tabbed_2_3" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Incorrect code with side-effects</label><label for="__tabbed_2_2">Alternative 1</label><label for="__tabbed_2_3">Alternative 2</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>var r1 = pcall1() or  pcall2()  // compile error, non-deterministic
+
+
+var r2 = pcall1() and pcall2()  // compile error, non-deterministic
+
+
+var r3 = pcall1() +   pcall2()  // compile error
+// compile error only if pcall1/pcall2 can have side effects
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>var r1 = fcall1()
+r1  = fcall2() unless r1
+
+var r2 = fcall1()
+r2  = fcall2() when r2
+
+var r3 = fcall1()
+r3 += fcall2()
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>var r1 = fcall1() or_else fcall2()
+
+
+var r2 = fcall1() and_then fcall2()
+
+
+var r3 = fcall1()
+r3 += fcall2()
+</code></pre></div>
+</div>
+</div>
+</div>
+<h2 id="basic-gates">Basic gates<a class="headerlink" href="#basic-gates" title="Permanent link">&para;</a></h2>
+<p>Pyrope allows a low level or structural direct basic gate instantiation. There
+are some basic gates to which to which the compiler translates Pyrope code to. These
+basic gates are also directly accesible:</p>
+<ul>
+<li><code>__sum</code> for addition and substraction gate.</li>
+<li><code>__mult</code> for multiplication gate.</li>
+<li><code>__div</code> for divisions gate.</li>
+<li><code>__and</code> for bitwise and gate</li>
+<li><code>__or</code> for bitwise or gate</li>
+<li><code>__xor</code> for bitwise xor gate</li>
+<li><code>__ror</code> for bitwise reduce-or gate</li>
+<li><code>__not</code> for bitwise not gate</li>
+<li><code>__get_mask</code> for extrating bits using a mask gate</li>
+<li><code>__set_mask</code> for replacing bits using a mask gate</li>
+<li><code>__sext</code> for sign-extension gate</li>
+<li><code>__lt</code> for less-than comparison gate</li>
+<li><code>__ge</code> for greater-equal comparison gate</li>
+<li><code>__eq</code> for equal comparison gate</li>
+<li><code>__shl</code> for shift left logical gate</li>
+<li><code>__sra</code> for shift right arithmetic gate</li>
+<li><code>__lut</code> for Look-Up-Table gate</li>
+<li><code>__mux</code> for a priority multiplexer</li>
+<li><code>__hotmux</code> for a one-hot excoded multiplexer</li>
+<li><code>__memory</code> for a memory gate</li>
+<li><code>__flop</code> for a flop gate</li>
+<li><code>__latch</code> for a latch gate</li>
+</ul>
+<p>Each of the basic gates operate always over signed integers like Pyrope, but
+their semantics vary. A more detailed explanation is available at <a href="/livehd/05-lgraph/#cell-type">LiveHD cell
+type section</a>.</p>
+<h2 id="initialization">Initialization<a class="headerlink" href="#initialization" title="Permanent link">&para;</a></h2>
+<p>Each variable declaration (<code>var</code> or <code>let</code>) must have an assigned value. The
+type default value is <code>_</code> (<code>0</code> integer, <code>""</code> string, <code>false</code> boolean, <code>nil</code>
+otherwise)</p>
+<div class="highlight"><pre><span></span><code>a  = 3        // compile error, no previous let or var
+
+var b = 3
+b  = 5        // OK
+b += 1        // OK
+
+let cu3 = if runtime { 3 }else{ 5 }
+
+let d = &quot;hello&quot;  // OK
+d = &quot;bar&quot;        // compile error, &#39;d&#39; is immutable
+var d = &quot;bar&quot;    // compile error, &#39;d&#39; already declared
+
+var e = _        // OK, no type or default value, just scope declaration
+e:u32 = 33       // OK
+
+var Foo = 33     // compiler error, &#39;let Foo = 33&#39;
+Foo  = 33        // compiler error, `Foo` already declared as immutable
+</code></pre></div>
+<p>When the variable is a tuple or a range style, the default initialization is
+<code>nil</code>. <code>0sb?</code> can not be applied to ranges or tuples value because it is
+restricted for integers. <code>nil</code> should be used in those cases.</p>
+<div class="highlight"><pre><span></span><code>var tup = nil
+
+if cond::[comptime] {
+  tup = (a=1,b=2)
+}else{
+  tup = (a=1,b:u4=3,c=3)
+}
+
+cassert tup.a == 1
+cassert cond implies tup.b==2
+cassert !cond implies tup.b==3
+</code></pre></div>
+<p>Variables with first character upper case are <code>comptime</code>. This means that the contents
+must be known/fix at compilation time.</p>
+<div class="highlight"><pre><span></span><code>var A_xxx = something             // comptime
+var A_yyy::[comptime] = something // also comptime, redundant but legal
+</code></pre></div>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["search.suggest", "navigation.sections", "navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.b4d07000.min.js"></script>
+      
+        <script src="../../javascripts/config.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,1584 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../05-assert/">
+      
+      
+        <link rel="next" href="../06-functions/">
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.15">
+    
+    
+      
+        <title>Statements - LiveHD and Pyrope</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.26e3688c.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ecc896b0.min.css">
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CFira+Code:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Fira Code"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/table.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#statements" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LiveHD and Pyrope" class="md-header__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LiveHD and Pyrope
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Statements
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+            
+              <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3Z"/></svg>
+              </label>
+            
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_2">
+            
+              <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6zm0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4zM7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+              </label>
+            
+          
+        </form>
+      
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LiveHD and Pyrope" class="md-nav__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    LiveHD and Pyrope
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        LiveHD and Pyrope
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+          Livehd
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Livehd
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/00-intro/" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/01-install/" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/02-usage/" class="md-nav__link">
+        Usage
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/03-memory/" class="md-nav__link">
+        Memory and concurrency
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/04-api/" class="md-nav__link">
+        C++ API
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/05-lgraph/" class="md-nav__link">
+        LGraph
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/06-lnast/" class="md-nav__link">
+        LNAST
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10-bazel/" class="md-nav__link">
+        Bazel build
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10b-3rdparty/" class="md-nav__link">
+        3rd Party
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/11-pass/" class="md-nav__link">
+        Creating a Pass
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/12-github/" class="md-nav__link">
+        GitHub Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/13-style/" class="md-nav__link">
+        Coding Style
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          Pyrope
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Pyrope
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00-hwdesign/" class="md-nav__link">
+        Hardware Design
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-introduction/" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-basics/" class="md-nav__link">
+        Basic syntax
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-bundle/" class="md-nav__link">
+        Tuples
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-variables/" class="md-nav__link">
+        Variables and types
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-assert/" class="md-nav__link">
+        Verification
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Statements
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Statements
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#conditional-ifelifelse" class="md-nav__link">
+    Conditional (if/elif/else)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unique-parallel-conditional-match" class="md-nav__link">
+    Unique parallel conditional (match)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gate-statements-whenunless" class="md-nav__link">
+    Gate statements (when/unless)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-block" class="md-nav__link">
+    Code block
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#loop-for" class="md-nav__link">
+    Loop (for)
+  </a>
+  
+    <nav class="md-nav" aria-label="Loop (for)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#code-block-control" class="md-nav__link">
+    Code block control
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#whileloop" class="md-nav__link">
+    while/loop
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#defer" class="md-nav__link">
+    defer
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-test" class="md-nav__link">
+    Testing (test)
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing (test)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-only-statements" class="md-nav__link">
+    Test only statements
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-functions/" class="md-nav__link">
+        Lambdas
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06b-instantiation/" class="md-nav__link">
+        Instantiation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06c-pipelining/" class="md-nav__link">
+        Pipelining
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-typesystem/" class="md-nav__link">
+        Type system
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07b-structtype/" class="md-nav__link">
+        Structural Typing
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-memories/" class="md-nav__link">
+        Memories
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-stdlib/" class="md-nav__link">
+        Pyrope std lib
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-internals/" class="md-nav__link">
+        Internals
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10b-vslang/" class="md-nav__link">
+        vs Other Languages
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../11-deprecated/" class="md-nav__link">
+        Deprecated or Future
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../12-lnast/" class="md-nav__link">
+        LNAST
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../13-stdlib/" class="md-nav__link">
+        Pyrope Standard Library
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#conditional-ifelifelse" class="md-nav__link">
+    Conditional (if/elif/else)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unique-parallel-conditional-match" class="md-nav__link">
+    Unique parallel conditional (match)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gate-statements-whenunless" class="md-nav__link">
+    Gate statements (when/unless)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-block" class="md-nav__link">
+    Code block
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#loop-for" class="md-nav__link">
+    Loop (for)
+  </a>
+  
+    <nav class="md-nav" aria-label="Loop (for)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#code-block-control" class="md-nav__link">
+    Code block control
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#whileloop" class="md-nav__link">
+    while/loop
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#defer" class="md-nav__link">
+    defer
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-test" class="md-nav__link">
+    Testing (test)
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing (test)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-only-statements" class="md-nav__link">
+    Test only statements
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="statements">Statements<a class="headerlink" href="#statements" title="Permanent link">&para;</a></h1>
+<h2 id="conditional-ifelifelse">Conditional (<code>if</code>/<code>elif</code>/<code>else</code>)<a class="headerlink" href="#conditional-ifelifelse" title="Permanent link">&para;</a></h2>
+<p>Pyrope uses a typical <code>if</code>, <code>elif</code>, <code>else</code> sequence found in most languages.
+Before the if starts, there is an optional keyword <code>unique</code> that enforces that
+a single condition is true in the if/elif chain. This is useful for synthesis
+which allows a parallel mux.</p>
+<p>The <code>if</code> sequence can be used in expressions too.</p>
+<div class="highlight"><pre><span></span><code>a = unique if cond == 1 {
+    300
+  }elif cond == 2 {
+    400
+  }else{
+    500
+  }
+
+var x = _
+if a { x = 3 } else { x = 4 }
+</code></pre></div>
+<p>Like several modern programming languages, there can be a list of expressions
+in the evaluation condition. If variables are declared, they are restricted to
+the remaining if/else statement blocks.</p>
+<div class="highlight"><pre><span></span><code>var tmp = x+1
+
+if var x1=x+1; x1 == tmp {
+   puts &quot;x1:{} is the same as tmp:{}&quot;, x1, tmp
+}elif var x2=x+2; x2 == tmp {
+   puts &quot;x1:{} != x2:{} == tmp:{}&quot;, x1, x2, tmp
+}
+</code></pre></div>
+<h2 id="unique-parallel-conditional-match">Unique parallel conditional (<code>match</code>)<a class="headerlink" href="#unique-parallel-conditional-match" title="Permanent link">&para;</a></h2>
+<p>The <code>match</code> statement is similar to a chain of unique if/elif, like the
+<code>unique if/elif</code> sequence, one of the options in the match must be true. The
+difference is that one of the entries must be truth or an error is generated.
+This makes the <code>match</code> statement a replacement for the common "unique parallel
+case" Verilog directive.</p>
+<p>In addition to functionality, the syntax is different to avoid redundancy.
+<code>match</code> joins the match expression with the beginning of the matching entry must
+form a valid expression.</p>
+<div class="highlight"><pre><span></span><code>x = 1
+match x {
+  == 1            { puts &quot;always true&quot; }
+  in 2,3          { puts &quot;never&quot;       }
+}
+// It is equivalent to:
+unique if x == 1  { puts &quot;always true&quot; }
+elif x in (2,3)   { puts &quot;never&quot;       }
+else              { assert false       }
+</code></pre></div>
+<p>Like the <code>if</code>, it can also be used as an expression.</p>
+<div class="highlight"><pre><span></span><code>var hot = match x {
+    == 0b001 { a }
+    == 0b010 { b }
+    == 0b100 { c }
+  }
+</code></pre></div>
+<p>Like the <code>if</code> statement, a sequence of statements and declarations are possible in the match statement.</p>
+<div class="highlight"><pre><span></span><code>match let one=1 ; one ++ (2) {
+  == (1,2) { puts &quot;one:{}&quot;, one }      // should always hit
+}
+</code></pre></div>
+<p>Since the <code>==</code> is the most common condition in the <code>match</code> statement, it can be
+ommitted.</p>
+<div class="highlight"><pre><span></span><code>for x in 1..=5 {
+  let v1 = match x {
+    3 { &quot;three&quot; }
+    4 { &quot;four&quot; }
+    else { &quot;neither&quot;}
+  }
+
+  let v2 = match x {
+    == 3 { &quot;three&quot; }
+    == 4 { &quot;four&quot; }
+    else { &quot;neither&quot;}
+  }
+  cassert v1 == v2
+}
+</code></pre></div>
+<h2 id="gate-statements-whenunless">Gate statements (<code>when</code>/<code>unless</code>)<a class="headerlink" href="#gate-statements-whenunless" title="Permanent link">&para;</a></h2>
+<p>A simple statement like assignments, variable declarations, and function calls
+and returns can be gated or not executed with a <code>when</code> or <code>unless</code> statement.
+This is similar to an <code>if</code> statement, but the difference is that the statement
+is in the current scope, not creating a new scope. This allows cleaner more
+compact syntax.</p>
+<div class="highlight"><pre><span></span><code>var a = 3
+a += 1 when false             // never executes 
+assert a == 3
+assert a == 1000 when a &gt; 10  // assert never executed either
+
+reg my = 3 when some_condition  // no register declared otherwise
+
+return &quot;fail&quot; unless success_condition
+</code></pre></div>
+<p>Complex assignments like <code>a |&gt; b(1) |&gt; c</code> can not be gated because it is not
+clear if the gated applies to the last call or the whole pipeline sequence.
+Similarly, gating ifs/match statements do not make much sense. As a result,
+<code>when</code>/<code>unless</code> can only be applied to assignments, function calls, and code
+block control statements (<code>return</code>, <code>break</code>, <code>continue</code>).</p>
+<h2 id="code-block">Code block<a class="headerlink" href="#code-block" title="Permanent link">&para;</a></h2>
+<p>A code block is a sequence of statements delimited by <code>{</code> and <code>}</code>. The
+functionality is the same as in other languages. Variables declared within
+a code block are not visible outside the code block. In other words, code block
+variables have scope from definition until the end of the code block.</p>
+<p>Code blocks are different from lambdas. A lambda consists of a code block but
+it has several differences. In lambdas, (1) variables defined in upper scopes
+are accessed inside as immutable copies only when captured by scope; (2) inputs
+and outputs could be constrained, and (3) the <code>return</code> statement finishes a
+lambda not a code block.</p>
+<p>The main features of code blocks:</p>
+<ul>
+<li>
+<p>Code blocks define a new scope. New variable declarations inside are not visible outside it. </p>
+</li>
+<li>
+<p>Code blocks do not allow variable declaration shadowing.</p>
+</li>
+<li>
+<p>Expressions can have multiple code blocks but they are not allowed to have
+  side-effects for variables outside the code block. The <a href="../02-basics/#evaluation-order">evaluation
+  order</a> provides more details on expressions
+  evaluation order.</p>
+</li>
+<li>
+<p>When used in an expression or lambda, the last statement in the lambda code
+  block can be an expression. It is not needed to add the <code>return</code> keyword in
+  this case.</p>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><code>{
+  var x=1
+  var z=_
+  {
+    z = 10
+    var x=_           // compiler error, &#39;x&#39; is a shawdow variable
+  }
+  assert z == 10 
+}
+let zz = x            // compile error, `x` is out of scope
+
+var yy = {let x=3 ; 33/3} + 1
+assert yy == 12
+let xx = {yy=1 ; 33}  // compile error, &#39;yy&#39; has side effects
+
+if {let a=1+yy; 13&lt;a} {
+  // a is not visible in this scope
+  some_code()
+}
+
+let doit = fun(f,a) {
+  let x = f(a)
+  assert x == 7
+  return 3
+}
+
+let z3 = doit(fun(a) { 
+  assert a!=0
+  return 7             // exist the current lambda
+  100                  // never reached statement
+}, 33)
+cassert z3 == 3
+</code></pre></div>
+<h2 id="loop-for">Loop (<code>for</code>)<a class="headerlink" href="#loop-for" title="Permanent link">&para;</a></h2>
+<p>The <code>for</code> iterates over the first-level elements in a tuple or the values in a
+range.  In all the cases, the number of loop iterations must be known at
+compile time. The loop exit condition can not be run-time data-dependent.</p>
+<p>The loop can have an early exit when calling <code>break</code> and skip of the current
+iteration with the <code>continue</code> keyword.</p>
+<div class="highlight"><pre><span></span><code>for i in 0..&lt;100 {
+ some_code(i)
+}
+
+var bund = (1,2,3,4)
+for (index,i) in bund.enumerate() {
+  assert bund[j] == i
+}
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>let b = (a=1,b=3,c=5,7,11)
+assert b.keys() == (&#39;a&#39;, &#39;b&#39;, &#39;c&#39;, &#39;&#39;, &#39;&#39;)
+assert b.enumerate() == ((0,1), (1,3), (2,5), (3,7), (4,11))
+let xx= zip(b.keys(), b.enumerate()) 
+cassert xx == ((&#39;a&#39;,0,a=1), (&#39;b&#39;,1,b=3), (&#39;c&#39;,2,c=5), (&#39;&#39;,3,7), (&#39;&#39;,4,11))
+
+for (key,index,i) in zip(keys(b),b.enumerate()) {
+  assert i==1  implies (index==0 and key == &#39;a&#39;)
+  assert i==3  implies (index==1 and key == &#39;b&#39;)
+  assert i==5  implies (index==2 and key == &#39;c&#39;)
+  assert i==7  implies (index==3 and key == &#39;&#39; )
+  assert i==11 implies (index==4 and key == &#39;&#39; )
+}
+
+let c = ((1,a=3), b=4, c=(x=1,y=6))
+assert c.enumerate() == ((0,(1,a=3)), (1,b=4), (2,c=(x=1,y=6)))
+</code></pre></div>
+<p>The <code>for</code> can also be used in an expression that allows building comprehensions
+to initialize arrays. Pyrope uses a comprehension similar to Julia or Python.</p>
+<div class="highlight"><pre><span></span><code>var c = for i in 1..&lt;5 { var xx = i }  // compile error, no expression
+var d = i for i in 0..&lt;5 
+var e = i for i in 0..&lt;5 if i
+assert (0,1,2,3,4) == d
+assert e == (1,2,3,4)
+</code></pre></div>
+<p>The iterating element is copied by value, if the intention is to iterate over a
+vector or array to modify the contents, a <code>ref</code> must be used. Only the element
+is mutable. When a <code>ref</code> is used, it must be a variable reference, not a
+function call return (value). The mutable for can not be used in
+comprehensions.</p>
+<div class="highlight"><pre><span></span><code>b = (1,2,3,4,5)
+
+for x in ref b {
+  x += 1
+}
+assert b == (2,3,4,5,6)
+</code></pre></div>
+<h3 id="code-block-control">Code block control<a class="headerlink" href="#code-block-control" title="Permanent link">&para;</a></h3>
+<p>Code block control statements allow changing the control flow for <code>lambdas</code> and
+loop statements (<code>for</code>, <code>loop</code>, and <code>while</code>). <code>return</code> can have a value.</p>
+<ul>
+<li>
+<p><code>return</code> exits or terminates the current lambda. The current output variables
+  are provided as the <code>lambda</code> output. If a tuple is provided, the tuple is the
+  returned value, the output variables are not used.</p>
+</li>
+<li>
+<p><code>break</code> terminates the closest inner loop (<code>for</code>/<code>while</code>/<code>loop</code>). If none is
+  found, a compile error is generated.</p>
+</li>
+<li>
+<p><code>continue</code> looks for the closest inner loop (<code>for</code>/<code>while</code>/<code>loop</code>) code
+  block. The <code>continue</code> will perform the next loop iteration. If no inner loop
+  is found, a compile error is generated.</p>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><code>var total:[] = _
+for a in 1..=10 {
+  continue when a == 2
+  total ++= a
+  break when a == 3    // exit for scope
+}
+assert total == (1,3)
+
+if true {
+  code(x)
+  continue             // compile error, no upper loop scope
+}
+
+a = 3
+var total2:[] = _
+while a&gt;0 {
+  total2 ++= a
+  break when a == 2    // exit if scope
+  a = a - 1
+  continue
+  assert false         // never executed
+}
+assert total2 == (3,2)
+
+total = i+10 for i in 1..=9 if i&lt;3
+assert total == (11, 12)
+</code></pre></div>
+<h2 id="whileloop">while/loop<a class="headerlink" href="#whileloop" title="Permanent link">&para;</a></h2>
+<p><code>while cond { [stmts]+ }</code> is a typical while loop found in most programming
+languages. The only difference is that like with loops, the while must be fully
+unrolled at compilation time. The <code>loop { [stmts]+ }</code> is equivalent to a <code>while
+true { [stmts]+ }</code>.</p>
+<p>Like <code>if</code>/<code>match</code>, the <code>while</code> condition can have a sequence of statements with
+variable declarations visible only inside the while statements.</p>
+<div class="highlight"><pre><span></span><code>// a do while contruct does not exist, but a loop is quite clean/close
+
+var a = 0
+loop {
+  puts &quot;a:{}&quot;,a
+
+  a += 1
+
+  break unless a &lt; 10 
+} // do{ ... }while(a&lt;10)
+</code></pre></div>
+<h2 id="defer">defer<a class="headerlink" href="#defer" title="Permanent link">&para;</a></h2>
+<p>A <code>defer</code> attribute can be applied to variables. When used to read a variable,
+it returns the last values written to the variable the end of the current
+cycle. This is needed if we need to have any loop in connecting blocks. The
+<code>defer</code> applied to a write, delays the write update to the end of the cycle.
+The delayed writes happen before the delayed reads. This is also for delaying
+assertion checks to the end of the cycle like post condition checks.</p>
+<div class="highlight"><pre><span></span><code>var c = 10
+assert b.[defer] == 33    // behaves like a postcondition
+b = c.[defer]
+assert b == 33
+c += 20
+c += 3
+</code></pre></div>
+<p>To connect the <code>ring</code> function calls in a loop.
+<div class="highlight"><pre><span></span><code>f1 = ring(a, f4.[defer])
+f2 = ring(b, f1)
+f3 = ring(c, f2)
+f4 = ring(d, f3)
+</code></pre></div></p>
+<p>If the intention is to read the result after being a flop, there is no need to
+use the <code>defer</code>, a normal register access could do it. If the read
+variables are registers, the <code>flop#[0]</code> is not the same as <code>defer</code>. The <code>flop#[0]</code>
+reads the value before any update, the <code>defer</code> read, gets values after updates.</p>
+<div class="highlight"><pre><span></span><code>reg counter:u32 = _
+
+let counter_m1 = counter#[1]  // compile error, #[1] only allowed for debug
+let counter_0  = counter#[0]  // current cycle 
+let counter_1  = counter#[-1] // last cycle
+let counter_2  = counter#[-2] // last last cycle cycle 
+
+var deferred = counter.[defer]
+
+if counter &lt; 100 {
+  counter += 1
+}else{
+  counter = 0
+}
+
+if counter == 10 {
+  assert deferred   == 10
+  assert counter_0  ==  9
+  assert counter_1  ==  8
+  assert counter_2  ==  7
+}
+</code></pre></div>
+<p>The <code>defer</code> can also be applied to write/updates to the end of the cycle but
+uses/reads the current value. In a way, the assignment is delayed to the end of
+the current cycle. If there are many defers to the same variable, they are
+ordered in program order.</p>
+<div class="highlight"><pre><span></span><code>var a = 1
+assert a == 1 and a.[defer] == 200
+
+a::[defer] = 100
+assert a == 1 and a.[defer] == 200
+
+a::[defer] = 200
+assert a == 1 and a.[defer] == 200
+</code></pre></div>
+<p>If there are <code>defer</code> reads and <code>defer</code> assignments, the defered writes are
+performed before the defered reads.</p>
+<div class="highlight"><pre><span></span><code>var a = 1
+var x = 100
+x::[defer] = a
+a = 200
+
+cassert x == 100
+assert x.[defer] == 1
+</code></pre></div>
+<h2 id="testing-test">Testing (<code>test</code>)<a class="headerlink" href="#testing-test" title="Permanent link">&para;</a></h2>
+<p>The test statement requires a text identifier to notify when the test fails.
+The <code>test</code> is similar to a <code>puts</code> statement followed by a scope (<code>test &lt;str&gt;
+[,args] { stmts+ }</code>). The statements inside the code block can not have any
+effect outside. </p>
+<div class="highlight"><pre><span></span><code>test &quot;my test {}&quot;, 1 {
+  assert true
+}
+</code></pre></div>
+<p>Each <code>test</code> can run in parallel, to increase the throughput, putting the
+randomization outside the test statement increases the number of tests:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Parallel tests</label><label for="__tabbed_1_2">Single test</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>let add = fun(a,b) { a+b }
+
+for i in 0..&lt;10 { // 10 tests
+  let a = (-30..&lt;100).rand
+  let b = (-30..&lt;100).rand
+
+  test &quot;test {}+{}&quot;,a,b {
+    assert add(a,b) == (a+b)
+  }
+}
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>let add = fun(a,b) { a+b }
+
+test &quot;test 10 additions&quot; {
+  for i in 0..&lt;10 { // 10 tests
+    let a = (-30..&lt;100).rand
+    let b = (-30..&lt;100).rand
+
+    assert add(a,b) == (a+b)
+  }
+}
+</code></pre></div>
+</div>
+</div>
+</div>
+<h3 id="test-only-statements">Test only statements<a class="headerlink" href="#test-only-statements" title="Permanent link">&para;</a></h3>
+<p><code>test</code> code blocks are allowed to use special statements not available outside
+testing blocks:</p>
+<ul>
+<li>
+<p><code>step [ncycles]</code> advances the simulation for several cycles. The local variables
+will preserve the value, the inputs may change value.</p>
+</li>
+<li>
+<p><code>waitfor condition</code> is a syntax sugar to wait for a condition to be true.</p>
+</li>
+</ul>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1"><code>step</code></label><label for="__tabbed_2_2">synthesizable equivalent</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>test &quot;wait 1 cycle&quot; {
+  let a = 1 + input
+  puts &quot;printed every cycle input={}&quot;, a
+  step 1
+  puts &quot;also every cycle a={}&quot;,a  // printed on cycle later
+}
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>test &quot;wait 1 cycle&quot; {
+  {
+    let a = 1 + input
+    puts &quot;printed every cycle input={}&quot;, a
+  } #&gt; {
+    puts &quot;also every cycle a={}&quot;,a  // printed on cycle later
+  }
+}
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>The <code>waitfor</code> command is equivalent to a <code>while</code> with a <code>step</code>.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1"><code>waitfor</code></label><label for="__tabbed_3_2">equivalent Pyrope</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>total = 3
+
+waitfor a_cond  // wait until a_cond is true
+
+assert total == 3 and a_cond
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>total = 3
+
+while !a_cond {
+  step
+}
+
+assert total == 3 and a_cond
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>The main reason for using the <code>step</code> is that the "equivalent" <code>#&gt;[1]</code> is a more
+structured construct. The <code>step</code> behaves more like a "yield" in that the next
+call or cycle it will continue from there. The <code>#&gt;[1]</code> directive adds a
+pipeline structure which means that it can be started each cycle. Calling a
+lambda that has called a <code>step</code> and still has not finished should result in a
+simulation assertion failure.</p>
+<ul>
+<li>
+<p><code>peek</code> allows to read any flop, and lambda input or output</p>
+</li>
+<li>
+<p><code>poke</code> is similar to <code>peek</code> but allows to set a value on any flop and lambda
+  input/output.</p>
+</li>
+</ul>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["search.suggest", "navigation.sections", "navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.b4d07000.min.js"></script>
+      
+        <script src="../../javascripts/config.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>

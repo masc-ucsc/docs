@@ -1,0 +1,1716 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../../livehd/13-style/">
+      
+      
+        <link rel="next" href="../01-introduction/">
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.15">
+    
+    
+      
+        <title>Hardware Design - LiveHD and Pyrope</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.26e3688c.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ecc896b0.min.css">
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CFira+Code:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Fira Code"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/table.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#hardware-design" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LiveHD and Pyrope" class="md-header__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LiveHD and Pyrope
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Hardware Design
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+            
+              <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3Z"/></svg>
+              </label>
+            
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_2">
+            
+              <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6zm0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4zM7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+              </label>
+            
+          
+        </form>
+      
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LiveHD and Pyrope" class="md-nav__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    LiveHD and Pyrope
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        LiveHD and Pyrope
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+          Livehd
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Livehd
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/00-intro/" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/01-install/" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/02-usage/" class="md-nav__link">
+        Usage
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/03-memory/" class="md-nav__link">
+        Memory and concurrency
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/04-api/" class="md-nav__link">
+        C++ API
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/05-lgraph/" class="md-nav__link">
+        LGraph
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/06-lnast/" class="md-nav__link">
+        LNAST
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10-bazel/" class="md-nav__link">
+        Bazel build
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10b-3rdparty/" class="md-nav__link">
+        3rd Party
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/11-pass/" class="md-nav__link">
+        Creating a Pass
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/12-github/" class="md-nav__link">
+        GitHub Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/13-style/" class="md-nav__link">
+        Coding Style
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          Pyrope
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Pyrope
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Hardware Design
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Hardware Design
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#no-von-neumann" class="md-nav__link">
+    No Von Neumann
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optimization-knobs" class="md-nav__link">
+    Optimization knobs
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hls-vs-hdl" class="md-nav__link">
+    HLS vs. HDL
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hardware-artifacts" class="md-nav__link">
+    Hardware artifacts
+  </a>
+  
+    <nav class="md-nav" aria-label="Hardware artifacts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#instantiation-vs-execution" class="md-nav__link">
+    Instantiation vs execution
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pipelining" class="md-nav__link">
+    Pipelining
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#simulation-vs-synthesis" class="md-nav__link">
+    Simulation vs synthesis
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reset" class="md-nav__link">
+    Reset
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#non-blocking-assignments" class="md-nav__link">
+    Non-blocking assignments
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invalid-code" class="md-nav__link">
+    Invalid code
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-value-logic" class="md-nav__link">
+    Multi value logic
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#simpler-hdl-constructs" class="md-nav__link">
+    Simpler HDL constructs
+  </a>
+  
+    <nav class="md-nav" aria-label="Simpler HDL constructs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unlimited-precision" class="md-nav__link">
+    Unlimited precision
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-pointers" class="md-nav__link">
+    No pointers
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-destructors" class="md-nav__link">
+    No destructors
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pass-by-value" class="md-nav__link">
+    Pass by value
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-recursion" class="md-nav__link">
+    No recursion
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-introduction/" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-basics/" class="md-nav__link">
+        Basic syntax
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-bundle/" class="md-nav__link">
+        Tuples
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-variables/" class="md-nav__link">
+        Variables and types
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-assert/" class="md-nav__link">
+        Verification
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05b-statements/" class="md-nav__link">
+        Statements
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-functions/" class="md-nav__link">
+        Lambdas
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06b-instantiation/" class="md-nav__link">
+        Instantiation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06c-pipelining/" class="md-nav__link">
+        Pipelining
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-typesystem/" class="md-nav__link">
+        Type system
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07b-structtype/" class="md-nav__link">
+        Structural Typing
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-memories/" class="md-nav__link">
+        Memories
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-stdlib/" class="md-nav__link">
+        Pyrope std lib
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-internals/" class="md-nav__link">
+        Internals
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10b-vslang/" class="md-nav__link">
+        vs Other Languages
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../11-deprecated/" class="md-nav__link">
+        Deprecated or Future
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../12-lnast/" class="md-nav__link">
+        LNAST
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../13-stdlib/" class="md-nav__link">
+        Pyrope Standard Library
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#no-von-neumann" class="md-nav__link">
+    No Von Neumann
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optimization-knobs" class="md-nav__link">
+    Optimization knobs
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hls-vs-hdl" class="md-nav__link">
+    HLS vs. HDL
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hardware-artifacts" class="md-nav__link">
+    Hardware artifacts
+  </a>
+  
+    <nav class="md-nav" aria-label="Hardware artifacts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#instantiation-vs-execution" class="md-nav__link">
+    Instantiation vs execution
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pipelining" class="md-nav__link">
+    Pipelining
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#simulation-vs-synthesis" class="md-nav__link">
+    Simulation vs synthesis
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reset" class="md-nav__link">
+    Reset
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#non-blocking-assignments" class="md-nav__link">
+    Non-blocking assignments
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invalid-code" class="md-nav__link">
+    Invalid code
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-value-logic" class="md-nav__link">
+    Multi value logic
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#simpler-hdl-constructs" class="md-nav__link">
+    Simpler HDL constructs
+  </a>
+  
+    <nav class="md-nav" aria-label="Simpler HDL constructs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unlimited-precision" class="md-nav__link">
+    Unlimited precision
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-pointers" class="md-nav__link">
+    No pointers
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-destructors" class="md-nav__link">
+    No destructors
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pass-by-value" class="md-nav__link">
+    Pass by value
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-recursion" class="md-nav__link">
+    No recursion
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="hardware-design">Hardware Design<a class="headerlink" href="#hardware-design" title="Permanent link">&para;</a></h1>
+<p>Most language manuals/guides do not include a chapter on "what is
+programming?", but Pyrope is a hardware description language or HDL.  This
+document is a guideline for hardware design for software designers. The idea is
+to be high level to explain the differences without going to syntactic details
+in different languages.</p>
+<h2 id="no-von-neumann">No Von Neumann<a class="headerlink" href="#no-von-neumann" title="Permanent link">&para;</a></h2>
+<p>Most software programming languages are built to program Von Neumann CPUs. When
+dealing with single-threaded code, the programmer has a sequence of "commands"
+or "statements" specified in a programming language. The machine executes one
+of those statements after another. There are "control flow" instructions to
+select what is the following statement to execute.</p>
+<p>Potentially more restricting, software languages have a central or distributed
+"memory" concept where program data resides. For single-threaded code, there
+tends to be a main unified memory.</p>
+<p>Current CPUs follow a Von Neumann approach<sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup>. Languages designed to program
+CPUs have the same model to map existing hardware efficiently. Since the
+languages are Von Neumann, it is logical that CPUs also evolve to keep the same
+model and further improve the performance. Since CPUs and languages follow the
+same Von Neumann model, software designers' mindset assumes this same concept.
+This feedback loop has resulted in most languages, hardware, and developers
+evolving around this model.</p>
+<p>Neither FPGAs nor ASICs is Von Neumann machines. There is no program counter to
+execute one statement after another, and there is no central memory. Those
+concepts could be built on top, and this is in fact what CPUs are about. CPUs
+are all about making efficient Von Neumann machines on top of FPGAs and/or
+ASICs given some power/area/performance constraints.</p>
+<p>To design a CPU or any hardware without a Von Neumann model, the standard
+concepts that all languages use of main memory or single-threaded execution do
+not make much sense. The reason is that the cells available in hardware are
+always there. The result can be used or not, but it is always there.</p>
+<p>At a high level, hardware designers decide the basic hardware constructs to
+include in the design (adders, logic gates...) and how to connect them. Those
+hardware blocks will be there all the time, and the connection is fixed too. In
+contrast, a software designer needs to build efficient programs for one or more
+Von Neumann CPUs.</p>
+<h2 id="optimization-knobs">Optimization knobs<a class="headerlink" href="#optimization-knobs" title="Permanent link">&para;</a></h2>
+<p>Programming hardware and software are all about solving a problem to meet some
+performance/power/cost constraints using the available resources. The
+difference is that the resources in hardware and software are not the same. In
+software, there are instructions; in hardware, there are cells<sup id="fnref:2"><a class="footnote-ref" href="#fn:2">2</a></sup>. This
+results in different optimization knobs.</p>
+<p>Designing an efficient software program is all about deciding the sequence of
+instructions to be small and fast. The computer architecture Iron's law
+summarizes it well. The performance is "Instruction Count" x "Instructions Per
+Cycle" x "Frequency". Since software programmers do not tend to consider the
+frequency, it is all about executing fewer instructions and doing each
+instruction as fast as possible. The software designer has to create a sequence
+of instructions to solve a problem. Those instructions could use resources like
+memory.</p>
+<p>Instead of instructions, most hardware designers have hardware blocks or cells
+like adders, multiplexors, flops, SRAMs... There are no central resources like
+memory, and they have to consider frequency.</p>
+<p>Like a software designer, the hardware designer needs to solve a problem.
+Still, instead of selecting a sequence of instructions, the designer selects
+the cells or hardware blocks and their interconnection. The designer divides
+problems into smaller pipeline stages to have a high frequency. A design with
+small cells that can achieve the desired frequency is an exemplary hardware
+design<sup id="fnref:3"><a class="footnote-ref" href="#fn:3">3</a></sup>. So it is all about instantiating blocks and connecting them.</p>
+<p>In hardware, there are two big categories of blocks: Combinational and
+Sequential. Combinational do not have a clock and perform operations like
+adding, and, xor... Sequential has a clock.  The clock is used to remember a
+value. Hence the output of a sequential block retains or memoizes the value of
+previous cycles while combinational blocks have no memory or clock concept.</p>
+<p>The hardware blocks are physical devices that need time to generate a valid
+output given a change in their inputs. When combinational blocks are connected,
+their maximum speed or frequency can be decided by finding the slowest path in
+the combinational blocks connected. This means that sequential blocks should
+separate combinational blocks to achieve higher frequency. This is called
+pipelining. There are overheads of adding more sequential blocks, and the
+hardware designer needs to find the correct balance given a set of constraints
+like area/frequency/power.</p>
+<p>A significant effort in hardware design goes to pipelining. Not only to find
+the correct spot separating combinational blocks but because the sequential
+block adds a concept of "state" or memory. Starting from a working combination
+lock and randomly adding some "sequential" blocks is highly likely to generate
+an incorrect result. Pipelining adds the conceptual problem that adding
+sequential blocks changes the semantics and that ALL the combinational blocks
+should have more or less the same frequency. Otherwise, the pipeline design is
+unbalanced<sup id="fnref:4"><a class="footnote-ref" href="#fn:4">4</a></sup>, and the slowest pipeline decides the overall frequency.</p>
+<p>The pipelining optimization concept is very different from software
+optimization.  In software, designers care about the average. If a function is
+slow and its execution requires half of the execution time, reducing by half
+should have a 25% performance improvement. The designer does not need to
+improve very infrequently used functions. In hardware, designers care about the
+worst case. If a pipeline stage is slow, improving it will result in a
+frequency improvement if it was the slowest. The benefit will be just the
+difference with the next slower pipeline stage, not optimizing the pipeline
+itself.</p>
+<p>The result is that hardware and software designers need to worry about
+different constraints like pipelining. Combined with the fact that hardware
+optimizations need to care about the worst case, not average, it is common for
+hardware designers to say that designing hardware is hard.</p>
+<h2 id="hls-vs-hdl">HLS vs. HDL<a class="headerlink" href="#hls-vs-hdl" title="Permanent link">&para;</a></h2>
+<p>Hardware designers also use programming languages to specify their FPGA/ASIC
+design. In the past, designers "drew" the transistor/cells/gates and had a more
+visual layout to see/place where each combination and the sequential block was
+located. Although it is possible to do a design in such a way, it is not as
+productive as using some hardware design language.</p>
+<p>There are many popular software languages like C++, Java, Rust, swift... There
+are also several hardware design languages, but they tend to fall into two
+categories: HLS (High-Level Synthesis) or HDLs (Hardware Description
+Languages). HLS can be languages like a subset of C or Rust. The HDLs are
+languages like Verilog, CHISEL, or Pyrope.</p>
+<p>In a nutshell, HLS tries to leverage the larger Von Neumann community
+(languages and humans that know to program Von Neumann) and use compilers to
+transform to efficient hardware mappings that are not Von Neumann.</p>
+<p>HLS has to deal with constructs like loops and central memory. The typical
+solution for loops is to use heuristics and/or directives to split the loops
+into different pipeline stages. The standard solution for global memory is not
+to use it or put compiler directives to guide them. Other constructs like
+memory allocation and recursion are also avoided in HLS. When a C program is
+translated to hardware, if it has pointers and uses memory, it needs directives
+to indicate where the memory resides and mark potential overlap or pointer
+aliasing between pointers. Otherwise, the generated translation is likely to be
+inefficient.</p>
+<p>HDLs (Hardware Description Languages) do not have a Von Neumann model. The
+currently most popular HDL (Verilog) is a data flow language that does not have
+a global program counter like Von Neumann languages. Instead, the programmer
+specifies a hierarchy of modules<sup id="fnref:5"><a class="footnote-ref" href="#fn:5">5</a></sup>. In Verilog, the execution of each module
+has a complicated set of options, but from a high-level point of view, a group
+of statements is executed in each module. The module executes forever because
+it is a set of gates instantiated in the hardware design.</p>
+<h2 id="hardware-artifacts">Hardware artifacts<a class="headerlink" href="#hardware-artifacts" title="Permanent link">&para;</a></h2>
+<p>This section goes over several of the leading hardware artifacts that tend to
+be exist in most HDLs independent of the syntax.</p>
+<h3 id="instantiation-vs-execution">Instantiation vs execution<a class="headerlink" href="#instantiation-vs-execution" title="Permanent link">&para;</a></h3>
+<p>Hardware designers decide the gates are instantiated<sup id="fnref:5a"><a class="footnote-ref" href="#fn:5a">6</a></sup> in the design, while
+software designers focus on executing the instructions. If a set of gates is
+rarely used, the hardware still has to instantiate them, and their performance
+area impact is independent of the usage frequency. In software, a set of seldom
+executed instructions have no performance impact. This is not the case in
+hardware. As such, languages build around "instantiation" more than traditional
+instruction execution.</p>
+<p>Instantiation means that the designer explicitly indicates the gates or
+circuits mapped to hardware. In the vast majority of HDLs (Verilog, CHISEl,
+pyRTL, VHDL...), the designer specifies a top-level module. Each module can
+have a set of gates and more instantiated sub-modules.</p>
+<p>In "software," languages have a "main" or starting execution point. The "main"
+executes or calls several functions depending on the data. Functions can
+iterate in loops, and the program finishes execution when the main finishes.</p>
+<p>In contrast, most HDLs differ from software languages in that they specify an
+instantiation tree hierarchy of modules, and then provide some syntax on how
+each module executes independently of the other modules. </p>
+<p>In HDLs, the execution never ends, and the modules run independently. It
+resembles a bit of an actor model. An actor is a module with individual
+execution, but there are many differences like the tree structure of
+instantiations and the incapacity to spawn new actors. Although it is possible
+to build an HLS around the actor model without spawning capability, popular
+HDLs do not.</p>
+<p>In most HDLs, the instantiated tree hierarchy is fixed. This makes sense from a
+hardware point of view<sup id="fnref:6"><a class="footnote-ref" href="#fn:6">7</a></sup>, but this means that a module can not be called
+inside a control flow statement. A common mistake from designers learning HDLs
+is to call a module conditionally. E.g., this code sequence is not what a
+software programmer may expect:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Problematic code</label><label for="__tabbed_1_2">Possible solution</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>var result = 0
+if some_opcode {
+  result = do_division(a,b)
+}else{
+  result = do_multiplication(a,b)
+}
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>var result = 0
+var result1 = do_division(a,b)
+var result2 = do_multiplication(a,b)
+if some_opcode {
+  result = result1
+}else{
+  result = result2
+}
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>A software programmer thinks about executing instructions. The previous syntax
+looks like execute or call <code>do_division</code> when <code>some_opcode</code> is true, but it is
+impossible to do in most HDLs because they are centered around instantiation,
+not execution. For synthesizable code, none of the most popular HDLs like
+Verilog, VHDL, CHISEL, pyRTL allow the instantiation of a module in a
+conditional. Some like Verilog have <code>functions</code> but those are inlined. When
+called, they can be seen as a macro preprocessor that inserts the function
+statements.</p>
+<p>HDLs force the designer to spicy the instantiation unconditionally, and then
+the <code>if</code> selects between the instantiations. Even though HDLs look like they
+execute instructions, they do not; it is all about cell instantiation and how
+to connect those instances. The <code>if</code> is not a branch instruction, it is a
+multiplexor instantiation. The <code>do_division</code> is not a function call; it
+instantiates a circuit or module.</p>
+<div class="admonition artifact">
+<p class="admonition-title">Artifact</p>
+<p>Function calls inside control flow statements are either not allowed or
+forced to be inlined.</p>
+</div>
+<div class="admonition artifact">
+<p class="admonition-title">Artifact</p>
+<p>HDLs look like instruction execution, but they are about circuit
+instantiation.</p>
+</div>
+<h3 id="pipelining">Pipelining<a class="headerlink" href="#pipelining" title="Permanent link">&para;</a></h3>
+<p>Pipelining is adding registers in combinational circuits to create smaller
+critical paths and hence higher frequency designs. It is essential to hardware
+design, and there is not much related to it in software design flows.</p>
+<p>To illustrate the problem, imagine a pipelined multiplier function (mult) that
+takes one cycle to produce the results, and the programmer has an assertion
+checking that it was a multiply. The result <code>c</code> is not the current cycle <code>a*b</code>
+but the last cycle <code>a</code> multiplied by the last cycle <code>b</code>. This is not what would
+be expected in a software API.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Problematic code</label><label for="__tabbed_2_2">HLS possible solution</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>var c = mul(a,b)
+assert c == a * b // assert fails!!
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>var c = mul(a,b)
+assert c == a#[-1] * b#[-1] // read last cycle #[-1] a and b
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>If actors execution resembles concurrent module instantiation execution,
+async/await resembles pipelining. In async/await, the results of a function are
+not available at the function return. In HDLs, there is no await, and the
+results from previous cycles are output by the module instance. </p>
+<p>Pipelining is not restricted to just function or module instantiations. A the
+module itself can have a set of registers, and different variables/wires have
+the results from different cycles. It is up to the designer to manage it, and
+it is one of the primary complexity sources of hardware design and
+verification.</p>
+<div class="admonition artifact">
+<p class="admonition-title">Artifact</p>
+<p>Different variables or wires can have results from other cycles due to
+pipelining.</p>
+</div>
+<h3 id="simulation-vs-synthesis">Simulation vs synthesis<a class="headerlink" href="#simulation-vs-synthesis" title="Permanent link">&para;</a></h3>
+<p>Hardware designs tend to have extensive verification infrastructures. The
+reason is that once the chip is fabricated, it can not be easily be patched
+like software. It may need to trash millions of dollars and take months to get
+the next chip, even for just a line of code patch. This is not different from
+software; it is just that the cost of a bug could be potentially much higher.</p>
+<p>The difference from software is that the "simulation" results used for
+verification may be different from the hardware results generated during
+"synthesis".</p>
+<p>A mismatch between synthesis and simulation could happen due to script
+directives in the synthesis scripts, or due to use language features that only
+affect simulation.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Problematic code</label><label for="__tabbed_3_2">HLS possible solution</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="k">initial</span><span class="w"> </span><span class="k">begin</span><span class="w"> </span><span class="c1">// initial code may not be used in synthesis</span>
+<span class="w">   </span><span class="n">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">3</span><span class="p">;</span>
+<span class="k">end</span>
+
+<span class="p">#</span><span class="mh">3</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">4</span><span class="p">;</span><span class="w"> </span><span class="c1">// delay simulation update, not synthesis update</span>
+<span class="k">case</span><span class="w"> </span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="w">  </span><span class="c1">// synthesis: full_case, parallel_case</span>
+<span class="p">...</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="c1">// Do allow simulation code to have side-effects on synthesis code</span>
+<span class="c1">// directives affect simulation AND synthesis (not one or the other)</span>
+
+<span class="n">unique</span><span class="w"> </span><span class="k">case</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="c1">// do not use synthesis only directives</span>
+<span class="p">...</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<div class="admonition artifact">
+<p class="admonition-title">Artifact</p>
+<p>Simulation and synthesis results can have different functionality</p>
+</div>
+<h3 id="reset">Reset<a class="headerlink" href="#reset" title="Permanent link">&para;</a></h3>
+<p>Programmers are used to initializing their variables. Since the modules are
+called every cycle, the typical software syntax for initialization does not
+work. To make it worse, some languages like Verilog (and others) have two
+initializations: reset and simulation setup.</p>
+<p>Some differences between reset and software initialization:</p>
+<ul>
+<li>Reset can take many cycles</li>
+<li>Reset can be called many times</li>
+<li>Reset vs. variable initialization in some languages (Verilog)</li>
+</ul>
+<div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Problematic code</label><label for="__tabbed_4_2">HLS possible solution</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="k">initial</span><span class="w"> </span><span class="k">begin</span>
+<span class="w">   </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">1</span><span class="p">;</span>
+<span class="k">end</span>
+<span class="k">always</span><span class="w"> </span><span class="p">@(</span><span class="k">posedge</span><span class="w"> </span><span class="n">clk</span><span class="p">)</span><span class="w"> </span><span class="k">begin</span>
+<span class="w">   </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">reset</span><span class="p">)</span><span class="w"> </span><span class="k">begin</span>
+<span class="w">     </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">2</span><span class="p">;</span>
+<span class="p">...</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="c1">// Just use the reset flop values to initialize contents</span>
+
+<span class="k">always</span><span class="w"> </span><span class="p">@(</span><span class="k">posedge</span><span class="w"> </span><span class="n">clk</span><span class="p">)</span><span class="w"> </span><span class="k">begin</span>
+<span class="w">   </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">reset</span><span class="p">)</span><span class="w"> </span><span class="k">begin</span>
+<span class="w">     </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">2</span><span class="p">;</span>
+<span class="p">...</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<div class="admonition artifact">
+<p class="admonition-title">Artifact</p>
+<p>Reset is different from variable initialization</p>
+</div>
+<h3 id="non-blocking-assignments">Non-blocking assignments<a class="headerlink" href="#non-blocking-assignments" title="Permanent link">&para;</a></h3>
+<p>Many HDLs have what hardware designers call "non-blocking assignments". The idea
+is that in hardware, when assigning a variable, the designer could think about
+the "result at the end of this cycle" rather than "update this mutable variable".</p>
+<p>Technically, a nonblocking assignment is an assignment to a variable, but the
+variable will be updated only at the end of the cycle. To illustrate the
+concept, imagine a counter. The counter can be updated with a non-blocking
+assignment and following statements could still read the value before the
+scheduled update.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">Problematic code</label><label for="__tabbed_5_2">HLS possible solution</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="n">counter</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">counter</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mh">1</span><span class="w">  </span><span class="c1">// non-blocking assignment</span>
+<span class="n">tmp</span><span class="w">     </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">counter</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mh">2</span><span class="w">  </span><span class="c1">// non-blocking assignment</span>
+<span class="n">assert</span><span class="w"> </span><span class="n">tmp</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="p">(</span><span class="n">counter</span><span class="o">+</span><span class="mh">1</span><span class="p">)</span><span class="w"> </span><span class="c1">// this may FAIL!</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>// Do not use non-blocking
+counter = counter + 1  // blocking assignment
+tmp     = counter + 2  // blocking assignment
+assert tmp == (counter+1) // this never fails
+</code></pre></div>
+</div>
+</div>
+</div>
+<div class="admonition artifact">
+<p class="admonition-title">Artifact</p>
+<p>Some HDLs support non-blocking assignments which are not found in software.</p>
+</div>
+<h3 id="invalid-code">Invalid code<a class="headerlink" href="#invalid-code" title="Permanent link">&para;</a></h3>
+<p>HDLs can generate invalid code that can not be fabricated, or it is strongly
+recommended not to be fabricated. Examples are:</p>
+<ul>
+<li>
+<p>Combinational loops. Creating a loop with combinational logic is generally
+  considered a bug (only a few circuits could accept this). If the
+  combinational loop is inside a mux, it can be difficult to catch during
+  verification unless a good toggle coverage results.</p>
+</li>
+<li>
+<p>Implicit latches. Some HDLs like Verilog can generate code with implicit
+  latches. Since the module is executed each time, variables with a missing
+  initialization can remember results from the last cycles generating implicit
+  latches. Most ASIC tools do not accept this, and it is considered a bug.</p>
+</li>
+<li>
+<p>Bogus flow. Any compile (software or hardware) can have bugs, but because
+  hardware compilers tend to have a smaller user base; they have more bugs than
+  typical software compilers. Since this cost of fixing a bug is also higher,
+  the solution is to have an additional verification or logical equivalence
+  test.</p>
+</li>
+</ul>
+<p>If the compile generates an executable in software flows, it is considered a
+valid executable unless invalid assembly directives are used. In most HDLs,
+this is not the case due to constructs like combinational loops.</p>
+<div class="admonition artifact">
+<p class="admonition-title">Artifact</p>
+<p>HDLs can generate invalid synthesis and/or simulation code.</p>
+</div>
+<h3 id="multi-value-logic">Multi value logic<a class="headerlink" href="#multi-value-logic" title="Permanent link">&para;</a></h3>
+<p>Software designers are used to binary numbers with 0s and 1s. In many HDLs,
+there are more than two possible states for each bit. In languages like
+Verilog, there are four states: <code>0</code>, <code>1</code>, <code>?</code> or <code>z</code>. Where <code>?</code> is a "quantum"
+like state indicating that it is both zero and one simultaneously, and the <code>z</code>
+indicates that it is in high impedance, which means that nobody is writing the
+value. Some languages like VHDL have even more states.</p>
+<p>The challenge is that when running code, the result may be unexpected. There
+are many discussions on addressing what the community calls "x-propagation."
+There is no agreement on the best solution. The reason for not removing <code>?</code> is
+that some large structures will not be initialized because of overheads.
+Although widely considered dangerous, some engineers like the <code>?</code> to allow more
+freedom to the synthesis tools<sup id="fnref:7"><a class="footnote-ref" href="#fn:7">8</a></sup></p>
+<p>There are three leading solutions categories:</p>
+<ul>
+<li>Allow <code>?</code> and run many simulations with different x-propagation rules.</li>
+<li>Allow <code>?</code> and randomly pick 0/1 for each <code>?</code> bit at simulation time.</li>
+<li>Do not allow <code>?</code>.</li>
+</ul>
+<div class="tabbed-set tabbed-alternate" data-tabs="6:2"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio" /><input id="__tabbed_6_2" name="__tabbed_6" type="radio" /><div class="tabbed-labels"><label for="__tabbed_6_1">Problematic code</label><label for="__tabbed_6_2">HLS possible solution</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0</span><span class="n">b</span><span class="o">?</span><span class="w">   </span><span class="c1">// a ? state</span>
+<span class="k">if</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="n">puts</span><span class="w"> </span><span class="s">&quot;x is never true&quot;</span>
+<span class="p">}</span>
+<span class="kt">reg</span><span class="w"> </span><span class="k">signed</span><span class="w"> </span><span class="p">[</span><span class="mh">3</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="mh">1</span><span class="p">;</span>
+<span class="nb">$display</span><span class="p">(</span><span class="s">&quot;%b</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">a</span><span class="p">[</span><span class="mh">5</span><span class="o">:</span><span class="mh">1</span><span class="p">]);</span><span class="w"> </span><span class="c1">// displays xx111</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="c1">// there is no agreement on the community, but possible solutions:</span>
+<span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0</span><span class="n">b</span><span class="o">?</span><span class="w"> </span><span class="c1">// (1): compile error</span>
+<span class="k">if</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="p">{</span><span class="w">  </span><span class="c1">// (2): randomly pick 1 or 0</span>
+<span class="p">}</span>
+<span class="kt">reg</span><span class="w"> </span><span class="k">signed</span><span class="w"> </span><span class="p">[</span><span class="mh">3</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="mh">1</span><span class="p">;</span>
+<span class="nb">$display</span><span class="p">(</span><span class="s">&quot;%b</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">a</span><span class="p">[</span><span class="mh">5</span><span class="o">:</span><span class="mh">1</span><span class="p">]);</span><span class="w"> </span><span class="c1">// displays 11111 (sign extend)</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<div class="admonition artifact">
+<p class="admonition-title">Artifact</p>
+<p>HDLs can operate over non-binary logic</p>
+</div>
+<h2 id="simpler-hdl-constructs">Simpler HDL constructs<a class="headerlink" href="#simpler-hdl-constructs" title="Permanent link">&para;</a></h2>
+<p>Not everything is more challenging in HDLs when compared with software programming
+languages. These are some differences that can make the HDLs simpler:</p>
+<h3 id="unlimited-precision">Unlimited precision<a class="headerlink" href="#unlimited-precision" title="Permanent link">&para;</a></h3>
+<p>High-performance software must adjust to the hardware, and as such, there are
+several integer types (int, short, long).  The result is that the programmer
+tends to be careful with overflows and type conversion. This is not a problem
+in hardware. If a 113 bits adder is needed, it can be synthesized. If only a 7
+bits adder is required; the synthesis can create the smaller adder too.</p>
+<p>Some HLS may have different integer sizes, but it is either a "strange" design
+the decision or just as a type check so that no unnecessary hardware is generated.</p>
+<p>Overflow is a source of many subtle bugs. For example, experience programmers
+write <code>a + (b-a))/2</code> not the expected <code>(a+b)/2</code> because of integer overflow
+semantics. HDLs can handle this like unlimited precision scripting languages
+without the overhead.</p>
+<h3 id="no-pointers">No pointers<a class="headerlink" href="#no-pointers" title="Permanent link">&para;</a></h3>
+<p>Memory and pointer management is big issue in most languages. Either garbage
+collection, manual, or alternative approaches.  Since there is no global
+memory, there is no memory to manage. Maybe even more important, there is no
+need for pointers. This avoids another set of problems like null dereferencing.</p>
+<h3 id="no-destructors">No destructors<a class="headerlink" href="#no-destructors" title="Permanent link">&para;</a></h3>
+<p>Since there is no global memory, there is no need to have garbage collection or
+the associated object destruction. If a "hardware resource" is utilized, it can
+not be recycled. As a result, the destructor may not make sense in hardware.</p>
+<h3 id="pass-by-value">Pass by value<a class="headerlink" href="#pass-by-value" title="Permanent link">&para;</a></h3>
+<p>Most software languages support passing function arguments either by value or
+reference. This is done to avoid copying the object that may reside in memory.
+Again, HLS has no memory. Therefore it is not as problematic. </p>
+<p>Most HDLs only support passing by value. This is not a drawback but avoid
+another source of bugs without the cost overhead that it will represent in a
+Vonn Neumann machine.</p>
+<h3 id="no-recursion">No recursion<a class="headerlink" href="#no-recursion" title="Permanent link">&para;</a></h3>
+<p>Most HDLs support recursion at compile-time but not at runtime. The reason is
+that there is no "stack memory". If the depth is bound, it can support run-time
+recursion, but the potentially sizeable combinational path would be "strange".
+Only manageable with retiming. As a result, most HDLs do not support runtime
+recursion.</p>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:1">
+<p>Multi-threaded CPUs are just an array of Von Neumann machines.&#160;<a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+<li id="fn:2">
+<p>In this document, we call any logic gate, flop, or memory array.&#160;<a class="footnote-backref" href="#fnref:2" title="Jump back to footnote 2 in the text">&#8617;</a></p>
+</li>
+<li id="fn:3">
+<p>There are other constraints like power, but the same idea/problem could
+  be said for software design.&#160;<a class="footnote-backref" href="#fnref:3" title="Jump back to footnote 3 in the text">&#8617;</a></p>
+</li>
+<li id="fn:4">
+<p>Unbalance pipelines have higher overheads in power/area.&#160;<a class="footnote-backref" href="#fnref:4" title="Jump back to footnote 4 in the text">&#8617;</a></p>
+</li>
+<li id="fn:5">
+<p>Verilog modules could be seen as functions in a software language that
+  can be instantiated in one or more places. The instantiation point sets a
+  hierarchy of modules.&#160;<a class="footnote-backref" href="#fnref:5" title="Jump back to footnote 5 in the text">&#8617;</a></p>
+</li>
+<li id="fn:5a">
+<p>Instantiation is the process of deciding which gates are fabricated or
+  mapped in a given hardware design. In an ASIC, it is the process of selecting
+  a set of gates that will be manufactured.&#160;<a class="footnote-backref" href="#fnref:5a" title="Jump back to footnote 6 in the text">&#8617;</a></p>
+</li>
+<li id="fn:6">
+<p>Transistors can not be added at runtime.&#160;<a class="footnote-backref" href="#fnref:6" title="Jump back to footnote 7 in the text">&#8617;</a></p>
+</li>
+<li id="fn:7">
+<p>This is very controversial, and many companies coding styles do not allow
+  the use of <code>?</code> to improve synthesis results.&#160;<a class="footnote-backref" href="#fnref:7" title="Jump back to footnote 8 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["search.suggest", "navigation.sections", "navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.b4d07000.min.js"></script>
+      
+        <script src="../../javascripts/config.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>

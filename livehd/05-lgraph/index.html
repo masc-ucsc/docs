@@ -1,0 +1,2606 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../04-api/">
+      
+      
+        <link rel="next" href="../06-lnast/">
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.15">
+    
+    
+      
+        <title>LGraph - LiveHD and Pyrope</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.26e3688c.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ecc896b0.min.css">
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CFira+Code:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Fira Code"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/table.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#lgraph" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LiveHD and Pyrope" class="md-header__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LiveHD and Pyrope
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              LGraph
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+            
+              <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3Z"/></svg>
+              </label>
+            
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_2">
+            
+              <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6zm0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4zM7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+              </label>
+            
+          
+        </form>
+      
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LiveHD and Pyrope" class="md-nav__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    LiveHD and Pyrope
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        LiveHD and Pyrope
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+          Livehd
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Livehd
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00-intro/" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-install/" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-usage/" class="md-nav__link">
+        Usage
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-memory/" class="md-nav__link">
+        Memory and concurrency
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-api/" class="md-nav__link">
+        C++ API
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          LGraph
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        LGraph
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#api" class="md-nav__link">
+    API
+  </a>
+  
+    <nav class="md-nav" aria-label="API">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#node-node_pin-and-edge-construction" class="md-nav__link">
+    Node, Node_pin, and Edge Construction
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#non-hierarchical-traversal-iterators" class="md-nav__link">
+    Non-Hierarchical Traversal Iterators
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hierarchical-traversal-iterators" class="md-nav__link">
+    Hierarchical Traversal Iterators
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#edge-iterators" class="md-nav__link">
+    Edge Iterators
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#attribute-design" class="md-nav__link">
+    Attribute Design
+  </a>
+  
+    <nav class="md-nav" aria-label="Attribute Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#non-hierarchical-attribute" class="md-nav__link">
+    Non-Hierarchical Attribute
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hierarchical-attribute" class="md-nav__link">
+    Hierarchical attribute
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cell-type" class="md-nav__link">
+    Cell type
+  </a>
+  
+    <nav class="md-nav" aria-label="Cell type">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sum" class="md-nav__link">
+    Sum
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mult" class="md-nav__link">
+    Mult
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#div" class="md-nav__link">
+    Div
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modulo-how-to-model" class="md-nav__link">
+    Modulo (how to model)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not" class="md-nav__link">
+    Not
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#and" class="md-nav__link">
+    And
+  </a>
+  
+    <nav class="md-nav" aria-label="And">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#forward-propagation" class="md-nav__link">
+    Forward Propagation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backward-propagation" class="md-nav__link">
+    Backward Propagation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other-considerations" class="md-nav__link">
+    Other Considerations
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#peephole-optimizations" class="md-nav__link">
+    Peephole Optimizations
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#comparators" class="md-nav__link">
+    Comparators
+  </a>
+  
+    <nav class="md-nav" aria-label="Comparators">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#forward-propagation_1" class="md-nav__link">
+    Forward Propagation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backward-propagation_1" class="md-nav__link">
+    Backward Propagation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#peephole-optimizations_1" class="md-nav__link">
+    Peephole Optimizations
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other-considerations_1" class="md-nav__link">
+    Other Considerations
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shl_op" class="md-nav__link">
+    SHL_op
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sra_op" class="md-nav__link">
+    SRA_op
+  </a>
+  
+    <nav class="md-nav" aria-label="SRA_op">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#verilog-considerations" class="md-nav__link">
+    Verilog Considerations
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mux_op" class="md-nav__link">
+    Mux_op
+  </a>
+  
+    <nav class="md-nav" aria-label="Mux_op">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#forward-propagation_2" class="md-nav__link">
+    Forward Propagation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backward-propagation_2" class="md-nav__link">
+    Backward Propagation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#peephole-optimizations_2" class="md-nav__link">
+    Peephole Optimizations
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other-considerations_2" class="md-nav__link">
+    Other Considerations
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lut_op" class="md-nav__link">
+    LUT_op
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#and_op" class="md-nav__link">
+    And_op
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#or_op" class="md-nav__link">
+    Or_op
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#xor_op" class="md-nav__link">
+    Xor_op
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#const_op" class="md-nav__link">
+    Const_op
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sflop_op" class="md-nav__link">
+    SFlop_op
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#aflop_op" class="md-nav__link">
+    AFlop_op
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fflop_op" class="md-nav__link">
+    FFlop_op
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#latch_op" class="md-nav__link">
+    Latch_op
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_mask_op" class="md-nav__link">
+    Get_mask_op
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set_mask_op" class="md-nav__link">
+    Set_mask_op
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sext_op-sign-extend" class="md-nav__link">
+    Sext_op  (Sign extend)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memory_op" class="md-nav__link">
+    Memory_op
+  </a>
+  
+    <nav class="md-nav" aria-label="Memory_op">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#forward-propagation_3" class="md-nav__link">
+    Forward Propagation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backward-propagation_3" class="md-nav__link">
+    Backward Propagation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other-considerations_3" class="md-nav__link">
+    Other Considerations
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#peephole-optimizations_3" class="md-nav__link">
+    Peephole Optimizations
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subgraph_op" class="md-nav__link">
+    SubGraph_op
+  </a>
+  
+    <nav class="md-nav" aria-label="SubGraph_op">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#forward-propagation_4" class="md-nav__link">
+    Forward Propagation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backward-propagation_4" class="md-nav__link">
+    Backward Propagation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#to-be-continued" class="md-nav__link">
+    To be continued ...
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optimization" class="md-nav__link">
+    Optimization
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-lnast/" class="md-nav__link">
+        LNAST
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-bazel/" class="md-nav__link">
+        Bazel build
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10b-3rdparty/" class="md-nav__link">
+        3rd Party
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../11-pass/" class="md-nav__link">
+        Creating a Pass
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../12-github/" class="md-nav__link">
+        GitHub Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../13-style/" class="md-nav__link">
+        Coding Style
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          Pyrope
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Pyrope
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/00-hwdesign/" class="md-nav__link">
+        Hardware Design
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/01-introduction/" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/02-basics/" class="md-nav__link">
+        Basic syntax
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/03-bundle/" class="md-nav__link">
+        Tuples
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/04-variables/" class="md-nav__link">
+        Variables and types
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/05-assert/" class="md-nav__link">
+        Verification
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/05b-statements/" class="md-nav__link">
+        Statements
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/06-functions/" class="md-nav__link">
+        Lambdas
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/06b-instantiation/" class="md-nav__link">
+        Instantiation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/06c-pipelining/" class="md-nav__link">
+        Pipelining
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/07-typesystem/" class="md-nav__link">
+        Type system
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/07b-structtype/" class="md-nav__link">
+        Structural Typing
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/08-memories/" class="md-nav__link">
+        Memories
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/09-stdlib/" class="md-nav__link">
+        Pyrope std lib
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/10-internals/" class="md-nav__link">
+        Internals
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/10b-vslang/" class="md-nav__link">
+        vs Other Languages
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/11-deprecated/" class="md-nav__link">
+        Deprecated or Future
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/12-lnast/" class="md-nav__link">
+        LNAST
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/13-stdlib/" class="md-nav__link">
+        Pyrope Standard Library
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#api" class="md-nav__link">
+    API
+  </a>
+  
+    <nav class="md-nav" aria-label="API">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#node-node_pin-and-edge-construction" class="md-nav__link">
+    Node, Node_pin, and Edge Construction
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#non-hierarchical-traversal-iterators" class="md-nav__link">
+    Non-Hierarchical Traversal Iterators
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hierarchical-traversal-iterators" class="md-nav__link">
+    Hierarchical Traversal Iterators
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#edge-iterators" class="md-nav__link">
+    Edge Iterators
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#attribute-design" class="md-nav__link">
+    Attribute Design
+  </a>
+  
+    <nav class="md-nav" aria-label="Attribute Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#non-hierarchical-attribute" class="md-nav__link">
+    Non-Hierarchical Attribute
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hierarchical-attribute" class="md-nav__link">
+    Hierarchical attribute
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cell-type" class="md-nav__link">
+    Cell type
+  </a>
+  
+    <nav class="md-nav" aria-label="Cell type">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sum" class="md-nav__link">
+    Sum
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mult" class="md-nav__link">
+    Mult
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#div" class="md-nav__link">
+    Div
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modulo-how-to-model" class="md-nav__link">
+    Modulo (how to model)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not" class="md-nav__link">
+    Not
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#and" class="md-nav__link">
+    And
+  </a>
+  
+    <nav class="md-nav" aria-label="And">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#forward-propagation" class="md-nav__link">
+    Forward Propagation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backward-propagation" class="md-nav__link">
+    Backward Propagation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other-considerations" class="md-nav__link">
+    Other Considerations
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#peephole-optimizations" class="md-nav__link">
+    Peephole Optimizations
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#comparators" class="md-nav__link">
+    Comparators
+  </a>
+  
+    <nav class="md-nav" aria-label="Comparators">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#forward-propagation_1" class="md-nav__link">
+    Forward Propagation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backward-propagation_1" class="md-nav__link">
+    Backward Propagation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#peephole-optimizations_1" class="md-nav__link">
+    Peephole Optimizations
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other-considerations_1" class="md-nav__link">
+    Other Considerations
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shl_op" class="md-nav__link">
+    SHL_op
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sra_op" class="md-nav__link">
+    SRA_op
+  </a>
+  
+    <nav class="md-nav" aria-label="SRA_op">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#verilog-considerations" class="md-nav__link">
+    Verilog Considerations
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mux_op" class="md-nav__link">
+    Mux_op
+  </a>
+  
+    <nav class="md-nav" aria-label="Mux_op">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#forward-propagation_2" class="md-nav__link">
+    Forward Propagation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backward-propagation_2" class="md-nav__link">
+    Backward Propagation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#peephole-optimizations_2" class="md-nav__link">
+    Peephole Optimizations
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other-considerations_2" class="md-nav__link">
+    Other Considerations
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lut_op" class="md-nav__link">
+    LUT_op
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#and_op" class="md-nav__link">
+    And_op
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#or_op" class="md-nav__link">
+    Or_op
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#xor_op" class="md-nav__link">
+    Xor_op
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#const_op" class="md-nav__link">
+    Const_op
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sflop_op" class="md-nav__link">
+    SFlop_op
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#aflop_op" class="md-nav__link">
+    AFlop_op
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fflop_op" class="md-nav__link">
+    FFlop_op
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#latch_op" class="md-nav__link">
+    Latch_op
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_mask_op" class="md-nav__link">
+    Get_mask_op
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set_mask_op" class="md-nav__link">
+    Set_mask_op
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sext_op-sign-extend" class="md-nav__link">
+    Sext_op  (Sign extend)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memory_op" class="md-nav__link">
+    Memory_op
+  </a>
+  
+    <nav class="md-nav" aria-label="Memory_op">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#forward-propagation_3" class="md-nav__link">
+    Forward Propagation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backward-propagation_3" class="md-nav__link">
+    Backward Propagation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other-considerations_3" class="md-nav__link">
+    Other Considerations
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#peephole-optimizations_3" class="md-nav__link">
+    Peephole Optimizations
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subgraph_op" class="md-nav__link">
+    SubGraph_op
+  </a>
+  
+    <nav class="md-nav" aria-label="SubGraph_op">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#forward-propagation_4" class="md-nav__link">
+    Forward Propagation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backward-propagation_4" class="md-nav__link">
+    Backward Propagation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#to-be-continued" class="md-nav__link">
+    To be continued ...
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optimization" class="md-nav__link">
+    Optimization
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="lgraph">LGraph<a class="headerlink" href="#lgraph" title="Permanent link">&para;</a></h1>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>LiveHD is beta under active development and we keep improving the
+API. Semantic versioning is a 0.+, significant API changes are expect.</p>
+</div>
+<p>The LGraph is built directly through LNAST to LGraph translations. The LNAST
+builds a gated-SSA which is translated to LGraph. Understanding the LGraph is
+needed if you want to build a LiveHD pass.</p>
+<p>LGraph is a graph or netlist where each vertex is called a node, and it has a
+cell type and a set of input/output pins.</p>
+<h2 id="api">API<a class="headerlink" href="#api" title="Permanent link">&para;</a></h2>
+<p>A single LGraph represents a single netlist module. LGraph is composed of
+nodes, node pins, edges, cell types, and tables of attributes. An LGraph node
+is affiliated with a cell node type and each type defines different amounts of input
+and output node pins. For example, a node can have 3 input ports and 2 output
+pins. Each of the input/output pins can have many edges to other graph nodes.
+Every node pin has an affiliated node pid. In the code, every node_pin has a
+<code>Port_ID</code>.</p>
+<p>A pair of driver pin and sink pin constitutes an edge.  The bitwidth of the
+driver pin determines the edge bitwidth.</p>
+<h3 id="node-node_pin-and-edge-construction">Node, Node_pin, and Edge Construction<a class="headerlink" href="#node-node_pin-and-edge-construction" title="Permanent link">&para;</a></h3>
+<ul>
+<li>create a node without associated type (edges can not be created until a type is associated)</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="n">new_node</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">lg</span><span class="o">-&gt;</span><span class="n">create_node</span><span class="p">()</span>
+<span class="c1">//note: type and/or bits still need to be assigned later</span>
+</code></pre></div>
+<ul>
+<li>create node with node type assigned</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="n">new_node</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">lg</span><span class="o">-&gt;</span><span class="n">create_node</span><span class="p">(</span><span class="n">Node_type_Op</span><span class="p">)</span>
+<span class="c1">//note: recommended way if you know the target node type</span>
+</code></pre></div>
+<ul>
+<li>create a constant node</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="n">new_node</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">lg</span><span class="o">-&gt;</span><span class="n">create_node_const</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+<span class="c1">//note: recommended way to create a const node</span>
+</code></pre></div>
+<ul>
+<li>setup default driver pin for pin_0 of a node</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="n">driver_pin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">new_node</span><span class="p">.</span><span class="n">setup_driver_pin</span><span class="p">();</span>
+<span class="c1">//note: every cell in LGraph has only one driver pin, pin0</span>
+</code></pre></div>
+<ul>
+<li>setup default sink pin for pin_0 of a node</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="n">sink_pin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">new_node</span><span class="p">.</span><span class="n">setup_sink_pin</span><span class="p">()</span>
+<span class="c1">//note: when you know the node type only has one input pin</span>
+</code></pre></div>
+<ul>
+<li>
+<p>setup sink pin for pin_x of a node, for more information, please refer to the
+  Cell type section. For quick reference of the sink pin names of each cell
+  type, please see
+  <a href="https://github.com/masc-ucsc/livehd/blob/master/lgraph/cell.cpp">cell.cpp</a>
+<div class="highlight"><pre><span></span><code><span class="n">sink_pin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">new_node</span><span class="p">.</span><span class="n">setup_sink_pin</span><span class="p">(</span><span class="s">&quot;some_name&quot;</span><span class="p">)</span>
+</code></pre></div></p>
+</li>
+<li>
+<p>add an edge between driver_pin and sink_pin</p>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="n">driver_pin</span><span class="p">.</span><span class="n">connect</span><span class="p">(</span><span class="n">sink_pin</span><span class="p">);</span>
+</code></pre></div>
+<ul>
+<li>get the driver node of an edge</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="n">driver_node</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">edge</span><span class="p">.</span><span class="n">driver</span><span class="p">.</span><span class="n">get_node</span><span class="p">()</span>
+</code></pre></div>
+<ul>
+<li>use node as the index/key for a container</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="n">absl</span><span class="o">::</span><span class="n">flat_hash_map</span><span class="o">&lt;</span><span class="n">Node</span><span class="o">::</span><span class="n">Compact</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="n">my_map</span><span class="p">;</span>
+<span class="n">my_map</span><span class="p">[</span><span class="n">node1</span><span class="p">.</span><span class="n">get_compact</span><span class="p">()]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">77</span><span class="p">;</span>
+<span class="n">my_map</span><span class="p">[</span><span class="n">node2</span><span class="p">.</span><span class="n">get_compact</span><span class="p">()]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">42</span><span class="p">;</span>
+<span class="p">...</span>
+</code></pre></div>
+<ul>
+<li>use node_pin as the index/key for a container</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="n">absl</span><span class="o">::</span><span class="n">flat_hash_map</span><span class="o">&lt;</span><span class="n">Node_pin</span><span class="o">::</span><span class="n">Compact</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="n">my_map</span><span class="p">;</span>
+<span class="n">my_map</span><span class="p">[</span><span class="n">node_pin1</span><span class="p">.</span><span class="n">get_compact</span><span class="p">()]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">14</span><span class="p">;</span>
+<span class="n">my_map</span><span class="p">[</span><span class="n">node_pin2</span><span class="p">.</span><span class="n">get_compact</span><span class="p">()]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">58</span><span class="p">;</span>
+<span class="p">...</span>
+</code></pre></div>
+<ul>
+<li>get the node_pin back from a Node_pin::Compact</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="n">Node_pin</span><span class="w"> </span><span class="n">dpin</span><span class="p">(</span><span class="n">lg</span><span class="p">,</span><span class="w"> </span><span class="n">some_dpin</span><span class="p">.</span><span class="n">get_compact</span><span class="p">())</span>
+</code></pre></div>
+<ul>
+<li>get the node back from a Node::Compact</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="n">Node</span><span class="w"> </span><span class="n">node</span><span class="p">(</span><span class="n">lg</span><span class="p">,</span><span class="w"> </span><span class="n">some_node</span><span class="p">.</span><span class="n">get_compact</span><span class="p">())</span>
+</code></pre></div>
+<ul>
+<li>create a LGraph input(output) with the name</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="n">new_node_pin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">lg</span><span class="o">-&gt;</span><span class="n">add_graph_input</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string_view</span><span class="p">)</span>
+</code></pre></div>
+<ul>
+<li>debug information of a node</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="n">node</span><span class="p">.</span><span class="n">debug_name</span><span class="p">()</span>
+</code></pre></div>
+<ul>
+<li>debug information of a node_pin</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="n">node_pin</span><span class="p">.</span><span class="n">debug_name</span><span class="p">()</span>
+</code></pre></div>
+<ul>
+<li>iterate output edges and get node/pin information from it</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">out</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">node</span><span class="p">.</span><span class="n">out_edges</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">auto</span><span class="w">  </span><span class="n">dpin</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="n">out</span><span class="p">.</span><span class="n">driver</span><span class="p">;</span>
+<span class="w">  </span><span class="k">auto</span><span class="w">  </span><span class="n">dpin_pid</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">dpin</span><span class="p">.</span><span class="n">get_pid</span><span class="p">();</span>
+<span class="w">  </span><span class="k">auto</span><span class="w">  </span><span class="n">dnode_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dpin</span><span class="p">.</span><span class="n">get_node</span><span class="p">().</span><span class="n">debug_name</span><span class="p">();</span>
+<span class="w">  </span><span class="k">auto</span><span class="w">  </span><span class="n">snode_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">out</span><span class="p">.</span><span class="n">sink</span><span class="p">.</span><span class="n">get_node</span><span class="p">().</span><span class="n">debug_name</span><span class="p">();</span>
+<span class="w">  </span><span class="k">auto</span><span class="w">  </span><span class="n">spin_pid</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">out</span><span class="p">.</span><span class="n">sink</span><span class="p">.</span><span class="n">get_pid</span><span class="p">();</span>
+<span class="w">  </span><span class="k">auto</span><span class="w">  </span><span class="n">dpin_name</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">dpin</span><span class="p">.</span><span class="n">has_name</span><span class="p">()</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">dpin</span><span class="p">.</span><span class="n">get_name</span><span class="p">()</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s">&quot;&quot;</span><span class="p">;</span>
+<span class="w">  </span><span class="k">auto</span><span class="w">  </span><span class="n">dbits</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="n">dpin</span><span class="p">.</span><span class="n">get_bits</span><span class="p">();</span>
+
+<span class="w">  </span><span class="n">fmt</span><span class="o">::</span><span class="n">print</span><span class="p">(</span><span class="s">&quot; {}-&gt;{}[label=</span><span class="se">\&quot;</span><span class="s">{}b :{} :{} :{}</span><span class="se">\&quot;</span><span class="s">];</span><span class="se">\n</span><span class="s">&quot;</span>
+<span class="w">      </span><span class="p">,</span><span class="w"> </span><span class="n">dnode_name</span><span class="p">,</span><span class="w"> </span><span class="n">snode_name</span><span class="p">,</span><span class="w"> </span><span class="n">dbits</span><span class="p">,</span><span class="w"> </span><span class="n">dpin_pid</span><span class="p">,</span><span class="w"> </span><span class="n">spin_pid</span><span class="p">,</span><span class="w"> </span><span class="n">dpin_name</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="non-hierarchical-traversal-iterators">Non-Hierarchical Traversal Iterators<a class="headerlink" href="#non-hierarchical-traversal-iterators" title="Permanent link">&para;</a></h3>
+<p>LGraph allows forward and backward traversals in the nodes (bidirectional
+graph). The reason is that some algorithms need a forward and some a backward
+traversal, being bidirectional would help. Whenever possible, the fast iterator
+should be used.</p>
+<div class="highlight"><pre><span></span><code><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">node</span><span class="o">:</span><span class="n">lg</span><span class="o">-&gt;</span><span class="n">fast</span><span class="p">())</span><span class="w">     </span><span class="p">{...}</span><span class="w"> </span><span class="c1">// unordered but very fast traversal</span>
+
+<span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">node</span><span class="o">:</span><span class="n">lg</span><span class="o">-&gt;</span><span class="n">forward</span><span class="p">())</span><span class="w">  </span><span class="p">{...}</span><span class="w"> </span><span class="c1">// propagates forward from each input/constant</span>
+
+<span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">node</span><span class="o">:</span><span class="n">lg</span><span class="o">-&gt;</span><span class="n">backward</span><span class="p">())</span><span class="w"> </span><span class="p">{...}</span><span class="w"> </span><span class="c1">// propagates backward from each output</span>
+</code></pre></div>
+<p>The LGraph iterator such as <code>for(auto node: g-&gt;forward())</code> do not visit graph
+input and outputs.</p>
+<div class="highlight"><pre><span></span><code>// simple way using lambda
+lg-&gt;each_graph_input([&amp;](const Node_pin &amp;pin){
+
+  //your operation with graph_input node_pin;
+
+});
+</code></pre></div>
+<h3 id="hierarchical-traversal-iterators">Hierarchical Traversal Iterators<a class="headerlink" href="#hierarchical-traversal-iterators" title="Permanent link">&para;</a></h3>
+<p>LGraph supports hierarchical traversal. Each sub-module of a hierarchical
+design will be transformed into a new LGraph and represented as a sub-graph node
+in the parent module. If the hierarchical traversal is used, every time the
+iterator encounters a sub-graph node, it will load the sub-graph persistent
+tables to the memory and traverse the subgraph recursively, ignoring the
+sub-graph input/outputs. This cross-module traversal treats the hierarchical
+netlist just like a flattened design. In this way, all integrated third-party
+tools could automatically achieve global design optimization or analysis by
+leveraging the LGraph hierarchical traversal feature.</p>
+<div class="highlight"><pre><span></span><code><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">node</span><span class="o">:</span><span class="n">lg</span><span class="o">-&gt;</span><span class="n">forward</span><span class="p">(</span><span class="nb">true</span><span class="p">))</span><span class="w"> </span><span class="p">{...}</span>
+</code></pre></div>
+<h3 id="edge-iterators">Edge Iterators<a class="headerlink" href="#edge-iterators" title="Permanent link">&para;</a></h3>
+<p>To iterate over the input edges of node, simply call:</p>
+<div class="highlight"><pre><span></span><code><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">inp_edge</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">node</span><span class="p">.</span><span class="n">inp_edges</span><span class="p">())</span><span class="w"> </span><span class="p">{...}</span>
+</code></pre></div>
+<p>And for output edges:</p>
+<div class="highlight"><pre><span></span><code><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">out_edge</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">node</span><span class="p">.</span><span class="n">out_edges</span><span class="p">())</span><span class="w"> </span><span class="p">{...}</span>
+</code></pre></div>
+<h2 id="attribute-design">Attribute Design<a class="headerlink" href="#attribute-design" title="Permanent link">&para;</a></h2>
+<p>Design attribute stands for the characteristic given to a LGraph node or node
+pin. For instance, the characteristic of a node name and node physical
+placement. Despite a single LGraph stands for a particular module, it could be
+instantiated multiple times. In this case, same module could have different
+attribute at different hierarchy of the netlist. A good design of attribute
+structure should be able to represent both non-hierarchical and hierarchical
+characteristic.</p>
+<h3 id="non-hierarchical-attribute">Non-Hierarchical Attribute<a class="headerlink" href="#non-hierarchical-attribute" title="Permanent link">&para;</a></h3>
+<p>Non-hierarchical LGraph attributes include pin name, node name and line of
+source code. Such properties should be the same across different LGraph
+instantia- tions. Two instantiations of the same LGraph module will have the
+exact same user-defined node name on every node. For example, instantiations of
+a subgraph-2 in both top and subgraph-1 would maintain the same non-hierarchical
+attribute table.</p>
+<div class="highlight"><pre><span></span><code><span class="n">node</span><span class="p">.</span><span class="n">set_name</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string_view</span><span class="w"> </span><span class="n">name</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="hierarchical-attribute">Hierarchical attribute<a class="headerlink" href="#hierarchical-attribute" title="Permanent link">&para;</a></h3>
+<p>LGraph also support hierarchical attribute. It is achieved by using a tree data
+structure to record the design hierarchy. In LGraph, every graph has a unique
+id (lg_id), every instantiation of a graph would form some nodes in the tree and
+every tree node is indexed by a unique hierarchical id (hid). We are able to
+identify a unique instantiation of a graph and generate its own hierarchical
+attribute table. An example of hierarchical attribute is wire-delay.</p>
+<div class="highlight"><pre><span></span><code><span class="n">node_pin</span><span class="p">.</span><span class="n">set_delay</span><span class="p">(</span><span class="kt">float</span><span class="w"> </span><span class="n">delay</span><span class="p">);</span>
+</code></pre></div>
+<h2 id="cell-type">Cell type<a class="headerlink" href="#cell-type" title="Permanent link">&para;</a></h2>
+<p>For each LGraph node, there is a specific cell type. This section explains the
+operation to perform for each node. It includes a precise way to compute the
+maximum and minimum value for the output.</p>
+<p>In LGraph, the cell types operate like having unlimited precision with signed
+numbers. Most HDL IRs have a type for signed inputs and another for unsigned.
+LiveHD handles the superset (sign and unlimited precision) with a single node.
+In LGraph, an unsigned value is signed value that is always positive. This
+simplifies the mixing and conversions which simplifies the passes. The drawback
+is that the export may have to convert back to signed/unsigned for some
+languages like Verilog.</p>
+<p>Maybe even more important is that all the LGraph cell types generate the same
+result if the input is sign-extended. This has implications, for example a
+typical HDL IR type like "concat" does not exist because the result is
+dependent on the inputs size. This has the advantage of simplifying the
+decisions of when to drop bits in a value. It also makes it easier to guarantee
+no loss of precision. Any drop of precision requires explicit handling with
+operations like and-gate with masks or Shifts. </p>
+<p>The document also explains corner cases in relationship to Verilog and how to
+convert to/from Verilog semantics. These are corner cases to deal with sign and
+precision. Each HDL may have different semantics, the Verilog is to showcase
+the specifics because it is a popular HDL.</p>
+<p>All the cell types are in <code>core/cell.hpp</code> and <code>core/cell.cpp</code>. The type
+enumerate is called <code>Ntype</code>. In general the nodes have a single output with the
+exception of complex nodes like subgraphs or memories. The inputs is a string in
+lower case or upper case. Upper case ('A') means that many edges (or output
+drivers) can connect to the same node input or sink pin, lower case ('a') means
+that only a driver can connect to the input or sink pin.</p>
+<p>Each cell type can be called directly with Pyrope using a low level RTL syntax.
+This is useful for debugging not for general use as it can result in less
+efficient LNAST code.</p>
+<p>An example of a multi-driver sink pin is the <code>Sum</code> cell which can do <code>Y=3+20+a0+a3</code>
+where <code>A_{0} = 3</code>, <code>A_{1} = 20</code>, <code>A_{2} = a0</code>, and <code>A_{3} = a3</code>. Another way to
+represent in valid Pyrope RTL syntax is:</p>
+<div class="highlight"><pre><span></span><code>Y = __sum(A=(3,20,a0,a3))
+</code></pre></div>
+<p>An example if single driver sink pin is the <code>SRA</code> cell which can do <code>Y=20&gt;&gt;3</code>.
+It is lower case because only one driver pin can connect to 'a' and 'b'. Another way
+to represent a valid Pyrope RTL syntax is:</p>
+<div class="highlight"><pre><span></span><code>Y = __sra(a=20,b=3)
+</code></pre></div>
+<p>The section includes description on how to compute the maximum (<code>max</code>) and
+minimum (<code>min</code>) allowed result range. This is used by the bitwidth inference
+pass. To ease the explanation, a <code>sign</code> value means that the result may be
+negative (<code>a.sign == a.min&lt;0</code>). <code>known</code> is true if the result sign is known
+(<code>a.known == a.max&lt;0 or a.min&gt;=0</code>), either positive or negative (<code>neg ==
+a.max&lt;0</code>). The cells explanation also requires the to compute the bit mask
+(<code>a.mask == (1&lt;&lt;a.bits)-1</code>).</p>
+<p>For any value (<code>a</code>), the number of bits required (<code>bits</code>) is <code>a.bits = log2(absmax(a.max,a.min))+1</code>.</p>
+<h3 id="sum">Sum<a class="headerlink" href="#sum" title="Permanent link">&para;</a></h3>
+<p>Addition and substraction node is a single cell Ntype that performs
+2-complement additions and substractions with unlimited precision.</p>
+<div  class="mermaid">graph LR
+    cell  --Y--> c(fa:fa-spinner)
+    a(fa:fa-spinner) --A--> cell[Sum]:::cell
+    b(fa:fa-spinner) --B--> cell
+    classDef cell stroke-width:3px
+</div>
+<p>If the inputs do not have the same size, they are sign extended to all have the
+same length.</p>
+<p><strong>Forward Propagation</strong></p>
+<ul>
+<li>Value:
+<div class="highlight"><pre><span></span><code>%Y = A.reduce(&#39;+&#39;) - B.reduce(&#39;+&#39;)
+</code></pre></div></li>
+<li>Max/min:
+<div class="highlight"><pre><span></span><code>%max = 0
+%min = 0
+for a in A {
+  %max += A.max
+  %min += A.min
+}
+for b in B {
+  %max -= b.min
+  %min -= b.max
+}
+</code></pre></div></li>
+</ul>
+<p><strong>Backward Propagation</strong></p>
+<p>Backward propagation is possible when all the inputs but ONE are known. The
+algorithm can check and look for the inputs that have more precision than
+needed and reduce the max/min backwards.</p>
+<p>For example, if and all the inputs but one A are known (max/min has the max/min
+computed for all the inputs but the unknown one)</p>
+<div class="highlight"><pre><span></span><code>A_{unknown}.max = Y.max - max 
+A_{unknown}.min = Y.min - min 
+</code></pre></div>
+<p>If the unknow is in port <code>B</code>:</p>
+<div class="highlight"><pre><span></span><code>B_{unknown}.max = min - T.min
+B_{unknown}.min = max - Y.max
+</code></pre></div>
+<p><strong>Verilog Considerations</strong></p>
+<p>In Verilog, the addition is unsigned if any of the inputs is unsigned. If any
+input is unsigned. all the inputs will be "unsigned extended" to match the
+largest value. This is different from Sum_Op semantics were each input is
+signed or unsigned extended independent of the other inputs. To match the
+semantics, when mixing signed and unsigned, all the potentially negative inputs
+must be converted to unsign with the Ntype_op::Tposs.</p>
+<div class="highlight"><pre><span></span><code><span class="kt">logic</span><span class="w"> </span><span class="k">signed</span><span class="w"> </span><span class="p">[</span><span class="mh">3</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="mh">1</span>
+<span class="kt">logic</span><span class="w"> </span><span class="k">signed</span><span class="w"> </span><span class="p">[</span><span class="mh">4</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">c</span><span class="p">;</span>
+
+<span class="k">assign</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mh">1</span><span class="mb">&#39;b1</span><span class="p">;</span>
+</code></pre></div>
+<p>The previous Verilog example extends everything to 5 bits (c) UNSIGNED extended
+because one of the inputs is unsigned (1b1 is unsigned in verilog, and 2sb1 is
+signed +1). LGraph semantics are different, everything is signed.</p>
+<div class="highlight"><pre><span></span><code><span class="n">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">5</span><span class="n">b01111</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mh">5</span><span class="n">b0001</span><span class="w"> </span><span class="c1">// this is the Verilog semantics by matching size</span>
+<span class="n">c</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="o">-</span><span class="mh">16</span><span class="w"> </span><span class="p">(</span><span class="o">!!</span><span class="p">)</span>
+</code></pre></div>
+<p>The Verilog addition/substraction output can have more bits than the inputs.
+This is the same as in LGraph <code>Sum</code>. Nevertheless, Verilog requires to specify
+the bits for all the input/outputs. This means that whenever Verilog drops
+precision an AND gate must be added (or a SEXT for signed output). In the
+following examples only the 'g' and 'h' variables needed.</p>
+<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="kt">wire</span><span class="w"> </span><span class="p">[</span><span class="mh">7</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">a</span><span class="p">;</span>
+<span class="w">  </span><span class="kt">wire</span><span class="w"> </span><span class="p">[</span><span class="mh">7</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">b</span><span class="p">;</span>
+<span class="w">  </span><span class="kt">wire</span><span class="w"> </span><span class="p">[</span><span class="mh">6</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">c</span><span class="p">;</span>
+<span class="w">  </span><span class="kt">wire</span><span class="w"> </span><span class="p">[</span><span class="mh">8</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">b</span><span class="p">;</span><span class="w"> </span><span class="c1">// f = __sum(a,b)  // a same size as b</span>
+<span class="w">  </span><span class="kt">wire</span><span class="w"> </span><span class="p">[</span><span class="mh">8</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">c</span><span class="p">;</span><span class="w"> </span><span class="c1">// f = __sum(a,__get_mask(c,-1))</span>
+<span class="w">  </span><span class="kt">wire</span><span class="w"> </span><span class="p">[</span><span class="mh">7</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">g</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">b</span><span class="p">;</span><span class="w"> </span><span class="c1">// g = __and(__sum(a,b),0x7F)</span>
+<span class="w">  </span><span class="kt">wire</span><span class="w"> </span><span class="p">[</span><span class="mh">6</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">b</span><span class="p">;</span><span class="w"> </span><span class="c1">// h = __and(__sum(a,b),0x3F)</span>
+</code></pre></div>
+<p><strong>Peephole Optimizations</strong></p>
+<ul>
+<li><code>Y = x-0+0+...</code> becomes <code>Y = x+...</code></li>
+<li><code>Y = x-x+...</code> becomes <code>Y = ...</code></li>
+<li><code>Y = x+x+...</code> becomes <code>Y = (x&lt;&lt;1)+...</code></li>
+<li><code>Y = (x&lt;&lt;n)+(y&lt;&lt;m)</code> where m&gt;n becomes <code>Y = (x+y&lt;&lt;(m-n)&lt;&lt;n</code></li>
+<li><code>Y = (~x)+1+...</code> becomes <code>Y = ...-x</code></li>
+<li><code>Y = a + (b&lt;&lt;n)</code> becomes <code>Y = {(a&gt;&gt;n)+b, a&amp;n.mask}</code></li>
+<li><code>Y = a - (b&lt;&lt;n)</code> becomes <code>Y = {(a&gt;&gt;n)-b, a&amp;n.mask}</code></li>
+<li>If every x,y... lower bit is zero <code>Y=x+y+...</code> becomes <code>Y=((x&gt;&gt;1)+(y&gt;&gt;1)+..)&lt;&lt;1</code></li>
+</ul>
+<h3 id="mult">Mult<a class="headerlink" href="#mult" title="Permanent link">&para;</a></h3>
+<p>Multiply operator. There is no cell type that combines multiplication and
+division because unlike in <code>Sum</code>. The reason is that with integers the order of multiplication/division changes
+the result even with unlimited precision integers (<code>a*(b/c) != (a*b)/c</code>).</p>
+<div  class="mermaid">graph LR
+    cell  --Y--> c(fa:fa-spinner)
+    a(fa:fa-spinner) --A--> cell[Mult]:::cell
+    classDef cell stroke-width:3px
+</div>
+<p><strong>Forward Propagation</strong></p>
+<ul>
+<li>Value:
+<div class="highlight"><pre><span></span><code>Y = A.reduce(&#39;*&#39;)
+</code></pre></div></li>
+<li>Max/min:
+<div class="highlight"><pre><span></span><code>var tmax = 1
+vat tmin = 1
+var sign  = 0
+for i in A {
+  tmax *= maxabs(A.max, A.min)
+  tmin *= minabs(A.max, A.min)
+  known = false                when min&lt;0 and max&gt;0
+  sign += 1                    when max&lt;0
+}
+if know { // sign is know
+  if sign &amp; 1 { // negative
+    %max = -tmin
+    %min = -tmax
+  }else{
+    %max = tmax
+    %min = tmin
+  }
+}else{
+  %max =  tmax
+  %min = -tmax
+}
+</code></pre></div></li>
+</ul>
+<p><strong>Backward Propagation</strong></p>
+<p>If only one input is missing, it is possible to infer the max/min from the
+output and the other inputs. Like in the <code>sum</code> case, if all the inputs but one
+and the output is known, it is possible to backward propagate to further
+constraint the unknown input.</p>
+<div class="highlight"><pre><span></span><code>A_{unknown}.max = Y.max / A.min
+A_{unknown}.min = Y.min / A.max
+</code></pre></div>
+<p><strong>Verilog Considerations</strong></p>
+<p>Unlike the <code>Sum</code>, the Verilog 2 LiveHD translation does not need to extend the
+inputs to have matching sizes. Multiplying/dividing signed and unsigned numbers
+has the same result. The bit representation is the same if the result was
+signed or unsigned.</p>
+<p>LiveHD mult node result (Y) number of bits can be more efficient than in
+Verilog. E.g: if the max value of A0 is 3 (2 bits) and A1 is 5 (3bits). If the
+result is unsigned, the maximum result is 15 (4 bits). In Verilog, the result
+will always be 5 bits. If the Verilog result was to an unsigned variable.
+Either all the inputs were unsigned, or there should pass to an <code>get_mask</code> to
+force the MSB as positive. This extra bit will be simplified but it will notify
+LGraph that the output is to be treated as unsigned.</p>
+<p><strong>Peephole Optimizations</strong></p>
+<ul>
+<li><code>Y = a*1*...</code> becomes <code>Y=a*...</code></li>
+<li><code>Y = a*0*...</code> becomes <code>Y=0</code></li>
+<li><code>Y = power2a*...</code> becomes <code>Y=(...)&lt;&lt;log2(power2a)</code></li>
+<li><code>Y = (power2a+power2b)*...</code> becomes <code>tmp=... ; Y = (tmp+tmp&lt;&lt;power2b)&lt;&lt;(power2a-power2b)</code> when power2a&gt;power2b</li>
+<li><code>Y = (power2a-power2b)*...</code> becomes <code>tmp=... ; Y = (tmp-tmp&lt;&lt;power2b)&lt;&lt;(power2a-power2b)</code> when power2a&gt;power2b</li>
+</ul>
+<h3 id="div">Div<a class="headerlink" href="#div" title="Permanent link">&para;</a></h3>
+<p>Division operator. The division operation is quite similar to the inverse of
+the multiplication, but a key difference is that only one driver is allowed for
+each input ('a' vs 'A').</p>
+<div  class="mermaid">graph LR
+    cell  --Y--> c(fa:fa-spinner)
+    a(fa:fa-spinner) --a--> cell[Div]:::cell
+    b(fa:fa-spinner) --b--> cell
+    classDef cell stroke-width:3px
+</div>
+<p><strong>Forward Propagation</strong></p>
+<ul>
+<li>Value:
+<div class="highlight"><pre><span></span><code>Y = a/b
+</code></pre></div></li>
+<li>Max/min:
+<div class="highlight"><pre><span></span><code>%max = a.max/b.min
+%min = a.min/b.max
+
+for i in a.max,a.min {
+  for j in b.max,b.min {
+     next        when j == 0
+     tmp = i / j
+     %max = tmp   when tmp &gt; max
+     %min = tmp   when tmp &lt; min
+  }
+}
+</code></pre></div></li>
+</ul>
+<p><strong>Backward Propagation</strong></p>
+<p>The backward propagation from the division can extracted from the forward
+propagation. It is a simpler case of multiplication backward propagation.</p>
+<p><strong>Verilog Considerations</strong></p>
+<p>The same considerations as in the multiplication should be applied.</p>
+<p><strong>Peephole Optimizations</strong></p>
+<ul>
+<li><code>Y = a/1</code> becomes <code>Y=a</code></li>
+<li><code>Y = 0/b</code> becomes <code>Y=0</code></li>
+<li><code>Y = a/power2b</code> becomes <code>Y=a&gt;&gt;log2(power2b)</code> if <code>Y.known and !Y.neg</code></li>
+<li><code>Y = a/power2b</code> becomes <code>Y=1+~(a&gt;&gt;log2(power2b))</code> if <code>Y.known and Y.neg</code></li>
+<li><code>Y = (x*c)/a</code> if c.bits&gt;a.bits becomes <code>Y = x * (c/a)</code> which should be a smaller division.</li>
+<li>If b is a constant and <code>Y.known and !Y.neg</code>. From the hackers delight, we</li>
+<li>know that the division can be changed for a multiplication</li>
+<li><code>Y=(a*(((1&lt;&lt;(a.bits+2)))/b+1))&gt;&gt;(a.bits+2)</code> If a sign is not <code>known</code>. Then `Y</li>
+<li>= Y.neg? (~Y_unsigned+1):Y_unsigned`</li>
+</ul>
+<h3 id="modulo-how-to-model">Modulo (how to model)<a class="headerlink" href="#modulo-how-to-model" title="Permanent link">&para;</a></h3>
+<p>There is no mod cell (Ntype_op::Mod) in LGraph. The reason is that a modulo
+different from a power of 2 is very rare in hardware. If the language supports
+modulo operations, they must be translated to division/multiplication.</p>
+<div class="highlight"><pre><span></span><code>y = a mod b
+</code></pre></div>
+<p>It is the same as:</p>
+<div class="highlight"><pre><span></span><code>y = a-b*(a/b)
+</code></pre></div>
+<p>If b is a power of 2, the division optimization will transform the modulo operation to:</p>
+<div class="highlight"><pre><span></span><code>y = a - (a&gt;&gt;n)&lt;&lt;n
+</code></pre></div>
+<p>The add optimization should reduce it to:</p>
+<div class="highlight"><pre><span></span><code>y = a &amp; n.mask
+</code></pre></div>
+<h3 id="not">Not<a class="headerlink" href="#not" title="Permanent link">&para;</a></h3>
+<p>Bitwise Not operator</p>
+<div  class="mermaid">graph LR
+    cell  --Y--> c(fa:fa-spinner)
+    a(fa:fa-spinner) --a--> cell[Div]:::cell
+    classDef cell stroke-width:3px
+</div>
+<p><strong>Forward Propagation</strong></p>
+<ul>
+<li>Value:
+<div class="highlight"><pre><span></span><code>Y = ~a
+</code></pre></div></li>
+<li>Max/min:
+<div class="highlight"><pre><span></span><code>%max = max(~a.max,~a.min)
+%min = min(~a.max,~a.min)
+</code></pre></div></li>
+</ul>
+<p><strong>Backward Propagation</strong></p>
+<div class="highlight"><pre><span></span><code>a.max = max(~Y.max,~Y.min)
+a.min = min(~Y.max,~Y.min)
+</code></pre></div>
+<p><em>Verilog Considerations</em>*</p>
+<p>Same semantics as verilog</p>
+<p><strong>Peephole Optimizations</strong></p>
+<p>No optimizations by itself, it has a single input. Other operations like Sum_Op can optimize when combined with Not_Op.</p>
+<h3 id="and">And<a class="headerlink" href="#and" title="Permanent link">&para;</a></h3>
+<p><code>And</code> is a typical AND gate with multiple inputs. All the inputs connect to pin
+'A' because input order does not matter. The result is always a signed number.</p>
+<div class="center highlight"><pre><span></span><code>digraph And {
+    rankdir=LR;
+    size=&quot;1,0.5&quot;
+
+    node [shape = circle]; And;
+    node [shape = point ]; q0
+    node [shape = point ]; q
+
+    q0 -&gt; And [ label =&quot;A&quot; ];
+    And  -&gt; q [ label = &quot;Y&quot; ];
+}
+</code></pre></div>
+<h4 id="forward-propagation">Forward Propagation<a class="headerlink" href="#forward-propagation" title="Permanent link">&para;</a></h4>
+<ul>
+<li><span class="arithmatex">\(Y = \forall_{i=0}^{\infty} Y \&amp; A_{i}\)</span></li>
+<li><span class="arithmatex">\(m = \forall_{i=0}^{\infty} min(m,A_{i}.bits)\)</span></li>
+<li><span class="arithmatex">\(Y.max = (1\ll m)-1\)</span></li>
+<li><span class="arithmatex">\(Y.min = -Y.max-1\)</span></li>
+</ul>
+<h4 id="backward-propagation">Backward Propagation<a class="headerlink" href="#backward-propagation" title="Permanent link">&para;</a></h4>
+<p>The And cell has a significant backpropagation impact. Even if some inputs had
+more bits, after the And cell the upper bits are dropped. This allows the back
+propagation to indicate that those bits are useless.</p>
+<ul>
+<li>$a.max = Y.max $</li>
+<li>$a.min = -Y.max-1 $</li>
+</ul>
+<h4 id="other-considerations">Other Considerations<a class="headerlink" href="#other-considerations" title="Permanent link">&para;</a></h4>
+<h4 id="peephole-optimizations">Peephole Optimizations<a class="headerlink" href="#peephole-optimizations" title="Permanent link">&para;</a></h4>
+<h3 id="comparators">Comparators<a class="headerlink" href="#comparators" title="Permanent link">&para;</a></h3>
+<p>LT, GT, EQ</p>
+<p>There are only 3 comparators. Other typically found like LE, GE, and NE can be
+created by simply negating one of the LGraph comparators. <code>GT = ~LE</code>, <code>LT = ~GE</code>, and <code>NE = ~EQ</code>.</p>
+<h4 id="forward-propagation_1">Forward Propagation<a class="headerlink" href="#forward-propagation_1" title="Permanent link">&para;</a></h4>
+<ul>
+<li>
+<p><code>Y = A LT B</code></p>
+</li>
+<li>
+<p><code>Y = A0 LT B and A1 LT B</code></p>
+</li>
+<li>
+<p><code>Y = A0 LT B0 and A1 LT B0 and A0 LT B1 and A1 LT B1</code></p>
+</li>
+</ul>
+<h4 id="backward-propagation_1">Backward Propagation<a class="headerlink" href="#backward-propagation_1" title="Permanent link">&para;</a></h4>
+<h4 id="peephole-optimizations_1">Peephole Optimizations<a class="headerlink" href="#peephole-optimizations_1" title="Permanent link">&para;</a></h4>
+<h4 id="other-considerations_1">Other Considerations<a class="headerlink" href="#other-considerations_1" title="Permanent link">&para;</a></h4>
+<p>Verilog treats all the inputs as unsigned if any of them is unsigned. LGraph treats all the inputs as signed all the time.</p>
+<table>
+<thead>
+<tr>
+<th>size</th>
+<th>A</th>
+<th>B</th>
+<th>Operation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>a==b</td>
+<td>S</td>
+<td>S</td>
+<td>EQ(a,b)</td>
+</tr>
+<tr>
+<td>a==b</td>
+<td>S</td>
+<td>U</td>
+<td>EQ(a,b)</td>
+</tr>
+<tr>
+<td>a==b</td>
+<td>U</td>
+<td>S</td>
+<td>EQ(a,b)</td>
+</tr>
+<tr>
+<td>a==b</td>
+<td>U</td>
+<td>U</td>
+<td>EQ(a,b)</td>
+</tr>
+<tr>
+<td>a&lt; b</td>
+<td>S</td>
+<td>S</td>
+<td>LT(a,b)</td>
+</tr>
+<tr>
+<td>a&lt; b</td>
+<td>S</td>
+<td>U</td>
+<td>LT(a,Tposs(b))</td>
+</tr>
+<tr>
+<td>a&lt; b</td>
+<td>U</td>
+<td>S</td>
+<td>LT(Tposs(a),b)</td>
+</tr>
+<tr>
+<td>a&lt; b</td>
+<td>U</td>
+<td>U</td>
+<td>LT(Tposs(a),Tposs(b))</td>
+</tr>
+</tbody>
+</table>
+<h3 id="shl_op">SHL_op<a class="headerlink" href="#shl_op" title="Permanent link">&para;</a></h3>
+<p>Shift Left performs the typical shift left when there is a single amount
+(<code>a&lt;&lt;amt</code>). The allow supports multiple left shift amounts. In this case the
+shift left is used to build one hot encoding mask. (<code>1&lt;&lt;(1,2) == (1&lt;&lt;1)|(1&lt;&lt;2)</code>)</p>
+<p>The result for when there are not amounts (<code>a&lt;&lt;()</code>) is <code>-1</code>. Notice that this
+is not ZERO but -1. The -1 means that all the bits are set. The reason is that
+when there are no offsets in the onehot encoding, the default functionality is
+to select all the bit masks, and hence -1.</p>
+<h3 id="sra_op">SRA_op<a class="headerlink" href="#sra_op" title="Permanent link">&para;</a></h3>
+<p>Logical or sign extension shift right.</p>
+<h4 id="verilog-considerations">Verilog Considerations<a class="headerlink" href="#verilog-considerations" title="Permanent link">&para;</a></h4>
+<p>Verilog has 2 types of shift <code>&gt;&gt;</code> and <code>&gt;&gt;&gt;</code>. The first is unsigned right shift,
+the 2nd is arithmetic right shift. LGraph only has arithmetic right shift
+(ShiftRigt_op). The verilog translation should make the value unsigned
+(<code>ShiftRigt(Join(0,a),b)</code>) before calling the shift operation. Conversely, for
+a <code>&gt;&gt;&gt;</code> if the input is Verilog unsigned (<code>ShiftRigt(a,b)</code>)</p>
+<h3 id="mux_op">Mux_op<a class="headerlink" href="#mux_op" title="Permanent link">&para;</a></h3>
+<h4 id="forward-propagation_2">Forward Propagation<a class="headerlink" href="#forward-propagation_2" title="Permanent link">&para;</a></h4>
+<ul>
+<li><span class="arithmatex">\(Y = P_{(1+P_{0}}\)</span></li>
+<li><span class="arithmatex">\(Y.max = (1\ll m)-1\)</span></li>
+<li><span class="arithmatex">\(Y.max = \forall_{i=0}^{\infty} P_{i}.max\)</span></li>
+<li><span class="arithmatex">\(Y.max = \forall_{i=0}^{\infty} P_{i}.min\)</span></li>
+</ul>
+<h4 id="backward-propagation_2">Backward Propagation<a class="headerlink" href="#backward-propagation_2" title="Permanent link">&para;</a></h4>
+<h4 id="peephole-optimizations_2">Peephole Optimizations<a class="headerlink" href="#peephole-optimizations_2" title="Permanent link">&para;</a></h4>
+<h4 id="other-considerations_2">Other Considerations<a class="headerlink" href="#other-considerations_2" title="Permanent link">&para;</a></h4>
+<h3 id="lut_op">LUT_op<a class="headerlink" href="#lut_op" title="Permanent link">&para;</a></h3>
+<h3 id="and_op">And_op<a class="headerlink" href="#and_op" title="Permanent link">&para;</a></h3>
+<p>reduce AND <code>a =u= -1</code> // unsigned equal</p>
+<h3 id="or_op">Or_op<a class="headerlink" href="#or_op" title="Permanent link">&para;</a></h3>
+<p>reduce OR <code>a != 0</code></p>
+<h3 id="xor_op">Xor_op<a class="headerlink" href="#xor_op" title="Permanent link">&para;</a></h3>
+<p>reduce xor is a chain of XORs.</p>
+<h3 id="const_op">Const_op<a class="headerlink" href="#const_op" title="Permanent link">&para;</a></h3>
+<h3 id="sflop_op">SFlop_op<a class="headerlink" href="#sflop_op" title="Permanent link">&para;</a></h3>
+<h3 id="aflop_op">AFlop_op<a class="headerlink" href="#aflop_op" title="Permanent link">&para;</a></h3>
+<h3 id="fflop_op">FFlop_op<a class="headerlink" href="#fflop_op" title="Permanent link">&para;</a></h3>
+<h3 id="latch_op">Latch_op<a class="headerlink" href="#latch_op" title="Permanent link">&para;</a></h3>
+<h3 id="get_mask_op">Get_mask_op<a class="headerlink" href="#get_mask_op" title="Permanent link">&para;</a></h3>
+<p>Inputs - a, mask
+Get_mask (a, mask)
+Functionality - Output contains only those bits a[i], for which mask[i] = 1, other bits a[i] for which mask[i] = 0, are dropped.
+a &amp; mask are interpreted as signed numbers and sign extended to the size of the other, if required.
+eg - Get_mask (0sb11000011, 0sb10101010) = 0sb1001 
+     Get_mask (0sb11110000, 0sb00001111) = 0sb0000
+     Get_mask (0sb0011, 0sb10) = 0sb001
+     Get_mask (0sb10, 0sb1010) = 0sb11</p>
+<h3 id="set_mask_op">Set_mask_op<a class="headerlink" href="#set_mask_op" title="Permanent link">&para;</a></h3>
+<p>Inputs - a, value, mask
+Set_mask(a, mask, value)
+Functionality - Replaces all bits a[i] for which mask[i] = 1, with value[i] 
+Retains all bits a[i] for which mask[i] = 0.
+// Check - if a, value are signed, actually none of them should be extended and their signs should not matter, but a might need to retain it's sign
+eg - Set_mask (0b101 01 010, 0sb000 11 000, 0b001 10 011) = 0sb 101 10 010</p>
+<h3 id="sext_op-sign-extend">Sext_op  (Sign extend)<a class="headerlink" href="#sext_op-sign-extend" title="Permanent link">&para;</a></h3>
+<p>Inputs - a, b
+Sext (a, b)
+Selects only bits a[b:0] dropping all remaining MSBs.
+The selected a[b:0] is interpretded as a signed value, a's sign does not matter,b conyains the MSB index and hence is always unsigned/ positive
+eg Sext (0b10101010, 4) = 0sb01010 = 0xA = +10
+Sext (0b10101010, 5) = 0sb101010 = 0x2A = -22</p>
+<h3 id="memory_op">Memory_op<a class="headerlink" href="#memory_op" title="Permanent link">&para;</a></h3>
+<p>Memory is the basic block to represent SRAM-like structures. Any large storage will benefit from using memory arrays instead of flops, which are slower to simulate. These memories are highly configurable.</p>
+<div class="center highlight"><pre><span></span><code>digraph Memory {
+    rankdir=LR;
+    size=&quot;2,1&quot;
+
+    node [shape = circle]; Memory;
+    node [shape = point ]; q0
+    node [shape = point ]; q1
+    node [shape = point ]; q2
+    node [shape = point ]; q3
+    node [shape = point ]; q4
+    node [shape = point ]; q5
+    node [shape = point ]; q6
+    node [shape = point ]; q7
+    node [shape = point ]; q8
+    node [shape = point ]; q9
+    node [shape = point ]; q10
+    node [shape = point ]; q
+
+    q0 -&gt; Memory [ label =&quot;a (addr)&quot; ];
+    q1 -&gt; Memory [ label =&quot;b (bits)&quot; ];
+    q2 -&gt; Memory [ label =&quot;c (clock)&quot; ];
+    q3 -&gt; Memory [ label =&quot;d (data in)&quot; ];
+    q4 -&gt; Memory [ label =&quot;e (enable)&quot; ];
+    q5 -&gt; Memory [ label =&quot;f (fwd)&quot; ];
+    q6 -&gt; Memory [ label =&quot;l (latency)&quot; ];
+    q7 -&gt; Memory [ label =&quot;m (wmask)&quot; ];
+    q8 -&gt; Memory [ label =&quot;p (posedge)&quot; ];
+    q9 -&gt; Memory [ label =&quot;s (size)&quot; ];
+    q10 -&gt; Memory [ label =&quot;w (wmode)&quot; ];
+    Memory  -&gt; q [ label =&quot;Q (data out)&quot; ];
+}
+</code></pre></div>
+<ul>
+<li><code>s</code> (<code>size</code>) is for the array size in number of entries</li>
+<li><code>b</code> (<code>bits</code>) is the number of bits per entry</li>
+<li><code>f</code> (<code>fwd</code>) points to a 0/1 constant driver pin to indicate if writes forward value (<code>0b0</code> for write-only ports). Effectively, it means zero cycles read latency when enabled. <code>fwd</code> is more than just setting <code>latency=0</code>. Even with latency zero, the write delay affects until the result is visible. With <code>fwd</code> enabled, the write latency does not matter to observe the results. This requires a costly forwarding logic.</li>
+<li><code>c</code>,<code>d</code>,<code>e</code>,<code>q</code>... are the memory configuration, data, address ports</li>
+</ul>
+<p>Ports (<code>a</code>,<code>c</code>...<code>p</code>,<code>w</code>) are arrays/vectors to support multiported memories. If a single instance
+exists in a port, the same is used across all the ports. E.g: if clock (<code>c</code>) is populated:</p>
+<div class="highlight"><pre><span></span><code>mem1.c = clk1 // clk for all the memory ports
+
+mem2.c[0] = clk1 // clock for memory port 0
+mem2.c[1] = clk2 // clock for memory port 1
+mem2.c[2] = clk2 // clock for memory port 2
+</code></pre></div>
+<p>Each memory port (rd, wr, or rd/wr) has the following ports:</p>
+<ul>
+<li><code>a</code> (<code>addr</code>) points to the driver pin for the address. The address bits should match the array size (<code>ceil(log2(s))</code>)</li>
+<li><code>c</code> (<code>clock</code>) points to the clock driver pin</li>
+<li><code>d</code> (<code>data_in</code>) points to the write data driver pin (read result is in <code>q</code> port).</li>
+<li><code>e</code> (<code>enable</code>) points to the driver pin for read/write enable.</li>
+<li><code>l</code> (<code>latency</code>) points to an integer constant driver pin (2 bits always). For writes <code>latency from 1 to 3</code>, for reads <code>latency from 0 to 3</code></li>
+<li><code>w</code> (<code>wmask</code>) Points to the write mask (1 == write, 0==no write). The mask bust be a big as the number of bits per entry (<code>b</code>). The <code>wmask</code> pin can be disconnected which means no write mask (a write will write all the bits).</li>
+<li><code>p</code> (<code>posedge</code>) points to a 1/0 constant driver pin</li>
+<li><code>m</code> (<code>mode</code>) points to the driver pin or switching between read (0) and write mode (1) (single bit)</li>
+<li><code>Q</code> (<code>data_out</code>) is a driver pin with the data read from the memory</li>
+</ul>
+<p>All the entries but the <code>wmask</code> must be populated. If the <code>wmask</code> is not set, a
+full write size is expected. Read-only ports do not have <code>data</code> and <code>wmask</code>
+fields if the write use the low ports (0,1...). By placing the read-only ports
+to the high numbers, we can avoid populating the wmask (<code>m</code>) and data out (<code>q</code>)
+ports. If the read ports use low port numbers those fields must be populated to
+allow the correct matching between write port (<code>a[n]</code>) and write result
+(<code>q[n]</code>).</p>
+<p>All the ports must be populated with the correct size. This is important
+because some modules access the field by bit position.
+If it is not used, it will point to a zero constant with the correct number of bits.
+The exception to this is <code>wmask</code> which, if <code>b</code> indicates 8 bits per entry,
+will be equivalent to <code>0xFF</code>. Setting wmask to <code>0b1</code> will mean a 1 bit zero,
+and the memory will be incorrectly operated.</p>
+<p>The memory usually has power of two sizes. If the size is not a power of 2, the
+address is rounded up. Writes to the invalid addresses will generated random
+memory updates. Reads should read random data.</p>
+<h4 id="forward-propagation_3">Forward Propagation<a class="headerlink" href="#forward-propagation_3" title="Permanent link">&para;</a></h4>
+<h4 id="backward-propagation_3">Backward Propagation<a class="headerlink" href="#backward-propagation_3" title="Permanent link">&para;</a></h4>
+<h4 id="other-considerations_3">Other Considerations<a class="headerlink" href="#other-considerations_3" title="Permanent link">&para;</a></h4>
+<h4 id="peephole-optimizations_3">Peephole Optimizations<a class="headerlink" href="#peephole-optimizations_3" title="Permanent link">&para;</a></h4>
+<h3 id="subgraph_op">SubGraph_op<a class="headerlink" href="#subgraph_op" title="Permanent link">&para;</a></h3>
+<p>And_Op: bitwise AND with 2 outputs single bit reduction (RED) or bitwise
+Y = VAL&amp;..&amp;VAL ; RED= &amp;Y</p>
+<h4 id="forward-propagation_4">Forward Propagation<a class="headerlink" href="#forward-propagation_4" title="Permanent link">&para;</a></h4>
+<ul>
+<li><span class="arithmatex">\(Y = \left\{\begin{matrix} VAL&gt;&gt;OFF &amp; SZ==0 \\ (VAL&gt;&gt;OFF) \&amp; (1&lt;&lt;SZ)-1) &amp; otherwise \end{matrix}\right.\)</span></li>
+<li><span class="arithmatex">\(Y.max = \left\{\begin{matrix} VAL.max&gt;&gt;OFF &amp; SZ==0 \\ (VAL.max&gt;&gt;OFF) \&amp; (1&lt;&lt;SZ)-1) &amp; otherwise \end{matrix}\right.\)</span></li>
+<li><span class="arithmatex">\(Y.min = 0\)</span></li>
+<li><span class="arithmatex">\(Y.sign = 0\)</span></li>
+</ul>
+<h4 id="backward-propagation_4">Backward Propagation<a class="headerlink" href="#backward-propagation_4" title="Permanent link">&para;</a></h4>
+<p>The sign can not be backward propagated because Pick_Op removes the sign no matter the input sign.</p>
+<h4 id="to-be-continued">To be continued ...<a class="headerlink" href="#to-be-continued" title="Permanent link">&para;</a></h4>
+<h2 id="optimization">Optimization<a class="headerlink" href="#optimization" title="Permanent link">&para;</a></h2>
+<p>Not all the nodes have the same complexity overhead. When performing peephole
+optimization is possible to trade one set of nodes for others. In general,
+we have this set of overheads:</p>
+<ul>
+<li>
+<p>0 overhead: not, get_mask, set_mask, sext, and SHL/SRA with constant shift
+  amounts. The rational is that those are just "wiring" cells to connect or
+  extract wires across. The NOT gate is not really zero, but it could be easily
+  mixed with sorrounding cells.</p>
+</li>
+<li>
+<p>1 overhead: And, Or, Xor, LUT, Mux</p>
+</li>
+<li>
+<p>3 overhead: LT, GT, EQ, Ror</p>
+</li>
+<li>
+<p>4 overhead: Less than 4 bit output Sum, and SHL/SRA with non-compile time
+  shift amount. This can be costly an require hardware like barrel shifters.</p>
+</li>
+<li>
+<p>5 overhead: large Sum, SHL/SRA.</p>
+</li>
+<li>
+<p>6 Overhead: Mult/Div</p>
+</li>
+</ul>
+<p>If a overhead level can be elininated having a small number of different cells
+with a smaller overhead level,the translation makes sense. Notice the "small
+number of cells", after all everything can be translated to nand gates. A 3x
+factor is somewhat reasonable. This means that a 5-level overhead is fine to be
+replaced for 3 4-level (or 3 3-level) but not for 4 4-level overhead. Zero
+overhead cells are not included in the list of cells in the replacement.</p>
+<p>This is a heuristic. Once works, it is a nice target to use AI to decide
+when/if a transformation is worth.</p>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["search.suggest", "navigation.sections", "navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.b4d07000.min.js"></script>
+      
+        <script src="../../javascripts/config.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>

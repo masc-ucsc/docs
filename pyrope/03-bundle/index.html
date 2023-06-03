@@ -1,0 +1,1537 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../02-basics/">
+      
+      
+        <link rel="next" href="../04-variables/">
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.15">
+    
+    
+      
+        <title>Tuples - LiveHD and Pyrope</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.26e3688c.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ecc896b0.min.css">
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CFira+Code:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Fira Code"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/table.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#tuples" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LiveHD and Pyrope" class="md-header__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LiveHD and Pyrope
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Tuples
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+            
+              <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3Z"/></svg>
+              </label>
+            
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_2">
+            
+              <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6zm0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4zM7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+              </label>
+            
+          
+        </form>
+      
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LiveHD and Pyrope" class="md-nav__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    LiveHD and Pyrope
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        LiveHD and Pyrope
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+          Livehd
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Livehd
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/00-intro/" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/01-install/" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/02-usage/" class="md-nav__link">
+        Usage
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/03-memory/" class="md-nav__link">
+        Memory and concurrency
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/04-api/" class="md-nav__link">
+        C++ API
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/05-lgraph/" class="md-nav__link">
+        LGraph
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/06-lnast/" class="md-nav__link">
+        LNAST
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10-bazel/" class="md-nav__link">
+        Bazel build
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10b-3rdparty/" class="md-nav__link">
+        3rd Party
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/11-pass/" class="md-nav__link">
+        Creating a Pass
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/12-github/" class="md-nav__link">
+        GitHub Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/13-style/" class="md-nav__link">
+        Coding Style
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+      
+      
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      
+      
+        <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          Pyrope
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Pyrope
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00-hwdesign/" class="md-nav__link">
+        Hardware Design
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-introduction/" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-basics/" class="md-nav__link">
+        Basic syntax
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Tuples
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Tuples
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#tuple-and-scope" class="md-nav__link">
+    Tuple and scope
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#everything-is-a-tuple" class="md-nav__link">
+    Everything is a tuple
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tuple-mutability" class="md-nav__link">
+    Tuple mutability
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#field-access" class="md-nav__link">
+    Field access
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tuples-vs-arrays" class="md-nav__link">
+    Tuples vs arrays
+  </a>
+  
+    <nav class="md-nav" aria-label="Tuples vs arrays">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#concatenate-fields" class="md-nav__link">
+    Concatenate fields
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optional-tuple-parenthesis" class="md-nav__link">
+    Optional tuple parenthesis
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enumerate-enum" class="md-nav__link">
+    Enumerate (enum)
+  </a>
+  
+    <nav class="md-nav" aria-label="Enumerate (enum)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#hierarchical-enumerates" class="md-nav__link">
+    Hierarchical enumerates
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enumerate-typecast" class="md-nav__link">
+    Enumerate typecast
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-variables/" class="md-nav__link">
+        Variables and types
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-assert/" class="md-nav__link">
+        Verification
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05b-statements/" class="md-nav__link">
+        Statements
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-functions/" class="md-nav__link">
+        Lambdas
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06b-instantiation/" class="md-nav__link">
+        Instantiation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06c-pipelining/" class="md-nav__link">
+        Pipelining
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-typesystem/" class="md-nav__link">
+        Type system
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07b-structtype/" class="md-nav__link">
+        Structural Typing
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-memories/" class="md-nav__link">
+        Memories
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-stdlib/" class="md-nav__link">
+        Pyrope std lib
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-internals/" class="md-nav__link">
+        Internals
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10b-vslang/" class="md-nav__link">
+        vs Other Languages
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../11-deprecated/" class="md-nav__link">
+        Deprecated or Future
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../12-lnast/" class="md-nav__link">
+        LNAST
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../13-stdlib/" class="md-nav__link">
+        Pyrope Standard Library
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#tuple-and-scope" class="md-nav__link">
+    Tuple and scope
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#everything-is-a-tuple" class="md-nav__link">
+    Everything is a tuple
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tuple-mutability" class="md-nav__link">
+    Tuple mutability
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#field-access" class="md-nav__link">
+    Field access
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tuples-vs-arrays" class="md-nav__link">
+    Tuples vs arrays
+  </a>
+  
+    <nav class="md-nav" aria-label="Tuples vs arrays">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#concatenate-fields" class="md-nav__link">
+    Concatenate fields
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#optional-tuple-parenthesis" class="md-nav__link">
+    Optional tuple parenthesis
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enumerate-enum" class="md-nav__link">
+    Enumerate (enum)
+  </a>
+  
+    <nav class="md-nav" aria-label="Enumerate (enum)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#hierarchical-enumerates" class="md-nav__link">
+    Hierarchical enumerates
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enumerate-typecast" class="md-nav__link">
+    Enumerate typecast
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="tuples">Tuples<a class="headerlink" href="#tuples" title="Permanent link">&para;</a></h1>
+<p>Tuples are a basic construct in Pyrope. Tuples are defined as an "ordered"
+sequence fields that can be named. Arrays/memories are a subcategory of tuples
+by requiring all the entries to have the same type. Internally, there is
+not a difference between tuples and arrays, but it is possible to check
+that all the fields are the same (hence array) by using brackets instead of parenthesis.</p>
+<div class="highlight"><pre><span></span><code>var b = (f1=3,f2=4) // b is named and ordered
+var c = (1,d=4)     // c is ordered and unnamed (some entries are not named)
+
+var d = (1,2,3,4)     // array or tuple
+assert d == [1,2,3,4] // the [] also check that all the fields have same type
+
+assert (true,1) != [true,1]  // compile error, true is not the same type as 1
+</code></pre></div>
+<p>To access fields in a tuple we use the dot <code>.</code> or <code>[]</code>
+<div class="highlight"><pre><span></span><code>var a = (
+  ,r1 = (b=1,c=2)
+  ,r2 = (3,4)
+)
+// tuple position is from left to right
+cassert a.r1 == (1,2) and a.r2 == (3,4)
+cassert a.0  == (1,2) and a[1] == (3,4)
+
+// different ways to access the same field
+cassert a.r1.c    == 2
+cassert a[&#39;r1&#39;].c == 2
+cassert a.r1.1    == 2
+cassert a.r1[1]   == 2
+cassert a[0][1]   == 2
+cassert a[0][&#39;c&#39;] == 2
+cassert a[&#39;r1.c&#39;] == 2
+cassert a[&#39;r1.1&#39;] == 2
+cassert a[&#39;0.c&#39;]  == 2
+cassert a[&#39;0.1&#39;]  == 2
+cassert a.0.c     == 2
+cassert a.0.1     == 2
+</code></pre></div></p>
+<p>The only main difference between <code>a.0</code> (dot) and <code>a[0]</code> (select) access is that
+dot access guarantees to be compile time index, while the select can have
+compile time or run-time index.</p>
+<p>There is introspection to check for an existing field with the <code>has</code> and <code>!has</code> operators.</p>
+<div class="highlight"><pre><span></span><code>var a = (foo = 3)
+cassert a has &#39;foo&#39;
+cassert !(a has &#39;bar&#39;)
+cassert a !has &#39;bar&#39; // &quot;has no&quot; is the opposite of &quot;has&quot;
+cassert a has 0
+cassert a !has 1
+cassert a !has 1
+</code></pre></div>
+<p>Tuple named fields can have a default type and or contents:</p>
+<div class="highlight"><pre><span></span><code>var val = 4
+var x = (
+  ,field1=1           // field1 with implicit type and 1 value
+  ,field2:string = _  // field2 with explicit type and &quot;&quot; default value
+  ,field3:int = 3     // field3 with explicit type and 3 value
+  ,val                // unnamed field with value `val` (4)
+)
+</code></pre></div>
+<h2 id="tuple-and-scope">Tuple and scope<a class="headerlink" href="#tuple-and-scope" title="Permanent link">&para;</a></h2>
+<p>Since tuples can be named or unnamed, an entry like <code>xx=(foo)</code> creates a tuple <code>xx</code>
+and copies the current scope variable <code>foo</code> contents as the first entry. In many cases
+it is required to pass a sequence of strings or identifiers. A solution is to
+name all the fields or quote as strings:</p>
+<div class="highlight"><pre><span></span><code>var x=100
+
+var tup1 = (&#39;x&#39;,y=4)
+var tup2 = (x,y=4)
+
+cassert tup1[0] == &#39;x&#39;
+cassert tup2[0] == 100
+</code></pre></div>
+<p>Some constructs like enumerates and attributes typically pass identifiers
+without assigning a value. The problem is that the syntax becomes not so
+"nice".  To address these cases, Pyrope does not use a variable reference but a
+"string" in the enumerate (<code>enum(a,b=3)</code>) and attribute (<code>foo::[attr]</code>,
+<code>foo.[attr]</code>). In these constructs, a reference can be enforced with <code>...var</code></p>
+<div class="highlight"><pre><span></span><code>let aa = 3
+let a = enum(aa,b=3)
+cassert a==b
+
+cassert x.[size] == x.[&#39;size&#39;]
+
+let zz= &quot;size&quot;
+cassert x.[...zz] == x.[size]
+</code></pre></div>
+<h2 id="everything-is-a-tuple">Everything is a tuple<a class="headerlink" href="#everything-is-a-tuple" title="Permanent link">&para;</a></h2>
+<p>In Pyrope everything is a Tuple, and it has some implications that this
+section tries to clarify.</p>
+<p>A tuple starts with <code>(</code> and finishes with <code>)</code>. In most languages, the
+parentheses have two meanings, operation precedence and/or tuple/record.
+In Pyrope, since a single element is a tuple too, the parenthesis always means
+a tuple.</p>
+<p>A code like <code>(1+(2),4)</code> can be read as "Create a tuple of two entries. The
+first entry is the result of the addition of <code>1</code> (which is a tuple of 1) and a
+tuple that has <code>2</code> as a unique entry. The second entry in the tuple is <code>4</code>".</p>
+<p>The tuple entries are separated by comma (<code>,</code>). Extra commas do not add meaning.</p>
+<div class="highlight"><pre><span></span><code>var a = (1,2)   // tuple of 2 entries, 1 and 2
+var b = (1)     // tuple of 1 entry, 1
+var c = 1       // tuple of 1 entry, 1
+var d = (,,1,,) // tuple of 1 entry, 1
+cassert a.0 == b.0 == c.0 == d.0
+cassert a!=b
+cassert b == c == d
+</code></pre></div>
+<p>A tuple with a single entry element is called a scalar. </p>
+<p>Tuples are used in many places:</p>
+<ul>
+<li>The arguments for a call function are a tuple. E.g: <code>fcall(1,2)</code></li>
+<li>The return of a function call is always a tuple. E.g: <code>foo = fcall()</code></li>
+<li>The index for a selector <code>[...]</code> is a tuple. As syntax sugar, the tuple parenthesis can be omitted. E.g: <code>foo@[0,2,3]</code></li>
+<li>The complex type declaration are a tuple. E.g: <code>let Xtype = (f=1,b:string)</code></li>
+</ul>
+<h2 id="tuple-mutability">Tuple mutability<a class="headerlink" href="#tuple-mutability" title="Permanent link">&para;</a></h2>
+<p>The tuple entries can be mutable/immutable and named/unnamed. Tuple entries
+follow the variable mutability rules with the exception that <code>=</code> can be
+used to declare a mutable field. <code>(a=3)</code> is equivalent to <code>(var a=3)</code>.</p>
+<div class="highlight"><pre><span></span><code>var c=(x=1,let b = 2, var d=3)
+c.x   = 3  // OK
+x.foo = 2  // compile error, tuple &#39;x&#39; does not have field &#39;foo&#39;
+c.b   = 10 // compile error, &#39;c.b&#39; is immutable
+c.d   = 30 // OK, d was already mutable type
+
+let d=(x=1, let y=2, var z=3)
+d.x   = 2  // OK
+d.foo = 3  // compile error, tuple &#39;d&#39; does not have field foo&#39;
+d.z   = 4  // compile error, &#39;d&#39; is immutable
+
+var e:d = _
+assert e.x==1 and e.y==2 and e.z==3
+e.x = 30   // OK
+e.y = 30   // compile error, &#39;e.y&#39; is immutable
+e.z = 30   // OK
+</code></pre></div>
+<p>Tuples are always ordered, but they can have unnamed entries. If needed a <code>_</code>
+can be used for name or default value during the tuple declaration.</p>
+<div class="highlight"><pre><span></span><code>var b = 100
+var a = (b:u8, b, b:u8 = _, let c=4) // a.0 and a.1 are unnamed, a.2==a.b 
+a.b = 200
+assert a == (100, 100, 200, 4)
+
+var f = (b=3, let e=5)
+f.b = 4                 // OK
+f.e = 10                // compile error, `f.e` is immutable
+
+let x = (1,2)
+x[0] = 3                // compile error, &#39;x&#39; is immutable
+var y = (1, let _ = 3)  // 2nd field is unnamed (only let allows that)
+y[0] = 100              // OK
+y[1] = 101              // compile error, `y[1]` is immutable
+</code></pre></div>
+<p>While the tuple entries can be either mutable or immutable, the field
+name/types are immutable. It is possible to construct new tuples with the <code>++</code>
+(concatenate) and <code>...</code> (in-place operator):</p>
+<div class="highlight"><pre><span></span><code>var a=(a=1,b=2)
+let b=(c=3)
+
+let ccat1 = a ++ b
+assert ccat1 == (a=1,b=2,c=3)
+assert ccat1 == (1,2,3)
+
+var ccat2 = a                // mutable tuple
+a = a ++ (b=20)
+assert ccat2 == (a=1,b=(2,20),c=3)
+assert ccat2 == (1,(2,20),3)
+
+var join1 = (...a,...b)
+assert join1 == (a=1,b=2,c=3)
+assert join1 == (1,2,3)
+
+var join2 = (...a,...(b=20)) // compile error, &#39;b&#39; already exists
+</code></pre></div>
+<p>The <code>a ++ b</code> concatenates two tuples. If the same field exists in both tuples,
+the resulting field will have a tuple with the entries of <code>a</code> and <code>b</code>.  The
+concat tries to match by field name, if the field names do not match or have no
+name a new entry is created. The algorithm starts with tuple <code>a</code> and starts
+from tuple field 0 upwards.</p>
+<div class="highlight"><pre><span></span><code>assert(((1,a=2,c=3) ++ (a=20,33,c=30,4)) == (1,a=(2,20),c=(3,30),33,4))
+</code></pre></div>
+<p>The <code>...</code> also concatenates, but it is an "inline concatenate". The difference
+is where the fields are concatenated and that it triggers a compile error if
+the same entry already exists.</p>
+<h2 id="field-access">Field access<a class="headerlink" href="#field-access" title="Permanent link">&para;</a></h2>
+<p>Since everything is a tuple, any variable can do <code>variable.0.0.0.0</code> because it
+literaly means, return the tuple first entry for four times. </p>
+<p>Another useful shortcut is when a tuple has a single field or entry, the tuple
+contents can be accessed without requiring the individual position or field
+entry name. This is quite useful for function return tuples with a single
+entry.</p>
+<div class="highlight"><pre><span></span><code>let x = (first=(second=3))
+
+assert x.first.second == 3
+assert x.first        == 3
+assert x              == 3
+assert x.0.second     == 3
+assert x.first.0      == 3
+assert x.0            == 3
+</code></pre></div>
+<h2 id="tuples-vs-arrays">Tuples vs arrays<a class="headerlink" href="#tuples-vs-arrays" title="Permanent link">&para;</a></h2>
+<p>Tuples are ordered, as such, it is possible to use them as arrays. Tuples and
+arrays share most behavior/operations, the key difference is that arrays are
+unnamed with the same type for all the entries.</p>
+<div class="highlight"><pre><span></span><code>var bund1 = (0,1,2,3,4) // ordered and can be used as an array
+
+var bund2 = (bund1,bund1,((10,20),30))
+assert bund2[0][1] == 1
+assert bund2[1][1] == 1
+assert bund2[2][0] == (10,20)
+assert bund2[2][0][1] == 20
+assert bund2[2][1] == 30
+</code></pre></div>
+<p>Pyrope tries to be compatible with synthesizable Verilog. In Verilog, when an
+out of bounds, access is performed in a packed array (unpacked arrays are not
+synthesizable), or an index has unknown bits (<code>?</code>), a runtime warning can be
+generated and the result is an unknown (<code>0sb?</code>). Notice that this is a
+pessimistic assumption because maybe all the entries have the same value when
+the index has unknowns.</p>
+<p>The Pyrope compile will trigger compile errors for out-of-bound access. It is not
+possible to create an array index that may perform an out of bounds access.</p>
+<div class="highlight"><pre><span></span><code>var array = (0,1,2)       // size 3, not 4
+let tmp = array[3]        // compile error, out of bounds access
+var index = 2
+if runtime {
+  index = 4
+}
+// Index can be 2 or 4
+
+var res1 = array[index]   // compile error, out of bounds access 
+
+var res2 = 0sb?           // Possible code to be compatible with Verilog
+if index&lt;3 {
+  res = array[index]      // OK
+}
+</code></pre></div>
+<p>Pyrope compiler will allow an index of an array/tuple with unknowns. If the
+index has unknown bits (<code>0sb?</code> or <code>0b1?0</code>) but the compiler can not know, the
+result will have unknowns (see <a href="../10-internals/">internals</a> for more details).
+Notice that the only way to have unknowns is that somewhere else a variable or
+a memory was explicitly initialized with unknowns. The default initialization
+in Pyrope is 0, not unknown like Verilog.</p>
+<h3 id="concatenate-fields">Concatenate fields<a class="headerlink" href="#concatenate-fields" title="Permanent link">&para;</a></h3>
+<p>Each tuple field must be unique. Nevertheless, it is practical to have
+fields that add more subfields. This is the case for overloading. To
+append or concatenate in a given field the <code>++=</code> operator can be assigned.</p>
+<div class="highlight"><pre><span></span><code>var x = (
+  ,ff = 1
+  ,ff = 2 // compile error
+)
+
+var y = (
+  ,ff = 1
+  ,ff ++= 2
+  ,zz ++= 3
+)
+assert y == (ff=(1,2),zz=3)
+</code></pre></div>
+<h2 id="optional-tuple-parenthesis">Optional tuple parenthesis<a class="headerlink" href="#optional-tuple-parenthesis" title="Permanent link">&para;</a></h2>
+<p>Parenthesis marks the beginning and the end of a tuple. Those parentheses can
+be avoided for an unnamed tuple in some cases:</p>
+<ul>
+<li>When doing a simple function call at the beginning of a line.</li>
+<li>When used inside a selector <code>[...]</code>.</li>
+<li>When used after an <code>in</code> operator followed by a <code>{</code> like in a <code>for</code> and <code>match</code> statements.</li>
+<li>For the inputs in a match statement.</li>
+<li>A single element lambda return value.</li>
+</ul>
+<div class="highlight"><pre><span></span><code>fcall 1,2         // same as: fcall(1,2)
+b = xx[1,2]       // same as: xx[(1,2)]
+
+for a in 1,2,3 {  // same as: for a in (1,2,3) {
+  x = a
+}
+y = match z {    
+  in 1,2 { 4 }    // same as: in (1,2) { 4 }
+  else { 5 }
+}
+y2 = match var one=1 ; one ++ z {  // same as: y2 = match (1,z) {
+  == (1,2) { 4 }
+}
+
+let addb = fun(a,b:u32)-&gt; a:u32 { // same as: letaddb = fun(a,b:u32)-&gt;(a:u32)  
+  a = a + b
+}
+</code></pre></div>
+<p>A named tuple parenthesis can be omitted on the left-hand side of an
+assignment. This is to mutate or declare multiple variables at once.  It is not
+allowed to avoid the parenthesis at the right-hand-side of the statement. The
+reason is that it is a bit confusing.</p>
+<div class="highlight"><pre><span></span><code>var a,b = (2,3)    // compile error, left-hand-side must be a tuple (a,b)
+var (a,b) = 2,3    // compile error, right-hand-side must be a tuple (2,3)
+var (a,b) = (2,3)
+assert a==2 and b==3
+
+var (c,d) = 1..=2  // compile error, range is a single entry assignment
+var c = 1..=2      // OK
+var (c,d) = 1      // compile error, 2 entry tuple in lhs, same in rhs
+var (c,d) = (1,2)  // OK
+assert c == 1 and d == 2
+</code></pre></div>
+<p>One thing to remember is that the <code>=</code> separates the statement in two parts
+(left and right), this is not the case with type or attributes that always
+apply to the immediatly declared variable or item.</p>
+<div class="highlight"><pre><span></span><code>let c = 4
+let (x,b) = (true, c:u3) // assign x=true, b=4 AND check that c is type u3
+
+cassert x == true
+cassert b == 4 
+</code></pre></div>
+<h2 id="enumerate-enum">Enumerate (<code>enum</code>)<a class="headerlink" href="#enumerate-enum" title="Permanent link">&para;</a></h2>
+<p>Enumerates, or enums for short, use the familiar tuple structure, but there is
+a significant difference in initialization. Enums require named tuples, but in
+most cases the named tupled should not have a set value. Enums automatically
+assigns values, tuples need explicit value initialization.</p>
+<div class="highlight"><pre><span></span><code>let b = &quot;foo&quot;
+let c = 1
+let test1     = enum(a=c,b)    // OK
+let something = (b)            // OK
+cassert something == &quot;foo&quot;
+cassert test1.a != test1.b
+cassert test1.a==1 and test1.b==2
+</code></pre></div>
+<p>The <code>enum</code> keyword does not reference scope variables unless the reference is
+on the right-hand-side.</p>
+<p>If an external variable wants to be used as a field, there has to be an explicit
+expression with a string type or a named tuple.</p>
+<div class="highlight"><pre><span></span><code>let a = &quot;field&quot;
+let c = (foo=4)
+let my_other_enum = enum(...a,b=3,...c)
+cassert my_other_enum.field != my_other_enum.b
+cassert my_other_enum.b   == 3
+cassert my_other_enum.foo == 4
+cassert my_other_enum.foo != my_other_enum.b
+</code></pre></div>
+<p>The enum default values are NOT like typical non-hardware languages. The enum
+auto-created values use a one-hot encoding. The first entry has the first bit
+set, the 2nd the 2nd bit set. If an entry has a value, the next entry uses
+the next free bit. If any field is set, then the enumerate behaves like a
+traditional enumerate sequence.</p>
+<div class="highlight"><pre><span></span><code>let V3 = enum(
+   ,a
+   ,b
+   ,c
+)
+cassert V3.a == 1
+cassert V3.b == 2
+cassert V3.c == 4
+
+let V4 = enum(
+   ,a
+   ,b=5
+   ,c
+)
+cassert V4.a == 0
+cassert V4.b == 5
+cassert V4.c == 6
+</code></pre></div>
+<h3 id="hierarchical-enumerates">Hierarchical enumerates<a class="headerlink" href="#hierarchical-enumerates" title="Permanent link">&para;</a></h3>
+<p>Enum can accept hierarchical tuples. Each enum level follows the same algorithm.
+Each entry tries to find a new bit. In the case of the hierarchy, the lower
+hierarchy level bits are kept.</p>
+<div class="highlight"><pre><span></span><code>let Animal = enum(
+  ,bird  =(eagle, parrot)
+  ,mammal=(rat  , human )
+)
+
+cassert Animal.bird.eagle != Animal.mammal
+cassert Animal.bird != Animal.mammal.human
+cassert Animal.bird == Animal.bird.parrot
+
+cassert int(Animal.bird        ) == 0b000001
+cassert int(Animal.bird.eagle  ) == 0b000011
+cassert int(Animal.bird.parrot ) == 0b000101
+cassert int(Animal.mammal      ) == 0b001000
+cassert int(Animal.mammal.rat  ) == 0b011000
+cassert int(Animal.mammal.human) == 0b101000
+</code></pre></div>
+<p>In general, for each leaf enum, the number of bits is equivalent to the number
+of entries in the leaf tuple.</p>
+<p>It is possible to use a sequence that is more consistent with traditional
+programming languages, but this only works with non-hierarchical enumerates
+when an integer type (<code>:int</code>, <code>:u32</code>, <code>:i4</code> ...) is used.</p>
+<div class="highlight"><pre><span></span><code>let V5=enum(
+   ,a
+   ,b=5
+   ,c
+)
+cassert int(V5.a) == 0
+cassert int(V5.b) == 5
+cassert int(V5.c) == 6
+</code></pre></div>
+<p>The same syntax is used for enums to different objects. The hierarchy is not
+allowed when an ordered numbering is requested.</p>
+<p>Enumerates of the same type can perform bitwise binary operations
+(and/or/xor/nand/xnor/xnor) and set operators (in/!in).</p>
+<div class="highlight"><pre><span></span><code>let human_rat = Animal.mammal.rat | Animal.mammal.human  // union op
+
+assert Animal.mammal      in human_rat
+assert Animal.mammal.rat  in human_rat
+assert Animal.bird       !in human_rat
+</code></pre></div>
+<h3 id="enumerate-typecast">Enumerate typecast<a class="headerlink" href="#enumerate-typecast" title="Permanent link">&para;</a></h3>
+<p>To convert a string back and forth to an enumerate, explicit typecast is needed
+but possible.</p>
+<div class="highlight"><pre><span></span><code>let E3=enum(
+  ,l1=(
+    ,l1a
+    ,l1b
+    )
+  ,l2
+  )
+cassert string(E3.l1.l1a) == &quot;E3.l1.l1a&quot;
+cassert string(E3.l1) == &quot;E3.l1&quot;
+cassert E3(&quot;l1.l2&quot;) == E3.l1.l2
+</code></pre></div>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["search.suggest", "navigation.sections", "navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.b4d07000.min.js"></script>
+      
+        <script src="../../javascripts/config.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>
