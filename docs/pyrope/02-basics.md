@@ -90,19 +90,23 @@ b = 'simpler here'
 * `\uNNNN`: hexadecimal 16-bit Unicode character UTF-8 encoded (4 digits)
 
 
-Pyrope allows string interpolation but only for variables, not expressions. The style
-is like C++ fmt::format which allows an identifier. When the identifier is provided
-the string is processed acordingly.
+Pyrope allows string interpolation only when double quote is used.
+Nevertheless, when string interpolation is used, the formatting guidelines are
+not allowed. The style is like C++ fmt::format which allows an identifier. When
+the identifier is provided the string is processed accordingly.
 
 ```
 let num       = 2
 let color     = "blue"
 let extension = "s"
 
-let txt = "I have {num:d} {color} potato{extension}"
-cassert txt == "I have 2 blue potatos"
-```
+let txt1 = "I have {num} {color} potato{extension}"
+let txt2 = format('I have {:d} {} potato{} ', num, color, extension)
+cassert txt1 == txt2 == "I have 2 blue potatos"
 
+let txt3 = 'I have {num}'         // single quote does not do interpolation
+cassert txt3 == "I have \{num\}"  // \{ escapes the interpolation
+```
 
 Integers and strings can be converted back and forth:
 

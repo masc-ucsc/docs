@@ -109,6 +109,19 @@ let f3 = fun(var x) { x + 1 }    // compile error, inputs are immutable
 let f2 = fun[var x](z) { x + z } // compile error, captures are immutable
 ```
 
+
+Tuple scope is also useful for declaring function default values:
+
+```
+fun example(a:int, b:int=self.a+5) -> (_:int) {
+  return a+b
+}
+assert example(a=3) == (a+a+5)
+assert example(6,7) == (6+7)
+assert example(6) == (6+6+5)
+assert example(b=3) !=0         // compile error: undefined `a` argument
+```
+
 ## Basic types
 
 Pyrope has 8 basic types:
