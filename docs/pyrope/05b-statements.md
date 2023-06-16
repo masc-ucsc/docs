@@ -7,14 +7,15 @@
 Pyrope uses a typical `if`, `elif`, `else` sequence found in most languages.
 Before the if starts, there is an optional keyword `unique` that enforces that
 a single condition is true in the if/elif chain. This is useful for synthesis
-which allows a parallel mux.
+which allows a parallel mux. The `unique` is a cleaner way to write an
+`optimize` statement.
 
 The `if` sequence can be used in expressions too.
 
 ```
-a = unique if cond == 1 {
+a = unique if x1 == 1 {
     300
-  }elif cond == 2 {
+  }elif x2 == 2 {
     400
   }else{
     500
@@ -22,6 +23,20 @@ a = unique if cond == 1 {
 
 var x = _
 if a { x = 3 } else { x = 4 }
+```
+
+The equivalent code with an explicit `optimize`, but unlike the `optimize`, the
+`unique` will guarantee to generate the `hotmux` statement.
+
+```
+optimize !(x1==1 and x2==2)
+a = if x1 == 1 {
+    300
+  }elif x2 == 2 {
+    400
+  }else{
+    500
+  }
 ```
 
 Like several modern programming languages, there can be a list of expressions
@@ -42,11 +57,13 @@ if var x1=x+1; x1 == tmp {
 
 ## Unique parallel conditional (`match`)
 
-The `match` statement is similar to a chain of unique if/elif, like the
-`unique if/elif` sequence, one of the options in the match must be true. The
-difference is that one of the entries must be truth or an error is generated.
-This makes the `match` statement a replacement for the common "unique parallel
-case" Verilog directive.
+The `match` statement is similar to a chain of unique if/elif, like the `unique
+if/elif` sequence, one of the options in the match must be true. The difference
+is that one of the entries must be truth or an error is generated. This makes
+the `match` statement a replacement for the common "unique parallel case"
+Verilog directive. The `match` statement behaves like also having an `optimize`
+statement which allows for more efficient code generation than a sequence of
+`if/else`.
 
 
 In addition to functionality, the syntax is different to avoid redundancy.
@@ -69,10 +86,16 @@ Like the `if`, it can also be used as an expression.
 
 ```
 var hot = match x {
-    == 0b001 { a }
-    == 0b010 { b }
-    == 0b100 { c }
+    == 0sb001 { a }
+    == 0sb010 { b }
+    == 0sb100 { c }
   }
+
+// Equivalent
+optimize (x==0sb001 or x==0sb010 or x==0sb100)
+var hot2 = __hotmux(x, a, b, c)
+
+assert hot==hot2
 ```
 
 Like the `if` statement, a sequence of statements and declarations are possible in the match statement.
@@ -84,7 +107,7 @@ match let one=1 ; one ++ (2) {
 ```
 
 Since the `==` is the most common condition in the `match` statement, it can be
-ommitted.
+omitted.
 
 ```
 for x in 1..=5 {
@@ -102,6 +125,7 @@ for x in 1..=5 {
   cassert v1 == v2
 }
 ```
+
 
 ## Gate statements (`when`/`unless`)
 

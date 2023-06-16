@@ -108,17 +108,21 @@ the register `din` pin, and all the updated register can only read the register
 ## Dealing with unknowns
 
 
-Pyrope tries to be compatible with synthesizable Verilog, as such it must
-handle/understand unknowns. Compatible does not mean that it will generate the
-same `?` bits as Verilog, but that it will not generate an unknown when Verilog
-has known. It is allowed to generate a `0` or a `1` when the Verilog logical
-equivalence check generates an `?`.
+Pyrope tries to be compatible with synthesizable Verilog but not equivalent. As
+such it must handle/understand unknowns. Compatible does not mean that it will
+generate the same `?` bits as Verilog, but that it will not generate an unknown
+when Verilog has known. It is allowed to generate a `0` or a `1` when the
+Verilog logical equivalence check generates an `?`.
+
+
+An example of different behavior is that Verilog semantics state `0 * 0sb?` is
+`0sb?` while most programmers would expect a zero.
 
 
 The previous definition of compatibility could allow the Pyrope compiler to
 randomly replace all the unknowns by `0` or `1` when doing internal compiler
-passes. It could even replace all the unknowns with `0` all the time, or even
-pick the representation that generates the most efficient code.
+passes. This is not done at compile time to keep determinism, but simulation
+time should randomly pick 0/1 for unknown bits.
 
 
 The issue is that the most likely source of having unknowns in operations is
@@ -141,7 +145,7 @@ In the compiler passes, we have the following semantics:
   arrays, and custom RTL memories. Verilog and CHISEL memories get translated
   to custom RTL memories. Non-persistent Verilog/CHISEL get translated to arrays.
   In Verilog, the semantics is that an out of bounds access generates unknowns. In
-  CHISEL, the `Vec` sematic is that an out of bound access uses the first index
+  CHISEL, the `Vec` is that an out of bound access uses the first index
   of the array. A CHISEL out of bound memory is an unknown like in Verilog. These
   are the semantics applied by the compiler optimization/transformations:
 
@@ -187,10 +191,10 @@ In the compiler passes, we have the following semantics:
   Tmerge when the if/mux control has unknowns:
 
     - If all the paths have the same constant value, the `if` is useless and
-      the correct value will be used. 
+      the correct value will be used.
 
     - If any path has a different constant value, the generated result bits will
-      have unknowns if the source bits are different or unknown. 
+      have unknowns if the source bits are different or unknown.
 
     - If any paths are not constant, there is no LNAST optimization. Further
       Lgraph optimizations could optimize if all the mux generated values are
@@ -205,15 +209,13 @@ In the compiler passes, we have the following semantics:
 
 At the end of the LNAST generation, a Lgraph is created. Only the registers and
 memory initialization are allowed to have unknowns in Lgraph.  Any invalid
-(`nil`) to an outout or register triggers a compile error. Any unknown constant
-bit is translated to zero (`0b10?` becomes `0b100`). LGraph does not have
-"unknowns" outside the register/memories.
+(`nil`) assigned to an output or register triggers a compile error. Any unknown constant
+bit is translated preserved (`0b10?`).
 
 
-As a result of these translations, the generated simulator may have to deal
-with unknowns, but only for arrays and memories explicitly non initialized
-contents. The semantics on the generated simulator are similar to CHISEL, any
-unknowns are randomly translated to 0 or 1 at initialization.
+The semantics on the generated simulator are similar to CHISEL, any unknowns
+are randomly translated to 0 or 1 at initialization.
+
 
 ## Optimize directive
 
@@ -221,8 +223,11 @@ unknowns are randomly translated to 0 or 1 at initialization.
 The `optimize` directive is like an `assert` but it also allows compiler
 optimizations. In a way, it is a safer version of Verilog `?`. Unlike other
 languages like C++23, Pyrope `optimize` verifies at simulation time that the
-`optimize` is correct. This means that the `optimize` is checked like an `assert`
-but it allows the compiler to optimize based on the condition.
+`optimize` is correct. This means that the `optimize` is checked like an
+`assert` but it allows the compiler to optimize based on the condition.
+`asserts` do not trigger optimizations because their check can be disabled at
+simulation time, and hence create mismatches between simulation and synthesis
+if the compiler optimized over assertions.
 
 
 === "Verilog x-optimization"
@@ -288,11 +293,36 @@ Optimize allows more freedom, without dangerous Verilog x-optimizations:
       out = 3
     }
 
-    optimize b != 3 
+    optimize b != 3
     // array = (1,2,3,4,5,6,7,8)
     res = array[b]
     ```
 
+## Unknown no optimization
+
+In Verilog, unknowns can trigger synthesis optimizations. This is not the case
+in Pyrope. Each unknown bit (`?`) can result in random 0/1 at simulation time, but it will
+not trigger optimizations. The `optimize` statement should be use for such behavior.
+
+
+```
+assert cond==3     // Not cassert or optimize, so no optimized
+var x1 = 0sb?
+
+if cond == 3 {
+  x1 = 1
+}
+assert x1==1 // still not optimized (cassert fails)
+cassert !x1.[comptime]
+
+var x2 = 0sb?
+optimize cond==3
+if cond == 3 {
+  x2 = 1
+}
+cassert x2==1
+cassert x2.[comptime]
+```
 
 ## LNAST optimization
 
@@ -329,10 +359,10 @@ depending on the LNAST node:
 
     - trivial simplification with constants for existing node, also performed
       as instruction combining proceeds. E.g.: `a+0 == a`, `a or true
-      == true` ... 
+      == true` ...
 
     - trivial identity simplification for existing node, also performed as
-      instruction combining proceeds. E.g: `a^a == a`, `a-a=0` ... 
+      instruction combining proceeds. E.g: `a^a == a`, `a-a=0` ...
 
 + If the node is a `::[comptime]` trigger a compile error unless all the inputs are
   constant
@@ -342,7 +372,7 @@ depending on the LNAST node:
 + If the node is a loop (`for`/`while`) that has at least one iteration expand
   the loop. This is an iterative process because the loop exit condition may
   depend on the loop body or functions called inside. After the loop
-  expansions, no `for`, `while`, `break`, `last`, `continue`, `cont` statement
+  expansions, no `for`, `while`, `break`, `last`, `continue` statement
   exists.
 
 + If the node is a function call, iterate over the possible polymorphic calls.
@@ -365,7 +395,7 @@ depending on the LNAST node:
 ### Type synthesis
 
 The type synthesis and check are performed during the LNAST pass. Pyrope uses a
-structural type system with global type inference. 
+structural type system with global type inference.
 
 The type inference should be performed as the same time as the LNAST
 optimization traverses the tree. It can not be a separate pass because there
@@ -450,11 +480,11 @@ let tup = (
 
 Closures capture extra state or inputs at definition. The capture variables are
 always immutable `let` no matter the outter scope definition. Therefore,
-capture variables behave like passed by value, not reference. 
+capture variables behave like passed by value, not reference.
 
 One important thing is 'when' does the capture happens. Pyrope follows the
 model of most languages like C++ that captures at lambda definition, not lambda
-execution. 
+execution.
 
 === "Pyrope capture time"
     ```
@@ -812,21 +842,21 @@ assert v@[3..=4] == 0b010 == v@[3,4]
 assert v@[4..=3 step -1] == 0b010
 assert v@[4,3] == v@[3,4] == 0b010
 
-let tmp1 = (v@[4], v@[3])@[..]  // typecast from 
+let tmp1 = (v@[4], v@[3])@[..]  // typecast from
 let tmp2 = (v@[3], v@[4])@[..]
 let tmp3 = v@[3,4]
 assert tmp1 == 0b01
 assert tmp2 == 0b100
 assert tmp3 == 0b10
 
-let tmp1s = (v@sext[4], v@sext[3])@[..]  // typecast from 
+let tmp1s = (v@sext[4], v@sext[3])@[..]  // typecast from
 let tmp2s = (v@sext[3], v@sext[4])@[..]
 let tmp3s = v@[4,3]
 assert tmp1s == 0b01
 assert tmp2s == 0b10
 assert tmp3s == 0b10
 
-let tmp1ss = (v@sext[4], v@sext[3])@sext[..]  // typecast from 
+let tmp1ss = (v@sext[4], v@sext[3])@sext[..]  // typecast from
 let tmp2ss = (v@sext[3], v@sext[4])@sext[..]
 let tmp3ss = v@sext[3,4]
 assert tmp1ss == 0b01  ==  1
@@ -864,8 +894,8 @@ reference.
 let args = fun(x) { puts "args:{}", b ; 1}
 let here = fun()  { puts "here" ; 3}
 
-let call_now   = fun(f:fun){ return f() } 
-let call_defer = fun(f:fun){ return f   } 
+let call_now   = fun(f:fun){ return f() }
+let call_defer = fun(f:fun){ return f   }
 
 let x0 = call_now(here)          // prints "here"
 let e1 = call_now(args)          // compile error, args needs arguments

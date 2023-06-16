@@ -18,7 +18,7 @@ There are 5 main verification statements:
 * `assert` and `cassert` are used to specify conditions that should hold true.
   `cassert` is required to hold true at compile time and `assert` can be
   checked either at compile or runtime if too slow to check. If the condition
-  doesn't hold, an error is raised. 
+  doesn't hold, an error is raised.
 
 * `optimize` is exactly like `assert`, but it also allows the tool to simplify
   code based on the given conditions. This can lead to more efficient code
@@ -50,7 +50,7 @@ cassert a == 3         // checked at compile time
 
 optimize b > 3         // may optimize and perform a runtime check
 
-let max_not_zero = fun(a,b) -> (res) 
+let max_not_zero = fun(a,b) -> (res)
   requires a>0
   requires b>0
   ensures res==a or res==b {
@@ -79,6 +79,12 @@ The recommendation is to write as many `assert` and `optimize` as possible. If
 something can not happen, writing the `optimize` has the advantage of allowing
 the synthesis tool to generate more efficient code.
 
+
+The `optimize` will allow code optimizations, the `cassert` should also result
+in code optimizations. The reason why `assert` does not trigger optimizations
+is because they can be enabled/disabled at simulation time.
+
+
 In a way, most type checks have equivalent `cassert` checks.
 
 ## LEC
@@ -95,7 +101,7 @@ implementation bit.
     The recommendation is to use `optimize` and `assert` frequently, but
     clearly to check preconditions and postconditions of methods. The 1949
     Turing quote of how to write assertions and programs is still valid "the
-    programmer should make a numner of definite assertions which can be checked
+    programmer should make a number of definite assertions which can be checked
     individually, and from which the correctness of the whole program easily
     follows."
 
@@ -233,7 +239,7 @@ that it can not have an impact on synthesis or a compile error is generated.
 
 ## Test
 
-Pyrope has the `test [message [,args]+] ( [stmts+] }`. 
+Pyrope has the `test [message [,args]+] ( [stmts+] }`.
 
 === "Many parallel tests"
     ```
@@ -276,9 +282,9 @@ let counter = proc(update)->(value) {
 }
 
 test "counter through several cycles" {
- 
+
   var inp = true
-  let x = counter(inp.[defer])  // inp contents at the end of each cycle 
+  let x = counter(inp.[defer])  // inp contents at the end of each cycle
 
   assert x == 0 // x.value == 0
   assert inp == true
@@ -313,7 +319,7 @@ block also accepts to read and/or clear failed attribute.
 ```
 test "assert should fail" {
 
- let n = assert.[failed] 
+ let n = assert.[failed]
  assert n == false
 
  assert false // FAILS

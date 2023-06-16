@@ -55,8 +55,8 @@ the simulation is performed, the expectation is to randomly generate a 0 or 1
 for each unknown (`?`) bit.
 
 
-The advice is not to use `x` besides `match` statement pattern matching. It is
-much better to use the default value (zero or empty string), but sometimes it
+The advice is not to use `?` besides `match` statement pattern matching. It is
+less error prone to use the default value (zero or empty string), but sometimes it
 is easier to use `nil` when converting Verilog code to Pyrope code. The `nil`
 means that the numeric value is invalid. If any operation is performed with
 `nil`, the result is an assertion failure. The only thing allowed to do with
@@ -191,7 +191,7 @@ program, a semicolon can do too.
 a = 1 ; b = 2
 ```
 
-## Printing
+## Printing and debugging
 
 Printing messages is useful for debugging. `puts` prints a message and the string
 is formatted using the c++20 fmt format. There is an implicit newline printed.
@@ -201,6 +201,23 @@ The same without a newline can be achieved with print.
 a = 1
 puts "Hello a is {}", a
 ```
+
+Pyrope does string interpolation, and it has attributes to access line of code
+and file name. Since tracing or debugging variables is quite common, the `dbg`
+statement behaves like puts and also prints the line of code and file name for
+easier tracing.
+
+
+```
+a = 1                                            // file foo line 3
+puts "{}:{} a:{} tracing a", a.[file], a.[loc], a
+puts "{a.[file]}:{a.loc} a:{a} tracing a"        // Same as previous
+dbg a, "tracing a"
+```
+
+The previous statements print "foo:3 a:1 tracing a" in the 3 cases. The line of
+code corresponds to the latest update of variable, not the `dbg` statement.
+
 
 Since many modules can print at the same cycle, it is possible to put a
 relative priority between puts (`priority`). If no relative priority is

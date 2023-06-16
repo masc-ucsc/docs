@@ -24,14 +24,32 @@ LiveHD: a fast and friendly hardware development flow that you can trust
 
 LiveHD is optimized for synthesis and simulation. The main components of LiveHD
 includes LGraph, LNAST, integrated 3rd-party tools, code generation, and "live"
-techniques. The core of LiveHD is a graph structure called LGraph (Live Graph).
-LGraph is built for fast synthesis and simulation, and interfaces other tools
-like Yosys, ABC, OpenTimer, and Mockturtle. LNAST stands for language neutral
-AST, which is a high-level IR on both front/back-end of LGraph. LNAST helps to
-bridge different HDLs and HLS into LiveHD and is useful for HDLs/C++ code
-generation.
+techniques.
+
+
+A compilation goes through the following steps:
+
+* Source code goes through a lexer/parser to create a parse tree or language specific AST.
+
+
+* The parse tree or language specific AST is translated to LNAST. LNAST is a
+AST-like representation that it is independent of the specific language.
+Pyrope, CHISEL, and Verilog translate to LNAST.
+
+
+* The are several passes on LNAST to infer the correct type and bitsizes. The goal is to
+expand tuples, macros at LNAST level, but this code is still not finished.
+
+* The LNAST is a tree-like representation which is translated to Lgraph. In a
+way, LNAST is a HIR (High-level IR) and Lgraph is a LIR (Low-level IR). For
+each Lgraph node, there is an equivalent LNAST, but not the opposite.
+
+* LGraph has a hierarchical graph representation designed for fast synthesis
+and simulation. It interfaces other tools like Yosys, ABC, OpenTimer, and
+Mockturtle.
+
+* For code generation, it is possible to translate back to LNAST or to directly
+output from Lgraph.
 
 ![LiveHD overall flow](../assets/images/livehd.svg)
-
-
 
