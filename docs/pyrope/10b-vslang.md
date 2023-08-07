@@ -31,7 +31,7 @@ reset.
 Pyrope tries to imitate non-HDLs and it has the same entry point "top" and also follows
 a precise control flow from that entry point. This is what a non-hardware designer
 will expect, but there is no exit/abort. The control flow will continue until
-it returns to the end of the "top" or entry point. 
+it returns to the end of the "top" or entry point.
 
 
 The key difference is that the "top" or entry point is called every cycle. From
@@ -173,7 +173,7 @@ let Shape = (
 )
 
 let Rectangle:(...Shape,...OtherAPI) = (...some_code_here)
-let Circle:Shape = (...some_code_here) 
+let Circle:Shape = (...some_code_here)
 
 let print_share_info = fun(s:Shape) { }
 ```
@@ -251,4 +251,21 @@ exists in the tuple `bar` (`bar.foo`). There is no Typescript equivalent to the
 Pyrope `"foo" in bar` which checks if `bar` is a tuple with an entry equal to
 string `"foo"`.
 
+
+## Matlab
+
+Matlab has a convenient multi-dimensional array or array initialization. It
+does not require comma. E.g: `a = [a b 100 c]` is valid Matlab.
+
+
+Pyrope requires commas to distinguish from multi-line statements, hence `a = [a,b,100,c]`
+To initialize a multi-dimensional array, it follows other languages syntax, but
+in Pyrope both `()` and `[]` are allowed and have the same meaning.
+
+```
+let x = [[1,2],[3,4]]
+assert x == ((1,2),[3,4])
+assert x[0,1] == 2 == x[0][1]
+assert x[1,0] == 3 == x[1][0]
+```
 
