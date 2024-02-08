@@ -142,14 +142,14 @@ The lambda definition has the following fields:
 
 ```
 var add:fun(...x) = _
-add = fun (...x) { x.0+x.1+x.2 }      // no IO specified
-add = fun (a,b,c){ a+b+c }            // constrain inputs to a,b,c
-add = fun (a,b,c){ a+b+c }            // same
-add = fun (a:u32,b:s3,c){ a+b+c }     // constrain some input types
-add = fun (a,b,c) -> (x:u32){ a+b+c } // constrain result to u32
-add = fun (a,b,c) -> (res){ a+b+c }   // constrain result to be named res
-add = fun (a,b:a,c:a){ a+b+c }        // constrain inputs to have same type
-add = fun <T>(a:T,b:T,c:T){ a+b+c }   // same
+add = fun(...x) { x.0+x.1+x.2 }      // no IO specified
+add = fun(a,b,c){ a+b+c }            // constrain inputs to a,b,c
+add = fun(a,b,c){ a+b+c }            // same
+add = fun(a:u32,b:s3,c){ a+b+c }     // constrain some input types
+add = fun(a,b,c) -> (x:u32){ a+b+c } // constrain result to u32
+add = fun(a,b,c) -> (res){ a+b+c }   // constrain result to be named res
+add = fun(a,b:a,c:a){ a+b+c }        // constrain inputs to have same type
+add = fun<T>(a:T,b:T,c:T){ a+b+c }   // same
 
 x = 2
 var add2:fun2(a) = _
@@ -201,8 +201,7 @@ There are several rules on how to handle arguments.
 * Function calls with arguments do not need parenthesis after newline or a
   variable assignment: `a = f(x,y)` is the same as `a = f x,y`
 
-* Functions explicitly declared without arguments, do not need parenthesis in
-  function call.
+* Functions without arguments, need explicit parenthesis in function call.
 
 Pyrope uses a Uniform Function Call Syntax (UFCS) when the first argument is
 `self`. It resembles Nim or D UFCS but it can be different from the order in
@@ -215,9 +214,9 @@ let div2 = fun (...x){ x.0 / x.1 }    // unnamed input tuple
 
 let noarg = fun () { 33 }         // explicit no args
 
-assert 33 == noarg()
+assert 33 == noarg()              // () needed to call
 
-assert noarg == 33 // compile error, `noarg()` needed for calls without arguments
+assert noarg // compile error, `noarg()` needed for calls without arguments
 
 a=div(3  , 4  , 3)       // compile error, div has 2 inputs
 b=div(self=8, b=4)       // OK, 2
@@ -252,7 +251,7 @@ var tup = (
 )
 
 let f1 = fun (self){ 2 }   // compile error, f1 shadows tup.f1
-let f2 = fun (self){ 3 }
+let f1 = fun (){ 3 }       // OK, no
 
 assert f1()         != 0  // compile error, missing argument
 assert f1(tup)      != 0  // compile error, f1 shadowing (tup.f1 and f1)
@@ -340,13 +339,16 @@ inc1(ref y)
 assert y == 4
 
 let banner = fun() { puts "hello"  }
-let execute_method = fun(fn) {
+let execute_method = fun(fn:fun()->()) {  // example with explicit type for fn
   fn() // prints hello when banner passed as argument
 }
 
 execute_method(banner)     // OK
 ```
 
+In Pyrope, to call a method, parenthesis are needed only when the method has arguments.
+This is needed to distinguish for higher order functions that need to distinguish between
+a function call and a pass of the lambda.
 
 ## Output tuple
 

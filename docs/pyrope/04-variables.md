@@ -257,13 +257,13 @@ assert b@[0]          == false
 ```
 
 
-A range is a separate tuple. As such it can not directly compare with 
+A range is a separate tuple. As such it can not directly compare with
 tupes. It requires an explicit conversion. If the range does not contain
 negative values, it can be converted to an integer back and forth which
 corresponds to a one-hot encoding.
 
 Range type cast from integers use the same one-hot encoding. It is not possible
-to type cast from tuple to range, but it is possible from range to tuple. 
+to type cast from tuple to range, but it is possible from range to tuple.
 
 ```
 let c = 1..=3
@@ -340,7 +340,7 @@ assert "h" ++ "ell" == ('h','e','l','l') == "hell"
 ## Type declarations
 
 Each variable has a type, either implicit or explicit, and as such, it can be
-used to declare a new type. 
+used to declare a new type.
 
 Pyrope does not have a `type` keyword. Instead it leverages the tuples for type
 creation. The difference is that a type should be an immutable variable, and
@@ -371,7 +371,7 @@ assert x equals z    // same type structure
 
 assert y is typ
 assert typ is typ
-assert z !is bund3 
+assert z !is bund3
 assert z !is typ
 assert z !is bund1
 ```
@@ -405,11 +405,17 @@ number of bits in an assertion, or placement hints, or even interact with the
 synthesis flow to read timing delays.
 
 
-Pyrope does not specify the attributes, the compiler flow specifies them.
+A key difference from attribute and tuple fields is that attributes are always
+compile time and the compiler flow has special meaning functionality for them.
+
+
+Pyrope does not specify all the attributes, the compiler flow specifies them.
+There are some built-in required attributes like checking the number of bits.
+
 Reading attributes should not affect a logical equivalence check. Writing
 attributes can have a side-effect because it can change bits use for
 wrap/saturate or change pins like reset/clock in registers. Additionally,
-attributes can affect assertions, so they can stop/abort the compilation. 
+attributes can affect assertions, so they can stop/abort the compilation.
 
 
 The are three operations that can be done with attributes: set, check, read.
@@ -418,7 +424,7 @@ The are three operations that can be done with attributes: set, check, read.
   assignment or directly accessed. If a variable definition, this binds the
   attribute with all the use cases of the variable. If the variable just
   changes attribute value, a direct assignment is possible E.g: `foo::[max=300]
-  = 4` or `baz.[attr] = 10` 
+  = 4` or `baz.[attr] = 10`
 
 * Check: when associated to a type property in the right-hand-side of an
   assignment. The attribute is a comma separated list of boolean expression
@@ -430,7 +436,7 @@ The are three operations that can be done with attributes: set, check, read.
 
 The attribute set, writes a value to the attribute. If no value is given a
 boolean `true` is set. The attribute checks are expressions that must evaluate
-true. 
+true.
 
 
 Since conditional code can depend on an attribute, which results in executing a
@@ -764,8 +770,8 @@ tuple or file the `private` attribute must be set.
 
 The private has different meaning depending on when it is applied:
 
-* When applied to a tuple entry (`(field::[private] = 3)`), it means that the 
-  entry can not be accessed outside the tuple. 
+* When applied to a tuple entry (`(field::[private] = 3)`), it means that the
+  entry can not be accessed outside the tuple.
 
 * When applied to a `pipestage` variable (`var foo::[private] = 3`), it means that the
   variable is not pipelined to the next type stage. Section
@@ -833,7 +839,7 @@ cassert 1<<(1,4,3) == 0b01_1010
   string, or already a tuple
 
 Most operations behave as expected when applied to signed unlimited precision
-integers. 
+integers.
 
 The `a in b` checks if values of `a` are in `b`. Notice that both can be
 tuples. If `a` is a named tuple, the entries in `b` match by name, and then
@@ -1091,11 +1097,14 @@ i = a == 3 <= b == d
 assert i == (a==3 and 3<=b and b == d)
 ```
 
-Comparators can be chained, but only when they follow the same type.
+Comparators can be chained, but only when they follow the same type or the
+direction is the same.
 
 ```
 assert a <= b <= c  // same as a<=b and b<=c
+assert a <  b <= c  // same as a< b and b<=c
 assert a == b <= c  // compile error, chained only allowed with same comparator
+assert a <= b >  c  // compile error, not same direction
 ```
 
 ## Optional
@@ -1315,7 +1324,7 @@ The same rules apply when a tuple or a type is declared.
 let a = "foo"
 
 var at1 = (
-  ,a:string 
+  ,a:string
 )
 cassert at1[0] == "foo"
 cassert at1 !has "a"    // at1.a undefined
@@ -1362,5 +1371,29 @@ assert !rand implies y == 2
 assert z.[valid]
 assert  rand implies z == 5
 assert !rand implies z == 6
+```
+
+It is also possible to assign to an underscore, it behaves like a sink. It may be useful when dealing
+with structured bindings ()multiple return values) with unused arguments.
+
+
+```
+let weird_pick_bits = fun(b:u32) -> (x:u1, _:u4) {
+  return (x=n@[2..<3], b@[5])
+}
+
+fun fcall_returns_2_values()->(xx,yy) {
+  xx = 3
+  yy = 7
+}
+
+let (a,_) = fcall_returns_2_values()
+assert a == 3
+
+var b:u8 = 3
+_ = a           // legal, but it is just a "read" to 'a'
+_ = 3
+b = _
+assert b == 0 and not b.[valid]
 ```
 

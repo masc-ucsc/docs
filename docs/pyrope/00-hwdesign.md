@@ -224,7 +224,7 @@ iterate in loops, and the program finishes execution when the main finishes.
 
 In contrast, most HDLs differ from software languages in that they specify an
 instantiation tree hierarchy of modules, and then provide some syntax on how
-each module executes independently of the other modules. 
+each module executes independently of the other modules.
 
 
 In HDLs, the execution never ends, and the modules run independently. It
@@ -330,7 +330,7 @@ be expected in a software API.
 If actors execution resembles concurrent module instantiation execution,
 async/await resembles pipelining. In async/await, the results of a function are
 not available at the function return. In HDLs, there is no await, and the
-results from previous cycles are output by the module instance. 
+results from previous cycles are output by the module instance.
 
 
 
@@ -604,7 +604,7 @@ not be recycled. As a result, the destructor may not make sense in hardware.
 
 Most software languages support passing function arguments either by value or
 reference. This is done to avoid copying the object that may reside in memory.
-Again, HLS has no memory. Therefore it is not as problematic. 
+Again, HLS has no memory. Therefore it is not as problematic.
 
 Most HDLs only support passing by value. This is not a drawback but avoid
 another source of bugs without the cost overhead that it will represent in a

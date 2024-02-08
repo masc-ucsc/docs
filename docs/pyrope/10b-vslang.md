@@ -126,16 +126,19 @@ let max_gap_count = fun(nums) {
 }
 ```
 
+A significant difference is that Pyrope everything is by value. In C++, you could do code with undefined behaviour very easily by mistake when dealing with pointers.
+
+```
+const T& f2(T t)        { return t; } // returns pointer to local
+```
+
 ## Swift
 
-There are many diffirences with Swift, but this section just highlights a couple because it helps
-to understand the Pyrope semantics.
-
+There are many diffirences with Swift, but this section just highlights a couple because it helps to understand the Pyrope semantics.
 
 ### Protocol vs Pyrope constrains
 
-Swift protocols resemble type classes. As such require consent for implementing
-a functionality. Pyrope resembles C++ concepts that constraint functionality.
+Swift protocols resemble type classes. As such require consent for implementing a functionality. Pyrope resembles C++ concepts that constraint functionality.
 
 ```swift
 func add<T>(a:T, b:T) -> T { a + b }  // compile error
@@ -267,5 +270,40 @@ let x = [[1,2],[3,4]]
 assert x == ((1,2),[3,4])
 assert x[0,1] == 2 == x[0][1]
 assert x[1,0] == 3 == x[1][0]
+```
+
+## Go
+
+Pyrope and go have several similarities but with slightly different syntax. For example, functions capacity to have multiple name return values is quite similar.
+
+Some significant difference is the built-in and imports.
+
+In Go:
+```
+func larger(a, b []string) []string {
+  len := len(a)
+  if len > len(b) { // Error: invalid operation: cannot call non-function len (variable of type int)
+    return a
+  }
+  return b
+}
+```
+
+In Pyrope:
+```
+import std as std
+
+fun larger(a:[]string, b:[]string) -> (:[]string) {
+  let strlen := std.strlen(a)
+  if strlen > std.strlen(b) {
+    return a
+  }
+  return b
+}
+
+// Using attributes (bits != strlen, but works too)
+fun larger(a:[]string, b:[]string) -> (:[]string) {
+  if a.[bits] > b.[bits] { a }else{ b }
+}
 ```
 

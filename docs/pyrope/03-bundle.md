@@ -132,7 +132,7 @@ cassert a!=b
 cassert b == c == d
 ```
 
-A tuple with a single entry element is called a scalar. 
+A tuple with a single entry element is called a scalar.
 
 Tuples are used in many places:
 
@@ -173,7 +173,7 @@ can be used for name or default value during the tuple declaration.
 
 ```
 var b = 100
-var a = (b:u8, b, b:u8 = _, let c=4) // a.0 and a.1 are unnamed, a.2==a.b 
+var a = (b:u8, b, b:u8 = _, let c=4) // a.0 and a.1 are unnamed, a.2==a.b
 a.b = 200
 assert a == (100, 100, 200, 4)
 
@@ -233,7 +233,7 @@ the same entry already exists.
 ## Field access
 
 Since everything is a tuple, any variable can do `variable.0.0.0.0` because it
-literaly means, return the tuple first entry for four times. 
+literaly means, return the tuple first entry for four times.
 
 
 Another useful shortcut is when a tuple has a single field or entry, the tuple
@@ -253,6 +253,17 @@ assert x.0            == 3
 ```
 
 
+Tuples can also use structural binding to unpack a tuple multiple fields into separate variables.
+
+```
+let x = (f1=(f1a=1,f1b=3), f2=4)
+
+let (y,z) = x
+assert y == (1,3) and z == 4
+assert y.f1a == 1 and y.f1b == 3
+assert y == (f1a=1,f1b=3)
+```
+
 ## Tuples vs arrays
 
 Tuples are ordered, as such, it is possible to use them as arrays. Tuples and
@@ -261,6 +272,8 @@ unnamed with the same type for all the entries.
 
 ```
 var bund1 = (0,1,2,3,4) // ordered and can be used as an array
+
+var array1 = [0,1,2,3,4]  // [] force array, so all the entries have same type
 
 var bund2 = (bund1,bund1,((10,20),30))
 assert bund2[0][1] == 1
@@ -290,7 +303,7 @@ if runtime {
 }
 // Index can be 2 or 4
 
-var res1 = array[index]   // compile error, out of bounds access 
+var res1 = array[index]   // compile error, out of bounds access
 
 var res2 = 0sb?           // Possible code to be compatible with Verilog
 if index<3 {
@@ -347,7 +360,7 @@ b = xx[1,2]       // same as: xx[(1,2)]
 for a in 1,2,3 {  // same as: for a in (1,2,3) {
   x = a
 }
-y = match z {    
+y = match z {
   in 1,2 { 4 }    // same as: in (1,2) { 4 }
   else { 5 }
 }
@@ -355,7 +368,7 @@ y2 = match var one=1 ; one ++ z {  // same as: y2 = match (1,z) {
   == (1,2) { 4 }
 }
 
-let addb = fun(a,b:u32)-> a:u32 { // same as: letaddb = fun(a,b:u32)->(a:u32)  
+let addb = fun(a,b:u32)-> a:u32 { // same as: letaddb = fun(a,b:u32)->(a:u32)
   a = a + b
 }
 ```
@@ -387,7 +400,7 @@ let c = 4
 let (x,b) = (true, c:u3) // assign x=true, b=4 AND check that c is type u3
 
 cassert x == true
-cassert b == 4 
+cassert b == 4
 ```
 
 ## Enumerate (`enum`)

@@ -304,7 +304,7 @@ can have side effects. Pyrope constrains the expressions so that no matter the
 evaluation order, the synthesis result is the same. 
 
 
-As a reference, languages like C++11 do not have a defined order of evaluation for
+Languages like C++11 do not have a defined order of evaluation for
 all types of expressions. Calling `call1() + call2()` is not defined. Either
 `call1()` first or `call2()` first.
 
