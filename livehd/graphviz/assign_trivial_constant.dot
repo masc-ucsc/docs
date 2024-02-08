@@ -1,0 +1,19 @@
+digraph assign {
+  rankdir=LR
+  bgcolor="transparent"
+
+  node [fontname = "helvetica", shape=record, style="rounded", penwidth = 2];
+  edge [fontname = "helvetica", color="#142b30", arrowhead="normal", penwidth = 2];
+  graph [fontname = "helvetica"];
+
+
+
+  node0 [label = "<a> stmts  | <s1> stmt1"];
+  node1 [label = "<a> assign | <l> lhs  | <r> rhs"];
+  node2 [label = "<a> ref    | <l> val"];
+  node3 [label = "<a> const  | <l> 0d1023u10"];
+
+  node0:s1 -> node1:a;
+  node1:l  -> node2:a;
+  node1:r  -> node3:a;
+}
