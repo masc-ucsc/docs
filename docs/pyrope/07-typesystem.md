@@ -356,10 +356,10 @@ In fact, internally Pyrope only tracks the `max` and `min` value. When the
 `sbits/ubits` is used, it is converted to a `max/min` range. Pyrope code can
 set or access the bitwidth attributes for each integer variable.
 
-* `$max`: the maximum number
-* `$min`: the minimum number
-* `$sbits`: the number of bits to represent the value
-* `$ubits`: the number of bits. The variable must be always positive or a compile error.
+* `max`: the maximum number
+* `min`: the minimum number
+* `sbits`: the number of bits to represent the value
+* `ubits`: the number of bits. The variable must be always positive or a compile error.
 
 
 Internally, Pyrope has 2 sets of `max/min`. The constrained and the current.

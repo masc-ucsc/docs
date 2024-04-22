@@ -74,10 +74,11 @@ In the previous example, the compiler infers that the bundle at most has 127 ent
 There are several constructs to declare arrays or async memories:
 
 ```
-reg mem1:[16]i8 = 3   // mem 16bit memory initialized to 3 with type i8
-reg mem2:[16]i8 = _   // mem 16bit memory initialized to 0 with type i8
-var mem3:[] = 0sb?        // array infer size and type, 0sb? initialized
-var mem4:[13] = 0         // array 13 entries size, initialized to zero
+reg mem1:[16]i8 = 3        // mem 16 entry init to 3 with type i8
+reg mem2:[16]i8 = _        // mem 16 entry init to 0 with type i8
+var mem3:[] = 0sb?         // array infer size and type, 0sb? initialized
+var mem4:[13] = 0          // array 13 entries size, initialized to zero
+reg mem5:[4]i3 = [1,2,3,4] // mem 4 enties 3 bits each, initialized
 ```
 
 Pyrope allows slicing of bundles and hence arrays.
