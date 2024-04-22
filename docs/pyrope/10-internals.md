@@ -875,7 +875,7 @@ This is done to avoid mistakes. If a bit swap is wanted, it must be explicit.
 
 ```
 let reverse = fun(x:uint)->(total:uint) {
-  for i in 0..<x.__bits {
+  for i in 0..<x.[bits] {
     total <<= 1
     total  |= x@[i]
   }
