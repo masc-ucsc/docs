@@ -501,6 +501,10 @@ their semantics vary. A more detailed explanation is available at [LiveHD cell
 type section](/livehd/05-lgraph/#cell-type).
 
 
+Pyrope does not have a "mod" operator. The semantics for "mod" with signed
+integers are different in languages like Python and C. It is a complex operator
+to provide hardware support.
+
 ## Initialization
 
 
