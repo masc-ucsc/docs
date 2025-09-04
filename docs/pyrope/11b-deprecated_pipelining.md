@@ -1,4 +1,4 @@
-# Pipelining
+# Deprecated Pipelining
 
 
 ## Registers
@@ -77,233 +77,6 @@ a `din` and `enable` pin like a flop, but just one option `posclk`.
 var my_latch_q = __latch(din=my_din, enable=my_enable, posclk=true)
 ```
 
-## Pipestage
-
-
-Pyrope has a `pipestage` statement (`#>identifier[fsm_configuration]`) that
-helps to create simple pipeline stages. The `identifier[fsm_configuration]` is
-optional and the default meaning is a fully pipelined 1 pipeline stage depth.
-It is the same as saying `_[lat=1]`. The identifier can be accessed as an
-attribute to count the pipestage utilization.
-
-The fsm configuration can have `lat` (number of pipeline stages or latency) or
-`num` (number of units). The number of units is only needed when the code is
-not fully pipelined in combination with loop constructs like `while`, `for`,
-and `loop`.
-
-The `num` sets the number of units. The hardware will not back pressure, but an
-assertion will fail during simulation if the number of units is overflowed.
-`num` only makes sense when the latency (`lat`) is more than 1.
-
-
-```
-// variables/register before
-
-{
-  // stage 0 scope
-} #> {               // no identifier, 1 stage by default
-  // stage 1 scope
-} #>foo[2] {            // no identifier, 2 stages
-  // stage 2-3 scope
-} #>bar[1] {     // 'free_stage' identifier, 1 stages
-  // stage 4 scope
-} #> {
-  // stage 5 scope
-}
-
-// variables/register after pipestage
-```
-
-The semantics of `pipestage` are as follows:
-
-* Explicitly declared registers (`reg foo`) are not affected by `pipestage`
-
-* Variables declared before are "pipelined" inside each of the `pipestage` scopes.
-
-* Variables declared in a stage are pipelined to all the following stages
-  unless the variable is private (`var priv_example::[private]=3`)
-
-* The pipelined variables are not visible in the scope after the `pipestage`
-  sequence.
-
-* The original non-pipelined variable can be accessed with `v#[0]`.
-
-
-To illustrate the semantics, imagine a module where the input `i` is a
-monotonically increasing sequence (`0,1,2,3,4,5,6,7....`).
-
-
-```
-assert i==0 or (i#[-1] + 1 == i)
-
-let i_let = i
-
-var i_var0 = i
-var i_var1 = i
-
-reg i_reg0 = i        // initialization only
-reg i_reg1:i_reg0 = _
-
-i_reg1 = i                // every cycle
-
-{
-  assert i == i#[0]       // i#[0] is unflop input (or first defined) value
-  assert i == i_let
-  assert i == i_var0
-  assert i == i_var1
-
-  assert 0 == i_reg0
-  assert i == i_reg1
-
-  let _local_var = 3
-
-  let pub_var = 100 + i
-
-} #> {
-  assert _local_var!=0      // compile error, _local_var is not in scope
-  assert pub_var == 100 + i // pipelined pub_var
-
-  // both inputs and variables flop, so asserts hold
-  assert i == i_let
-  assert i == i_var0
-  assert i == i_var1
-
-  assert 0 == i_reg0        // i_reg0 never changes, so 0 is fine
-  assert i#[-1] == i_reg1   // last i-reg, not current
-
-  assert i == 0 or (i == i#[0]+1)  // i#[0] is the unflop original
-}
-
-assert pub_var != 0 // compile error, pub_var is not in scope
-```
-
-
-The pipestage accept the `clock` and `posclk` attributes from register to allow
-the selection of different clock signal. Notice that it does not allow `reset`
-or `latch` or `async` because it does not require reset logic.
-
-
-Pipelining is one of the challenges of designing hardware. Even a simple pipestage
-code can result in incorrect hardware. The reason is that if two pipestage blocks
-generate an output simultaneously, there is no way to generate both outputs. The
-result is a compile or simulation error.
-
-```
-let bad_code = proc(my_clk, inp)->(o1,o2) {
-
-  {
-    o1 = 1
-    o2 = inp + 1  // o2? iff bad_code called this cycle and inp? is valid
-  } #>my_pipe[lat=1,clock=my_clk] {
-    o1 = 2        // compile error, o1 driven simultaneous from multiple stages
-    o2 = inp + 2  // may be OK if inp is not valid every cycle
-  }
-
-}
-```
-
-## Pipestage with loops
-
-
-The pipestage directive (`#>identifier[cycles]{  }`) automatically creates a fully
-pipeline design with `cycles` pipeline depth. `cycles` must be bigger or equal
-than 1 and known at compile time. When `cycles` is not specified a `1` value is
-assumed.
-
-Pipestage can be applied to `while` and `loop` statements, not to `for`
-statements because `for` must be fully unrolled at compile time.
-
-When applied to loops, the loop becames a state machine with `cycles` the
-maximum number of simultaneous loop iterations. It effectively means that
-number of units or state machines that can perform the loop simultaneously.
-The identifier becomes a procedure attribute.
-
-
-=== "Fully Pipelined"
-    ```
-    let mul3=proc(a,b)->res {
-      let tmp = a*b
-      #>full_case[lat=3,num=3] { // Same as full_case[lat=3]
-        res = tmp
-      }
-    }
-    ```
-=== "State-machine"
-    ```
-    let mul_slow=proc(a,b)->res {
-
-      let result  = 0
-      let rest    = a
-
-      while rest >= b #>_[lat=1,num=4] {  // lat=1 is latency per iteration
-        rest = rest - b
-        result += 1
-      }
-
-      res = result
-    }
-    ```
-=== "Slow 1 Stage"
-    ```
-    let mul1=proc(a,b)->(reg res) {
-      res = a*b
-    }
-    ```
-=== "Slow 1 Stage (alt syntax)"
-    ```
-    let mul1=proc(a,b)->(res) {
-      #>full_case_again[lat=1] { 
-        res = a*b
-      }
-    }
-    ```
-=== "Pure Combinatinal"
-    ```
-    let mul0=proc(a,b)->(res) {
-      res = a*b
-    }
-    ```
-
-To understand the fully pipelined behavior, the following shows the pipestage
-against the more direct implementation with registers.
-
-```
-if cond {
-  var p1 = inp1
-  var out = _
-
-  {
-    var _l1 = inp1 + 1
-
-    var p2 = inp1 + 2
-  } #> {
-    out = p1 + p2
-  }
-
-  res = out
-}
-
-// Non pipestage equivalent
-if cond {
-  var p1 = inp1
-  var out = _
-
-  {
-    reg p1r = _
-    reg p2r = _
-
-    var l1::[private] = inp1 + 1  // private
-    var p2 = inp1 + 2             // public
-
-    out = p1r + p2r               // registered values
-
-    p1r = p1
-    p2r = p2
-  }
-
-  res = out
-}
-```
 
 
 ## Retiming
@@ -342,26 +115,26 @@ multiplier that takes 3 cycles and an adder that takes 1 cycle to complete, and
 the conceptual problems of integrating them:
 
 
-=== "Pipestage"
+=== "pipe"
     ```
-    let block = proc(in1,in2)->(out) {
-      {
-        let tmp = in1 * in2
-      } #>some_id[lat=3] {
-        out = tmp + in1#[0]
-      }
+    let block = pipe[3](in1,in2)->(out) {
+        pipe[3] mul (in1, in2) { in1 * in2 }
+        pipe[1] add (tmp, in2) { tmp * in2 }
+        let tmp = await[3] mul(in1,in2)
+        out = await[1] add(tmp, in1#[-3])  // Original in1 when multipler started
+        assert out == (in1#[-4]*in2#[-4] + in1#[-4]) // Directly access 4 cycles back
     }
     ```
 
 === "Explicit Stages"
     ```
-    add1 = proc(a,b) {     // 1 cycle add
+    add1 = mod(a,b) {     // 1 cycle add
       reg r  = _
       let rr = r           // get flop value
       r = a+b
       return rr
     }
-    let mul3 = proc(a,b) { // 3 cycle multiply
+    let mul3 = mod(a,b) { // 3 cycle multiply
       reg reg1 = _
       reg reg2 = _
       reg reg3 = _
@@ -372,8 +145,8 @@ the conceptual problems of integrating them:
     }
 
     let block = proc(in1,in2)->(out) {
-      let x =#[..] mul3(in1, in2)
-      out   =#[..] add1(x,in3)
+      let x = await[3] mul3(in1, in2)
+      out   = await[1] add1(x,in3)
     }
     ```
 
@@ -514,7 +287,7 @@ let quick_log2 = fun(a) {
 
 let div=proc(a,b,id)->(res,id) {
   loop #>free_div_units[4] {
-    return (a >> quick_log2(b), id) when b@+[..] == 1
+    return (a >> quick_log2(b), id) when b#+[..] == 1
     #>my_fsm[lat=5,num=1] {
       res = (a/b, id)
     }

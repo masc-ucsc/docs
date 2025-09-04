@@ -78,7 +78,7 @@ reg mem1:[16]i8 = 3        // mem 16 entry init to 3 with type i8
 reg mem2:[16]i8 = _        // mem 16 entry init to 0 with type i8
 var mem3:[] = 0sb?         // array infer size and type, 0sb? initialized
 var mem4:[13] = 0          // array 13 entries size, initialized to zero
-reg mem5:[4]i3 = [1,2,3,4] // mem 4 enties 3 bits each, initialized
+reg mem5:[4]i3 = (1,2,3,4) // mem 4 entries 3 bits each, initialized
 ```
 
 Pyrope allows slicing of bundles and hence arrays.
@@ -121,15 +121,15 @@ generate a reset value.
 === "Explicit initialization"
     ```
     var mem = ( 
-      ,(u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0))
-      ,(u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0))
-      ,(u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0))
-      ,(u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0))
+      (u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0)),
+      (u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0)),
+      (u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0)),
+      (u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0))
     )
     reg mem2 = ( 
-      ,(u5(0), u5(1), u5(2), u5(3), u5(4), u5(5), u5(6), u5(7))
-      ,(u5(0), u5(1), u5(2), u5(3), u5(4), u5(5), u5(6), u5(7))
-      ,(u5(0), u5(1), u5(2), u5(3), u5(4), u5(5), u5(6), u5(7))
+      (u5(0), u5(1), u5(2), u5(3), u5(4), u5(5), u5(6), u5(7)),
+      (u5(0), u5(1), u5(2), u5(3), u5(4), u5(5), u5(6), u5(7)),
+      (u5(0), u5(1), u5(2), u5(3), u5(4), u5(5), u5(6), u5(7))
     )
     ```
 
@@ -206,7 +206,7 @@ mem.latency = (1, 1, 1)
 mem.wensize = 1 // we bit (no write mask)
 mem.rdport  = (-1,1,0) // 0 WR, !=0 -> RD
 
-res =#[..] __memory(mem)
+res = await[..] __memory(mem)
 
 q0 = res.0
 q1 = res.1
@@ -231,7 +231,7 @@ dimension. The entries are in a row-major order.
 var d2:[2][2] = ((1,2),(3,4))
 assert d2[0][0] == 1 and d2[0][1] == 2 and d2[1][0] == 3 and d2[1][1] == 4
 
-assert d2[0] == (1,2) and d2[1] == (2,3)
+assert d2[0] == (1,2) and d2[1] == (3,4)
 ```
 
 The `for` iterator goes over each entry of the bundle/array. If a matrix, it
@@ -240,11 +240,11 @@ multi-dimensional arrays.
 
 ```
 let flatten = fun(...arr) {
-  var res = 0
+  var res = ()
   for i in arr {
     res ++= i
   }
-  return res
+  res
 }
 
 assert flatten(d2) == (1,2,3,4)
@@ -261,10 +261,10 @@ with tuples or by requiring an enumerate.
 var x1:[2]u3 = (0,1)
 assert x1[0] == 0 and x1[1] == 1
 
-var X=enum(
-  ,t1 = 0 // sequential enum, not one hot enum (explicit assign)
-  ,t2
-  ,t3
+enum X = (
+  t1 = 0, // sequential enum, not one hot enum (explicit assign)
+  t2,
+  t3
 )
 
 var x2:[X]u3 = _

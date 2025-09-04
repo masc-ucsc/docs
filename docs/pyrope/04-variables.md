@@ -1,7 +1,7 @@
 # Variables and types
 
 A variable is an instance of a given type. The type may be inferred from use.
-The basic types are Boolean, lambda, Integer, Range, and String. All those
+The basic types are Boolean, function, Integer, Range, and String. All those
 types can be combined with tuples.
 
 
@@ -20,8 +20,8 @@ range).
 
 
 In all the cases, variable declaration is either:
-* `let variable [:type] = expression`
-* `var variable [:type] = expression`
+* `let variable [:type] [:[attrbute list]] = expression`
+* `var variable [:type] [:[attrbute list]]= expression`
 
 In a tuple scope, `variable [:type] = expression` is equivalent to `var
 variable [:type] = expression`. This is to avoid the most common case
@@ -65,10 +65,10 @@ always immutable (`let`).
     assert x == 10
     assert b == 3        // compile error, undefined variable 'b'
 
-    let f2 = fun() {     // restrict scope
-      assert a == 3      // compile error, undefined variable 'a'
+    let f2 = fun() {     // no capture of 'a'
+      // assert a == 3   // compile error, undefined variable 'a'
     }
-    let f3 = fun[ff=a]() { // restrict scope
+    let f3 = fun[ff=a]() { // capture 'a' as 'ff'
       assert ff == 3     // OK
       ff = 3             // compile error, immutable variable
     }
@@ -106,15 +106,15 @@ declare them as `var` and redundant to declare them as `let`.
 
 ```
 let f3 = fun(var x) { x + 1 }    // compile error, inputs are immutable
-let f2 = fun[var x](z) { x + z } // compile error, captures are immutable
+let f4 = fun[var x](z) { x + z } // compile error, captures are immutable
 ```
 
 
 Tuple scope is also useful for declaring function default values:
 
 ```
-fun example(a:int, b:int=self.a+5) -> (_:int) {
-  return a+b
+fun example(a:int, b:int=self.a+5) -> (result:int) {
+  result = a + b
 }
 assert example(a=3) == (a+a+5)
 assert example(6,7) == (6+7)
@@ -128,15 +128,15 @@ Pyrope has 8 basic types:
 
 * `boolean`: either `true` or `false`
 * `enum`: enumerated
-* `fun`: A function or pure combinational lambda
+* `fun`: A function or pure combinational logic
 * `int`: which is signed integer of unlimited precision
-* `proc`: A procedure or lambda with state/clock or side-effects
+* `mod`: A module with state/clock or side-effects
 * `range`: A one hot encoding of values `1..=3 == 0b1110`
 * `string`: which is a sequence of characters
 * `variant`: An union without typecast
 
 
-All the types except the function can be converted back and forth to an
+All the types except functions can be converted back and forth to an
 integer.
 
 
@@ -192,7 +192,7 @@ var d = b or false   // OK
 var e = c or false   // compile error, 'c' is not a boolean
 
 let e = 0xfeed
-if e@[3] {           // OK, bit extraction for single bit returns a boolean
+if e#[3] {           // OK, bit extraction for single bit returns a boolean
   call(x)
 }
 
@@ -211,12 +211,12 @@ let x = a and b
 let y = x + 1    // compile error: 'x' is a boolean, '1' is integer
 ```
 
-### Lambda (`fun`/`proc`)
+### Functions (`fun`/`pipe`/`mod`)
 
-Lambdas have several options (see [Functions](06-functions.md)), but from a
+Functions have several options (see [Functions](06-functions.md)), but from a
 high level they provide a sequence of statements and they have a tuple for
-input and a tuple for output. Lambdas also can capture values from declaration.
-Like strings, lambdas are always immutable objects but they can be assigned
+input and a tuple for output. Functions can capture values from declaration.
+Like strings, functions are always immutable objects but they can be assigned
 to mutable variables.
 
 
@@ -247,13 +247,13 @@ assert a[..<2] == (1,2)
 assert a[1..<10] == (2,3)
 
 let b = 0b0110_1001
-assert b@[1..]        == 0b0110_100
-assert b@[1..=-1]     == 0b0110_100
-assert b@[1..=-2]     == 0b0110_100  // unsigned result from bit selector
-assert b@sext[1..=-2] == 0sb110_100
-assert b@[1..=-3]     == 0sb10_100
-assert b@[1..<-3]     == 0b0_100
-assert b@[0]          == false
+assert b#[1..]        == 0b0110_100
+assert b#[1..=-1]     == 0b0110_100
+assert b#[1..=-2]     == 0b0110_100  // unsigned result from bit selector
+assert b#sext[1..=-2] == 0sb110_100
+assert b#[1..=-3]     == 0sb10_100
+assert b#[1..<-3]     == 0b0_100
+assert b#[0]          == false
 ```
 
 
@@ -311,7 +311,7 @@ possible when both begin and end of the range are fully specified.
 assert((0..<30 step 10) == (0,10,20)) // ranges and tuples can combined
 assert((1..=3) ++ 4 == (1,2,3,4))   // tuple and range ops become a tuple
 assert 1..=3 == (1,2,3)
-assert((1..=3)@[..] == 0b1110)      // convert range to integer with @[..]
+assert((1..=3)#[..] == 0b1110)      // convert range to integer with #[..]
 ```
 
 ### String
@@ -325,7 +325,7 @@ a = 'cad'              // c is 0x63, a is 0x61, and d is 0x64
 b = 0x64_61_63
 assert a == string(b)  // typecast number to string
 assert int(a) == b     // typecast string to number
-assert a@[..] == b     // typecast string to number
+assert a#[..] == b     // typecast string to number
 ```
 
 Like ranges, strings can also be seen as a tuple, and when tuple operations are
@@ -424,14 +424,14 @@ The are three operations that can be done with attributes: set, check, read.
   assignment or directly accessed. If a variable definition, this binds the
   attribute with all the use cases of the variable. If the variable just
   changes attribute value, a direct assignment is possible E.g: `foo::[max=300]
-  = 4` or `baz.[attr] = 10`
+  = 4` or `baz::[attr = 10]`
 
 * Check: when associated to a type property in the right-hand-side of an
   assignment. The attribute is a comma separated list of boolean expression
   that must evaluate true only at this statement. E.g: `var tmp =
   yy::[comptime, attr2>0] + xx`
 
-* Read: a direct read of an attribute value is possible with `variable.field.[attribute]`
+* Read: a direct read of an attribute value is possible with `variable.field::[field_attribute]`
 
 
 The attribute set, writes a value to the attribute. If no value is given a
@@ -448,20 +448,16 @@ most logical is to trigger a compile error if there is no fast convergence.
 ```
 // attribute set
 var foo:u32:[comptime=true] = xx   // enforce that foo is comptime true always
-var bar::[comptime] = xx           // same as previous statement
 yyy = xx                           // yyy does not check comptime
-yyy::[comptime=true] = xx          // now, checks that 'yyy` is comptime
+assert yyy::[comptime]             // now, checks that 'yyy` is comptime
 
 // attribute check
 if bar == 3 {
-  tmp = bar::[comptime == true]    // check that this use of bar is comptime
-  tmp = bar::[comptime]            // same as previous statement
-  tmp = bar ; assert bar.[comptime] // same as previous statements
+  tmp = bar ; assert bar::[comptime]
 }
-                                   // bar/foo may not be comptime
 
 // attribute read
-assert tmp.[bits] < 30 and !tmp.[comptime]
+assert tmp::[bits] < 30 and !tmp::[comptime]
 ```
 
 The attribute check is like a type check, both can be converted to assertions,
@@ -470,7 +466,8 @@ but the syntax is cleaner.
 
 === "Attribute Check"
     ```
-    let x = y::[cond,bar==3] + 1
+    let x = y + 1
+    assert  y::[cond,bar==3]
 
     read_state = fun(x) {
       let f:u32:[comptime] = x // f is compile time or a error is generated
@@ -483,13 +480,13 @@ but the syntax is cleaner.
 === "Assertion Equivalent Check"
     ```
     let x = y + 1
-    cassert y.[cond]
-    cassert y.[bar]==3
+    cassert y::[cond]
+    cassert y::[bar]==3
 
     read_state = fun(x) {
       let f = x
       cassert f does u32
-      cassert f.[comptime]
+      cassert f::[comptime]
       f
     }
 
@@ -501,14 +498,17 @@ statements because it is confusing if applied to the condition or all the
 sub-statements.
 
 ```
-if cond::[comptime] {    // cond is checked to be compile time constant
-  x::[comptime] = a +1   // x is set to be compile time constant
+z::[comptime=true] = xx   // assign xx to z AND set comptime true
+z::[comptime] = xx        // Same, attribute access on LHS of assignment are attributes set to true
+
+if cond::[comptime] {         // cond is checked to be compile time constant
+  x::[comptime=true] = a +1   // x is set to be compile time constant
 }else{
-  x::[comptime] = b      // x is set to be compile time constant
+  x::[comptime] = b           // x is set to be compile time constant
 }
 
 
-if cond.[comptime] {  // checks if cond is compute at comptime
+if cond::[comptime] {  // checks if cond is compute at comptime
   let v = cond
   if cond {
     puts "cond is compile time and true"
@@ -523,11 +523,11 @@ semantic. To understand the potential Pyrope syntax, this is a hypothetical
 `::[poison]` attribute that marks tuple.
 
 ```
-let bad = (a=3,b::[poison]=4)
+let bad = (a=3,b::[poison=true]=4)
 
 let b = bad.b
 
-assert b.[poison] and b==4
+assert b::[poison] and b==4
 ```
 
 
@@ -538,17 +538,11 @@ This is needed because when connecting things like a reset, we want to connect
 to the reset wire, not the current reset value.
 
 ```
-let counter = proc(en, width) {
-  reg value:uint:[bits=width] = 0
-  value = value + 1
-  value
-}
+reg counter:u32 = 0
 
-let counter2::[clock_pin=clk1]=counter
-let counter3::[reset_pin=rst2]=counter
+reg counter2::[clock_pin=clk1]=0
+reg counter3::[reset_pin=rst2]=0
 
-var ctr2 =#[..] counter2(my_enable)
-var ctr3 =#[..] counter3(my_enable)
 ```
 
 In the long term, the goal is to have any synthesis directive that can affect
@@ -662,10 +656,9 @@ opt2:int:[min=0,max=300] = 0  // same
 opt3::[min=0,max=300] = 0     // same
 opt4:int(0..=300) = 0         // same
 
-assert opt1.[ubits] == 0    // opt1 initialized to 0, so 0 bits
+assert opt1::[ubits] == 0    // opt1 initialized to 0, so 0 bits
 opt1 = 200
-assert opt1.[ubits] == 8    // last assignment needs 9 sbits or 8 ubits
-tmp  = opt1::[ubits==8] + 1   // expression AND assert opt1.[ubits]==8 check
+assert opt1::[ubits] == 8    // last assignment needs 9 sbits or 8 ubits
 ```
 
 The wrap/saturate are attributes that only make sense for attribute set. There
@@ -679,7 +672,7 @@ d:u5  = 0
 w:u5:[wrap] = 0     // attribute set for all the 'w' uses
 
 b = a               // OK, o precision lost
-c::[wrap] = a       // OK, same as c = a@[0..<5] (Since 100 is 0b1100100, c==4)
+c::[wrap] = a       // OK, same as c = a#[0..<5] (Since 100 is 0b1100100, c==4)
 c = a               // compile error, 100 overflows the maximum value of 'c'
 w = a               // OK, 'w' has a wrap set at declaration
 
@@ -809,7 +802,7 @@ All the operators work over signed integers.
 * `a ~| b` bitwise nor
 * `a ~^ b` bitwise xnor
 * `a >> b` arithmetic right shift
-* `a@[..] >> b` logical right shift
+* `a#[..] >> b` logical right shift
 * `a << b` left shift
 
 In the previous operations, `a` and `b` need to be integers. The exception is
@@ -938,7 +931,7 @@ x = b in a
 ### Reduce and bit selection operators
 
 The reduce operators and bit selection share a common syntax
-`variable@op[sel]` where:
+`variable#op[sel]` where:
 
 + `variable` is a tuple where all the tuple fields and subfields must have a
   explicit type size unless the tuple has 1 entry.
@@ -977,7 +970,7 @@ This is not the case for the xor-reduce and pop-count. These two operations are
 size insensitive for positive numbers but sensitive for negative numbers. E.g:
 pop-count of 0sb111 is different than 0sb111111. When the variable is negative
 a close range must be used. Alternatively, a `zext` must be used to select
-bits accordingly. E.g: `variable@[0..=3]@+[..]` does a `zext` and the positive result
+bits accordingly. E.g: `variable#[0..=3]#+[..]` does a `zext` and the positive result
 is passed to the pop-count. The compiler could infer the size and compute, but
 it is considered non-intuitive for programmers.
 
@@ -985,29 +978,29 @@ it is considered non-intuitive for programmers.
 ```
 x = 0b1_0110   // positive
 y = 0s1_0110   // negative
-assert x@[0,2] == 0b10
-assert y@[100,200]       == 0b11   and x@[100,200]       == 0
-assert y@sext[0,100,200] == 0sb110 and x@sext[1,100,200] == 0b001
-assert x@|[..] == -1
-assert x@&[0,1] == 0
-assert x@+[0..=5] == x@+[0..<100] == 3
-assert y@+[0..=5]  // compile error, 'y' can be negative
-assert y@[..]@+[..] == 3
-assert y@[0..=5]@+[..] == 3
-assert y@[0..=6]@+[..] == 4
+assert x#[0,2] == 0b10
+assert y#[100,200]       == 0b11   and x#[100,200]       == 0
+assert y#sext[0,100,200] == 0sb110 and x#sext[1,100,200] == 0b001
+assert x#|[..] == -1
+assert x#&[0,1] == 0
+assert x#+[0..=5] == x#+[0..<100] == 3
+assert y#+[0..=5]  // compile error, 'y' can be negative
+assert y#[..]#+[..] == 3
+assert y#[0..=5]#+[..] == 3
+assert y#[0..=6]#+[..] == 4
 
 var z     = 0b0110
-z@[0] = 1
+z#[0] = 1
 assert z == 0b0111
-z@[0] = 0b11 // compile error, '0b11` overflows the maximum allowed value of `z@[0]`
+z#[0] = 0b11 // compile error, '0b11` overflows the maximum allowed value of `z#[0]`
 ```
 
 !!!Note
     It is important to remember that in Pyrope all the operations use signed
     numbers. This means that an and-reduce over any positive number is always going
-    to be zero because the most significant bit is zero, E.g: `0xFF@&[..] == 0`. In
+    to be zero because the most significant bit is zero, E.g: `0xFF#&[..] == 0`. In
     some cases, a close-range will be needed if the intention is to ignore the sign.
-    E.g: `0xFF@&[0..<8] == -1`.
+    E.g: `0xFF#&[0..<8] == -1`.
 
 
 
@@ -1019,18 +1012,18 @@ must be used.
 Another important characteristic of the bit selection is that the order of the
 bits on the selection does not affect the result. Internally, it is a bitmask
 that has no order. For the `zext` and `sext`, the same order as the input
-variable is respected. This means that `var@[1,2] == var@[2,1]`. As a result,
+variable is respected. This means that `var#[1,2] == var#[2,1]`. As a result,
 the bit selection can not be used to transpose bits. A tuple must be used for
 such an operation.
 
 ```
 var v = 0b10
-assert v@[0,1] == v@[1,2] == v@[..] == v@[0..=1] == v@[..=1] == 0b10
+assert v#[0,1] == v#[1,2] == v#[..] == v#[0..=1] == v#[..=1] == 0b10
 
 var trans = 0
 
-trans@[0] = v@[1]
-trans@[1] = v@[0]
+trans#[0] = v#[1]
+trans#[1] = v#[0]
 assert trans == 0b01
 ```
 
@@ -1187,9 +1180,9 @@ status.
 
 ```
 var v1:u32 = _                 // v1 is zero every cycle AND not valid
-assert v1.[valid] == false
+assert v1::[valid] == false
 var v2:u32 = 0                 // v2 is zero every cycle AND     valid
-assert v2.[valid] == true
+assert v2::[valid] == true
 
 cassert v1?
 cassert not v2?
@@ -1219,9 +1212,9 @@ always assert counter.reset implies !counter?
 ```
 let custom = (
   ,data:i16 = _
-  ,setter = proc(ref self, v) {
+  ,setter = mod(ref self, v) {
     self.data = v
-    self.[valid] = v != 33
+    self::[valid] = v != 33
   }
 )
 
@@ -1243,7 +1236,7 @@ let complex = (
   ,reg v1:string = "foo"
   ,v2:string = _
 
-  ,setter = proc(ref self,v) {
+  ,setter = mod(ref self, v) {
      self.v1 = v
      self.v2 = v
   }
@@ -1252,7 +1245,7 @@ let complex = (
 var x1:complex = _
 var x2:complex:[valid=false] = 0  // toggle valid, and set zero
 var x3:complex = 0
-x3.[valid] = false                // set invalid
+x3::[valid=false]                 // set invalid
 
 assert x1.v1 == "" and x1.v2 == ""
 assert not x2? and not x2.v1? and not v2.v2?
@@ -1283,7 +1276,7 @@ The `let` and `var` statements require an initialization value for each cycle.
 Pyrope only has undefined values unless explicitly indicated. A variable has an
 undefined value if and only if the value is set to `nil` or all the bits are
 unknown (`0sb?`). Undefined variables always have invalid optional
-(`.[valid]==false`), and defined can have valid or invalid optional.
+(`::[valid]==false`), and defined can have valid or invalid optional.
 
 
 On any assignment (`v = _`) where the rhs is a single underscore `_`, the
@@ -1296,26 +1289,26 @@ variable optional is set to false, and it is assigned the default value:
 
 ```
 var a:int = _
-cassert a==0 and a.[valid] == false and not a?
+cassert a==0 and a::[valid] == false and not a?
 
 var b:int = 0
-cassert b==0 and b.[valid] and b?
+cassert b==0 and b::[valid] and b?
 b = nil
-cassert b==nil and b.[valid] == false and not b?
+cassert b==nil and b::[valid] == false and not b?
 
 var c:fun(a1) = _
-cassert c == nil and c.[valid]==false
+cassert c == nil and c::[valid]==false
 c = fun(a1) { cassert true }
-cassert c!= nil and c.[valid]
+cassert c!= nil and c::[valid]
 
 var d:[] = _               // empty tuple
-cassert d != nil and d.[valid]
-cassert d[0] == nil and !d[0].[valid]
+cassert d != nil and d::[valid]
+cassert d[0] == nil and !d[0]::[valid]
 
 var e:int = nil
-cassert e==nil and !e.[valid] and not e?
+cassert e==nil and !e::[valid] and not e?
 e = 0
-cassert e==0 and e.[valid] and e?
+cassert e==0 and e::[valid] and e?
 ```
 
 The same rules apply when a tuple or a type is declared.
@@ -1332,15 +1325,15 @@ cassert at1 !has "a"    // at1.a undefined
 var at2 = (
   ,a:string = _
 )
-cassert at2.a == ""  and at2.a.[valid]==false
+cassert at2.a == ""  and at2.a::[valid]==false
 at2.a = "torrellas"
 cassert at2.a == "torrellas" and at2[0] == "torrellas"
 
 var at3:at2 = _
-cassert at3.a == ""  and at3.a.[valid]==false
+cassert at3.a == ""  and at3.a::[valid]==false
 
 var at4:at2 = (a="josep")
-cassert at4.a == "josep"  and at4.a.[valid] and at4.[valid]
+cassert at4.a == "josep"  and at4.a::[valid] and at4::[valid]
 
 ```
 
@@ -1361,14 +1354,14 @@ if rand {
   z = 6
 }
 assert x==3  // Simplified due to the _ initialization
-assert rand      implies x.[valid]
-assert x.[valid] implies rand
+assert rand      implies x::[valid]
+assert x::[valid] implies rand
 
-assert y.[valid]
+assert y::[valid]
 assert  rand implies y == 4
 assert !rand implies y == 2
 
-assert z.[valid]
+assert z::[valid]
 assert  rand implies z == 5
 assert !rand implies z == 6
 ```
@@ -1379,10 +1372,10 @@ with structured bindings ()multiple return values) with unused arguments.
 
 ```
 let weird_pick_bits = fun(b:u32) -> (x:u1, _:u4) {
-  return (x=n@[2..<3], b@[5])
+  (x=b#[2..<3], b#[5])
 }
 
-fun fcall_returns_2_values()->(xx,yy) {
+fun fcall_returns_2_values() -> (xx, yy) {
   xx = 3
   yy = 7
 }
@@ -1394,6 +1387,6 @@ var b:u8 = 3
 _ = a           // legal, but it is just a "read" to 'a'
 _ = 3
 b = _
-assert b == 0 and not b.[valid]
+assert b == 0 and not b::[valid]
 ```
 

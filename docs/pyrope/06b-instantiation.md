@@ -19,12 +19,12 @@ A trivial `if/else` with all the options covered is a simple mux.
 var res:s4 = _
 if cond {
   res = a
-}else{
+} else {
   res = b
 }
 
 // RTL equivalent (bus of 4 bits in a,b,res2)
-var res2:s4 = __mux(cond,b,a)
+var res2:s4 = __mux(cond, b, a)
 
 lec res, res2
 ```
@@ -32,10 +32,10 @@ lec res, res2
 An expression `if/else` is also a mux.
 
 ```
-var res = if cond { a }else{ b }
+var res = if cond { a } else { b }
 
 // RTL equivalent
-var res2 = __mux(cond,b,a)
+var res2 = __mux(cond, b, a)
 
 lec res, res2
 ```
@@ -47,7 +47,7 @@ var res = a
 res = b unless cond
 
 // RTL equivalent
-var res2 = __mux(cond,b,a)
+var res2 = __mux(cond, b, a)
 
 lec res, res2
 ```
@@ -60,15 +60,15 @@ a compile error is generated.
 var res = a
 if cond1 {
   res = b
-}elif cond2 {
+} elif cond2 {
   res = c
-}else{
+} else {
   assert true // no res
 }
 
 // RTL equivalent
 var tmp = __mux(cond2, a, c)
-var res2= __mux(cond1, tmp, b)
+var res2 = __mux(cond1, tmp, b)
 
 lec res, res2
 ```
@@ -80,13 +80,13 @@ mux.
 var res = a
 unique if cond1 {
   res = b
-}elif cond2 {
+} elif cond2 {
   res = c
 } // no res in else
 
 // RTL equivalent
-var sel = (!cond1 and !cond2, cond1, cond2)@[..]  // one hot encode
-var res2= __hotmux(sel, a, b, c)
+var sel = (!cond1 and !cond2, cond1, cond2)#[..]  // one hot encode
+var res2 = __hotmux(sel, a, b, c)
 optimize !(cond1 and cond2)                       // one hot check
 
 lec res, res2
@@ -109,8 +109,8 @@ match x {
 let cond1 = x == c1
 let cond2 = x == c2
 let cond3 = x == c3
-var sel = (cond1, cond2, !cond1 and !cond2)@[..]  // one hot encode (no cond3)
-var res2= __hotmux(sel, b, c, d)
+var sel = (cond1, cond2, !cond1 and !cond2)#[..]  // one hot encode (no cond3)
+var res2 = __hotmux(sel, b, c, d)
 optimize ( cond1 and !cond2 and !cond3)
       or (!cond1 and  cond2 and !cond3)
       or (!cond1 and !cond2 and  cond3)    // one hot check (no else allowed)
@@ -176,7 +176,7 @@ or non-short-circuit (`and_then`/`or_else`) expressions.
 === "Lambda call (inlined)"
 
     ```
-    let f = fun(a,b) { if a == 0 { 3 }else{ b } }
+    let f = fun(a, b) { if a == 0 { 3 } else { b } }
 
     var lhs = c
     if cond {
@@ -187,9 +187,9 @@ or non-short-circuit (`and_then`/`or_else`) expressions.
     let a_cond = __not(__ror(a))             // a == 0
     let tmp    = __mux(a_cond, b, 3)         // if a_cond { 3 }else{ b }
     var lhs2   = c
-    lhs2       = __mux(cond, x, tmp)
+    lhs2       = __mux(cond, lhs2, tmp)
 
-    let tmp_v  = __mux(a_cond, a?, __and(a?,b?)) // a? or (a==0 and b?)
+    let tmp_v  = __mux(a_cond, a?, __and(a?, b?)) // a? or (a==0 and b?)
 
     let lhs2_v = __mux(cond, c?, tmp_v)
 
@@ -207,44 +207,44 @@ can be the SSA name.
 
 === "Lambda call"
     ```
-    let sub = proc(a,b)->(x) {
-      let tmp = sum(a,b)       // instance tmp,sum
+    let sub = mod(a, b) -> (x) {
+      let tmp = sum(a, b)      // instance tmp,sum
 
-      x = sum(tmp,3)           // instance x,sum
+      x = sum(tmp, 3)          // instance x,sum
     }
 
-    let top = proc(a,b,c)->(x) {
+    let top = mod(a, b, c) -> (x) {
 
-     x = sub(a,b).x
+     x = sub(a, b).x
      if c {
-       let tmp=3
-       x += sub(b,tmp).x
+       let tmp = 3
+       x += sub(b, tmp).x
      }
     }
     ```
 
 === "Instance"
     ```
-    let sub = proc(a,b)->(x) {
-      let tmp = sum(a,b)       // instance tmp
+    let sub = mod(a, b) -> (x) {
+      let tmp = sum(a, b)      // instance tmp
 
-      x = sum(tmp,3)           // instance x
+      x = sum(tmp, 3)          // instance x
     }
 
-    let top = proc(a,b,c)->(x) {
+    let top = mod(a, b, c) -> (x) {
 
-     x = sub(a,b).x           // instance x
+     x = sub(a, b).x          // instance x
 
      let x_0 = _
      let sub_arg_0 = _
      let sub_arg_1 = _
      if c {
-       let tmp=3
+       let tmp = 3
        sub_arg_0 = b
        sub_arg_1 = tmp
        x += x_0.[defer]       // use defer (instance after conditional code)
      }
-     x_0 = sub(sub_arg_0,sub_arg_1).x   // instance x_0 (SSA)
+     x_0 = sub(sub_arg_0, sub_arg_1).x   // instance x_0 (SSA)
     }
     ```
 
@@ -271,15 +271,15 @@ the condition is false.
 === "Conditional proc call"
 
     ```
-    let case_1_counter = proc(runtime)->(res) {
+    let case_1_counter = mod(runtime) -> (res) {
 
       let r = (
-        ,reg total:u16 = _          // r is reg, everything is reg
-        ,increase = fun(a) {
+        reg total:u16 = _,          // r is reg, everything is reg
+        increase = fun(a) {
           puts "hello"
 
           let res = self.total
-          self.total::[wrap] = res+a
+          self.total::[wrap] = res + a
 
           res
         }
@@ -296,15 +296,15 @@ the condition is false.
 === "Pyrope inline equivalent"
 
     ```
-    let case_1_counter = proc(runtime)->(res) {
+    let case_1_counter = mod(runtime) -> (res) {
 
       let r = (
-        ,reg total:u16 = _
-        ,increase = fun(a) {
+        reg total:u16 = _,
+        increase = fun(a) {
           puts "hello"
 
           let res = self.total
-          self.total::[wrap] = res+a
+          self.total::[wrap] = res + a
 
           res
         }
@@ -314,13 +314,13 @@ the condition is false.
         puts "hello"
 
         let res = r.total
-        r.total::[wrap] = res+3
+        r.total::[wrap] = res + 3
         res = res
       }elif runtime == 4 {
         puts "hello"
 
         let res = r.total
-        r.total::[wrap]= res+9
+        r.total::[wrap] = res + 9
         res = res
       }
     }
@@ -411,11 +411,11 @@ simulation/synthesis.
 reg r:u16 = 3 // reset sets r to 3
 r = 2             // non-reset assignment
 
-reg array:[]u16 = (1,2,3,4)  // reset values
+reg array:[4]u16 = (1, 2, 3, 4)  // reset values
 
 reg r2:u128 = conf.get("my_data.for.r2")
 
-reg array:[] = conf.get("some.conf.hex.dump")
+reg array:[] = conf.get("some.conf.hex.dump") // dynamic size from config
 ```
 
 
@@ -423,7 +423,7 @@ The assignment during declaration to a register is always the reset value. If
 the assignment is a method, the method is called every cycle during reset.
 
 ```
-reg array:[1024]tag:[clock_pin=my_clock] = proc(ref self) {
+reg array:[1024]tag:[clock_pin=my_clock] = mod(ref self) {
   reg reset_iter:u10:[reset_pin=false] = 0sb? // no reset flop
 
   self[reset_iter].state = I
@@ -440,7 +440,7 @@ without reset signal.
 
 
 ```
-reg my_flop:[8]u32 = proc(ref self) {
+reg my_flop:[8]u32 = mod(ref self) {
   reg reset_counter:u3:[async=true] = _ // async is only posedge reset
 
   self[reset_counter] = reset_counter
@@ -457,11 +457,11 @@ cycle Similarly a tuple can have a reset when assigned to a register.
 
     ```
     let Mix_tup = (
-      ,reg flag:bool = false
-      ,state: u2
+      reg flag:bool = false,
+      state: u2
     )
 
-    var x:Mux_tup = (false,1)  // 0 used at reset, 1 used every cycle
+    var x:Mix_tup = (false, 1)  // false used at reset, 1 used every cycle
 
     assert x.flag implies x.state == 2
 
@@ -476,13 +476,13 @@ cycle Similarly a tuple can have a reset when assigned to a register.
 
     ```
     let Mix_tup = (
-      ,reg flag:bool = false
-      ,state:u2
+      reg flag:bool = false,
+      state:u2
     )
 
-    var x:Mux_tup = proc(ref self) {
-      self.flag  = proc(ref self) { self = false }  // reset code
-      self.state = 2                                // every cycle code
+    var x:Mix_tup = mod(ref self) {
+      self.flag  = mod(ref self) { self = false }   // reset code
+      self.state = 2                               // every cycle code
     }
 
     assert x.flag implies x.state == 2
@@ -497,9 +497,9 @@ A sample of asynchronous reset with different reset and clock signal
 
 ```
 reg my_asyn_other_reg:u8:[
-  ,async = true
-  ,clock = ref clk2    // ref to connect, not read clk2 value
-  ,reset = ref reset33 // ref to connect, not read current reset33 value
+  async = true,
+  clock = ref clk2,    // ref to connect, not read clk2 value
+  reset = ref reset33  // ref to connect, not read current reset33 value
 ] = 33 // initialized to 33 at reset
 
 
@@ -507,7 +507,7 @@ if my_async_other_reg == 33 {
   my_async_other_reg = 4
 }
 
-assert my_async_other_reg in (4,33)
+assert my_async_other_reg in (4, 33)
 ```
 
 ### retime
@@ -558,13 +558,13 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
 
 
     ```
-    let inner = fun(z,y)->(a,h) {
-      a =   y & z
+    fun inner(z, y) -> (a, h) {
+      a = y & z
       h = !(y & z)
     }
 
-    let top2 = fun(a,b)->(c,d) {
-      let x= inner(y=a,z=b)
+    fun top2(a, b) -> (c, d) {
+      let x = inner(y=a, z=b)
       c = x.a
       d = x.h
     }
@@ -574,42 +574,42 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
 
     ```
     let Inner_t = (
-      ,setter = proc(ref self, z,y) {
-        self.a =   y & z
+      setter = mod(ref self, z, y) {
+        self.a = y & z
         self.h = !(y & z)
       }
     )
 
     let Top2_t = (
-      ,setter = proc(ref self,a,b) {
-        let foo:Inner_t = (y=a,z=b)
+      setter = mod(ref self, a, b) {
+        let foo:Inner_t = (y=a, z=b)
         
         self.c = foo.a
         self.d = foo.h
       }
     )
 
-    let top:Top2_t = (a,b)
+    let top:Top2_t = (a, b)
     ```
 
 === "Pyrope alternative II"
 
     ```
     let Inner_t = (
-      ,setter = proc(ref self, z,y) {
-        self.a =   y & z
+      setter = mod(ref self, z, y) {
+        self.a = y & z
         self.h = !(y & z)
       }
     )
 
     let Top2_t = (
-      ,foo:Inner_t = _
-      ,setter = proc(ref self,a,b) {
-        (self.c, self.d) = self.foo(y=a,z=b)
+      foo:Inner_t = _,
+      setter = mod(ref self, a, b) {
+        (self.c, self.d) = self.foo(y=a, z=b)
       }
     )
 
-    let top:Top2_t = (a,b)
+    let top:Top2_t = (a, b)
     ```
 
 
@@ -622,7 +622,7 @@ are advantages to each approach but the code quality should be the same.
 
 ```
 reg a:u4 = 3
-a::[saturate] = a+1
+a::[saturate] = a + 1
 
 reg b = 4
 if cond {
@@ -634,7 +634,7 @@ if cond {
 // RTL equivalent
 a_qpin = __flop(reset=ref reset, clk=ref clk, initial=3, din=a.[defer])
 tmp    = __sum(A=(a_qpin, 1))
-a      = __mux(tmp[4], tmp@[0..=3], 0xF)    // saturate, not wrap
+a      = __mux(tmp[4], tmp#[0..=3], 0xF)    // saturate, not wrap
 
 b_qpin = __flop(reset=ref reset, clk=ref clk, initial=4, din=b.[defer])
 b      = __mux(cond, b_qpin, 5)

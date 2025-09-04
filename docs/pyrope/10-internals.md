@@ -20,8 +20,8 @@ operations: `a in b`, `a does b`, and lambda call rules.
 cassert (a=1) in (1,a=1,3)
 cassert (a=1) !does (1,a=1,3)
 
-let f = fun(a) { puts "{}",a }
-let g = fun(long, short) { puts "{}",long }
+let f = fun(a) { puts "{a}" }
+let g = fun(long, short) { puts "{long}" }
 
 f(a=1)             // OK
 f(1)               // OK
@@ -467,9 +467,8 @@ problem of true shadowing.
 let f1 = fun() { 1 }
 
 let tup = (
-  ,f1 = fun() { 2 }
-
-  ,code = fun() {
+  f1 = fun() { 2 },
+  code = fun() {
      assert self.f1() == 2
      assert f1() == 1
   }
@@ -491,9 +490,9 @@ execution.
     var x_s = 10
 
     let call_captured = fun[x_s]() {
-      return fun[x_s]() {
+      fun[x_s]() {
         assert x_s == 10
-        return x_s
+        x_s
       }
     }
 
@@ -551,8 +550,8 @@ may do this implementation.
 
     ```
     let j = 1
-    let b = fun[j](x:i32)-> :i32 {
-      return x+j
+    let b = fun[j](x:i32) -> (result:i32) {
+      result = x + j
     }
 
     assert b(1) == 2
@@ -562,9 +561,9 @@ may do this implementation.
       a += 1
 
       var addX = (
-        ,a: i32 = a                        // copy value, runtime or comptime
-        ,getter = fun(self, x: i32) {
-          return x + self.a
+        a:i32 = a,                        // copy value, runtime or comptime
+        getter = fun(self, x:i32) {
+          x + self.a
         }
       )
 
@@ -577,8 +576,8 @@ may do this implementation.
       var a:i32 = 1
       a += 1
 
-      let addX = fun[a](x: i32) { // Same behaviour as closure with tuple
-        return x + a
+      let addX = fun[a](x:i32) { // Same behaviour as closure with tuple
+        x + a
       }
 
       a += 100;
@@ -625,15 +624,15 @@ Capture values must be explicit, or no capture happens. This means that
 ```
 var x = 3
 
-let f1 = fun[x]()->(_:int){
+let f1 = fun[x]() -> (result:int) {
    assert x == 3
    var x = _    // compile error. Shadow captured x
-   return 200
+   result = 200
 }
-let f2 = fun()->(_:int){
+let f2 = fun() -> (result:int) {
    var x = _    // OK, no captures 'x' variable
    x = 100
-   return x
+   result = x
 }
 ```
 
@@ -644,10 +643,10 @@ Capture variables pass the value at capture time:
 var x = 3
 var y = 10
 
-let fun2 = fun[y]()->(_:int){
+let fun2 = fun[y]() -> (result:int) {
   y = 100              // compile error, y is immutable when captured
-  var x  = 200
-  return y + x
+  var x = 200
+  result = y + x
 }
 x = 1000
 assert fun2() == 203
@@ -671,8 +670,8 @@ It is also easy to forget that parenthesis can be ommited in simple expressions,
 not when ranges or tuples are involed.
 
 ```
-asssert 2 in (1,2)  // compile error, not allowed to drop parenthesis
-asssert(2 in (1,2)) // OK
+assert 2 in (1,2)  // compile error, not allowed to drop parenthesis
+assert(2 in (1,2)) // OK
 ```
 
 ### Multiple tuples
@@ -686,23 +685,23 @@ there is no initial value set.
 
 ```
 let X_t = (
-  ,i1 = (
-    ,i1_field:u32 = 1
-    ,i2_field:u32 = 2
-    ,setter = proc(ref self, a) {
+  i1 = (
+    i1_field:u32 = 1,
+    i2_field:u32 = 2,
+    setter = fun(ref self, a) {
        self.i1_field = a
     }
-  )
-  ,i2 = (
-    ,i1_field:i32 = 11
-    ,setter = proc(ref self, a) {
+  ),
+  i2 = (
+    i1_field:i32 = 11,
+    setter = fun(ref self, a) {
        self.i1_field = a
     }
   )
 )
 
 var top = (
-  ,setter = proc(ref self) {
+  setter = fun(ref self) {
     var x:X_t = _
     assert x.i1.i1_field == 1
     assert x.i1.i2_field == 2
@@ -834,34 +833,34 @@ iterators, but also in bit section:
 ```
 let v = 0xF0
 
-assert v@[0] == 0
-assert v@[4] == 1       // unsigned output
-assert v@sext[4] == -1  // signed output
+assert v#[0] == 0
+assert v#[4] == 1       // unsigned output
+assert v#sext[4] == -1  // signed output
 
-assert v@[3..=4] == 0b010 == v@[3,4]
-assert v@[4..=3 step -1] == 0b010
-assert v@[4,3] == v@[3,4] == 0b010
+assert v#[3..=4] == 0b010 == v#[3,4]
+assert v#[4..=3 step -1] == 0b010
+assert v#[4,3] == v#[3,4] == 0b010
 
-let tmp1 = (v@[4], v@[3])@[..]  // typecast from
-let tmp2 = (v@[3], v@[4])@[..]
-let tmp3 = v@[3,4]
+let tmp1 = (v#[4], v#[3])#[..]  // typecast from
+let tmp2 = (v#[3], v#[4])#[..]
+let tmp3 = v#[3,4]
 assert tmp1 == 0b01
 assert tmp2 == 0b100
 assert tmp3 == 0b10
 
-let tmp1s = (v@sext[4], v@sext[3])@[..]  // typecast from
-let tmp2s = (v@sext[3], v@sext[4])@[..]
-let tmp3s = v@[4,3]
+let tmp1s = (v#sext[4], v#sext[3])#[..]  // typecast from
+let tmp2s = (v#sext[3], v#sext[4])#[..]
+let tmp3s = v#[4,3]
 assert tmp1s == 0b01
 assert tmp2s == 0b10
 assert tmp3s == 0b10
 
-let tmp1ss = (v@sext[4], v@sext[3])@sext[..]  // typecast from
-let tmp2ss = (v@sext[3], v@sext[4])@sext[..]
-let tmp3ss = v@sext[3,4]
+let tmp1ss = (v#sext[4], v#sext[3])#sext[..]  // typecast from
+let tmp2ss = (v#sext[3], v#sext[4])#sext[..]
+let tmp3ss = v#sext[3,4]
 assert tmp1ss == 0b01  ==  1
 assert tmp2ss == 0sb10 == -2
-assert tmp3ss == 0sb10 == -2 == v@sext[4,3]
+assert tmp3ss == 0sb10 == -2 == v#sext[4,3]
 ```
 
 
@@ -869,15 +868,16 @@ The reason is that for multiple bit selection assumes a smaller to larger bits.
 If the opposite order is needed, support functions/code must explicitly do it.
 
 
-In Pyrope, there is no order in bit selection (`xx@[0,1,2,3] == xx@[3,2,1,0]`).
+In Pyrope, there is no order in bit selection (`xx#[0,1,2,3] == xx#[3,2,1,0]`).
 This is done to avoid mistakes. If a bit swap is wanted, it must be explicit.
 
 
 ```
-let reverse = fun(x:uint)->(total:uint) {
+let reverse = fun(x:uint) -> (total:uint) {
+  total = 0
   for i in 0..<x.[bits] {
     total <<= 1
-    total  |= x@[i]
+    total |= x#[i]
   }
 }
 assert reverse(0b10110) == 0b01101
@@ -891,11 +891,11 @@ reference.
 
 
 ```
-let args = fun(x) { puts "args:{}", b ; 1}
-let here = fun()  { puts "here" ; 3}
+let args = fun(x) { puts "args:{x}"; 1 }
+let here = fun() { puts "here"; 3 }
 
-let call_now   = fun(f:fun){ return f() }
-let call_defer = fun(f:fun){ return f   }
+let call_now = fun(f:fun) { f() }
+let call_defer = fun(f:fun) { f }
 
 let x0 = call_now(here)          // prints "here"
 let e1 = call_now(args)          // compile error, args needs arguments

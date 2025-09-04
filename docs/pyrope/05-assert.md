@@ -50,12 +50,12 @@ cassert a == 3         // checked at compile time
 
 optimize b > 3         // may optimize and perform a runtime check
 
-let max_not_zero = fun(a,b) -> (res)
-  requires a>0
-  requires b>0
-  ensures res==a or res==b {
+fun max_not_zero(a, b) -> (result) {
+  requires a > 0
+  requires b > 0
+  ensures result == a or result == b
 
-  res = if a>b {a} else {b}
+  result = if a > b { a } else { b }
 }
 ```
 
@@ -106,8 +106,8 @@ implementation bit.
     follows."
 
 ```
-let fun1 = fun(a,b) { a | b}
-let fun2 = fun(a,b) { ~(~a | ~b) }
+fun fun1(a, b) { a | b }
+fun fun2(a, b) { ~(~a | ~b) }
 lec fun1, fun2
 ```
 
@@ -116,17 +116,17 @@ checks the optional or valid (`::[valid]`) from the output. It can take several
 cycles to show the same result.
 
 ```
-let mul2 = proc(a,b) -> (reg out) {
+mod mul2(a, b) -> (reg out) {
   reg pipe1 = _
 
   out = pipe1
 
-  pipe1 = a*b
+  pipe1 = a * b
 }
 
-let mul0 = fun(a,b)->(out) { out = a*b }
+fun mul0(a, b) -> (out) { out = a * b }
 
-lec_valid mul0, mult2
+lec_valid mul0, mul2
 ```
 
 ## Coverage
@@ -150,8 +150,8 @@ System Verilog `coverpoint` and `covergroup` but the meaning is not the same.
 
 ```pyrope
 // coverage case NUM group states that random should be odd or even
-covecase NUM,   random&1 , "odd number"
-covecase NUM, !(random&1), "even number"
+covercase NUM,   random&1 , "odd number"
+covercase NUM, !(random&1), "even number"
 
 covercase COND1, reset, "in reset"
 covercase COND1, val>3, "bigger than 3"
@@ -170,7 +170,7 @@ tested.
 
 
 The `cover` allows to not be true a given cycle. To allow the same in a
-`covercase`, the designer can add `coverase GRP, true`. This is a true always
+`covercase`, the designer can add `covercase GRP, true`. This is a true always
 cover point for the indicated cover group.
 
 
@@ -193,7 +193,7 @@ To provide assert/optimize during reset, Pyrope provides a `always assert`,
 `always cover`.
 
 ```
-reg memory:[]u33 = (1,2,3) // may take cycles to load this contents
+reg memory:[3]u33 = (1, 2, 3) // may take cycles to load this contents
 
 assert memory[0] == 1 // not checked during reset
 
@@ -209,13 +209,13 @@ random number (`::[rand]`) generation.
 
 
 ```
-let x:u8 = _
+var x:u8 = _
 
-for i in 1..<100 {
-  cassert 0 <= x.[crand]  <= 255
+for i in 1..=99 {
+  cassert 0 <= x.[crand] <= 255
 }
 
-let get_rand_0_2556 = fun(a:u8) {
+fun get_rand_0_255(a:u8) {
   a.[rand]
 }
 ```
@@ -227,11 +227,11 @@ a compile error for string, range, and lambda types.
 When applied to a tuple, it randomly picks an entry from the tuple.
 
 ```
-let a = (1,2,3,b=4)
-let x = a.[rand]
+var a = (1, 2, 3, b=4)
+var x = a.[rand]
 
-cassert x==1 or x==2 or x==3 or x==4
-cassert x.b==4 when x==4
+cassert x == 1 or x == 2 or x == 3 or x == 4
+cassert x.b == 4 when x == 4
 ```
 
 The simulation random number is considered a `::[debug]` statement, this means
@@ -243,12 +243,12 @@ Pyrope has the `test [message [,args]+] ( [stmts+] }`.
 
 === "Many parallel tests"
     ```
-    let add = fun(a,b) { a+b }
+    fun add(a, b) { a + b }
 
     for a in 0..=20 {
       for b in 0..=20 {
-        test "checking add({},{})", a,b {
-           cassert a+b == add(a,b)
+        test "checking add({},{})", a, b {
+           cassert a + b == add(a, b)
         }
       }
     }
@@ -256,12 +256,12 @@ Pyrope has the `test [message [,args]+] ( [stmts+] }`.
 
 === "Single large test"
     ```
-    let add = fun(a,b) { a+b }
+    fun add(a, b) { a + b }
 
     test "checking add" {
       for a in 0..=20 {
         for b in 0..=20 {
-           cassert a+b == add(a,b)
+           cassert a + b == add(a, b)
         }
       }
     }
@@ -273,7 +273,7 @@ cycle, and the test continues from that given point. This is useful for when a
 lambda is instantiated and we want to check/update the inputs/outputs.
 
 ```
-let counter = proc(update)->(value) {
+mod counter(update) -> (value) {
   reg count:u8:[wrap] = 0
 
   value = count
@@ -284,7 +284,7 @@ let counter = proc(update)->(value) {
 test "counter through several cycles" {
 
   var inp = true
-  let x = counter(inp.[defer])  // inp contents at the end of each cycle
+  var x = counter(inp.[defer])  // inp contents at the end of each cycle
 
   assert x == 0 // x.value == 0
   assert inp == true
@@ -319,12 +319,12 @@ block also accepts to read and/or clear failed attribute.
 ```
 test "assert should fail" {
 
- let n = assert.[failed]
+ var n = assert.[failed]
  assert n == false
 
  assert false // FAILS
 
- assert assert.[false]
+ assert assert.[failed]
 
  assert.[failed] = false // disable test failures done when it finishes
 }

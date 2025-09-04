@@ -5,7 +5,7 @@
 
 Pyrope is a modern hardware description language, with these focus points:
 
-* Fast parallel and incremental elaboration 
+* Fast parallel and incremental elaboration
 * Modern and concise language
 * Avoiding hardware specific artifacts
     - Allows optional hierarchical [calls](00-hwdesign.md#instantiation-vs-execution)
@@ -58,23 +58,26 @@ Populate the Pyrope code
 
     src/gcd.prp:
     ```pyrope linenums="1"
-    var gcd = proc (a:uint,b:uint)->(reg x:uint) {
-      x = a
+    mod gcd(a:u32, b:u32) -> (reg result:u32) {
+      reg x = a
       reg y = b
 
-      while y!=0 #> {
-        if x > y { 
-          x -= y 
-        }else{ 
-          y -= x 
+      if y != 0 {
+        result = nil
+        if x > y {
+          x -= y
+        } else {
+          y -= x
         }
+      }else{
+        result = x // Unset nil
       }
     }
 
     for a in 1..=100 {
       for b in 1..=100 {
         test "check.gcd({},{})",a,b {
-          let z =#[..] gcd(a,b)
+          let z = await gcd(a, b)
 
           waitfor z?
 
@@ -177,7 +180,7 @@ Run
 $prp test check.gcd
 ```
 
-The `gcd.prp` includes the top-level module (`gcd`) and the unit test. 
+The `gcd.prp` includes the top-level module (`gcd`) and the unit test.
 
 
 * Some Pyrope features not common in other HDLs (CHISEL):
@@ -185,7 +188,7 @@ The `gcd.prp` includes the top-level module (`gcd`) and the unit test.
     - Pyrope is not a DSL. Most modern HDLs like CHISEL, pyMTL, pyRTL, CλaSH
       are DSL cases. In these cases, there is a host language (SCALA, or Python,
       or Haskell) that must be executed. The result of the execution is the hardware
-      description which can be Verilog or some internal IR like FIRRTL in CHISEL. 
+      description which can be Verilog or some internal IR like FIRRTL in CHISEL.
       The advantage of the DSL is that it can leverage the existing language to
       have a nice hardware generator. The disadvantage is that there are 2 languages
       at once, the DSL and the host language, and that it is difficult to do

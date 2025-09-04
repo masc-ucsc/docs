@@ -90,19 +90,19 @@ constraints from the type system. Pyrope type system constructs to handle types:
   logical equivalence, just type equivalence.
 
 ```
-let t1 = (a:int=1  , b:string)
+let t1 = (a:int=1, b:string)
 let t2 = (a:int=100, b:string)
-var v1 = (a=33     , b="hello")
+var v1 = (a=33, b="hello")
 
 let f1 = fun() {
-  return (a=33     , b="hello")
+  (a=33, b="hello")
 }
 
-assert t1    equals t2
-assert t1    equals v1
-assert f1()  equals t1
+assert t1 equals t2
+assert t1 equals v1
+assert f1() equals t1
 assert _:f1 !equals t1
-assert _:t1  equals t2
+assert _:t1 equals t2
 ```
 
 
@@ -116,17 +116,17 @@ it is able to print/dump the results.
 
 ```
 let At:int(33..) = _      // number bigger than 32
-let Bt=(
-  ,c:string = _
-  ,d=100
-  ,setter = fun(ref self, ...args) { self.c = args }
+let Bt = (
+  c:string = _,
+  d = 100,
+  setter = fun(ref self, ...args) { self.c = args }
 )
 
-var a:At=40
+var a:At = 40
 var a2 = At(40)
 cassert a == a2
 
-var b:Bt="hello"
+var b:Bt = "hello"
 var b2 = Bt("hello")
 cassert b == b2
 
@@ -142,7 +142,7 @@ These are the detailed rules for the `a does b` operator depending on the `a` an
 
 
 * false when `a` and `b` are different basic types (`boolean`, `fun`,
-  `integer`, `proc`, `range`, `string`, `enums`).
+  `integer`, `mod`, `range`, `string`, `enums`).
 
 * true when `a` and `b` have the same basic type of either `boolean` or `string`.
 
@@ -153,7 +153,7 @@ These are the detailed rules for the `a does b` operator depending on the `a` an
   are previously constrained values in left-hand-side statements, or inferred
   from right-hand-side if no lhs type is specified.
 
-* `(a@[..] & b@[..]) == b@[..]` when `a` and `b` are `range`. This means that the `a`
+* `(a#[..] & b#[..]) == b#[..]` when `a` and `b` are `range`. This means that the `a`
   range has at least all the values in `b` range.
 
 * There are two cases for tuples. If all the tuple entries are named, `a does
@@ -169,14 +169,14 @@ These are the detailed rules for the `a does b` operator depending on the `a` an
 * The lambdas have a more complicated set of rules explained later.
 
 ```
-assert (a:int:(max=33,min=0) does (a:int(20,5)))
-assert (a:int(0..=33)       !does (a:int(50,5)))
+assert (a:int:(max=33, min=0) does (a:int(20, 5)))
+assert (a:int(0..=33) !does (a:int(50, 5)))
 
-assert  (a:string,b:int) does (a:"hello", b:33)
-assert ((b:int,a:string) !does (a:"hello", b:33)) // order maters in tuples
+assert (a:string, b:int) does (a:"hello", b:33)
+assert ((b:int, a:string) !does (a:"hello", b:33)) // order matters in tuples
 
-assert  _:fun(x,xxx2)->(y,z) does _:fun(x     )->(y,z)
-assert (_:fun(x     )->(y,z) !does _:fun(x,xxx2)->(y,z))
+assert _:fun(x, xxx2) -> (y, z) does _:fun(x) -> (y, z)
+assert (_:fun(x) -> (y, z) !does _:fun(x, xxx2) -> (y, z))
 ```
 
 For named tuples, this code shows some of the corner cases:
@@ -185,11 +185,11 @@ For named tuples, this code shows some of the corner cases:
 let t1 = (a:string, b:int)
 let t2 = (b:int, a:string)
 
-var a:t1  = ("hello", 3)     // OK
+var a:t1 = ("hello", 3)     // OK
 var a1:t1 = (3, "hello")     // compile error, positions do not match
-var b:t1  = (a="hello", 3)   // OK
+var b:t1 = (a="hello", 3)   // OK
 var b1:t1 = (3, a="hello")   // compile error, positions do not match
-var c:t1  = (a="hello", b=3) // OK
+var c:t1 = (a="hello", b=3) // OK
 var c1:t1 = (b=3, a="hello") // OK
 
 var d:t2 = c                 // OK, both fully named
@@ -227,9 +227,9 @@ are present, both need to match type.
 cassert (a:u32=0, b:bool) does (a:u32, c:string="hello", b=false)
 cassert (a:u32=0, c:string="hello", b=false) case (a = 0, b:bool) // b is nil
 
-cassert (a:u32=0, c:string="hello", b=false) !case (a:u32 = 1 , b:bool=nil )
-cassert (a:u32=0, c:string="hello", b=false) !case (a:bool=nil, b:bool=nil )
-cassert (a:u32=0, c:string="hello", b=false) !case (a = 0     , b     =true)
+cassert (a:u32=0, c:string="hello", b=false) !case (a:u32 = 1, b:bool=nil)
+cassert (a:u32=0, c:string="hello", b=false) !case (a:bool=nil, b:bool=nil)
+cassert (a:u32=0, c:string="hello", b=false) !case (a = 0, b = true)
 ```
 
 ## Nominal type check
@@ -276,9 +276,9 @@ assert t1 !is t2
 
 let t4:X1 = (b=5)
 
-assert t4  equals t1
-assert t4  is     t1
-assert t4 !is     t2
+assert t4 equals t1
+assert t4 is t1
+assert t4 !is t2
 
 let f2 = fun(x) where x is X1 {
   x.b + 1
@@ -295,15 +295,15 @@ time.
 
 ```
 let Rgb = (
-  ,c:u24
-  ,setter = proc(ref self, c) { self.c = c }
+  c:u24,
+  setter = mod(ref self, c) { self.c = c }
 )
 
 let Color = enum(
-  ,Yellow:Rgb = 0xffff00
-  ,Red:Rgb    = 0xff0000
-  ,Green      = Rgb(0x00ff00) // alternative
-  ,Blue       = Rgb(0x0000ff)
+  Yellow:Rgb = 0xffff00,
+  Red:Rgb = 0xff0000,
+  Green = Rgb(0x00ff00), // alternative
+  Blue = Rgb(0x0000ff)
 )
 
 var y:Color = Color.Red
@@ -319,15 +319,15 @@ type, where the enumerate has to be either of the enum entries where each is
 associated to a type.
 
 ```
-let ADT=enum(
-  ,Person:(eats:string) = _
-  ,Robot:(charges_with:string) = _
+let ADT = enum(
+  Person:(eats:string) = _,
+  Robot:(charges_with:string) = _
 )
 
 let nourish = fun(x:ADT) {
   match x {
-    == ADT.Person { puts "eating:{}"  , x.eats         }
-    == ADT.Robot  { puts "charging:{}", x.charges_with }
+    == ADT.Person { puts "eating:{}", x.eats }
+    == ADT.Robot { puts "charging:{}", x.charges_with }
   }
 }
 
@@ -384,7 +384,7 @@ val = 3          // val has 3 bits (0sb011 all the numbers are signed)
 val = 300        // compile error, '300' overflows the maximum allowed value of 'val'
 
 val = 1          // max=1,min=1 sbits=2, ubits=1
-assert val.[ubits] == 1 and val.[min]==1 and val.[max]==1 and val.[sbits]==2
+assert val.[ubits] == 1 and val.[min] == 1 and val.[max] == 1 and val.[sbits] == 2
 
 val::[wrap] = 0x1F0 // Drop bits from 0x1F0 to fit in constrained type
 assert val == 240 == 0xF0
@@ -401,8 +401,8 @@ control-flow divergences, the worst possible path is considered.
 var a = 3                  // a: current(max=3,min=3) constrain()
 var c:int(0..=10) = _      // c: current(max=0,min=0) constrain(max=10,min=0)
 if b {
-  c = a+1                  // c: current(max=4,min=4) constrain(max=10,min=0)
-}else{
+  c = a + 1                // c: current(max=4,min=4) constrain(max=10,min=0)
+} else {
   c = a                    // c: current(max=3,min=3) constrain(max=10,min=0)
 }
                            // c: current(max=4,min=3) constrain(max=10,min=0)
@@ -410,11 +410,11 @@ if b {
 var e::[sbits = 4] = _     // e: current(max=0,min=0) constrain(max=7,min=-8)
 e = 2                      // e: current(max=2,min=2) constrain(max=7,min=-8)
 var d = c                  // d: current(max=4,min=3) constrain()
-if d==4 {
+if d == 4 {
   d = e + 1                // d: current(max=3,min=3) constrain()
 }
 var g:u3 = d               // g: current(max=4,min=3) constrain(max=7,min=0)
-var h = c@[0,1]            // h: current(max=3,min=0) constrain()
+var h = c#[0, 1]           // h: current(max=3,min=0) constrain()
 ```
 
 
@@ -425,13 +425,13 @@ understand, the comments show the max/min bitwidth computations.
 
 ```
 if cmd? {
-  (x,y) = cmd   // x.max=cmd.a.max; x.min = 0 (uint) ; ....
-}elif x > y {
+  (x, y) = cmd  // x.max=cmd.a.max; x.min = 0 (uint) ; ....
+} elif x > y {
                 // narrowing: x.min = y.min + 1 = 1
                 // narrowing: y.max = x.min - 1
   x = x - y     // x.max = x.max - x.min = x.max - 1
                 // x.min = x.min - y.max = 1
-}else{          // x <= y
+} else {        // x <= y
                 // narrowing: x.max = y.min
                 // narrowing: y.min = x.min
   y = y - x     // y.max = y.max - x.min = y.max
@@ -450,10 +450,10 @@ the bitwidth by typecasting. For example, this could work:
 reg x = 0
 reg y = 0
 if cmd? {
-  (x,y) = cmd
-}elif x > y {
+  (x, y) = cmd
+} elif x > y {
   x = x - y
-}else{
+} else {
   y = y - x
 }
 x:cmd.a:[wrap] = x  // use cmd.a type for x, and drop bits as needed
@@ -498,11 +498,11 @@ types can be stored across cycles.
 
 
 ```
-let e_type=enum(str:String = "hello",num=22)
-let v_type=variant(str:String, num:int) // No default value in variant
+let e_type = enum(str:String = "hello", num=22)
+let v_type = variant(str:String, num:int) // No default value in variant
 
 var vv:v_type = (num=0x65)
-cassert vv.num == 0x64
+cassert vv.num == 0x65
 let xx = vv.str                         // compile or simulation error
 ```
 
@@ -512,7 +512,7 @@ Variants may not be solved at compile time, and the error will be a simulation
 error. A `comptime` directive can force a compile time-only variant.
 
 ```
-let Vtype=variant(str:String,num:int,b:bool)
+let Vtype = variant(str:String, num:int, b:bool)
 
 let x1a:Vtype = "hello"                 // implicit variant type
 let x1b:Vtype = (str="hello")           // explicit variant type
@@ -547,32 +547,32 @@ To convert between tuples, an explicit setter is needed unless the tuple fields
 names, order, and types match.
 
 ```
-let at=(c:string,d:u32)
-let bt=(c:string,d:u100)
+let at = (c:string, d:u32)
+let bt = (c:string, d:u100)
 
-let ct=(
-  ,d:u32    = _
-  ,c:string = _
+let ct = (
+  d:u32 = _,
+  c:string = _
 )
 // different order
-let dt=(
-  ,d:u32    = _
-  ,c:string = _
-  ,setter = proc (ref self, x:at) { self.d = x.d ; self.c = x.c }
+let dt = (
+  d:u32 = _,
+  c:string = _,
+  setter = mod (ref self, x:at) { self.d = x.d; self.c = x.c }
 )
 
-var b:bt=(c="hello", d=10000)
-var a:at=_
+var b:bt = (c="hello", d=10000)
+var a:at = _
 
 a = b          // OK c is string, and 10000 fits in u32
 
-var c:ct= a    // OK even different order because all names match
+var c:ct = a   // OK even different order because all names match
 
-var d:dt = a   // OK, call intitial to type cast
+var d:dt = a   // OK, call initial to type cast
 ```
 
 * To string: The `format` allows to convert any type/tuple to a string.
-* To integer: `variable@[..]` for string, range, and bool, union otherwise.
+* To integer: `variable#[..]` for string, range, and bool, union otherwise.
 * `union` allows to convert across types by specifying the size explicitly.
 
 ## Introspection
@@ -580,16 +580,16 @@ var d:dt = a   // OK, call intitial to type cast
 Introspection is possible for tuples.
 
 ```
-a = (b=1,c:u32=2)
+a = (b=1, c:u32=2)
 var b = a
-b.c=100
+b.c = 100
 
 assert a equals b
 assert a.size == 2
 assert a['b'] == 1
 assert a['c'] equals u32
 
-assert   a has 'c'
+assert a has 'c'
 assert !(a has 'foo')
 
 assert a.[id] == 'a'
@@ -603,8 +603,8 @@ function but not to change the functionality. Functions have 3 fields `inputs`,
 at declaration.
 
 ```
-let fu = fun(a,b=2) -> (c) where a>10 { c = a + b }
-assert fu.[inp] equals ('a','b')
+let fu = fun(a, b=2) -> (c) where a > 10 { c = a + b }
+assert fu.[inp] equals ('a', 'b')
 assert fu.[out] equals ('c')
 assert fu.[where](a=200) and !fu.[where](a=1)
 ```
@@ -613,13 +613,13 @@ This means that when ignoring named vs unnamed calls, overloading behaves like
 this:
 
 ```
-let x:u32 = fn(a1,a2)
+let x:u32 = fn(a1, a2)
 
-let model_poly_call = fun(fn, ...args)->(out) {
+let model_poly_call = fun(fn, ...args) -> (out) {
   for f in fn {
      continue unless f.[inp] does args
      continue unless f.[out] does out
-     return f(args) when i.[where](args)
+     return f(args) when f.[where](args)
   }
 }
 let x:u32 = model_poly_call(fn, a1, a2)
@@ -633,21 +633,21 @@ let randomize::[debug] = fun(ref self) {
   let rnd = import("prp/rnd")
   for i in ref self {
     if i equals _:int {
-      i = rnd.between(i.[max],i.[min])
-    }elif i equals _:bool {
+      i = rnd.between(i.[max], i.[min])
+    } elif i equals _:bool {
       i = rnd.boolean()
     }
   }
   self
 }
 
-let x = (a=1,b=true,c="hello")
-let y = x.randomize
+let x = (a=1, b=true, c="hello")
+let y = x.randomize()
 
-assert x.a==1 and x.b==true and x.c=="hello"
-cover  y.a!=1
-cover  y.b!=true
-assert y.c=="hello"  // string is not supposed to mutate in randomize()
+assert x.a == 1 and x.b == true and x.c == "hello"
+cover y.a != 1
+cover y.b != true
+assert y.c == "hello"  // string is not supposed to mutate in randomize()
 ```
 
 
@@ -673,23 +673,23 @@ Any call to a function or tuple outside requires a prior `import` statement.
 
 ```
 // file: src/my_fun.prp
-let fun1    = fun(a,b) { a+b }
-let fun2    = fun(a) {
+fun fun1(a, b) { a + b }
+fun fun2(a) {
   let inside = fun() { 3 }
   a
 }
-let another = fun(a) { a }
+fun another(a) { a }
 
 let mytup = (
-  ,call3 = fun() { puts "call called" }
+  call3 = fun() { puts "call called" }
 )
 ```
 
 ```
 // file: src/user.prp
 a = import("my_fun/*fun*")
-a.fun1(a=1,b=2)         // OK
-a.another(a=1,2)        // compile error, 'another' is not an imported function
+a.fun1(a=1, b=2)        // OK
+a.another(a=1, 2)       // compile error, 'another' is not an imported function
 a.fun2.inside()         // compile error, `inside` is not in top scope variable
 
 let fun1 = import("my_fun/fun1")
@@ -697,7 +697,7 @@ lec fun1, a.fun1
 
 x = import("my_fun/mytup")
 
-x.call3()                // prints call called
+x.call3()               // prints call called
 ```
 
 The `import` points to a file [setup code](06b-instantiation.md#setup-code)
@@ -760,18 +760,18 @@ reference (not copy) an existing register in the call hierarchy.
 
 The syntax of `regref` is similar to `import` but the semantics are very different.
 While `import` looks through Pyrope files, `regref` looks through the instantiation
-hierarchy for matching register names. `regdef` only can get a reference to a
+hierarchy for matching register names. `regref` only can get a reference to a
 register, it can not be used to import functions or variables.
 
 
 ```
-let do_increase = proc() {
+mod do_increase() {
   reg counter = 0
 
   counter:u32:[wrap] = counter + 1
 }
 
-let do_debug = proc() {
+mod do_debug() {
   let cntr = regref("do_increase/counter")
 
   puts "The counter value is {}", cntr
@@ -806,32 +806,32 @@ set a different value for each uart base register.
 ```
 // file remote.prp
 
-let xxx = proc(some,code) {
+mod xxx(some, code) {
   reg uart_addr:u32 = _
   assert 0x400 > uart_addr >= 0x300
 }
 
 // file local.prp
-let setup_xx = proc() {
+mod setup_xx() {
   var xx = regref("uart_addr") // match xxx.uart_addr if xxx is in hierarchy
   var index = 0
   for val in ref xx {          // ref does not allow enumerate
-    val = 0x300+index*0x10     // sets uart_addr to 0x300, 0x310, 0x320...
+    val = 0x300 + index * 0x10 // sets uart_addr to 0x300, 0x310, 0x320...
     index += 1
   }
 }
 ```
 
 
-Maybe the best way to understand the `regdef` is to see the differences with
+Maybe the best way to understand the `regref` is to see the differences with
 the `import`:
 
 * Instantiation vs File hierarchy
   + `regref` finds matches across instantiated registers.
-  + `import` traverses the file/directory hierarchy to find one matche.
+  + `import` traverses the file/directory hierarchy to find one match.
 * Success vs Failure
   + `regref` keeps going to find all the matches, and it is possible to have a zero matches
-  + `import` stops at the first match, and a compile error is generated if there is no match.
+  + `import` stops at the first match, and a compile error is generated if there is no match or multiple matches.
 
 
 ### Mocking library
@@ -845,7 +845,7 @@ or register reference.
 
 ```
 let bpred = ( // complex predictor
-  ,let taken = fun(){ self.some_table[som_var] >=0 }
+  taken = fun() { self.some_table[som_var] >= 0 }
 )
 
 test "mocking taken branches" {
@@ -871,11 +871,11 @@ ambiguity.
 
 ```
 let Typ1 = (
-  ,a:string = "none"
-  ,b:u32    = 0
+  a:string = "none",
+  b:u32 = 0
 )
 
-let w      = Typ1(a="foo", b=33)  // OK
+let w = Typ1(a="foo", b=33)       // OK
 let x:Typ1 = (a="foo", b=33)      // OK, same as before
 
 let v:Typ1 = Typ1(a="foo", b=33)  // OK, but redundant Typ1
@@ -883,9 +883,9 @@ let y:Typ1 = ("foo", 33)          // OK, because no conflict by type
 
 var z:Typ1 = _                    // OK, default field values
 cassert z.a == "none" and z.b == 0
-z = ("foo",33)
+z = ("foo", 33)
 
-cassert v==w==x==y==z
+cassert v == w == x == y == z
 ```
 
 Pyrope allows a setter method to intercept assignments or construction. The same
@@ -897,27 +897,27 @@ respect the declaration order.
 
 ```
 let Typ2 = (
-  ,a:string = "none"
-  ,b:u32    = 0
-  ,setter = proc(ref self, a, b) { self.a = a ; self.b = b }
+  a:string = "none",
+  b:u32 = 0,
+  setter = mod(ref self, a, b) { self.a = a; self.b = b }
 )
 
 var x:Typ2 = (a="x", b=0)
 var y:Typ2 = (a="x", b=0)
 
 x["hello"] = 44
-y = ("hello",44)
-cassert x==y
+y = ("hello", 44)
+cassert x == y
 ```
 
 Tuples can be multi-dimensional, and the index can handle multiple indexes at once.
 
 ```
 let Matrix8x8 = (
-  ,data:[8][8]u16 = _
-  ,setter = fun(ref self, x:int(0,7), y:int(0,7), v:u16) {
+  data:[8][8]u16 = _,
+  setter = fun(ref self, x:int(0, 7), y:int(0, 7), v:u16) {
     self.data[x][y] = v
-  } ++ fun(ref self, x:int(0,7), v:u16) {
+  } ++ fun(ref self, x:int(0, 7), v:u16) {
     for ent in ref data[x] {
       ent = v
     }
@@ -931,7 +931,7 @@ let Matrix8x8 = (
 let m:Matrix8x8 = _
 cassert m.data[0][3] == 0
 
-m[1,2] = 100
+m[1, 2] = 100
 cassert m.data[1][2] == 100
 m[1] = 3
 cassert m.data[1][2] == 3
@@ -939,7 +939,7 @@ m[4][5] = 33
 cassert m.data[4][5] == 33
 
 m[1] = 40
-cassert m[1] == (3,40,3,3,3,3,3,3)
+cassert m[1] == (3, 40, 3, 3, 3, 3, 3, 3)
 ```
 
 The default `getter`/`setter` allows for indexing each of the dimentions and returns
@@ -948,18 +948,17 @@ which to pick.
 
 ```
 let Matrix2x2 = (
-  ,data:[2][2]u16 = _
-  ,getter = fun(ref self, x:int(0,2), y:int(0,2)) {
+  data:[2][2]u16 = _,
+  getter = fun(ref self, x:int(0, 2), y:int(0, 2)) {
     self.data[x][y] + 1
   }
-
 )
 
 let n:Matrix2x2 = _
 n.data[0][1] = 2      // default setter
 
 cassert n[0][1] == 3  // getter does + 1
-cassert n[0] == (0,3) // compile error, no getter for fun(ref self, x)
+cassert n[0] == (0, 3) // compile error, no getter for fun(ref self, x)
 ```
 
 The symmetric getter method is called whenever the tuple is read. Since each
@@ -968,16 +967,16 @@ any variable/field. The same array rule applies to the getter.
 
 ```
 let My_2_elem = (
-  ,data:[2]string = _
-  ,setter = proc(ref self, x:uint(0..<2), v:string) {
+  data:[2]string = _,
+  setter = mod(ref self, x:uint(0..<2), v:string) {
     self.data[x] = v
-  } ++ proc(ref self, v:My_2_elem) {
+  } ++ mod(ref self, v:My_2_elem) {
     self.data = v.data
-    } ++ proc(ref self) { // default _ assignment
-      self.data = _
-    }
-  ,getter = fun(self)         { self.data    }
-         ++ fun(self, i:uint) { self.data[i] }
+  } ++ mod(ref self) { // default _ assignment
+    self.data = _
+  },
+  getter = fun(self) { self.data }
+        ++ fun(self, i:uint) { self.data[i] }
 )
 
 var v:My_2_elem = _
@@ -1000,15 +999,14 @@ set/returned.
 
 ```
 let some_obj = (
-  ,a1:string
-  ,a2 = (
-    ,_val:u32 = _                               // hidden field
-
-    ,getter=fun(self) { self._val + 100 }
-    ,setter=proc(ref self, x) { self._val = x+1 }
-  )
-  ,setter = proc(ref self, a,b){                  // setter
-    self.a1      = a
+  a1:string,
+  a2 = (
+    _val:u32 = _,                              // hidden field
+    getter = fun(self) { self._val + 100 },
+    setter = mod(ref self, x) { self._val = x + 1 }
+  ),
+  setter = mod(ref self, a, b) {                 // setter
+    self.a1 = a
     self.a2._val = b
   }
 )

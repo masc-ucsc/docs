@@ -104,24 +104,24 @@ auto max_gap_count(std::vector<int> nums) {
 let max_gap_count = fun(nums) {
   let max  = import("std").max
   let sort = import("std").sort
-  let adjacent_transform = fun(a,num,f) {
-    var res:[] = _
+  let adjacent_transform = fun(a, num, f) {
+    var res:[?] = _
     for i in 0..<a.length step num {
       res ++= f(a[i..+num])
     }
-    return res
+    res
   }
-  let count = fun(a,b) {
+  let count = fun(a, b) {
     var r = 0
     for i in a {
       r += 1 when i == b
     }
-    return r
+    r
   }
 
-  return numbers
-     |> sort(fun(a,b) { a<b })
-     |> adjacent_transform(num=2, fun(a,b) { a-b } )
+  numbers
+     |> sort(fun(a, b) { a < b })
+     |> adjacent_transform(num=2, fun(a, b) { a - b })
      |> fun(a) { count(a, a.max) }
 }
 ```
@@ -146,8 +146,8 @@ func add<T:Numeric>(a:T, b:T) -> T { a + b }
 ```
 
 ```
-let add = fun(a,b) { a + b }            // OK, no constrains
-let add = fun<T:int>(a:T,b:T) { a + b } // constrain both to have same type
+let add = fun(a, b) { a + b }            // OK, no constrains
+let add = fun<T:int>(a:T, b:T) { a + b } // constrain both to have same type
 ```
 
 When a protocol defines an interface, in Swift:
@@ -170,15 +170,15 @@ func print_share_info<T:Shape>(_ s:T) {
 In Pyrope:
 ```
 let Shape = (
-  ,name:fun(self)->(_:string)    = _
-  ,area:fun(self)->(_:Float)     = _  // NOTE: Pyrope does not have float type
-  ,perimeter:fun(self)->(_:Float)= _
+  name = fun(self) -> (result:string) { _ },    // undefined method
+  area = fun(self) -> (result:float) { _ },     // NOTE: Pyrope does not have float type
+  perimeter = fun(self) -> (result:float) { _ }
 )
 
-let Rectangle:(...Shape,...OtherAPI) = (...some_code_here)
+let Rectangle:(...Shape, ...OtherAPI) = (...some_code_here)
 let Circle:Shape = (...some_code_here)
 
-let print_share_info = fun(s:Shape) { }
+let print_share_info = fun(s:Shape) { puts "Shape: {s.name()}" }
 ```
 
 
@@ -216,16 +216,16 @@ A Rust style Pyrope equivalent:
 
 ```
 let AnObject = (
-  ,v:i32 = _
+  v:i32 = _
 )
 
-let f1 = proc(ref self:AnObject) -> :i32 { // unnamed output tuple
+let f1 = fun(ref self:AnObject) -> (result:i32) { // named output tuple
   let res = self.v
   self.v += 1
-  return res
+  result = res
 }
-let f2 = fun(self:AnObject) -> :i32 {
-  return self.v
+let f2 = fun(self:AnObject) -> (result:i32) {
+  result = self.v
 }
 ```
 
@@ -233,12 +233,12 @@ A more Pyrope style equivalent:
 
 ```
 let AnObject = (
-  ,v:i32 = _
-  ,f1 = proc(ref self) -> (res:i32) {
+  v:i32 = _,
+  f1 = fun(ref self) -> (res:i32) {
     res = self.v
     self.v += 1
-  }
-  ,f2 = fun(self) -> :i32 { self.v }
+  },
+  f2 = fun(self) -> (result:i32) { result = self.v }
 )
 ```
 
@@ -261,15 +261,15 @@ Matlab has a convenient multi-dimensional array or array initialization. It
 does not require comma. E.g: `a = [a b 100 c]` is valid Matlab.
 
 
-Pyrope requires commas to distinguish from multi-line statements, hence `a = [a,b,100,c]`
+Pyrope requires commas to distinguish from multi-line statements, hence `a = (a, b, 100, c)`
 To initialize a multi-dimensional array, it follows other languages syntax, but
 in Pyrope both `()` and `[]` are allowed and have the same meaning.
 
 ```
-let x = [[1,2],[3,4]]
-assert x == ((1,2),[3,4])
-assert x[0,1] == 2 == x[0][1]
-assert x[1,0] == 3 == x[1][0]
+let x = ((1, 2), (3, 4))
+assert x == ((1, 2), (3, 4))
+assert x[0, 1] == 2 == x[0][1]
+assert x[1, 0] == 3 == x[1][0]
 ```
 
 ## Go
@@ -293,17 +293,18 @@ In Pyrope:
 ```
 import std as std
 
-fun larger(a:[]string, b:[]string) -> (:[]string) {
-  let strlen := std.strlen(a)
+fun larger(a:[?]string, b:[?]string) -> (result:[?]string) {
+  let strlen = std.strlen(a)
   if strlen > std.strlen(b) {
-    return a
+    result = a
+  } else {
+    result = b
   }
-  return b
 }
 
 // Using attributes (bits != strlen, but works too)
-fun larger(a:[]string, b:[]string) -> (:[]string) {
-  if a.[bits] > b.[bits] { a }else{ b }
+fun larger(a:[?]string, b:[?]string) -> (result:[?]string) {
+  result = if a.[bits] > b.[bits] { a } else { b }
 }
 ```
 

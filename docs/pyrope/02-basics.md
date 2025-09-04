@@ -45,7 +45,7 @@ the binary encoding.
 0sb0?0          // 0 or 2 in decimal
 ```
 
-The Verilog high impedance `z` is not supported. A `bus` construct must be used instead.
+The Verilog high impedance `z` is not supported. An explicit `bus` construct must be used instead.
 
 Like in many HDLs, Pyrope has unknowns `?`. The x-propagation is a source of
 complexity in most hardware models. Pyrope has `x` or `?` to be compatible with
@@ -66,9 +66,10 @@ E.g: `0sb? | 1` is `1` but `nil | 1` is an assertion error.
 
 
 Notice that `nil` is a state in the integer basic type, it is not a new type by
-itself, it does not represent an invalid pointer, but rather an invalid integer. Also
-important is that the compiler will guarantee that all the `nil` are eliminated
-at compile time or a compile error is generated.
+itself, it does not represent an invalid pointer, but rather an invalid
+integer. Also important is that the compiler will guarantee that all the `nil`
+arithmetic or decision uses are eliminated at compile time or a compile error
+is generated.
 
 
 ### Strings
@@ -90,18 +91,16 @@ b = 'simpler here'
 * `\uNNNN`: hexadecimal 16-bit Unicode character UTF-8 encoded (4 digits)
 
 
-Pyrope allows string interpolation only when double quote is used.
-Nevertheless, when string interpolation is used, the formatting guidelines are
-not allowed. The style is like C++ fmt::format which allows an identifier. When
-the identifier is provided the string is processed accordingly.
+Pyrope allows string interpolation only when double quote is used (`"bla {expression:format_style} bla"`).
+The format style is like C++23 std::format.
 
 ```
 let num       = 2
 let color     = "blue"
 let extension = "s"
 
-let txt1 = "I have {num} {color} potato{extension}"
-let txt2 = format('I have {:d} {} potato{} ', num, color, extension)
+let txt1 = "I have {num:d} {color} potato{extension}"
+let txt2 = string("I have {:d} {} potato{}", num, color, extension)
 cassert txt1 == txt2 == "I have 2 blue potatos"
 
 let txt3 = 'I have {num}'         // single quote does not do interpolation
@@ -112,7 +111,7 @@ Integers and strings can be converted back and forth:
 
 ```
 var a:string = "127"
-var b:int    = a     // same as var b = int(a)
+var b:int = a        // same as var b = int(a)
 var c:string = b     // same as var c = string(b)
 assert a == c
 assert b == 0x7F
@@ -128,9 +127,10 @@ expressions. In Pyrope, spaces do not have meaning, and newlines combined with
 the first token after newline is enough to decide the end of statement.
 
 
-By looking at the first character after a new line, it is possible to know if
-the rest of the line belongs to the previous statement or it is a new
-statement.
+By looking at the first character after a new line and the last one the
+previous line, it is possible to know if the rest of the line belongs to the
+previous statement or it is a new statement.
+
 
 If the line starts with an alphanumeric (`[a-z0-9]` that excludes operators
 like `or`, `and`) value or an open parenthesis (`(`), the rest of the line
@@ -160,7 +160,7 @@ An identifier is any non-reserved keyword that starts with an underscore or an
 alphabetic character. Since Pyrope is designer to support any synthesizable
 Verilog automatic translation, any sequence of characters between backticks
 (\`) can form a valid identifier. The identifier uses the same escape sequence
-as strings. 
+as strings.
 
 ```
 `foo is . strange!\nidentifier` = 4
@@ -194,12 +194,12 @@ a = 1 ; b = 2
 ## Printing and debugging
 
 Printing messages is useful for debugging. `puts` prints a message and the string
-is formatted using the c++20 fmt format. There is an implicit newline printed.
+is formatted using the c++23 std::format. There is an implicit newline printed.
 The same without a newline can be achieved with print.
 
 ```
 a = 1
-puts "Hello a is {}", a
+puts "Hello a is {a}"
 ```
 
 Pyrope does string interpolation, and it has attributes to access line of code
@@ -209,10 +209,10 @@ easier tracing.
 
 
 ```
-a = 1                                            // file foo line 3
-puts "{}:{} a:{} tracing a", a.[file], a.[loc], a
-puts "{a.[file]}:{a.loc} a:{a} tracing a"        // Same as previous
-dbg a, "tracing a"
+a = 1
+
+puts "{}:{} a:{} tracing a", a::[file], a::[loc], a
+puts "{a::[file]}:{a::[loc]} a:{a} tracing a"        // Same
 ```
 
 The previous statements print "foo:3 a:1 tracing a" in the 3 cases. The line of
@@ -257,43 +257,36 @@ behavior of the synthesized code and it is considered a non-side-effect lambda
 call. This allows to have `puts` calls in `functions`.
 
 
-## Functions and procedures
+## Lambda or Routines
 
-Pyrope only supports anonymous lambdas. A lambda can be assigned to a variable,
-and it can be called as most programmers expect. [Lambda
-section](06-functions.md) has more details on the allowed syntax.
+
+Pyrope only supports anonymous lambdas, but the lambdas can have attributes that restrict
+the lambda functionality to combinational only (`comb` or `fun`), pipeline
+stages that have all the outputs with the same dela (`pipe`), or lambdas that connect
+multiple combinational or pipeline stages but require explicit timing use (`flow`) to connect
+operations. [Lambda section](06-functions.md) has more details on the allowed syntax.
 
 
 ```
-var f = fun(a,b) { a + b }
+var f = fun(a, b) { a + b }
 ```
 
 Pyrope naming for consistency:
 
-* `lambda` is any sequence of statements grouped in a code block that can be
-  assigned to a variable and called to execute later.
+* `fun` or `comb` is pure combinational logic (zero cycles)
 
-* `function` is a lambda with only combination statements without non-Pyrope
-  calls.
+* `pipe[N]` is a fixed N-cycle pipeline
 
-* `procedure` is a lambda that can have combination like function but also
-  non-combinational (register/memories). Procedures are a superset of functions.
+* `pipe[A..=B]` is a flexible A-to-B cycle pipeline
 
-* `method` is a lambda (`function` or `procedure`) that updates another
-  variable.  The first argument is an explicit `self`.
+* `async` is a reserved keyword for future asynchronous pipeline stages.
 
-* `module` is a lambda that has a physical instance. Lambdas are either inlined
-  or modules.
+* `flow` is a module with arbitrary internal pipelining, but mostly connecting blocks, no combinational logic
 
+* `comb` or `pipe` that uses a `self` parameter is also called a method
 
-lambda are not only restricted to Pyrope code. It is possible to interface with
-non-Pyrope (C++) code, but the calls should respect the same
-`procedure`/`function` definition. A C++ `function` can not update the C++
-internal state or generate output because the simulation/compiler is allowed to
-call it multiple times. This is not the case for C++ `procedure`.
 
 ## Evaluation order
-
 
 Statements are evaluated one after another in program order. The main source of
 conflicts come from expressions.
@@ -301,7 +294,7 @@ conflicts come from expressions.
 
 The expression evaluation order is important if the elements in the expression
 can have side effects. Pyrope constrains the expressions so that no matter the
-evaluation order, the synthesis result is the same. 
+evaluation order, the synthesis result is the same.
 
 
 Languages like C++11 do not have a defined order of evaluation for
@@ -325,18 +318,10 @@ expressions like `and_then`, `or_else`, or control expressions (`if/else`,
 have no side-effects, and hence the evaluation order is not important.
 
 
-A `procedure` is an lambda that can update state internally. It can be through
-a C++ API call, or some synthesizable state. As such, only one `procedure` call
-can exist per expression.
+A `pipe` can update state internally and has one or more cycle delays. As such,
+`pipe` statements can do many calls to `fun`/`comb` lambdas, but not to other
+`pipe` lambdas. `pipe` lambdas can only be called inside `flow` lambdas.
 
-
-```
-var a = fcall() + 1               // OK
-var x = pcall() + a               // OK, proc combined with variable read
-var b = fcall(a) + 10 + pcall(a)  // OK
-var d = t.pcall() + pcall2(b)     // compile error, multiple procedure calls
-var y = t.pcall() + t.pcall()     // compile error, multiple procedure calls
-```
 
 
 Expressions also can have a code blocks (`{  }`) as long as there are no
@@ -345,7 +330,7 @@ side-effects. In a way, expression code blocks can be seen as a type of
 
 
 ```
-var a = {var d=3 ; last d+1} + 100 // OK
+var a = {var d=3 ; d+1} + 100 // OK
 assert a == (3+1+100)
 assert a == {3+1+100}  // same, expression evaluated as 104 and returned
 ```
@@ -353,9 +338,9 @@ assert a == {3+1+100}  // same, expression evaluated as 104 and returned
 
 For most expressions, Pyrope is more restrictive than other languages because
 it wants to be a fully defined deterministic independent of implementation. To
-handle logging/messaging in `function` calls, Pyrope treats `puts` as a special
+handle logging/messaging in `fun` calls, Pyrope treats `puts` as a special
 instruction. Pyrope runtime delays the puts output until the end of the cycle.
-Section (Printing)[02-basics.md#printing] has more details.
+See the Printing section above for more details.
 
 
 To illustrate the evaluation order, it is useful to see a Verilog example. The
@@ -431,14 +416,14 @@ statements, or the `and_then` and `or_else` operations must be used.
 
 === "Incorrect code with side-effects"
     ```
-    var r1 = pcall1() or  pcall2()  // compile error, non-deterministic
+    var r1 = mcall1() or  mcall2()  // compile error, non-deterministic
 
 
-    var r2 = pcall1() and pcall2()  // compile error, non-deterministic
+    var r2 = mcall1() and mcall2()  // compile error, non-deterministic
 
 
-    var r3 = pcall1() +   pcall2()  // compile error
-    // compile error only if pcall1/pcall2 can have side effects
+    var r3 = mcall1() +   mcall2()  // compile error
+    // compile error only if mcall1/mcall2 can have side effects
     ```
 
 === "Alternative 1"

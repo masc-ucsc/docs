@@ -555,7 +555,7 @@ let foo::[attr1=2] = 3
 var foo2 = foo
 cassert foo2.[attr1] == 2
 
-let foo3 = foo@[..]
+let foo3 = foo#[..]
 cassert foo3 !has _::[attr1]
 
 var xx = 4
@@ -582,8 +582,8 @@ with a `shl` operator.
 
 === "Pyrope"
     ```
-    foo@[1,2] = xx
-    yy = foo@[5] + xx@[1..<4]
+    foo#[1,2] = xx
+    yy = foo#[5] + xx#[1..<4]
     ```
 
 === "LNAST direct"
@@ -673,7 +673,7 @@ with a `shl` operator.
       ref ___5
     ```
 
-It is possible to use a `foo@sext[range]` to perform a bit selection with sign
+It is possible to use a `foo#sext[range]` to perform a bit selection with sign
 extension. The `sext` LNAST node is equivalent to the Lgraph `sext` that has 2
 inputs. The variable and from what bit to perform sign-extension. This means
 that the LNAST translation needs a `get_mask` and a `sext` node. The `sext`,
@@ -683,11 +683,11 @@ operations.
 
 === "Pyrope"
     ```
-    let t1 = foo@sext[..=4]
-    let t2 = foo@|[..=4]
-    let t3 = foo@&[..=4]
-    let t4 = foo@^[..=4]
-    let t5 = foo@+[..=4]
+    let t1 = foo#sext[..=4]
+    let t2 = foo#|[..=4]
+    let t3 = foo#&[..=4]
+    let t4 = foo#^[..=4]
+    let t5 = foo#+[..=4]
     ```
 
 === "LNAST"
@@ -862,7 +862,7 @@ not
   ref ___0
 ```
 
-Logical shift right (`x = a@[..] >> b`):
+Logical shift right (`x = a#[..] >> b`):
 ```lnast
 get_mask
   ref ___0
@@ -1314,7 +1314,7 @@ the `elif` conditions.
     let tmp1 = a<3
     let tmp2 = a>40
     let tmp3 = 1<<(tmp1,tmp2)
-    optimize tmp3@+[..]<=1        // at most one bit set
+    optimize tmp3#+[..]<=1        // at most one bit set
 
     if tmp1 {
       y = 10

@@ -21,70 +21,52 @@ which lambda to call.
     compiler versions. These are features that Pyrope enables.
 
 
-Pyrope divides the lambdas into two categories: `functions` and `procedures`.
-Functions operate only over combinational logic. They can not have any
-synthesis side-effect. This means the function outputs are only a function of
-the function inputs. Any external call can only affect `debug` statements not
-the synthesizable code. `functions` resemble `pure functions` in normal
-programming languages. In pure functions, the function results depend only on
-the input parameters. In Pyrope, they are allowed to have side effects on debug
-code (non-synthesizable).
+Pyrope divides the lambdas into three categories: `functions`, `pipelines`, and `modules`.
 
+- `functions` (fun) operate only over combinational logic. They can not have any
+  synthesis side-effect. This means the function outputs are only a function of
+  the function inputs. Any external call can only affect `debug` statements not
+  the synthesizable code. `functions` resemble `pure functions` in normal
+  programming languages.
 
-Non-function lambdas are called `procedures` or `methods`. The only difference
-between `procedures` and `methods` is that a `method` has `self` as the first
-argument in the output which allows to mutable the called tuple.
+- `pipelines` (pipe) are fixed or variable latency pipelines with automatic timing.
+  They use `await[N]` to specify pipeline timing.
 
+- `modules` (mod) allow arbitrary internal pipelining with explicit timing control.
 
-Lambdas also can be divided into `modules` and non-`modules`. A `module` is a
-lambda visible at synthesis call hierarchy. A `non-module` is an inlined or
-flattened `lambda`.
-
-
-`functions` are combinational logic, but `procedures` can have inputs and/or
-outputs registerd or just be a generic pure combinational function.
+Methods are functions/pipelines/modules that have `self` as the first
+argument which allows operating on tuples.
 
 === "Combinational (fun)"
     ```
-    let add=fun(a,b)->(res) {
-      res = a+b
+    let add = fun(a, b) -> (result) {
+      result = a + b
     }
 
-    fun add(a,b)->(res) {  // Same as let add=fun(a,b)->(res)
-      res = a+b
-    }
-    ```
-
-=== "Combinational (proc)"
-    ```
-    let add=proc(a,b)->(res) {  // nicer to use fun, but proc works
-      res = a+b
-    }
-
-    proc add(a,b)->(res) {  // same
-      res = a+b
+    fun add(a, b) -> (result) {  // Same as let add = fun(a, b) -> (result)
+      result = a + b
     }
     ```
 
-=== "Inputs Registerd (proc)"
+=== "Pipeline (pipe)"
     ```
-    let add=proc(reg a, reg b)->(res) {
-      res = a+b
+    pipe[3] multiply(a, b) -> (result) {
+      result = a * b
     }
 
-    proc add(reg a, reg b)->(res) { // same
-      res = a+b
+    pipe[1..=3] add_pipe(a, b) -> (result) {
+      result = a + b
     }
     ```
 
-=== "Outputs Registerd (proc)"
+=== "Module with registers (mod)"
     ```
-    let add=proc(a, b)->(reg res) {
-      res = a+b
+    mod counter(enable) -> (reg count) {
+      count += 1 when enable
     }
 
-    proc add(a, b)->(reg res) { // same
-      res = a+b
+    mod add_reg(a, b) -> (reg result) {
+      result = a + b
     }
     ```
 
@@ -98,18 +80,17 @@ declaration is also valid, but it is syntax sugar and equivalent to `let name =
 fun`.
 
 ```
-let a_3   = {   3 }      // just scope, not a lambda. Scope is evaluate now
+let a_3 = { 3 }          // just scope, not a lambda. Scope is evaluate now
 let a_fun = fun() { 4 }  // when a_fun is called 4 is returned
 
-let fun3 = fun(){ 5 }    // public lambda that can be imported by other files
+let fun3 = fun() { 5 }   // public lambda that can be imported by other files
 
-let x = a_3()            // compile error, explicit call not posible in scope
+let x = a_3()            // compile error, explicit call not possible in scope
 let x = a_fun()          // OK, explicit call needed when no arguments
 
-assert a_3() equals 3
+assert a_3 == 3
 assert a_fun equals _:fun()
-assert a_fun() equals 4
-assert a_fun() == 4      // calls to eval the function
+assert a_fun() == 4
 ```
 
 The lambda definition has the following fields:
@@ -142,39 +123,39 @@ The lambda definition has the following fields:
 
 ```
 var add:fun(...x) = _
-add = fun(...x) { x.0+x.1+x.2 }      // no IO specified
-add = fun(a,b,c){ a+b+c }            // constrain inputs to a,b,c
-add = fun(a,b,c){ a+b+c }            // same
-add = fun(a:u32,b:s3,c){ a+b+c }     // constrain some input types
-add = fun(a,b,c) -> (x:u32){ a+b+c } // constrain result to u32
-add = fun(a,b,c) -> (res){ a+b+c }   // constrain result to be named res
-add = fun(a,b:a,c:a){ a+b+c }        // constrain inputs to have same type
-add = fun<T>(a:T,b:T,c:T){ a+b+c }   // same
+add = fun(...x) { x.0 + x.1 + x.2 }     // no IO specified
+add = fun(a, b, c) { a + b + c }        // constrain inputs to a,b,c
+add = fun(a, b, c) { a + b + c }        // same
+add = fun(a:u32, b:s3, c) { a + b + c } // constrain some input types
+add = fun(a, b, c) -> (x:u32) { a + b + c } // constrain result to u32
+add = fun(a, b, c) -> (result) { a + b + c } // constrain result to be named result
+add = fun(a, b:a, c:a) { a + b + c }    // constrain inputs to have same type
+add = fun<T>(a:T, b:T, c:T) { a + b + c } // same
 
-x = 2
-var add2:fun2(a) = _
-add2 = fun       (a){   x + a }    // compile error, undefined 'x'
-add2 = fun[     ](a){   x + a }    // compile error, undefined 'x'
-add2 = fun[x    ](a){   x + a }    // explicit capture x
-add2 = fun[foo=x](a){ foo + a }    // capture x but rename to something else
+let x = 2
+var add2:fun(a) = _
+add2 = fun       (a) { x + a }    // compile error, undefined 'x'
+add2 = fun[     ](a) { x + a }    // compile error, undefined 'x'
+add2 = fun[x    ](a) { x + a }    // explicit capture x
+add2 = fun[foo=x](a) { foo + a }  // capture x but rename to something else
 
 var y = (
-  ,val:u32 = 1
-  ,inc1 = fun (ref self) { self.val = u32(self.val + 1) }
+  val:u32 = 1,
+  inc1 = fun (ref self) { self.val = u32(self.val + 1) }
 )
 
 let my_log::[debug] = fun (...inp) {
-  print "loging:"
+  print "logging:"
   for i in inp {
     print " {}", i
   }
   puts
 }
 
-let f = fun<X>(a:X,b:X){ a+b }   // enforces a and b with same type
-assert f(33:u22,100:u22)
+let f = fun<X>(a:X, b:X) { a + b }   // enforces a and b with same type
+assert f(33:u22, 100:u22) == 133
 
-my_log a, false, x+1
+my_log(a, false, x + 1)
 ```
 
 ## Argument naming
@@ -209,8 +190,8 @@ other languages. Notice the different order in UFCS vs pipe, and also that in
 the pipe the argument tuple is concatenated.
 
 ```
-let div  = fun (self,b) { self / b }  // named input tuple
-let div2 = fun (...x){ x.0 / x.1 }    // unnamed input tuple
+let div  = fun (self, b) { self / b }  // named input tuple
+let div2 = fun (...x) { x.0 / x.1 }    // unnamed input tuple
 
 let noarg = fun () { 33 }         // explicit no args
 
@@ -218,25 +199,25 @@ assert 33 == noarg()              // () needed to call
 
 assert noarg // compile error, `noarg()` needed for calls without arguments
 
-a=div(3  , 4  , 3)       // compile error, div has 2 inputs
-b=div(self=8, b=4)       // OK, 2
-c=div self=8, b=4        // compile error, parenthesis needed for complex call
-d=(self=8).div(b=2)      // OK, 4
-d=(8).div(b=2)           // OK, 4 . self does not need to be named
-d=8.div(2)               // OK, single character inputs no need to be named
-e=(self=8).div b=2       // compile error, parenthesis needed for complex call
+a = div(3, 4, 3)         // compile error, div has 2 inputs
+b = div(self=8, b=4)     // OK, 2
+c = div(self=8, b=4)     // compile error, parenthesis needed for complex call
+d = (self=8).div(b=2)    // OK, 4
+d = (8).div(b=2)         // OK, 4 . self does not need to be named
+d = 8.div(2)             // OK, single character inputs no need to be named
+e = (self=8).div(b=2)    // compile error, parenthesis needed for complex call
 
-h=div2(8, 4, 3)          // OK, 2 (3rd arg is not used)
-i=8.div2(4,3)            // compile error, no self in div2
+h = div2(8, 4, 3)        // OK, 2 (3rd arg is not used)
+i = 8.div2(4, 3)         // compile error, no self in div2
 
-j=(8,4)  |> div2         // OK, 2, same as div2(8,4)
-j=(8,4)  |> div2()       // OK, 2, same as div2(8,4)
-k=(4)    |> div2(8)      // OK, 2, same as div2(8,4)
-l=(4,33) |> div2(8)      // OK, 2, same as div2(8,4,33)
-m=4      |> div2 8       // compile error, parenthesis needed for complex call
+j = (8, 4) |> div2       // OK, 2, same as div2(8,4)
+j = (8, 4) |> div2()     // OK, 2, same as div2(8,4)
+k = (4) |> div2(8)       // OK, 2, same as div2(8,4)
+l = (4, 33) |> div2(8)   // OK, 2, same as div2(8,4,33)
+m = 4 |> div2(8)         // compile error, parenthesis needed for complex call
 
-n=div((8,4), 3)          // compile error: (8,4)/3 is undefined
-o=(8,4).div2(1)          // compile error: (8,4)/1 is undefined
+n = div((8, 4), 3)       // compile error: (8,4)/3 is undefined
+o = (8, 4).div2(1)       // compile error: (8,4)/1 is undefined
 ```
 
 
@@ -247,23 +228,23 @@ but only explicit one as explained later.
 
 ```
 var tup = (
-  ,let f1 = fun(self) { 1 }
+  f1 = fun(self) { 1 }
 )
 
-let f1 = fun (self){ 2 }   // compile error, f1 shadows tup.f1
-let f1 = fun (){ 3 }       // OK, no
+let f1 = fun (self) { 2 } // compile error, f1 shadows tup.f1
+let f1 = fun () { 3 }      // OK, no self
 
-assert f1()         != 0  // compile error, missing argument
-assert f1(tup)      != 0  // compile error, f1 shadowing (tup.f1 and f1)
-assert 4.f1()       != 0  // compile error, f1 can be called for tup, so shadow
-assert tup.f1()     != 0  // compile error, f1 is shadowing
+assert f1() != 0         // compile error, missing argument
+assert f1(tup) != 0      // compile error, f1 shadowing (tup.f1 and f1)
+assert 4.f1() != 0       // compile error, f1 can be called for tup, so shadow
+assert tup.f1() != 0     // compile error, f1 is shadowing
 
 let xx = fun[tup] { tup.f1() } // OK, function restricted scope for f1
-assert xx()
+assert xx() == 1
 
 assert (4:tup).f1() == 1
-assert 4.f2()       == 3  // UFCS call
-assert tup.f1()     == 1
+assert 4.f1() == 3        // UFCS call
+assert tup.f1() == 1
 ```
 
 The keyword `self` is used to indicate that the function is accessing a tuple.
@@ -273,9 +254,9 @@ contents, a `ref self` must be passed as input.
 
 ```
 var tup2 = (
-  ,val:u8 = _
-  ,upd = proc(ref self) { self.val::[saturate] += 1 }
-  ,calc = fun(self) { self.val}
+  val:u8 = _,
+  upd = mod(ref self) { self.val::[saturate] += 1 },
+  calc = fun(self) { self.val }
 )
 ```
 
@@ -286,17 +267,17 @@ statement; (2) after a pipeline directive; (3) the variable has a getter method
 
 ```
 no_arg_fun()     // must use explicit parenthesis/called
-arg_fun 1,2      // parenthesis are optional
-arg_fun(1,2)     // OK too
-(1,2) |> arg_fun // OK too, it is after |>
+arg_fun(1, 2)    // parenthesis recommended
+arg_fun(1, 2)    // OK too
+(1, 2) |> arg_fun // OK too, it is after |>
 
 var intercepted:(
- ,field:u32
- ,getter=fun(self) { self.field + 1 }
- ,setter=fun(ref self,v ) { self.field = v }
+  field:u32,
+  getter = fun(self) { self.field + 1 },
+  setter = fun(ref self, v) { self.field = v }
 ) = 0
 
-cassert intercepted == 1  // will call get method without explicit call
+cassert intercepted == 1  // will call getter method without explicit call
 cassert intercepted.field == 0
 ```
 
@@ -338,8 +319,8 @@ var y = 3
 inc1(ref y)
 assert y == 4
 
-let banner = fun() { puts "hello"  }
-let execute_method = fun(fn:fun()->()) {  // example with explicit type for fn
+let banner = fun() { puts "hello" }
+let execute_method = fun(fn:fun() -> ()) {  // example with explicit type for fn
   fn() // prints hello when banner passed as argument
 }
 
@@ -356,15 +337,15 @@ Pyrope everything is a tuple, even the output or return from a lambda. When a
 single element is returned, it can be an unnamed tuple by omiting parenthesis.
 
 ```
-let ret1 = fun()->(a:int) { // named
+let ret1 = fun() -> (a:int) { // named
   a = 1
 }
 
-let ret2 = fun()->a:int {   // unnamed
+let ret2 = fun() -> a:int {   // unnamed
   a = 2
 }
 
-let ret3 = fun()->(a,b) {   // named
+let ret3 = fun() -> (a, b) {   // named
   a = 3
   b = 4
 }
@@ -373,13 +354,13 @@ let a1 = ret1()
 assert a1.a == 1 // NOT a1 == 1
 
 let a2 = ret2()
-assert a2 == 1   // NOT a2.a == 1
+assert a2 == 2   // NOT a2.a == 2
 
 let a3 = ret3()
-assert a3.a == 3 and a2.b == 4
+assert a3.a == 3 and a3.b == 4
 
-let (x1,x2) = ret3()
-assert x1   == 3 and x2   == 4
+let (x1, x2) = ret3()
+assert x1 == 3 and x2 == 4
 ```
 
 ## Attributes
@@ -398,10 +379,10 @@ attributes.
 
 
 ```
-let p1 = proc(a)->(res) {
+let p1 = mod(a) -> (result) {
   self.[my_zero_found] or= (a == 0)
 
-  res = a + 1
+  result = a + 1
 }
 
 let p2 = p1      // copy
@@ -415,7 +396,7 @@ test "testing p1" {
   assert p1.[my_zero_found] == false
 
   cassert p1(0) == 1
-  assert p1.my_zero_found == true
+  assert p1.[my_zero_found] == true
 
   cassert p1(50) == 51
   assert p1.[my_zero_found] == true
@@ -436,11 +417,11 @@ any `self` updates should generate a compile error.
 
 ```
 let Nested_call = (
-  ,var x = 1
-  ,let outter= proc(ref self) {  self.x = 100 ; self.inner(); self.x = 5 }
-  ,let inner = fun(self) { assert self.x == 100 }
-  ,let faulty = proc(self) { self.x = 55 } // compile error, immutable self
-  ,proc okcall(ref self) { self.x = 55 }   // equivalent to let okcall=proc
+  var x = 1,
+  outter = mod(ref self) { self.x = 100; self.inner(); self.x = 5 },
+  inner = fun(self) { assert self.x == 100 },
+  faulty = mod(self) { self.x = 55 }, // compile error, immutable self
+  okcall = mod(ref self) { self.x = 55 } // equivalent to mod okcall(ref self)
 )
 ```
 
@@ -449,8 +430,8 @@ variable return.
 
 ```
 var a_1 = (
-  ,x:u10
-  ,let f1 = fun(ref self,x)->(self) { // BOTH ref self and return self is OK
+  x:u10,
+  f1 = fun(ref self, x) -> (self) { // BOTH ref self and return self is OK
     self.x = x
     self
   }
@@ -502,9 +483,9 @@ let t1 = (a:u32)
 
 var x:t1 = (a=3)
 
-t1.double = proc(ref self) { self.a *= 2 }  // extension function
+t1.double = mod(ref self) { self.a *= 2 }  // extension function
 // previous is exactly the same as:
-// t1 = t1 ++ (double = proc(ref self) { self.a *= 2 })
+// t1 = t1 ++ (double = mod(ref self) { self.a *= 2 })
 
 var y:t1 = (a=3)
 x.double             // compile error, double method does not exit
@@ -577,17 +558,17 @@ fibonnaci implementation with and without `where` clauses. Section
 overloading.
 
 ```
-let fib1 = fun(n) where n==0 {0}
-        ++ fun(n) where n==1 {1}
-        ++ fun(n)            { fib1(n-1) + fib1(n-2) }
+let fib1 = fun(n) where n == 0 { 0 }
+        ++ fun(n) where n == 1 { 1 }
+        ++ fun(n) { fib1(n - 1) + fib1(n - 2) }
 
 assert fib1(10) == 55
 
 let fib2 = fun(n) {
-  return match n {
-    == 0 {0}
-    == 1 {1}
-    else {fib2(n-1) + fib2(n-2)}
+  match n {
+    == 0 { 0 }
+    == 1 { 1 }
+    else { fib2(n - 1) + fib2(n - 2) }
   }
 }
 

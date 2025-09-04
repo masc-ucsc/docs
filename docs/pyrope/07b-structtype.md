@@ -25,26 +25,25 @@ equivalance)[07-typesystem.md#Type_equivalence].
 
 ```
 let Animal = (
-  ,legs:int = _
-  ,name= "unnamed"
-  ,say_name = fun() { puts name }
+  legs:int = _,
+  name = "unnamed",
+  say_name = fun() { puts name }
 )
 
 let Dog = Animal ++ (
-  ,setter = proc(ref self) { self.legs = 4 }
-  ,bark = fun() { puts "bark bark" }
+  setter = fun(ref self) { self.legs = 4 },
+  bark = fun() { puts "bark bark" }
 )
 
 let Bird = Animal ++ (
-  ,seeds_eaten:int = _
-
-  ,setter = proc(ref self)  { self.legs = 2 }
-      ++ proc(ref self, a:Animal)    { self.legs = 2 ; name = "bird animal" }
-  ,eat_seeds = proc(ref self, n) { self.seeds_eaten += n }
+  seeds_eaten:int = _,
+  setter = fun(ref self) { self.legs = 2 }
+      ++ fun(ref self, a:Animal) { self.legs = 2; name = "bird animal" },
+  eat_seeds = fun(ref self, n) { self.seeds_eaten += n }
 )
 
 let Greyhound = Dog ++ ( // also extends Dog
-  ,race = fun() { puts "running fast" }
+  race = fun() { puts "running fast" }
 )
 ```
 
@@ -73,9 +72,9 @@ issue of mutable containers can not exists.
 
 
 ```
-var a_vec:[]Animal = _
-var b_vec:[]Bird = _
-var d_vec:[]Dog = _
+var a_vec:[?]Animal = _
+var b_vec:[?]Bird = _
+var d_vec:[?]Dog = _
 
 a_vec[0] = d:Dog    // OK
 a_vec[1] = b:Bird   // OK
@@ -90,13 +89,13 @@ b_vec[0] = g:Greyhound  // OK, explicit conversion
 b_vec[0] = b:Bird       // OK, 'b does b'
 b_vec[0] = a:Animal     // OK, explicit conversion
 
-let do_animal_vec = fun(a_vec:[]Animal)->(r:[]Animal) {
+let do_animal_vec = fun(a_vec:[?]Animal) -> (r:[?]Animal) {
   r = a_vec
   r[0] = d:Dog  // OK `d does r[0]`
 }
 
-var x = do_animal_vec(b_vec:[]Bird) // OK
-assert x does _:[]Animal  // not :[]Bird
+var x = do_animal_vec(b_vec:[?]Bird) // OK
+assert x does _:[?]Animal  // not :[?]Bird
 ```
 
 ### Basic types
@@ -108,10 +107,10 @@ of one does not need the field, and hence it allows to create different types:
 
 ```
 let Age = (
-  ,age:int = _
+  age:int = _
 )
 let Weight = (
-  ,weight:int = _
+  weight:int = _
 )
 
 assert Age !does Weight
@@ -176,13 +175,13 @@ overloading check.
 
 
 ```
-let fa_t:fun(a:Animal)->() = _
-let fd_t:fun(d:Dog)->() = _
+let fa_t = fun(a:Animal) { }
+let fd_t = fun(d:Dog) { }
 
-let call_animal = fun(a:Animal)->() {
+let call_animal = fun(a:Animal) {
    puts a.name // OK
 }
-let call_dog:fd_t = fun(d:Dog)->() {    // OK to add type in lhs
+let call_dog = fun(d:Dog) {    // OK
    d.bark()    // OK
 }
 
@@ -226,7 +225,7 @@ in-place with the relative order left.
 
 
 ```
-let m = fun(a:int,...x:(_:string,c:int,d), y:int)->() { 
+let m = fun(a:int, ...x:(_:string, c:int, d), y:int) { 
   assert a == 1
   assert x.0 == "here"
   assert x.1 == 2 == x.c
@@ -312,16 +311,14 @@ intercept, the lambda must be added at the head of the tuple entry.
 
 ```
 let base = (
-  ,fun1 = fun() { 1 }         // catch all
-  ,fun2 = fun() { 2 }         // catch all
-  ,fun3 = fun() { 3 }         // catch all
+  fun1 = fun() { 1 },         // catch all
+  fun2 = fun() { 2 },         // catch all
+  fun3 = fun() { 3 }          // catch all
 )
 let ext = base ++ (
-  ,fun1 =   fun (a,b){ 4 }  // overwrite allowed with extends
-  ,fun2 ++= fun (a,b){ 5 }  // append
-  ,fun2 ++= fun ()   { 6 }  // append
-  ,fun3 =   fun(a,b) { 7 } ++ base.fun3 // prepend
-  ,fun3 =   fun()    { 8 } ++ base.fun3 // prepend
+  fun1 = fun(a, b) { 4 },   // overwrite allowed with extends
+  fun2 = fun(a, b) { 5 } ++ fun() { 6 } ++ base.fun2,  // append
+  fun3 = fun(a, b) { 7 } ++ fun() { 8 } ++ base.fun3   // prepend
 )
 
 var t:ext = _
@@ -343,7 +340,7 @@ A more traditional "overload" calling the is possible by calling the lambda dire
 
 ```
 let x = base ++ (
-  ,fun1 = fun() { return base.fun1() + 100 }
+  fun1 = fun() { base.fun1() + 100 }
 )
 ```
 
@@ -390,9 +387,9 @@ every call but this result in not so maintanable code.
 
 
 ```
-var fun_list = fun(a,b){ a+b}
-fun_list ++= fun(a,b,c){ a+b+c }
-fun_list ++= fun(a,b,c,d){ a+b+c+d }
+var fun_list = fun(a, b) { a + b }
+fun_list ++= fun(a, b, c) { a + b + c }
+fun_list ++= fun(a, b, c, d) { a + b + c + d }
 
 assert fun_list.[size] == 3    // 3 lambda entries in fun_list
 
@@ -402,67 +399,69 @@ assert fun_list(1,2,4,5) == 12
 assert fun_list(1,2,4,5,6) == 18 // compile error, no function with 5 args
 
 
-fun_list ++= fun(a,b){ 100}
-assert fun_list(1,2) == 3
+fun_list ++= fun(a, b) { 100 }
+assert fun_list(1, 2) == 3
 
-fun_list = fun(a,b){ 200} ++ fun_list
-assert fun_list(1,2) == 200
+fun_list = fun(a, b) { 200 } ++ fun_list
+assert fun_list(1, 2) == 200
 ```
 
 For untyped named argument calls:
 
 ```
-var f1 = fun(a,b){ a+b+100 }
-  f1 ++= fun(x,y){ x+y+200 }
+var f1 = fun(a, b) { a + b + 100 }
+f1 ++= fun(x, y) { x + y + 200 }
 
-assert f1(a=1,b=2) == 103
-assert f1(x=1,y=2) == 203
-assert f1(  1,  2) == 103  // first in list
+assert f1(a=1, b=2) == 103
+assert f1(x=1, y=2) == 203
+assert f1(1, 2) == 103  // first in list
 ```
 
 For typed calls:
 
 ```
-var fo = fun(a:int,b:string)->(_:bool)  { true    }
-  fo ++= fun(a:int,b:int   )->(_:bool)  { false   }
-  fo ++= fun(a:int,b:int   )->(_:string){ "hello" }
+var fo = fun(a:int, b:string) -> (result:bool) { result = true }
+fo ++= fun(a:int, b:int) -> (result:bool) { result = false }
+fo ++= fun(a:int, b:int) -> (result:string) { result = "hello" }
 
-let a = fo(3,hello)
+let a = fo(3, hello)
 assert a == true
 
-let b = fo(3,300)        // first in list return bool
+let b = fo(3, 300)        // first in list return bool
 assert b == false
 
-let c:int = fo(3,300)    // compile error, no lambda fulfills constrains
-let c:string = fo(3,300)
+let c:int = fo(3, 300)    // compile error, no lambda fulfills constrains
+let c:string = fo(3, 300)
 assert c == "hello"
 ```
 
 For conditional argument calls:
 
 ```
-var f1 = fun(a,b)      where a >  40 { b+100    }
-      ++ fun(a,b)->(x) where x > 300 { b+200    } // output x
-      ++ fun(a,b)->(a) where a >  20 { b+300    } // input a
-      ++ fun(a,b)->(x) where x >  10 { b+400    } // output x
-      ++ fun(a,b)                    { a+b+1000 } // default
+var f1 = fun(a, b) where a > 40 { b + 100 }
+      ++ fun(a, b) -> (x) where x > 300 { x = b + 200 } // output x
+      ++ fun(a, b) -> (a) where a > 20 { a = b + 300 } // input a
+      ++ fun(a, b) -> (x) where x > 10 { x = b + 400 } // output x
+      ++ fun(a, b) { a + b + 1000 } // default
 
-var fun_manual = fun(a,b){  // equivalent but not as maintenable
-  if a>40 {
-    return b+100
+var fun_manual = fun(a, b) {  // equivalent but not as maintainable
+  if a > 40 {
+    b + 100
+  } elif {
+    let x = b + 200
+    if x > 300 {
+      (x=x)
+    } elif a > 20 {
+      b + 300
+    } elif {
+      let tmp = a + b
+      if tmp > 10 {
+        (a=tmp)
+      } else {
+        a + b + 1000
+      }
+    }
   }
-  let x = b + 200
-  if x>300 {
-    return (x=x)
-  }
-  if a>20 {
-    return b+300
-  }
-  let tmp = a + b
-  if tmp >10 {
-    return (a=tmp)
-  }
-  return a+b+1000
 }
 
 test "check equiv" {
@@ -492,13 +491,13 @@ let x:Param_type(int)    = (xx=130)
 Subtype polymorphism: A subtype provides functionality/api for another super type.
 ```
 let Animal = (
-  ,speak:fun(self) = _
+  speak = fun(self) { _ }
 )
-let Cat: Animal = (
-  ,speak = fun(self) { puts "meaow" }
+let Cat = Animal ++ (
+  speak = fun(self) { puts "meaow" }
 )
-let Bird: Animal = (
-  ,speak = fun(self) { puts "pio pio" }
+let Bird = Animal ++ (
+  speak = fun(self) { puts "pio pio" }
 )
 ```
 
@@ -515,14 +514,14 @@ let smallest = fun(...a) {
 
 Ad-hoc polymorphism: capacity to overload the same lambda name with different types.
 ```
-let speak = fun(a:Bird) { puts "pio pio"  } 
+let speak = fun(a:Bird) { puts "pio pio" } 
          ++ fun(a:Cat) { puts "meaow" }
 ```
 
 Coercion polymorphism: Capacity to cast a type to another
 ```
 let Type1 = (
-  ,setter = fun(ref self, a:int) {  }
+  setter = fun(ref self, a:int) { }
 )
 let a:Type1 = 33
 ```
@@ -539,22 +538,22 @@ immutable, new methods can be added like in mixin.
 
 ```
 let Say_mixin = (
-  ,say = fun(s) { puts s }
+  say = fun(s) { puts s }
 )
 
 let Say_hi_mixin = (
-  ,say_hi  = fun() {self.say("hi {}", self.name) }
-  ,say_bye = fun() {self.say("bye {}", self.name) }
+  say_hi = fun() { self.say("hi {}", self.name) },
+  say_bye = fun() { self.say("bye {}", self.name) }
 )
 
 let User = (
-  ,name:string = _
-  ,setter = proc(ref self, n:string) { self.name = n }
+  name:string = _,
+  setter = fun(ref self, n:string) { self.name = n }
 )
 
 let Mixing_all = Say_mixin ++ Say_hi_mixin ++ User
 
-var a:Mixing_all="Julius Caesar"
+var a:Mixing_all = "Julius Caesar"
 a.say_hi()
 ```
 
@@ -587,22 +586,22 @@ There are also two ways to concatenate tuples in Pyrope. `t1 ++ t2` and
 
 ```
 let Int1 = (
-  ,var counter:int:[private] = 0
-  ,add = proc(ref self, v) { self.counter += v }
-  ,get = fun(self) -> (_:int) { self.counter }
-  ,api_pending: proc(ref self, x:int) -> (o:string) = _
+  var counter:int:[private] = 0,
+  add = fun(ref self, v) { self.counter += v },
+  get = fun(self) -> (result:int) { result = self.counter },
+  api_pending = fun(ref self, x:int) -> (o:string) { _ }
 )
 
 let Int2 = (
-  ,var counter:int:[private] = 0
-  ,accumulate = proc(ref self, v) { self.counter += v ; return self.counter }
-  ,api_pending:proc(ref self, x:string) -> (o:string) = _
+  var counter:int:[private] = 0,
+  accumulate = fun(ref self, v) { self.counter += v; self.counter },
+  api_pending = fun(ref self, x:string) -> (o:string) { _ }
 )
 
-let Combined = (...Int1, ...Int2
-  ,api_pending = proc(ref self, x:int) -> (o:string) {
+let Combined = (...Int1, ...Int2,
+  api_pending = fun(ref self, x:int) -> (o:string) {
     self.add(x)
-    string(self.accumulate(self.get()))
+    o = string(self.accumulate(self.get()))
   }
 )
 ```
@@ -615,21 +614,21 @@ function is `nil`.
 
 ```
 let Interface = (
-  ,let add:fun(ref self, x) = _ // nil or undefined method
-  ,let sub = fun(ref self,x ) { self.add(-x) }
+  let add = fun(ref self, x) { _ }, // undefined method
+  let sub = fun(ref self, x) { self.add(-x) }
 )
 
 Interface.add(3)                // compile error, undefined method
 
 let My_obj = (
-  ,val1:u8 = 0
-  ,let add = fun(ref self, x) { self.val += x }
+  val1:u8 = 0,
+  let add = fun(ref self, x) { self.val += x }
 ) ++ Interface                  // OK, but not recommended
 
 let My_obj2 = (
-  ,...Interface                 // recommended
-  ,val1:u8 = 0
-  ,let add = fun(ref self, x) { self.val += x }
+  ...Interface,                 // recommended
+  val1:u8 = 0,
+  let add = fun(ref self, x) { self.val += x }
 )
 cassert My_obj equals My_obj2   // same behavioir no defined overlap fiels
 
@@ -678,23 +677,23 @@ let exclude = fun(o,...a) {
 }
 
 let Shape = (
-  ,name:string = _
-  ,area:fun (self )->(_:i32)  = _            // undefined 
-  ,increase_size:proc(ref self, x:i12) = _  // undefined 
+  name:string = _,
+  area = fun(self) -> (result:i32) { _ },            // undefined 
+  increase_size = fun(ref self, x:i12) { _ },  // undefined 
 
-  ,setter=proc(ref self, name ) { self.name = name } // implemented, use =
-  ,say_name=fun(self) { puts "name:{}", name }
+  setter = fun(ref self, name) { self.name = name }, // implemented
+  say_name = fun(self) { puts "name:{}", name }
 )
 
 let Circle = (
-  ,...exclude(Shape,'setter')
+  ...exclude(Shape, 'setter'),
   
-  ,setter        = proc(ref self) { Circle.setter(this, "circle") }
-  ,increase_size = proc(ref self, x:i12) { self.rad *= x }
-  ,rad:i32       = _
-  ,area = fun(self) -> (_:i32) {
+  setter = fun(ref self) { Circle.setter(this, "circle") },
+  increase_size = fun(ref self, x:i12) { self.rad *= x },
+  rad:i32 = _,
+  area = fun(self) -> (result:i32) {
      let pi = import("math").pi
-     return pi * self.rad * self.rad
+     result = pi * self.rad * self.rad
   }
 ):Shape  // extra check that the exclude did not remove too many fields
 ```
@@ -707,11 +706,11 @@ type inference. The `where` clause is followed by a list of comma separated
 conditions that must evaluate true for the function to be valid.
 
 ```
-let rotate = fun(a) where a has 'x', a has 'y' and_then a.y!=30 {
+let rotate = fun(a) where a has 'x', a has 'y' and_then a.y != 30 {
   var r = a
   r.x = a.y
   r.y = a.x
-  return r
+  r
 }
 ```
 

@@ -95,7 +95,7 @@ without assigning a value. The problem is that the syntax becomes not so
 
 ```
 let aa = 3
-let a = enum(aa,b=3)
+let a = enum(,aa, ,b=3)
 cassert a==b
 
 cassert x.[size] == x.['size']
@@ -138,7 +138,7 @@ Tuples are used in many places:
 
 * The arguments for a call function are a tuple. E.g: `fcall(1,2)`
 * The return of a function call is always a tuple. E.g: `foo = fcall()`
-* The index for a selector `[...]` is a tuple. As syntax sugar, the tuple parenthesis can be omitted. E.g: `foo@[0,2,3]`
+* The index for a selector `[...]` is a tuple. As syntax sugar, the tuple parenthesis can be omitted. E.g: `foo#[0,2,3]`
 * The complex type declaration are a tuple. E.g: `let Xtype = (f=1,b:string)`
 
 
@@ -368,7 +368,7 @@ y2 = match var one=1 ; one ++ z {  // same as: y2 = match (1,z) {
   == (1,2) { 4 }
 }
 
-let addb = fun(a,b:u32)-> a:u32 { // same as: letaddb = fun(a,b:u32)->(a:u32)
+let addb = fun(a, b:u32) -> (a:u32) { // same as: let addb = fun(a,b:u32)->(a:u32)
   a = a + b
 }
 ```
@@ -445,7 +445,7 @@ traditional enumerate sequence.
 
 
 ```
-let V3 = enum(
+enum V3 = (
    ,a
    ,b
    ,c
@@ -454,7 +454,7 @@ cassert V3.a == 1
 cassert V3.b == 2
 cassert V3.c == 4
 
-let V4 = enum(
+enum V4 = (
    ,a
    ,b=5
    ,c
@@ -471,9 +471,9 @@ Each entry tries to find a new bit. In the case of the hierarchy, the lower
 hierarchy level bits are kept.
 
 ```
-let Animal = enum(
-  ,bird  =(eagle, parrot)
-  ,mammal=(rat  , human )
+enum Animal = (
+  ,bird  =(,eagle, ,parrot)
+  ,mammal=(,rat  , ,human )
 )
 
 cassert Animal.bird.eagle != Animal.mammal
@@ -497,7 +497,7 @@ programming languages, but this only works with non-hierarchical enumerates
 when an integer type (`:int`, `:u32`, `:i4` ...) is used.
 
 ```
-let V5=enum(
+enum V5 = (
    ,a
    ,b=5
    ,c
@@ -530,7 +530,7 @@ To convert a string back and forth to an enumerate, explicit typecast is needed
 but possible.
 
 ```
-let E3=enum(
+enum E3 = (
   ,l1=(
     ,l1a
     ,l1b
