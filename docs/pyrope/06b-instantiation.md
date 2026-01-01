@@ -242,7 +242,7 @@ can be the SSA name.
        let tmp = 3
        sub_arg_0 = b
        sub_arg_1 = tmp
-       x += x_0.[defer]       // use defer (instance after conditional code)
+       x += x_0.[defer]       // use defer or next (instance after conditional code)
      }
      x_0 = sub(sub_arg_0, sub_arg_1).x   // instance x_0 (SSA)
     }
@@ -632,7 +632,7 @@ if cond {
 }
 
 // RTL equivalent
-a_qpin = __flop(reset=ref reset, clk=ref clk, initial=3, din=a.[defer])
+a_qpin = __flop(reset=ref reset, clk=ref clk, initial=3, din=a.[defer]) // defer or next are aliases
 tmp    = __sum(A=(a_qpin, 1))
 a      = __mux(tmp[4], tmp#[0..=3], 0xF)    // saturate, not wrap
 

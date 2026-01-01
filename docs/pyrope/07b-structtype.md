@@ -116,7 +116,7 @@ let Weight = (
 assert Age !does Weight
 
 var a:Age = 3
-assert a == a.age == a.0 == 3
+assert a == a.age == a[0] == 3
 
 var w:Weight = 100
 
@@ -227,8 +227,8 @@ in-place with the relative order left.
 ```
 let m = fun(a:int, ...x:(_:string, c:int, d), y:int) { 
   assert a == 1
-  assert x.0 == "here"
-  assert x.1 == 2 == x.c
+  assert x[0] == "here"
+  assert x[1] == 2 == x.c
   assert y == 3
   if d does int { // inferred type
     assert d == 33
@@ -614,7 +614,7 @@ function is `nil`.
 
 ```
 let Interface = (
-  let add = fun(ref self, x) { _ }, // undefined method
+  let add = fun(ref self, x), // undefined method
   let sub = fun(ref self, x) { self.add(-x) }
 )
 

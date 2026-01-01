@@ -123,7 +123,7 @@ The lambda definition has the following fields:
 
 ```
 var add:fun(...x) = _
-add = fun(...x) { x.0 + x.1 + x.2 }     // no IO specified
+add = fun(...x) { x[0] + x[1] + x[2] }     // no IO specified
 add = fun(a, b, c) { a + b + c }        // constrain inputs to a,b,c
 add = fun(a, b, c) { a + b + c }        // same
 add = fun(a:u32, b:s3, c) { a + b + c } // constrain some input types
@@ -191,7 +191,7 @@ the pipe the argument tuple is concatenated.
 
 ```
 let div  = fun (self, b) { self / b }  // named input tuple
-let div2 = fun (...x) { x.0 / x.1 }    // unnamed input tuple
+let div2 = fun (...x) { x[0] / x[1] }    // unnamed input tuple
 
 let noarg = fun () { 33 }         // explicit no args
 

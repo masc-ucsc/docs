@@ -506,6 +506,8 @@ b += 1        // OK
 
 let cu3 = if runtime { 3 }else{ 5 }
 
+let (a:u32,b) = (1,"string_inferred")
+
 let d = "hello"  // OK
 d = "bar"        // compile error, 'd' is immutable
 var d = "bar"    // compile error, 'd' already declared

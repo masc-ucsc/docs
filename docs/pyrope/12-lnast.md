@@ -1028,7 +1028,7 @@ tup_concat
 The inplace concatenate is equivalent but it has a check (`cassert`) to detect overlap. After the concatenation,
 the fields in `a` and `b` should be found in the result `x` or there was an overlap.
 
-`x=(a,..b)` translates to:
+`x=(a,...b)` translates to:
 ```lnast
 tup_concat
   ref x

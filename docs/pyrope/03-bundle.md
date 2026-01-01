@@ -22,28 +22,17 @@ var a = (
   ,r1 = (b=1,c=2)
   ,r2 = (3,4)
 )
-// tuple position is from left to right
+// tuple position is from left to right like most languages
 cassert a.r1 == (1,2) and a.r2 == (3,4)
-cassert a.0  == (1,2) and a[1] == (3,4)
+cassert a[0] == (1,2) and a[1] == (3,4)
 
 // different ways to access the same field
 cassert a.r1.c    == 2
 cassert a['r1'].c == 2
-cassert a.r1.1    == 2
 cassert a.r1[1]   == 2
 cassert a[0][1]   == 2
 cassert a[0]['c'] == 2
-cassert a['r1.c'] == 2
-cassert a['r1.1'] == 2
-cassert a['0.c']  == 2
-cassert a['0.1']  == 2
-cassert a.0.c     == 2
-cassert a.0.1     == 2
 ```
-
-The only main difference between `a.0` (dot) and `a[0]` (select) access is that
-dot access guarantees to be compile time index, while the select can have
-compile time or run-time index.
 
 There is introspection to check for an existing field with the `has` and `!has` operators.
 
@@ -127,7 +116,7 @@ var a = (1,2)   // tuple of 2 entries, 1 and 2
 var b = (1)     // tuple of 1 entry, 1
 var c = 1       // tuple of 1 entry, 1
 var d = (,,1,,) // tuple of 1 entry, 1
-cassert a.0 == b.0 == c.0 == d.0
+cassert a[0] == b[0] == c[0] == d[0}
 cassert a!=b
 cassert b == c == d
 ```
@@ -173,7 +162,7 @@ can be used for name or default value during the tuple declaration.
 
 ```
 var b = 100
-var a = (b:u8, b, b:u8 = _, let c=4) // a.0 and a.1 are unnamed, a.2==a.b
+var a = (b:u8, b, b:u8 = _, let c=4) // a[0] and a[1] are unnamed, a[2]==a.b
 a.b = 200
 assert a == (100, 100, 200, 4)
 
@@ -201,8 +190,7 @@ let ccat1 = a ++ b
 assert ccat1 == (a=1,b=2,c=3)
 assert ccat1 == (1,2,3)
 
-var ccat2 = a                // mutable tuple
-a = a ++ (b=20)
+var ccat2 = a ++ (b=20) ++ b
 assert ccat2 == (a=1,b=(2,20),c=3)
 assert ccat2 == (1,(2,20),3)
 
@@ -232,7 +220,7 @@ the same entry already exists.
 
 ## Field access
 
-Since everything is a tuple, any variable can do `variable.0.0.0.0` because it
+Since everything is a tuple, any variable can do `variable[0][0][0]` because it
 literaly means, return the tuple first entry for four times.
 
 
@@ -247,9 +235,9 @@ let x = (first=(second=3))
 assert x.first.second == 3
 assert x.first        == 3
 assert x              == 3
-assert x.0.second     == 3
-assert x.first.0      == 3
-assert x.0            == 3
+assert x.[0].second   == 3
+assert x.first.[0]    == 3
+assert x.[0]          == 3
 ```
 
 

@@ -208,8 +208,8 @@ mem.rdport  = (-1,1,0) // 0 WR, !=0 -> RD
 
 res = await[..] __memory(mem)
 
-q0 = res.0
-q1 = res.1
+q0 = res[0]
+q1 = res[1]
 
 ```
 

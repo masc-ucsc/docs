@@ -94,7 +94,7 @@ let t1 = (a:int=1, b:string)
 let t2 = (a:int=100, b:string)
 var v1 = (a=33, b="hello")
 
-let f1 = fun() {
+let f1 = comb() {
   (a=33, b="hello")
 }
 
@@ -119,7 +119,7 @@ let At:int(33..) = _      // number bigger than 32
 let Bt = (
   c:string = _,
   d = 100,
-  setter = fun(ref self, ...args) { self.c = args }
+  setter = comb(ref self, ...args) { self.c = args }
 )
 
 var a:At = 40
@@ -141,7 +141,7 @@ The `does` operator is the base to compare types. It follows structural typing r
 These are the detailed rules for the `a does b` operator depending on the `a` and `b` fields:
 
 
-* false when `a` and `b` are different basic types (`boolean`, `fun`,
+* false when `a` and `b` are different basic types (`boolean`, `comb`,
   `integer`, `mod`, `range`, `string`, `enums`).
 
 * true when `a` and `b` have the same basic type of either `boolean` or `string`.
@@ -175,8 +175,8 @@ assert (a:int(0..=33) !does (a:int(50, 5)))
 assert (a:string, b:int) does (a:"hello", b:33)
 assert ((b:int, a:string) !does (a:"hello", b:33)) // order matters in tuples
 
-assert _:fun(x, xxx2) -> (y, z) does _:fun(x) -> (y, z)
-assert (_:fun(x) -> (y, z) !does _:fun(x, xxx2) -> (y, z))
+assert _:comb(x, xxx2) -> (y, z) does _:comb(x) -> (y, z)
+assert (_:comb(x) -> (y, z) !does _:comb(x, xxx2) -> (y, z))
 ```
 
 For named tuples, this code shows some of the corner cases:
@@ -193,7 +193,7 @@ var c:t1 = (a="hello", b=3) // OK
 var c1:t1 = (b=3, a="hello") // OK
 
 var d:t2 = c                 // OK, both fully named
-assert d.0 == c.1 and c.0 == d.1
+assert d[0] == c[1] and c[0] == d[1]
 assert d.a == c.a and d.b == c.b
 ```
 
@@ -201,14 +201,14 @@ Ignoring the value is what makes `equals` different from `==`. As a result
 different functionality functions could be `equals`.
 
 ```
-let a = fun() { 1 }
-let b = fun() { 2 }
-assert a equals _:fun()    // 1 !equals :fun()
+let a = comb() { 1 }
+let b = comb() { 2 }
+assert a equals _:comb()    // 1 !equals :comb()
 
 assert a() != b()              // 1 != 2
 assert a() equals b()          // 1 equals 2
 
-assert _:a equals _:fun()
+assert _:a equals _:comb()
 ```
 
 ## Type check with values
@@ -280,7 +280,7 @@ assert t4 equals t1
 assert t4 is t1
 assert t4 !is t2
 
-let f2 = fun(x) where x is X1 {
+let f2 = comb(x) where x is X1 {
   x.b + 1
 }
 ```
@@ -303,7 +303,7 @@ let Color = enum(
   Yellow:Rgb = 0xffff00,
   Red:Rgb = 0xff0000,
   Green = Rgb(0x00ff00), // alternative
-  Blue = Rgb(0x0000ff)
+  GBlue = Rgb(0x0000ff)
 )
 
 var y:Color = Color.Red
@@ -324,7 +324,7 @@ let ADT = enum(
   Robot:(charges_with:string) = _
 )
 
-let nourish = fun(x:ADT) {
+let nourish = comb(x:ADT) {
   match x {
     == ADT.Person { puts "eating:{}", x.eats }
     == ADT.Robot { puts "charging:{}", x.charges_with }
@@ -377,14 +377,14 @@ When the attributes are read, it reads the current. it does not read the constra
 
 ```pyrope
 var val:u8 = 0   // designer constraints a to be between 0 and 255
-assert val.[sbits] == 0
+assert val::[sbits] == 0
 
 val = 3          // val has 3 bits (0sb011 all the numbers are signed)
 
 val = 300        // compile error, '300' overflows the maximum allowed value of 'val'
 
 val = 1          // max=1,min=1 sbits=2, ubits=1
-assert val.[ubits] == 1 and val.[min] == 1 and val.[max] == 1 and val.[sbits] == 2
+assert val::[ubits] == 1 and val::[min] == 1 and val::[max] == 1 and val::[sbits] == 2
 
 val::[wrap] = 0x1F0 // Drop bits from 0x1F0 to fit in constrained type
 assert val == 240 == 0xF0
@@ -558,7 +558,7 @@ let ct = (
 let dt = (
   d:u32 = _,
   c:string = _,
-  setter = mod (ref self, x:at) { self.d = x.d; self.c = x.c }
+  setter = comb(ref self, x:at) { self.d = x.d; self.c = x.c }
 )
 
 var b:bt = (c="hello", d=10000)
@@ -592,9 +592,9 @@ assert a['c'] equals u32
 assert a has 'c'
 assert !(a has 'foo')
 
-assert a.[id] == 'a'
-assert a.0.[id] == ':0:b' and a.b.[id] == ':0:b'
-assert a.1.[id] == ':1:c' and a.c.[id] == ':1:c'
+assert a::[id] == 'a'
+assert a[0]::[id] == ':0:b' and a.b::[id] == ':0:b'
+assert a[1]::[id] == ':1:c' and a.c::[id] == ':1:c'
 ```
 
 Function definitions allocate a tuple, which allows to introspect the
@@ -603,10 +603,10 @@ function but not to change the functionality. Functions have 3 fields `inputs`,
 at declaration.
 
 ```
-let fu = fun(a, b=2) -> (c) where a > 10 { c = a + b }
-assert fu.[inp] equals ('a', 'b')
-assert fu.[out] equals ('c')
-assert fu.[where](a=200) and !fu.[where](a=1)
+let fu = comb(a, b=2) -> (c) where a > 10 { c = a + b }
+assert fu::[inp] equals ('a', 'b')
+assert fu::[out] equals ('c')
+assert fu::[where](a=200) and !fu::[where](a=1)
 ```
 
 This means that when ignoring named vs unnamed calls, overloading behaves like
@@ -615,11 +615,11 @@ this:
 ```
 let x:u32 = fn(a1, a2)
 
-let model_poly_call = fun(fn, ...args) -> (out) {
+let model_poly_call = comb(fn, ...args) -> (out) {
   for f in fn {
-     continue unless f.[inp] does args
-     continue unless f.[out] does out
-     return f(args) when f.[where](args)
+     continue unless f::[inp] does args
+     continue unless f::[out] does out
+     return f(args) when f::[where](args)
   }
 }
 let x:u32 = model_poly_call(fn, a1, a2)
@@ -629,11 +629,11 @@ There are several uses for introspection, but for example, it is possible to bui
 function that returns a randomly mutated tuple.
 
 ```
-let randomize::[debug] = fun(ref self) {
+let randomize::[debug] = comb(ref self) {
   let rnd = import("prp/rnd")
   for i in ref self {
     if i equals _:int {
-      i = rnd.between(i.[max], i.[min])
+      i = rnd.between(i::[max], i::[min])
     } elif i equals _:bool {
       i = rnd.boolean()
     }
@@ -673,21 +673,21 @@ Any call to a function or tuple outside requires a prior `import` statement.
 
 ```
 // file: src/my_fun.prp
-fun fun1(a, b) { a + b }
-fun fun2(a) {
-  let inside = fun() { 3 }
+comb fun1(a, b) { a + b }
+comb fun2(a) {
+  let inside = comb() { 3 }
   a
 }
-fun another(a) { a }
+comb another(a) { a }
 
 let mytup = (
-  call3 = fun() { puts "call called" }
+  call3 = comb() { puts "call called" }
 )
 ```
 
 ```
 // file: src/user.prp
-a = import("my_fun/*fun*")
+a = import("my_fun/*comb*")
 a.fun1(a=1, b=2)        // OK
 a.another(a=1, 2)       // compile error, 'another' is not an imported function
 a.fun2.inside()         // compile error, `inside` is not in top scope variable
@@ -845,7 +845,7 @@ or register reference.
 
 ```
 let bpred = ( // complex predictor
-  taken = fun() { self.some_table[som_var] >= 0 }
+  taken = comb() { self.some_table[som_var] >= 0 }
 )
 
 test "mocking taken branches" {
@@ -915,13 +915,13 @@ Tuples can be multi-dimensional, and the index can handle multiple indexes at on
 ```
 let Matrix8x8 = (
   data:[8][8]u16 = _,
-  setter = fun(ref self, x:int(0, 7), y:int(0, 7), v:u16) {
+  setter = comb(ref self, x:int(0, 7), y:int(0, 7), v:u16) {
     self.data[x][y] = v
-  } ++ fun(ref self, x:int(0, 7), v:u16) {
+  } ++ comb(ref self, x:int(0, 7), v:u16) {
     for ent in ref data[x] {
       ent = v
     }
-  } ++ fun(ref self) { // default initialization
+  } ++ comb(ref self) { // default initialization
     for ent in ref data {
       ent = 0
     }
@@ -949,7 +949,7 @@ which to pick.
 ```
 let Matrix2x2 = (
   data:[2][2]u16 = _,
-  getter = fun(ref self, x:int(0, 2), y:int(0, 2)) {
+  getter = comb(ref self, x:int(0, 2), y:int(0, 2)) {
     self.data[x][y] + 1
   }
 )
@@ -958,7 +958,7 @@ let n:Matrix2x2 = _
 n.data[0][1] = 2      // default setter
 
 cassert n[0][1] == 3  // getter does + 1
-cassert n[0] == (0, 3) // compile error, no getter for fun(ref self, x)
+cassert n[0] == (0, 3) // compile error, no getter for comb(ref self, x)
 ```
 
 The symmetric getter method is called whenever the tuple is read. Since each
@@ -975,8 +975,8 @@ let My_2_elem = (
   } ++ mod(ref self) { // default _ assignment
     self.data = _
   },
-  getter = fun(self) { self.data }
-        ++ fun(self, i:uint) { self.data[i] }
+  getter = comb(self) { self.data }
+        ++ comb(self, i:uint) { self.data[i] }
 )
 
 var v:My_2_elem = _
@@ -1002,7 +1002,7 @@ let some_obj = (
   a1:string,
   a2 = (
     _val:u32 = _,                              // hidden field
-    getter = fun(self) { self._val + 100 },
+    getter = comb(self) { self._val + 100 },
     setter = mod(ref self, x) { self._val = x + 1 }
   ),
   setter = mod(ref self, a, b) {                 // setter
@@ -1025,9 +1025,9 @@ to customize by return type:
 ```
 let showcase = (
   ,v:int = _
-  ,getter = fun(self)->(_:string) where self.i>10 {
+  ,getter = comb(self)->(_:string) where self.i>10 {
     format("this is a big {} number", self.v)
-  } ++ fun(self)->(_:int) {
+  } ++ comb(self)->(_:int) {
     self.v
   }
 )
@@ -1048,9 +1048,9 @@ In this case, it allows building typecast per type.
 ```
 let my_obj = (
   ,val:u32 = _
-  ,getter = fun(self)->(_:string ){ string(self.val) }
-       ++ fun(self)->(_:bool){ self.val != 0    }
-       ++ fun(self)->(_:int    ){ self.val         }
+  ,getter = comb(self)->(_:string ){ string(self.val) }
+       ++ comb(self)->(_:bool){ self.val != 0    }
+       ++ comb(self)->(_:int    ){ self.val         }
 )
 ```
 
@@ -1061,11 +1061,11 @@ The setter/getter can also access attributes:
 ```
 var obj1::[attr1] = (
   ,data:int = _
-  ,setter = fun(ref self, v) {
-    if v.[attr2] {
-      self.data.[attr3] = 33
+  ,setter = comb(ref self, v) {
+    if v::[attr2] {
+      self.data::[attr3] = 33
     }
-    cassert self.[attr1]
+    cassert self::[attr1]
   }
 )
 ```
@@ -1087,10 +1087,10 @@ cassert fbool == 0
 
 let Tup = (
   ,v:string = _  // default to empty
-  ,setter = fun(ref self) { // no args, default setter for _
+  ,setter = comb(ref self) { // no args, default setter for _
      cassert self.v == ""
      self.v = "empty33"
-  } ++ fun(ref self, v) {
+  } ++ comb(ref self, v) {
      self.v = v
   }
 )
@@ -1115,20 +1115,18 @@ Array index also use the setter or getter methods.
 ```
 var my_arr = (
   ,vector:[16]u8 = 0
-  ,getter = fun(self, idx:u4) {
+  ,getter = comb(self, idx:u4) {
      self.vector[idx]
   }
-  ,setter = proc(ref self, idx:u4, val:u8) {
+  ,setter = pipe(ref self, idx:u4, val:u8) {
      self.vector[idx] = val
-  } ++ proc(ref self) {
+  } ++ pipe(ref self) {
      // default constructor declaration
   }
 )
 
 my_arr[3] = 300           // calls setter
-my_arr.3  = 300           // calls setter
 cassert my_add[3] == 300  // calls getter
-cassert my_add.3  == 300  // calls getter
 ```
 
 Unlike languages like C++, the setter is only called if there is a new value
@@ -1143,12 +1141,12 @@ let Point = (
   ,priv_x:int:[private] = 0
   ,priv_y:int:[private] = 0
 
-  ,setter = proc(ref self, x:int, y:int) {
+  ,setter = pipe(ref self, x:int, y:int) {
     self.priv_x = x
     self.priv_y = y
   }
 
-  ,getter = proc(self, idx:string) {
+  ,getter = pipe(self, idx:string) {
     match idx {
      == 'x' { self.priv_x }
      == 'y' { self.priv_y }
@@ -1174,9 +1172,9 @@ comparators. When non-provided the `lt` (Less Than) is a compile error, and the
 ```
 let t=(
   ,v:string = _
-  ,setter = proc(ref self) { self.v = a }
-  ,lt = fun(self,other)->(_:bool){ self.v  < other.v }
-  ,eq = fun(self,other)            { self.v == other.v } // infer return
+  ,setter = pipe(ref self) { self.v = a }
+  ,lt = comb(self,other)->(_:bool){ self.v  < other.v }
+  ,eq = comb(self,other)            { self.v == other.v } // infer return
 )
 
 var m1:t = 10
@@ -1225,9 +1223,9 @@ let t1=(
 let t2=(
   ,xx_a=33
   ,yy_b = "foo"
-  ,eq = fun(self, o:t1) {
+  ,eq = comb(self, o:t1) {
     return self.xx_a == o.b and self.xx_y == o.long_name
-  } ++ fun(self, o:t2) {
+  } ++ comb(self, o:t2) {
     return self.xx_a == o.xx_a and self.xx_y == o.xx_y
   }
 )
@@ -1278,12 +1276,12 @@ Non-Pyrope calls have the same procedure/function distinction and use the same
 Pyrope lambda definition but they do not have the `where` clause.
 
 
-If no type is provided, a C++ call assumes a `proc(...inp)->(...out)` type is
+If no type is provided, a C++ call assumes a `pipe(...inp)->(...out)` type is
 can pass many inputs/outputs and has permission to mutate values. Any call to a
 method with two underscores `__` is either a basic gate or a C++ function.
 
 ```
-let __my_typed_cpp:fun(a,b)->(e) = _
+let __my_typed_cpp:comb(a,b)->(e) = _
 ```
 
 Type defining non-Pyrope code is good to catch errors and also because declaring
