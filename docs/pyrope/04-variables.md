@@ -563,7 +563,6 @@ passes:
 * `critical`: synthesis time criticality
 * `debug` (sticky): variable use for debug only, not synthesis allowed
 * `delay`: synthesis time delay
-* `defer`: for reads, it means last value written. For assigns, it means defer write
 * `deprecated`: to generate special warnigns about usage
 * `donttouch`: do not touch/optimize away
 * `file`: to print the file where the variable was declared
@@ -1389,4 +1388,3 @@ _ = 3
 b = ?
 assert b == 0 and not b::[valid]
 ```
-
