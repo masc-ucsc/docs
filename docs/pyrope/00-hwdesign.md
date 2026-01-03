@@ -245,7 +245,7 @@ software programmer may expect:
 === "Problematic code"
 
     ```pyrope
-    var result = 0
+    mut result = 0
     if some_opcode {
       result = do_division(a,b)
     }else{
@@ -256,9 +256,9 @@ software programmer may expect:
 === "Possible solution"
 
     ```pyrope
-    var result = 0
-    var result1 = do_division(a,b)
-    var result2 = do_multiplication(a,b)
+    mut result = 0
+    mut result1 = do_division(a,b)
+    mut result2 = do_multiplication(a,b)
     if some_opcode {
       result = result1
     }else{
@@ -316,15 +316,15 @@ be expected in a software API.
 === "Problematic code"
 
     ```pyrope
-    var c = mul(a,b)
+    mut c = mul(a,b)
     assert c == a * b // assert fails!!
     ```
 
 === "HLS possible solution"
 
     ```pyrope
-    var c = mul(a,b)
-    assert c == a#[-1] * b#[-1] // read last cycle #[-1] a and b
+    mut c = mul(a,b)
+    assert c == a@[-1] * b@[-1] // read last cycle @[-1] a and b
     ```
 
 If actors execution resembles concurrent module instantiation execution,
@@ -618,5 +618,3 @@ that there is no "stack memory". If the depth is bound, it can support run-time
 recursion, but the potentially sizeable combinational path would be "strange".
 Only manageable with retiming. As a result, most HDLs do not support runtime
 recursion.
-
-

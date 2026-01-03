@@ -39,11 +39,11 @@ argument which allows operating on tuples.
 
 === "Combinational (fun)"
     ```
-    let add = fun(a, b) -> (result) {
+    const add = comb(a, b) -> (result) {
       result = a + b
     }
 
-    fun add(a, b) -> (result) {  // Same as let add = fun(a, b) -> (result)
+    fun add(a, b) -> (result) {  // Same as const add = comb(a, b) -> (result)
       result = a + b
     }
     ```
@@ -76,17 +76,17 @@ Only anonymous lambdas are supported, this means that there is no global scope
 for functions, procedures, or modules. The only way for a file to access a
 lambda is to have access to a local variable with a definition or to "import" a
 variable from another file. The more familiar `fun name` or `proc name`
-declaration is also valid, but it is syntax sugar and equivalent to `let name =
+declaration is also valid, but it is syntax sugar and equivalent to `const name =
 fun`.
 
 ```
-let a_3 = { 3 }          // just scope, not a lambda. Scope is evaluate now
-let a_fun = fun() { 4 }  // when a_fun is called 4 is returned
+const a_3 = { 3 }          // just scope, not a lambda. Scope is evaluate now
+const a_fun = comb() { 4 }  // when a_fun is called 4 is returned
 
-let fun3 = fun() { 5 }   // public lambda that can be imported by other files
+const fun3 = comb() { 5 }   // public lambda that can be imported by other files
 
-let x = a_3()            // compile error, explicit call not possible in scope
-let x = a_fun()          // OK, explicit call needed when no arguments
+const x = a_3()            // compile error, explicit call not possible in scope
+const x = a_fun()          // OK, explicit call needed when no arguments
 
 assert a_3 == 3
 assert a_fun equals _:fun()
@@ -122,29 +122,29 @@ The lambda definition has the following fields:
   [overload](07b-structtype.md#lambda_overloading) has more details.
 
 ```
-var add:fun(...x) = _
-add = fun(...x) { x[0] + x[1] + x[2] }     // no IO specified
-add = fun(a, b, c) { a + b + c }        // constrain inputs to a,b,c
-add = fun(a, b, c) { a + b + c }        // same
-add = fun(a:u32, b:s3, c) { a + b + c } // constrain some input types
-add = fun(a, b, c) -> (x:u32) { a + b + c } // constrain result to u32
-add = fun(a, b, c) -> (result) { a + b + c } // constrain result to be named result
-add = fun(a, b:a, c:a) { a + b + c }    // constrain inputs to have same type
+mut add:fun(...x) = ?
+add = comb(...x) { x[0] + x[1] + x[2] }     // no IO specified
+add = comb(a, b, c) { a + b + c }        // constrain inputs to a,b,c
+add = comb(a, b, c) { a + b + c }        // same
+add = comb(a:u32, b:s3, c) { a + b + c } // constrain some input types
+add = comb(a, b, c) -> (x:u32) { a + b + c } // constrain result to u32
+add = comb(a, b, c) -> (result) { a + b + c } // constrain result to be named result
+add = comb(a, b:a, c:a) { a + b + c }    // constrain inputs to have same type
 add = fun<T>(a:T, b:T, c:T) { a + b + c } // same
 
-let x = 2
-var add2:fun(a) = _
+const x = 2
+mut add2:fun(a) = ?
 add2 = fun       (a) { x + a }    // compile error, undefined 'x'
 add2 = fun[     ](a) { x + a }    // compile error, undefined 'x'
 add2 = fun[x    ](a) { x + a }    // explicit capture x
 add2 = fun[foo=x](a) { foo + a }  // capture x but rename to something else
 
-var y = (
+mut y = (
   val:u32 = 1,
   inc1 = fun (ref self) { self.val = u32(self.val + 1) }
 )
 
-let my_log::[debug] = fun (...inp) {
+const my_log::[debug] = fun (...inp) {
   print "logging:"
   for i in inp {
     print " {}", i
@@ -152,7 +152,7 @@ let my_log::[debug] = fun (...inp) {
   puts
 }
 
-let f = fun<X>(a:X, b:X) { a + b }   // enforces a and b with same type
+const f = fun<X>(a:X, b:X) { a + b }   // enforces a and b with same type
 assert f(33:u22, 100:u22) == 133
 
 my_log(a, false, x + 1)
@@ -190,10 +190,10 @@ other languages. Notice the different order in UFCS vs pipe, and also that in
 the pipe the argument tuple is concatenated.
 
 ```
-let div  = fun (self, b) { self / b }  // named input tuple
-let div2 = fun (...x) { x[0] / x[1] }    // unnamed input tuple
+const div  = fun (self, b) { self / b }  // named input tuple
+const div2 = fun (...x) { x[0] / x[1] }    // unnamed input tuple
 
-let noarg = fun () { 33 }         // explicit no args
+const noarg = fun () { 33 }         // explicit no args
 
 assert 33 == noarg()              // () needed to call
 
@@ -227,19 +227,19 @@ variables, Pyrope does not allow `lambda` call shadowing. Polymorphism is allowe
 but only explicit one as explained later.
 
 ```
-var tup = (
-  f1 = fun(self) { 1 }
+mut tup = (
+  f1 = comb(self) { 1 }
 )
 
-let f1 = fun (self) { 2 } // compile error, f1 shadows tup.f1
-let f1 = fun () { 3 }      // OK, no self
+const f1 = fun (self) { 2 } // compile error, f1 shadows tup.f1
+const f1 = fun () { 3 }      // OK, no self
 
 assert f1() != 0         // compile error, missing argument
 assert f1(tup) != 0      // compile error, f1 shadowing (tup.f1 and f1)
 assert 4.f1() != 0       // compile error, f1 can be called for tup, so shadow
 assert tup.f1() != 0     // compile error, f1 is shadowing
 
-let xx = fun[tup] { tup.f1() } // OK, function restricted scope for f1
+const xx = fun[tup] { tup.f1() } // OK, function restricted scope for f1
 assert xx() == 1
 
 assert (4:tup).f1() == 1
@@ -253,10 +253,10 @@ contents, a `ref self` must be passed as input.
 
 
 ```
-var tup2 = (
-  val:u8 = _,
+mut tup2 = (
+  val:u8 = ?,
   upd = mod(ref self) { self.val::[saturate] += 1 },
-  calc = fun(self) { self.val }
+  calc = comb(self) { self.val }
 )
 ```
 
@@ -271,10 +271,10 @@ arg_fun(1, 2)    // parenthesis recommended
 arg_fun(1, 2)    // OK too
 (1, 2) |> arg_fun // OK too, it is after |>
 
-var intercepted:(
+mut intercepted:(
   field:u32,
-  getter = fun(self) { self.field + 1 },
-  setter = fun(ref self, v) { self.field = v }
+  getter = comb(self) { self.field + 1 },
+  setter = comb(ref self, v) { self.field = v }
 ) = 0
 
 cassert intercepted == 1  // will call getter method without explicit call
@@ -310,17 +310,17 @@ only useful for lambda input arguments.
 
 
 ```
-let inc1 = fun(ref a) { a += 1 }
+const inc1 = comb(ref a) { a += 1 }
 
-let x = 3
+const x = 3
 inc1(ref x)       // compile error, `x` is immutable but modified inside inc1
 
-var y = 3
+mut y = 3
 inc1(ref y)
 assert y == 4
 
-let banner = fun() { puts "hello" }
-let execute_method = fun(fn:fun() -> ()) {  // example with explicit type for fn
+const banner = comb() { puts "hello" }
+const execute_method = comb(fn:fun() -> ()) {  // example with explicit type for fn
   fn() // prints hello when banner passed as argument
 }
 
@@ -337,29 +337,29 @@ Pyrope everything is a tuple, even the output or return from a lambda. When a
 single element is returned, it can be an unnamed tuple by omiting parenthesis.
 
 ```
-let ret1 = fun() -> (a:int) { // named
+const ret1 = comb() -> (a:int) { // named
   a = 1
 }
 
-let ret2 = fun() -> a:int {   // unnamed
+const ret2 = comb() -> a:int {   // unnamed
   a = 2
 }
 
-let ret3 = fun() -> (a, b) {   // named
+const ret3 = comb() -> (a, b) {   // named
   a = 3
   b = 4
 }
 
-let a1 = ret1()
+const a1 = ret1()
 assert a1.a == 1 // NOT a1 == 1
 
-let a2 = ret2()
+const a2 = ret2()
 assert a2 == 2   // NOT a2.a == 2
 
-let a3 = ret3()
+const a3 = ret3()
 assert a3.a == 3 and a3.b == 4
 
-let (x1, x2) = ret3()
+const (x1, x2) = ret3()
 assert x1 == 3 and x2 == 4
 ```
 
@@ -379,29 +379,32 @@ attributes.
 
 
 ```
-let p1 = mod(a) -> (result) {
-  self.[my_zero_found] or= (a == 0)
+const p1 = mod(a) -> (result) {
+  mut self.found_once:bool = false
+  self.found_once or= (a == 0)
 
-  result = a + 1
+  const tmp::[my_zero_found=self.found_once] = a + 1
+
+  result = tmp
 }
 
-let p2 = p1      // copy
-let p3 = ref p1  // reference
+const p2 = p1      // copy
+const p3 = ref p1  // reference
 
 test "testing p1" {
-  assert p1.[my_zero_found] == false
-  assert p2.[my_zero_found] == false
+  assert p1::[my_zero_found] == false
+  assert p2::[my_zero_found] == false
 
   cassert p1(3) == 4
-  assert p1.[my_zero_found] == false
+  assert p1::[my_zero_found] == false
 
   cassert p1(0) == 1
-  assert p1.[my_zero_found] == true
+  assert p1::[my_zero_found] == true
 
   cassert p1(50) == 51
-  assert p1.[my_zero_found] == true
-  assert p2.[my_zero_found] == false
-  assert p3.[my_zero_found] == true
+  assert p1::[my_zero_found] == true
+  assert p2::[my_zero_found] == false
+  assert p3::[my_zero_found] == true
 }
 ```
 
@@ -416,10 +419,10 @@ a pass by value call. Since all the inputs are immutable by default (`let`),
 any `self` updates should generate a compile error.
 
 ```
-let Nested_call = (
-  var x = 1,
+const Nested_call = (
+  mut x = 1,
   outter = mod(ref self) { self.x = 100; self.inner(); self.x = 5 },
-  inner = fun(self) { assert self.x == 100 },
+  inner = comb(self) { assert self.x == 100 },
   faulty = mod(self) { self.x = 55 }, // compile error, immutable self
   okcall = mod(ref self) { self.x = 55 } // equivalent to mod okcall(ref self)
 )
@@ -429,44 +432,44 @@ let Nested_call = (
 variable return.
 
 ```
-var a_1 = (
+mut a_1 = (
   x:u10,
-  f1 = fun(ref self, x) -> (self) { // BOTH ref self and return self is OK
+  f1 = comb(ref self, x) -> (self) { // BOTH ref self and return self is OK
     self.x = x
     self
   }
 )
 
 a_1.f1(3)
-var a_2 = a_1.f1(4)  // a_2 is updated, not a_1
+mut a_2 = a_1.f1(4)  // a_2 is updated, not a_1
 assert a_1.x == 3 and a_2.x == 4
 
 // Same behavior as in a function with UFCS
 fun2 = fun (ref self, x) { self.x = x }
 
 a_1.fun2(10)
-var a_3 = a_1.fun2(20)
+mut a_3 = a_1.fun2(20)
 assert a_1 == 10 and a_3 == 20
 ```
 
 Since UFCS does not allow shadowing, a wrapper must be built or a compile error is generated.
 
 ```
-var counter = (
-  ,var val:i32 = 0
-  ,let inc = fun (ref self, v){ self.var += v }
+mut counter = (
+  ,mut val:i32 = 0
+  ,const inc = fun (ref self, v){ self.var += v }
 )
 
 assert counter.val == 0
 counter.inc(3)
 assert counter.val == 3
 
-let inc = fun (ref self, v) { self.var *= v } // NOT INC but multiply
+const inc = fun (ref self, v) { self.var *= v } // NOT INC but multiply
 counter.inc(2)             // compile error, multiple inc options
 assert 44.inc(2) == 8
 
 counter.val = 5
-let mul = inc
+const mul = inc
 counter.mul(2)             // call the new mul method with UFCS
 assert counter.val == 10
 
@@ -479,15 +482,15 @@ It is possible to add new methods after the type declaration. In some
 languages, this is called extension functions.
 
 ```
-let t1 = (a:u32)
+const t1 = (a:u32)
 
-var x:t1 = (a=3)
+mut x:t1 = (a=3)
 
 t1.double = mod(ref self) { self.a *= 2 }  // extension function
 // previous is exactly the same as:
 // t1 = t1 ++ (double = mod(ref self) { self.a *= 2 })
 
-var y:t1 = (a=3)
+mut y:t1 = (a=3)
 x.double             // compile error, double method does not exit
 y.double             // OK
 assert y.a == 6
@@ -504,7 +507,7 @@ it can be error-prone.
     foo = fun (self) { puts "fun.foo" }
     a = (
       ,foo = fun () {
-         bar = fun() { puts "bar" }
+         bar = comb() { puts "bar" }
          puts "mem.foo"
          return (bar=bar)
       }
@@ -531,7 +534,7 @@ it can be error-prone.
     foo = fun (self:int) { puts "fun.foo" }
     a = (
       ,foo = fun () {
-         bar = fun() { puts "bar" }
+         bar = comb() { puts "bar" }
          puts "mem.foo"
          return (bar=bar)
       }
@@ -558,13 +561,13 @@ fibonnaci implementation with and without `where` clauses. Section
 overloading.
 
 ```
-let fib1 = fun(n) where n == 0 { 0 }
-        ++ fun(n) where n == 1 { 1 }
-        ++ fun(n) { fib1(n - 1) + fib1(n - 2) }
+const fib1 = comb(n) where n == 0 { 0 }
+        ++ comb(n) where n == 1 { 1 }
+        ++ comb(n) { fib1(n - 1) + fib1(n - 2) }
 
 assert fib1(10) == 55
 
-let fib2 = fun(n) {
+const fib2 = comb(n) {
   match n {
     == 0 { 0 }
     == 1 { 1 }

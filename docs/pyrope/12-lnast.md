@@ -18,8 +18,8 @@ names that do not allow to use compact tuple representation like `foo here.field
 
 === "Pyrope"
     ```
-    let x = 3 + 1
-    var z = 4
+    const x = 3 + 1
+    mut z = 4
     `foo x` = x + z + 2
     ```
 
@@ -69,7 +69,7 @@ types and/or attributes.
 
 === "Pyrope"
     ```
-    let a:u2:[foo] = b:u1:[bar]
+    const a:u2:[foo] = b:u1:[bar]
 
     x:u2:[foo] = y:u1:[bar]
     ```
@@ -254,7 +254,7 @@ Tuples can have a `let` in declaration to indicate that the field is immutable.
 
 === "Tuple in Pyrope"
     ```
-    var a = (b=2, let x=1+1)
+    mut a = (b=2, const x=1+1)
     ```
 
 === "LNAST direct"
@@ -294,8 +294,8 @@ Tuple concatenation does not use `plus` but the `tup_concat` operator.
 
 === "Tuple in Pyrope"
     ```
-    var a = (2, 1+1)
-    let x = a ++ (c=3) ++ 1
+    mut a = (2, 1+1)
+    const x = a ++ (c=3) ++ 1
     ```
 
 === "LNAST direct"
@@ -364,7 +364,7 @@ LNAST nodes (`attr_get`/`attr_set` and `attr_ref_set`/`attr_ref_check`).
 over the associated `ref` node destination.
 
 `attr_ref_check` only works comparing equal to a `const` or `ref`. More complex
-attribute comparisons needs `attr_get` and `casserts` to operate. 
+attribute comparisons needs `attr_get` and `casserts` to operate.
 
 Attribute set are in left-hand-side of assignments which can also be in tuple entries.
 
@@ -409,8 +409,8 @@ checked between attributes a `cassert` must be used.
 
 === "Pyrope"
     ```
-    var x = (let z=x::[!y], 4::[foo])
-    let y = a::[f==3,b] + 1
+    mut x = (const z=x::[!y], 4::[foo])
+    const y = a::[f==3,b] + 1
     ```
 
 === "LNAST option 1"
@@ -501,18 +501,18 @@ the attribute to the left-hand-side expression. Non-sticky attributes
 do not affect or propagate.
 
 
-Attributes are not sticky by default, but some like `.[debug]` is a sticky
+Attributes are not sticky by default, but some like `::[debug]` is a sticky
 attribute. This means that if any of the elements in any operation has a debug
-attribute, the result also has a `.[debug]` attribute. There is no way to
+attribute, the result also has a `::[debug]` attribute. There is no way to
 remove these attributes.
 
 === "Pyrope"
     ```
-    let d::[debug] = 3
+    const d::[debug] = 3
 
-    var a = d + 100
+    mut a = d + 100
 
-    cassert a.[debug]  // debug is sticky
+    cassert a::[debug]  // debug is sticky
     ```
 
 === "LNAST"
@@ -550,23 +550,23 @@ with arithmetic operations and/or bit selection.
 
 
 ```
-let foo::[attr1=2] = 3
+const foo::[attr1=2] = 3
 
-var foo2 = foo
-cassert foo2.[attr1] == 2
+mut foo2 = foo
+cassert foo2::[attr1] == 2
 
-let foo3 = foo#[..]
-cassert foo3 !has _::[attr1]
+const foo3 = foo#[..]
+cassert foo3 !has ::[attr1]
 
-var xx = 4
+mut xx = 4
 xx::[attr2=5] = 1
 
-let xx2 = xx
-cassert xx2.[attr2] == 5
-cassert xx2 has _::[attr2]
+const xx2 = xx
+cassert xx2::[attr2] == 5
+cassert xx2 has ::[attr2]
 
-let xx3 = xx + 0
-cassert xx3 !has _::[attr2]
+const xx3 = xx + 0
+cassert xx3 !has ::[attr2]
 ```
 
 
@@ -683,11 +683,11 @@ operations.
 
 === "Pyrope"
     ```
-    let t1 = foo#sext[..=4]
-    let t2 = foo#|[..=4]
-    let t3 = foo#&[..=4]
-    let t4 = foo#^[..=4]
-    let t5 = foo#+[..=4]
+    const t1 = foo#sext[..=4]
+    const t2 = foo#|[..=4]
+    const t3 = foo#&[..=4]
+    const t4 = foo#^[..=4]
+    const t5 = foo#+[..=4]
     ```
 
 === "LNAST"
@@ -749,9 +749,9 @@ like `plus`, `LUT`, `memory`. In LNAST this is translated like a lambda call.
 
 === "Pyrope"
     ```
-    let foo = 3
-    let bar = 300
-    let b = __plus(1,2,foo,bar)
+    const foo = 3
+    const bar = 300
+    const b = __plus(1,2,foo,bar)
     ```
 
 === "LNAST"
@@ -986,9 +986,9 @@ translated to an AND gate over the bitcode translation, but the tuple check
 requires a tuple check.
 
 ```
-let tup=(1,2,3)
-let ran=1..<5
-let enu = enum(a,b=(x,y),c)
+const tup=(1,2,3)
+const ran=1..<5
+const enu = enum(a,b=(x,y),c)
 
 cassert 2 in tup
 cassert 3 in ran
@@ -1197,23 +1197,23 @@ only `function` calls.
 
 === "Pyrope"
     ```
-    var total=3
-    if var x=3; x<3 {
+    mut total=3
+    if mut x=3; x<3 {
       total+=x
-    }elif var z=3; z<4 {
+    }elif mut z=3; z<4 {
       total+=x+z
     }
     ```
 
 === "Pyrope Equivalent"
     ```
-    var total=3
+    mut total=3
     {
-      var x=3
+      mut x=3
       if x<3 {
         total+=x
       }else{
-        var z=3
+        mut z=3
         if z<4 {
           total+=x+z
         }
@@ -1239,9 +1239,9 @@ that the condition is a one-hot encoding.
 
 === "Pyrope"
     ```
-    if var x=a ; x<3 {
+    if mut x=a ; x<3 {
       t = 100+x               // z not in scope
-    }elif var z = x+c ; z>5 {
+    }elif mut z = x+c ; z>5 {
       t = 200+z+x             // z and x in scope
     }
     ```
@@ -1304,16 +1304,16 @@ the `elif` conditions.
 
     unique if a<3 {
       y = 10
-    }elif a>40 {  // not allowed to do 'elif var z=40; a>z'
+    }elif a>40 {  // not allowed to do 'elif mut z=40; a>z'
       y = 20+x
     }
     ```
 
 === "Pyrope Equivalent"
     ```
-    let tmp1 = a<3
-    let tmp2 = a>40
-    let tmp3 = 1<<(tmp1,tmp2)
+    const tmp1 = a<3
+    const tmp2 = a>40
+    const tmp3 = 1<<(tmp1,tmp2)
     optimize tmp3#+[..]<=1        // at most one bit set
 
     if tmp1 {
@@ -1373,7 +1373,7 @@ false }` is created.
 
 === "Pyrope"
     ```
-    var z = 0
+    mut z = 0
     match x {
      == 3 { z = 1 }
      in 4..<6 { z = 2 }
@@ -1483,14 +1483,14 @@ statements.
 
 === "Pyrope"
     ```
-    if var x=3; x<4 {
+    if mut x=3; x<4 {
       cassert x==3
     }
-    while var z=1; x {
+    while mut z=1; x {
       x -= z
     }
-    var z=0
-    match var x=2 ; z+x {
+    mut z=0
+    match mut x=2 ; z+x {
       == 2 { cassert true  }
       != 7 { cassert true  }
       else { cassert false }
@@ -1624,7 +1624,7 @@ The `while` translates to a `loop` with a `break` statement.
 
 === "Pyrope while"
     ```
-    while var i=0 ; i!=3 {
+    while mut i=0 ; i!=3 {
       i += 1
     }
     ```
@@ -1802,12 +1802,12 @@ code.
 
 === "Pyrope"
     ```
-    let num = 1
-    let color = "blue"
-    let extension = "s"
+    const num = 1
+    const color = "blue"
+    const extension = "s"
 
-    let txt1 = "I have {num} {color} potato{extension}"  // interpolation
-    let txt2 = format('I have {:d} {} potato{}', num, color, extension)
+    const txt1 = "I have {num} {color} potato{extension}"  // interpolation
+    const txt2 = format('I have {:d} {} potato{}', num, color, extension)
     ```
 === "LNAST"
     ```lnast
@@ -1883,4 +1883,3 @@ unless an argument is an expression.
       ref fcall
       ref ___args
     ```
-

@@ -20,8 +20,8 @@ range).
 
 
 In all the cases, variable declaration is either:
-* `let variable [:type] [:[attrbute list]] = expression`
-* `var variable [:type] [:[attrbute list]]= expression`
+* `const variable [:type] [:[attrbute list]] = expression`
+* `mut variable [:type] [:[attrbute list]]= expression`
 
 In a tuple scope, `variable [:type] = expression` is equivalent to `var
 variable [:type] = expression`. This is to avoid the most common case
@@ -34,14 +34,14 @@ always immutable (`let`).
 
     ```
     assert a == 3        // compile error, undefined variable 'a'
-    var a = 3
+    mut a = 3
     {
       assert a == 3
       a = 33             // OK. assign 33
       a:int = 33         // OK, assign 33 and check that 'a' has type int
-      let b = 4
-      let a = 3333       // compile error, variable shadowing
-      var a = 33         // compile error, variable shadowing
+      const b = 4
+      const a = 3333       // compile error, variable shadowing
+      mut a = 33         // compile error, variable shadowing
     }
     assert b == 3        // compile error, undefined variable 'b'
     ```
@@ -50,25 +50,25 @@ always immutable (`let`).
 
     ```
     assert a == 3        // compile error, undefined variable 'a'
-    var a = 3
-    var x = 10
-    let f1 = fun[a,x=a+1]() {
+    mut a = 3
+    mut x = 10
+    const f1 = fun[a,x=a+1]() {
       assert a == 3
       a = 33             // compile error, capture/inputs are immutable
       x = 300            // compile error, capture/inputs are immutable
-      let b = 4
-      let a = 3333       // compile error, variable shadowing
-      var a = 33         // compile error, variable shadowing
+      const b = 4
+      const a = 3333       // compile error, variable shadowing
+      mut a = 33         // compile error, variable shadowing
       return b+3
     }
     assert f1() == 7
     assert x == 10
     assert b == 3        // compile error, undefined variable 'b'
 
-    let f2 = fun() {     // no capture of 'a'
+    const f2 = comb() {     // no capture of 'a'
       // assert a == 3   // compile error, undefined variable 'a'
     }
-    let f3 = fun[ff=a]() { // capture 'a' as 'ff'
+    const f3 = fun[ff=a]() { // capture 'a' as 'ff'
       assert ff == 3     // OK
       ff = 3             // compile error, immutable variable
     }
@@ -77,14 +77,14 @@ always immutable (`let`).
 === "Tuple scope"
 
     ```
-    var a = 3
-    let r1 = (
-      ,a = a+1           // same as var a = a+1
+    mut a = 3
+    const r1 = (
+      ,a = a+1           // same as mut a = a+1
       ,c = {assert a == 3 and self.a==4; 50}
     )
     r1.a = 33            // compile error, 'r1' is immutable variable
 
-    var r2 = (a=100, let c=(a=a+1, e=self.a+30))
+    mut r2 = (a=100, const c=(a=a+1, e=self.a+30))
     assert r2 == (a=100,c=(a=101, e=131))  // checks values not mutability
     r2.a = 33            // OK
     r2.c.a = 33          // compile error, 'r2.c' is immutable variable
@@ -105,8 +105,8 @@ Since the captures and lambda inputs are always immutable, it is not allowed to
 declare them as `var` and redundant to declare them as `let`.
 
 ```
-let f3 = fun(var x) { x + 1 }    // compile error, inputs are immutable
-let f4 = fun[var x](z) { x + z } // compile error, captures are immutable
+const f3 = comb(mut x) { x + 1 }    // compile error, inputs are immutable
+const f4 = comb[mut x](z) { x + z } // compile error, captures are immutable
 ```
 
 
@@ -155,12 +155,12 @@ different constraints):
 * `int(a..<b)`: integer basic type constrained to be between `a` and `b`.
 
 ```
-var a:int         = _ // any value, no constrain
-var b:unsigned    = _ // only positive values
-var c:u13         = _ // only from 0 to 1<<13
-var d:int(20..=30)= _ // only values from 20 to 30 (both included)
-var d:int(-5..<6) = _ // only values from -5 to 6 (6 not included)
-var e:int(-1,0)   = _ // 1 bit integer: -1 or 0
+mut a:int         = ? // any value, no constrain
+mut b:unsigned    = ? // only positive values
+mut c:u13         = ? // only from 0 to 1<<13
+mut d:int(20..=30)= ? // only values from 20 to 30 (both included)
+mut d:int(-5..<6) = ? // only values from -5 to 6 (6 not included)
+mut e:int(-1,0)   = ? // 1 bit integer: -1 or 0
 ```
 
 Integers can have 3 value (`0`,`1`,`?`) expression or a `nil`. Section
@@ -182,16 +182,16 @@ boolean will raise an assertion when the integer has undefined bits (`?`) or
 `nil`.
 
 ```
-let b = true
-let c = 3
+const b = true
+const c = 3
 
 if c    { call(x) }  // compile error, 'c' is not a boolean expression
 if c!=0 { call(x) }  // OK
 
-var d = b or false   // OK
-var e = c or false   // compile error, 'c' is not a boolean
+mut d = b or false   // OK
+mut e = c or false   // compile error, 'c' is not a boolean
 
-let e = 0xfeed
+const e = 0xfeed
 if e#[3] {           // OK, bit extraction for single bit returns a boolean
   call(x)
 }
@@ -207,8 +207,8 @@ String input typecase is valid, but anything different than ("0", "1", "-1",
 Logical and arithmetic operations can not be mixed.
 
 ```
-let x = a and b
-let y = x + 1    // compile error: 'x' is a boolean, '1' is integer
+const x = a and b
+const y = x + 1    // compile error: 'x' is a boolean, '1' is integer
 ```
 
 ### Functions (`fun`/`pipe`/`mod`)
@@ -239,14 +239,14 @@ size in the tuple can be unknown.
 * `[first..]` is the same as `[first..=-1]`.
 
 ```
-let a = (1,2,3)
+const a = (1,2,3)
 assert a[0..] == (1,2,3)
 assert a[1..] == (2,3)
 assert a[..=1] == (1,2)
 assert a[..<2] == (1,2)
 assert a[1..<10] == (2,3)
 
-let b = 0b0110_1001
+const b = 0b0110_1001
 assert b#[1..]        == 0b0110_100
 assert b#[1..=-1]     == 0b0110_100
 assert b#[1..=-2]     == 0b0110_100  // unsigned result from bit selector
@@ -266,7 +266,7 @@ Range type cast from integers use the same one-hot encoding. It is not possible
 to type cast from tuple to range, but it is possible from range to tuple.
 
 ```
-let c = 1..=3
+const c = 1..=3
 assert int(c) == 0b1110
 assert range(0b01_1100) == 2..=4
 
@@ -286,7 +286,7 @@ assert tuple(10..=0 step -2) == (10,8,6,4,2, 0)
 assert      (10..=0 step -2) == (10,8,6,4,2, 0)
 
 assert -1..=2 == (-1,0,1,2)
-let x = -1..=2
+const x = -1..=2
 
 assert (i for i in 0..=10 step 2) == (0,2,4,6,8,10)
 ```
@@ -347,22 +347,22 @@ creation. The difference is that a type should be an immutable variable, and
 therefore it is recommended to start with Uppercase.
 
 ```
-var bund1 = (color:string, value:s33)
-x:bund1        = _      // OK, declare x of type bund1 with default values
+mut bund1 = (color:string, value:s33)
+x:bund1        = ?      // OK, declare x of type bund1 with default values
 bund1.color    = "red"  // OK
-bund1.is_green = fun(self) { self.color == "green" }
+bund1.is_green = comb(self) { self.color == "green" }
 x.color        = "blue" // OK
 
-let typ = (color:string, value:s33, is_green:fun(self) = _)
-y:typ        = _        // OK
+const typ = (color:string, value:s33, is_green:fun(self) = _)
+y:typ        = ?        // OK
 typ.color    = "red"    // compile error
-typ.is_green = fun(self) { self.color == "green" }
+typ.is_green = comb(self) { self.color == "green" }
 y.color      = "red"    // OK
 
-let bund3 = (color:string, value:s33)
-z:bund3        = _                 // OK
+const bund3 = (color:string, value:s33)
+z:bund3        = ?                 // OK
 bund3.color    = "red"             // compile error
-bund3.is_green = fun(self) { ... } // compile error
+bund3.is_green = comb(self) { ... } // compile error
 z.color        = "blue"            // OK
 
 assert x equals typ  // same type structure
@@ -390,7 +390,7 @@ the variable `does` comply with the type specified.
 
 
 ```
-var a = true  // infer a is a boolean
+mut a = true  // infer a is a boolean
 
 foo = a:bool or false // checks that 'a' is a boolean
 ```
@@ -428,7 +428,7 @@ The are three operations that can be done with attributes: set, check, read.
 
 * Check: when associated to a type property in the right-hand-side of an
   assignment. The attribute is a comma separated list of boolean expression
-  that must evaluate true only at this statement. E.g: `var tmp =
+  that must evaluate true only at this statement. E.g: `mut tmp =
   yy::[comptime, attr2>0] + xx`
 
 * Read: a direct read of an attribute value is possible with `variable.field::[field_attribute]`
@@ -447,17 +447,17 @@ most logical is to trigger a compile error if there is no fast convergence.
 
 ```
 // attribute set
-var foo:u32:[comptime=true] = xx   // enforce that foo is comptime true always
+mut foo:u32:[comptime=true] = xx   // enforce that foo is comptime true always
 yyy = xx                           // yyy does not check comptime
-assert yyy::[comptime]             // now, checks that 'yyy` is comptime
+assert yyy::[comptime] == true             // now, checks that 'yyy` is comptime
 
 // attribute check
 if bar == 3 {
-  tmp = bar ; assert bar::[comptime]
+  tmp = bar ; assert bar::[comptime] == true
 }
 
 // attribute read
-assert tmp::[bits] < 30 and !tmp::[comptime]
+assert tmp::[bits] < 30 and tmp::[comptime] == false
 ```
 
 The attribute check is like a type check, both can be converted to assertions,
@@ -466,31 +466,31 @@ but the syntax is cleaner.
 
 === "Attribute Check"
     ```
-    let x = y + 1
+    const x = y + 1
     assert  y::[cond,bar==3]
 
-    read_state = fun(x) {
-      let f:u32:[comptime] = x // f is compile time or a error is generated
+    read_state = comb(x) {
+      const f:u32:[comptime=true] = x // f is compile time or a error is generated
       return f                 // f should be compile time constant
     }
 
-    var foo = read_state(zz) // foo will be compile time constant
+    mut foo = read_state(zz) // foo will be compile time constant
     ```
 
 === "Assertion Equivalent Check"
     ```
-    let x = y + 1
+    const x = y + 1
     cassert y::[cond]
     cassert y::[bar]==3
 
-    read_state = fun(x) {
-      let f = x
+    read_state = comb(x) {
+      const f = x
       cassert f does u32
-      cassert f::[comptime]
+      cassert f::[comptime] == true
       f
     }
 
-    var foo = read_state(zz) // foo will be compile time constant
+    mut foo = read_state(zz) // foo will be compile time constant
     ```
 
 Pyrope allows to assign the attribute to a variable or a function call. Not to
@@ -498,18 +498,18 @@ statements because it is confusing if applied to the condition or all the
 sub-statements.
 
 ```
-z::[comptime=true] = xx   // assign xx to z AND set comptime true
-z::[comptime] = xx        // Same, attribute access on LHS of assignment are attributes set to true
+z:[comptime=true] = xx   // assign xx to z AND set comptime true
+z:[comptime=true] = xx        // Same, attribute access on LHS of assignment are attributes set to true
 
-if cond::[comptime] {         // cond is checked to be compile time constant
-  x::[comptime=true] = a +1   // x is set to be compile time constant
+if cond::[comptime] == true {         // cond is checked to be compile time constant
+  x:[comptime=true] = a +1   // x is set to be compile time constant
 }else{
-  x::[comptime] = b           // x is set to be compile time constant
+  x:[comptime=true] = b           // x is set to be compile time constant
 }
 
 
-if cond::[comptime] {  // checks if cond is compute at comptime
-  let v = cond
+if cond::[comptime] == true {  // checks if cond is compute at comptime
+  const v = cond
   if cond {
     puts "cond is compile time and true"
   }
@@ -523,9 +523,9 @@ semantic. To understand the potential Pyrope syntax, this is a hypothetical
 `::[poison]` attribute that marks tuple.
 
 ```
-let bad = (a=3,b::[poison=true]=4)
+const bad = (a=3,b::[poison] == true=4)
 
-let b = bad.b
+const b = bad.b
 
 assert b::[poison] and b==4
 ```
@@ -694,17 +694,17 @@ set/check/read the compile time status. This means that the value must be
 constant at compile time or a compile error is generated.
 
 ```
-let a::[comptime] = 1     // obviously comptime
-b::[comptime] = a + 2     // OK too
-let c::[comptime] = rand  // compile error, 'c' is not compile time constant
+const a:[comptime=true] = 1     // obviously comptime
+b:[comptime=true] = a + 2     // OK too
+const c:[comptime=true] = rand  // compile error, 'c' is not compile time constant
 ```
 
 To avoid too frequent comptime directives, Pyrope treats all the variables that
 start with uppercase as compile time constants.
 
 ```
-var Xconst1 = 1      // obvious comptime
-var Xvar2   = rand   // compile error, 'Xvar2' is not compile time constant
+mut Xconst1 = 1      // obvious comptime
+mut Xvar2   = rand   // compile error, 'Xvar2' is not compile time constant
 ```
 
 ### debug attribute
@@ -721,8 +721,8 @@ This guarantees that `debug` variables, or statements, do not have any
 side-effects beyond debug statements.
 
 ```
-var a = (b::[debug]=2, c = 3) // a.b is a debug variable
-let c::[debug] = 3
+mut a = (b::[debug]=2, c = 3) // a.b is a debug variable
+const c::[debug] = 3
 ```
 
 Assignments to debug variables also bypass protection access. This means that
@@ -731,10 +731,10 @@ all the results as debug, it allows to read any public/private variable/field.
 
 
 ```
-x:(_priv=3, zz=4) = _
+x:(_priv=3, zz=4) = ?
 
-let tmp = x._priv         // compile error
-let tmp::[debug] = x.priv // OK
+const tmp = x._priv         // compile error
+const tmp::[debug] = x.priv // OK
 
 assert x._priv == 3    // OK, assert is a debug statement
 ```
@@ -748,7 +748,7 @@ persistence across cycles the `reg` type must be used.
 
 ```
 reg counter:u32   = 10
-var not_a_reg:u32 = 20
+mut not_a_reg:u32 = 20
 ```
 
 In `reg`, the right-hand side of the initialization (`10` in the
@@ -766,7 +766,7 @@ The private has different meaning depending on when it is applied:
 * When applied to a tuple entry (`(field::[private] = 3)`), it means that the
   entry can not be accessed outside the tuple.
 
-* When applied to a `pipestage` variable (`var foo::[private] = 3`), it means that the
+* When applied to a `pipestage` variable (`mut foo::[private] = 3`), it means that the
   variable is not pipelined to the next type stage. Section
   [pipestage](06c-pipelining.md) has more details.
 
@@ -914,7 +914,7 @@ match (a=1,b=3) {
   else { cassert false }
 }
 
-match let t=(a=1,b=3); t {
+match const t=(a=1,b=3); t {
   case (a=1  ,c=4) { cassert false }
   case (b=nil,a=1) { cassert t.b==3 and t.a==1 }
   else { cassert false }
@@ -989,7 +989,7 @@ assert y#[..]#+[..] == 3
 assert y#[0..=5]#+[..] == 3
 assert y#[0..=6]#+[..] == 4
 
-var z     = 0b0110
+mut z     = 0b0110
 z#[0] = 1
 assert z == 0b0111
 z#[0] = 0b11 // compile error, '0b11` overflows the maximum allowed value of `z#[0]`
@@ -1017,10 +1017,10 @@ the bit selection can not be used to transpose bits. A tuple must be used for
 such an operation.
 
 ```
-var v = 0b10
+mut v = 0b10
 assert v#[0,1] == v#[1,2] == v#[..] == v#[0..=1] == v#[..=1] == 0b10
 
-var trans = 0
+mut trans = 0
 
 trans#[0] = v#[1]
 trans#[1] = v#[0]
@@ -1179,9 +1179,9 @@ status.
 
 
 ```
-var v1:u32 = _                 // v1 is zero every cycle AND not valid
+mut v1:u32 = ?                 // v1 is zero every cycle AND not valid
 assert v1::[valid] == false
-var v2:u32 = 0                 // v2 is zero every cycle AND     valid
+mut v2:u32 = 0                 // v2 is zero every cycle AND     valid
 assert v2::[valid] == true
 
 cassert v1?
@@ -1196,8 +1196,8 @@ assert v2?                     // valid even though data is not
 assert v1 != 0                 // usual verilog x logic
 assert v2 != 0                 // usual verilog x logic
 
-let res1 = v1 + 0              // valid with just unknown 0sb? data
-let res2 = v2 + 0              // valid with just unknown 0sb? data
+const res1 = v1 + 0              // valid with just unknown 0sb? data
+const res2 = v2 + 0              // valid with just unknown 0sb? data
 
 assert res1?
 assert res2?
@@ -1210,15 +1210,15 @@ always assert counter.reset implies !counter?
 `valid` can be overwritten by the setter method:
 
 ```
-let custom = (
-  ,data:i16 = _
+const custom = (
+  ,data:i16 = ?
   ,setter = mod(ref self, v) {
     self.data = v
     self::[valid] = v != 33
   }
 )
 
-var x:custom = _
+mut x:custom = ?
 
 cassert x?
 x.data = 33
@@ -1232,9 +1232,9 @@ data-independent. Tuples also can have an optional type, which behaves like
 adding optional to each of the tuple fields.
 
 ```
-let complex = (
+const complex = (
   ,reg v1:string = "foo"
-  ,v2:string = _
+  ,v2:string = ?
 
   ,setter = mod(ref self, v) {
      self.v1 = v
@@ -1242,10 +1242,10 @@ let complex = (
   }
 )
 
-var x1:complex = _
-var x2:complex:[valid=false] = 0  // toggle valid, and set zero
-var x3:complex = 0
-x3::[valid=false]                 // set invalid
+mut x1:complex = ?
+mut x2:complex:[valid=false] = 0  // toggle valid, and set zero
+mut x3:complex = 0
+x3::[valid] == false                 // set invalid
 
 assert x1.v1 == "" and x1.v2 == ""
 assert not x2? and not x2.v1? and not v2.v2?
@@ -1288,24 +1288,24 @@ variable optional is set to false, and it is assigned the default value:
 * `nil` otherwise
 
 ```
-var a:int = _
+mut a:int = ?
 cassert a==0 and a::[valid] == false and not a?
 
-var b:int = 0
+mut b:int = 0
 cassert b==0 and b::[valid] and b?
 b = nil
 cassert b==nil and b::[valid] == false and not b?
 
-var c:fun(a1) = _
+mut c:fun(a1) = ?
 cassert c == nil and c::[valid]==false
-c = fun(a1) { cassert true }
+c = comb(a1) { cassert true }
 cassert c!= nil and c::[valid]
 
-var d:[] = _               // empty tuple
+mut d:[] = ?               // empty tuple
 cassert d != nil and d::[valid]
 cassert d[0] == nil and !d[0]::[valid]
 
-var e:int = nil
+mut e:int = nil
 cassert e==nil and !e::[valid] and not e?
 e = 0
 cassert e==0 and e::[valid] and e?
@@ -1314,25 +1314,25 @@ cassert e==0 and e::[valid] and e?
 The same rules apply when a tuple or a type is declared.
 
 ```
-let a = "foo"
+const a = "foo"
 
-var at1 = (
+mut at1 = (
   ,a:string
 )
 cassert at1[0] == "foo"
 cassert at1 !has "a"    // at1.a undefined
 
-var at2 = (
-  ,a:string = _
+mut at2 = (
+  ,a:string = ?
 )
 cassert at2.a == ""  and at2.a::[valid]==false
 at2.a = "torrellas"
 cassert at2.a == "torrellas" and at2[0] == "torrellas"
 
-var at3:at2 = _
+mut at3:at2 = ?
 cassert at3.a == ""  and at3.a::[valid]==false
 
-var at4:at2 = (a="josep")
+mut at4:at2 = (a="josep")
 cassert at4.a == "josep"  and at4.a::[valid] and at4::[valid]
 
 ```
@@ -1343,9 +1343,9 @@ assigns a value, the valid will be set only on that path, but the data may
 always have the path.
 
 ```
-var x=_
-var y=2
-var z=_
+mut x=_
+mut y=2
+mut z=_
 if rand {
   x = 3
   y = 4
@@ -1371,7 +1371,7 @@ with structured bindings ()multiple return values) with unused arguments.
 
 
 ```
-let weird_pick_bits = fun(b:u32) -> (x:u1, _:u4) {
+const weird_pick_bits = comb(b:u32) -> (x:u1, _:u4) {
   (x=b#[2..<3], b#[5])
 }
 
@@ -1380,13 +1380,13 @@ fun fcall_returns_2_values() -> (xx, yy) {
   yy = 7
 }
 
-let (a,_) = fcall_returns_2_values()
+const (a,_) = fcall_returns_2_values()
 assert a == 3
 
-var b:u8 = 3
+mut b:u8 = 3
 _ = a           // legal, but it is just a "read" to 'a'
 _ = 3
-b = _
+b = ?
 assert b == 0 and not b::[valid]
 ```
 

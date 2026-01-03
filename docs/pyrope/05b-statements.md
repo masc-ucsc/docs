@@ -21,7 +21,7 @@ a = unique if x1 == 1 {
     500
   }
 
-var x = _
+mut x = ?
 if a { x = 3 } else { x = 4 }
 ```
 
@@ -45,11 +45,11 @@ the remaining if/else statement blocks.
 
 
 ```
-var tmp = x+1
+mut tmp = x+1
 
-if var x1=x+1; x1 == tmp {
+if mut x1=x+1; x1 == tmp {
    puts "x1:{} is the same as tmp:{}", x1, tmp
-}elif var x2=x+2; x2 == tmp {
+}elif mut x2=x+2; x2 == tmp {
    puts "x1:{} != x2:{} == tmp:{}", x1, x2, tmp
 }
 ```
@@ -85,7 +85,7 @@ else              { assert false       }
 Like the `if`, it can also be used as an expression.
 
 ```
-var hot = match x {
+mut hot = match x {
     == 0sb001 { a }
     == 0sb010 { b }
     == 0sb100 { c }
@@ -93,7 +93,7 @@ var hot = match x {
 
 // Equivalent
 optimize (x==0sb001 or x==0sb010 or x==0sb100)
-var hot2 = __hotmux(x, a, b, c)
+mut hot2 = __hotmux(x, a, b, c)
 
 assert hot==hot2
 ```
@@ -101,7 +101,7 @@ assert hot==hot2
 Like the `if` statement, a sequence of statements and declarations are possible in the match statement.
 
 ```
-match let one=1 ; one ++ (2) {
+match const one=1 ; one ++ (2) {
   == (1,2) { puts "one:{}", one }      // should always hit
 }
 ```
@@ -111,13 +111,13 @@ omitted.
 
 ```
 for x in 1..=5 {
-  let v1 = match x {
+  const v1 = match x {
     3 { "three" }
     4 { "four" }
     else { "neither"}
   }
 
-  let v2 = match x {
+  const v2 = match x {
     == 3 { "three" }
     == 4 { "four" }
     else { "neither"}
@@ -136,8 +136,8 @@ is in the current scope, not creating a new scope. This allows cleaner more
 compact syntax.
 
 ```
-var a = 3
-a += 1 when false             // never executes 
+mut a = 3
+a += 1 when false             // never executes
 assert a == 3
 assert a == 1000 when a > 10  // assert never executed either
 
@@ -170,7 +170,7 @@ lambda not a code block.
 
 The main features of code blocks:
 
-* Code blocks define a new scope. New variable declarations inside are not visible outside it. 
+* Code blocks define a new scope. New variable declarations inside are not visible outside it.
 
 * Code blocks do not allow variable declaration shadowing.
 
@@ -185,32 +185,32 @@ The main features of code blocks:
 
 ```
 {
-  var x=1
-  var z=_
+  mut x=1
+  mut z=_
   {
     z = 10
-    var x=_           // compiler error, 'x' is a shawdow variable
+    mut x=_           // compiler error, 'x' is a shawdow variable
   }
-  assert z == 10 
+  assert z == 10
 }
-let zz = x            // compile error, `x` is out of scope
+const zz = x            // compile error, `x` is out of scope
 
-var yy = {let x=3 ; 33/3} + 1
+mut yy = {const x=3 ; 33/3} + 1
 assert yy == 12
-let xx = {yy=1 ; 33}  // compile error, 'yy' has side effects
+const xx = {yy=1 ; 33}  // compile error, 'yy' has side effects
 
-if {let a=1+yy; 13<a} {
+if {const a=1+yy; 13<a} {
   // a is not visible in this scope
   some_code()
 }
 
-let doit = fun(f,a) {
-  let x = f(a)
+const doit = comb(f,a) {
+  const x = f(a)
   assert x == 7
   return 3
 }
 
-let z3 = doit(fun(a) { 
+const z3 = doit(fun(a) {
   assert a!=0
   return 7             // exist the current lambda
   100                  // never reached statement
@@ -233,17 +233,17 @@ for i in 0..<100 {
  some_code(i)
 }
 
-var bund = (1,2,3,4)
+mut bund = (1,2,3,4)
 for (index,i) in bund.enumerate() {
   assert bund[j] == i
 }
 ```
 
 ```
-let b = (a=1,b=3,c=5,7,11)
+const b = (a=1,b=3,c=5,7,11)
 assert b.keys() == ('a', 'b', 'c', '', '')
 assert b.enumerate() == ((0,1), (1,3), (2,5), (3,7), (4,11))
-let xx= zip(b.keys(), b.enumerate()) 
+const xx= zip(b.keys(), b.enumerate())
 cassert xx == (('a',0,a=1), ('b',1,b=3), ('c',2,c=5), ('',3,7), ('',4,11))
 
 for (key,index,i) in zip(keys(b),b.enumerate()) {
@@ -254,7 +254,7 @@ for (key,index,i) in zip(keys(b),b.enumerate()) {
   assert i==11 implies (index==4 and key == '' )
 }
 
-let c = ((1,a=3), b=4, c=(x=1,y=6))
+const c = ((1,a=3), b=4, c=(x=1,y=6))
 assert c.enumerate() == ((0,(1,a=3)), (1,b=4), (2,c=(x=1,y=6)))
 ```
 
@@ -262,9 +262,9 @@ The `for` can also be used in an expression that allows building comprehensions
 to initialize arrays. Pyrope uses a comprehension similar to Julia or Python.
 
 ```
-var c = for i in 1..<5 { var xx = i }  // compile error, no expression
-var d = i for i in 0..<5 
-var e = i for i in 0..<5 if i
+mut c = for i in 1..<5 { mut xx = i }  // compile error, no expression
+mut d = i for i in 0..<5
+mut e = i for i in 0..<5 if i
 assert (0,1,2,3,4) == d
 assert e == (1,2,3,4)
 ```
@@ -302,7 +302,7 @@ loop statements (`for`, `loop`, and `while`). `return` can have a value.
 
 
 ```
-var total:[] = _
+mut total:[] = ?
 for a in 1..=10 {
   continue when a == 2
   total ++= a
@@ -316,7 +316,7 @@ if true {
 }
 
 a = 3
-var total2:[] = _
+mut total2:[] = ?
 while a>0 {
   total2 ++= a
   break when a == 2    // exit if scope
@@ -344,17 +344,17 @@ variable declarations visible only inside the while statements.
 ```
 // a do while contruct does not exist, but a loop is quite clean/close
 
-var a = 0
+mut a = 0
 loop {
   puts "a:{}",a
 
   a += 1
 
-  break unless a < 10 
+  break unless a < 10
 } // do{ ... }while(a<10)
 ```
 
-## defer 
+## defer
 
 A `defer` attribute can be applied to variables. When used to read a variable,
 it returns the last values written to the variable the end of the current
@@ -364,9 +364,9 @@ The delayed writes happen before the delayed reads. This is also for delaying
 assertion checks to the end of the cycle like post condition checks.
 
 ```
-var c = 10
-assert b.[defer] == 33    // behaves like a postcondition
-b = c.[defer]
+mut c = 10
+assert b@[1] == 33    // behaves like a postcondition
+b = c@[1]
 assert b == 33
 c += 20
 c += 3
@@ -374,7 +374,7 @@ c += 3
 
 To connect the `ring` function calls in a loop.
 ```
-f1 = ring(a, f4.[defer])
+f1 = ring(a, f4@[1])
 f2 = ring(b, f1)
 f3 = ring(c, f2)
 f4 = ring(d, f3)
@@ -386,14 +386,14 @@ variables are registers, the `flop#[0]` is not the same as `defer`. The `flop#[0
 reads the value before any update, the `defer` read, gets values after updates.
 
 ```
-reg counter:u32 = _
+reg counter:u32 = ?
 
-let counter_m1 = counter#[1]  // compile error, #[1] only allowed for debug
-let counter_0  = counter#[0]  // current cycle 
-let counter_1  = counter#[-1] // last cycle
-let counter_2  = counter#[-2] // last last cycle cycle 
+const counter_m1 = counter#[1]  // compile error, #[1] only allowed for debug
+const counter_0  = counter#[0]  // current cycle
+const counter_1  = counter#[-1] // last cycle
+const counter_2  = counter#[-2] // last last cycle cycle
 
-var deferred = counter.[defer]
+mut deferred = counter@[1]
 
 if counter < 100 {
   counter += 1
@@ -412,30 +412,35 @@ if counter == 10 {
 The `defer` can also be applied to write/updates to the end of the cycle but
 uses/reads the current value. In a way, the assignment is delayed to the end of
 the current cycle. If there are many defers to the same variable, they are
-ordered in program order.
+ordered in program order. Notice that defer writes only makes sense if there is a
+register or array because all the variables (mut and const) restart every
+cycle. Defer reads make sense even for variables as it is the final value.
 
 ```
-var a = 1
-assert a == 1 and a.[defer] == 200
-
-a::[defer] = 100
-assert a == 1 and a.[defer] == 200
-
-a::[defer] = 200
-assert a == 1 and a.[defer] == 200
+reg a:u8 = 1
+if a==1 {
+  assert a@[1] == 200
+  a@[1] = 200 // defer write
+  assert a == 1
+  assert a@[0] == 1
+  assert a@[1] == 200
+}else{
+  assert a@[1] == 2
+  a@[1] = 2    // defer write
+}
 ```
 
-If there are `defer` reads and `defer` assignments, the defered writes are
-performed before the defered reads.
+If there are `defer` reads and `defer` assignments/writes, the defered writes are
+performed ahead of the defered reads.
 
 ```
-var a = 1
-var x = 100
-x::[defer] = a
+mut a = 1
+mut x = 100
+x = a@[1]
 a = 200
 
 cassert x == 100
-assert x.[defer] == 1
+assert x@[1] == x
 ```
 
 ## Testing (`test`)
@@ -443,7 +448,7 @@ assert x.[defer] == 1
 The test statement requires a text identifier to notify when the test fails.
 The `test` is similar to a `puts` statement followed by a scope (`test <str>
 [,args] { stmts+ }`). The statements inside the code block can not have any
-effect outside. 
+effect outside.
 
 
 ```pyrope
@@ -458,11 +463,11 @@ randomization outside the test statement increases the number of tests:
 
 === "Parallel tests"
     ```
-    let add = fun(a,b) { a+b }
+    const add = comb(a,b) { a+b }
 
     for i in 0..<10 { // 10 tests
-      let a = (-30..<100).rand
-      let b = (-30..<100).rand
+      const a = (-30..<100).rand
+      const b = (-30..<100).rand
 
       test "test {}+{}",a,b {
         assert add(a,b) == (a+b)
@@ -472,12 +477,12 @@ randomization outside the test statement increases the number of tests:
 
 === "Single test"
     ```
-    let add = fun(a,b) { a+b }
+    const add = comb(a,b) { a+b }
 
     test "test 10 additions" {
       for i in 0..<10 { // 10 tests
-        let a = (-30..<100).rand
-        let b = (-30..<100).rand
+        const a = (-30..<100).rand
+        const b = (-30..<100).rand
 
         assert add(a,b) == (a+b)
       }
@@ -498,7 +503,7 @@ will preserve the value, the inputs may change value.
 
     ```
     test "wait 1 cycle" {
-      let a = 1 + input
+      const a = 1 + input
       puts "printed every cycle input={}", a
       step 1
       puts "also every cycle a={}",a  // printed on cycle later
@@ -510,7 +515,7 @@ will preserve the value, the inputs may change value.
     ```
     test "wait 1 cycle" {
       {
-        let a = 1 + input
+        const a = 1 + input
         puts "printed every cycle input={}", a
       } #> {
         puts "also every cycle a={}",a  // printed on cycle later
@@ -553,4 +558,3 @@ simulation assertion failure.
 
 * `poke` is similar to `peek` but allows to set a value on any flop and lambda
   input/output.
-

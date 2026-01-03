@@ -117,7 +117,7 @@ cycles to show the same result.
 
 ```
 mod mul2(a, b) -> (reg out) {
-  reg pipe1 = _
+  reg pipe1 = ?
 
   out = pipe1
 
@@ -209,14 +209,14 @@ random number (`::[rand]`) generation.
 
 
 ```
-var x:u8 = _
+mut x:u8 = ?
 
 for i in 1..=99 {
-  cassert 0 <= x.[crand] <= 255
+  cassert 0 <= x::[crand] <= 255
 }
 
 fun get_rand_0_255(a:u8) {
-  a.[rand]
+  return a::[rand]
 }
 ```
 
@@ -227,8 +227,8 @@ a compile error for string, range, and lambda types.
 When applied to a tuple, it randomly picks an entry from the tuple.
 
 ```
-var a = (1, 2, 3, b=4)
-var x = a.[rand]
+mut a = (1, 2, 3, b=4)
+mut x = a::[rand]
 
 cassert x == 1 or x == 2 or x == 3 or x == 4
 cassert x.b == 4 when x == 4
@@ -283,8 +283,8 @@ mod counter(update) -> (value) {
 
 test "counter through several cycles" {
 
-  var inp = true
-  var x = counter(inp.[defer])  // inp contents at the end of each cycle
+  mut inp = true
+  mut x = counter(inp@[1])  // inp contents at the end of each cycle
 
   assert x == 0 // x.value == 0
   assert inp == true
@@ -313,24 +313,21 @@ test "counter through several cycles" {
 During `test` simulation, all the assertions are checked but the test does not
 stop with a failure until the end. Sometimes it is useful to write tests to
 check that assertions fail. Assertion failures will be printed but the test
-will continue and fail only if the `assert.[failed]` is true. The `test` code
+will continue and fail only if the `assert::[failed]` is true. The `test` code
 block also accepts to read and/or clear failed attribute.
 
 ```
 test "assert should fail" {
 
- var n = assert.[failed]
+ const n = assert::[failed]
  assert n == false
 
  assert false // FAILS
 
- assert assert.[failed]
-
- assert.[failed] = false // disable test failures done when it finishes
+ assert assert::[failed]
 }
 ```
 
 ## Monitor
 
 TODO
-

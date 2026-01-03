@@ -39,16 +39,16 @@ optimize.
 === "Snippet with types"
 
     ```
-    var b = "hello"
+    mut b = "hello"
 
-    var a:u32 = 0
+    mut a:u32 = 0
 
     a += 1
 
     a = b                       // incorrect
 
 
-    var dest:u32 = 0
+    mut dest:u32 = 0
 
     dest = foo:u16 + v:u8
     ```
@@ -56,16 +56,16 @@ optimize.
 === "Snippet with comptime assert"
 
     ```
-    var b = "hello"
+    mut b = "hello"
 
-    var a:u32 = 0
+    mut a:u32 = 0
 
     a += 1
     cassert a does u32
     a = b                       // incorrect
     cassert b does u32  // fails
 
-    var dest:u32 = 0
+    mut dest:u32 = 0
     cassert (dest does u32) and (foo does u16) and (v does u8)
     dest = foo:u16 + v:u8
     ```
@@ -90,11 +90,11 @@ constraints from the type system. Pyrope type system constructs to handle types:
   logical equivalence, just type equivalence.
 
 ```
-let t1 = (a:int=1, b:string)
-let t2 = (a:int=100, b:string)
-var v1 = (a=33, b="hello")
+const t1 = (a:int=1, b:string)
+const t2 = (a:int=100, b:string)
+mut v1 = (a=33, b="hello")
 
-let f1 = comb() {
+const f1 = comb() {
   (a=33, b="hello")
 }
 
@@ -115,19 +115,19 @@ Since the `puts` command understands types, it can be used on any variable, and
 it is able to print/dump the results.
 
 ```
-let At:int(33..) = _      // number bigger than 32
-let Bt = (
-  c:string = _,
+const At:int(33..) = ?      // number bigger than 32
+const Bt = (
+  c:string = ?,
   d = 100,
   setter = comb(ref self, ...args) { self.c = args }
 )
 
-var a:At = 40
-var a2 = At(40)
+mut a:At = 40
+mut a2 = At(40)
 cassert a == a2
 
-var b:Bt = "hello"
-var b2 = Bt("hello")
+mut b:Bt = "hello"
+mut b2 = Bt("hello")
 cassert b == b2
 
 puts "a:{} or {}", a, at // a:40 or 33
@@ -182,17 +182,17 @@ assert (_:comb(x) -> (y, z) !does _:comb(x, xxx2) -> (y, z))
 For named tuples, this code shows some of the corner cases:
 
 ```
-let t1 = (a:string, b:int)
-let t2 = (b:int, a:string)
+const t1 = (a:string, b:int)
+const t2 = (b:int, a:string)
 
-var a:t1 = ("hello", 3)     // OK
-var a1:t1 = (3, "hello")     // compile error, positions do not match
-var b:t1 = (a="hello", 3)   // OK
-var b1:t1 = (3, a="hello")   // compile error, positions do not match
-var c:t1 = (a="hello", b=3) // OK
-var c1:t1 = (b=3, a="hello") // OK
+mut a:t1 = ("hello", 3)     // OK
+mut a1:t1 = (3, "hello")     // compile error, positions do not match
+mut b:t1 = (a="hello", 3)   // OK
+mut b1:t1 = (3, a="hello")   // compile error, positions do not match
+mut c:t1 = (a="hello", b=3) // OK
+mut c1:t1 = (b=3, a="hello") // OK
 
-var d:t2 = c                 // OK, both fully named
+mut d:t2 = c                 // OK, both fully named
 assert d[0] == c[1] and c[0] == d[1]
 assert d.a == c.a and d.b == c.b
 ```
@@ -201,8 +201,8 @@ Ignoring the value is what makes `equals` different from `==`. As a result
 different functionality functions could be `equals`.
 
 ```
-let a = comb() { 1 }
-let b = comb() { 2 }
+const a = comb() { 1 }
+const b = comb() { 2 }
 assert a equals _:comb()    // 1 !equals :comb()
 
 assert a() != b()              // 1 != 2
@@ -246,41 +246,41 @@ the `b` variable declaration type name. If their declaration had no type, the
 inferred type name is used.
 
 ```
-let a = 3
-let b = 200
+const a = 3
+const b = 200
 cassert a is b
 
-let c:u32 = 10
+const c:u32 = 10
 cassert a !is c
 cassert a::[typename] == "int" and c::[typename] == "u32"
 
-let d:u32 = nil
+const d:u32 = nil
 cassert c is d
 
-let e = (a:u32=1)
-let f:(a:u32) = 33
+const e = (a:u32=1)
+const f:(a:u32) = 33
 cassert e is f
 ```
 
 Since it checks equivalence, when `a is b == b is a`.
 
 ```
-let X1 = (b:u32)
-let X2 = (b:u32)
+const X1 = (b:u32)
+const X2 = (b:u32)
 
-let t1:X1 = (b=3)
-let t2:X2 = (b=3)
+const t1:X1 = (b=3)
+const t2:X2 = (b=3)
 assert (b=3) !is X2  // same as (b=3) !is X2
 assert t1 equals t2
 assert t1 !is t2
 
-let t4:X1 = (b=5)
+const t4:X1 = (b=5)
 
 assert t4 equals t1
 assert t4 is t1
 assert t4 !is t2
 
-let f2 = comb(x) where x is X1 {
+const f2 = comb(x) where x is X1 {
   x.b + 1
 }
 ```
@@ -294,19 +294,19 @@ time.
 
 
 ```
-let Rgb = (
+const Rgb = (
   c:u24,
   setter = mod(ref self, c) { self.c = c }
 )
 
-let Color = enum(
+const Color = enum(
   Yellow:Rgb = 0xffff00,
   Red:Rgb = 0xff0000,
   Green = Rgb(0x00ff00), // alternative
   GBlue = Rgb(0x0000ff)
 )
 
-var y:Color = Color.Red
+mut y:Color = Color.Red
 if y == Color.Red {
   puts "c1:{} c2:{}\n", y, y.c  // prints: c1:Color.Red c2:0xff0000
 }
@@ -319,12 +319,12 @@ type, where the enumerate has to be either of the enum entries where each is
 associated to a type.
 
 ```
-let ADT = enum(
-  Person:(eats:string) = _,
-  Robot:(charges_with:string) = _
+const ADT = enum(
+  Person:(eats:string) = ?,
+  Robot:(charges_with:string) = ?
 )
 
-let nourish = comb(x:ADT) {
+const nourish = comb(x:ADT) {
   match x {
     == ADT.Person { puts "eating:{}", x.eats }
     == ADT.Robot { puts "charging:{}", x.charges_with }
@@ -376,7 +376,7 @@ the needed number of integer bits.
 When the attributes are read, it reads the current. it does not read the constrained.
 
 ```pyrope
-var val:u8 = 0   // designer constraints a to be between 0 and 255
+mut val:u8 = 0   // designer constraints a to be between 0 and 255
 assert val::[sbits] == 0
 
 val = 3          // val has 3 bits (0sb011 all the numbers are signed)
@@ -398,8 +398,8 @@ of each variable. For each operation, the maximum and minimum are computed. For
 control-flow divergences, the worst possible path is considered.
 
 ```
-var a = 3                  // a: current(max=3,min=3) constrain()
-var c:int(0..=10) = _      // c: current(max=0,min=0) constrain(max=10,min=0)
+mut a = 3                  // a: current(max=3,min=3) constrain()
+mut c:int(0..=10) = ?      // c: current(max=0,min=0) constrain(max=10,min=0)
 if b {
   c = a + 1                // c: current(max=4,min=4) constrain(max=10,min=0)
 } else {
@@ -407,14 +407,14 @@ if b {
 }
                            // c: current(max=4,min=3) constrain(max=10,min=0)
 
-var e::[sbits = 4] = _     // e: current(max=0,min=0) constrain(max=7,min=-8)
+mut e::[sbits = 4] = ?     // e: current(max=0,min=0) constrain(max=7,min=-8)
 e = 2                      // e: current(max=2,min=2) constrain(max=7,min=-8)
-var d = c                  // d: current(max=4,min=3) constrain()
+mut d = c                  // d: current(max=4,min=3) constrain()
 if d == 4 {
   d = e + 1                // d: current(max=3,min=3) constrain()
 }
-var g:u3 = d               // g: current(max=4,min=3) constrain(max=7,min=0)
-var h = c#[0, 1]           // h: current(max=3,min=0) constrain()
+mut g:u3 = d               // g: current(max=4,min=3) constrain(max=7,min=0)
+mut h = c#[0, 1]           // h: current(max=3,min=0) constrain()
 ```
 
 
@@ -498,12 +498,12 @@ types can be stored across cycles.
 
 
 ```
-let e_type = enum(str:String = "hello", num=22)
-let v_type = variant(str:String, num:int) // No default value in variant
+const e_type = enum(str:String = "hello", num=22)
+const v_type = variant(str:String, num:int) // No default value in variant
 
-var vv:v_type = (num=0x65)
+mut vv:v_type = (num=0x65)
 cassert vv.num == 0x65
-let xx = vv.str                         // compile or simulation error
+const xx = vv.str                         // compile or simulation error
 ```
 
 
@@ -512,25 +512,25 @@ Variants may not be solved at compile time, and the error will be a simulation
 error. A `comptime` directive can force a compile time-only variant.
 
 ```
-let Vtype = variant(str:String, num:int, b:bool)
+const Vtype = variant(str:String, num:int, b:bool)
 
-let x1a:Vtype = "hello"                 // implicit variant type
-let x1b:Vtype = (str="hello")           // explicit variant type
+const x1a:Vtype = "hello"                 // implicit variant type
+const x1b:Vtype = (str="hello")           // explicit variant type
 
-var x2:Vtype:[comptime] = "hello"       // comptime
+mut x2:Vtype:[comptime=true] = "hello"       // comptime
 
 cassert x1a.str == "hello" and x1a == "hello"
 cassert x1b.str == "hello" and x1b == "hello"
 
-let err1 = x1a.num                      // compile or simulation error
-let err2 = x1b.b                        // compile or simulation error
-let err3 = x2.num                       // compile error
+const err1 = x1a.num                      // compile or simulation error
+const err2 = x1b.b                        // compile or simulation error
+const err3 = x2.num                       // compile error
 ```
 
 As a reference, `enums` allow to compare for field but not update enum entries.
 
 ```
-var ee = e_type
+mut ee = e_type
 ee.str = "new_string"       // compile error, enum is immutable
 
 match ee {
@@ -547,28 +547,28 @@ To convert between tuples, an explicit setter is needed unless the tuple fields
 names, order, and types match.
 
 ```
-let at = (c:string, d:u32)
-let bt = (c:string, d:u100)
+const at = (c:string, d:u32)
+const bt = (c:string, d:u100)
 
-let ct = (
-  d:u32 = _,
-  c:string = _
+const ct = (
+  d:u32 = ?,
+  c:string = ?
 )
 // different order
-let dt = (
-  d:u32 = _,
-  c:string = _,
+const dt = (
+  d:u32 = ?,
+  c:string = ?,
   setter = comb(ref self, x:at) { self.d = x.d; self.c = x.c }
 )
 
-var b:bt = (c="hello", d=10000)
-var a:at = _
+mut b:bt = (c="hello", d=10000)
+mut a:at = ?
 
 a = b          // OK c is string, and 10000 fits in u32
 
-var c:ct = a   // OK even different order because all names match
+mut c:ct = a   // OK even different order because all names match
 
-var d:dt = a   // OK, call initial to type cast
+mut d:dt = a   // OK, call initial to type cast
 ```
 
 * To string: The `format` allows to convert any type/tuple to a string.
@@ -581,7 +581,7 @@ Introspection is possible for tuples.
 
 ```
 a = (b=1, c:u32=2)
-var b = a
+mut b = a
 b.c = 100
 
 assert a equals b
@@ -603,7 +603,7 @@ function but not to change the functionality. Functions have 3 fields `inputs`,
 at declaration.
 
 ```
-let fu = comb(a, b=2) -> (c) where a > 10 { c = a + b }
+const fu = comb(a, b=2) -> (c) where a > 10 { c = a + b }
 assert fu::[inp] equals ('a', 'b')
 assert fu::[out] equals ('c')
 assert fu::[where](a=200) and !fu::[where](a=1)
@@ -613,24 +613,24 @@ This means that when ignoring named vs unnamed calls, overloading behaves like
 this:
 
 ```
-let x:u32 = fn(a1, a2)
+const x:u32 = fn(a1, a2)
 
-let model_poly_call = comb(fn, ...args) -> (out) {
+const model_poly_call = comb(fn, ...args) -> (out) {
   for f in fn {
      continue unless f::[inp] does args
      continue unless f::[out] does out
      return f(args) when f::[where](args)
   }
 }
-let x:u32 = model_poly_call(fn, a1, a2)
+const x:u32 = model_poly_call(fn, a1, a2)
 ```
 
 There are several uses for introspection, but for example, it is possible to build a
 function that returns a randomly mutated tuple.
 
 ```
-let randomize::[debug] = comb(ref self) {
-  let rnd = import("prp/rnd")
+const randomize::[debug] = comb(ref self) {
+  const rnd = import("prp/rnd")
   for i in ref self {
     if i equals _:int {
       i = rnd.between(i::[max], i::[min])
@@ -641,8 +641,8 @@ let randomize::[debug] = comb(ref self) {
   self
 }
 
-let x = (a=1, b=true, c="hello")
-let y = x.randomize()
+const x = (a=1, b=true, c="hello")
+const y = x.randomize()
 
 assert x.a == 1 and x.b == true and x.c == "hello"
 cover y.a != 1
@@ -675,12 +675,12 @@ Any call to a function or tuple outside requires a prior `import` statement.
 // file: src/my_fun.prp
 comb fun1(a, b) { a + b }
 comb fun2(a) {
-  let inside = comb() { 3 }
+  const inside = comb() { 3 }
   a
 }
 comb another(a) { a }
 
-let mytup = (
+const mytup = (
   call3 = comb() { puts "call called" }
 )
 ```
@@ -692,7 +692,7 @@ a.fun1(a=1, b=2)        // OK
 a.another(a=1, 2)       // compile error, 'another' is not an imported function
 a.fun2.inside()         // compile error, `inside` is not in top scope variable
 
-let fun1 = import("my_fun/fun1")
+const fun1 = import("my_fun/fun1")
 lec fun1, a.fun1
 
 x = import("my_fun/mytup")
@@ -731,10 +731,10 @@ use a different library version than xx/bb/cc if the library is provided by yy,
 or use a default one from the xx directory.
 
 ```
-let a = import("prj1/file1")
-let b = import("file1")       // import xxx_fun from file1 in the local project
-let c = import("file2")       // import the functions from local file2
-let d = import("prj2/file3")  // import the functions from project prj2 and file3
+const a = import("prj1/file1")
+const b = import("file1")       // import xxx_fun from file1 in the local project
+const c = import("file2")       // import the functions from local file2
+const d = import("prj2/file3")  // import the functions from project prj2 and file3
 ```
 
 Many languages have a "using" or "import" or "include" command that includes
@@ -743,12 +743,12 @@ allow that, but it is possible to use a mixin to add the imported functionality
 to a tuple.
 
 ```
-let b = import("prp/Number")
-var a = import("fancy/Number_mixin")
+const b = import("prp/Number")
+mut a = import("fancy/Number_mixin")
 
-let Number = b ++ a // patch the default Number class
+const Number = b ++ a // patch the default Number class
 
-var x:Number = 3
+mut x:Number = 3
 ```
 
 ### Register reference
@@ -772,7 +772,7 @@ mod do_increase() {
 }
 
 mod do_debug() {
-  let cntr = regref("do_increase/counter")
+  const cntr = regref("do_increase/counter")
 
   puts "The counter value is {}", cntr
 }
@@ -807,14 +807,14 @@ set a different value for each uart base register.
 // file remote.prp
 
 mod xxx(some, code) {
-  reg uart_addr:u32 = _
+  reg uart_addr:u32 = ?
   assert 0x400 > uart_addr >= 0x300
 }
 
 // file local.prp
 mod setup_xx() {
-  var xx = regref("uart_addr") // match xxx.uart_addr if xxx is in hierarchy
-  var index = 0
+  mut xx = regref("uart_addr") // match xxx.uart_addr if xxx is in hierarchy
+  mut index = 0
   for val in ref xx {          // ref does not allow enumerate
     val = 0x300 + index * 0x10 // sets uart_addr to 0x300, 0x310, 0x320...
     index += 1
@@ -844,14 +844,14 @@ overwrite an existing value. The peek/poke use the same reference as `import`
 or register reference.
 
 ```
-let bpred = ( // complex predictor
+const bpred = ( // complex predictor
   taken = comb() { self.some_table[som_var] >= 0 }
 )
 
 test "mocking taken branches" {
   poke "bpred_file/taken", true
 
-  var l = core.fetch.predict(0xFFF)
+  mut l = core.fetch.predict(0xFFF)
 }
 ```
 
@@ -870,18 +870,18 @@ character names, or variable name matches argument name, or there is no type
 ambiguity.
 
 ```
-let Typ1 = (
+const Typ1 = (
   a:string = "none",
   b:u32 = 0
 )
 
-let w = Typ1(a="foo", b=33)       // OK
-let x:Typ1 = (a="foo", b=33)      // OK, same as before
+const w = Typ1(a="foo", b=33)       // OK
+const x:Typ1 = (a="foo", b=33)      // OK, same as before
 
-let v:Typ1 = Typ1(a="foo", b=33)  // OK, but redundant Typ1
-let y:Typ1 = ("foo", 33)          // OK, because no conflict by type
+const v:Typ1 = Typ1(a="foo", b=33)  // OK, but redundant Typ1
+const y:Typ1 = ("foo", 33)          // OK, because no conflict by type
 
-var z:Typ1 = _                    // OK, default field values
+mut z:Typ1 = ?                    // OK, default field values
 cassert z.a == "none" and z.b == 0
 z = ("foo", 33)
 
@@ -896,14 +896,14 @@ respect the declaration order.
 
 
 ```
-let Typ2 = (
+const Typ2 = (
   a:string = "none",
   b:u32 = 0,
   setter = mod(ref self, a, b) { self.a = a; self.b = b }
 )
 
-var x:Typ2 = (a="x", b=0)
-var y:Typ2 = (a="x", b=0)
+mut x:Typ2 = (a="x", b=0)
+mut y:Typ2 = (a="x", b=0)
 
 x["hello"] = 44
 y = ("hello", 44)
@@ -913,8 +913,8 @@ cassert x == y
 Tuples can be multi-dimensional, and the index can handle multiple indexes at once.
 
 ```
-let Matrix8x8 = (
-  data:[8][8]u16 = _,
+const Matrix8x8 = (
+  data:[8][8]u16 = ?,
   setter = comb(ref self, x:int(0, 7), y:int(0, 7), v:u16) {
     self.data[x][y] = v
   } ++ comb(ref self, x:int(0, 7), v:u16) {
@@ -928,7 +928,7 @@ let Matrix8x8 = (
   }
 )
 
-let m:Matrix8x8 = _
+const m:Matrix8x8 = ?
 cassert m.data[0][3] == 0
 
 m[1, 2] = 100
@@ -947,14 +947,14 @@ a slice of the object. Since they can be overwritten, the explicit overload sele
 which to pick.
 
 ```
-let Matrix2x2 = (
-  data:[2][2]u16 = _,
+const Matrix2x2 = (
+  data:[2][2]u16 = ?,
   getter = comb(ref self, x:int(0, 2), y:int(0, 2)) {
     self.data[x][y] + 1
   }
 )
 
-let n:Matrix2x2 = _
+const n:Matrix2x2 = ?
 n.data[0][1] = 2      // default setter
 
 cassert n[0][1] == 3  // getter does + 1
@@ -966,21 +966,21 @@ variable or tuple field is also a tuple, the getter/setter allow to intercept
 any variable/field. The same array rule applies to the getter.
 
 ```
-let My_2_elem = (
-  data:[2]string = _,
+const My_2_elem = (
+  data:[2]string = ?,
   setter = mod(ref self, x:uint(0..<2), v:string) {
     self.data[x] = v
   } ++ mod(ref self, v:My_2_elem) {
     self.data = v.data
   } ++ mod(ref self) { // default _ assignment
-    self.data = _
+    self.data = ?
   },
   getter = comb(self) { self.data }
         ++ comb(self, i:uint) { self.data[i] }
 )
 
-var v:My_2_elem = _
-var x:My_2_elem = _
+mut v:My_2_elem = ?
+mut x:My_2_elem = ?
 
 v = (x=0, "hello")
 v[1] = "world"
@@ -988,7 +988,7 @@ v[1] = "world"
 cassert v[0] == "hello"
 cassert v == ("hello", "world")  // not
 
-let z = v
+const z = v
 cassert z !equals v   // v has v.data, z does not
 ```
 
@@ -998,10 +998,10 @@ set/returned.
 
 
 ```
-let some_obj = (
+const some_obj = (
   a1:string,
   a2 = (
-    _val:u32 = _,                              // hidden field
+    _val:u32 = ?,                              // hidden field
     getter = comb(self) { self._val + 100 },
     setter = mod(ref self, x) { self._val = x + 1 }
   ),
@@ -1011,7 +1011,7 @@ let some_obj = (
   }
 )
 
-var x:some_obj = ("hello", 3)
+mut x:some_obj = ("hello", 3)
 
 assert x.a1 == "hello"
 assert x.a2 == 103
@@ -1023,8 +1023,8 @@ The getter method can be [overloaded](06-functions.md#Overloading). This allows
 to customize by return type:
 
 ```
-let showcase = (
-  ,v:int = _
+const showcase = (
+  ,v:int = ?
   ,getter = comb(self)->(_:string) where self.i>10 {
     format("this is a big {} number", self.v)
   } ++ comb(self)->(_:int) {
@@ -1032,13 +1032,13 @@ let showcase = (
   }
 )
 
-var s:showcase = _
+mut s:showcase = ?
 s.v = 3
-let r1:string = s // compile error, no matching getter
-let r2:int    = s // OK
+const r1:string = s // compile error, no matching getter
+const r2:int    = s // OK
 
 s.v = 100
-let r3:string = s // OK
+const r3:string = s // OK
 cassert r3 == "this is a bit 100 number"
 ```
 
@@ -1046,8 +1046,8 @@ Like all the lambdas, the getter method can also be overloaded on the return typ
 In this case, it allows building typecast per type.
 
 ```
-let my_obj = (
-  ,val:u32 = _
+const my_obj = (
+  ,val:u32 = ?
   ,getter = comb(self)->(_:string ){ string(self.val) }
        ++ comb(self)->(_:bool){ self.val != 0    }
        ++ comb(self)->(_:int    ){ self.val         }
@@ -1059,8 +1059,8 @@ let my_obj = (
 The setter/getter can also access attributes:
 
 ```
-var obj1::[attr1] = (
-  ,data:int = _
+mut obj1::[attr1] = (
+  ,data:int = ?
   ,setter = comb(ref self, v) {
     if v::[attr2] {
       self.data::[attr3] = 33
@@ -1079,14 +1079,14 @@ tuple types, the setter will be called without any value.
 
 
 ```
-let fint:int = _
+const fint:int = ?
 cassert fint == 0
 
-var fbool:bool = _
+mut fbool:bool = ?
 cassert fbool == 0
 
-let Tup = (
-  ,v:string = _  // default to empty
+const Tup = (
+  ,v:string = ?  // default to empty
   ,setter = comb(ref self) { // no args, default setter for _
      cassert self.v == ""
      self.v = "empty33"
@@ -1095,13 +1095,13 @@ let Tup = (
   }
 )
 
-var x:Tup = _
+mut x:Tup = ?
 cassert x.v == "empty33"
 
 x = "Padua"
 cassert x.v == "Padua"
 
-var y = Tup()
+mut y = Tup()
 cassert y.v == "empty33"
 
 y = "ucsc"
@@ -1113,7 +1113,7 @@ cassert y.v == "ucsc"
 Array index also use the setter or getter methods.
 
 ```
-var my_arr = (
+mut my_arr = (
   ,vector:[16]u8 = 0
   ,getter = comb(self, idx:u4) {
      self.vector[idx]
@@ -1137,7 +1137,7 @@ assignment.
 If the getter/setter uses a string argument, this also allows to access tuple fields.
 
 ```
-let Point = (
+const Point = (
   ,priv_x:int:[private] = 0
   ,priv_y:int:[private] = 0
 
@@ -1154,7 +1154,7 @@ let Point = (
   }
 )
 
-let p:Point = (1,2)
+const p:Point = (1,2)
 
 cassert p['x'] == 1 and p['y'] == 2
 cassert p.x == 1 and p.y == 2          // compile error
@@ -1170,15 +1170,15 @@ comparators. When non-provided the `lt` (Less Than) is a compile error, and the
 
 
 ```
-let t=(
-  ,v:string = _
+const t=(
+  ,v:string = ?
   ,setter = pipe(ref self) { self.v = a }
   ,lt = comb(self,other)->(_:bool){ self.v  < other.v }
   ,eq = comb(self,other)            { self.v == other.v } // infer return
 )
 
-var m1:t = 10
-var m2:t = 4
+mut m1:t = 10
+mut m2:t = 4
 assert m1 < m2 and !(m1==m2)
 assert m1 <= m2 and m1 != m2 and m2 > m1 and m2 >= m1
 ```
@@ -1189,22 +1189,22 @@ b`, but a compile error is created unless `a equals b` returns true. This means
 that a comparison by tuple position suffices even for named tuples.
 
 ```
-let t1=(
+const t1=(
   ,long_name:string = "foo"
   ,b=33
 )
-let t2=(
+const t2=(
   ,b=33
   ,long_name:string = "foo"
 )
-let t3=(
+const t3=(
   ,33
   ,long_name:string = "foo"
 )
 
 cassert t1==t2
 cassert t1 !equals t3
-let x = t1==t3           // compile error, t1 !equals t3
+const x = t1==t3           // compile error, t1 !equals t3
 ```
 
 The comparator `a == b` when `a` or `b` are tuples is equivalent to:
@@ -1216,11 +1216,11 @@ cassert a equals b
 With the `eq` overload, it is possible to compare named and unnamed tuples.
 
 ```
-let t1=(
+const t1=(
   ,long_name:string = "foo"
   ,b=33
 )
-let t2=(
+const t2=(
   ,xx_a=33
   ,yy_b = "foo"
   ,eq = comb(self, o:t1) {
@@ -1262,9 +1262,9 @@ file during the setup phase to decide configuration parameters.
 
 
 ```
-let cfg = __read_json()
+const cfg = __read_json()
 
-let ext = if cfg.foo.bar == 3 {
+const ext = if cfg.foo.bar == 3 {
    foo
 }else{
    bar
@@ -1281,7 +1281,7 @@ can pass many inputs/outputs and has permission to mutate values. Any call to a
 method with two underscores `__` is either a basic gate or a C++ function.
 
 ```
-let __my_typed_cpp:comb(a,b)->(e) = _
+const __my_typed_cpp:comb(a,b)->(e) = ?
 ```
 
 Type defining non-Pyrope code is good to catch errors and also because declaring

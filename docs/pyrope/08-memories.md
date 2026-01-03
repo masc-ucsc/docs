@@ -57,31 +57,31 @@ initialization is zero.
 ```
 reg mem:[] = 0
 mem[3]   = something // async memory
-var array:[] = _
+mut array:[] = ?
 array[3] = something // array no cross cycles persistence
 ```
 
 ```
-var index:u7 = _
-var index2:u6 = _
+mut index:u7 = ?
+mut index2:u6 = ?
 
 array[index] = something
 some_result  = array[index2+3]
 ```
 
-In the previous example, the compiler infers that the bundle at most has 127 entries.
+In the previous example, the compiler infers that the tuple at most has 127 entries.
 
 There are several constructs to declare arrays or async memories:
 
 ```
 reg mem1:[16]i8 = 3        // mem 16 entry init to 3 with type i8
-reg mem2:[16]i8 = _        // mem 16 entry init to 0 with type i8
-var mem3:[] = 0sb?         // array infer size and type, 0sb? initialized
-var mem4:[13] = 0          // array 13 entries size, initialized to zero
+reg mem2:[16]i8 = ?        // mem 16 entry init to 0 with type i8
+mut mem3:[] = 0sb?         // array infer size and type, 0sb? initialized
+mut mem4:[13] = 0          // array 13 entries size, initialized to zero
 reg mem5:[4]i3 = (1,2,3,4) // mem 4 entries 3 bits each, initialized
 ```
 
-Pyrope allows slicing of bundles and hence arrays.
+Pyrope allows slicing of tuples and hence arrays.
 
 ```
 x1 = array[first..<last]  // from first to last, last not included
@@ -89,12 +89,12 @@ x2 = array[first..=last]  // from first to last, last included
 x3 = array[first..+size]  // from first to first+size, first+size. not included
 ```
 
-Since bundles are multi-dimensional, arrays or async memories are multi-dimensional too.
+Since tuples are multi-dimensional, arrays or async memories are multi-dimensional too.
 
 ```
 a[3][4] = 1
 
-var b:[4][8]u8 = 13
+mut b:[4][8]u8 = 13
 
 assert b[2][7] == 13
 assert b[2][10]      // compile error, '10' is out of bound access for 'b[2]'
@@ -104,12 +104,12 @@ It is possible to initialize the async memory with an array. The initialization
 of async memories happens whenever `reset` is set on the system. A key difference
 between arrays (no clock) and memories is that arrays initialization value must
 be `comptime` while `memories` and `reg` can have a sequence of statements to
-generate a reset value. 
+generate a reset value.
 
 === "Pyrope array syntax"
     ```
-    var mem1:[4][8]u5 = 0
-    var reset_value:[3][8]u5:[comptime] = _ // only used during reset
+    mut mem1:[4][8]u5 = 0
+    mut reset_value:[3][8]u5:[comptime=true] = ? // only used during reset
     for i in 0..<3 {
       for j in 0..<8 {
         reset_value[i][j] = j
@@ -120,13 +120,13 @@ generate a reset value.
 
 === "Explicit initialization"
     ```
-    var mem = ( 
+    mut mem = (
       (u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0)),
       (u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0)),
       (u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0)),
       (u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0))
     )
-    reg mem2 = ( 
+    reg mem2 = (
       (u5(0), u5(1), u5(2), u5(3), u5(4), u5(5), u5(6), u5(7)),
       (u5(0), u5(1), u5(2), u5(3), u5(4), u5(5), u5(6), u5(7)),
       (u5(0), u5(1), u5(2), u5(3), u5(4), u5(5), u5(6), u5(7))
@@ -171,9 +171,9 @@ is a typical decode stage from an in-order CPU:
 
 === "Flop the outputs"
     ```
-    var rf:[32]i64 = 0sb?
+    mut rf:[32]i64 = 0sb?
 
-    reg a:(data1:i64, data2:i64) = _
+    reg a:(data1:i64, data2:i64) = ?
 
     data_rs1 = a.data1
     data_rs2 = a.data2
@@ -213,10 +213,10 @@ q1 = res[1]
 
 ```
 
-The previous code directly instantiates a memory and passes the configuration. 
+The previous code directly instantiates a memory and passes the configuration.
 
 
-Multi cycle memories are pipelined elements, and using them requires the `=#[..]` assignment
+Multi cycle memories are pipelined elements, and using them requires the `=@[..]` assignment
 and the same rules as pipeline flops apply (See [pipelining](06b-pipelining.md)).
 
 
@@ -228,19 +228,19 @@ dimension. The entries are in a row-major order.
 
 
 ```
-var d2:[2][2] = ((1,2),(3,4))
+mut d2:[2][2] = ((1,2),(3,4))
 assert d2[0][0] == 1 and d2[0][1] == 2 and d2[1][0] == 3 and d2[1][1] == 4
 
 assert d2[0] == (1,2) and d2[1] == (3,4)
 ```
 
-The `for` iterator goes over each entry of the bundle/array. If a matrix, it
+The `for` iterator goes over each entry of the tuple/array. If a matrix, it
 does in row-major order. This allows building a simple function to flatten
 multi-dimensional arrays.
 
 ```
-let flatten = fun(...arr) {
-  var res = ()
+const flatten = comb(...arr) {
+  mut res = ()
   for i in arr {
     res ++= i
   }
@@ -258,7 +258,7 @@ with tuples or by requiring an enumerate.
 
 
 ```
-var x1:[2]u3 = (0,1)
+mut x1:[2]u3 = (0,1)
 assert x1[0] == 0 and x1[1] == 1
 
 enum X = (
@@ -267,14 +267,14 @@ enum X = (
   t3
 )
 
-var x2:[X]u3 = _
+mut x2:[X]u3 = ?
 x2[X.t1] = 0
 x2[X.t2] = 1
 x2[0]              // compile error, only enum index
 
-var x3:[-8..<7]u3 = _  // accept signed values
+mut x3:[-8..<7]u3 = ?  // accept signed values
 
-var x4:[100..<132]u3 = _
+mut x4:[100..<132]u3 = ?
 
 assert x4[100] == 0
 assert x4[3]       // compile error, out of bounds index
@@ -297,8 +297,8 @@ fail with unknowns.
 ```
 reg r_ver = 0sb?
 
-reg r = _
-var v = _
+reg r = ?
+mut v = ?
 
 assert v == 0 and r == 0
 
@@ -315,7 +315,7 @@ initialized before reset during simulation. There is no guarantee of zero
 initialization before reset.
 
 ```
-var arr:[] = (0,1,2,3,4,5,6,7)
+mut arr:[] = (0,1,2,3,4,5,6,7)
 
 always assert arr[0] == 0 and arr[7] == 7  // may FAIL during reset
 
@@ -325,4 +325,3 @@ always assert mem[7] == 7                  // may FAIL during reset
 always assert mem[7] == 7 unless mem.reset // OK
 assert mem[7] == 7                         // OK, not checked during reset
 ```
-

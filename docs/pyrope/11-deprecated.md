@@ -10,7 +10,7 @@ tried and deprecated or removed until a better solution is found.
 
 The `step` command breaks the execution of the function in the statements before and after the step. In the next
 cycle, the statements after the step are executed. The issue was that the step could be placed inside complicated
-nests of 'if' and 'for' loops. This results in a difficult code to get right. 
+nests of 'if' and 'for' loops. This results in a difficult code to get right.
 
 The plan is to add something like this feature in the future, once a cleaner implementation is designed.
 
@@ -20,43 +20,12 @@ The plan is to add something like this feature in the future, once a cleaner imp
 The plan is to re-add the fluid pipelines syntax, but all the other features must be added first.
 
 
-## Bundle index with bundles
-
-Bundles do not allow an index with another bundle unless it is a trivial bundle
-(one element). To illustrate the current constraints:
-
-=== "Bundle index (not allowed)"
-
-    ```old
-    type Person = (name:string, age:u32)
-    var a = (one:Person, two:Person)
-
-    x = ('one', 'two')
-    a[x].age = 10
-    ```
-
-=== "Current legal Pyrope"
-
-    ```
-    let Person = (name:string=_, age:u32=_)
-    var a = (one:Person, two:Person)
-
-    x = 'one'
-    y = 'two'
-    a[x].age = 10
-    a[y].age = 10
-    ```
-
-In the future, it may be allowed but some options may not be allowed. For
-example, if the index bundle is not unordered, the result of the assignment may
-not be easy to predict by the programmer. 
-
 ## async/await and coroutines
 
 In non-hardware languages, there are several constructs to handle
 asynchronicity.  Asynchronicity is not to leverage parallelism for speedup but
 software constructs to handle long latency operations. The most popular
-models/techniques are async/await, coroutines, and actors. 
+models/techniques are async/await, coroutines, and actors.
 
 In a way, pipelining could be expressed with similar constructs. This has the
 advantage of having a larger community (software) to understand/program
@@ -113,7 +82,7 @@ after the `telescope_unit` starts. For the designer, this is quite difficult to
 handle. How many flops to add to remember the starting point for `a` and `b`.
 
 ```pyrope
- let res1 =#[1,2] telescope_unit(a,b,start)
+ let res1 =@[1,2] telescope_unit(a,b,start)
 
  if res1? {
    puts "{}-{}+1 is {}", a, b, res1.res  // incorrect reference to a
@@ -126,7 +95,7 @@ remembering the live-ins and continue executing when the condition is
 satisfied.
 
 ```pyrope
- let res1 =#[1,2] telescope_unit(a,b,start)
+ let res1 =@[1,2] telescope_unit(a,b,start)
 
  yield res1? // wait for condition to happen
  assert res1?
@@ -159,7 +128,7 @@ let telescope_unit3 = fun(a:u32,b:u32) -> (_:u32) {
 The code sample for explicitly managed step function usage:
 
 ```pyrope
- let res2 =#[1,2] telescope_unit3(a,b,start)
+ let res2 =@[1,2] telescope_unit3(a,b,start)
 
  if res2? { // code executed 1 or 2 cycles after telescope_unit is called
    puts "{}-{}+1 is {}", a, b, res2
@@ -169,7 +138,7 @@ The code sample for explicitly managed step function usage:
 The code sample for implicitly managed step function usage:
 
 ```future
- async res3 =#[1,2] telescope_unit3(a,b) when start
+ async res3 =@[1,2] telescope_unit3(a,b) when start
 
  await res3 {
    // a and b could have the correct results due to the async/await
@@ -263,5 +232,3 @@ Fluid constructs:
 [^liam]: Liam: An Actor Based Programming Model for HDLs, Haven Skinner, Rafael
 T. Possignolo, and Jose Renau. 15th ACM-IEEE International Conference on Formal
 Methods and Models for System Design (MEMOCODE), October 2017.
-
-

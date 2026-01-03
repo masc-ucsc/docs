@@ -95,24 +95,24 @@ Pyrope allows string interpolation only when double quote is used (`"bla {expres
 The format style is like C++23 std::format.
 
 ```
-let num       = 2
-let color     = "blue"
-let extension = "s"
+const num       = 2
+const color     = "blue"
+const extension = "s"
 
-let txt1 = "I have {num:d} {color} potato{extension}"
-let txt2 = string("I have {:d} {} potato{}", num, color, extension)
+const txt1 = "I have {num:d} {color} potato{extension}"
+const txt2 = string("I have {:d} {} potato{}", num, color, extension)
 cassert txt1 == txt2 == "I have 2 blue potatos"
 
-let txt3 = 'I have {num}'         // single quote does not do interpolation
+const txt3 = 'I have {num}'         // single quote does not do interpolation
 cassert txt3 == "I have \{num\}"  // \{ escapes the interpolation
 ```
 
 Integers and strings can be converted back and forth:
 
 ```
-var a:string = "127"
-var b:int = a        // same as var b = int(a)
-var c:string = b     // same as var c = string(b)
+mut a:string = "127"
+mut b:int = a        // same as mut b = int(a)
+mut c:string = b     // same as mut c = string(b)
 assert a == c
 assert b == 0x7F
 assert a == b        // compile error, 'a' and 'b' have different types
@@ -137,7 +137,7 @@ like `or`, `and`) value or an open parenthesis (`(`), the rest of the line
 belongs to a new statement.
 
 ```
-var (a,b,c,d) = _
+mut (a,b,c,d) = ?
 a = 1
   + 3           // 1st stmt
 (b,c) = (1,3)   // 2nd stmt
@@ -268,12 +268,12 @@ operations. [Lambda section](06-functions.md) has more details on the allowed sy
 
 
 ```
-var f = fun(a, b) { a + b }
+mut f = comb(a, b) { a + b }
 ```
 
 Pyrope naming for consistency:
 
-* `fun` or `comb` is pure combinational logic (zero cycles)
+* `comb` is pure combinational logic (zero cycles)
 
 * `pipe[N]` is a fixed N-cycle pipeline
 
@@ -330,7 +330,7 @@ side-effects. In a way, expression code blocks can be seen as a type of
 
 
 ```
-var a = {var d=3 ; d+1} + 100 // OK
+mut a = {mut d=3 ; d+1} + 100 // OK
 assert a == (3+1+100)
 assert a == {3+1+100}  // same, expression evaluated as 104 and returned
 ```
@@ -416,37 +416,37 @@ statements, or the `and_then` and `or_else` operations must be used.
 
 === "Incorrect code with side-effects"
     ```
-    var r1 = mcall1() or  mcall2()  // compile error, non-deterministic
+    mut r1 = mcall1() or  mcall2()  // compile error, non-deterministic
 
 
-    var r2 = mcall1() and mcall2()  // compile error, non-deterministic
+    mut r2 = mcall1() and mcall2()  // compile error, non-deterministic
 
 
-    var r3 = mcall1() +   mcall2()  // compile error
+    mut r3 = mcall1() +   mcall2()  // compile error
     // compile error only if mcall1/mcall2 can have side effects
     ```
 
 === "Alternative 1"
     ```
-    var r1 = fcall1()
+    mut r1 = fcall1()
     r1  = fcall2() unless r1
 
-    var r2 = fcall1()
+    mut r2 = fcall1()
     r2  = fcall2() when r2
 
-    var r3 = fcall1()
+    mut r3 = fcall1()
     r3 += fcall2()
     ```
 
 === "Alternative 2"
     ```
-    var r1 = fcall1() or_else fcall2()
+    mut r1 = fcall1() or_else fcall2()
 
 
-    var r2 = fcall1() and_then fcall2()
+    mut r2 = fcall1() and_then fcall2()
 
 
-    var r3 = fcall1()
+    mut r3 = fcall1()
     r3 += fcall2()
     ```
 
@@ -493,29 +493,28 @@ to provide hardware support.
 ## Initialization
 
 
-Each variable declaration (`var` or `let`) must have an assigned value. The
-type default value is `_` (`0` integer, `""` string, `false` boolean, `nil`
-otherwise)
+Each variable declaration (`mut` or `const`) must have an assigned value. The
+type default value is `?` (unknown/uninitialized).
 
 ```
-a  = 3        // compile error, no previous let or var
+a  = 3        // compile error, no previous const or mut
 
-var b = 3
+mut b = 3
 b  = 5        // OK
 b += 1        // OK
 
-let cu3 = if runtime { 3 }else{ 5 }
+const cu3 = if runtime { 3 }else{ 5 }
 
-let (a:u32,b) = (1,"string_inferred")
+const (a:u32,b) = (1,"string_inferred")
 
-let d = "hello"  // OK
+const d = "hello"  // OK
 d = "bar"        // compile error, 'd' is immutable
-var d = "bar"    // compile error, 'd' already declared
+mut d = "bar"    // compile error, 'd' already declared
 
-var e = _        // OK, no type or default value, just scope declaration
+mut e = ?        // OK, no type or default value, just scope declaration
 e:u32 = 33       // OK
 
-var Foo = 33     // compiler error, 'let Foo = 33'
+mut Foo = 33     // compiler error, 'const Foo = 33'
 Foo  = 33        // compiler error, `Foo` already declared as immutable
 ```
 
@@ -524,9 +523,10 @@ When the variable is a tuple or a range style, the default initialization is
 restricted for integers. `nil` should be used in those cases.
 
 ```
-var tup = nil
+mut tup = nil
 
-if cond::[comptime] {
+assert cond::[comptime] // Tuples are compile time, it would fail otherwise
+if cond == true {
   tup = (a=1,b=2)
 }else{
   tup = (a=1,b:u4=3,c=3)
@@ -541,7 +541,8 @@ Variables with first character upper case are `comptime`. This means that the co
 must be known/fix at compilation time.
 
 ```
-var A_xxx = something             // comptime
-var A_yyy::[comptime] = something // also comptime, redundant but legal
+assert something::[comptime]
+mut A_xxx = something                 // comptime
+assert A_xxx::[comptime]              // also comptime
+mut A_yyy:[comptime=true] = something // also comptime, redundant but legal
 ```
-

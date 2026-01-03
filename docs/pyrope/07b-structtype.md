@@ -24,33 +24,33 @@ The basic behavior of `does` is explained in (Type
 equivalance)[07-typesystem.md#Type_equivalence].
 
 ```
-let Animal = (
-  legs:int = _,
+const Animal = (
+  legs:int = ?,
   name = "unnamed",
-  say_name = fun() { puts name }
+  say_name = comb() { puts name }
 )
 
-let Dog = Animal ++ (
-  setter = fun(ref self) { self.legs = 4 },
-  bark = fun() { puts "bark bark" }
+const Dog = Animal ++ (
+  setter = comb(ref self) { self.legs = 4 },
+  bark = comb() { puts "bark bark" }
 )
 
-let Bird = Animal ++ (
-  seeds_eaten:int = _,
-  setter = fun(ref self) { self.legs = 2 }
-      ++ fun(ref self, a:Animal) { self.legs = 2; name = "bird animal" },
-  eat_seeds = fun(ref self, n) { self.seeds_eaten += n }
+const Bird = Animal ++ (
+  seeds_eaten:int = ?,
+  setter = comb(ref self) { self.legs = 2 }
+      ++ comb(ref self, a:Animal) { self.legs = 2; name = "bird animal" },
+  eat_seeds = comb(ref self, n) { self.seeds_eaten += n }
 )
 
-let Greyhound = Dog ++ ( // also extends Dog
-  race = fun() { puts "running fast" }
+const Greyhound = Dog ++ ( // also extends Dog
+  race = comb() { puts "running fast" }
 )
 ```
 
 ```
-var a:Animal = _
-var b:Bird = _
-var d:Dog = _
+mut a:Animal = ?
+mut b:Bird = ?
+mut d:Dog = ?
 
 d = a // compile error, 'a does d' is false
 b = a // OK, explicit setter in Bird for Animal
@@ -68,13 +68,13 @@ check to guarantee that no precision is lost. Otherwise, an explicit `wrap` or
 
 The same rules of assignments exists for arrays. In Pyrope, arrays can be
 mutable, but they can never be passed by reference. This means that the typical
-issue of mutable containers can not exists. 
+issue of mutable containers can not exists.
 
 
 ```
-var a_vec:[?]Animal = _
-var b_vec:[?]Bird = _
-var d_vec:[?]Dog = _
+mut a_vec:[?]Animal = ?
+mut b_vec:[?]Bird = ?
+mut d_vec:[?]Dog = ?
 
 a_vec[0] = d:Dog    // OK
 a_vec[1] = b:Bird   // OK
@@ -89,12 +89,12 @@ b_vec[0] = g:Greyhound  // OK, explicit conversion
 b_vec[0] = b:Bird       // OK, 'b does b'
 b_vec[0] = a:Animal     // OK, explicit conversion
 
-let do_animal_vec = fun(a_vec:[?]Animal) -> (r:[?]Animal) {
+const do_animal_vec = comb(a_vec:[?]Animal) -> (r:[?]Animal) {
   r = a_vec
   r[0] = d:Dog  // OK `d does r[0]`
 }
 
-var x = do_animal_vec(b_vec:[?]Bird) // OK
+mut x = do_animal_vec(b_vec:[?]Bird) // OK
 assert x does _:[?]Animal  // not :[?]Bird
 ```
 
@@ -106,21 +106,21 @@ should match. Since every element is a type of one, read/writing a named tuple
 of one does not need the field, and hence it allows to create different types:
 
 ```
-let Age = (
-  age:int = _
+const Age = (
+  age:int = ?
 )
-let Weight = (
-  weight:int = _
+const Weight = (
+  weight:int = ?
 )
 
 assert Age !does Weight
 
-var a:Age = 3
+mut a:Age = 3
 assert a == a.age == a[0] == 3
 
-var w:Weight = 100
+mut w:Weight = 100
 
-let err = a == w // compile error, not (a equals w) or overload
+const err = a == w // compile error, not (a equals w) or overload
 ```
 
 
@@ -137,7 +137,7 @@ The following `f` method has no constraints on the input arguments. It can pass
 anything, but constraints the return value to be an integer.
 
 ```
-let f = fun(a,b) -> (r:int) { r = xx(a) + xx(b) }
+const f = comb(a,b) -> (r:int) { r = xx(a) + xx(b) }
 ```
 
 The type can be inferred for arguments and return values. If the lambda
@@ -151,7 +151,7 @@ The `f1` example constraints `a` and `b` arguments to have a type that
 satisfies `(a does Some_type_class) and (b does Some_type_class)`.
 
 ```
-let f1 = fun<T:Some_type_class>(a:T,b:T) -> (r:int) { r = xx(a) + xx(b) }
+const f1 = fun<T:Some_type_class>(a:T,b:T) -> (r:int) { r = xx(a) + xx(b) }
 ```
 
 
@@ -162,10 +162,10 @@ an argument.
 
 
 For each lambda call (`ret_val = f(a1,a2)`), the type system check against the
-defined lambda (`f = fun(ad1:ad1_t, ad2)->(rd1:rd1_t, rd2)`). In this case, the
+defined lambda (`f = comb(ad1:ad1_t, ad2)->(rd1:rd1_t, rd2)`). In this case, the
 check for the calling arguments (`(a1,a2) does (:ad1_t, :())`) should be
 satisfied. Notice that some of the inputs (`ad2`) have no defined type, so those
-unspecified arguments always satisfies by the type check. 
+unspecified arguments always satisfies by the type check.
 
 The return tuple is also used in the type system (`ret_val does (:rd1_t,
 :())`), the check is the same as in an assignment (`lhs does rhs`). In
@@ -175,28 +175,28 @@ overloading check.
 
 
 ```
-let fa_t = fun(a:Animal) { }
-let fd_t = fun(d:Dog) { }
+const fa_t = comb(a:Animal) { }
+const fd_t = comb(d:Dog) { }
 
-let call_animal = fun(a:Animal) {
+const call_animal = comb(a:Animal) {
    puts a.name // OK
 }
-let call_dog = fun(d:Dog) {    // OK
+const call_dog = comb(d:Dog) {    // OK
    d.bark()    // OK
 }
 
-let f_a = fun(fa:fa_t) { 
-  var a:Animal = _
-  var d:Dog = _
+const f_a = comb(fa:fa_t) {
+  mut a:Animal = ?
+  mut d:Dog = ?
   fa(a)  // OK
   fa(d)  // OK, `d does Animal` is true
 }
 f_a(call_animal) // OK
 f_a(call_dog)    // compile error, `fa_t does call_dog` is false
 
-let f_d = fun(fd:fd_t) { 
-  var a:Animal = _
-  var d:Dog = _
+const f_d = comb(fd:fd_t) {
+  mut a:Animal = ?
+  mut d:Dog = ?
   fd(a)  // compile error, `a does Dog` is false
   fd(d)  // OK
 }
@@ -208,7 +208,7 @@ f_d(call_dog)    // OK
 In tuple comparisons, `does` and `==`, the tuple field position is not used
 when both tuples are fully named. If tuple field is unnamed, both existing
 names and positions should match in the comparison.  For fully named tuples,
-when all the fields have names,  `(a=1,b=2) does (b=2,a=1)` is true. 
+when all the fields have names,  `(a=1,b=2) does (b=2,a=1)` is true.
 
 
 The same rule also applies to lambda calls. If all the arguments are named, the
@@ -225,7 +225,7 @@ in-place with the relative order left.
 
 
 ```
-let m = fun(a:int, ...x:(_:string, c:int, d), y:int) { 
+const m = comb(a:int, ...x:(_:string, c:int, d), y:int) {
   assert a == 1
   assert x[0] == "here"
   assert x[1] == 2 == x.c
@@ -274,7 +274,7 @@ does y2)`.
 Given a lambda passed as argument (`:fun(x:fun(c:c_t)->(d:d_t))->(y)`), the
 check when passing the lambda as argument to `x` a function like
 `fun(w:w_t)->(z:z_t)`. In this case, the `:fun(:w_t)->(_:z_t) does
-fun(:c_t)->(_:d_t)` is a contravariant test for inputs and covariant for
+comb(:c_t)->(_:d_t)` is a contravariant test for inputs and covariant for
 outputs. This makes it equivalent to `(_:c_t does _:w_t) and (_:z_t does _:d_t)`.
 
 
@@ -310,18 +310,18 @@ There is a priority of overloading in the tuple order. If the intention is to
 intercept, the lambda must be added at the head of the tuple entry.
 
 ```
-let base = (
-  fun1 = fun() { 1 },         // catch all
-  fun2 = fun() { 2 },         // catch all
-  fun3 = fun() { 3 }          // catch all
+const base = (
+  fun1 = comb() { 1 },         // catch all
+  fun2 = comb() { 2 },         // catch all
+  fun3 = comb() { 3 }          // catch all
 )
-let ext = base ++ (
-  fun1 = fun(a, b) { 4 },   // overwrite allowed with extends
-  fun2 = fun(a, b) { 5 } ++ fun() { 6 } ++ base.fun2,  // append
-  fun3 = fun(a, b) { 7 } ++ fun() { 8 } ++ base.fun3   // prepend
+const ext = base ++ (
+  fun1 = comb(a, b) { 4 },   // overwrite allowed with extends
+  fun2 = comb(a, b) { 5 } ++ comb() { 6 } ++ base.fun2,  // append
+  fun3 = comb(a, b) { 7 } ++ comb() { 8 } ++ base.fun3   // prepend
 )
 
-var t:ext = _
+mut t:ext = ?
 
 // t.fun1 only has ext.fun1
 assert t.fun1(a=1,b=2) == 4
@@ -339,8 +339,8 @@ assert t.fun3() == 8     // ext.fun3 catches all ahead of ext.fun3
 A more traditional "overload" calling the is possible by calling the lambda directly:
 
 ```
-let x = base ++ (
-  fun1 = fun() { base.fun1() + 100 }
+const x = base ++ (
+  fun1 = comb() { base.fun1() + 100 }
 )
 ```
 
@@ -372,7 +372,7 @@ lambda call:
   compile error. Dynamic dispatch only works with functions `fun`.
 
 If the `where COND` is not compile time there must be a `where true` condition
-to catch the default behavior. 
+to catch the default behavior.
 
 The previous rules imply that Pyrope has some type of dynamic dispatch. The
 types for the inputs and outputs must be known at compile time (static
@@ -387,11 +387,11 @@ every call but this result in not so maintanable code.
 
 
 ```
-var fun_list = fun(a, b) { a + b }
-fun_list ++= fun(a, b, c) { a + b + c }
-fun_list ++= fun(a, b, c, d) { a + b + c + d }
+mut fun_list = comb(a, b) { a + b }
+fun_list ++= comb(a, b, c) { a + b + c }
+fun_list ++= comb(a, b, c, d) { a + b + c + d }
 
-assert fun_list.[size] == 3    // 3 lambda entries in fun_list
+assert fun_list::[size] == 3    // 3 lambda entries in fun_list
 
 assert fun_list(1,2) == 3
 assert fun_list(1,2,4) == 7
@@ -399,18 +399,18 @@ assert fun_list(1,2,4,5) == 12
 assert fun_list(1,2,4,5,6) == 18 // compile error, no function with 5 args
 
 
-fun_list ++= fun(a, b) { 100 }
+fun_list ++= comb(a, b) { 100 }
 assert fun_list(1, 2) == 3
 
-fun_list = fun(a, b) { 200 } ++ fun_list
+fun_list = comb(a, b) { 200 } ++ fun_list
 assert fun_list(1, 2) == 200
 ```
 
 For untyped named argument calls:
 
 ```
-var f1 = fun(a, b) { a + b + 100 }
-f1 ++= fun(x, y) { x + y + 200 }
+mut f1 = comb(a, b) { a + b + 100 }
+f1 ++= comb(x, y) { x + y + 200 }
 
 assert f1(a=1, b=2) == 103
 assert f1(x=1, y=2) == 203
@@ -420,41 +420,41 @@ assert f1(1, 2) == 103  // first in list
 For typed calls:
 
 ```
-var fo = fun(a:int, b:string) -> (result:bool) { result = true }
-fo ++= fun(a:int, b:int) -> (result:bool) { result = false }
-fo ++= fun(a:int, b:int) -> (result:string) { result = "hello" }
+mut fo = comb(a:int, b:string) -> (result:bool) { result = true }
+fo ++= comb(a:int, b:int) -> (result:bool) { result = false }
+fo ++= comb(a:int, b:int) -> (result:string) { result = "hello" }
 
-let a = fo(3, hello)
+const a = fo(3, hello)
 assert a == true
 
-let b = fo(3, 300)        // first in list return bool
+const b = fo(3, 300)        // first in list return bool
 assert b == false
 
-let c:int = fo(3, 300)    // compile error, no lambda fulfills constrains
-let c:string = fo(3, 300)
+const c:int = fo(3, 300)    // compile error, no lambda fulfills constrains
+const c:string = fo(3, 300)
 assert c == "hello"
 ```
 
 For conditional argument calls:
 
 ```
-var f1 = fun(a, b) where a > 40 { b + 100 }
-      ++ fun(a, b) -> (x) where x > 300 { x = b + 200 } // output x
-      ++ fun(a, b) -> (a) where a > 20 { a = b + 300 } // input a
-      ++ fun(a, b) -> (x) where x > 10 { x = b + 400 } // output x
-      ++ fun(a, b) { a + b + 1000 } // default
+mut f1 = comb(a, b) where a > 40 { b + 100 }
+      ++ comb(a, b) -> (x) where x > 300 { x = b + 200 } // output x
+      ++ comb(a, b) -> (a) where a > 20 { a = b + 300 } // input a
+      ++ comb(a, b) -> (x) where x > 10 { x = b + 400 } // output x
+      ++ comb(a, b) { a + b + 1000 } // default
 
-var fun_manual = fun(a, b) {  // equivalent but not as maintainable
+mut fun_manual = comb(a, b) {  // equivalent but not as maintainable
   if a > 40 {
     b + 100
   } elif {
-    let x = b + 200
+    const x = b + 200
     if x > 300 {
       (x=x)
     } elif a > 20 {
       b + 300
     } elif {
-      let tmp = a + b
+      const tmp = a + b
       if tmp > 10 {
         (a=tmp)
       } else {
@@ -473,16 +473,16 @@ test "check equiv" {
 }
 ```
 
-### Parametric polymorphism 
+### Parametric polymorphism
 
-Add-hoc polymorphism overloads a function, and parametric polymorphism allows to 
+Add-hoc polymorphism overloads a function, and parametric polymorphism allows to
 parametrize types based on arguments.
 
 ```
-let Param_type = fun(a) { return (xx:a = _) }
+const Param_type = comb(a) { return (xx:a = _) }
 
-let x:Param_type(string) = (xx="hello")
-let x:Param_type(int)    = (xx=130)
+const x:Param_type(string) = (xx="hello")
+const x:Param_type(int)    = (xx=130)
 ```
 
 ### Summary polymorphism
@@ -490,21 +490,21 @@ let x:Param_type(int)    = (xx=130)
 
 Subtype polymorphism: A subtype provides functionality/api for another super type.
 ```
-let Animal = (
-  speak = fun(self) { _ }
+const Animal = (
+  speak = comb(self) { _ }
 )
-let Cat = Animal ++ (
-  speak = fun(self) { puts "meaow" }
+const Cat = Animal ++ (
+  speak = comb(self) { puts "meaow" }
 )
-let Bird = Animal ++ (
-  speak = fun(self) { puts "pio pio" }
+const Bird = Animal ++ (
+  speak = comb(self) { puts "pio pio" }
 )
 ```
 
 Parametric polymorphism: Same function works for many types
 ```
-let smallest = fun(...a) {
-  let x = a[0]
+const smallest = comb(...a) {
+  const x = a[0]
   for i in a[1..] {
     x = i when i < x
   }
@@ -514,16 +514,16 @@ let smallest = fun(...a) {
 
 Ad-hoc polymorphism: capacity to overload the same lambda name with different types.
 ```
-let speak = fun(a:Bird) { puts "pio pio" } 
-         ++ fun(a:Cat) { puts "meaow" }
+const speak = comb(a:Bird) { puts "pio pio" }
+         ++ comb(a:Cat) { puts "meaow" }
 ```
 
 Coercion polymorphism: Capacity to cast a type to another
 ```
-let Type1 = (
-  setter = fun(ref self, a:int) { }
+const Type1 = (
+  setter = comb(ref self, a:int) { }
 )
-let a:Type1 = 33
+const a:Type1 = 33
 ```
 
 ## Traits and mixin
@@ -537,23 +537,23 @@ access them. In several languages, there are different constructs to build them
 immutable, new methods can be added like in mixin.
 
 ```
-let Say_mixin = (
-  say = fun(s) { puts s }
+const Say_mixin = (
+  say = comb(s) { puts s }
 )
 
-let Say_hi_mixin = (
-  say_hi = fun() { self.say("hi {}", self.name) },
-  say_bye = fun() { self.say("bye {}", self.name) }
+const Say_hi_mixin = (
+  say_hi = comb() { self.say("hi {}", self.name) },
+  say_bye = comb() { self.say("bye {}", self.name) }
 )
 
-let User = (
-  name:string = _,
-  setter = fun(ref self, n:string) { self.name = n }
+const User = (
+  name:string = ?,
+  setter = comb(ref self, n:string) { self.name = n }
 )
 
-let Mixing_all = Say_mixin ++ Say_hi_mixin ++ User
+const Mixing_all = Say_mixin ++ Say_hi_mixin ++ User
 
-var a:Mixing_all = "Julius Caesar"
+mut a:Mixing_all = "Julius Caesar"
 a.say_hi()
 ```
 
@@ -585,21 +585,21 @@ There are also two ways to concatenate tuples in Pyrope. `t1 ++ t2` and
 
 
 ```
-let Int1 = (
-  var counter:int:[private] = 0,
-  add = fun(ref self, v) { self.counter += v },
-  get = fun(self) -> (result:int) { result = self.counter },
-  api_pending = fun(ref self, x:int) -> (o:string) { _ }
+const Int1 = (
+  mut counter:int:[private] = 0,
+  add = comb(ref self, v) { self.counter += v },
+  get = comb(self) -> (result:int) { result = self.counter },
+  api_pending = comb(ref self, x:int) -> (o:string) { _ }
 )
 
-let Int2 = (
-  var counter:int:[private] = 0,
-  accumulate = fun(ref self, v) { self.counter += v; self.counter },
-  api_pending = fun(ref self, x:string) -> (o:string) { _ }
+const Int2 = (
+  mut counter:int:[private] = 0,
+  accumulate = comb(ref self, v) { self.counter += v; self.counter },
+  api_pending = comb(ref self, x:string) -> (o:string) { _ }
 )
 
-let Combined = (...Int1, ...Int2,
-  api_pending = fun(ref self, x:int) -> (o:string) {
+const Combined = (...Int1, ...Int2,
+  api_pending = comb(ref self, x:int) -> (o:string) {
     self.add(x)
     o = string(self.accumulate(self.get()))
   }
@@ -613,26 +613,26 @@ This is quite useful for defining interfaces because the default value for a
 function is `nil`.
 
 ```
-let Interface = (
-  let add = fun(ref self, x), // undefined method
-  let sub = fun(ref self, x) { self.add(-x) }
+const Interface = (
+  const add = comb(ref self, x), // undefined method
+  const sub = comb(ref self, x) { self.add(-x) }
 )
 
 Interface.add(3)                // compile error, undefined method
 
-let My_obj = (
+const My_obj = (
   val1:u8 = 0,
-  let add = fun(ref self, x) { self.val += x }
+  const add = comb(ref self, x) { self.val += x }
 ) ++ Interface                  // OK, but not recommended
 
-let My_obj2 = (
+const My_obj2 = (
   ...Interface,                 // recommended
   val1:u8 = 0,
-  let add = fun(ref self, x) { self.val += x }
+  const add = comb(ref self, x) { self.val += x }
 )
 cassert My_obj equals My_obj2   // same behavioir no defined overlap fiels
 
-let xx:My_obj = _               // default initialization
+const xx:My_obj = ?               // default initialization
 
 cassert xx.val1 == 0
 xx.add(3)
@@ -657,7 +657,7 @@ between both tuples.
 An issue with in-place operator is when more than one tuple has the `setter`
 method. If the tuples are concatenated with `...` and error is triggered, if
 the tuples are concatenated with `++` it does not check if methods overlap.
-Neither is the expected solution for a mixin. 
+Neither is the expected solution for a mixin.
 
 
 The solution is to remove fields from the in-place concatenation and to
@@ -665,34 +665,34 @@ explicitly create the new methods with some support method.
 
 
 ```
-let exclude = fun(o,...a) {
-  let new_tup = ()
+const exclude = comb(o,...a) {
+  const new_tup = ()
   for (key,idx,e) in zip(o.keys(),o.enumerate()) {
     // create single tupe and append to preserve key and position order
-    let sing_tup = ()
+    const sing_tup = ()
     sing_tup[key] = e
     new_tup ++= sing_tup unless key in o
   }
   new_tup
 }
 
-let Shape = (
-  name:string = _,
-  area = fun(self) -> (result:i32) { _ },            // undefined 
-  increase_size = fun(ref self, x:i12) { _ },  // undefined 
+const Shape = (
+  name:string = ?,
+  area = comb(self) -> (result:i32) { _ },            // undefined
+  increase_size = comb(ref self, x:i12) { _ },  // undefined
 
-  setter = fun(ref self, name) { self.name = name }, // implemented
-  say_name = fun(self) { puts "name:{}", name }
+  setter = comb(ref self, name) { self.name = name }, // implemented
+  say_name = comb(self) { puts "name:{}", name }
 )
 
-let Circle = (
+const Circle = (
   ...exclude(Shape, 'setter'),
-  
-  setter = fun(ref self) { Circle.setter(this, "circle") },
-  increase_size = fun(ref self, x:i12) { self.rad *= x },
-  rad:i32 = _,
-  area = fun(self) -> (result:i32) {
-     let pi = import("math").pi
+
+  setter = comb(ref self) { Circle.setter(this, "circle") },
+  increase_size = comb(ref self, x:i12) { self.rad *= x },
+  rad:i32 = ?,
+  area = comb(self) -> (result:i32) {
+     const pi = import("math").pi
      result = pi * self.rad * self.rad
   }
 ):Shape  // extra check that the exclude did not remove too many fields
@@ -706,8 +706,8 @@ type inference. The `where` clause is followed by a list of comma separated
 conditions that must evaluate true for the function to be valid.
 
 ```
-let rotate = fun(a) where a has 'x', a has 'y' and_then a.y != 30 {
-  var r = a
+const rotate = comb(a) where a has 'x', a has 'y' and_then a.y != 30 {
+  mut r = a
   r.x = a.y
   r.y = a.x
   r
@@ -716,8 +716,3 @@ let rotate = fun(a) where a has 'x', a has 'y' and_then a.y != 30 {
 
 The previous rotate function is difficult to implement with a traditional
 structural typing.
-
-
-
-
-

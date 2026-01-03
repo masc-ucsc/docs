@@ -20,17 +20,17 @@ operations: `a in b`, `a does b`, and lambda call rules.
 cassert (a=1) in (1,a=1,3)
 cassert (a=1) !does (1,a=1,3)
 
-let f = fun(a) { puts "{a}" }
-let g = fun(long, short) { puts "{long}" }
+const f = comb(a) { puts "{a}" }
+const g = comb(long, short) { puts "{long}" }
 
 f(a=1)             // OK
 f(1)               // OK
 
 g(long=1, short=1) // OK
 g(1,1)             // compile error
-let long=1
+const long=1
 g(long, short=1)   // OK
-let short=1
+const short=1
 g(long, short)     // OK
 ```
 
@@ -52,7 +52,7 @@ is buffered and ordered at the end of the cycle to be deterministic.
 The only source of non-determinism is non-Pyrope (C++) calls from `procedures`
 executed at different pipeline stages. The pipeline stages could be executed in
 any order, it is just that the same order must be repeated deterministically
-during simulation. The non-Pyrope calls must be `::[comptime]` to affect
+during simulation. The non-Pyrope calls must be `::[comptime] == true` to affect
 synthesis. So the synthesis is deterministic, but the testing like cosimulation
 may not.
 
@@ -307,21 +307,21 @@ not trigger optimizations. The `optimize` statement should be use for such behav
 
 ```
 assert cond==3     // Not cassert or optimize, so no optimized
-var x1 = 0sb?
+mut x1 = 0sb?
 
 if cond == 3 {
   x1 = 1
 }
-assert x1==1 // still not optimized (cassert fails)
-cassert !x1.[comptime]
+assert  x1==1 // still not optimized (cassert fails)
+assert !x1 and x1::[comptime] == true
 
-var x2 = 0sb?
+mut x2 = 0sb?
 optimize cond==3
 if cond == 3 {
   x2 = 1
 }
 cassert x2==1
-cassert x2.[comptime]
+cassert x2::[comptime] == true
 ```
 
 ## LNAST optimization
@@ -364,7 +364,7 @@ depending on the LNAST node:
     - trivial identity simplification for existing node, also performed as
       instruction combining proceeds. E.g: `a^a == a`, `a-a=0` ...
 
-+ If the node is a `::[comptime]` trigger a compile error unless all the inputs are
++ If the node is a `::[comptime] == true` trigger a compile error unless all the inputs are
   constant
 
     - `cassert` should satisfy the condition or a compile error is generated
@@ -438,7 +438,7 @@ copy propagation, and final lgraph translation the type checks are respected.
 
 * Left side assignments respect the assigned type (`LHS does RHS`)
 
-* Any explicit type on any expression should respect the type (`var does type`)
+* Any explicit type on any expression should respect the type (`mut does type`)
 
 
 The previous algorithm describes the semantics, the implementation may be
@@ -464,11 +464,11 @@ access the tuple field, the `self.field` is always required. This avoid the
 problem of true shadowing.
 
 ```
-let f1 = fun() { 1 }
+const f1 = comb() { 1 }
 
-let tup = (
-  f1 = fun() { 2 },
-  code = fun() {
+const tup = (
+  f1 = comb() { 2 },
+  code = comb() {
      assert self.f1() == 2
      assert f1() == 1
   }
@@ -487,9 +487,9 @@ execution.
 
 === "Pyrope capture time"
     ```
-    var x_s = 10
+    mut x_s = 10
 
-    let call_captured = fun[x_s]() {
+    const call_captured = fun[x_s]() {
       fun[x_s]() {
         assert x_s == 10
         x_s
@@ -497,15 +497,15 @@ execution.
     }
 
     test "capture test" {
-      let tst = fun() {
-        var x_s = 20   // not variable shadowing because fun scope
+      const tst = comb() {
+        mut x_s = 20   // not variable shadowing because fun scope
 
-        let x1 = call_captured()
+        const x1 = call_captured()
         assert x1 == 10
 
         x_s = 30;
 
-        let x2 = call_captured()
+        const x2 = call_captured()
         assert x2 == 10
       }
       tst // call the test
@@ -549,20 +549,20 @@ may do this implementation.
 === "Pyrope tuple closure style"
 
     ```
-    let j = 1
-    let b = fun[j](x:i32) -> (result:i32) {
+    const j = 1
+    const b = fun[j](x:i32) -> (result:i32) {
       result = x + j
     }
 
     assert b(1) == 2
 
     test "closure with tuple" {
-      var a: i32 = 1
+      mut a: i32 = 1
       a += 1
 
-      var addX = (
+      mut addX = (
         a:i32 = a,                        // copy value, runtime or comptime
-        getter = fun(self, x:i32) {
+        getter = comb(self, x:i32) {
           x + self.a
         }
       )
@@ -573,10 +573,10 @@ may do this implementation.
     }
 
     test "plain closure" {
-      var a:i32 = 1
+      mut a:i32 = 1
       a += 1
 
-      let addX = fun[a](x:i32) { // Same behaviour as closure with tuple
+      const addX = fun[a](x:i32) { // Same behaviour as closure with tuple
         x + a
       }
 
@@ -591,7 +591,7 @@ may do this implementation.
     ```zig
     pub fn main() void {
         const j = 1;
-        var b = struct{
+        mut b = struct{
             fn function(x: i32) i32 {
                 return x+j;
             }
@@ -601,7 +601,7 @@ may do this implementation.
     }
 
     test "closure with runtime" {
-      var a: i32 = 1;
+      mut a: i32 = 1;
       a += 1;
 
       const addX = (struct {
@@ -622,15 +622,15 @@ Capture values must be explicit, or no capture happens. This means that
 `...fun[](...)...` is the same as `...fun(...)...`.
 
 ```
-var x = 3
+mut x = 3
 
-let f1 = fun[x]() -> (result:int) {
+const f1 = fun[x]() -> (result:int) {
    assert x == 3
-   var x = _    // compile error. Shadow captured x
+   mut x = ?    // compile error. Shadow captured x
    result = 200
 }
-let f2 = fun() -> (result:int) {
-   var x = _    // OK, no captures 'x' variable
+const f2 = comb() -> (result:int) {
+   mut x = ?    // OK, no captures 'x' variable
    x = 100
    result = x
 }
@@ -640,12 +640,12 @@ Capture variables pass the value at capture time:
 
 
 ```
-var x = 3
-var y = 10
+mut x = 3
+mut y = 10
 
-let fun2 = fun[y]() -> (result:int) {
+const fun2 = fun[y]() -> (result:int) {
   y = 100              // compile error, y is immutable when captured
-  var x = 200
+  mut x = 200
   result = y + x
 }
 x = 1000
@@ -684,25 +684,25 @@ there is no initial value set.
 
 
 ```
-let X_t = (
+const X_t = (
   i1 = (
     i1_field:u32 = 1,
     i2_field:u32 = 2,
-    setter = fun(ref self, a) {
+    setter = comb(ref self, a) {
        self.i1_field = a
     }
   ),
   i2 = (
     i1_field:i32 = 11,
-    setter = fun(ref self, a) {
+    setter = comb(ref self, a) {
        self.i1_field = a
     }
   )
 )
 
-var top = (
-  setter = fun(ref self) {
-    var x:X_t = _
+mut top = (
+  setter = comb(ref self) {
+    mut x:X_t = ?
     assert x.i1.i1_field == 1
     assert x.i1.i2_field == 2
     assert x.i2.i1_field == 11
@@ -752,8 +752,8 @@ There is no way to know at run-time if a value is unknown, but a compile trick
 can work. The reason is that integers can be converted to strings in a C++ API
 
 ```
-var x = 0sb10?
-let str = __to_string(x) // only works for compile time constants
+mut x = 0sb10?
+const str = __to_string(x) // only works for compile time constants
 assert x == "0sb10?"
 ```
 
@@ -766,9 +766,9 @@ to largest. It is not legal to do a `5..<0` range, the solution is to use a
 
 
 ```
-let s:string="hell"
+const s:string="hell"
 for (idx,i) in s.enumerate() {
-  let v = match idx {
+  const v = match idx {
    == 0 { "h" }
    == 1 { "e" }
    == 2 { "l" }
@@ -777,9 +777,9 @@ for (idx,i) in s.enumerate() {
   assert v == i
 }
 
-let t = (1,2,3)
+const t = (1,2,3)
 for (idx,i) in t.enumerate() {
-  let v = match idx {
+  const v = match idx {
    == 0 { 1 }
    == 1 { 2 }
    == 2 { 3 }
@@ -787,9 +787,9 @@ for (idx,i) in t.enumerate() {
   assert v == i
 }
 
-let r=2..<5
+const r=2..<5
 for (idx,i) in r.enumerate() {
-  let v = match idx {
+  const v = match idx {
    == 0 { 2 }
    == 1 { 3 }
    == 2 { 4 }
@@ -797,10 +797,10 @@ for (idx,i) in r.enumerate() {
   assert v == i
 }
 
-let r2=4..=2 step -1
+const r2=4..=2 step -1
 assert r2 == (4,3,2)
 for (idx,i) in r2.enumerate() {
-  let v = match idx {
+  const v = match idx {
    == 0 { 4 }
    == 1 { 3 }
    == 2 { 2 }
@@ -809,10 +809,10 @@ for (idx,i) in r2.enumerate() {
 }
 
 for i in 2..<5 {
-  let ri = 2+(4-i) // reverse index
+  const ri = 2+(4-i) // reverse index
   // 2 == (2..<5).trailing_one
   // 4 == (2..<5).leading_one
-  let v = match idx {
+  const v = match idx {
    == 0 { 4 }
    == 1 { 3 }
    == 2 { 2 }
@@ -831,7 +831,7 @@ Ranges are sets, this creates potentially unexpected results in reverse `for`
 iterators, but also in bit section:
 
 ```
-let v = 0xF0
+const v = 0xF0
 
 assert v#[0] == 0
 assert v#[4] == 1       // unsigned output
@@ -841,23 +841,23 @@ assert v#[3..=4] == 0b010 == v#[3,4]
 assert v#[4..=3 step -1] == 0b010
 assert v#[4,3] == v#[3,4] == 0b010
 
-let tmp1 = (v#[4], v#[3])#[..]  // typecast from
-let tmp2 = (v#[3], v#[4])#[..]
-let tmp3 = v#[3,4]
+const tmp1 = (v#[4], v#[3])#[..]  // typecast from
+const tmp2 = (v#[3], v#[4])#[..]
+const tmp3 = v#[3,4]
 assert tmp1 == 0b01
 assert tmp2 == 0b100
 assert tmp3 == 0b10
 
-let tmp1s = (v#sext[4], v#sext[3])#[..]  // typecast from
-let tmp2s = (v#sext[3], v#sext[4])#[..]
-let tmp3s = v#[4,3]
+const tmp1s = (v#sext[4], v#sext[3])#[..]  // typecast from
+const tmp2s = (v#sext[3], v#sext[4])#[..]
+const tmp3s = v#[4,3]
 assert tmp1s == 0b01
 assert tmp2s == 0b10
 assert tmp3s == 0b10
 
-let tmp1ss = (v#sext[4], v#sext[3])#sext[..]  // typecast from
-let tmp2ss = (v#sext[3], v#sext[4])#sext[..]
-let tmp3ss = v#sext[3,4]
+const tmp1ss = (v#sext[4], v#sext[3])#sext[..]  // typecast from
+const tmp2ss = (v#sext[3], v#sext[4])#sext[..]
+const tmp3ss = v#sext[3,4]
 assert tmp1ss == 0b01  ==  1
 assert tmp2ss == 0sb10 == -2
 assert tmp3ss == 0sb10 == -2 == v#sext[4,3]
@@ -868,14 +868,15 @@ The reason is that for multiple bit selection assumes a smaller to larger bits.
 If the opposite order is needed, support functions/code must explicitly do it.
 
 
-In Pyrope, there is no order in bit selection (`xx#[0,1,2,3] == xx#[3,2,1,0]`).
+In Pyrope, there is no order in bit selection (`xx#[0,1,2,3] == xx#[3,2,1,0]`) even when bit slicing.
+This is different from Verilog when endianness in declaration only happens when bit slicing.
 This is done to avoid mistakes. If a bit swap is wanted, it must be explicit.
 
 
 ```
-let reverse = fun(x:uint) -> (total:uint) {
+const reverse = comb(x:uint) -> (total:uint) {
   total = 0
-  for i in 0..<x.[bits] {
+  for i in 0..<x::[bits] {
     total <<= 1
     total |= x#[i]
   }
@@ -891,23 +892,23 @@ reference.
 
 
 ```
-let args = fun(x) { puts "args:{x}"; 1 }
-let here = fun() { puts "here"; 3 }
+const args = comb(x) { puts "args:{x}"; 1 }
+const here = comb() { puts "here"; 3 }
 
-let call_now = fun(f:fun) { f() }
-let call_defer = fun(f:fun) { f }
+const call_now = comb(f:fun) { f() }
+const call_defer = comb(f:fun) { f }
 
-let x0 = call_now(here)          // prints "here"
-let e1 = call_now(args)          // compile error, args needs arguments
-let x1 = call_defer(here)        // nothing printed
-let e2 = call_defer(args)        // compile error, args needs arguments
+const x0 = call_now(here)          // prints "here"
+const e1 = call_now(args)          // compile error, args needs arguments
+const x1 = call_defer(here)        // nothing printed
+const e2 = call_defer(args)        // compile error, args needs arguments
 assert x0  == 3                  // nothing printed
 assert x1  == 3                  // nothing printed
 
-let x2 = call_now(ref here)      // prints "here"
-let e3 = call_now(ref args)      // compile error, args needs arguments
-let x3 = call_defer(ref here)    // nothing printed
-let x4 = call_defer(ref args)    // nothing printed
+const x2 = call_now(ref here)      // prints "here"
+const e3 = call_now(ref args)      // compile error, args needs arguments
+const x3 = call_defer(ref here)    // nothing printed
+const x4 = call_defer(ref args)    // nothing printed
 assert x2  == 3                  // nothing printed
 assert x3()  == 3                // prints "here"
 assert x3  == 3                  // compile error, explicit call needed
@@ -933,8 +934,6 @@ There is no `--` operator in Pyrope, but there is a `-` which can
 be followed by a negative number `-3`.
 
 ```
-let v = (3)--3
+const v = (3)--3
 assert v == 6
 ```
-
-

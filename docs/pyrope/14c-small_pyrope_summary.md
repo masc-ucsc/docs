@@ -18,11 +18,11 @@ Small Pyrope is a **hardware description language** with these fundamental chara
 
 ### 1. Storage Classes (NOT variable mutability)
 ```pyrope
-let my_constant = 42    // Compile-time constant (immutable)
-var my_wire = 0         // Combinational (no persistence across cycles)
+const my_constant = 42  // Compile-time constant (immutable)
+mut my_wire = 0         // Combinational (no persistence across cycles)
 reg my_state = 0        // Register (persistent across cycles)
 ```
-**LLM Pitfall**: Don't confuse with `const`/`let`/`var` from JavaScript. These represent **hardware storage types**.
+**LLM Pitfall**: Don't confuse with `const`/`let`/`var` from JavaScript. These represent **hardware storage types**. Semicolons are optional and behave like a newline; use `;` only to put multiple statements on one line.
 
 ### 2. Function Types are Hardware Semantics
 ```pyrope
@@ -30,21 +30,22 @@ comb add(a:u8, b:u8) -> (result:u8) { result = a + b } // Combinational logic
 pipe counter() -> (reg count:u8) { count += 1 }        // Pipelined with registers
 flow alu(in1, in2) -> (out) { /* explicit timing */ }  // Dataflow with timing
 ```
-**LLM Pitfall**: `comb`/`pipe`/`flow` are NOT just function modifiers - they define **hardware implementation strategy**.
+**LLM Pitfall**: `comb`/`pipe`/`flow` are NOT just function modifiers - they define **hardware implementation strategy**. Small Pyrope does not support function capture variables; pass values as arguments.
 
 ### 3. Bit Selection Syntax
 ```pyrope
-var value = 0b1010_1100
-var bits = value#[3..=6]        // Extract bits 3-6 (NOT array indexing)
+mut value = 0b1010_1100
+mut bits = value#[3..=6]        // Extract bits 3-6 (NOT array indexing)
 value#[3] = 0                   // Set bit 3 (NOT array assignment)
 ```
 **LLM Pitfall**: `#[...]` is bit selection, NOT array/hash access. Use `[...]` for array indexing.
+**Literal Pitfall**: `_` is only a digit separator (`12_34__ == 1234`), while `?` is a don't-care/unknown bit in binary literals. Use `?` for default/uninitialized values (e.g., `mut x = ?`).
 
 ### 4. Tuple-Centric Everything
 ```pyrope
-var point = (x=10, y=20)        // Named tuple (like struct)
-var array = (1, 2, 3, 4)        // Indexed tuple (like array)
-var mixed = (x=1, 2, y=3)       // Mixed named/indexed
+mut point = (x=10, y=20)        // Named tuple (like struct)
+mut array = (1, 2, 3, 4)        // Indexed tuple (like array)
+mut mixed = (x=1, 2, y=3)       // Mixed named/indexed
 
 // Access patterns
 assert point.x == 10            // Named access
@@ -52,27 +53,27 @@ assert array[2] == 3            // Array-style access
 ```
 ### 5. Ranges with Multiple Operators
 ```pyrope
-var range1 = 1..=5              // Inclusive: 1,2,3,4,5
-var range2 = 0..<4              // Exclusive: 0,1,2,3
-var range3 = 2..+3              // Size-based: 2,3,4 (3 elements starting at 2)
+mut range1 = 1..=5              // Inclusive: 1,2,3,4,5
+mut range2 = 0..<4              // Exclusive: 0,1,2,3
+mut range3 = 2..+3              // Size-based: 2,3,4 (3 elements starting at 2)
 ```
 **LLM Pitfall**: Three different range operators with different semantics. `..+` is size-based, not addition.
 
 ### 6. Type Annotations and Attributes
 ```pyrope
-var data:u32:[max=1000, min=0] = 0          // Type with constraints
+mut data:u32:[max=1000, min=0] = 0          // Type with constraints
 reg counter:[reset_pin=rst] = 0             // Hardware attributes
-assert value::[comptime]                    // Attribute checking (double colon!)
+cassert counter::[bits] == 8                // Read and check attribute
 ```
-**LLM Pitfall**: `::` (double colon) for attribute access, single `:` for type annotation.
+Attributes are **set only at declaration** with `:[attr=value]` and are **immutable** afterwards. Use `::[attr]` to **read** attribute values. Check by comparing: `foo::[attr] == value`. For one-off overflow, use typecast syntax: `(expr):Type:[wrap=true]`.
 
 ### 7. Assignment Operators in Hardware Context
 ```pyrope
 reg counter = 0
 counter += 1                    // Immediate update
-counter::[next] += 1           // Deferred to end of cycle
+counter@[1] += 1               // Deferred to end of cycle
 ```
-**LLM Pitfall**: Register updates can be immediate or deferred - crucial for hardware timing.
+**LLM Pitfall**: Register updates can be immediate or deferred. Use `@[n]` for timing: `@[0]` current, `@[1]` end of cycle, `@[-1]` previous cycle.
 
 ### 8. Memory Declaration Syntax
 ```pyrope
@@ -82,6 +83,9 @@ reg dual_port:[1024]u16:[                   // Complex memory with attributes
   wrport=(2),
   latency=1
 ] = 0
+
+// Port access uses .port[] for clarity
+mut out = ram.port[0][addr]:[rdport=0]      // Read port 0
 ```
 **LLM Pitfall**: Memory attributes go AFTER the type, using `:[...]` syntax.
 
@@ -115,8 +119,9 @@ test "description" {           // Test block with simulation
 
 1. **Don't use familiar keywords incorrectly**:
    - `class` doesn't exist - use tuples
-   - `function` doesn't exist - use `comb`/`pipe`/`flow`
+   - `function`/`fun` doesn't exist - use `comb`/`pipe`/`flow`
    - `while`/`for` are compile-time only
+   - `%` (modulo) is compile-time only due to hardware cost
 
 2. **Don't assume array-like syntax everywhere**:
    - `arr#[i]` for bit selection
@@ -124,7 +129,7 @@ test "description" {           // Test block with simulation
    - `tuple.field` or `tuple.0` for tuple access
 
 3. **Don't ignore storage classes**:
-   - Always use `let`/`var`/`reg` appropriately
+   - Always use `const`/`mut`/`reg` appropriately
    - Understand hardware implications
 
 4. **Don't forget hardware timing**:
@@ -141,9 +146,9 @@ test "description" {           // Test block with simulation
 
 ### Variable Declaration
 ```pyrope
-let PI = 3.14                   // Compile-time constant
-var temp = calculation()        // Combinational
-reg accumulator = 0            // Persistent register
+const PI = 3.14                 // Compile-time constant
+mut temp = calculation()        // Combinational
+reg accumulator = 0             // Persistent register
 ```
 
 ### Function Definition
@@ -156,14 +161,15 @@ pipe stateful_function() -> (reg counter:u8) { counter += 1 }
 ```pyrope
 reg ram:[64]u32 = 0
 ram[addr] = data               // Write
-var read_data = ram[addr]      // Read
+mut read_data = ram[addr]      // Read
 ```
 
 ### Control Flow
 ```pyrope
 if condition { /* ... */ }     // Standard conditional
 match value {                  // Pattern matching
-  == 0 { /* ... */ }
+  case 0 { /* ... */ }         // `case` is alias for `==`
+  == 1 { /* ... */ }           // `==` also works
   else { /* ... */ }
 }
 ```
@@ -171,7 +177,7 @@ match value {                  // Pattern matching
 ### Testing
 ```pyrope
 test "my test" {
-    var result = my_function(input)
+    mut result = my_function(input)
     assert result == expected
     step                       // Advance simulation
 }

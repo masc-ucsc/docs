@@ -7,10 +7,10 @@ not a difference between tuples and arrays, but it is possible to check
 that all the fields are the same (hence array) by using brackets instead of parenthesis.
 
 ```
-var b = (f1=3,f2=4) // b is named and ordered
-var c = (1,d=4)     // c is ordered and unnamed (some entries are not named)
+mut b = (f1=3,f2=4) // b is named and ordered
+mut c = (1,d=4)     // c is ordered and unnamed (some entries are not named)
 
-var d = (1,2,3,4)     // array or tuple
+mut d = (1,2,3,4)     // array or tuple
 assert d == [1,2,3,4] // the [] also check that all the fields have same type
 
 assert (true,1) != [true,1]  // compile error, true is not the same type as 1
@@ -18,7 +18,7 @@ assert (true,1) != [true,1]  // compile error, true is not the same type as 1
 
 To access fields in a tuple we use the dot `.` or `[]`
 ```
-var a = (
+mut a = (
   ,r1 = (b=1,c=2)
   ,r2 = (3,4)
 )
@@ -37,7 +37,7 @@ cassert a[0]['c'] == 2
 There is introspection to check for an existing field with the `has` and `!has` operators.
 
 ```
-var a = (foo = 3)
+mut a = (foo = 3)
 cassert a has 'foo'
 cassert !(a has 'bar')
 cassert a !has 'bar' // "has no" is the opposite of "has"
@@ -49,13 +49,29 @@ cassert a !has 1
 Tuple named fields can have a default type and or contents:
 
 ```
-var val = 4
-var x = (
+mut val = 4
+mut x = (
   ,field1=1           // field1 with implicit type and 1 value
-  ,field2:string = _  // field2 with explicit type and "" default value
+  ,field2:string = ?  // field2 with explicit type and "" default value
   ,field3:int = 3     // field3 with explicit type and 3 value
   ,val                // unnamed field with value `val` (4)
 )
+```
+
+## Tuple index with tuples
+
+Tuples can be used as index too because all the tuples are ordered at compile time.
+
+```
+type Person = (name:string, age:u32)
+mut a = (one:Person, two:Person)
+
+x = ('two', 'one')
+a[x].age = (3,4)
+assert a.one == 4 and a.two == 3
+
+a[0,1] = (10,20)
+assert a.one == 10 and a.two == 20
 ```
 
 ## Tuple and scope
@@ -67,10 +83,10 @@ it is required to pass a sequence of strings or identifiers. A solution is to
 name all the fields or quote as strings:
 
 ```
-var x=100
+mut x=100
 
-var tup1 = ('x',y=4)
-var tup2 = (x,y=4)
+mut tup1 = ('x',y=4)
+mut tup2 = (x,y=4)
 
 cassert tup1[0] == 'x'
 cassert tup2[0] == 100
@@ -79,18 +95,17 @@ cassert tup2[0] == 100
 Some constructs like enumerates and attributes typically pass identifiers
 without assigning a value. The problem is that the syntax becomes not so
 "nice".  To address these cases, Pyrope does not use a variable reference but a
-"string" in the enumerate (`enum(a,b=3)`) and attribute (`foo::[attr]`,
-`foo.[attr]`). In these constructs, a reference can be enforced with `...var`
+"string" in the enumerate (`enum(a,b=3)`) and attribute (`foo::[attr]`). In these constructs, a reference can be enforced with `...var`
 
 ```
-let aa = 3
-let a = enum(,aa, ,b=3)
+const aa = 3
+const a = enum(,aa, ,b=3)
 cassert a==b
 
-cassert x.[size] == x.['size']
+cassert x::[size] == x::['size']
 
-let zz= "size"
-cassert x.[...zz] == x.[size]
+const zz= "size"
+cassert x::[...zz] == x::[size]
 ```
 
 ## Everything is a tuple
@@ -112,10 +127,10 @@ tuple that has `2` as a unique entry. The second entry in the tuple is `4`".
 The tuple entries are separated by comma (`,`). Extra commas do not add meaning.
 
 ```
-var a = (1,2)   // tuple of 2 entries, 1 and 2
-var b = (1)     // tuple of 1 entry, 1
-var c = 1       // tuple of 1 entry, 1
-var d = (,,1,,) // tuple of 1 entry, 1
+mut a = (1,2)   // tuple of 2 entries, 1 and 2
+mut b = (1)     // tuple of 1 entry, 1
+mut c = 1       // tuple of 1 entry, 1
+mut d = (,,1,,) // tuple of 1 entry, 1
 cassert a[0] == b[0] == c[0] == d[0}
 cassert a!=b
 cassert b == c == d
@@ -128,29 +143,29 @@ Tuples are used in many places:
 * The arguments for a call function are a tuple. E.g: `fcall(1,2)`
 * The return of a function call is always a tuple. E.g: `foo = fcall()`
 * The index for a selector `[...]` is a tuple. As syntax sugar, the tuple parenthesis can be omitted. E.g: `foo#[0,2,3]`
-* The complex type declaration are a tuple. E.g: `let Xtype = (f=1,b:string)`
+* The complex type declaration are a tuple. E.g: `const Xtype = (f=1,b:string)`
 
 
 ## Tuple mutability
 
 The tuple entries can be mutable/immutable and named/unnamed. Tuple entries
 follow the variable mutability rules with the exception that `=` can be
-used to declare a mutable field. `(a=3)` is equivalent to `(var a=3)`.
+used to declare a mutable field. `(a=3)` is equivalent to `(mut a=3)`.
 
 
 ```
-var c=(x=1,let b = 2, var d=3)
+mut c=(x=1,const b = 2, mut d=3)
 c.x   = 3  // OK
 x.foo = 2  // compile error, tuple 'x' does not have field 'foo'
 c.b   = 10 // compile error, 'c.b' is immutable
 c.d   = 30 // OK, d was already mutable type
 
-let d=(x=1, let y=2, var z=3)
+const d=(x=1, const y=2, mut z=3)
 d.x   = 2  // OK
 d.foo = 3  // compile error, tuple 'd' does not have field foo'
 d.z   = 4  // compile error, 'd' is immutable
 
-var e:d = _
+mut e:d = ?
 assert e.x==1 and e.y==2 and e.z==3
 e.x = 30   // OK
 e.y = 30   // compile error, 'e.y' is immutable
@@ -161,18 +176,18 @@ Tuples are always ordered, but they can have unnamed entries. If needed a `_`
 can be used for name or default value during the tuple declaration.
 
 ```
-var b = 100
-var a = (b:u8, b, b:u8 = _, let c=4) // a[0] and a[1] are unnamed, a[2]==a.b
+mut b = 100
+mut a = (b:u8, b, b:u8 = ?, const c=4) // a[0] and a[1] are unnamed, a[2]==a.b
 a.b = 200
 assert a == (100, 100, 200, 4)
 
-var f = (b=3, let e=5)
+mut f = (b=3, const e=5)
 f.b = 4                 // OK
 f.e = 10                // compile error, `f.e` is immutable
 
-let x = (1,2)
+const x = (1,2)
 x[0] = 3                // compile error, 'x' is immutable
-var y = (1, let _ = 3)  // 2nd field is unnamed (only let allows that)
+mut y = (1, const _ = 3)  // 2nd field is unnamed (only const allows that)
 y[0] = 100              // OK
 y[1] = 101              // compile error, `y[1]` is immutable
 ```
@@ -183,22 +198,22 @@ name/types are immutable. It is possible to construct new tuples with the `++`
 (concatenate) and `...` (in-place operator):
 
 ```
-var a=(a=1,b=2)
-let b=(c=3)
+mut a=(a=1,b=2)
+const b=(c=3)
 
-let ccat1 = a ++ b
+const ccat1 = a ++ b
 assert ccat1 == (a=1,b=2,c=3)
 assert ccat1 == (1,2,3)
 
-var ccat2 = a ++ (b=20) ++ b
+mut ccat2 = a ++ (b=20) ++ b
 assert ccat2 == (a=1,b=(2,20),c=3)
 assert ccat2 == (1,(2,20),3)
 
-var join1 = (...a,...b)
+mut join1 = (...a,...b)
 assert join1 == (a=1,b=2,c=3)
 assert join1 == (1,2,3)
 
-var join2 = (...a,...(b=20)) // compile error, 'b' already exists
+mut join2 = (...a,...(b=20)) // compile error, 'b' already exists
 ```
 
 
@@ -230,7 +245,7 @@ entry name. This is quite useful for function return tuples with a single
 entry.
 
 ```
-let x = (first=(second=3))
+const x = (first=(second=3))
 
 assert x.first.second == 3
 assert x.first        == 3
@@ -244,9 +259,9 @@ assert x.[0]          == 3
 Tuples can also use structural binding to unpack a tuple multiple fields into separate variables.
 
 ```
-let x = (f1=(f1a=1,f1b=3), f2=4)
+const x = (f1=(f1a=1,f1b=3), f2=4)
 
-let (y,z) = x
+const (y,z) = x
 assert y == (1,3) and z == 4
 assert y.f1a == 1 and y.f1b == 3
 assert y == (f1a=1,f1b=3)
@@ -259,11 +274,11 @@ arrays share most behavior/operations, the key difference is that arrays are
 unnamed with the same type for all the entries.
 
 ```
-var bund1 = (0,1,2,3,4) // ordered and can be used as an array
+mut bund1 = (0,1,2,3,4) // ordered and can be used as an array
 
-var array1 = [0,1,2,3,4]  // [] force array, so all the entries have same type
+mut array1 = [0,1,2,3,4]  // [] force array, so all the entries have same type
 
-var bund2 = (bund1,bund1,((10,20),30))
+mut bund2 = (bund1,bund1,((10,20),30))
 assert bund2[0][1] == 1
 assert bund2[1][1] == 1
 assert bund2[2][0] == (10,20)
@@ -283,17 +298,17 @@ The Pyrope compile will trigger compile errors for out-of-bound access. It is no
 possible to create an array index that may perform an out of bounds access.
 
 ```
-var array = (0,1,2)       // size 3, not 4
-let tmp = array[3]        // compile error, out of bounds access
-var index = 2
+mut array = (0,1,2)       // size 3, not 4
+const tmp = array[3]        // compile error, out of bounds access
+mut index = 2
 if runtime {
   index = 4
 }
 // Index can be 2 or 4
 
-var res1 = array[index]   // compile error, out of bounds access
+mut res1 = array[index]   // compile error, out of bounds access
 
-var res2 = 0sb?           // Possible code to be compatible with Verilog
+mut res2 = 0sb?           // Possible code to be compatible with Verilog
 if index<3 {
   res = array[index]      // OK
 }
@@ -314,12 +329,12 @@ fields that add more subfields. This is the case for overloading. To
 append or concatenate in a given field the `++=` operator can be assigned.
 
 ```
-var x = (
+mut x = (
   ,ff = 1
   ,ff = 2 // compile error
 )
 
-var y = (
+mut y = (
   ,ff = 1
   ,ff ++= 2
   ,zz ++= 3
@@ -352,11 +367,11 @@ y = match z {
   in 1,2 { 4 }    // same as: in (1,2) { 4 }
   else { 5 }
 }
-y2 = match var one=1 ; one ++ z {  // same as: y2 = match (1,z) {
+y2 = match mut one=1 ; one ++ z {  // same as: y2 = match (1,z) {
   == (1,2) { 4 }
 }
 
-let addb = fun(a, b:u32) -> (a:u32) { // same as: let addb = fun(a,b:u32)->(a:u32)
+const addb = comb(a, b:u32) -> (a:u32) { // same as: const addb = comb(a,b:u32)->(a:u32)
   a = a + b
 }
 ```
@@ -367,15 +382,15 @@ allowed to avoid the parenthesis at the right-hand-side of the statement. The
 reason is that it is a bit confusing.
 
 ```
-var a,b = (2,3)    // compile error, left-hand-side must be a tuple (a,b)
-var (a,b) = 2,3    // compile error, right-hand-side must be a tuple (2,3)
-var (a,b) = (2,3)
+mut a,b = (2,3)    // compile error, left-hand-side must be a tuple (a,b)
+mut (a,b) = 2,3    // compile error, right-hand-side must be a tuple (2,3)
+mut (a,b) = (2,3)
 assert a==2 and b==3
 
-var (c,d) = 1..=2  // compile error, range is a single entry assignment
-var c = 1..=2      // OK
-var (c,d) = 1      // compile error, 2 entry tuple in lhs, same in rhs
-var (c,d) = (1,2)  // OK
+mut (c,d) = 1..=2  // compile error, range is a single entry assignment
+mut c = 1..=2      // OK
+mut (c,d) = 1      // compile error, 2 entry tuple in lhs, same in rhs
+mut (c,d) = (1,2)  // OK
 assert c == 1 and d == 2
 ```
 
@@ -384,8 +399,8 @@ One thing to remember is that the `=` separates the statement in two parts
 apply to the immediatly declared variable or item.
 
 ```
-let c = 4
-let (x,b) = (true, c:u3) // assign x=true, b=4 AND check that c is type u3
+const c = 4
+const (x,b) = (true, c:u3) // assign x=true, b=4 AND check that c is type u3
 
 cassert x == true
 cassert b == 4
@@ -399,10 +414,10 @@ most cases the named tupled should not have a set value. Enums automatically
 assigns values, tuples need explicit value initialization.
 
 ```
-let b = "foo"
-let c = 1
-let test1     = enum(a=c,b)    // OK
-let something = (b)            // OK
+const b = "foo"
+const c = 1
+const test1     = enum(a=c,b)    // OK
+const something = (b)            // OK
 cassert something == "foo"
 cassert test1.a != test1.b
 cassert test1.a==1 and test1.b==2
@@ -416,9 +431,9 @@ If an external variable wants to be used as a field, there has to be an explicit
 expression with a string type or a named tuple.
 
 ```
-let a = "field"
-let c = (foo=4)
-let my_other_enum = enum(...a,b=3,...c)
+const a = "field"
+const c = (foo=4)
+const my_other_enum = enum(...a,b=3,...c)
 cassert my_other_enum.field != my_other_enum.b
 cassert my_other_enum.b   == 3
 cassert my_other_enum.foo == 4
@@ -504,7 +519,7 @@ Enumerates of the same type can perform bitwise binary operations
 (and/or/xor/nand/xnor/xnor) and set operators (in/!in).
 
 ```
-let human_rat = Animal.mammal.rat | Animal.mammal.human  // union op
+const human_rat = Animal.mammal.rat | Animal.mammal.human  // union op
 
 assert Animal.mammal      in human_rat
 assert Animal.mammal.rat  in human_rat
@@ -529,4 +544,3 @@ cassert string(E3.l1.l1a) == "E3.l1.l1a"
 cassert string(E3.l1) == "E3.l1"
 cassert E3("l1.l2") == E3.l1.l2
 ```
-

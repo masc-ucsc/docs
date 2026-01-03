@@ -5,17 +5,17 @@ This is a list of functionality that `import prp` should produce.
 ## Basic operations
 
 All the LNAST node have an associated function matching name to simplify the
-creation of operations: `plus`, `minus`, `mult`, `div`, `mod`, `ror`... 
+creation of operations: `plus`, `minus`, `mult`, `div`, `mod`, `ror`...
 
 ```
-let prp = import("prp")
+const prp = import("prp")
 cassert prp.plus(1,2,3) == 6
 ```
 
 Library code:
 ```
-let plus = fun(...a:int)->(_:int) {
-  var r = 0
+const plus = comb(...a:int)->(_:int) {
+  mut r = 0
   for e in a {
     r += e
   }
@@ -29,14 +29,14 @@ let plus = fun(...a:int)->(_:int) {
 
 Sample use:
 ```
-let x = (1,2,23)
+const x = (1,2,23)
 
 cassert p.len(x) == 3
 ```
 
 Library code:
 ```
-let len = fun(x) { x.[size] }
+const len = comb(x) { x::[size] }
 ```
 
 ### map
@@ -44,14 +44,14 @@ let len = fun(x) { x.[size] }
 Sample use:
 
 ```
-let x = (1,2,3)
+const x = (1,2,3)
 
 cassert x.map(fun(i){ i+1 }) == (2,3,4)
 ```
 
 Library code:
 ```
-let map = fun<T>(f:fun(a:T),...x:[]T) {
+const map = fun<T>(f:fun(a:T),...x:[]T) {
   return f(e) for e in x
 }
 ```
@@ -67,7 +67,7 @@ cassert (1,2,3).filter(fun(i){ i!=2 }) == (1,3)
 Library code:
 
 ```
-let filter = fun<T>(f:fun(a:T)->(_:Bool),...x:[]T) {
+const filter = fun<T>(f:fun(a:T)->(_:Bool),...x:[]T) {
   return e for e in x if not f(e)
 }
 ```
@@ -83,10 +83,10 @@ cassrt (1,2,3).reduce(prp.plus) == 6
 Library code:
 
 ```
-let reduce = fun(op:fun<T>(a:T,b:T)->(_:T), ...x) {
-  return x when x.[size] <= 1
+const reduce = comb(op:fun<T>(a:T,b:T)->(_:T), ...x) {
+  return x when x::[size] <= 1
 
-  var res = x[0]
+  mut res = x[0]
   for i in x[1..] {
     res = op(res, i)
   }
@@ -101,4 +101,3 @@ let reduce = fun(op:fun<T>(a:T,b:T)->(_:T), ...x) {
  transform, drop, join, split, reverse, common, counted...
 
  https://en.cppreference.com/w/cpp/ranges
-

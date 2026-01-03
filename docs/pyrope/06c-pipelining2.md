@@ -7,32 +7,35 @@ In hardware, registers (built from flip-flops) are essential for storing informa
 
 While it's possible to instantiate low-level flops, the recommended, programmer-friendly method is to declare a **register** using the `reg` keyword. This makes statefulness explicit and prevents common bugs. The compiler guarantees that a `reg` is a state-holding element.
 
-A register's value at the start of a cycle is its **current state**. New values are assigned to its **next state** using the `next()` keyword. This clear separation avoids the ambiguity between a register's input (`din`) and output (`q`) pins that plagues many HDLs.
+A register's value at the start of a cycle is its **current state**. New values are assigned to its **next state** using the `@[1]` attribute. This clear separation avoids the ambiguity between a register's input (`din`) and output (`q`) pins that plagues many HDLs.
 
-In our syntax, `total@0` refers to the register's current state (its 'q' value). The `next(total)` construct defines the logic for its 'din' pin, which will become the state in the next cycle.
+In our syntax, `total@0` (same as `total@[0]`) refers to the register's current state (its 'q' value). The `total@[1]` construct defines the logic for its 'din' pin, which will become the state in the next cycle.
 
 === "Structural flop style"
     ```
-    var counter_next:u8 = _
+    mut counter_next:u8:[wrap=true] = ?
 
-    let counter_q = __flop(din=next(counter_next)   // defer to get last update
-                       ,reset_pin=my_rst, clock_pin=my_clk
+    const counter_q = __flop(din=counter_next@[1]   // defer to get last update
+                       ,reset_pin=my_rst, clock_pin=ref my_clk
                        ,enable=my_enable            // enable control
                        ,posclk=true
                        ,initial=3                   // reset value
                        ,async=false)
 
-    counter_next::[wrap] = counter_q + 1
+    counter_next = counter_q + 1
     ```
 
 === "Pyrope style"
     ```
-    reg counter:u8:[reset_pin=my_rst, clock_pin=my_clk, posclk=true] = 3
-    assert counter == counter#[0]  // counter still has the q value
+    reg counter:u8:[wrap=true, reset_pin=my_rst, clock_pin=ref my_clk, posclk=true] = 3
+    assert counter == counter@[0]  // counter still has the q value
+    const tmp1 == counter
 
     if my_enable {
-      next(counter)::[wrap] = counter + 1
+      counter = counter + 1
     }
+    assert tmp1 != tmp2  when my_enable
+    assert tmp1 == counter@[0]
     ```
 
 
@@ -72,15 +75,15 @@ pipe add(a, b) -> (c) { c = a + b }
 // Define the composite flow that orchestrates the primitives.
 flow multiply_add(in1, in2) -> (out) {
     // Stage 1: The multiplier takes 3 cycles. Its output is at cycle 3.
-    let tmp@3 = delay[3] mul(in1@0, in2@0)
+    const tmp@3 = delay[3] mul(in1@0, in2@0)
 
     // Stage 2: To add 'in1' to the result, we must align it with 'tmp@3'.
     // We explicitly delay 'in1' by 3 cycles.
-    let in1_d@3 = delay[3] in1@0
+    const in1_d@3 = delay[3] in1@0
 
     // Stage 3: Now both inputs to 'add' are correctly aligned at cycle 3.
     // The adder takes 1 cycle, so the final output is at cycle 4.
-    let out@4 = delay[1] add(tmp@3, in1_d@3)
+    const out@4 = delay[1] add(tmp@3, in1_d@3)
 }
 ```
 
@@ -118,4 +121,3 @@ graph TD
     m2 --> m3
     in1_2 --> in1_3
 ```
-

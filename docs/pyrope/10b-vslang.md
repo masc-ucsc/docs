@@ -55,7 +55,7 @@ function return.
 Pyrope defers the statements not to the end of the scope but to the end of the
 clock cycle. The defer delays the "write" until the end of the clock cycle, the
 defer does not defer the reads, just the write or update. To read the value
-from the end of the cycle an attribute `variable.[defer]` must be used.
+from the end of the cycle an attribute `variable@[1]` must be used.
 
 
 These are constructs not existing in software but needed in hardware because it
@@ -64,15 +64,18 @@ allows to connect forward. Some contructs like connecting a ring require a
 "backward edge". The attribute `[defer]` allow such type of constructs.
 
 ```
-var a = 1
-var b = 2
+mut a = 1
+mut b = 2
 
 cassert a==1 and b==2
-b::[defer] = a
+b = (a)@[1]            // write defer
 cassert a==1 and b==2
 
-cassert b.[defer] == 1
+cassert b@[1] == 1     // read defer
 ```
+
+If there are read and write defers, the read defers happen first, and then the write defers. As a result, the deferred writes are not seen in this cycle.
+
 
 ### Pipelining
 
@@ -101,18 +104,18 @@ auto max_gap_count(std::vector<int> nums) {
 ```
 
 ```
-let max_gap_count = fun(nums) {
-  let max  = import("std").max
-  let sort = import("std").sort
-  let adjacent_transform = fun(a, num, f) {
-    var res:[?] = _
+const max_gap_count = comb(nums) {
+  const max  = import("std").max
+  const sort = import("std").sort
+  const adjacent_transform = comb(a, num, f) {
+    mut res:[?] = ?
     for i in 0..<a.length step num {
       res ++= f(a[i..+num])
     }
     res
   }
-  let count = fun(a, b) {
-    var r = 0
+  const count = comb(a, b) {
+    mut r = 0
     for i in a {
       r += 1 when i == b
     }
@@ -121,8 +124,8 @@ let max_gap_count = fun(nums) {
 
   numbers
      |> sort(fun(a, b) { a < b })
-     |> adjacent_transform(num=2, fun(a, b) { a - b })
-     |> fun(a) { count(a, a.max) }
+     |> adjacent_transform(num=2, comb(a, b) { a - b })
+     |> comb(a) { count(a, a.max) }
 }
 ```
 
@@ -146,8 +149,8 @@ func add<T:Numeric>(a:T, b:T) -> T { a + b }
 ```
 
 ```
-let add = fun(a, b) { a + b }            // OK, no constrains
-let add = fun<T:int>(a:T, b:T) { a + b } // constrain both to have same type
+const add = comb(a, b) { a + b }            // OK, no constrains
+const add = fun<T:int>(a:T, b:T) { a + b } // constrain both to have same type
 ```
 
 When a protocol defines an interface, in Swift:
@@ -169,16 +172,16 @@ func print_share_info<T:Shape>(_ s:T) {
 
 In Pyrope:
 ```
-let Shape = (
-  name = fun(self) -> (result:string) { _ },    // undefined method
-  area = fun(self) -> (result:float) { _ },     // NOTE: Pyrope does not have float type
-  perimeter = fun(self) -> (result:float) { _ }
+const Shape = (
+  name = comb(self) -> (result:string) { _ },    // undefined method
+  area = comb(self) -> (result:float) { _ },     // NOTE: Pyrope does not have float type
+  perimeter = comb(self) -> (result:float) { _ }
 )
 
-let Rectangle:(...Shape, ...OtherAPI) = (...some_code_here)
-let Circle:Shape = (...some_code_here)
+const Rectangle:(...Shape, ...OtherAPI) = (...some_code_here)
+const Circle:Shape = (...some_code_here)
 
-let print_share_info = fun(s:Shape) { puts "Shape: {s.name()}" }
+const print_share_info = comb(s:Shape) { puts "Shape: {s.name()}" }
 ```
 
 
@@ -202,7 +205,7 @@ pub struct AnObject {
 
 imp AnObject {
   pub fn f1(&mut self) -> i32 {
-    let res = self.v;
+    const res = self.v;
     self.v += 1;
     res
   }
@@ -215,16 +218,16 @@ imp AnObject {
 A Rust style Pyrope equivalent:
 
 ```
-let AnObject = (
-  v:i32 = _
+const AnObject = (
+  v:i32 = ?
 )
 
-let f1 = fun(ref self:AnObject) -> (result:i32) { // named output tuple
-  let res = self.v
+const f1 = comb(ref self:AnObject) -> (result:i32) { // named output tuple
+  const res = self.v
   self.v += 1
   result = res
 }
-let f2 = fun(self:AnObject) -> (result:i32) {
+const f2 = comb(self:AnObject) -> (result:i32) {
   result = self.v
 }
 ```
@@ -232,13 +235,13 @@ let f2 = fun(self:AnObject) -> (result:i32) {
 A more Pyrope style equivalent:
 
 ```
-let AnObject = (
-  v:i32 = _,
-  f1 = fun(ref self) -> (res:i32) {
+const AnObject = (
+  v:i32 = ?,
+  f1 = comb(ref self) -> (res:i32) {
     res = self.v
     self.v += 1
   },
-  f2 = fun(self) -> (result:i32) { result = self.v }
+  f2 = comb(self) -> (result:i32) { result = self.v }
 )
 ```
 
@@ -266,7 +269,7 @@ To initialize a multi-dimensional array, it follows other languages syntax, but
 in Pyrope both `()` and `[]` are allowed and have the same meaning.
 
 ```
-let x = ((1, 2), (3, 4))
+const x = ((1, 2), (3, 4))
 assert x == ((1, 2), (3, 4))
 assert x[0, 1] == 2 == x[0][1]
 assert x[1, 0] == 3 == x[1][0]
@@ -294,7 +297,7 @@ In Pyrope:
 import std as std
 
 fun larger(a:[?]string, b:[?]string) -> (result:[?]string) {
-  let strlen = std.strlen(a)
+  const strlen = std.strlen(a)
   if strlen > std.strlen(b) {
     result = a
   } else {
@@ -304,7 +307,6 @@ fun larger(a:[?]string, b:[?]string) -> (result:[?]string) {
 
 // Using attributes (bits != strlen, but works too)
 fun larger(a:[?]string, b:[?]string) -> (result:[?]string) {
-  result = if a.[bits] > b.[bits] { a } else { b }
+  result = if a::[bits] > b::[bits] { a } else { b }
 }
 ```
-

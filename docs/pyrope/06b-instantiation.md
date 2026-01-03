@@ -16,7 +16,7 @@ Conditional statements like `if/else` and `match` translate to multiplexers
 A trivial `if/else` with all the options covered is a simple mux.
 
 ```
-var res:s4 = _
+mut res:s4 = ?
 if cond {
   res = a
 } else {
@@ -24,7 +24,7 @@ if cond {
 }
 
 // RTL equivalent (bus of 4 bits in a,b,res2)
-var res2:s4 = __mux(cond, b, a)
+mut res2:s4 = __mux(cond, b, a)
 
 lec res, res2
 ```
@@ -32,10 +32,10 @@ lec res, res2
 An expression `if/else` is also a mux.
 
 ```
-var res = if cond { a } else { b }
+mut res = if cond { a } else { b }
 
 // RTL equivalent
-var res2 = __mux(cond, b, a)
+mut res2 = __mux(cond, b, a)
 
 lec res, res2
 ```
@@ -43,11 +43,11 @@ lec res, res2
 The `when/unless` is also a mux.
 
 ```
-var res = a
+mut res = a
 res = b unless cond
 
 // RTL equivalent
-var res2 = __mux(cond, b, a)
+mut res2 = __mux(cond, b, a)
 
 lec res, res2
 ```
@@ -57,7 +57,7 @@ covered, the value from before the `if` is used. If the variable did not exist,
 a compile error is generated.
 
 ```
-var res = a
+mut res = a
 if cond1 {
   res = b
 } elif cond2 {
@@ -67,17 +67,17 @@ if cond1 {
 }
 
 // RTL equivalent
-var tmp = __mux(cond2, a, c)
-var res2 = __mux(cond1, tmp, b)
+mut tmp = __mux(cond2, a, c)
+mut res2 = __mux(cond1, tmp, b)
 
 lec res, res2
 ```
 
 `unique if`/`elif` is similar but avoids mux nesting using a one-hot encoded
-mux. 
+mux.
 
 ```
-var res = a
+mut res = a
 unique if cond1 {
   res = b
 } elif cond2 {
@@ -85,8 +85,8 @@ unique if cond1 {
 } // no res in else
 
 // RTL equivalent
-var sel = (!cond1 and !cond2, cond1, cond2)#[..]  // one hot encode
-var res2 = __hotmux(sel, a, b, c)
+mut sel = (!cond1 and !cond2, cond1, cond2)#[..]  // one hot encode
+mut res2 = __hotmux(sel, a, b, c)
 optimize !(cond1 and cond2)                       // one hot check
 
 lec res, res2
@@ -98,7 +98,7 @@ point of view, the `match` is a "full parallel" and the `unique if` is a
 "parallel". Both are checked at verification and optimized at synthesis.
 
 ```
-var res = a
+mut res = a
 match x {
   == c1 { res = b }
   == c2 { res = c }
@@ -106,11 +106,11 @@ match x {
 }
 
 // RTL equivalent
-let cond1 = x == c1
-let cond2 = x == c2
-let cond3 = x == c3
-var sel = (cond1, cond2, !cond1 and !cond2)#[..]  // one hot encode (no cond3)
-var res2 = __hotmux(sel, b, c, d)
+const cond1 = x == c1
+const cond2 = x == c2
+const cond3 = x == c3
+mut sel = (cond1, cond2, !cond1 and !cond2)#[..]  // one hot encode (no cond3)
+mut res2 = __hotmux(sel, b, c, d)
 optimize ( cond1 and !cond2 and !cond3)
       or (!cond1 and  cond2 and !cond3)
       or (!cond1 and !cond2 and  cond3)    // one hot check (no else allowed)
@@ -129,11 +129,11 @@ or non-short-circuit (`and_then`/`or_else`) expressions.
 === "Short-circuit expression"
 
     ```
-    var lhs = v1 or_else v2
+    mut lhs = v1 or_else v2
 
     // RTL equivalent
-    let lhs2  = __or(v1, v2)
-    let lhs2_v = __or(__and(v1?, v1), __and(v2?, v2))
+    const lhs2  = __or(v1, v2)
+    const lhs2_v = __or(__and(v1?, v1), __and(v2?, v2))
 
     lec lhs , lhs2
     lec lhs?, lhs2_v
@@ -142,11 +142,11 @@ or non-short-circuit (`and_then`/`or_else`) expressions.
 === "Usual expression"
 
     ```
-    var lhs = v1 + v2
+    mut lhs = v1 + v2
 
     // RTL equivalent
-    let lhs2   = __sum(A=(v1, v2))
-    let lhs2_v = __and(v1?, v2?)
+    const lhs2   = __sum(A=(v1, v2))
+    const lhs2_v = __and(v1?, v2?)
 
     lec lhs , lhs2
     lec lhs?, lhs2_v
@@ -163,11 +163,11 @@ or non-short-circuit (`and_then`/`or_else`) expressions.
     } // no else
 
     // RTL equivalent
-    let tmp = __mux(cond2, v0, v2)
-    let lhs2= __mux(cond1, tmp, v1)
+    const tmp = __mux(cond2, v0, v2)
+    const lhs2= __mux(cond1, tmp, v1)
 
-    let tmp_v = __mux(cond2, v0?, v2?)
-    let lhs2_v= __mux(cond1, tmp_v, v1?)
+    const tmp_v = __mux(cond2, v0?, v2?)
+    const lhs2_v= __mux(cond1, tmp_v, v1?)
 
     lec lhs , lhs2
     lec lhs?, lhs2_v
@@ -176,22 +176,22 @@ or non-short-circuit (`and_then`/`or_else`) expressions.
 === "Lambda call (inlined)"
 
     ```
-    let f = fun(a, b) { if a == 0 { 3 } else { b } }
+    const f = comb(a, b) { if a == 0 { 3 } else { b } }
 
-    var lhs = c
+    mut lhs = c
     if cond {
        lhs = f(a,b)
     }
 
     // RTL equivalent
-    let a_cond = __not(__ror(a))             // a == 0
-    let tmp    = __mux(a_cond, b, 3)         // if a_cond { 3 }else{ b }
-    var lhs2   = c
+    const a_cond = __not(__ror(a))             // a == 0
+    const tmp    = __mux(a_cond, b, 3)         // if a_cond { 3 }else{ b }
+    mut lhs2   = c
     lhs2       = __mux(cond, lhs2, tmp)
 
-    let tmp_v  = __mux(a_cond, a?, __and(a?, b?)) // a? or (a==0 and b?)
+    const tmp_v  = __mux(a_cond, a?, __and(a?, b?)) // a? or (a==0 and b?)
 
-    let lhs2_v = __mux(cond, c?, tmp_v)
+    const lhs2_v = __mux(cond, c?, tmp_v)
 
     lec lhs , lhs2
     lec lhs?, lhs2_v
@@ -201,23 +201,23 @@ or non-short-circuit (`and_then`/`or_else`) expressions.
 
 Lambda calls are either inlined or become a specific instance (module). When
 the instance is located in a conditional path, the instance is moved to the
-main scope toggling the inputs valid attribute `::[valid=false]`. The instance
+main scope toggling the inputs valid attribute `::[valid] == false`. The instance
 has the assigned variable name. If the instance is a `var`, the variable name
 can be the SSA name.
 
 === "Lambda call"
     ```
-    let sub = mod(a, b) -> (x) {
-      let tmp = sum(a, b)      // instance tmp,sum
+    const sub = mod(a, b) -> (x) {
+      const tmp = sum(a, b)      // instance tmp,sum
 
       x = sum(tmp, 3)          // instance x,sum
     }
 
-    let top = mod(a, b, c) -> (x) {
+    const top = mod(a, b, c) -> (x) {
 
      x = sub(a, b).x
      if c {
-       let tmp = 3
+       const tmp = 3
        x += sub(b, tmp).x
      }
     }
@@ -225,24 +225,24 @@ can be the SSA name.
 
 === "Instance"
     ```
-    let sub = mod(a, b) -> (x) {
-      let tmp = sum(a, b)      // instance tmp
+    const sub = mod(a, b) -> (x) {
+      const tmp = sum(a, b)      // instance tmp
 
       x = sum(tmp, 3)          // instance x
     }
 
-    let top = mod(a, b, c) -> (x) {
+    const top = mod(a, b, c) -> (x) {
 
      x = sub(a, b).x          // instance x
 
-     let x_0 = _
-     let sub_arg_0 = _
-     let sub_arg_1 = _
+     const x_0 = ?
+     const sub_arg_0 = ?
+     const sub_arg_1 = ?
      if c {
-       let tmp = 3
+       const tmp = 3
        sub_arg_0 = b
        sub_arg_1 = tmp
-       x += x_0.[defer]       // use defer or next (instance after conditional code)
+       x += x_0@[1]       // use defer or next (instance after conditional code)
      }
      x_0 = sub(sub_arg_0, sub_arg_1).x   // instance x_0 (SSA)
     }
@@ -271,14 +271,14 @@ the condition is false.
 === "Conditional proc call"
 
     ```
-    let case_1_counter = mod(runtime) -> (res) {
+    const case_1_counter = mod(runtime) -> (res) {
 
-      let r = (
-        reg total:u16 = _,          // r is reg, everything is reg
-        increase = fun(a) {
+      const r = (
+        reg total:u16 = ?,          // r is reg, everything is reg
+        increase = comb(a) {
           puts "hello"
 
-          let res = self.total
+          const res = self.total
           self.total::[wrap] = res + a
 
           res
@@ -296,14 +296,14 @@ the condition is false.
 === "Pyrope inline equivalent"
 
     ```
-    let case_1_counter = mod(runtime) -> (res) {
+    const case_1_counter = mod(runtime) -> (res) {
 
-      let r = (
-        reg total:u16 = _,
-        increase = fun(a) {
+      const r = (
+        reg total:u16 = ?,
+        increase = comb(a) {
           puts "hello"
 
-          let res = self.total
+          const res = self.total
           self.total::[wrap] = res + a
 
           res
@@ -313,13 +313,13 @@ the condition is false.
       if runtime == 2 {
         puts "hello"
 
-        let res = r.total
+        const res = r.total
         r.total::[wrap] = res + 3
         res = res
       }elif runtime == 4 {
         puts "hello"
 
-        let res = r.total
+        const res = r.total
         r.total::[wrap] = res + 9
         res = res
       }
@@ -441,7 +441,7 @@ without reset signal.
 
 ```
 reg my_flop:[8]u32 = mod(ref self) {
-  reg reset_counter:u3:[async=true] = _ // async is only posedge reset
+  reg reset_counter:u3:[async=true] = ? // async is only posedge reset
 
   self[reset_counter] = reset_counter
   reset_counter::[wrap] += 1
@@ -456,12 +456,12 @@ cycle Similarly a tuple can have a reset when assigned to a register.
 === "Mixed tuple reset with constants"
 
     ```
-    let Mix_tup = (
+    const Mix_tup = (
       reg flag:bool = false,
       state: u2
     )
 
-    var x:Mix_tup = (false, 1)  // false used at reset, 1 used every cycle
+    mut x:Mix_tup = (false, 1)  // false used at reset, 1 used every cycle
 
     assert x.flag implies x.state == 2
 
@@ -475,12 +475,12 @@ cycle Similarly a tuple can have a reset when assigned to a register.
 === "Mixed tuple reset with method"
 
     ```
-    let Mix_tup = (
+    const Mix_tup = (
       reg flag:bool = false,
       state:u2
     )
 
-    var x:Mix_tup = mod(ref self) {
+    mut x:Mix_tup = mod(ref self) {
       self.flag  = mod(ref self) { self = false }   // reset code
       self.state = 2                               // every cycle code
     }
@@ -564,7 +564,7 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
     }
 
     fun top2(a, b) -> (c, d) {
-      let x = inner(y=a, z=b)
+      const x = inner(y=a, z=b)
       c = x.a
       d = x.h
     }
@@ -573,43 +573,43 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
 === "Pyrope alternative I"
 
     ```
-    let Inner_t = (
+    const Inner_t = (
       setter = mod(ref self, z, y) {
         self.a = y & z
         self.h = !(y & z)
       }
     )
 
-    let Top2_t = (
+    const Top2_t = (
       setter = mod(ref self, a, b) {
-        let foo:Inner_t = (y=a, z=b)
-        
+        const foo:Inner_t = (y=a, z=b)
+
         self.c = foo.a
         self.d = foo.h
       }
     )
 
-    let top:Top2_t = (a, b)
+    const top:Top2_t = (a, b)
     ```
 
 === "Pyrope alternative II"
 
     ```
-    let Inner_t = (
+    const Inner_t = (
       setter = mod(ref self, z, y) {
         self.a = y & z
         self.h = !(y & z)
       }
     )
 
-    let Top2_t = (
-      foo:Inner_t = _,
+    const Top2_t = (
+      foo:Inner_t = ?,
       setter = mod(ref self, a, b) {
         (self.c, self.d) = self.foo(y=a, z=b)
       }
     )
 
-    let top:Top2_t = (a, b)
+    const top:Top2_t = (a, b)
     ```
 
 
@@ -626,20 +626,19 @@ a::[saturate] = a + 1
 
 reg b = 4
 if cond {
-  reg c = _           // weird as reg, but legal syntax
+  reg c = ?           // weird as reg, but legal syntax
   c = b + 1
   b = 5
 }
 
 // RTL equivalent
-a_qpin = __flop(reset=ref reset, clk=ref clk, initial=3, din=a.[defer]) // defer or next are aliases
+a_qpin = __flop(reset=ref reset, clk=ref clk, initial=3, din=a@[1]) // defer or next are aliases
 tmp    = __sum(A=(a_qpin, 1))
 a      = __mux(tmp[4], tmp#[0..=3], 0xF)    // saturate, not wrap
 
-b_qpin = __flop(reset=ref reset, clk=ref clk, initial=4, din=b.[defer])
+b_qpin = __flop(reset=ref reset, clk=ref clk, initial=4, din=b@[1])
 b      = __mux(cond, b_qpin, 5)
 
-c_cond_qpin = __flop(reset=ref reset, clk=ref clk, initial=0, din=c_cond.[defer])
+c_cond_qpin = __flop(reset=ref reset, clk=ref clk, initial=0, din=c_cond@[1])
 c_cond      = __sum(A=(b, 1))
 ```
-
