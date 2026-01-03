@@ -1,0 +1,17 @@
+digraph assign {
+  rankdir=LR
+  bgcolor="transparent"
+
+  node  [fontname = "helvetica", shape=record, style="rounded", penwidth = 2];
+  edge  [fontname = "helvetica", color="#142b30", arrowhead="normal", penwidth = 2];
+  graph [fontname = "helvetica"];
+
+
+  node_6 [label = "<a> ~     | <l> lhs  | <r> rhs"];
+  node_7 [label = "<a> ref   | <l> %out"];
+  node_8 [label = "<a> ref   | <l> $inp"];
+
+  node_6:l  -> node_7:a;
+  node_6:r  -> node_8:a;
+
+}
