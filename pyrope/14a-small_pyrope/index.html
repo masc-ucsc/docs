@@ -1,0 +1,3318 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../13-stdlib/">
+      
+      
+        <link rel="next" href="../14b-small_pyrope_todo/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Small Pyrope - Minimal Hardware Description Language - LiveHD and Pyrope</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CFira+Code:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Fira Code"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/table.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#small-pyrope-minimal-hardware-description-language" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LiveHD and Pyrope" class="md-header__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LiveHD and Pyrope
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Small Pyrope - Minimal Hardware Description Language
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LiveHD and Pyrope" class="md-nav__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    LiveHD and Pyrope
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LiveHD and Pyrope
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Livehd
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Livehd
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/00-intro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/01-install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/02-usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/03-memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory and concurrency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/04-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    C++ API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/05-lgraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LGraph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/06-lnast/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LNAST
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10-bazel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bazel build
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10b-3rdparty/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3rd Party
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/11-pass/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Creating a Pass
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/12-github/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GitHub Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/13-style/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding Style
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Pyrope
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00-hwdesign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hardware Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-introduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-basics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basic syntax
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-bundle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tuples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Variables and types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-assert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05b-statements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Statements
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-functions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lambdas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06b-instantiation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Instantiation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06c-pipelining2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipelining
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-typesystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Type system
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07b-structtype/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Structural Typing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-memories/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memories
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-stdlib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope std lib
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-internals/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internals
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10b-vslang/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vs Other Languages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../11-deprecated/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deprecated or Future
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../11b-deprecated_pipelining/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deprecated Pipelining
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../12-lnast/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LNAST
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../13-stdlib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope Standard Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Small Pyrope - Minimal Hardware Description Language
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Small Pyrope - Minimal Hardware Description Language
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#core-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Principles
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#types-and-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Types and Variables
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Types and Variables">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#variable-storage-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Variable Storage Classes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#variable-scope-simplified" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Variable Scope (Simplified)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tuples-core-data-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tuples (Core Data Structure)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ranges" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ranges
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#arrays-and-memories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arrays and Memories
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#combinational-pipelines-or-flows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Combinational, Pipelines, or Flows
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Combinational, Pipelines, or Flows">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#combinational-or-pure-functions-comb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Combinational or Pure Functions (comb)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipeline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#flow-connecting-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Flow (Connecting Blocks)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#control-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Control Flow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Control Flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#conditionals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conditionals
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compile-time-loops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compile-Time Loops
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#match-pattern-matching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Match (Pattern Matching)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enumerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enumerations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Attributes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Attributes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#attribute-syntax" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Attribute Syntax
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#common-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Attributes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memory-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory Attributes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Operators
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Operators">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#arithmetic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arithmetic
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bitwise" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bitwise
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logical
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Comparison
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bit-selection-and-reduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bit Selection and Reduction
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#operator-precedence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Operator Precedence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-and-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing and Verification
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing and Verification">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#assertions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Assertions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debug-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debug Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hardware-semantics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hardware Semantics
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Hardware Semantics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#register-updates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Register Updates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reset-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reset Behavior
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#module-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Module System
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Module System">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#import-basic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Import (Basic)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#complete-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complete Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#todo-features-to-add-after-small-pyrope-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TODO: Features to Add After Small Pyrope Implementation
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../14b-small_pyrope_todo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Small Pyrope – TODO Features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../14c-small_pyrope_summary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Small Pyrope - Summary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_24" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_24" id="__nav_3_24_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Node modules
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_24_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_24">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Node modules
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_24_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_24_1" id="__nav_3_24_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    @openai
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_24_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_24_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    @openai
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_24_1_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../node_modules/%40openai/codex/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Codex
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_3_24_1_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_24_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Codex
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_25" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_25" id="__nav_3_25_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Old
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_25_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_25">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Old
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../old/small_pyrope_flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Small pyrope flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#core-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Principles
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#types-and-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Types and Variables
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Types and Variables">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#variable-storage-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Variable Storage Classes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#variable-scope-simplified" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Variable Scope (Simplified)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tuples-core-data-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tuples (Core Data Structure)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ranges" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ranges
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#arrays-and-memories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arrays and Memories
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#combinational-pipelines-or-flows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Combinational, Pipelines, or Flows
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Combinational, Pipelines, or Flows">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#combinational-or-pure-functions-comb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Combinational or Pure Functions (comb)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipeline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#flow-connecting-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Flow (Connecting Blocks)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#control-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Control Flow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Control Flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#conditionals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conditionals
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compile-time-loops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compile-Time Loops
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#match-pattern-matching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Match (Pattern Matching)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enumerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enumerations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Attributes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Attributes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#attribute-syntax" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Attribute Syntax
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#common-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Attributes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memory-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory Attributes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Operators
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Operators">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#arithmetic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arithmetic
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bitwise" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bitwise
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logical
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Comparison
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bit-selection-and-reduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bit Selection and Reduction
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#operator-precedence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Operator Precedence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-and-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing and Verification
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing and Verification">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#assertions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Assertions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debug-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debug Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hardware-semantics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hardware Semantics
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Hardware Semantics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#register-updates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Register Updates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reset-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reset Behavior
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#module-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Module System
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Module System">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#import-basic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Import (Basic)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#complete-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complete Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#todo-features-to-add-after-small-pyrope-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TODO: Features to Add After Small Pyrope Implementation
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="small-pyrope-minimal-hardware-description-language">Small Pyrope - Minimal Hardware Description Language<a class="headerlink" href="#small-pyrope-minimal-hardware-description-language" title="Permanent link">&para;</a></h1>
+<p>A minimal subset of Pyrope that can express any hardware design while being implementation-friendly. Small pyrope is designed to be the subset of Pyrope
+that allows easier implementation of a first Pyrope compiler while being compatible with full Pyrope.</p>
+<h2 id="core-principles">Core Principles<a class="headerlink" href="#core-principles" title="Permanent link">&para;</a></h2>
+<p>Small Pyrope maintains Pyrope's expressiveness while reducing complexity:</p>
+<ul>
+<li>
+<p>Everything is a tuple (fundamental data structure)</p>
+</li>
+<li>
+<p>Structural typing only</p>
+</li>
+<li>
+<p>Compile-time elaboration for all control flow</p>
+</li>
+<li>
+<p>Simple timing model with explicit cycles</p>
+</li>
+</ul>
+<h2 id="types-and-variables">Types and Variables<a class="headerlink" href="#types-and-variables" title="Permanent link">&para;</a></h2>
+<h3 id="basic-types">Basic Types<a class="headerlink" href="#basic-types" title="Permanent link">&para;</a></h3>
+<p>Small Pyrope supports integers (<code>u8</code>, <code>i16</code>, <code>int</code>), <code>bool</code>, and <code>string</code>. Type annotations use <code>:</code> and are optional when they can be inferred.</p>
+<p>Number literals may include <code>_</code> separators with no meaning (<code>12_34__ == 1234</code>). Binary literals may include <code>?</code> bits (don't care/unknown). The <code>?</code> value also serves as the default/uninitialized value.</p>
+<p>Attributes are set at declaration with <code>:[...]</code> and are independent of the type: <code>name:Type:[attr=value]</code>. Use <code>::[attr]</code> to read attribute values (see Attributes section).
+<div class="highlight"><pre><span></span><code>// Integers (signed/unsigned with bit constraints)
+mut a:u8 = 100          // 8-bit unsigned
+mut b:i16 = -50         // 16-bit signed
+mut c:int = 1000        // Unlimited precision (compile-time only)
+
+// Boolean
+mut flag:bool = true
+
+// String (basic operations)
+mut text:string = &quot;hello&quot;
+mut combined = text ++ &quot; world&quot;  // String concatenation
+puts &quot;Debug: value is &quot;, combined   // Print for debugging
+
+// Default initialization
+mut x = ?               // Type default (0 for int, false for bool, &quot;&quot; for string)
+mut y = 0               // Explicit value
+
+// &#39;?&#39; bits are don&#39;t-care/unknown, &#39;_&#39; is just a separator
+mut unknown = 0b101?    // Bit 0 is don&#39;t care/unknown
+mut partial = 0b??10    // Multiple don&#39;t care/unknown bits
+</code></pre></div></p>
+<h3 id="variable-storage-classes">Variable Storage Classes<a class="headerlink" href="#variable-storage-classes" title="Permanent link">&para;</a></h3>
+<p>Semicolons have the same behavior as a newline: they are optional, but can be used to put multiple statements on one line.
+<div class="highlight"><pre><span></span><code>const constant = 42     // Compile-time constant (immutable)
+mut wire = 0            // Combinational (no persistence)
+reg state = 0           // Register (persistent across cycles)
+</code></pre></div></p>
+<h3 id="variable-scope-simplified">Variable Scope (Simplified)<a class="headerlink" href="#variable-scope-simplified" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>// Code block scope
+mut a = 3
+{
+    assert a == 3       // Visible from outer scope
+    mut b = 4           // Local to this block
+    // const a = 33     // Error: no shadowing allowed
+}
+// assert b == 4       // Error: &#39;b&#39; not visible outside block
+
+// Functions have their own scope (Small Pyrope does not support capture variables)
+comb example() {
+    mut local = 5       // Function-local variable
+    local + 1
+}
+</code></pre></div>
+<h3 id="tuples-core-data-structure">Tuples (Core Data Structure)<a class="headerlink" href="#tuples-core-data-structure" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>mut point = (x=10, y=20)        // Named tuple
+mut array = (1, 2, 3, 4)        // Indexed tuple
+mut mixed = (x=1, 2, y=3)       // Mixed named/indexed
+
+// Access
+assert point.x == 10
+assert array[2] == 3            // Array-style access
+
+// Concatenation
+mut combined = point ++ (z=30)  // (x=10, y=20, z=30)
+</code></pre></div>
+<h3 id="ranges">Ranges<a class="headerlink" href="#ranges" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>mut range1 = 1..=5              // Inclusive range: 1,2,3,4,5
+mut range2 = 0..&lt;4              // Exclusive range: 0,1,2,3
+mut range3 = 2..+3              // Size-based range: 2,3,4
+
+// Range operations
+assert (1..=3) == (1,2,3)       // Range to tuple conversion
+assert int(1..=3) == 0b1110     // Range to one-hot encoding
+</code></pre></div>
+<h3 id="arrays-and-memories">Arrays and Memories<a class="headerlink" href="#arrays-and-memories" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>mut buffer:[16]u8 = ?           // Array (no persistence)
+reg memory:[256]u32 = 0         // Memory (persistent)
+
+memory[addr] = data             // Write
+mut read_data = memory[addr]    // Read
+
+// Range-based access
+mut slice = buffer[1..=4]       // Extract elements 1-4
+
+// Memory with synthesis attributes
+reg ram:[1024]u32:[
+  latency=1,                    // 1-cycle read latency
+  fwd=true,                     // Write-to-read forwarding
+  wensize=4,                    // 4-bit write enable (byte enables)
+  rdport=(0,1), wrport=(2,3)    // Port assignment
+] = 0
+
+// Dual-port access (simple Pyrope requires explicit port attribute for multiport)
+ram[addr1]:[wrport=2] = data1            // Write port 2
+ram[addr2]:[wrport=3] = data2            // Write port 3
+mut out1 = ram.port[0][addr3]:[rdport=0] // Read port 0
+mut out2 = ram.port[1][addr4]:[rdport=1] // Read port 1
+</code></pre></div>
+<h2 id="combinational-pipelines-or-flows">Combinational, Pipelines, or Flows<a class="headerlink" href="#combinational-pipelines-or-flows" title="Permanent link">&para;</a></h2>
+<p>Small Pyrope functions do not support capture variables (e.g. <code>comb f[a] { ... }</code> is not supported). Pass values explicitly as arguments.</p>
+<h3 id="combinational-or-pure-functions-comb">Combinational or Pure Functions (<code>comb</code>)<a class="headerlink" href="#combinational-or-pure-functions-comb" title="Permanent link">&para;</a></h3>
+<p>In Pyrope, a combinational or pure function is a stateless function without memory or registers. As such, it can not have side-effects.</p>
+<div class="highlight"><pre><span></span><code>comb add(a:u8, b:u8) -&gt; (result:u8) {
+    result = a + b
+}
+
+// Implicit return
+comb add_simple(a:u8, b:u8) {
+    a + b                       // Returns single-element tuple
+}
+</code></pre></div>
+<h3 id="pipeline">Pipeline<a class="headerlink" href="#pipeline" title="Permanent link">&para;</a></h3>
+<p>A pipeline is a function where all the outputs are updated with the same time number of cycles with respect to the inputs.</p>
+<div class="highlight"><pre><span></span><code>pipe counter(enable:bool) -&gt; (reg count:u8) {
+    count += 1 when enable
+}
+
+pipe fifo(push:bool, pop:bool, data_in:u18) -&gt; (data_out:u18, full:bool, empty:bool) {
+    reg buffer:[16]u18 = _
+    reg head:u4 = 0
+    reg tail:u4 = 0
+    reg count:u5 = 0
+
+    if push and !full {
+        buffer[head] = data_in
+        head = (head + 1) &amp; 0xF
+        count += 1
+    }
+
+    if pop and !empty {
+        data_out = buffer[tail]
+        tail = (tail + 1) &amp; 0xF
+        count -= 1
+    }
+
+    full = (count == 16)
+    empty = (count == 0)
+}
+</code></pre></div>
+<h3 id="flow-connecting-blocks">Flow (Connecting Blocks)<a class="headerlink" href="#flow-connecting-blocks" title="Permanent link">&para;</a></h3>
+<p>A flow is a function that allows to connect combinational, pipeline, or flow functions but requires explicit time indication for each variable use. Each variable has a <code>@cycle</code> to indicate the expected cycle completion with respect to the <code>flow</code> inputs. The outputs do not need the explicit time annotation.</p>
+<div class="highlight"><pre><span></span><code>pipe mul(a, b) -&gt; (c) { c = a * b }
+pipe add(a, b) -&gt; (c) { c = a + b }
+
+flow alu(in1, in2) -&gt; (out_pipelined, out_live) {
+  const (tmp@[2+1], in2_d@[2+1]) = delay[3] (mul(in1, in2), in2)
+  out_pipelined = delay[1] add(tmp@[2+1], in2_d@[2+1])
+  out_live      =@[1]      add(tmp@[2+1], in2@0)  // =@[1] is the same as = delay[1]
+}
+
+flow accum_alu(in1, in2) -&gt; (out) {
+  reg total:[init=0]
+  const tmp@[2+1] = delay[3] mul(in1, in2)
+  const sum_aligned = add(total@0, tmp@[2+1])  // explicit timing makes alignment clear
+  total@[1] = sum_aligned                      // @[1] defers write to end of cycle
+  out = total@0  // current register output
+}
+</code></pre></div>
+<p>Inside flow blocks, the variables should have a time delay indication, but as usual they can also have
+additional checks like type and attributes, but <code>comptime</code> attributes do not really care about the time delay.</p>
+<div class="highlight"><pre><span></span><code>const (tmp@0:u32, tmp2@[2]:u3:[something=true], x@0:i3:[comptime=true]) = some_flow_call(a@0, b@3:u32, c@2:[xxx_should_be_set=true])
+</code></pre></div>
+<h2 id="control-flow">Control Flow<a class="headerlink" href="#control-flow" title="Permanent link">&para;</a></h2>
+<h3 id="conditionals">Conditionals<a class="headerlink" href="#conditionals" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>if condition {
+    result = a
+} else {
+    result = b
+}
+</code></pre></div>
+<p>Pyrope also has Ruby-like unless at the end of the statement that removes the statement
+<code>unless</code>/<code>when</code> the condition is satisfied.
+<div class="highlight"><pre><span></span><code>return when    enable
+return unless !enable  // Same
+
+assert !enable
+</code></pre></div></p>
+<h3 id="compile-time-loops">Compile-Time Loops<a class="headerlink" href="#compile-time-loops" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>// For loops (must be compile-time bounded)
+for i in 0..=7 {
+    memory[i] = init_value
+}
+
+// Range-based loops
+for val in 1..&lt;10 step 2 {  // 1,3,5,7,9
+    process(val)
+}
+</code></pre></div>
+<h3 id="match-pattern-matching">Match (Pattern Matching)<a class="headerlink" href="#match-pattern-matching" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>match state {
+    == 0 { next_state = 1 }
+    == 1 { next_state = 2 }
+    == 2 { next_state = 0 }
+    else { next_state = 0 }
+}
+
+// `case` is an alias for `==` in match statements
+match state {
+    case 0 { next_state = 1 }
+    case 1 { next_state = 2 }
+    case 2 { next_state = 0 }
+    else   { next_state = 0 }
+}
+</code></pre></div>
+<h2 id="enumerations">Enumerations<a class="headerlink" href="#enumerations" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>enum State = (Idle, Active, Done)       // One-hot encoding: 1, 2, 4
+// Simplified subset of full Pyrope enum features
+
+reg current_state:State = State.Idle
+
+match current_state {
+    case State.Idle {
+        current_state = State.Active when start
+    }
+    case State.Active {
+        current_state = State.Done when complete
+    }
+    case State.Done {
+        current_state = State.Idle
+    }
+}
+</code></pre></div>
+<h2 id="attributes">Attributes<a class="headerlink" href="#attributes" title="Permanent link">&para;</a></h2>
+<p>Attributes provide compile-time metadata and constraints for variables, enabling hardware-specific optimizations and Verilog compatibility.</p>
+<h3 id="attribute-syntax">Attribute Syntax<a class="headerlink" href="#attribute-syntax" title="Permanent link">&para;</a></h3>
+<p>Attributes are <strong>set only at declaration</strong> using <code>:[attr=value]</code>. The <code>::[]</code> syntax is <strong>only for reading</strong> attribute values.</p>
+<div class="highlight"><pre><span></span><code>// Set attribute (only at declaration)
+mut foo:u32:[comptime=true] = 42    // Set comptime attribute
+reg counter:[reset_pin=rst] = 0     // Set reset pin attribute
+
+// Read attribute value
+const num_bits = counter::[bits]    // Read number of bits
+
+// Check attribute (read and compare)
+cassert counter::[bits] == 8        // Check bit width
+cassert foo::[comptime] == true     // Check if compile-time constant
+cassert z::[bits] &lt; 32              // Check bit width constraint
+</code></pre></div>
+<h3 id="common-attributes">Common Attributes<a class="headerlink" href="#common-attributes" title="Permanent link">&para;</a></h3>
+<p>Attributes are <strong>immutable after declaration</strong>. To change attributes, create a new variable.</p>
+<div class="highlight"><pre><span></span><code>// Bitwidth constraints
+mut data:u32:[max=1000, min=0] = 0
+
+// Overflow behavior (set at declaration - applies to all operations)
+mut counter_wrap:u8:[wrap=true] = 0      // Always wraps on overflow
+mut counter_sat:u8:[saturate=true] = 0   // Always saturates on overflow
+
+// One-off overflow behavior (typecast with attributes)
+mut result = (a + b):u8:[wrap=true]      // This operation wraps to u8
+mut clamped = (x + y):u8:[saturate=true] // This operation saturates to u8
+
+// Typecast without attributes
+mut truncated = (large_val):u8           // Explicit typecast to u8
+
+// Compile-time attributes
+const SIZE:[comptime=true] = 16     // Compile-time constant
+mut array_size = SIZE               // Uses compile-time value
+
+// Hardware attributes
+reg state:[reset_pin=my_reset] = 0  // Custom reset signal
+reg clocked:[clock_pin=fast_clk] = 0 // Custom clock signal
+reg async_reg:[async=true] = 0      // Asynchronous reset
+reg pipeline:[retime=true] = 0      // Allow synthesis retiming
+
+// Debug attributes
+mut debug_val:[debug=true] = counter // Debug-only variable
+
+// To &quot;change&quot; attributes, create a new variable
+mut new_data:[wrap=true] = data     // new_data has wrap, data unchanged
+</code></pre></div>
+<h3 id="memory-attributes">Memory Attributes<a class="headerlink" href="#memory-attributes" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>// Single-port memory with basic attributes
+reg memory:[256]u32:[latency=1, fwd=true] = 0
+
+// Multi-port memory configuration
+reg dual_port:[1024]u16:[
+  rdport=(0,1),        // Ports 0,1 are read ports
+  wrport=(2),          // Port 2 is write port
+  latency=1,           // Read latency
+  fwd=false,           // No forwarding
+  wensize=4            // 4-bit write enable mask
+] = 0
+
+// Memory with custom clocking
+reg async_mem:[64]u8:[
+  clock=(clk1, clk2),  // Different clocks per port
+  reset=mem_rst,       // Custom reset signal
+  posclk=false         // Negative edge triggered
+] = 0
+</code></pre></div>
+<h2 id="operators">Operators<a class="headerlink" href="#operators" title="Permanent link">&para;</a></h2>
+<h3 id="arithmetic">Arithmetic<a class="headerlink" href="#arithmetic" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>mut sum = a + b; mut diff = a - b; mut prod = a * b; mut div = a / b  // Basic arithmetic
+mut left_shift = a &lt;&lt; n; mut right_shift = a &gt;&gt; n  // Shifts
+const remainder = a % b  // Modulo (compile-time only due to cost)
+</code></pre></div>
+<h3 id="bitwise">Bitwise<a class="headerlink" href="#bitwise" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>mut and_result = a &amp; b; mut or_result = a | b; mut xor_result = a ^ b  // AND, OR, XOR
+mut not_result = ~a             // NOT
+</code></pre></div>
+<h3 id="logical">Logical<a class="headerlink" href="#logical" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>mut logical_and = a and b; mut logical_or = a or b  // Logical (no short-circuit)
+mut logical_not = !a            // Logical NOT
+</code></pre></div>
+<h3 id="comparison">Comparison<a class="headerlink" href="#comparison" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>mut equal = a == b; mut not_equal = a != b  // Equality
+mut less = a &lt; b; mut less_eq = a &lt;= b; mut greater = a &gt; b; mut greater_eq = a &gt;= b  // Comparison
+</code></pre></div>
+<h3 id="bit-selection-and-reduction">Bit Selection and Reduction<a class="headerlink" href="#bit-selection-and-reduction" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>mut value = 0b1010_1100
+mut bits = value#[3..=6]        // Extract bits 3-6
+value#[3] = 0                   // Set 3rd bit to 0
+
+// Reduction operators
+mut or_reduce = value#|[..]     // OR-reduce all bits
+mut and_reduce = value#&amp;[..]    // AND-reduce all bits
+mut xor_reduce = value#^[..]    // XOR-reduce (parity)
+mut pop_count = value#+[..]     // Population count
+
+// Sign/zero extension
+mut extended = value#sext[0..=3] // Sign extend bits 0-3 (3 is sign)
+mut zero_ext = value#zext[1..=5] // Zero extend bits 1-5 (no sign)
+
+// Non-contiguous bit selection is a short-cut for bit selection and tuple typecast
+// Careful to avoid endian confusion (think about tuple order)
+
+mut sparse1 = (value#[0], value#[3], value#[7])#[..]
+mut sparse2 = value#[0,3,7]      // Select bits 0, 3, and 7
+
+mut rparse1 = (value#[7], value#[3], value#[0])#[..]
+mut rparse2 = value#[7,3,0]      // Select bits 7, 3, and 0
+
+assert value  == 0b1010_1100
+assert sparse2== 0b1____1__0
+assert rparse2== 0b011           // reverse order of bits (LSB-first packing)
+</code></pre></div>
+<h2 id="operator-precedence">Operator Precedence<a class="headerlink" href="#operator-precedence" title="Permanent link">&para;</a></h2>
+<p>Small Pyrope follows the same precedence rules as full Pyrope for compatibility:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Priority</th>
+<th style="text-align: center;">Category</th>
+<th>Operators</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">Unary</td>
+<td><code>!</code>, <code>not</code>, <code>~</code>, <code>-</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">2</td>
+<td style="text-align: center;">Multiply/Divide</td>
+<td><code>*</code>, <code>/</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">Other Binary</td>
+<td><code>+</code>, <code>-</code>, <code>++</code>, <code>&lt;&lt;</code>, <code>&gt;&gt;</code>, <code>&amp;</code>, <code>\|</code>, <code>^</code>, <code>..=</code>, <code>..&lt;</code>, <code>..+</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">Comparators</td>
+<td><code>&lt;</code>, <code>&lt;=</code>, <code>==</code>, <code>!=</code>, <code>&gt;=</code>, <code>&gt;</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">5</td>
+<td style="text-align: center;">Logical</td>
+<td><code>and</code>, <code>or</code>, <code>implies</code></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code>// Explicit parentheses required for mixed precedence
+mut result = (a * b) + (c &amp; d)   // Clear precedence
+// mut mixed = a * b + c &amp; d     // Error: use parentheses
+
+// Chained comparisons allowed
+assert a &lt;= b &lt;= c               // Same as: a &lt;= b and b &lt;= c
+</code></pre></div>
+<h2 id="testing-and-verification">Testing and Verification<a class="headerlink" href="#testing-and-verification" title="Permanent link">&para;</a></h2>
+<h3 id="assertions">Assertions<a class="headerlink" href="#assertions" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>assert condition               // Runtime assertion
+cassert compile_time_expr      // Compile-time assertion
+
+test &quot;counter test&quot; {
+    const cnt = counter(true)
+    puts &quot;Counter value: &quot;, cnt   // Debug output
+    step                      // Advance one cycle
+    assert cnt == 1
+    cassert SIZE == 16         // Compile-time constant check
+}
+</code></pre></div>
+<h3 id="debug-output">Debug Output<a class="headerlink" href="#debug-output" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>// Basic puts for debugging
+puts &quot;Hello World&quot;            // Simple string output
+puts &quot;Value: &quot;, variable      // Print variable
+puts &quot;Count: &quot;, count, &quot; Max: &quot;, max_val  // Multiple values
+</code></pre></div>
+<h2 id="hardware-semantics">Hardware Semantics<a class="headerlink" href="#hardware-semantics" title="Permanent link">&para;</a></h2>
+<h3 id="register-updates">Register Updates<a class="headerlink" href="#register-updates" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>reg counter:u8 = 0
+mut tmp:u8 = counter
+
+counter += 1                    // Immediate update
+tmp += 1
+assert counter == tmp
+
+counter@[1] += 1               // Defer write to end of cycle
+assert counter == tmp
+tmp += 1
+
+assert counter != tmp
+assert counter@[1] == tmp      // Read deferred value (end of cycle)
+
+// Timing syntax summary:
+// counter@[0]  - current value (same as just &#39;counter&#39;)
+// counter@[1]  - value at end of cycle (deferred/next)
+// counter@[-1] - value from previous cycle
+</code></pre></div>
+<h3 id="reset-behavior">Reset Behavior<a class="headerlink" href="#reset-behavior" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>reg counter:u8 = 100            // Reset value is 100
+</code></pre></div>
+<h2 id="module-system">Module System<a class="headerlink" href="#module-system" title="Permanent link">&para;</a></h2>
+<h3 id="import-basic">Import (Basic)<a class="headerlink" href="#import-basic" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>// Import functions from other files
+const math_ops = import(&quot;math/basic&quot;)
+const result = math_ops.add(a, b)
+
+// Import specific function
+const multiply = import(&quot;math/basic/multiply&quot;)
+const product = multiply(x, y)
+
+// Import from local file
+const utils = import(&quot;utils&quot;)
+utils.debug_print(&quot;Hello&quot;)
+</code></pre></div>
+<h2 id="complete-example">Complete Example<a class="headerlink" href="#complete-example" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>// Import required modules
+const test_utils = import(&quot;test/helpers&quot;)
+
+// Simple CPU register file
+pipe reg_file(
+    clk:bool,
+    we:bool,
+    ra:u5,
+    rb:u5,
+    wa:u5,
+    wd:u32
+) -&gt; (
+    rd_a:u32,
+    rd_b:u32
+) {
+    reg registers:[32]u32 = 0
+
+    // Read ports (1st read, no forwarding)
+    rd_a = if ra == 0 { 0 } else { registers[ra] }
+    rd_b = if rb == 0 { 0 } else { registers[rb] }
+
+    // Write port
+    if we {
+        registers[wa] = wd when (wa != 0)  // Register 0 is always 0
+    }
+}
+
+test &quot;register file&quot; {
+    const rf = reg_file(we=true, ra=3, rb=1, wa=1, wd=42)
+    assert rf.rd_a == 0
+    assert rf.rd_b == 0 // no fwd
+    step
+    const rf2 = reg_file(we=false, ra=1, rb=0, wa=0, wd=0)
+    assert rf2.rd_a == 42
+    assert rf2.rd_b == 0
+}
+</code></pre></div>
+<h2 id="todo-features-to-add-after-small-pyrope-implementation">TODO: Features to Add After Small Pyrope Implementation<a class="headerlink" href="#todo-features-to-add-after-small-pyrope-implementation" title="Permanent link">&para;</a></h2>
+<p>This section has moved. See <code>new_syntax_doc/01c-small_pyrope_todo.md</code> for examples of planned features beyond Small Pyrope.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["search.suggest", "navigation.sections", "navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../javascripts/config.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>

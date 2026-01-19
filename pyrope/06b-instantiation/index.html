@@ -12,10 +12,14 @@
         <link rel="prev" href="../06-functions/">
       
       
-        <link rel="next" href="../06c-pipelining/">
+        <link rel="next" href="../06c-pipelining2/">
+      
+      
+        
+      
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.15">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
     
     
       
@@ -23,14 +27,17 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.26e3688c.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ecc896b0.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
+
     
+    
+      
     
     
       
@@ -44,11 +51,10 @@
     
       <link rel="stylesheet" href="../../stylesheets/table.css">
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
-    
     
     
   </head>
@@ -63,9 +69,6 @@
     
     <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
   
-    
-    
-      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
@@ -95,7 +98,8 @@
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
     </label>
     <div class="md-header__title" data-md-component="header-title">
       <div class="md-header__ellipsis">
@@ -116,48 +120,57 @@
     
       
         <form class="md-header__option" data-md-component="palette">
-          
-            
-            
-            
-            <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
-            
-              <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_2" hidden>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3Z"/></svg>
-              </label>
-            
-          
-            
-            
-            
-            <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_2">
-            
-              <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6zm0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4zM7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-              </label>
-            
-          
-        </form>
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+</form>
       
     
     
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
     
-      <label class="md-header__button md-icon" for="__search">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
-      </label>
-      <div class="md-search" data-md-component="search" role="dialog">
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
       <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
       <label class="md-search__icon md-icon" for="__search">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
       </label>
       <nav class="md-search__options" aria-label="Search">
         
         <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
         </button>
       </nav>
       
@@ -165,7 +178,7 @@
       
     </form>
     <div class="md-search__output">
-      <div class="md-search__scrollwrap" data-md-scrollfix>
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
         <div class="md-search-result" data-md-component="search-result">
           <div class="md-search-result__meta">
             Initializing search
@@ -176,13 +189,14 @@
     </div>
   </div>
 </div>
+      
     
     
       <div class="md-header__source">
         <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
     GitHub
@@ -212,6 +226,7 @@
                     
 
 
+
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="LiveHD and Pyrope" class="md-nav__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
@@ -226,7 +241,7 @@
       <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
   </div>
   <div class="md-source__repository">
     GitHub
@@ -238,14 +253,26 @@
     
       
       
-      
-
+  
   
   
   
     <li class="md-nav__item">
       <a href="../.." class="md-nav__link">
-        LiveHD and Pyrope
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LiveHD and Pyrope
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
@@ -253,425 +280,761 @@
     
       
       
-      
-
+  
   
   
   
     
+    
       
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
     
     <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
-      
-      
-      
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
-      
-      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
         
           
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Livehd
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
         
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-      
-      
-        <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
-          Livehd
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
-        <label class="md-nav__title" for="__nav_2">
-          <span class="md-nav__icon md-icon"></span>
-          Livehd
-        </label>
-        <ul class="md-nav__list" data-md-scrollfix>
-          
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Livehd
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../../livehd/00-intro/" class="md-nav__link">
-        Introduction
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
-            
-          
+              
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../../livehd/01-install/" class="md-nav__link">
-        Installation
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
-            
-          
+              
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../../livehd/02-usage/" class="md-nav__link">
-        Usage
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
-            
-          
+              
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../../livehd/03-memory/" class="md-nav__link">
-        Memory and concurrency
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory and concurrency
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
-            
-          
+              
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../../livehd/04-api/" class="md-nav__link">
-        C++ API
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    C++ API
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
-            
-          
+              
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../../livehd/05-lgraph/" class="md-nav__link">
-        LGraph
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LGraph
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
-            
-          
+              
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../../livehd/06-lnast/" class="md-nav__link">
-        LNAST
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LNAST
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
-            
-          
+              
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../../livehd/10-bazel/" class="md-nav__link">
-        Bazel build
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bazel build
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
-            
-          
+              
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../../livehd/10b-3rdparty/" class="md-nav__link">
-        3rd Party
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3rd Party
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
-            
-          
+              
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../../livehd/11-pass/" class="md-nav__link">
-        Creating a Pass
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Creating a Pass
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
-            
-          
+              
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../../livehd/12-github/" class="md-nav__link">
-        GitHub Guide
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GitHub Guide
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
-            
-          
+              
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../../livehd/13-style/" class="md-nav__link">
-        Coding Style
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding Style
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
+              
             
-          
-        </ul>
-      </nav>
+          </ul>
+        </nav>
+      
     </li>
   
 
     
       
       
-      
-
   
   
     
   
   
+  
+    
     
       
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
     
     <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
-      
-      
-      
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
-      
-      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
         
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-      
-      
-        <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
-          Pyrope
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
-        <label class="md-nav__title" for="__nav_3">
-          <span class="md-nav__icon md-icon"></span>
-          Pyrope
-        </label>
-        <ul class="md-nav__list" data-md-scrollfix>
-          
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Pyrope
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../00-hwdesign/" class="md-nav__link">
-        Hardware Design
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hardware Design
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
-            
-          
+              
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../01-introduction/" class="md-nav__link">
-        Introduction
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
-            
-          
+              
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../02-basics/" class="md-nav__link">
-        Basic syntax
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basic syntax
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
-            
-          
+              
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../03-bundle/" class="md-nav__link">
-        Tuples
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tuples
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
-            
-          
+              
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../04-variables/" class="md-nav__link">
-        Variables and types
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Variables and types
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
-            
-          
+              
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../05-assert/" class="md-nav__link">
-        Verification
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Verification
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
-            
-          
+              
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../05b-statements/" class="md-nav__link">
-        Statements
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Statements
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
-            
-          
+              
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../06-functions/" class="md-nav__link">
-        Lambdas
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lambdas
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
-            
-          
+              
             
               
+                
   
   
     
+  
   
   
     <li class="md-nav__item md-nav__item--active">
@@ -683,12 +1046,38 @@
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          Instantiation
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Instantiation
+  
+
+    
+  </span>
+  
+  
+
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <a href="./" class="md-nav__link md-nav__link--active">
-        Instantiation
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Instantiation
+  
+
+    
+  </span>
+  
+  
+
       </a>
       
         
@@ -708,42 +1097,66 @@
       
         <li class="md-nav__item">
   <a href="#conditionals" class="md-nav__link">
-    Conditionals
+    <span class="md-ellipsis">
+      
+        Conditionals
+      
+    </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#optional-expression" class="md-nav__link">
-    Optional expression
+    <span class="md-ellipsis">
+      
+        Optional expression
+      
+    </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#lambda-calls" class="md-nav__link">
-    Lambda calls
+    <span class="md-ellipsis">
+      
+        Lambda calls
+      
+    </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#optional-lambdas" class="md-nav__link">
-    Optional lambdas
+    <span class="md-ellipsis">
+      
+        Optional lambdas
+      
+    </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#expressions" class="md-nav__link">
-    Expressions
+    <span class="md-ellipsis">
+      
+        Expressions
+      
+    </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#setup-vs-reset-vs-execution" class="md-nav__link">
-    Setup vs reset vs execution
+    <span class="md-ellipsis">
+      
+        Setup vs reset vs execution
+      
+    </span>
   </a>
   
     <nav class="md-nav" aria-label="Setup vs reset vs execution">
@@ -751,28 +1164,44 @@
         
           <li class="md-nav__item">
   <a href="#setup-code" class="md-nav__link">
-    Setup code
+    <span class="md-ellipsis">
+      
+        Setup code
+      
+    </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
   <a href="#reset-code" class="md-nav__link">
-    Reset code
+    <span class="md-ellipsis">
+      
+        Reset code
+      
+    </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
   <a href="#retime" class="md-nav__link">
-    retime
+    <span class="md-ellipsis">
+      
+        retime
+      
+    </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
   <a href="#execution-code" class="md-nav__link">
-    Execution code
+    <span class="md-ellipsis">
+      
+        Execution code
+      
+    </span>
   </a>
   
 </li>
@@ -784,7 +1213,11 @@
       
         <li class="md-nav__item">
   <a href="#registers" class="md-nav__link">
-    Registers
+    <span class="md-ellipsis">
+      
+        Registers
+      
+    </span>
   </a>
   
 </li>
@@ -796,150 +1229,681 @@
     </li>
   
 
-            
-          
+              
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
-      <a href="../06c-pipelining/" class="md-nav__link">
-        Pipelining
+      <a href="../06c-pipelining2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipelining
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
-            
-          
+              
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../07-typesystem/" class="md-nav__link">
-        Type system
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Type system
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
-            
-          
+              
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../07b-structtype/" class="md-nav__link">
-        Structural Typing
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Structural Typing
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
-            
-          
+              
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../08-memories/" class="md-nav__link">
-        Memories
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memories
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
-            
-          
+              
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../09-stdlib/" class="md-nav__link">
-        Pyrope std lib
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope std lib
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
-            
-          
+              
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../10-internals/" class="md-nav__link">
-        Internals
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internals
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
-            
-          
+              
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../10b-vslang/" class="md-nav__link">
-        vs Other Languages
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vs Other Languages
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
-            
-          
+              
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../11-deprecated/" class="md-nav__link">
-        Deprecated or Future
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deprecated or Future
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
-            
-          
+              
             
               
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../11b-deprecated_pipelining/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deprecated Pipelining
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../12-lnast/" class="md-nav__link">
-        LNAST
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LNAST
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
-            
-          
+              
             
               
+                
+  
   
   
   
     <li class="md-nav__item">
       <a href="../13-stdlib/" class="md-nav__link">
-        Pyrope Standard Library
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope Standard Library
+  
+
+    
+  </span>
+  
+  
+
       </a>
     </li>
   
 
+              
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../14a-small_pyrope/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Small Pyrope - Minimal Hardware Description Language
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../14b-small_pyrope_todo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Small Pyrope – TODO Features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../14c-small_pyrope_summary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Small Pyrope - Summary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_24" >
+        
           
-        </ul>
-      </nav>
+          <label class="md-nav__link" for="__nav_3_24" id="__nav_3_24_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Node modules
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_24_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_24">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Node modules
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_24_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_24_1" id="__nav_3_24_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    @openai
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_24_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_24_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    @openai
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_24_1_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../node_modules/%40openai/codex/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Codex
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_3_24_1_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_24_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Codex
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_25" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_25" id="__nav_3_25_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Old
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_25_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_25">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Old
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../old/small_pyrope_flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Small pyrope flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -972,42 +1936,66 @@
       
         <li class="md-nav__item">
   <a href="#conditionals" class="md-nav__link">
-    Conditionals
+    <span class="md-ellipsis">
+      
+        Conditionals
+      
+    </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#optional-expression" class="md-nav__link">
-    Optional expression
+    <span class="md-ellipsis">
+      
+        Optional expression
+      
+    </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#lambda-calls" class="md-nav__link">
-    Lambda calls
+    <span class="md-ellipsis">
+      
+        Lambda calls
+      
+    </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#optional-lambdas" class="md-nav__link">
-    Optional lambdas
+    <span class="md-ellipsis">
+      
+        Optional lambdas
+      
+    </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#expressions" class="md-nav__link">
-    Expressions
+    <span class="md-ellipsis">
+      
+        Expressions
+      
+    </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#setup-vs-reset-vs-execution" class="md-nav__link">
-    Setup vs reset vs execution
+    <span class="md-ellipsis">
+      
+        Setup vs reset vs execution
+      
+    </span>
   </a>
   
     <nav class="md-nav" aria-label="Setup vs reset vs execution">
@@ -1015,28 +2003,44 @@
         
           <li class="md-nav__item">
   <a href="#setup-code" class="md-nav__link">
-    Setup code
+    <span class="md-ellipsis">
+      
+        Setup code
+      
+    </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
   <a href="#reset-code" class="md-nav__link">
-    Reset code
+    <span class="md-ellipsis">
+      
+        Reset code
+      
+    </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
   <a href="#retime" class="md-nav__link">
-    retime
+    <span class="md-ellipsis">
+      
+        retime
+      
+    </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
   <a href="#execution-code" class="md-nav__link">
-    Execution code
+    <span class="md-ellipsis">
+      
+        Execution code
+      
+    </span>
   </a>
   
 </li>
@@ -1048,7 +2052,11 @@
       
         <li class="md-nav__item">
   <a href="#registers" class="md-nav__link">
-    Registers
+    <span class="md-ellipsis">
+      
+        Registers
+      
+    </span>
   </a>
   
 </li>
@@ -1063,9 +2071,11 @@
           
           
             <div class="md-content" data-md-component="content">
+              
               <article class="md-content__inner md-typeset">
                 
                   
+
 
   
   
@@ -1080,65 +2090,65 @@ major Pyrope syntax constructs translate to gates.</p>
 <p>Conditional statements like <code>if/else</code> and <code>match</code> translate to multiplexers
 (muxes).</p>
 <p>A trivial <code>if/else</code> with all the options covered is a simple mux.</p>
-<div class="highlight"><pre><span></span><code>var res:s4 = _
+<div class="highlight"><pre><span></span><code>mut res:s4 = ?
 if cond {
   res = a
-}else{
+} else {
   res = b
 }
 
 // RTL equivalent (bus of 4 bits in a,b,res2)
-var res2:s4 = __mux(cond,b,a)
+mut res2:s4 = __mux(cond, b, a)
 
 lec res, res2
 </code></pre></div>
 <p>An expression <code>if/else</code> is also a mux.</p>
-<div class="highlight"><pre><span></span><code>var res = if cond { a }else{ b }
+<div class="highlight"><pre><span></span><code>mut res = if cond { a } else { b }
 
 // RTL equivalent
-var res2 = __mux(cond,b,a)
+mut res2 = __mux(cond, b, a)
 
 lec res, res2
 </code></pre></div>
 <p>The <code>when/unless</code> is also a mux.</p>
-<div class="highlight"><pre><span></span><code>var res = a
+<div class="highlight"><pre><span></span><code>mut res = a
 res = b unless cond
 
 // RTL equivalent
-var res2 = __mux(cond,b,a)
+mut res2 = __mux(cond, b, a)
 
 lec res, res2
 </code></pre></div>
 <p>Chaining <code>if</code>/<code>elif</code> creates a chain of muxes. If not all the inputs are
 covered, the value from before the <code>if</code> is used. If the variable did not exist,
 a compile error is generated.</p>
-<div class="highlight"><pre><span></span><code>var res = a
+<div class="highlight"><pre><span></span><code>mut res = a
 if cond1 {
   res = b
-}elif cond2 {
+} elif cond2 {
   res = c
-}else{
+} else {
   assert true // no res
 }
 
 // RTL equivalent
-var tmp = __mux(cond2, a, c)
-var res2= __mux(cond1, tmp, b)
+mut tmp = __mux(cond2, a, c)
+mut res2 = __mux(cond1, tmp, b)
 
 lec res, res2
 </code></pre></div>
 <p><code>unique if</code>/<code>elif</code> is similar but avoids mux nesting using a one-hot encoded
-mux. </p>
-<div class="highlight"><pre><span></span><code>var res = a
+mux.</p>
+<div class="highlight"><pre><span></span><code>mut res = a
 unique if cond1 {
   res = b
-}elif cond2 {
+} elif cond2 {
   res = c
 } // no res in else
 
 // RTL equivalent
-var sel = (!cond1 and !cond2, cond1, cond2)@[..]  // one hot encode
-var res2= __hotmux(sel, a, b, c)
+mut sel = (!cond1 and !cond2, cond1, cond2)#[..]  // one hot encode
+mut res2 = __hotmux(sel, a, b, c)
 optimize !(cond1 and cond2)                       // one hot check
 
 lec res, res2
@@ -1147,7 +2157,7 @@ lec res, res2
 options is enabled, which allows further optimizations. From a Verilog designer
 point of view, the <code>match</code> is a "full parallel" and the <code>unique if</code> is a
 "parallel". Both are checked at verification and optimized at synthesis.</p>
-<div class="highlight"><pre><span></span><code>var res = a
+<div class="highlight"><pre><span></span><code>mut res = a
 match x {
   == c1 { res = b }
   == c2 { res = c }
@@ -1155,11 +2165,11 @@ match x {
 }
 
 // RTL equivalent
-let cond1 = x == c1
-let cond2 = x == c2
-let cond3 = x == c3
-var sel = (cond1, cond2, !cond1 and !cond2)@[..]  // one hot encode (no cond3)
-var res2= __hotmux(sel, b, c, d)
+const cond1 = x == c1
+const cond2 = x == c2
+const cond3 = x == c3
+mut sel = (cond1, cond2, !cond1 and !cond2)#[..]  // one hot encode (no cond3)
+mut res2 = __hotmux(sel, b, c, d)
 optimize ( cond1 and !cond2 and !cond3)
       or (!cond1 and  cond2 and !cond3)
       or (!cond1 and !cond2 and  cond3)    // one hot check (no else allowed)
@@ -1174,22 +2184,22 @@ or non-short-circuit (<code>and_then</code>/<code>or_else</code>) expressions.</
 <div class="tabbed-set tabbed-alternate" data-tabs="1:4"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><input id="__tabbed_1_4" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Short-circuit expression</label><label for="__tabbed_1_2">Usual expression</label><label for="__tabbed_1_3">Conditionals</label><label for="__tabbed_1_4">Lambda call (inlined)</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code>var lhs = v1 or_else v2
+<div class="highlight"><pre><span></span><code>mut lhs = v1 or_else v2
 
 // RTL equivalent
-let lhs2  = __or(v1, v2)
-let lhs2_v = __or(__and(v1?, v1), __and(v2?, v2))
+const lhs2  = __or(v1, v2)
+const lhs2_v = __or(__and(v1?, v1), __and(v2?, v2))
 
 lec lhs , lhs2
 lec lhs?, lhs2_v
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code>var lhs = v1 + v2
+<div class="highlight"><pre><span></span><code>mut lhs = v1 + v2
 
 // RTL equivalent
-let lhs2   = __sum(A=(v1, v2))
-let lhs2_v = __and(v1?, v2?)
+const lhs2   = __sum(A=(v1, v2))
+const lhs2_v = __and(v1?, v2?)
 
 lec lhs , lhs2
 lec lhs?, lhs2_v
@@ -1204,33 +2214,33 @@ if cond1 {
 } // no else
 
 // RTL equivalent
-let tmp = __mux(cond2, v0, v2)
-let lhs2= __mux(cond1, tmp, v1)
+const tmp = __mux(cond2, v0, v2)
+const lhs2= __mux(cond1, tmp, v1)
 
-let tmp_v = __mux(cond2, v0?, v2?)
-let lhs2_v= __mux(cond1, tmp_v, v1?)
+const tmp_v = __mux(cond2, v0?, v2?)
+const lhs2_v= __mux(cond1, tmp_v, v1?)
 
 lec lhs , lhs2
 lec lhs?, lhs2_v
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code>let f = fun(a,b) { if a == 0 { 3 }else{ b } }
+<div class="highlight"><pre><span></span><code>const f = comb(a, b) { if a == 0 { 3 } else { b } }
 
-var lhs = c
+mut lhs = c
 if cond {
    lhs = f(a,b)
 }
 
 // RTL equivalent
-let a_cond = __not(__ror(a))             // a == 0
-let tmp    = __mux(a_cond, b, 3)         // if a_cond { 3 }else{ b }
-var lhs2   = c
-lhs2       = __mux(cond, x, tmp)
+const a_cond = __not(__ror(a))             // a == 0
+const tmp    = __mux(a_cond, b, 3)         // if a_cond { 3 }else{ b }
+mut lhs2   = c
+lhs2       = __mux(cond, lhs2, tmp)
 
-let tmp_v  = __mux(a_cond, a?, __and(a?,b?)) // a? or (a==0 and b?)
+const tmp_v  = __mux(a_cond, a?, __and(a?, b?)) // a? or (a==0 and b?)
 
-let lhs2_v = __mux(cond, c?, tmp_v)
+const lhs2_v = __mux(cond, c?, tmp_v)
 
 lec lhs , lhs2
 lec lhs?, lhs2_v
@@ -1241,49 +2251,49 @@ lec lhs?, lhs2_v
 <h2 id="lambda-calls">Lambda calls<a class="headerlink" href="#lambda-calls" title="Permanent link">&para;</a></h2>
 <p>Lambda calls are either inlined or become a specific instance (module). When
 the instance is located in a conditional path, the instance is moved to the
-main scope toggling the inputs valid attribute <code>::[valid=false]</code>. The instance
+main scope toggling the inputs valid attribute <code>::[valid] == false</code>. The instance
 has the assigned variable name. If the instance is a <code>var</code>, the variable name
 can be the SSA name.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Lambda call</label><label for="__tabbed_2_2">Instance</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code>let sub = proc(a,b)-&gt;(x) {
-  let tmp = sum(a,b)       // instance tmp,sum
+<div class="highlight"><pre><span></span><code>const sub = mod(a, b) -&gt; (x) {
+  const tmp = sum(a, b)      // instance tmp,sum
 
-  x = sum(tmp,3)           // instance x,sum
+  x = sum(tmp, 3)          // instance x,sum
 }
 
-let top = proc(a,b,c)-&gt;(x) {
+const top = mod(a, b, c) -&gt; (x) {
 
- x = sub(a,b).x
+ x = sub(a, b).x
  if c {
-   let tmp=3
-   x += sub(b,tmp).x
+   const tmp = 3
+   x += sub(b, tmp).x
  }
 }
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code>let sub = proc(a,b)-&gt;(x) {
-  let tmp = sum(a,b)       // instance tmp
+<div class="highlight"><pre><span></span><code>const sub = mod(a, b) -&gt; (x) {
+  const tmp = sum(a, b)      // instance tmp
 
-  x = sum(tmp,3)           // instance x
+  x = sum(tmp, 3)          // instance x
 }
 
-let top = proc(a,b,c)-&gt;(x) {
+const top = mod(a, b, c) -&gt; (x) {
 
- x = sub(a,b).x           // instance x
+ x = sub(a, b).x          // instance x
 
- let x_0 = _
- let sub_arg_0 = _
- let sub_arg_1 = _
+ const x_0 = ?
+ const sub_arg_0 = ?
+ const sub_arg_1 = ?
  if c {
-   let tmp=3
+   const tmp = 3
    sub_arg_0 = b
    sub_arg_1 = tmp
-   x += x_0.[defer]       // use defer (instance after conditional code)
+   x += x_0@[1]       // use defer or next (instance after conditional code)
  }
- x_0 = sub(sub_arg_0,sub_arg_1).x   // instance x_0 (SSA)
+ x_0 = sub(sub_arg_0, sub_arg_1).x   // instance x_0 (SSA)
 }
 </code></pre></div>
 </div>
@@ -1306,15 +2316,15 @@ the condition is false.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Conditional proc call</label><label for="__tabbed_3_2">Pyrope inline equivalent</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code>let case_1_counter = proc(runtime)-&gt;(res) {
+<div class="highlight"><pre><span></span><code>const case_1_counter = mod(runtime) -&gt; (res) {
 
-  let r = (
-    ,reg total:u16 = _          // r is reg, everything is reg
-    ,increase = fun(a) {
+  const r = (
+    reg total:u16 = ?,          // r is reg, everything is reg
+    increase = comb(a) {
       puts &quot;hello&quot;
 
-      let res = self.total
-      self.total::[wrap] = res+a
+      const res = self.total
+      self.total::[wrap] = res + a
 
       res
     }
@@ -1329,15 +2339,15 @@ the condition is false.</p>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code>let case_1_counter = proc(runtime)-&gt;(res) {
+<div class="highlight"><pre><span></span><code>const case_1_counter = mod(runtime) -&gt; (res) {
 
-  let r = (
-    ,reg total:u16 = _
-    ,increase = fun(a) {
+  const r = (
+    reg total:u16 = ?,
+    increase = comb(a) {
       puts &quot;hello&quot;
 
-      let res = self.total
-      self.total::[wrap] = res+a
+      const res = self.total
+      self.total::[wrap] = res + a
 
       res
     }
@@ -1346,14 +2356,14 @@ the condition is false.</p>
   if runtime == 2 {
     puts &quot;hello&quot;
 
-    let res = r.total
-    r.total::[wrap] = res+3
+    const res = r.total
+    r.total::[wrap] = res + 3
     res = res
   }elif runtime == 4 {
     puts &quot;hello&quot;
 
-    let res = r.total
-    r.total::[wrap]= res+9
+    const res = r.total
+    r.total::[wrap] = res + 9
     res = res
   }
 }
@@ -1424,15 +2434,15 @@ simulation/synthesis.</p>
 <div class="highlight"><pre><span></span><code>reg r:u16 = 3 // reset sets r to 3
 r = 2             // non-reset assignment
 
-reg array:[]u16 = (1,2,3,4)  // reset values
+reg array:[4]u16 = (1, 2, 3, 4)  // reset values
 
 reg r2:u128 = conf.get(&quot;my_data.for.r2&quot;)
 
-reg array:[] = conf.get(&quot;some.conf.hex.dump&quot;)
+reg array:[] = conf.get(&quot;some.conf.hex.dump&quot;) // dynamic size from config
 </code></pre></div>
 <p>The assignment during declaration to a register is always the reset value. If
 the assignment is a method, the method is called every cycle during reset.</p>
-<div class="highlight"><pre><span></span><code>reg array:[1024]tag:[clock_pin=my_clock] = proc(ref self) {
+<div class="highlight"><pre><span></span><code>reg array:[1024]tag:[clock_pin=my_clock] = mod(ref self) {
   reg reset_iter:u10:[reset_pin=false] = 0sb? // no reset flop
 
   self[reset_iter].state = I
@@ -1444,8 +2454,8 @@ the assignment is a method, the method is called every cycle during reset.</p>
 a reset inside the reset procedure. To guarantee determinism, any register
 inside the reset procedure can be either asynchrnous reset or a register
 without reset signal.</p>
-<div class="highlight"><pre><span></span><code>reg my_flop:[8]u32 = proc(ref self) {
-  reg reset_counter:u3:[async=true] = _ // async is only posedge reset
+<div class="highlight"><pre><span></span><code>reg my_flop:[8]u32 = mod(ref self) {
+  reg reset_counter:u3:[async=true] = ? // async is only posedge reset
 
   self[reset_counter] = reset_counter
   reset_counter::[wrap] += 1
@@ -1457,12 +2467,12 @@ cycle Similarly a tuple can have a reset when assigned to a register.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Mixed tuple reset with constants</label><label for="__tabbed_4_2">Mixed tuple reset with method</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code>let Mix_tup = (
-  ,reg flag:bool = false
-  ,state: u2
+<div class="highlight"><pre><span></span><code>const Mix_tup = (
+  reg flag:bool = false,
+  state: u2
 )
 
-var x:Mux_tup = (false,1)  // 0 used at reset, 1 used every cycle
+mut x:Mix_tup = (false, 1)  // false used at reset, 1 used every cycle
 
 assert x.flag implies x.state == 2
 
@@ -1474,14 +2484,14 @@ x.flag = true
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code>let Mix_tup = (
-  ,reg flag:bool = false
-  ,state:u2
+<div class="highlight"><pre><span></span><code>const Mix_tup = (
+  reg flag:bool = false,
+  state:u2
 )
 
-var x:Mux_tup = proc(ref self) {
-  self.flag  = proc(ref self) { self = false }  // reset code
-  self.state = 2                                // every cycle code
+mut x:Mix_tup = mod(ref self) {
+  self.flag  = mod(ref self) { self = false }   // reset code
+  self.state = 2                               // every cycle code
 }
 
 assert x.flag implies x.state == 2
@@ -1496,9 +2506,9 @@ if x.flag {
 </div>
 <p>A sample of asynchronous reset with different reset and clock signal</p>
 <div class="highlight"><pre><span></span><code>reg my_asyn_other_reg:u8:[
-  ,async = true
-  ,clock = ref clk2    // ref to connect, not read clk2 value
-  ,reset = ref reset33 // ref to connect, not read current reset33 value
+  async = true,
+  clock = ref clk2,    // ref to connect, not read clk2 value
+  reset = ref reset33  // ref to connect, not read current reset33 value
 ] = 33 // initialized to 33 at reset
 
 
@@ -1506,7 +2516,7 @@ if my_async_other_reg == 33 {
   my_async_other_reg = 4
 }
 
-assert my_async_other_reg in (4,33)
+assert my_async_other_reg in (4, 33)
 </code></pre></div>
 <h3 id="retime">retime<a class="headerlink" href="#retime" title="Permanent link">&para;</a></h3>
 <p>Values stored in registers (flop or latches) and memories (synchronous or
@@ -1542,54 +2552,54 @@ cycle, even when reset is set.</p>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code>let inner = fun(z,y)-&gt;(a,h) {
-  a =   y &amp; z
+<div class="highlight"><pre><span></span><code>fun inner(z, y) -&gt; (a, h) {
+  a = y &amp; z
   h = !(y &amp; z)
 }
 
-let top2 = fun(a,b)-&gt;(c,d) {
-  let x= inner(y=a,z=b)
+fun top2(a, b) -&gt; (c, d) {
+  const x = inner(y=a, z=b)
   c = x.a
   d = x.h
 }
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code>let Inner_t = (
-  ,setter = proc(ref self, z,y) {
-    self.a =   y &amp; z
+<div class="highlight"><pre><span></span><code>const Inner_t = (
+  setter = mod(ref self, z, y) {
+    self.a = y &amp; z
     self.h = !(y &amp; z)
   }
 )
 
-let Top2_t = (
-  ,setter = proc(ref self,a,b) {
-    let foo:Inner_t = (y=a,z=b)
+const Top2_t = (
+  setter = mod(ref self, a, b) {
+    const foo:Inner_t = (y=a, z=b)
 
     self.c = foo.a
     self.d = foo.h
   }
 )
 
-let top:Top2_t = (a,b)
+const top:Top2_t = (a, b)
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code>let Inner_t = (
-  ,setter = proc(ref self, z,y) {
-    self.a =   y &amp; z
+<div class="highlight"><pre><span></span><code>const Inner_t = (
+  setter = mod(ref self, z, y) {
+    self.a = y &amp; z
     self.h = !(y &amp; z)
   }
 )
 
-let Top2_t = (
-  ,foo:Inner_t = _
-  ,setter = proc(ref self,a,b) {
-    (self.c, self.d) = self.foo(y=a,z=b)
+const Top2_t = (
+  foo:Inner_t = ?,
+  setter = mod(ref self, a, b) {
+    (self.c, self.d) = self.foo(y=a, z=b)
   }
 )
 
-let top:Top2_t = (a,b)
+const top:Top2_t = (a, b)
 </code></pre></div>
 </div>
 </div>
@@ -1599,26 +2609,33 @@ syntax shows, the inner modules may be in tuples or direct module calls. The
 are advantages to each approach but the code quality should be the same.</p>
 <h2 id="registers">Registers<a class="headerlink" href="#registers" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>reg a:u4 = 3
-a::[saturate] = a+1
+a::[saturate] = a + 1
 
 reg b = 4
 if cond {
-  reg c = _           // weird as reg, but legal syntax
+  reg c = ?           // weird as reg, but legal syntax
   c = b + 1
   b = 5
 }
 
 // RTL equivalent
-a_qpin = __flop(reset=ref reset, clk=ref clk, initial=3, din=a.[defer])
+a_qpin = __flop(reset=ref reset, clk=ref clk, initial=3, din=a@[1]) // defer or next are aliases
 tmp    = __sum(A=(a_qpin, 1))
-a      = __mux(tmp[4], tmp@[0..=3], 0xF)    // saturate, not wrap
+a      = __mux(tmp[4], tmp#[0..=3], 0xF)    // saturate, not wrap
 
-b_qpin = __flop(reset=ref reset, clk=ref clk, initial=4, din=b.[defer])
+b_qpin = __flop(reset=ref reset, clk=ref clk, initial=4, din=b@[1])
 b      = __mux(cond, b_qpin, 5)
 
-c_cond_qpin = __flop(reset=ref reset, clk=ref clk, initial=0, din=c_cond.[defer])
+c_cond_qpin = __flop(reset=ref reset, clk=ref clk, initial=0, din=c_cond@[1])
 c_cond      = __sum(A=(b, 1))
 </code></pre></div>
+
+
+
+
+
+
+
 
 
 
@@ -1629,6 +2646,7 @@ c_cond      = __sum(A=(b, 1))
             </div>
           
           
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
         </div>
         
       </main>
@@ -1656,10 +2674,14 @@ c_cond      = __sum(A=(b, 1))
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
-    <script id="__config" type="application/json">{"base": "../..", "features": ["search.suggest", "navigation.sections", "navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.b4d07000.min.js"></script>
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["search.suggest", "navigation.sections", "navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
         <script src="../../javascripts/config.js"></script>
       
