@@ -296,7 +296,7 @@ time.
 ```
 const Rgb = (
   c:u24,
-  setter = mod(ref self, c) { self.c = c }
+  setter = comb(ref self, c) { self.c = c }
 )
 
 const Color = enum(
@@ -517,7 +517,7 @@ const Vtype = variant(str:String, num:int, b:bool)
 const x1a:Vtype = "hello"                 // implicit variant type
 const x1b:Vtype = (str="hello")           // explicit variant type
 
-mut x2:Vtype:[comptime=true] = "hello"       // comptime
+comptime x2:Vtype = "hello"                  // comptime
 
 cassert x1a.str == "hello" and x1a == "hello"
 cassert x1b.str == "hello" and x1b == "hello"
@@ -899,7 +899,7 @@ respect the declaration order.
 const Typ2 = (
   a:string = "none",
   b:u32 = 0,
-  setter = mod(ref self, a, b) { self.a = a; self.b = b }
+  setter = comb(ref self, a, b) { self.a = a; self.b = b }
 )
 
 mut x:Typ2 = (a="x", b=0)
@@ -968,11 +968,11 @@ any variable/field. The same array rule applies to the getter.
 ```
 const My_2_elem = (
   data:[2]string = ?,
-  setter = mod(ref self, x:uint(0..<2), v:string) {
+  setter = comb(ref self, x:uint(0..<2), v:string) {
     self.data[x] = v
-  } ++ mod(ref self, v:My_2_elem) {
+  } ++ comb(ref self, v:My_2_elem) {
     self.data = v.data
-  } ++ mod(ref self) { // default _ assignment
+  } ++ comb(ref self) { // default _ assignment
     self.data = ?
   },
   getter = comb(self) { self.data }
@@ -1003,9 +1003,9 @@ const some_obj = (
   a2 = (
     _val:u32 = ?,                              // hidden field
     getter = comb(self) { self._val + 100 },
-    setter = mod(ref self, x) { self._val = x + 1 }
+    setter = comb(ref self, x) { self._val = x + 1 }
   ),
-  setter = mod(ref self, a, b) {                 // setter
+  setter = comb(ref self, a, b) {                 // setter
     self.a1 = a
     self.a2._val = b
   }
@@ -1272,8 +1272,8 @@ const ext = if cfg.foo.bar == 3 {
 ```
 
 
-Non-Pyrope calls have the same procedure/function distinction and use the same
-Pyrope lambda definition but they do not have the `where` clause.
+Non-Pyrope calls use the same Pyrope lambda definition but they do not have
+the `where` clause.
 
 
 If no type is provided, a C++ call assumes a `pipe(...inp)->(...out)` type is
@@ -1285,5 +1285,5 @@ const __my_typed_cpp:comb(a,b)->(e) = ?
 ```
 
 Type defining non-Pyrope code is good to catch errors and also because declaring
-`function` allows to handle several cases of circular dependencies not possible with `procedure` [import section](10-internals.md)
+`comb` allows to handle several cases of circular dependencies not possible with `mod` [import section](10-internals.md)
 

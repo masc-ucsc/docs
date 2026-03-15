@@ -11,6 +11,15 @@ The following programs are assumed to be present when building LiveHD:
 - GCC 12+ or Clang 12+ (C++20 support is required)
 - Bazel
 - python3
+- You need bison version 3.6 or newer installed
+```
+bison --version
+```
+In OSX, you can not use the default system flex includes (missmatch in types). In OSX, install bison/flex with brew and set in path. E.g inside `~/.bashrc`
+```
+export PATH="/opt/homebrew/opt/bison/bin:$PATH"
+export PATH="/opt/homebrew/opt/flex/bin:$PATH"
+```
 
 It is also assumed that bash is used to compile LiveHD.
 
@@ -114,4 +123,3 @@ Make sure to have enough memory (4+GB at least)
 ## Next Steps
 
 To start using LiveHD, check out [Usage](02-usage.md). If you're interested in working on LiveHD, refer to [Creating a pass](11-pass.md).
-

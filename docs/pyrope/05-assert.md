@@ -50,7 +50,7 @@ cassert a == 3         // checked at compile time
 
 optimize b > 3         // may optimize and perform a runtime check
 
-fun max_not_zero(a, b) -> (result) {
+comb max_not_zero(a, b) -> (result) {
   requires a > 0
   requires b > 0
   ensures result == a or result == b
@@ -106,8 +106,8 @@ implementation bit.
     follows."
 
 ```
-fun fun1(a, b) { a | b }
-fun fun2(a, b) { ~(~a | ~b) }
+comb fun1(a, b) { a | b }
+comb fun2(a, b) { ~(~a | ~b) }
 lec fun1, fun2
 ```
 
@@ -124,7 +124,7 @@ mod mul2(a, b) -> (reg out) {
   pipe1 = a * b
 }
 
-fun mul0(a, b) -> (out) { out = a * b }
+comb mul0(a, b) -> (out) { out = a * b }
 
 lec_valid mul0, mul2
 ```
@@ -215,7 +215,7 @@ for i in 1..=99 {
   cassert 0 <= x::[crand] <= 255
 }
 
-fun get_rand_0_255(a:u8) {
+comb get_rand_0_255(a:u8) {
   return a::[rand]
 }
 ```
@@ -243,7 +243,7 @@ Pyrope has the `test [message [,args]+] ( [stmts+] }`.
 
 === "Many parallel tests"
     ```
-    fun add(a, b) { a + b }
+    comb add(a, b) { a + b }
 
     for a in 0..=20 {
       for b in 0..=20 {
@@ -256,7 +256,7 @@ Pyrope has the `test [message [,args]+] ( [stmts+] }`.
 
 === "Single large test"
     ```
-    fun add(a, b) { a + b }
+    comb add(a, b) { a + b }
 
     test "checking add" {
       for a in 0..=20 {
@@ -273,18 +273,29 @@ cycle, and the test continues from that given point. This is useful for when a
 lambda is instantiated and we want to check/update the inputs/outputs.
 
 ```
-mod counter(update) -> (value) {
+// mod: output 'value' is combinational (reads register directly)
+mod counter_mod(update) -> (value) {
   reg count:u8:[wrap] = 0
 
-  value = count
+  value = count              // combinational output (no extra flop)
 
   count += 1 when update
 }
 
-test "counter through several cycles" {
+// pipe[1]: output 'value' goes through a flop (Moore machine)
+// Same logic, but output is delayed by 1 cycle compared to mod version
+pipe[1] counter_pipe(update) -> (value) {
+  reg count:u8:[wrap] = 0
+
+  value = count              // registered output (goes through output flop)
+
+  count += 1 when update
+}
+
+test "counter_mod through several cycles" {
 
   mut inp = true
-  mut x = counter(inp@[1])  // inp contents at the end of each cycle
+  mut x = counter_mod(inp@[])  // inp contents at the end of each cycle
 
   assert x == 0 // x.value == 0
   assert inp == true

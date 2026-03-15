@@ -151,7 +151,7 @@ The `f1` example constraints `a` and `b` arguments to have a type that
 satisfies `(a does Some_type_class) and (b does Some_type_class)`.
 
 ```
-const f1 = fun<T:Some_type_class>(a:T,b:T) -> (r:int) { r = xx(a) + xx(b) }
+const f1 = comb<T:Some_type_class>(a:T,b:T) -> (r:int) { r = xx(a) + xx(b) }
 ```
 
 
@@ -258,22 +258,22 @@ tuple semantics and the relationship is preserved.
 
 When `x` and `y` are in a lambda passed as reference to another lambda (lambda
 reference), the relationship is not covariant but contravariant. `Dog does
-Animal` is true, but `:fun(x:Dog)->() does _:fun(x:Animal)->()` is false. The
-reason is shown in the previous example. The `fun(fd:fd_t)` can be called
+Animal` is true, but `:comb(x:Dog)->() does _:fun(x:Animal)->()` is false. The
+reason is shown in the previous example. The `comb(fd:fd_t)` can be called
 with `call_animal` because the fields accessed by `call_animal` are only a
 subset of `Dog` and hence if called inside `f_d` it can handle the `Dog` type.
 The opposite is not the case.
 
 
-`:fun(x1)->(x2) does _:fun(y1)->y2` check is equivalent to `(y1 does x1) and (x2
+`:comb(x1)->(x2) does _:fun(y1)->y2` check is equivalent to `(y1 does x1) and (x2
 does y2)`.
 
 
 
 
-Given a lambda passed as argument (`:fun(x:fun(c:c_t)->(d:d_t))->(y)`), the
+Given a lambda passed as argument (`:comb(x:fun(c:c_t)->(d:d_t))->(y)`), the
 check when passing the lambda as argument to `x` a function like
-`fun(w:w_t)->(z:z_t)`. In this case, the `:fun(:w_t)->(_:z_t) does
+`comb(w:w_t)->(z:z_t)`. In this case, the `:comb(:w_t)->(_:z_t) does
 comb(:c_t)->(_:d_t)` is a contravariant test for inputs and covariant for
 outputs. This makes it equivalent to `(_:c_t does _:w_t) and (_:z_t does _:d_t)`.
 
@@ -293,13 +293,12 @@ is checked in the covariant and contravariant checks.
 
 Pyrope does not have global scope for defined lambdas. Instead, all the lambda
 must reside in a local variable or must be "imported". Nevertheless, a local
-variable can have multiple lambdas. It is similar to Odin's "explicit procedure
-overloading". This section explains how is the overloading selection in this
-case.
+variable can have multiple lambdas. It is similar to Odin's "explicit lambda
+overloading". This section explains how the overloading selection works.
 
 
 By overloading, this section refers to typical ad-hoc polymorphism where the same
-function/procedure name can have different functionality for different types.
+lambda name can have different functionality for different types.
 
 
 For Pyrope overloading, lambdas are typically added at the end `++=` of the tuple.
@@ -369,7 +368,7 @@ lambda call:
   order based on the `COND` result at runtime.
 
 * If the list has more than one entry, and any of them is a `proc`, generate a
-  compile error. Dynamic dispatch only works with functions `fun`.
+  compile error. Dynamic dispatch only works with `comb` functions.
 
 If the `where COND` is not compile time there must be a `where true` condition
 to catch the default behavior.
@@ -377,7 +376,7 @@ to catch the default behavior.
 The previous rules imply that Pyrope has some type of dynamic dispatch. The
 types for the inputs and outputs must be known at compile time (static
 dispatch) but the `where` condition may be known at run-time as long as the
-lambda is immutable (`fun`).
+lambda is immutable (`comb`).
 
 
 The `where` condition is not considered part of the type system, but a syntax

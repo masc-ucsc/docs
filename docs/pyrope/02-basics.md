@@ -45,31 +45,40 @@ the binary encoding.
 0sb0?0          // 0 or 2 in decimal
 ```
 
-The Verilog high impedance `z` is not supported. An explicit `bus` construct must be used instead.
+The Verilog high impedance `z` is not supported. Tri-state behavior can be
+expressed with `unique if`, which EDA tools can optimize to tri-state buffers
+when appropriate.
 
-Like in many HDLs, Pyrope has unknowns `?`. The x-propagation is a source of
-complexity in most hardware models. Pyrope has `x` or `?` to be compatible with
-Verilog existing designs. This means that inside the Pyrope compiler, the
-constant operations with unknowns are compatible with Verilog semantics. When
-the simulation is performed, the expectation is to randomly generate a 0 or 1
-for each unknown (`?`) bit.
+Like in many HDLs, Pyrope has unknowns `?`. Pyrope has `x` or `?` to be
+compatible with Verilog existing designs.
 
+There are two distinct "no value" concepts in Pyrope — `?` and `nil`:
 
-The advice is not to use `?` besides `match` statement pattern matching. It is
-less error prone to use the default value (zero or empty string), but sometimes it
-is easier to use `nil` when converting Verilog code to Pyrope code. The `nil`
-means that the numeric value is invalid. If any operation is performed with
-`nil`, the result is an assertion failure. The only thing allowed to do with
-nil is to copy it. While the `nil` behaves like an invalid value, the `0sb?`
-behaves like an unknown value that still can be used in arithmetic operations.
-E.g: `0sb? | 1` is `1` but `nil | 1` is an assertion error.
+* **`?` (unknown)**: A valid but unknown bit — like a quantum state that is
+  either 0 or 1 but not yet observed. Arithmetic works with unknowns following
+  Verilog x-propagation semantics: `0sb? + 1` is `0sb??`, `0sb? | 1` is `1`.
+  During simulation, each unknown bit is randomly resolved to 0 or 1. Unknowns
+  exist in hardware and map directly to Verilog `x`.
 
+* **`nil` (invalid)**: An invalid value that must never be used. Any arithmetic
+  or decision with `nil` triggers a simulation assertion error. The only
+  allowed operation is copying. The compiler must prove that all `nil` uses are
+  eliminated at compile time, or a compile error is generated. `nil` never
+  exists in synthesized hardware.
+
+```
+0sb? | 1     // OK: result is 1 (unknown OR 1 = 1)
+0sb? + 1     // OK: result is 0sb?? (unknown propagation)
+nil | 1      // assertion error: nil is invalid, not unknown
+```
 
 Notice that `nil` is a state in the integer basic type, it is not a new type by
 itself, it does not represent an invalid pointer, but rather an invalid
-integer. Also important is that the compiler will guarantee that all the `nil`
-arithmetic or decision uses are eliminated at compile time or a compile error
-is generated.
+integer.
+
+The advice is not to use `?` besides `match` statement pattern matching. It is
+less error prone to use the default value (zero or empty string), but sometimes
+it is easier to use `nil` when converting Verilog code to Pyrope code.
 
 
 ### Strings
@@ -261,7 +270,7 @@ call. This allows to have `puts` calls in `functions`.
 
 
 Pyrope only supports anonymous lambdas, but the lambdas can have attributes that restrict
-the lambda functionality to combinational only (`comb` or `fun`), pipeline
+the lambda functionality to combinational only (`comb`), pipeline
 stages that have all the outputs with the same dela (`pipe`), or lambdas that connect
 multiple combinational or pipeline stages but require explicit timing use (`flow`) to connect
 operations. [Lambda section](06-functions.md) has more details on the allowed syntax.
@@ -273,17 +282,19 @@ mut f = comb(a, b) { a + b }
 
 Pyrope naming for consistency:
 
-* `comb` is pure combinational logic (zero cycles)
+* `comb` is pure combinational logic (zero cycles). Can use `ref` to modify tuples (equivalent to implicit output).
 
-* `pipe[N]` is a fixed N-cycle pipeline
+* `pipe[N]` is a fixed N-cycle pipeline (Moore machine — outputs always registered)
 
-* `pipe[A..=B]` is a flexible A-to-B cycle pipeline
+* `pipe[A..=B]` is a flexible A-to-B cycle pipeline (Moore machine)
 
-* `async` is a reserved keyword for future asynchronous pipeline stages.
+* `async` is reserved for future use (async/await-style pipelining).
 
-* `flow` is a module with arbitrary internal pipelining, but mostly connecting blocks, no combinational logic
+* `flow` connects combinational/pipeline blocks with explicit timing (`@[cycle]`). Can also use `reg` for persistent state.
 
-* `comb` or `pipe` that uses a `self` parameter is also called a method
+* `mod` has no constraints on registers or outputs (can be Mealy or Moore), operates cycle by cycle.
+
+* `comb`, `pipe`, `flow`, or `mod` that uses a `self` parameter is also called a method
 
 
 ## Evaluation order
@@ -314,19 +325,19 @@ with explicit short-circuit.
 
 The programmer can explicitly set an evaluation order by using short-circuit
 expressions like `and_then`, `or_else`, or control expressions (`if/else`,
-`match`, `for`). An expression can have many `function` calls because those
+`match`, `for`). An expression can have many `comb` calls because those
 have no side-effects, and hence the evaluation order is not important.
 
 
 A `pipe` can update state internally and has one or more cycle delays. As such,
-`pipe` statements can do many calls to `fun`/`comb` lambdas, but not to other
+`pipe` statements can do many calls to `comb` lambdas, but not to other
 `pipe` lambdas. `pipe` lambdas can only be called inside `flow` lambdas.
 
 
 
-Expressions also can have a code blocks (`{  }`) as long as there are no
+Expressions also can have code blocks (`{  }`) as long as there are no
 side-effects. In a way, expression code blocks can be seen as a type of
-`functions` that are called immedialy after definition.
+`comb` lambda that is called immediately after definition.
 
 
 ```
@@ -338,7 +349,7 @@ assert a == {3+1+100}  // same, expression evaluated as 104 and returned
 
 For most expressions, Pyrope is more restrictive than other languages because
 it wants to be a fully defined deterministic independent of implementation. To
-handle logging/messaging in `fun` calls, Pyrope treats `puts` as a special
+handle logging/messaging in `comb` calls, Pyrope treats `puts` as a special
 instruction. Pyrope runtime delays the puts output until the end of the cycle.
 See the Printing section above for more details.
 
@@ -538,11 +549,10 @@ cassert !cond implies tup.b==3
 ```
 
 Variables with first character upper case are `comptime`. This means that the contents
-must be known/fix at compilation time.
+must be known/fixed at compilation time.
 
 ```
 assert something::[comptime]
-mut A_xxx = something                 // comptime
+comptime A_xxx = something            // comptime
 assert A_xxx::[comptime]              // also comptime
-mut A_yyy:[comptime=true] = something // also comptime, redundant but legal
 ```

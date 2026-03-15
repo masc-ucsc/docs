@@ -176,7 +176,7 @@ type Vtype = variant(str:String, num:int, b:bool)
 const x1a:Vtype = "hello"                 // implicit variant type
 const x1b:Vtype = (str="hello")           // explicit variant type
 
-mut x2:Vtype:[comptime=true] = "hello"    // comptime
+comptime x2:Vtype = "hello"               // comptime
 
 cassert x1a.str == "hello" and x1a == "hello"
 cassert x1b.str == "hello" and x1b == "hello"
@@ -244,7 +244,7 @@ const Queue = type<T>(push:comb(T)->(), pop:comb()->(T), empty:comb()->(bool))
 
 const triadd1 = comb<T>(a:T, b:T, c:T) -> T { a + b + c }
 const triadd2 = pipe<T>::[stages=3] (a:T, b:T, c:T) ->T { a + b + c }
-const triadd3 = flow<T> (a:T, b:T, c:T) ->T { a@0 + b@0 + c@0 }
+const triadd3 = flow<T> (a:T, b:T, c:T) ->T { a@[0] + b@[0] + c@[0] }
 cassert triadd1(1,2,3) == 6
 ```
 
@@ -324,13 +324,11 @@ pipe stage2::[stages=2..<8] (in:int) -> (out:int) {
 const v = if in? { stage(in) } else { 0 }
 ```
 
-### Bus structures and high-impedance
-```pyrope
-mut bus:u1 = 'z'              // compile error: no 'z' literal in Pyrope
-bus = a when enable else 'z'  // compile error: no 'z' literal in Pyrope
-// NOTE: Use bus resolution as a function-style primitive:
-(a,b) = bus(a,b)
-```
+### Tri-state behavior
+
+Pyrope does not have a `bus` construct or high-impedance `z` literal.
+Tri-state behavior is expressed with `unique if`, which EDA tools can optimize
+to tri-state buffers when conditions are mutually exclusive.
 
 ### Memory compilers
 ```pyrope

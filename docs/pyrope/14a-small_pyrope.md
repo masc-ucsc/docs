@@ -34,25 +34,38 @@ mut flag:bool = true
 
 // String (basic operations)
 mut text:string = "hello"
-mut combined = text ++ " world"  // String concatenation
+mut combined = text ++ " world"  // Tuple concatenation (strings are tuples of characters)
 puts "Debug: value is ", combined   // Print for debugging
 
 // Default initialization
 mut x = ?               // Type default (0 for int, false for bool, "" for string)
 mut y = 0               // Explicit value
 
-// '?' bits are don't-care/unknown, '_' is just a separator
-mut unknown = 0b101?    // Bit 0 is don't care/unknown
-mut partial = 0b??10    // Multiple don't care/unknown bits
+// '?' bits are unknown (valid but unobserved, like Verilog x)
+// Arithmetic works: 0sb? + 1 = 0sb??, 0sb? | 1 = 1
+mut unknown = 0b101?    // Bit 0 is unknown
+mut partial = 0b??10    // Multiple unknown bits
+
+// 'nil' is invalid (NOT unknown) — any use is an assertion error
+// The compiler must prove all nil uses are eliminated or compile error
+mut z = nil             // invalid, can only be copied until assigned a real value
 ```
 
 ### Variable Storage Classes
 Semicolons have the same behavior as a newline: they are optional, but can be used to put multiple statements on one line.
 ```pyrope
-const constant = 42     // Compile-time constant (immutable)
-mut wire = 0            // Combinational (no persistence)
-reg state = 0           // Register (persistent across cycles)
+comptime SIZE = 16          // Compile-time constant (shorthand for comptime const)
+comptime mut counter = 0    // Mutable at compile time (updated during elaboration)
+const constant = 42         // Immutable after assignment (NOT compile-time)
+mut wire = 0                // Combinational (no persistence, can be reassigned)
+reg state = 0               // Register (persistent across cycles)
 ```
+
+Variables have two orthogonal properties: mutability (`const` vs `mut`) and
+timing (`comptime` vs runtime). `const` is immutable after assignment but its
+value can differ on each function call. `mut` can be reassigned. The `comptime`
+prefix modifier means the value must be resolvable at compile/elaboration time.
+`reg` persists across cycles. `comptime` alone is shorthand for `comptime const`.
 
 ### Variable Scope (Simplified)
 ```pyrope
@@ -82,7 +95,7 @@ mut mixed = (x=1, 2, y=3)       // Mixed named/indexed
 assert point.x == 10
 assert array[2] == 3            // Array-style access
 
-// Concatenation
+// Concatenation (++ is always tuple concatenation — strings, lambdas, tuples)
 mut combined = point ++ (z=30)  // (x=10, y=20, z=30)
 ```
 
@@ -123,7 +136,7 @@ mut out1 = ram.port[0][addr3]:[rdport=0] // Read port 0
 mut out2 = ram.port[1][addr4]:[rdport=1] // Read port 1
 ```
 
-## Combinational, Pipelines, or Flows
+## Lambda Types: `comb`, `pipe`, `flow`, `mod`
 Small Pyrope functions do not support capture variables (e.g. `comb f[a] { ... }` is not supported). Pass values explicitly as arguments.
 
 ### Combinational or Pure Functions (`comb`)
@@ -135,23 +148,34 @@ comb add(a:u8, b:u8) -> (result:u8) {
     result = a + b
 }
 
-// Implicit return
+// Implicit return: last expression is the return value
 comb add_simple(a:u8, b:u8) {
     a + b                       // Returns single-element tuple
+}
+
+// 'return' is only needed for early exits
+comb clamp(x:i16) -> (result:u8) {
+    return 0 when x < 0        // Early exit
+    return 255 when x > 255    // Early exit
+    result = x                  // Normal path, no return needed
 }
 ```
 
 ### Pipeline
 
-A pipeline is a function where all the outputs are updated with the same time number of cycles with respect to the inputs.
+A pipeline is a Moore machine — outputs always go through flops. The `pipe`
+declares its latency (e.g., `pipe[3]`), and the tool may retime logic for
+performance, but the behavior is equivalent to a `comb` with N flops appended
+at the outputs. Pipelines can use `reg` for internal storage, but besides
+storage, they behave like a `comb` with pipelined outputs.
 
 
 ```pyrope
-pipe counter(enable:bool) -> (reg count:u8) {
+pipe[1] counter(enable:bool) -> (reg count:u8) {
     count += 1 when enable
 }
 
-pipe fifo(push:bool, pop:bool, data_in:u18) -> (data_out:u18, full:bool, empty:bool) {
+mod fifo(push:bool, pop:bool, data_in:u18) -> (data_out:u18, full:bool, empty:bool) {
     reg buffer:[16]u18 = _
     reg head:u4 = 0
     reg tail:u4 = 0
@@ -176,32 +200,42 @@ pipe fifo(push:bool, pop:bool, data_in:u18) -> (data_out:u18, full:bool, empty:b
 
 ### Flow (Connecting Blocks)
 
-A flow is a function that allows to connect combinational, pipeline, or flow functions but requires explicit time indication for each variable use. Each variable has a `@cycle` to indicate the expected cycle completion with respect to the `flow` inputs. The outputs do not need the explicit time annotation.
+A flow connects combinational, pipeline, or other flow blocks with explicit
+timing control. Flows can also use `reg` for persistent state across cycles.
+There are three complementary timing mechanisms inside `flow` blocks:
+
+* `delay[N]` on operations: specifies that an operation takes N cycles.
+* `var@[N]` on uses (RHS): specifies which cycle to read the value at. The
+  compiler inserts alignment delays if needed.
+* `:@[N]` on declarations (LHS): optional timing type check. The compiler
+  verifies the computed cycle matches N.
 
 ```pyrope
 pipe mul(a, b) -> (c) { c = a * b }
 pipe add(a, b) -> (c) { c = a + b }
 
 flow alu(in1, in2) -> (out_pipelined, out_live) {
-  const (tmp@[2+1], in2_d@[2+1]) = delay[3] (mul(in1, in2), in2)
-  out_pipelined = delay[1] add(tmp@[2+1], in2_d@[2+1])
-  out_live      =@[1]      add(tmp@[2+1], in2@0)  // =@[1] is the same as = delay[1]
+  const (tmp, in2_d) = delay[3] (mul(in1@[0], in2@[0]), in2)
+  out_pipelined:@[4] = delay[1] add(tmp@[3], in2_d@[3])
+  out_live           = delay[1] add(tmp@[3], in2@[0])
 }
 
 flow accum_alu(in1, in2) -> (out) {
   reg total:[init=0]
-  const tmp@[2+1] = delay[3] mul(in1, in2)
-  const sum_aligned = add(total@0, tmp@[2+1])  // explicit timing makes alignment clear
-  total@[1] = sum_aligned                      // @[1] defers write to end of cycle
-  out = total@0  // current register output
+  const tmp = delay[3] mul(in1@[0], in2@[0])
+  const sum_aligned = add(total@[0], tmp@[3])  // explicit timing makes alignment clear
+  total@[] = sum_aligned                       // @[] defers write to end of cycle
+  out = total@[0]  // current register output
 }
 ```
 
-Inside flow blocks, the variables should have a time delay indication, but as usual they can also have
-additional checks like type and attributes, but `comptime` attributes do not really care about the time delay.
+Inside flow blocks, variable uses on the right-hand side should have a `@[N]`
+time annotation for the compiler to check alignment. The left-hand side can
+optionally use `:@[N]` as a timing type check. As usual, variables can also
+have type and attribute checks.
 
 ```pyrope
-const (tmp@0:u32, tmp2@[2]:u3:[something=true], x@0:i3:[comptime=true]) = some_flow_call(a@0, b@3:u32, c@2:[xxx_should_be_set=true])
+const (tmp:u32, tmp2:u3:[something=true]) = some_flow_call(a@[0], b@[3]:u32, c@[2]:[xxx_should_be_set=true])
 ```
 
 
@@ -216,8 +250,12 @@ if condition {
 }
 ```
 
-Pyrope also has Ruby-like unless at the end of the statement that removes the statement
-`unless`/`when` the condition is satisfied.
+Pyrope also has `when`/`unless` trailing modifiers for single-statement
+conditionals. `when cond` executes the statement only if `cond` is true;
+`unless cond` executes only if `cond` is false. Unlike `if` blocks, these do
+not create a new scope — the statement stays in the current scope. They can be
+applied to assignments, function calls, assertions, and control statements
+(`return`, `break`, `continue`).
 ```
 return when    enable
 return unless !enable  // Same
@@ -226,8 +264,13 @@ assert !enable
 ```
 
 ### Compile-Time Loops
+
+Loop bounds must be `comptime` (known at compile time) so that loops can be
+unrolled. The loop body can contain runtime logic — only the bounds are
+compile-time.
+
 ```pyrope
-// For loops (must be compile-time bounded)
+// For loops (bounds must be comptime, body is runtime hardware)
 for i in 0..=7 {
     memory[i] = init_value
 }
@@ -239,6 +282,10 @@ for val in 1..<10 step 2 {  // 1,3,5,7,9
 ```
 
 ### Match (Pattern Matching)
+
+`match` is always unique (mutually exclusive branches, like `unique if`). It
+supports any comparison operator, not just equality.
+
 ```pyrope
 match state {
     == 0 { next_state = 1 }
@@ -254,12 +301,24 @@ match state {
     case 2 { next_state = 0 }
     else   { next_state = 0 }
 }
+
+// Other comparison operators are allowed
+match value {
+    < 0   { result = -1 }
+    == 0  { result = 0 }
+    > 0   { result = 1 }
+}
 ```
 
 ## Enumerations
+
+`enum` uses one-hot encoding (each value maps to a single bit), which is ideal
+for FSMs in hardware. `variant` is a tagged union that shares bits between
+entries for more compact representation. Both allow only one entry to be active
+at a time.
+
 ```pyrope
 enum State = (Idle, Active, Done)       // One-hot encoding: 1, 2, 4
-// Simplified subset of full Pyrope enum features
 
 reg current_state:State = State.Idle
 
@@ -286,16 +345,19 @@ Attributes are **set only at declaration** using `:[attr=value]`. The `::[]` syn
 
 ```pyrope
 // Set attribute (only at declaration)
-mut foo:u32:[comptime=true] = 42    // Set comptime attribute
-reg counter:[reset_pin=rst] = 0     // Set reset pin attribute
+reg counter:[reset_pin=ref rst] = 0 // Set reset pin (ref connects the wire)
 
 // Read attribute value
 const num_bits = counter::[bits]    // Read number of bits
 
 // Check attribute (read and compare)
 cassert counter::[bits] == 8        // Check bit width
-cassert foo::[comptime] == true     // Check if compile-time constant
 cassert z::[bits] < 32              // Check bit width constraint
+
+// Compile-time uses the 'comptime' prefix modifier (not an attribute)
+comptime SIZE = 16                  // shorthand for comptime const
+comptime mut elaboration_cnt = 0   // mutable at compile time
+cassert SIZE::[comptime] == true   // Can still query comptime status
 ```
 
 ### Common Attributes
@@ -317,13 +379,14 @@ mut clamped = (x + y):u8:[saturate=true] // This operation saturates to u8
 // Typecast without attributes
 mut truncated = (large_val):u8           // Explicit typecast to u8
 
-// Compile-time attributes
-const SIZE:[comptime=true] = 16     // Compile-time constant
+// Compile-time uses the 'comptime' prefix modifier
+comptime SIZE = 16                  // Known at elaboration time (shorthand for comptime const)
 mut array_size = SIZE               // Uses compile-time value
 
 // Hardware attributes
-reg state:[reset_pin=my_reset] = 0  // Custom reset signal
-reg clocked:[clock_pin=fast_clk] = 0 // Custom clock signal
+reg state:[reset_pin=ref my_reset] = 0  // Custom reset signal (ref = wire connection)
+reg clocked:[clock_pin=ref fast_clk] = 0 // Custom clock signal
+reg no_reset:[reset_pin=false] = 0      // Tied low (comptime value, no ref needed)
 reg async_reg:[async=true] = 0      // Asynchronous reset
 reg pipeline:[retime=true] = 0      // Allow synthesis retiming
 
@@ -362,7 +425,7 @@ reg async_mem:[64]u8:[
 ```pyrope
 mut sum = a + b; mut diff = a - b; mut prod = a * b; mut div = a / b  // Basic arithmetic
 mut left_shift = a << n; mut right_shift = a >> n  // Shifts
-const remainder = a % b  // Modulo (compile-time only due to cost)
+const remainder = a % b  // Modulo (debug-only: too expensive for single-cycle hardware)
 ```
 
 ### Bitwise
@@ -469,17 +532,19 @@ counter += 1                    // Immediate update
 tmp += 1
 assert counter == tmp
 
-counter@[1] += 1               // Defer write to end of cycle
+counter@[] += 1                // Defer write to end of cycle
 assert counter == tmp
 tmp += 1
 
 assert counter != tmp
-assert counter@[1] == tmp      // Read deferred value (end of cycle)
+assert counter@[] == tmp       // Read deferred value (end of cycle)
+assert counter@[1] == tmp      // OK in assert (debug): @[1] == @[] for registers
 
 // Timing syntax summary:
 // counter@[0]  - current value (same as just 'counter')
-// counter@[1]  - value at end of cycle (deferred/next)
+// counter@[]   - deferred value (end of current cycle)
 // counter@[-1] - value from previous cycle
+// counter@[1]  - next cycle value (compile error unless debug context)
 ```
 
 ### Reset Behavior
@@ -511,7 +576,7 @@ utils.debug_print("Hello")
 const test_utils = import("test/helpers")
 
 // Simple CPU register file
-pipe reg_file(
+pipe[1] reg_file(
     clk:bool,
     we:bool,
     ra:u5,
@@ -535,13 +600,25 @@ pipe reg_file(
 }
 
 test "register file" {
+    // Cycle 0: write 42 to register 1, read regs 3 and 1
     const rf = reg_file(we=true, ra=3, rb=1, wa=1, wd=42)
-    assert rf.rd_a == 0
-    assert rf.rd_b == 0 // no fwd
+    // pipe[1] outputs are registered — these reflect the initial state (all zeros)
+    assert rf.rd_a == 0          // reg[3] = 0 (initial), delayed 1 cycle
+    assert rf.rd_b == 0          // reg[1] = 0 (initial), delayed 1 cycle
+
     step
+
+    // Cycle 1: no write, read reg 1 (was written last cycle)
     const rf2 = reg_file(we=false, ra=1, rb=0, wa=0, wd=0)
-    assert rf2.rd_a == 42
-    assert rf2.rd_b == 0
+    // Output still reflects cycle 0 reads due to pipe[1] delay
+    assert rf2.rd_a == 0         // reg[3] still 0
+
+    step
+
+    // Cycle 2: pipe[1] output now reflects cycle 1 reads
+    const rf3 = reg_file(we=false, ra=1, rb=0, wa=0, wd=0)
+    assert rf3.rd_a == 42        // reg[1] = 42 (written in cycle 0, read in cycle 1, output in cycle 2)
+    assert rf3.rd_b == 0         // reg[0] always 0
 }
 ```
 

@@ -21,41 +21,81 @@ which lambda to call.
     compiler versions. These are features that Pyrope enables.
 
 
-Pyrope divides the lambdas into three categories: `functions`, `pipelines`, and `modules`.
+Pyrope divides the lambdas into four categories: `comb`, `pipe`, `flow`, and `mod`.
 
-- `functions` (fun) operate only over combinational logic. They can not have any
-  synthesis side-effect. This means the function outputs are only a function of
-  the function inputs. Any external call can only affect `debug` statements not
-  the synthesizable code. `functions` resemble `pure functions` in normal
-  programming languages.
+- `comb` operates only over combinational logic. The outputs are purely a
+  function of the inputs — no registers, no state, no cycle-level side effects.
+  Any external call inside a `comb` can only affect debug statements (e.g.,
+  `puts`), not synthesizable code. `comb` can use `ref` arguments to modify
+  tuples; `ref` is equivalent to having the argument as both input and output,
+  which is still purely combinational. `comb` resembles `pure functions` in
+  normal programming languages.
 
-- `pipelines` (pipe) are fixed or variable latency pipelines with automatic timing.
-  They use `await[N]` to specify pipeline timing.
+- `pipe` is a Moore machine — outputs always go through flops (at least 1
+  stage, never `pipe[0]`). A `pipe` can declare its latency: `pipe[3]` is
+  fixed 3-cycle, `pipe[1..=3]` lets the compiler choose, and bare `pipe`
+  leaves the latency flexible for the caller to specify via `delay[N]` in a
+  `flow`. The tool may retime logic for performance, but the behavior is
+  equivalent to a `comb` with N flops appended at the outputs. `pipe` can use
+  `reg` for internal storage, but besides storage, it behaves like a `comb`
+  with pipelined outputs.
 
-- `modules` (mod) allow arbitrary internal pipelining with explicit timing control.
+- `flow` connects `comb`, `pipe`, or other `flow` blocks with explicit timing
+  control. Inside a `flow`, each variable use has a `@[cycle]` annotation
+  indicating its pipeline stage. This gives the designer full control over
+  where pipeline stages are placed. `flow` can also use `reg` for persistent
+  state across cycles.
 
-Methods are functions/pipelines/modules that have `self` as the first
-argument which allows operating on tuples.
+- `mod` has no constraints on how registers and outputs are used. Unlike `pipe`
+  (Moore machine with registered outputs), `mod` can have combinational or
+  registered outputs in any arrangement. `mod` operates cycle by cycle with
+  explicit register reads and writes.
 
-=== "Combinational (fun)"
+Methods are `comb`/`pipe`/`flow`/`mod` lambdas that have `self` as the first
+argument, which allows operating on tuples.
+
+=== "Combinational (comb)"
     ```
     const add = comb(a, b) -> (result) {
       result = a + b
     }
 
-    fun add(a, b) -> (result) {  // Same as const add = comb(a, b) -> (result)
+    comb add(a, b) -> (result) {  // Same as const add = comb(a, b) -> (result)
       result = a + b
     }
     ```
 
 === "Pipeline (pipe)"
     ```
-    pipe[3] multiply(a, b) -> (result) {
+    pipe[3] multiply(a, b) -> (result) {   // fixed 3-cycle latency
       result = a * b
     }
 
-    pipe[1..=3] add_pipe(a, b) -> (result) {
+    pipe[1..=3] add_pipe(a, b) -> (result) { // compiler chooses 1-3 cycles
       result = a + b
+    }
+
+    pipe flexible_mul(a, b) -> (result) {  // bare: caller specifies via delay[N]
+      result = a * b
+    }
+    ```
+
+=== "Flow (flow)"
+    ```
+    pipe mul(a, b) -> (c) { c = a * b }
+    pipe add(a, b) -> (c) { c = a + b }
+
+    flow multiply_add(in1, in2) -> (out) {
+      const tmp = delay[3] mul(in1@[0], in2@[0])
+      const in1_d = delay[3] in1@[0]
+      out:@[4] = delay[1] add(tmp@[3], in1_d@[3])
+    }
+
+    flow accum(in1, in2) -> (out) {
+      reg total = 0                             // flow can use reg
+      const tmp = delay[3] mul(in1@[0], in2@[0])
+      total@[] = add(total@[0], tmp@[3])
+      out = total@[0]
     }
     ```
 
@@ -75,22 +115,22 @@ argument which allows operating on tuples.
 Only anonymous lambdas are supported, this means that there is no global scope
 for functions, procedures, or modules. The only way for a file to access a
 lambda is to have access to a local variable with a definition or to "import" a
-variable from another file. The more familiar `fun name` or `proc name`
+variable from another file. The more familiar `comb name` or `pipe name`
 declaration is also valid, but it is syntax sugar and equivalent to `const name =
-fun`.
+comb`.
 
 ```
-const a_3 = { 3 }          // just scope, not a lambda. Scope is evaluate now
-const a_fun = comb() { 4 }  // when a_fun is called 4 is returned
+const a_3 = { 3 }            // just scope, not a lambda. Scope is evaluate now
+const a_lambda = comb() { 4 } // when a_lambda is called 4 is returned
 
-const fun3 = comb() { 5 }   // public lambda that can be imported by other files
+const get_five = comb() { 5 } // public lambda that can be imported by other files
 
 const x = a_3()            // compile error, explicit call not possible in scope
-const x = a_fun()          // OK, explicit call needed when no arguments
+const x = a_lambda()       // OK, explicit call needed when no arguments
 
 assert a_3 == 3
-assert a_fun equals _:fun()
-assert a_fun() == 4
+assert a_lambda equals _:comb()
+assert a_lambda() == 4
 ```
 
 The lambda definition has the following fields:
@@ -116,13 +156,13 @@ The lambda definition has the following fields:
 
 + `COND` is the condition under which this statement is valid. The `COND` can
   use the inputs, outputs, and `self` to evaluate. If the outputs are used in
-  the `COND`, the lambda must be immutable (`fun`). This means that the method
+  the `COND`, the lambda must be immutable (`comb`). This means that the method
   is called when the condition could evaluate true depending on its execution,
   but being immutable there are no side effects. Section
   [overload](07b-structtype.md#lambda_overloading) has more details.
 
 ```
-mut add:fun(...x) = ?
+mut add:comb(...x) = ?
 add = comb(...x) { x[0] + x[1] + x[2] }     // no IO specified
 add = comb(a, b, c) { a + b + c }        // constrain inputs to a,b,c
 add = comb(a, b, c) { a + b + c }        // same
@@ -130,21 +170,21 @@ add = comb(a:u32, b:s3, c) { a + b + c } // constrain some input types
 add = comb(a, b, c) -> (x:u32) { a + b + c } // constrain result to u32
 add = comb(a, b, c) -> (result) { a + b + c } // constrain result to be named result
 add = comb(a, b:a, c:a) { a + b + c }    // constrain inputs to have same type
-add = fun<T>(a:T, b:T, c:T) { a + b + c } // same
+add = comb<T>(a:T, b:T, c:T) { a + b + c } // same
 
 const x = 2
-mut add2:fun(a) = ?
-add2 = fun       (a) { x + a }    // compile error, undefined 'x'
-add2 = fun[     ](a) { x + a }    // compile error, undefined 'x'
-add2 = fun[x    ](a) { x + a }    // explicit capture x
-add2 = fun[foo=x](a) { foo + a }  // capture x but rename to something else
+mut add2:comb(a) = ?
+add2 = comb       (a) { x + a }    // compile error, undefined 'x'
+add2 = comb[     ](a) { x + a }    // compile error, undefined 'x'
+add2 = comb[x    ](a) { x + a }    // explicit capture x
+add2 = comb[foo=x](a) { foo + a }  // capture x but rename to something else
 
 mut y = (
   val:u32 = 1,
-  inc1 = fun (ref self) { self.val = u32(self.val + 1) }
+  inc1 = comb (ref self) { self.val = u32(self.val + 1) }
 )
 
-const my_log::[debug] = fun (...inp) {
+const my_log::[debug] = comb (...inp) {
   print "logging:"
   for i in inp {
     print " {}", i
@@ -152,7 +192,7 @@ const my_log::[debug] = fun (...inp) {
   puts
 }
 
-const f = fun<X>(a:X, b:X) { a + b }   // enforces a and b with same type
+const f = comb<X>(a:X, b:X) { a + b }   // enforces a and b with same type
 assert f(33:u22, 100:u22) == 133
 
 my_log(a, false, x + 1)
@@ -190,10 +230,10 @@ other languages. Notice the different order in UFCS vs pipe, and also that in
 the pipe the argument tuple is concatenated.
 
 ```
-const div  = fun (self, b) { self / b }  // named input tuple
-const div2 = fun (...x) { x[0] / x[1] }    // unnamed input tuple
+const div  = comb (self, b) { self / b }  // named input tuple
+const div2 = comb (...x) { x[0] / x[1] }    // unnamed input tuple
 
-const noarg = fun () { 33 }         // explicit no args
+const noarg = comb () { 33 }         // explicit no args
 
 assert 33 == noarg()              // () needed to call
 
@@ -231,15 +271,15 @@ mut tup = (
   f1 = comb(self) { 1 }
 )
 
-const f1 = fun (self) { 2 } // compile error, f1 shadows tup.f1
-const f1 = fun () { 3 }      // OK, no self
+const f1 = comb (self) { 2 } // compile error, f1 shadows tup.f1
+const f1 = comb () { 3 }      // OK, no self
 
 assert f1() != 0         // compile error, missing argument
 assert f1(tup) != 0      // compile error, f1 shadowing (tup.f1 and f1)
 assert 4.f1() != 0       // compile error, f1 can be called for tup, so shadow
 assert tup.f1() != 0     // compile error, f1 is shadowing
 
-const xx = fun[tup] { tup.f1() } // OK, function restricted scope for f1
+const xx = comb[tup] { tup.f1() } // OK, function restricted scope for f1
 assert xx() == 1
 
 assert (4:tup).f1() == 1
@@ -248,14 +288,17 @@ assert tup.f1() == 1
 ```
 
 The keyword `self` is used to indicate that the function is accessing a tuple.
-`self` is required to be the first argument. If the procedure modifies the tuple
-contents, a `ref self` must be passed as input.
+`self` is required to be the first argument. If the method modifies the tuple
+contents, a `ref self` must be passed as input. Since `ref` is equivalent to
+having the argument as both input and output, `comb` can use `ref` and still
+be purely combinational. Use `mod` only when the method needs registers or
+cycle-level state.
 
 
 ```
 mut tup2 = (
   val:u8 = ?,
-  upd = mod(ref self) { self.val::[saturate] += 1 },
+  upd = comb(ref self) { self.val::[saturate] += 1 },
   calc = comb(self) { self.val }
 )
 ```
@@ -320,7 +363,7 @@ inc1(ref y)
 assert y == 4
 
 const banner = comb() { puts "hello" }
-const execute_method = comb(fn:fun() -> ()) {  // example with explicit type for fn
+const execute_method = comb(fn:comb() -> ()) {  // example with explicit type for fn
   fn() // prints hello when banner passed as argument
 }
 
@@ -365,48 +408,76 @@ assert x1 == 3 and x2 == 4
 
 ## Attributes
 
-Variables can have attributes, but `procedures` can also have them. Procedure
-attributes have only one direction from inside the method to outside/caller.
-They can be used to signal out of band information about the procedude. Attributes
-can only be `integer`, `bool`, or `string`. Depending on the type, they are
-initialized to `0`, `false`, or `""`.
+Variables can have attributes. Attributes can only be `integer`, `bool`, or
+`string`. Depending on the type, they are initialized to `0`, `false`, or `""`.
 
+Stateful behavior can be modeled as a tuple with fields and methods. The tuple
+fields hold the state, and the methods operate on it via `ref self`.
 
-The procedure attribute is stored in the variable that keeps the lambda. This
-means that it can be checked before or after the lambda call, and that
-different variables can point to the same procedure but keep different
-attributes.
+=== "Explicit call"
+    ```
+    mut p1 = (
+      mut found_once:bool = false,
+      call = mod(ref self, a) -> (result) {
+        self.found_once or= (a == 0)
+        result = a + 1
+      }
+    )
 
+    mut p2 = p1       // copy
+    mut p3 = ref p1   // reference
 
-```
-const p1 = mod(a) -> (result) {
-  mut self.found_once:bool = false
-  self.found_once or= (a == 0)
+    test "testing p1" {
+      assert p1.found_once == false
+      assert p2.found_once == false
 
-  const tmp::[my_zero_found=self.found_once] = a + 1
+      cassert p1.call(3) == 4
+      assert p1.found_once == false
 
-  result = tmp
-}
+      cassert p1.call(0) == 1
+      assert p1.found_once == true
 
-const p2 = p1      // copy
-const p3 = ref p1  // reference
+      cassert p1.call(50) == 51
+      assert p1.found_once == true
+      assert p2.found_once == false
+      assert p3.found_once == true
+    }
+    ```
 
-test "testing p1" {
-  assert p1::[my_zero_found] == false
-  assert p2::[my_zero_found] == false
+=== "With getter/setter"
+    ```
+    mut p1 = (
+      mut found_once:bool = false,
+      setter = mod(ref self, a) {
+        self.found_once or= (a == 0)
+        self._result = a + 1
+      },
+      mut _result = 0,
+      getter = comb(self) { self._result }
+    )
 
-  cassert p1(3) == 4
-  assert p1::[my_zero_found] == false
+    mut p2 = p1       // copy
+    mut p3 = ref p1   // reference
 
-  cassert p1(0) == 1
-  assert p1::[my_zero_found] == true
+    test "testing p1" {
+      assert p1.found_once == false
+      assert p2.found_once == false
 
-  cassert p1(50) == 51
-  assert p1::[my_zero_found] == true
-  assert p2::[my_zero_found] == false
-  assert p3::[my_zero_found] == true
-}
-```
+      p1 = 3                         // calls setter
+      cassert p1 == 4                // calls getter
+      assert p1.found_once == false
+
+      p1 = 0
+      cassert p1 == 1
+      assert p1.found_once == true
+
+      p1 = 50
+      cassert p1 == 51
+      assert p1.found_once == true
+      assert p2.found_once == false
+      assert p3.found_once == true
+    }
+    ```
 
 ## Methods
 
@@ -421,10 +492,10 @@ any `self` updates should generate a compile error.
 ```
 const Nested_call = (
   mut x = 1,
-  outter = mod(ref self) { self.x = 100; self.inner(); self.x = 5 },
+  outter = comb(ref self) { self.x = 100; self.inner(); self.x = 5 },
   inner = comb(self) { assert self.x == 100 },
-  faulty = mod(self) { self.x = 55 }, // compile error, immutable self
-  okcall = mod(ref self) { self.x = 55 } // equivalent to mod okcall(ref self)
+  faulty = comb(self) { self.x = 55 }, // compile error, immutable self
+  okcall = comb(ref self) { self.x = 55 }
 )
 ```
 
@@ -445,10 +516,10 @@ mut a_2 = a_1.f1(4)  // a_2 is updated, not a_1
 assert a_1.x == 3 and a_2.x == 4
 
 // Same behavior as in a function with UFCS
-fun2 = fun (ref self, x) { self.x = x }
+const set_x = comb (ref self, x) { self.x = x }
 
-a_1.fun2(10)
-mut a_3 = a_1.fun2(20)
+a_1.set_x(10)
+mut a_3 = a_1.set_x(20)
 assert a_1 == 10 and a_3 == 20
 ```
 
@@ -457,14 +528,14 @@ Since UFCS does not allow shadowing, a wrapper must be built or a compile error 
 ```
 mut counter = (
   ,mut val:i32 = 0
-  ,const inc = fun (ref self, v){ self.var += v }
+  ,const inc = comb (ref self, v){ self.var += v }
 )
 
 assert counter.val == 0
 counter.inc(3)
 assert counter.val == 3
 
-const inc = fun (ref self, v) { self.var *= v } // NOT INC but multiply
+const inc = comb (ref self, v) { self.var *= v } // NOT INC but multiply
 counter.inc(2)             // compile error, multiple inc options
 assert 44.inc(2) == 8
 
@@ -486,9 +557,9 @@ const t1 = (a:u32)
 
 mut x:t1 = (a=3)
 
-t1.double = mod(ref self) { self.a *= 2 }  // extension function
+t1.double = comb(ref self) { self.a *= 2 }  // extension function
 // previous is exactly the same as:
-// t1 = t1 ++ (double = mod(ref self) { self.a *= 2 })
+// t1 = t1 ++ (double = comb(ref self) { self.a *= 2 })
 
 mut y:t1 = (a=3)
 x.double             // compile error, double method does not exit
@@ -504,9 +575,9 @@ it can be error-prone.
 
 === "unconstrained declaration"
     ```
-    foo = fun (self) { puts "fun.foo" }
+    foo = comb (self) { puts "comb.foo" }
     a = (
-      ,foo = fun () {
+      ,foo = comb () {
          bar = comb() { puts "bar" }
          puts "mem.foo"
          return (bar=bar)
@@ -515,8 +586,8 @@ it can be error-prone.
     b = 3
     c = "string"
 
-    b.foo         // prints "fun.foo"
-    b.foo()       // prints "fun.foo"
+    b.foo         // prints "comb.foo"
+    b.foo()       // prints "comb.foo"
     x = a.foo     // prints "mem.foo"
     y = a.foo()   // prints "mem.foo"
     x()           // prints "bar"
@@ -525,15 +596,15 @@ it can be error-prone.
     a.foo().bar() // prints "mem.foo" and then "bar"
     a.foo().bar   // prints "mem.foo" and then "bar"
 
-    c.foo         // prints "fun.foo"
+    c.foo         // prints "comb.foo"
     ```
 
 === "constrained declaration"
 
     ```
-    foo = fun (self:int) { puts "fun.foo" }
+    foo = comb (self:int) { puts "comb.foo" }
     a = (
-      ,foo = fun () {
+      ,foo = comb () {
          bar = comb() { puts "bar" }
          puts "mem.foo"
          return (bar=bar)
@@ -542,8 +613,8 @@ it can be error-prone.
     b = 3
     c = "string"
 
-    b.foo         // prints "fun.foo"
-    b.foo()       // prints "fun.foo"
+    b.foo         // prints "comb.foo"
+    b.foo()       // prints "comb.foo"
     x = a.foo     // prints "mem.foo"
     y = a.foo()   // prints "mem.foo"
     x()           // prints "bar"
@@ -555,10 +626,12 @@ it can be error-prone.
     c.foo         // compile error, undefined 'foo' field/call
     ```
 
-The `where` statement also allows to constrain arguments. This is a sample of
-fibonnaci implementation with and without `where` clauses. Section
-[overload](07b-structtype.md#lambda_overloading) has more details on the method
-overloading.
+The `where` statement also allows to constrain arguments. Lambda overloading
+uses `++` to create a tuple of lambda definitions — the compiler selects the
+matching `where` clause at compile time (ambiguous matches are a compile error).
+This is a sample of fibonacci implementation with and without `where` clauses.
+Section [overload](07b-structtype.md#lambda_overloading) has more details on
+the method overloading.
 
 ```
 const fib1 = comb(n) where n == 0 { 0 }

@@ -23,7 +23,7 @@ if cond {
   res = b
 }
 
-// RTL equivalent (bus of 4 bits in a,b,res2)
+// RTL equivalent (mux of 4 bits in a,b,res2)
 mut res2:s4 = __mux(cond, b, a)
 
 lec res, res2
@@ -242,7 +242,7 @@ can be the SSA name.
        const tmp = 3
        sub_arg_0 = b
        sub_arg_1 = tmp
-       x += x_0@[1]       // use defer or next (instance after conditional code)
+       x += x_0@[]        // defer read (instance after conditional code)
      }
      x_0 = sub(sub_arg_0, sub_arg_1).x   // instance x_0 (SSA)
     }
@@ -326,11 +326,11 @@ the condition is false.
     }
     ```
 
-The result of conditionally calling procedures is that most of the code may be
+The result of conditionally calling lambdas is that most of the code may be
 inlined. This can change the expected equivalent Verilog generated modules.
 
 
-Calling a procedure with the inputs set invalid has a different behavior. For
+Calling a lambda with the inputs set invalid has a different behavior. For
 once C++ calls will still happen, and updates to registers with not valid data
 is allowed to reset the valid bit.
 
@@ -423,7 +423,7 @@ The assignment during declaration to a register is always the reset value. If
 the assignment is a method, the method is called every cycle during reset.
 
 ```
-reg array:[1024]tag:[clock_pin=my_clock] = mod(ref self) {
+reg array:[1024]tag:[clock_pin=ref my_clock] = mod(ref self) {
   reg reset_iter:u10:[reset_pin=false] = 0sb? // no reset flop
 
   self[reset_iter].state = I
@@ -434,8 +434,8 @@ reg array:[1024]tag:[clock_pin=my_clock] = mod(ref self) {
 
 
 Since the reset can be high many cycles, it may be practical/necessary to have
-a reset inside the reset procedure. To guarantee determinism, any register
-inside the reset procedure can be either asynchrnous reset or a register
+a reset inside the reset lambda. To guarantee determinism, any register
+inside the reset lambda can be either asynchrnous reset or a register
 without reset signal.
 
 
@@ -449,7 +449,7 @@ reg my_flop:[8]u32 = mod(ref self) {
 ```
 
 A related functionality and constrains happen when a tuple have some register
-fields and some non-register fields. The same reset procedure is called every
+fields and some non-register fields. The same reset lambda is called every
 cycle Similarly a tuple can have a reset when assigned to a register.
 
 
@@ -558,12 +558,12 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
 
 
     ```
-    fun inner(z, y) -> (a, h) {
+    comb inner(z, y) -> (a, h) {
       a = y & z
       h = !(y & z)
     }
 
-    fun top2(a, b) -> (c, d) {
+    comb top2(a, b) -> (c, d) {
       const x = inner(y=a, z=b)
       c = x.a
       d = x.h
@@ -574,14 +574,14 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
 
     ```
     const Inner_t = (
-      setter = mod(ref self, z, y) {
+      setter = comb(ref self, z, y) {
         self.a = y & z
         self.h = !(y & z)
       }
     )
 
     const Top2_t = (
-      setter = mod(ref self, a, b) {
+      setter = comb(ref self, a, b) {
         const foo:Inner_t = (y=a, z=b)
 
         self.c = foo.a
@@ -596,7 +596,7 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
 
     ```
     const Inner_t = (
-      setter = mod(ref self, z, y) {
+      setter = comb(ref self, z, y) {
         self.a = y & z
         self.h = !(y & z)
       }
@@ -604,7 +604,7 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
 
     const Top2_t = (
       foo:Inner_t = ?,
-      setter = mod(ref self, a, b) {
+      setter = comb(ref self, a, b) {
         (self.c, self.d) = self.foo(y=a, z=b)
       }
     )
@@ -632,13 +632,13 @@ if cond {
 }
 
 // RTL equivalent
-a_qpin = __flop(reset=ref reset, clk=ref clk, initial=3, din=a@[1]) // defer or next are aliases
+a_qpin = __flop(reset=ref reset, clk=ref clk, initial=3, din=a@[]) // defer to get final value
 tmp    = __sum(A=(a_qpin, 1))
 a      = __mux(tmp[4], tmp#[0..=3], 0xF)    // saturate, not wrap
 
-b_qpin = __flop(reset=ref reset, clk=ref clk, initial=4, din=b@[1])
+b_qpin = __flop(reset=ref reset, clk=ref clk, initial=4, din=b@[])
 b      = __mux(cond, b_qpin, 5)
 
-c_cond_qpin = __flop(reset=ref reset, clk=ref clk, initial=0, din=c_cond@[1])
+c_cond_qpin = __flop(reset=ref reset, clk=ref clk, initial=0, din=c_cond@[])
 c_cond      = __sum(A=(b, 1))
 ```

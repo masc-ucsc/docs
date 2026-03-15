@@ -52,7 +52,7 @@ always immutable (`let`).
     assert a == 3        // compile error, undefined variable 'a'
     mut a = 3
     mut x = 10
-    const f1 = fun[a,x=a+1]() {
+    const f1 = comb[a,x=a+1]() {
       assert a == 3
       a = 33             // compile error, capture/inputs are immutable
       x = 300            // compile error, capture/inputs are immutable
@@ -68,7 +68,7 @@ always immutable (`let`).
     const f2 = comb() {     // no capture of 'a'
       // assert a == 3   // compile error, undefined variable 'a'
     }
-    const f3 = fun[ff=a]() { // capture 'a' as 'ff'
+    const f3 = comb[ff=a]() { // capture 'a' as 'ff'
       assert ff == 3     // OK
       ff = 3             // compile error, immutable variable
     }
@@ -113,7 +113,7 @@ const f4 = comb[mut x](z) { x + z } // compile error, captures are immutable
 Tuple scope is also useful for declaring function default values:
 
 ```
-fun example(a:int, b:int=self.a+5) -> (result:int) {
+comb example(a:int, b:int=self.a+5) -> (result:int) {
   result = a + b
 }
 assert example(a=3) == (a+a+5)
@@ -128,7 +128,7 @@ Pyrope has 8 basic types:
 
 * `boolean`: either `true` or `false`
 * `enum`: enumerated
-* `fun`: A function or pure combinational logic
+* `comb`: A function or pure combinational logic
 * `int`: which is signed integer of unlimited precision
 * `mod`: A module with state/clock or side-effects
 * `range`: A one hot encoding of values `1..=3 == 0b1110`
@@ -211,7 +211,7 @@ const x = a and b
 const y = x + 1    // compile error: 'x' is a boolean, '1' is integer
 ```
 
-### Functions (`fun`/`pipe`/`mod`)
+### Functions (`comb`/`pipe`/`mod`)
 
 Functions have several options (see [Functions](06-functions.md)), but from a
 high level they provide a sequence of statements and they have a tuple for
@@ -353,7 +353,7 @@ bund1.color    = "red"  // OK
 bund1.is_green = comb(self) { self.color == "green" }
 x.color        = "blue" // OK
 
-const typ = (color:string, value:s33, is_green:fun(self) = _)
+const typ = (color:string, value:s33, is_green:comb(self) = _)
 y:typ        = ?        // OK
 typ.color    = "red"    // compile error
 typ.is_green = comb(self) { self.color == "green" }
@@ -376,8 +376,8 @@ assert z !is typ
 assert z !is bund1
 ```
 
-Adding a method to a tuple with `tup.fn = fun...` is the same as `tup = tup ++
-(fn=fun...)`.
+Adding a method to a tuple with `tup.fn = comb...` is the same as `tup = tup ++
+(fn=comb...)`.
 
 
 ## Type checks
@@ -446,10 +446,10 @@ most logical is to trigger a compile error if there is no fast convergence.
 
 
 ```
-// attribute set
-mut foo:u32:[comptime=true] = xx   // enforce that foo is comptime true always
+// comptime as prefix modifier
+comptime foo:u32 = xx              // enforce that foo is comptime (shorthand for comptime const)
 yyy = xx                           // yyy does not check comptime
-assert yyy::[comptime] == true             // now, checks that 'yyy` is comptime
+assert yyy::[comptime] == true     // now, checks that 'yyy' is comptime
 
 // attribute check
 if bar == 3 {
@@ -470,7 +470,7 @@ but the syntax is cleaner.
     assert  y::[cond,bar==3]
 
     read_state = comb(x) {
-      const f:u32:[comptime=true] = x // f is compile time or a error is generated
+      comptime f:u32 = x      // f is compile time or an error is generated
       return f                 // f should be compile time constant
     }
 
@@ -498,13 +498,12 @@ statements because it is confusing if applied to the condition or all the
 sub-statements.
 
 ```
-z:[comptime=true] = xx   // assign xx to z AND set comptime true
-z:[comptime=true] = xx        // Same, attribute access on LHS of assignment are attributes set to true
+comptime z = xx                      // z is a comptime variable
 
-if cond::[comptime] == true {         // cond is checked to be compile time constant
-  x:[comptime=true] = a +1   // x is set to be compile time constant
+if cond::[comptime] == true {        // cond is checked to be compile time constant
+  comptime x = a + 1                 // x is comptime
 }else{
-  x:[comptime=true] = b           // x is set to be compile time constant
+  comptime x = b                     // x is comptime
 }
 
 
@@ -523,7 +522,7 @@ semantic. To understand the potential Pyrope syntax, this is a hypothetical
 `::[poison]` attribute that marks tuple.
 
 ```
-const bad = (a=3,b::[poison] == true=4)
+const bad = (a=3,b::[poison==true]=4)
 
 const b = bad.b
 
@@ -686,24 +685,33 @@ d::[saturate] = c+1 // OK, d==31
 x::[saturate] boolean = c // compile error, saturate only allowed in integers
 ```
 
-### comptime attribute
+### comptime modifier
 
-Pyrope borrows the `comptime` functionality from Zig. Any variable can
-set/check/read the compile time status. This means that the value must be
-constant at compile time or a compile error is generated.
+Pyrope borrows the `comptime` functionality from Zig. `comptime` is a prefix
+modifier that can be applied to `const` or `mut` to indicate that the variable
+must be resolvable at compile/elaboration time. `comptime` alone is shorthand
+for `comptime const`.
 
 ```
-const a:[comptime=true] = 1     // obviously comptime
-b:[comptime=true] = a + 2     // OK too
-const c:[comptime=true] = rand  // compile error, 'c' is not compile time constant
+comptime SIZE = 16          // shorthand for comptime const SIZE = 16
+comptime const a = 1        // same as above, explicit const
+comptime mut counter = 0    // mutable at compile time (updated during elaboration)
+comptime b = a + 2          // OK, comptime const
+comptime c = rand           // compile error, 'c' is not resolvable at compile time
+```
+
+The `comptime` status can still be queried with `::[comptime]`:
+
+```
+cassert a::[comptime] == true
 ```
 
 To avoid too frequent comptime directives, Pyrope treats all the variables that
 start with uppercase as compile time constants.
 
 ```
-mut Xconst1 = 1      // obvious comptime
-mut Xvar2   = rand   // compile error, 'Xvar2' is not compile time constant
+comptime Xconst1 = 1    // obvious comptime
+comptime Xvar2 = rand   // compile error, 'Xvar2' is not compile time constant
 ```
 
 ### debug attribute
@@ -1211,7 +1219,7 @@ always assert counter.reset implies !counter?
 ```
 const custom = (
   ,data:i16 = ?
-  ,setter = mod(ref self, v) {
+  ,setter = comb(ref self, v) {
     self.data = v
     self::[valid] = v != 33
   }
@@ -1235,7 +1243,7 @@ const complex = (
   ,reg v1:string = "foo"
   ,v2:string = ?
 
-  ,setter = mod(ref self, v) {
+  ,setter = comb(ref self, v) {
      self.v1 = v
      self.v2 = v
   }
@@ -1295,7 +1303,7 @@ cassert b==0 and b::[valid] and b?
 b = nil
 cassert b==nil and b::[valid] == false and not b?
 
-mut c:fun(a1) = ?
+mut c:comb(a1) = ?
 cassert c == nil and c::[valid]==false
 c = comb(a1) { cassert true }
 cassert c!= nil and c::[valid]
@@ -1374,7 +1382,7 @@ const weird_pick_bits = comb(b:u32) -> (x:u1, _:u4) {
   (x=b#[2..<3], b#[5])
 }
 
-fun fcall_returns_2_values() -> (xx, yy) {
+comb fcall_returns_2_values() -> (xx, yy) {
   xx = 3
   yy = 7
 }

@@ -26,7 +26,10 @@ if a { x = 3 } else { x = 4 }
 ```
 
 The equivalent code with an explicit `optimize`, but unlike the `optimize`, the
-`unique` will guarantee to generate the `hotmux` statement.
+`unique` will guarantee to generate the `hotmux` statement. EDA tools can also
+optimize `unique if` to tri-state buffers when the conditions are mutually
+exclusive, providing the same behavior as a hardware bus without needing a
+separate `bus` construct.
 
 ```
 optimize !(x1==1 and x2==2)
@@ -129,11 +132,14 @@ for x in 1..=5 {
 
 ## Gate statements (`when`/`unless`)
 
-A simple statement like assignments, variable declarations, and function calls
-and returns can be gated or not executed with a `when` or `unless` statement.
-This is similar to an `if` statement, but the difference is that the statement
-is in the current scope, not creating a new scope. This allows cleaner more
-compact syntax.
+A simple statement can be conditionally executed by appending `when cond` or
+`unless cond` at the end. `when cond` executes the statement only if `cond` is
+true. `unless cond` executes the statement only if `cond` is false.
+
+These are equivalent to a trailing `if`/`if not`, but unlike `if` blocks, they
+do not create a new scope — the statement stays in the current scope. This
+makes them ideal for single-statement conditionals like gating assertions,
+conditional assignments, or early returns.
 
 ```
 mut a = 3
@@ -179,9 +185,10 @@ The main features of code blocks:
   order](02-basics.md#evaluation-order) provides more details on expressions
   evaluation order.
 
-* When used in an expression or lambda, the last statement in the lambda code
-  block can be an expression. It is not needed to add the `return` keyword in
-  this case.
+* When used in an expression or lambda, the last expression in the body is the
+  implicit return value. The `return` keyword is only needed for early exits —
+  not for the normal return path. This applies to all lambda types
+  (`comb`/`pipe`/`flow`/`mod`).
 
 ```
 {
@@ -189,7 +196,7 @@ The main features of code blocks:
   mut z=_
   {
     z = 10
-    mut x=_           // compiler error, 'x' is a shawdow variable
+    mut x=_           // compiler error, 'x' is a shadow variable
   }
   assert z == 10
 }
@@ -210,7 +217,7 @@ const doit = comb(f,a) {
   return 3
 }
 
-const z3 = doit(fun(a) {
+const z3 = doit(comb(a) {
   assert a!=0
   return 7             // exist the current lambda
   100                  // never reached statement
@@ -289,9 +296,11 @@ assert b == (2,3,4,5,6)
 Code block control statements allow changing the control flow for `lambdas` and
 loop statements (`for`, `loop`, and `while`). `return` can have a value.
 
-* `return` exits or terminates the current lambda. The current output variables
-  are provided as the `lambda` output. If a tuple is provided, the tuple is the
-  returned value, the output variables are not used.
+* `return` is for early exits — it terminates the current lambda before
+  reaching the end. The current output variables are provided as the `lambda`
+  output. If a tuple is provided, the tuple is the returned value, the output
+  variables are not used. For the normal return path, the last expression in
+  the body is the implicit return value and no `return` is needed.
 
 * `break` terminates the closest inner loop (`for`/`while`/`loop`). If none is
   found, a compile error is generated.
@@ -356,17 +365,41 @@ loop {
 
 ## defer
 
-A `defer` attribute can be applied to variables. When used to read a variable,
-it returns the last values written to the variable the end of the current
-cycle. This is needed if we need to have any loop in connecting blocks. The
-`defer` applied to a write, delays the write update to the end of the cycle.
-The delayed writes happen before the delayed reads. This is also for delaying
-assertion checks to the end of the cycle like post condition checks.
+The `@` operator provides cycle-based access to variables. The timing syntax:
+
+* `variable@[0]`: current cycle value (before any update this cycle). Same as just `variable`.
+* `variable@[-1]`: value from the previous cycle. Only valid for registers.
+* `variable@[-2]`: value from two cycles ago. Only valid for registers.
+* `variable@[]`: defer to end of current cycle. Read returns the final value
+  after all updates; write delays the update to the end of the cycle.
+* `variable@[1]`: next cycle value. Compile error unless in a debug context
+  (e.g., `assert`). For registers, `variable@[] == variable@[1]` always holds
+  because the deferred end-of-cycle value becomes the register's value at the
+  start of the next cycle.
+
+The `@[N]` with negative N (`@[-1]`, `@[-2]`...) is only valid for registers
+(`reg`), since `mut` and `const` variables do not persist across cycles. `@[]`
+(defer) is valid for any variable as it refers to the final value within the
+current cycle.
+
+The `@[N]` with positive N adds pipeline stages and is therefore only valid
+inside `flow` blocks, where explicit pipeline timing is the primary mechanism.
+It is not allowed in `comb` (pure combinational, no cycles), `pipe` (implicit
+pipeline stages), or `mod` (direct register control, no pipeline annotations).
+In debug contexts (e.g., `assert`), `@[N]` with positive N is allowed anywhere
+to peek at future/next-cycle values.
+
+### Defer reads
+
+When used to read a variable, `@[]` returns the last value written to the
+variable at the end of the current cycle. This is needed if we need to have any
+loop in connecting blocks or for delaying assertion checks to the end of the
+cycle like post condition checks.
 
 ```
 mut c = 10
-assert b@[1] == 33    // behaves like a postcondition
-b = c@[1]
+assert b@[] == 33    // behaves like a postcondition
+b = c@[]
 assert b == 33
 c += 20
 c += 3
@@ -374,26 +407,24 @@ c += 3
 
 To connect the `ring` function calls in a loop.
 ```
-f1 = ring(a, f4@[1])
+f1 = ring(a, f4@[])
 f2 = ring(b, f1)
 f3 = ring(c, f2)
 f4 = ring(d, f3)
 ```
 
 If the intention is to read the result after being a flop, there is no need to
-use the `defer`, a normal register access could do it. If the read
-variables are registers, the `flop#[0]` is not the same as `defer`. The `flop#[0]`
-reads the value before any update, the `defer` read, gets values after updates.
+use the `defer`, a normal register access could do it. The `reg@[0]`
+reads the value before any update, the `@[]` defer read gets values after updates.
 
 ```
 reg counter:u32 = ?
 
-const counter_m1 = counter#[1]  // compile error, #[1] only allowed for debug
-const counter_0  = counter#[0]  // current cycle
-const counter_1  = counter#[-1] // last cycle
-const counter_2  = counter#[-2] // last last cycle cycle
+const counter_0  = counter@[0]  // current cycle (before updates)
+const counter_1  = counter@[-1] // last cycle
+const counter_2  = counter@[-2] // last last cycle
 
-mut deferred = counter@[1]
+mut deferred = counter@[]       // defer read: final value at end of cycle
 
 if counter < 100 {
   counter += 1
@@ -403,44 +434,47 @@ if counter < 100 {
 
 if counter == 10 {
   assert deferred   == 10
+  assert counter@[1] == 10      // OK in assert (debug), same as deferred
   assert counter_0  ==  9
   assert counter_1  ==  8
   assert counter_2  ==  7
 }
 ```
 
-The `defer` can also be applied to write/updates to the end of the cycle but
-uses/reads the current value. In a way, the assignment is delayed to the end of
-the current cycle. If there are many defers to the same variable, they are
-ordered in program order. Notice that defer writes only makes sense if there is a
-register or array because all the variables (mut and const) restart every
-cycle. Defer reads make sense even for variables as it is the final value.
+### Defer writes
+
+The `@[]` can also be applied to writes to delay the update to the end of
+the cycle while reads use the current value. If there are many defers to the
+same variable, they are ordered in program order. Defer writes only make sense
+if there is a register or array because `mut` and `const` variables restart
+every cycle. Defer reads make sense even for `mut` variables as it is the
+final value within the cycle.
 
 ```
 reg a:u8 = 1
 if a==1 {
-  assert a@[1] == 200
-  a@[1] = 200 // defer write
+  assert a@[] == 200
+  a@[] = 200 // defer write
   assert a == 1
   assert a@[0] == 1
-  assert a@[1] == 200
+  assert a@[1] == 200           // OK in assert (debug), same as a@[]
 }else{
-  assert a@[1] == 2
-  a@[1] = 2    // defer write
+  assert a@[] == 2
+  a@[] = 2    // defer write
 }
 ```
 
-If there are `defer` reads and `defer` assignments/writes, the defered writes are
-performed ahead of the defered reads.
+If there are `defer` reads and `defer` assignments/writes, the deferred writes
+are performed ahead of the deferred reads.
 
 ```
 mut a = 1
 mut x = 100
-x = a@[1]
+x = a@[]
 a = 200
 
 cassert x == 100
-assert x@[1] == x
+assert x@[] == x                // defer read equals final value
 ```
 
 ## Testing (`test`)

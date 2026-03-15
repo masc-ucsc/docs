@@ -18,16 +18,18 @@ Small Pyrope is a **hardware description language** with these fundamental chara
 
 ### 1. Storage Classes (NOT variable mutability)
 ```pyrope
-const my_constant = 42  // Compile-time constant (immutable)
-mut my_wire = 0         // Combinational (no persistence across cycles)
-reg my_state = 0        // Register (persistent across cycles)
+comptime SIZE = 16          // Compile-time constant (shorthand for comptime const)
+comptime mut counter = 0    // Mutable at compile time (elaboration)
+const my_constant = 42      // Immutable after assignment (NOT compile-time)
+mut my_wire = 0             // Combinational (no persistence across cycles)
+reg my_state = 0            // Register (persistent across cycles)
 ```
-**LLM Pitfall**: Don't confuse with `const`/`let`/`var` from JavaScript. These represent **hardware storage types**. Semicolons are optional and behave like a newline; use `;` only to put multiple statements on one line.
+**LLM Pitfall**: `const` means immutable, NOT compile-time. `comptime` is a prefix modifier (not a storage class) that can be applied to `const` or `mut`. `comptime` alone is shorthand for `comptime const`. Don't confuse with `const`/`let`/`var` from JavaScript — these represent **hardware storage types**. Semicolons are optional and behave like a newline.
 
 ### 2. Function Types are Hardware Semantics
 ```pyrope
 comb add(a:u8, b:u8) -> (result:u8) { result = a + b } // Combinational logic
-pipe counter() -> (reg count:u8) { count += 1 }        // Pipelined with registers
+pipe[1] counter() -> (reg count:u8) { count += 1 }     // Moore machine (1-cycle pipeline)
 flow alu(in1, in2) -> (out) { /* explicit timing */ }  // Dataflow with timing
 ```
 **LLM Pitfall**: `comb`/`pipe`/`flow` are NOT just function modifiers - they define **hardware implementation strategy**. Small Pyrope does not support function capture variables; pass values as arguments.
@@ -71,9 +73,9 @@ Attributes are **set only at declaration** with `:[attr=value]` and are **immuta
 ```pyrope
 reg counter = 0
 counter += 1                    // Immediate update
-counter@[1] += 1               // Deferred to end of cycle
+counter@[] += 1                // Deferred to end of cycle
 ```
-**LLM Pitfall**: Register updates can be immediate or deferred. Use `@[n]` for timing: `@[0]` current, `@[1]` end of cycle, `@[-1]` previous cycle.
+**LLM Pitfall**: Register updates can be immediate or deferred. Use `@[0]` for current value, `@[]` for end-of-cycle defer, `@[-1]` for previous cycle. `@[1]` (next cycle) is only allowed in debug contexts like `assert`.
 
 ### 8. Memory Declaration Syntax
 ```pyrope
@@ -94,8 +96,10 @@ mut out = ram.port[0][addr]:[rdport=0]      // Read port 0
 ### Cycle-Based Execution
 - `step` advances simulation by one clock cycle
 - Register updates happen at cycle boundaries
-- Combinational logic (`var`) updates immediately
-- Pipeline functions have implicit cycle delays
+- Combinational logic (`mut`) updates immediately
+- `pipe` is a Moore machine (outputs always registered), may use `reg` for internal storage
+- `mod` has no constraints on registers or outputs
+- `flow` has three timing mechanisms: `delay[N]` (operation latency), `var@[N]` (use at cycle N), `:@[N]` (timing type check on LHS)
 
 ### No Runtime Loops
 ```pyrope
@@ -119,9 +123,9 @@ test "description" {           // Test block with simulation
 
 1. **Don't use familiar keywords incorrectly**:
    - `class` doesn't exist - use tuples
-   - `function`/`fun` doesn't exist - use `comb`/`pipe`/`flow`
-   - `while`/`for` are compile-time only
-   - `%` (modulo) is compile-time only due to hardware cost
+   - `function`/`def`/`fn` doesn't exist - use `comb`/`pipe`/`flow`/`mod`
+   - `while`/`for` loop bounds must be `comptime` (unrolled at elaboration)
+   - `%` (modulo) is debug-only (too expensive for single-cycle hardware)
 
 2. **Don't assume array-like syntax everywhere**:
    - `arr#[i]` for bit selection
@@ -130,11 +134,17 @@ test "description" {           // Test block with simulation
 
 3. **Don't ignore storage classes**:
    - Always use `const`/`mut`/`reg` appropriately
+   - `comptime` is a prefix modifier, not a storage class (`comptime mut` is valid)
    - Understand hardware implications
 
 4. **Don't forget hardware timing**:
    - Use `step` in tests
    - Understand register vs. wire behavior
+
+5. **Don't apply software intuitions to `ref`**:
+   - In hardware, all signals are wires — there is no copy cost
+   - `ref` exists for semantic reasons (allowing mutation), not performance
+   - `comb(ref self)` is valid and still purely combinational — `ref` is just an implicit output
    - Consider cycle boundaries
 
 5. **Don't use mainstream patterns**:
@@ -146,7 +156,7 @@ test "description" {           // Test block with simulation
 
 ### Variable Declaration
 ```pyrope
-const PI = 3.14                 // Compile-time constant
+comptime PI = 3.14              // Compile-time constant
 mut temp = calculation()        // Combinational
 reg accumulator = 0             // Persistent register
 ```

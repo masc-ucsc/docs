@@ -109,7 +109,7 @@ generate a reset value.
 === "Pyrope array syntax"
     ```
     mut mem1:[4][8]u5 = 0
-    mut reset_value:[3][8]u5:[comptime=true] = ? // only used during reset
+    comptime reset_value:[3][8]u5 = ? // only used during reset
     for i in 0..<3 {
       for j in 0..<8 {
         reset_value[i][j] = j
@@ -216,8 +216,8 @@ q1 = res[1]
 The previous code directly instantiates a memory and passes the configuration.
 
 
-Multi cycle memories are pipelined elements, and using them requires the `=@[..]` assignment
-and the same rules as pipeline flops apply (See [pipelining](06b-pipelining.md)).
+Multi cycle memories are pipelined elements, and using them requires the `delay[..]`
+syntax and the same rules as pipeline flops apply (See [pipelining](06b-pipelining.md)).
 
 
 ## Multidimensional arrays
