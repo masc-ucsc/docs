@@ -849,7 +849,7 @@ const bpred = ( // complex predictor
 )
 
 test "mocking taken branches" {
-  poke "bpred_file/taken", true
+  poke("bpred_file/taken", true)
 
   mut l = core.fetch.predict(0xFFF)
 }
@@ -1286,4 +1286,3 @@ const __my_typed_cpp:comb(a,b)->(e) = ?
 
 Type defining non-Pyrope code is good to catch errors and also because declaring
 `comb` allows to handle several cases of circular dependencies not possible with `mod` [import section](10-internals.md)
-

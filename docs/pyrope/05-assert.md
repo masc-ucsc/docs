@@ -339,6 +339,213 @@ test "assert should fail" {
 }
 ```
 
+## Signal reference
+
+While `regref` references registers in the instantiated hierarchy, `sigref`
+generalizes this to any signal: inputs, outputs, wires, and tuple fields.
+Together they provide read access into the design hierarchy for verification.
+
+```pyrope
+const r1 = regref("top/core0/counter")   // register only
+const s1 = sigref("top/core0/fifo0/full") // any signal
+```
+
+The recommended mental model is:
+
+* `import` traverses the file/directory hierarchy and copies definitions.
+* `regref` traverses the instance hierarchy and references registers.
+* `sigref` traverses the instance hierarchy and references any signal.
+
+Like `regref`, `sigref` is read-only: it can not create a second writer or
+affect the valid bits, resets, or scheduling of the DUT. The single writer
+multiple reader semantics are preserved.
+
+When a partial path is given (no leading instance), `sigref` matches all
+instances that contain a signal with that name, returning a tuple of
+references. This follows the same matching rules as `regref`.
+
+```pyrope
+const all_full = sigref("full")  // every "full" signal in the hierarchy
+```
+
+If a full path does not resolve to exactly one signal, elaboration fails.
+
+
 ## Monitor
 
-TODO
+Monitors provide a way to attach verification logic to an already elaborated
+design without modifying the original source. The goal is similar to
+SystemVerilog `bind`, but monitors in Pyrope are just `test` blocks that use
+`sigref` and `regref` to observe the design hierarchy.
+
+No new keywords are needed. The debug-only semantics come from `test`,
+`assert`, and `cover` which are already debug statements. This means that
+removing all monitor tests preserves the same synthesizable design.
+
+
+### Observing a single instance
+
+A `test` block can use `sigref` and `regref` with a full instance path to
+check invariants on a specific instance.
+
+```pyrope
+test "fifo0 checks" {
+  const push  = sigref("top/core0/fifo0/push")
+  const pop   = sigref("top/core0/fifo0/pop")
+  const full  = sigref("top/core0/fifo0/full")
+  const empty = sigref("top/core0/fifo0/empty")
+
+  assert !(push and full),  "enqueue while full"
+  assert !(pop and empty),  "dequeue while empty"
+
+  cover push
+  cover pop
+}
+```
+
+
+### Observing all instances of a lambda
+
+When `sigref` is given a partial path, it matches across all instances. This
+replaces the `bind target_lambda` pattern with the same matching rules already
+used by `regref`.
+
+```pyrope
+test "all fifo checks" {
+  const full  = sigref("full")
+  const push  = sigref("push")
+
+  for f, p in full, push {
+    assert !(p and f), "enqueue while full"
+  }
+}
+```
+
+
+### Stateful monitors
+
+A `test` block can declare local `reg` to keep verification state across
+cycles. This state belongs to the test and is not visible to the DUT.
+
+```pyrope
+test "req ack protocol" {
+  const req = sigref("top/core0/req")
+  const ack = sigref("top/core0/ack")
+  reg pending = false
+
+  pending = true  when req
+  pending = false when ack
+
+  assert !ack or pending, "ack without earlier req"
+}
+```
+
+
+### Reusable monitor lambdas
+
+For monitors that are attached to many instances or shared across files, a
+regular lambda can encapsulate the checks. The caller passes `sigref` and
+`regref` values as arguments.
+
+```pyrope
+comb fifo_checks(push, pop, full, empty) {
+  assert !(push and full),  "enqueue while full"
+  assert !(pop and empty),  "dequeue while empty"
+  cover push
+  cover pop
+}
+
+test "fifo0 monitor" {
+  fifo_checks(
+    push  = sigref("top/core0/fifo0/push"),
+    pop   = sigref("top/core0/fifo0/pop"),
+    full  = sigref("top/core0/fifo0/full"),
+    empty = sigref("top/core0/fifo0/empty"),
+  )
+}
+```
+
+
+## Timing rules
+
+For combinational signals, `sigref` observes the same value visible at the
+instance boundary in that cycle.
+
+For registers, `sigref` and `regref` read the current `q` value. A test may
+use `@[1]` or `@[]` inside debug contexts using the same timing rules as
+ordinary assertions.
+
+Tests acting as monitors follow the same invalid/reset rules as `assert`:
+
+* `assert` and `cover` are skipped when an observed value is invalid.
+* `always assert` and `always cover` force checking independent of valid.
+
+
+## Relation with test and poke
+
+`test` blocks can combine stimulus (`step`, `poke`) with monitoring
+(`sigref`, `regref`). The expected layering is:
+
+* `test` with `step` and `poke` drives stimulus and checks top-level behavior.
+* `test` with `sigref` checks local invariants close to each instance.
+* `poke` is useful for mocking and fault injection.
+
+```pyrope
+test "mocking taken branches" {
+  const taken = sigref("core/fetch/bpred0/taken")
+
+  cover taken
+
+  poke("core/fetch/bpred0/taken", true)
+
+  mut l = core.fetch.predict(0xFFF)
+}
+```
+
+
+## Restrictions
+
+The following restrictions keep monitor semantics simple and deterministic:
+
+* `sigref` is read-only. A test can not assign through `sigref`.
+* A test can not create a second writer for a DUT register via `regref`.
+* A test acting as a monitor can not instantiate synthesizable logic visible
+  from the DUT.
+* A test can not depend on execution order between sibling modules.
+
+These restrictions ensure that removing all `test` blocks preserves the same
+synthesizable design.
+
+
+## Example
+
+```pyrope
+// file fifo.prp
+const fifo = mod(clk, rst, push, pop, din) -> (full, empty, dout) {
+  reg count:u3 = 0
+
+  full  = count == 4
+  empty = count == 0
+
+  if push and !full  { count += 1 }
+  if pop  and !empty { count -= 1 }
+}
+
+// file fifo_checks.prp (verification only, does not modify fifo.prp)
+test "fifo invariants" {
+  const push  = sigref("fifo/push")
+  const pop   = sigref("fifo/pop")
+  const full  = sigref("fifo/full")
+  const empty = sigref("fifo/empty")
+  const count = regref("fifo/count")
+
+  assert !(push and full)
+  assert !(pop and empty)
+  assert count <= 4
+  assert empty implies count == 0
+  assert full  implies count == 4
+}
+```
+
+This test can be added from a verification file without editing the file
+that defines `fifo`.
