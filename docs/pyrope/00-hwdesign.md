@@ -334,7 +334,7 @@ results from previous cycles are output by the module instance.
 
 
 
-Pipelining is not restricted to just function or module instantiations. A the
+Pipelining is not restricted to just function or module instantiations. The
 module itself can have a set of registers, and different variables/wires have
 the results from different cycles. It is up to the designer to manage it, and
 it is one of the primary complexity sources of hardware design and

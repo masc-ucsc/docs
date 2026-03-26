@@ -94,7 +94,7 @@ argument, which allows operating on tuples.
     flow accum(in1, in2) -> (out) {
       reg total = 0                             // flow can use reg
       const tmp = delay[3] mul(in1@[0], in2@[0])
-      total@[] = add(total@[0], tmp@[3])
+      total::[defer] = add(total@[0], tmp@[3])
       out = total@[0]
     }
     ```
@@ -376,28 +376,21 @@ a function call and a pass of the lambda.
 
 ## Output tuple
 
-Pyrope everything is a tuple, even the output or return from a lambda. When a
-single element is returned, it can be an unnamed tuple by omiting parenthesis.
+Pyrope everything is a tuple, even the output or return from a lambda. The
+output type always uses parenthesis.
 
 ```
-const ret1 = comb() -> (a:int) { // named
+const ret1 = comb() -> (a:int) {
   a = 1
 }
 
-const ret2 = comb() -> a:int {   // unnamed
-  a = 2
-}
-
-const ret3 = comb() -> (a, b) {   // named
+const ret3 = comb() -> (a, b) {
   a = 3
   b = 4
 }
 
 const a1 = ret1()
-assert a1.a == 1 // NOT a1 == 1
-
-const a2 = ret2()
-assert a2 == 2   // NOT a2.a == 2
+assert a1.a == 1 and a1 == 1  // single-field tuple auto-unwraps
 
 const a3 = ret3()
 assert a3.a == 3 and a3.b == 4
@@ -486,7 +479,7 @@ needed when a method intends to update the tuple contents. In this case, `ref
 self` argument behaves like a pass by reference in non-hardware languages. This
 means that the tuple fields are updated as the method executes, it does not
 wait until the method finishes execution. A method without the `ref` keyword is
-a pass by value call. Since all the inputs are immutable by default (`let`),
+a pass by value call. Since all the inputs are immutable by default (`const`),
 any `self` updates should generate a compile error.
 
 ```

@@ -363,24 +363,20 @@ loop {
 } // do{ ... }while(a<10)
 ```
 
-## defer
+## Cycle access and defer
 
 The `@` operator provides cycle-based access to variables. The timing syntax:
 
 * `variable@[0]`: current cycle value (before any update this cycle). Same as just `variable`.
 * `variable@[-1]`: value from the previous cycle. Only valid for registers.
 * `variable@[-2]`: value from two cycles ago. Only valid for registers.
-* `variable@[]`: defer to end of current cycle. Read returns the final value
-  after all updates; write delays the update to the end of the cycle.
 * `variable@[1]`: next cycle value. Compile error unless in a debug context
-  (e.g., `assert`). For registers, `variable@[] == variable@[1]` always holds
-  because the deferred end-of-cycle value becomes the register's value at the
-  start of the next cycle.
+  (e.g., `assert`). For registers, `variable::[defer] == variable@[1]` always
+  holds because the deferred end-of-cycle value becomes the register's value
+  at the start of the next cycle.
 
 The `@[N]` with negative N (`@[-1]`, `@[-2]`...) is only valid for registers
-(`reg`), since `mut` and `const` variables do not persist across cycles. `@[]`
-(defer) is valid for any variable as it refers to the final value within the
-current cycle.
+(`reg`), since `mut` and `const` variables do not persist across cycles.
 
 The `@[N]` with positive N adds pipeline stages and is therefore only valid
 inside `flow` blocks, where explicit pipeline timing is the primary mechanism.
@@ -389,17 +385,23 @@ pipeline stages), or `mod` (direct register control, no pipeline annotations).
 In debug contexts (e.g., `assert`), `@[N]` with positive N is allowed anywhere
 to peek at future/next-cycle values.
 
+The `::[defer]` attribute provides deferred access to a variable — reading or
+writing the value at the end of the current cycle. Unlike `@[N]` which is a
+cycle index, `::[defer]` is a separate mechanism. It is valid for any variable
+type (`mut`, `const`, `reg`) as it refers to the final value within the current
+cycle.
+
 ### Defer reads
 
-When used to read a variable, `@[]` returns the last value written to the
+When used to read a variable, `::[defer]` returns the last value written to the
 variable at the end of the current cycle. This is needed if we need to have any
 loop in connecting blocks or for delaying assertion checks to the end of the
 cycle like post condition checks.
 
 ```
 mut c = 10
-assert b@[] == 33    // behaves like a postcondition
-b = c@[]
+assert b::[defer] == 33    // behaves like a postcondition
+b = c::[defer]
 assert b == 33
 c += 20
 c += 3
@@ -407,7 +409,7 @@ c += 3
 
 To connect the `ring` function calls in a loop.
 ```
-f1 = ring(a, f4@[])
+f1 = ring(a, f4::[defer])
 f2 = ring(b, f1)
 f3 = ring(c, f2)
 f4 = ring(d, f3)
@@ -415,7 +417,7 @@ f4 = ring(d, f3)
 
 If the intention is to read the result after being a flop, there is no need to
 use the `defer`, a normal register access could do it. The `reg@[0]`
-reads the value before any update, the `@[]` defer read gets values after updates.
+reads the value before any update, the `::[defer]` read gets values after updates.
 
 ```
 reg counter:u32 = ?
@@ -424,7 +426,7 @@ const counter_0  = counter@[0]  // current cycle (before updates)
 const counter_1  = counter@[-1] // last cycle
 const counter_2  = counter@[-2] // last last cycle
 
-mut deferred = counter@[]       // defer read: final value at end of cycle
+mut deferred = counter::[defer]  // defer read: final value at end of cycle
 
 if counter < 100 {
   counter += 1
@@ -443,7 +445,7 @@ if counter == 10 {
 
 ### Defer writes
 
-The `@[]` can also be applied to writes to delay the update to the end of
+The `::[defer]` can also be applied to writes to delay the update to the end of
 the cycle while reads use the current value. If there are many defers to the
 same variable, they are ordered in program order. Defer writes only make sense
 if there is a register or array because `mut` and `const` variables restart
@@ -453,14 +455,14 @@ final value within the cycle.
 ```
 reg a:u8 = 1
 if a==1 {
-  assert a@[] == 200
-  a@[] = 200 // defer write
+  assert a::[defer] == 200
+  a::[defer] = 200 // defer write
   assert a == 1
   assert a@[0] == 1
-  assert a@[1] == 200           // OK in assert (debug), same as a@[]
+  assert a@[1] == 200           // OK in assert (debug), same as a::[defer]
 }else{
-  assert a@[] == 2
-  a@[] = 2    // defer write
+  assert a::[defer] == 2
+  a::[defer] = 2    // defer write
 }
 ```
 
@@ -470,11 +472,11 @@ are performed ahead of the deferred reads.
 ```
 mut a = 1
 mut x = 100
-x = a@[]
+x = a::[defer]
 a = 200
 
 cassert x == 100
-assert x@[] == x                // defer read equals final value
+assert x::[defer] == x          // defer read equals final value
 ```
 
 ## Testing (`test`)

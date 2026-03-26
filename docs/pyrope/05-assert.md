@@ -295,7 +295,7 @@ pipe[1] counter_pipe(update) -> (value) {
 test "counter_mod through several cycles" {
 
   mut inp = true
-  mut x = counter_mod(inp@[])  // inp contents at the end of each cycle
+  mut x = counter_mod(inp::[defer])  // inp contents at the end of each cycle
 
   assert x == 0 // x.value == 0
   assert inp == true
@@ -472,7 +472,7 @@ For combinational signals, `sigref` observes the same value visible at the
 instance boundary in that cycle.
 
 For registers, `sigref` and `regref` read the current `q` value. A test may
-use `@[1]` or `@[]` inside debug contexts using the same timing rules as
+use `@[1]` or `::[defer]` inside debug contexts using the same timing rules as
 ordinary assertions.
 
 Tests acting as monitors follow the same invalid/reset rules as `assert`:

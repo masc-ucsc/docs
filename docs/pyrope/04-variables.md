@@ -13,7 +13,7 @@ has a different set of rules constraining the variable visibility. Overall, the
 variable/field is visible from declaration until the end of scope.
 
 
-Pyrope uses `var` or `let` to declare a variable, but all the declarations must
+Pyrope uses `mut` or `const` to declare a variable, but all the declarations must
 have a value. `_` is used to specify the default value (`false` for boolean,
 `0` for integer, `""` for string, undefined lambda for lambda, and `0..=0` for
 range).
@@ -23,11 +23,11 @@ In all the cases, variable declaration is either:
 * `const variable [:type] [:[attrbute list]] = expression`
 * `mut variable [:type] [:[attrbute list]]= expression`
 
-In a tuple scope, `variable [:type] = expression` is equivalent to `var
+In a tuple scope, `variable [:type] = expression` is equivalent to `mut
 variable [:type] = expression`. This is to avoid the most common case
-where tuple fields are frequently declared `var` not `let`. This is
+where tuple fields are frequently declared `mut` not `const`. This is
 different from lambda captures that declare a new variable but they are
-always immutable (`let`).
+always immutable (`const`).
 
 
 === "Code Block scope"
@@ -102,7 +102,7 @@ always immutable (`let`).
 
 
 Since the captures and lambda inputs are always immutable, it is not allowed to
-declare them as `var` and redundant to declare them as `let`.
+declare them as `mut` and redundant to declare them as `const`.
 
 ```
 const f3 = comb(mut x) { x + 1 }    // compile error, inputs are immutable
@@ -570,7 +570,7 @@ passes:
 * `keep`: same as donttouch but shorter
 * `key`: variable/entry key name
 * `left_of`, `right_of`, `top_of`, `bottom_of`, `align_with`: placement hints
-* `let` and `var`: is the variable declared as `let` and/or `var`
+* `const` and `mut`: is the variable declared as `const` and/or `mut`
 * `loc`: line of code information
 * `max_delay`, `min_delay`: synthesis optimizations checked at simulation
 * `max_load`, `max_fanout`, `max_cap`: synthesis optimization hints
@@ -588,7 +588,7 @@ passes:
 
 Registers have the following attributes:
 
-* `async`: false by default, selects an asynchronous reset
+* `sync`: true by default, when false selects an asynchronous reset (posedge only)
 * `initial`: reset value when reset is high
 * `clock`: connected to `clock` by default
 * `reset`: connected to `reset` by default
@@ -775,7 +775,7 @@ The private has different meaning depending on when it is applied:
 
 * When applied to a `pipestage` variable (`mut foo::[private] = 3`), it means that the
   variable is not pipelined to the next type stage. Section
-  [pipestage](06c-pipelining.md) has more details.
+  [pipestage](06c-pipelining2.md) has more details.
 
 * When is applied to a pyrope file upper scope variable (`reg top_reg:[private]
   = 0`), it means that an `import` command or register reference can not access
@@ -1279,7 +1279,7 @@ Variable initialization indicates the default value set every cycle and the
 optional (`::[valid]` attribute).
 
 
-The `let` and `var` statements require an initialization value for each cycle.
+The `const` and `mut` statements require an initialization value for each cycle.
 Pyrope only has undefined values unless explicitly indicated. A variable has an
 undefined value if and only if the value is set to `nil` or all the bits are
 unknown (`0sb?`). Undefined variables always have invalid optional

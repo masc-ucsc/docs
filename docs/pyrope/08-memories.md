@@ -46,7 +46,7 @@ RTL interface.
 The async memories behave like tuples/arrays but there is a small difference,
 the persistence of state between clock cycles. To be persistent across clock
 cycles, this is achieved with a `reg` declaration. When a variable is declared
-with `var` the contents are lost at the end of the cycle, when declared with
+with `mut` the contents are lost at the end of the cycle, when declared with
 `reg` the contents are preserved across cycles.
 
 
@@ -206,7 +206,7 @@ mem.latency = (1, 1, 1)
 mem.wensize = 1 // we bit (no write mask)
 mem.rdport  = (-1,1,0) // 0 WR, !=0 -> RD
 
-res = await[..] __memory(mem)
+res = delay[..] __memory(mem)
 
 q0 = res[0]
 q1 = res[1]
@@ -217,7 +217,7 @@ The previous code directly instantiates a memory and passes the configuration.
 
 
 Multi cycle memories are pipelined elements, and using them requires the `delay[..]`
-syntax and the same rules as pipeline flops apply (See [pipelining](06b-pipelining.md)).
+syntax and the same rules as pipeline flops apply (See [pipelining](06c-pipelining2.md)).
 
 
 ## Multidimensional arrays
@@ -282,12 +282,12 @@ assert x4[3]       // compile error, out of bounds index
 
 ### Reset and initialization
 
-Like the `let` and `var` statements, `reg` statements require an initialization
-value. While `let/var` initialize every cycle, the `reg` initialization is the
+Like the `const` and `mut` statements, `reg` statements require an initialization
+value. While `const`/`mut` initialize every cycle, the `reg` initialization is the
 value to set during reset.
 
 
-Like in `let/var` cases, the reset/initialization value can use the traditional
+Like in `const`/`mut` cases, the reset/initialization value can use the traditional
 Verilog uninitialized (`0sb?`) contents. The Pyrope semantics for any bit with
 `?` value is to respect arithmetic Verilog semantics at compile time, but to
 randomly generate a zero/ones for each simulation. As a result assertions can

@@ -76,7 +76,7 @@ optimize.
 Each variable can be a basic type. In addition, each variable can have a set of
 constraints from the type system. Pyrope type system constructs to handle types:
 
-* `var` and `let` allows declaring types.
+* `mut` and `const` allows declaring types.
 
 * `a does b`: Checks 'a' is a superset or equal to 'b'. In the future, the
   Unicode character "\u02287" could be used as an alternative to `does` (`a`

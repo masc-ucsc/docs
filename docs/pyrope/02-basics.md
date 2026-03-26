@@ -54,17 +54,21 @@ compatible with Verilog existing designs.
 
 There are two distinct "no value" concepts in Pyrope — `?` and `nil`:
 
-* **`?` (unknown)**: A valid but unknown bit — like a quantum state that is
-  either 0 or 1 but not yet observed. Arithmetic works with unknowns following
-  Verilog x-propagation semantics: `0sb? + 1` is `0sb??`, `0sb? | 1` is `1`.
-  During simulation, each unknown bit is randomly resolved to 0 or 1. Unknowns
-  exist in hardware and map directly to Verilog `x`.
+* **`?` (undefined)**: A bit whose value has not been decided by the designer,
+  but the resulting circuit must be correct whether the bit turns out to be 0
+  or 1. During simulation, each `?` bit is randomly resolved to 0 or 1 to
+  verify correctness under both possibilities. Arithmetic follows Verilog
+  x-propagation semantics: `0sb? + 1` is `0sb??`, `0sb? | 1` is `1`. In
+  synthesized hardware, `?` bits give the synthesis tool freedom to choose
+  whichever value produces a smaller or faster circuit.
 
-* **`nil` (invalid)**: An invalid value that must never be used. Any arithmetic
-  or decision with `nil` triggers a simulation assertion error. The only
-  allowed operation is copying. The compiler must prove that all `nil` uses are
-  eliminated at compile time, or a compile error is generated. `nil` never
-  exists in synthesized hardware.
+* **`nil` (invalid)**: An invalid value that must never be used in any
+  expression. Any arithmetic or decision with `nil` triggers a simulation
+  assertion error. The only allowed operation is copying or checking for
+  validity (`x?` returns false for `nil`). The compiler must prove that all
+  `nil` uses are eliminated at compile time, or a compile error is generated.
+  `nil` never exists in synthesized hardware — it is a compile-time and
+  simulation-time safety mechanism.
 
 ```
 0sb? | 1     // OK: result is 1 (unknown OR 1 = 1)
@@ -271,7 +275,7 @@ call. This allows to have `puts` calls in `functions`.
 
 Pyrope only supports anonymous lambdas, but the lambdas can have attributes that restrict
 the lambda functionality to combinational only (`comb`), pipeline
-stages that have all the outputs with the same dela (`pipe`), or lambdas that connect
+stages that have all the outputs with the same delay (`pipe`), or lambdas that connect
 multiple combinational or pipeline stages but require explicit timing use (`flow`) to connect
 operations. [Lambda section](06-functions.md) has more details on the allowed syntax.
 
@@ -288,11 +292,11 @@ Pyrope naming for consistency:
 
 * `pipe[A..=B]` is a flexible A-to-B cycle pipeline (Moore machine)
 
-* `async` is reserved for future use (async/await-style pipelining).
-
 * `flow` connects combinational/pipeline blocks with explicit timing (`@[cycle]`). Can also use `reg` for persistent state.
 
 * `mod` has no constraints on registers or outputs (can be Mealy or Moore), operates cycle by cycle.
+
+* `async`/`await` are reserved keywords for future use.
 
 * `comb`, `pipe`, `flow`, or `mod` that uses a `self` parameter is also called a method
 
@@ -314,19 +318,16 @@ all types of expressions. Calling `call1() + call2()` is not defined. Either
 
 
 In many languages, the evaluation order is defined for logical expressions.
-This is typically called the short-circuit evaluation. Some languages like
-Pascal, Rust, Kotlin have different `and/or` to express conditional evaluation.
-In Pascal, there is an `and/or` and `and_then/or_else` (conditional). In Rust
-`&/|` and `&&/||` (conditional). In Kotlin `&&/||` and `and/or` (conditional).
-Pyrope uses has the `and/or` without short-circuit, and the `and_then/or_else`
-with explicit short-circuit.
+This is typically called short-circuit evaluation. Pyrope `and`/`or` always
+short-circuit like most modern languages: in `a and b`, `b` is not evaluated
+if `a` is false; in `a or b`, `b` is not evaluated if `a` is true. Since
+Pyrope expressions have no side effects, short-circuit produces the same
+hardware as evaluating both sides — the compiler is free to optimize either
+way.
 
-
-
-The programmer can explicitly set an evaluation order by using short-circuit
-expressions like `and_then`, `or_else`, or control expressions (`if/else`,
-`match`, `for`). An expression can have many `comb` calls because those
-have no side-effects, and hence the evaluation order is not important.
+The programmer can also set evaluation order with control expressions
+(`if/else`, `match`, `for`). An expression can have many `comb` calls because
+those have no side-effects, and hence the evaluation order is not important.
 
 
 A `pipe` can update state internally and has one or more cycle delays. As such,
@@ -422,22 +423,17 @@ end
 
 If an order is needed and a function call can have `debug` side-effects or
 synthesis side-effects, the statement must be broken down into several
-statements, or the `and_then` and `or_else` operations must be used.
+statements. Since `and`/`or` short-circuit, they provide a defined left-to-right
+evaluation order for logical expressions.
 
 
 === "Incorrect code with side-effects"
     ```
-    mut r1 = mcall1() or  mcall2()  // compile error, non-deterministic
-
-
-    mut r2 = mcall1() and mcall2()  // compile error, non-deterministic
-
-
     mut r3 = mcall1() +   mcall2()  // compile error
     // compile error only if mcall1/mcall2 can have side effects
     ```
 
-=== "Alternative 1"
+=== "Fix with separate statements"
     ```
     mut r1 = fcall1()
     r1  = fcall2() unless r1
@@ -449,12 +445,12 @@ statements, or the `and_then` and `or_else` operations must be used.
     r3 += fcall2()
     ```
 
-=== "Alternative 2"
+=== "Fix with short-circuit"
     ```
-    mut r1 = fcall1() or_else fcall2()
+    mut r1 = fcall1() or fcall2()
 
 
-    mut r2 = fcall1() and_then fcall2()
+    mut r2 = fcall1() and fcall2()
 
 
     mut r3 = fcall1()
@@ -486,7 +482,7 @@ basic gates are also directly accesible:
 * `__sra` for shift right arithmetic gate
 * `__lut` for Look-Up-Table gate
 * `__mux` for a priority multiplexer
-* `__hotmux` for a one-hot excoded multiplexer
+* `__hotmux` for a one-hot encoded multiplexer
 * `__memory` for a memory gate
 * `__flop` for a flop gate
 * `__latch` for a latch gate

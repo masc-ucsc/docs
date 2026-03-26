@@ -123,13 +123,13 @@ lec res, res2
 Valid or optionals are computed for each assignment and passed to every lambda
 call. Each variable has an associated valid bit, but it is removed if never
 read, and it is always true unless the variables are assigned in conditionals
-or non-short-circuit (`and_then`/`or_else`) expressions.
+or short-circuit (`and`/`or`) expressions.
 
 
 === "Short-circuit expression"
 
     ```
-    mut lhs = v1 or_else v2
+    mut lhs = v1 or v2
 
     // RTL equivalent
     const lhs2  = __or(v1, v2)
@@ -202,7 +202,7 @@ or non-short-circuit (`and_then`/`or_else`) expressions.
 Lambda calls are either inlined or become a specific instance (module). When
 the instance is located in a conditional path, the instance is moved to the
 main scope toggling the inputs valid attribute `::[valid] == false`. The instance
-has the assigned variable name. If the instance is a `var`, the variable name
+has the assigned variable name. If the instance is a `mut`, the variable name
 can be the SSA name.
 
 === "Lambda call"
@@ -242,7 +242,7 @@ can be the SSA name.
        const tmp = 3
        sub_arg_0 = b
        sub_arg_1 = tmp
-       x += x_0@[]        // defer read (instance after conditional code)
+       x += x_0::[defer]   // defer read (instance after conditional code)
      }
      x_0 = sub(sub_arg_0, sub_arg_1).x   // instance x_0 (SSA)
     }
@@ -338,8 +338,8 @@ is allowed to reset the valid bit.
 ## Expressions
 
 Pyrope expressions are guaranteed to have the same result independent of the
-order of evaluation. Only `and_then`, `or_else` or complex constructs like
-`if/else`, `match`, `for` have evaluation order.
+order of evaluation. Only `and`, `or` (short-circuit) or complex constructs
+like `if/else`, `match`, `for` have evaluation order.
 
 
 ## Setup vs reset vs execution
@@ -441,7 +441,7 @@ without reset signal.
 
 ```
 reg my_flop:[8]u32 = mod(ref self) {
-  reg reset_counter:u3:[async=true] = ? // async is only posedge reset
+  reg reset_counter:u3:[sync=false] = ? // asynchronous reset is posedge only
 
   self[reset_counter] = reset_counter
   reset_counter::[wrap] += 1
@@ -497,7 +497,7 @@ A sample of asynchronous reset with different reset and clock signal
 
 ```
 reg my_asyn_other_reg:u8:[
-  async = true,
+  sync = false,
   clock = ref clk2,    // ref to connect, not read clk2 value
   reset = ref reset33  // ref to connect, not read current reset33 value
 ] = 33 // initialized to 33 at reset
@@ -632,13 +632,13 @@ if cond {
 }
 
 // RTL equivalent
-a_qpin = __flop(reset=ref reset, clk=ref clk, initial=3, din=a@[]) // defer to get final value
+a_qpin = __flop(reset=ref reset, clk=ref clk, initial=3, din=a::[defer]) // defer to get final value
 tmp    = __sum(A=(a_qpin, 1))
 a      = __mux(tmp[4], tmp#[0..=3], 0xF)    // saturate, not wrap
 
-b_qpin = __flop(reset=ref reset, clk=ref clk, initial=4, din=b@[])
+b_qpin = __flop(reset=ref reset, clk=ref clk, initial=4, din=b::[defer])
 b      = __mux(cond, b_qpin, 5)
 
-c_cond_qpin = __flop(reset=ref reset, clk=ref clk, initial=0, din=c_cond@[])
+c_cond_qpin = __flop(reset=ref reset, clk=ref clk, initial=0, din=c_cond::[defer])
 c_cond      = __sum(A=(b, 1))
 ```

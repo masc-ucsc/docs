@@ -343,7 +343,7 @@ const x = base ++ (
 )
 ```
 
-To allow overloading the base `lambda` as `var`. By concatenating lambdas to a
+To allow overloading the base `lambda` as `mut`. By concatenating lambdas to a
 variable, we effectively create an unnamed tuple with multiple entries. Since
 all the variables are tuples of size one too, the following rules apply to any
 lambda call:
@@ -565,8 +565,8 @@ handle explicit method overload.
 In a way, the concatenate just adds methods from two tuples to create a new
 tuple. In programming languages with object-oriented programming (OOP), there
 are many keywords (`virtual`, `final`, `override`, `static`...) to constrain
-how methods can be updated/changed. In Pyrope, the `let` and `var` keywords can
-be added to any tuple field. The `let` makes the entry immutable when applied
+how methods can be updated/changed. In Pyrope, the `const` and `mut` keywords can
+be added to any tuple field. The `const` makes the entry immutable when applied
 to a method, it behaves like a `final` keyword in most languages.
 
 
@@ -574,7 +574,7 @@ There are also two ways to concatenate tuples in Pyrope. `t1 ++ t2` and
 `(...t1, ...t2)`:
 
 * `t1 ++ t2` concatenates each field in both tuples. A compile error is
-  generated if `t1` field is a `let` with a defined value, and `t2` has also
+  generated if `t1` field is a `const` with a defined value, and `t2` has also
   the same defined field.
 
 
@@ -705,7 +705,7 @@ type inference. The `where` clause is followed by a list of comma separated
 conditions that must evaluate true for the function to be valid.
 
 ```
-const rotate = comb(a) where a has 'x', a has 'y' and_then a.y != 30 {
+const rotate = comb(a) where a has 'x', a has 'y' and a.y != 30 {
   mut r = a
   r.x = a.y
   r.y = a.x

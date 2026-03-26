@@ -7,20 +7,20 @@ In hardware, registers (built from flip-flops) are essential for storing informa
 
 While it's possible to instantiate low-level flops, the recommended, programmer-friendly method is to declare a **register** using the `reg` keyword. This makes statefulness explicit and prevents common bugs. The compiler guarantees that a `reg` is a state-holding element.
 
-A register's value at the start of a cycle is its **current state**. New values are assigned to its **next state** using the `@[]` (defer) syntax. This clear separation avoids the ambiguity between a register's input (`din`) and output (`q`) pins that plagues many HDLs.
+A register's value at the start of a cycle is its **current state**. New values are assigned to its **next state** using the `::[defer]` syntax. This clear separation avoids the ambiguity between a register's input (`din`) and output (`q`) pins that plagues many HDLs.
 
-In our syntax, `total@[0]` refers to the register's current state (its 'q' value). The `total@[]` construct defers a write to the end of the cycle, defining the logic for its 'din' pin, which will become the state in the next cycle. In debug contexts (e.g., `assert`), `total@[1]` can also be used to read the next cycle value, and for registers `total@[] == total@[1]` always holds.
+In our syntax, `total@[0]` refers to the register's current state (its 'q' value). The `total::[defer]` construct defers a write to the end of the cycle, defining the logic for its 'din' pin, which will become the state in the next cycle. In debug contexts (e.g., `assert`), `total@[1]` can also be used to read the next cycle value, and for registers `total::[defer] == total@[1]` always holds.
 
 === "Structural flop style"
     ```
     mut counter_next:u8:[wrap=true] = ?
 
-    const counter_q = __flop(din=counter_next@[]    // defer to get final update
+    const counter_q = __flop(din=counter_next::[defer]  // defer to get final update
                        ,reset_pin=ref my_rst, clock_pin=ref my_clk
                        ,enable=my_enable            // enable control
                        ,posclk=true
                        ,initial=3                   // reset value
-                       ,async=false)
+                       ,sync=true)
 
     counter_next = counter_q + 1
     ```
@@ -29,12 +29,12 @@ In our syntax, `total@[0]` refers to the register's current state (its 'q' value
     ```
     reg counter:u8:[wrap=true, reset_pin=ref my_rst, clock_pin=ref my_clk, posclk=true] = 3
     assert counter == counter@[0]  // counter still has the q value
-    const tmp1 == counter
+    const tmp1 = counter
 
     if my_enable {
       counter = counter + 1
     }
-    assert tmp1 != tmp2  when my_enable
+    assert tmp1 != counter  when my_enable
     assert tmp1 == counter@[0]
     ```
 
@@ -83,7 +83,7 @@ complementary timing mechanisms for strong compile-time checking:
 
 The `@[N]` annotation with positive N is only valid inside `flow` blocks. It
 is not allowed in `comb` (pure combinational), `pipe` (Moore pipeline), or
-`mod` (module). Outside `flow`, only `@[0]` (current value), `@[]` (defer to
+`mod` (module). Outside `flow`, only `@[0]` (current value), `::[defer]` (defer to
 end of cycle), and `@[-N]` (previous cycles, registers only) are permitted in
 non-debug code.
 

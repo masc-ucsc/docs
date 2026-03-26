@@ -446,6 +446,14 @@ set, the 2nd the 2nd bit set. If an entry has a value, the next entry uses
 the next free bit. If any field is set, then the enumerate behaves like a
 traditional enumerate sequence.
 
+!!! WARNING
+
+    Enum values should always be compared against named enum entries, never
+    against raw integer literals. The underlying numeric encoding (one-hot by
+    default) is an implementation detail. Use `state == MyEnum.idle`, not
+    `state == 0` or `state == 1`. To inspect the raw bit representation, use
+    `state#[..]`.
+
 
 ```
 enum V3 = (
@@ -456,6 +464,11 @@ enum V3 = (
 cassert V3.a == 1
 cassert V3.b == 2
 cassert V3.c == 4
+
+// Always compare against enum entries, not raw values:
+mut state:V3 = V3.a
+cassert state == V3.a      // correct
+// cassert state == 1      // discouraged: relies on encoding details
 
 enum V4 = (
    ,a
