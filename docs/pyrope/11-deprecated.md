@@ -43,7 +43,7 @@ for 2 cycles and the current for 1 cycle.
 This example explicitly manages the valid output signals.
 
 
-```pyrope
+```pyrope_old
 let telescope_unit = fun(a:u32,b:u32,start:bool) -> (res:u32) {
 
   reg result_done = 0
@@ -81,7 +81,7 @@ In a simple telescoping use case, the `puts` command will be called 1 or 2 cycle
 after the `telescope_unit` starts. For the designer, this is quite difficult to
 handle. How many flops to add to remember the starting point for `a` and `b`.
 
-```pyrope
+```pyrope_old
  let res1 =@[1,2] telescope_unit(a,b,start)
 
  if res1? {
@@ -94,7 +94,7 @@ complete, a `yield` directive can behave like co-routines. Effectively,
 remembering the live-ins and continue executing when the condition is
 satisfied.
 
-```pyrope
+```pyrope_old
  let res1 =@[1,2] telescope_unit(a,b,start)
 
  yield res1? // wait for condition to happen
@@ -108,7 +108,7 @@ An alternative implementation is using the `#>identifier[lat=cycles]` keyword. T
 that two operations could finish on the same cycle, and the circuits are not as
 efficient.
 
-```pyrope
+```pyrope_old
 // implicit start/end (starts when called)
 let telescope_unit3 = fun(a:u32,b:u32) -> (_:u32) {
 
@@ -127,7 +127,7 @@ let telescope_unit3 = fun(a:u32,b:u32) -> (_:u32) {
 
 The code sample for explicitly managed step function usage:
 
-```pyrope
+```pyrope_old
  let res2 =@[1,2] telescope_unit3(a,b,start)
 
  if res2? { // code executed 1 or 2 cycles after telescope_unit is called

@@ -95,17 +95,13 @@ cassert tup2[0] == 100
 Some constructs like enumerates and attributes typically pass identifiers
 without assigning a value. The problem is that the syntax becomes not so
 "nice".  To address these cases, Pyrope does not use a variable reference but a
-"string" in the enumerate (`enum(a,b=3)`) and attribute (`foo::[attr]`). In these constructs, a reference can be enforced with `...var`
+"string" in the enumerate (`enum(a,b=3)`) and attribute (`foo::[attr]`).
 
 ```
 const aa = 3
 const a = enum(,aa, ,b=3)
 cassert a==b
 
-cassert x::[size] == x::['size']
-
-const zz= "size"
-cassert x::[...zz] == x::[size]
 ```
 
 ## Everything is a tuple
@@ -131,7 +127,7 @@ mut a = (1,2)   // tuple of 2 entries, 1 and 2
 mut b = (1)     // tuple of 1 entry, 1
 mut c = 1       // tuple of 1 entry, 1
 mut d = (,,1,,) // tuple of 1 entry, 1
-cassert a[0] == b[0] == c[0] == d[0}
+cassert a[0] == b[0] == c[0] == d[0]
 cassert a!=b
 cassert b == c == d
 ```
@@ -250,9 +246,9 @@ const x = (first=(second=3))
 assert x.first.second == 3
 assert x.first        == 3
 assert x              == 3
-assert x.[0].second   == 3
-assert x.first.[0]    == 3
-assert x.[0]          == 3
+assert x[0].second    == 3
+assert x.first[0]     == 3
+assert x[0]           == 3
 ```
 
 

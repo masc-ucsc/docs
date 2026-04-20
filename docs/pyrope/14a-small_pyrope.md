@@ -54,7 +54,7 @@ mut z = nil             // invalid, can only be copied until assigned a real val
 ### Variable Storage Classes
 Semicolons have the same behavior as a newline: they are optional, but can be used to put multiple statements on one line.
 ```pyrope
-comptime SIZE = 16          // Compile-time constant (shorthand for comptime const)
+comptime const SIZE = 16    // Compile-time constant (shorthand for comptime const)
 comptime mut counter = 0    // Mutable at compile time (updated during elaboration)
 const constant = 42         // Immutable after assignment (NOT compile-time)
 mut wire = 0                // Combinational (no persistence, can be reassigned)
@@ -164,14 +164,14 @@ comb clamp(x:i16) -> (result:u8) {
 ### Pipeline
 
 A pipeline is a Moore machine — outputs always go through flops. The `pipe`
-declares its latency (e.g., `pipe[3]`), and the tool may retime logic for
+declares its latency (e.g., `pipe::[3]`), and the tool may retime logic for
 performance, but the behavior is equivalent to a `comb` with N flops appended
 at the outputs. Pipelines can use `reg` for internal storage, but besides
 storage, they behave like a `comb` with pipelined outputs.
 
 
 ```pyrope
-pipe[1] counter(enable:bool) -> (reg count:u8) {
+pipe counter::[stages=1](enable:bool) -> (reg count:u8) {
     count += 1 when enable
 }
 
@@ -216,7 +216,7 @@ pipe add(a, b) -> (c) { c = a + b }
 
 flow alu(in1, in2) -> (out_pipelined, out_live) {
   const (tmp, in2_d) = delay[3] (mul(in1@[0], in2@[0]), in2)
-  out_pipelined:@[4] = delay[1] add(tmp@[3], in2_d@[3])
+  out_pipelined@[4]  = delay[1] add(tmp@[3], in2_d@[3])
   out_live           = delay[1] add(tmp@[3], in2@[0])
 }
 
@@ -224,7 +224,7 @@ flow accum_alu(in1, in2) -> (out) {
   reg total:[init=0]
   const tmp = delay[3] mul(in1@[0], in2@[0])
   const sum_aligned = add(total@[0], tmp@[3])  // explicit timing makes alignment clear
-  total@[] = sum_aligned                       // @[] defers write to end of cycle
+  total@[1] = sum_aligned                       // @[1] defers write to end of cycle
   out = total@[0]  // current register output
 }
 ```
@@ -235,7 +235,7 @@ optionally use `:@[N]` as a timing type check. As usual, variables can also
 have type and attribute checks.
 
 ```pyrope
-const (tmp:u32, tmp2:u3:[something=true]) = some_flow_call(a@[0], b@[3]:u32, c@[2]:[xxx_should_be_set=true])
+const (tmp:u32, tmp2:u3:[something=true]) = some_flow_call(a@[0], b@[3]:u32, c@[2]::[xxx_should_be_set=true])
 ```
 
 
@@ -355,7 +355,7 @@ cassert counter::[bits] == 8        // Check bit width
 cassert z::[bits] < 32              // Check bit width constraint
 
 // Compile-time uses the 'comptime' prefix modifier (not an attribute)
-comptime SIZE = 16                  // shorthand for comptime const
+comptime const SIZE = 16
 comptime mut elaboration_cnt = 0   // mutable at compile time
 cassert SIZE::[comptime] == true   // Can still query comptime status
 ```
@@ -380,7 +380,7 @@ mut clamped = (x + y):u8:[saturate=true] // This operation saturates to u8
 mut truncated = (large_val):u8           // Explicit typecast to u8
 
 // Compile-time uses the 'comptime' prefix modifier
-comptime SIZE = 16                  // Known at elaboration time (shorthand for comptime const)
+comptime const SIZE = 16                // Known at elaboration time
 mut array_size = SIZE               // Uses compile-time value
 
 // Hardware attributes
@@ -532,13 +532,13 @@ counter += 1                    // Immediate update
 tmp += 1
 assert counter == tmp
 
-counter@[] += 1                // Defer write to end of cycle
+counter@[1] += 1                // Defer write to end of cycle
 assert counter == tmp
 tmp += 1
 
 assert counter != tmp
-assert counter@[] == tmp       // Read deferred value (end of cycle)
-assert counter@[1] == tmp      // OK in assert (debug): @[1] == @[] for registers
+assert counter::[defer] == tmp  // Read deferred value (end of cycle)
+assert counter@[1] == tmp       // OK in assert (debug): @[1] == ::[defer] for registers
 
 // Timing syntax summary:
 // counter@[0]  - current value (same as just 'counter')
@@ -576,7 +576,7 @@ utils.debug_print("Hello")
 const test_utils = import("test/helpers")
 
 // Simple CPU register file
-pipe[1] reg_file(
+pipe reg_file::[stages=1](
     clk:bool,
     we:bool,
     ra:u5,
@@ -602,7 +602,7 @@ pipe[1] reg_file(
 test "register file" {
     // Cycle 0: write 42 to register 1, read regs 3 and 1
     const rf = reg_file(we=true, ra=3, rb=1, wa=1, wd=42)
-    // pipe[1] outputs are registered — these reflect the initial state (all zeros)
+    // pipe::[1] outputs are registered — these reflect the initial state (all zeros)
     assert rf.rd_a == 0          // reg[3] = 0 (initial), delayed 1 cycle
     assert rf.rd_b == 0          // reg[1] = 0 (initial), delayed 1 cycle
 
@@ -610,12 +610,12 @@ test "register file" {
 
     // Cycle 1: no write, read reg 1 (was written last cycle)
     const rf2 = reg_file(we=false, ra=1, rb=0, wa=0, wd=0)
-    // Output still reflects cycle 0 reads due to pipe[1] delay
+    // Output still reflects cycle 0 reads due to pipe::[1] delay
     assert rf2.rd_a == 0         // reg[3] still 0
 
     step
 
-    // Cycle 2: pipe[1] output now reflects cycle 1 reads
+    // Cycle 2: pipe::[1] output now reflects cycle 1 reads
     const rf3 = reg_file(we=false, ra=1, rb=0, wa=0, wd=0)
     assert rf3.rd_a == 42        // reg[1] = 42 (written in cycle 0, read in cycle 1, output in cycle 2)
     assert rf3.rd_b == 0         // reg[0] always 0

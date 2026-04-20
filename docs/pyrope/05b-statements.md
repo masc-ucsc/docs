@@ -535,29 +535,16 @@ will preserve the value, the inputs may change value.
 
 * `waitfor condition` is a syntax sugar to wait for a condition to be true.
 
-=== "`step`"
 
-    ```
-    test "wait 1 cycle" {
-      const a = 1 + input
-      puts "printed every cycle input={}", a
-      step 1
-      puts "also every cycle a={}",a  // printed on cycle later
-    }
-    ```
+```pyrope
+test "wait 1 cycle" {
+  const a = 1 + input
+  puts "printed every cycle input={}", a
+  step 1
+  puts "also every cycle a={}",a  // printed on cycle later
+}
+```
 
-=== "synthesizable equivalent"
-
-    ```
-    test "wait 1 cycle" {
-      {
-        const a = 1 + input
-        puts "printed every cycle input={}", a
-      } #> {
-        puts "also every cycle a={}",a  // printed on cycle later
-      }
-    }
-    ```
 
 The `waitfor` command is equivalent to a `while` with a `step`.
 

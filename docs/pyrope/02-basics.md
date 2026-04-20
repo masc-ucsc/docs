@@ -116,8 +116,11 @@ const txt1 = "I have {num:d} {color} potato{extension}"
 const txt2 = string("I have {:d} {} potato{}", num, color, extension)
 cassert txt1 == txt2 == "I have 2 blue potatos"
 
-const txt3 = 'I have {num}'         // single quote does not do interpolation
+const txt3 = 'I have {num}'     // single quote does not do interpolation
 cassert txt3 == "I have \{num\}"  // \{ escapes the interpolation
+
+comptime const text4 = "I have {num+1} x"
+cassert text4 == "I have 3 x"
 ```
 
 Integers and strings can be converted back and forth:
@@ -288,9 +291,9 @@ Pyrope naming for consistency:
 
 * `comb` is pure combinational logic (zero cycles). Can use `ref` to modify tuples (equivalent to implicit output).
 
-* `pipe[N]` is a fixed N-cycle pipeline (Moore machine — outputs always registered)
+* `pipe::[stages=N]` is a fixed N-cycle pipeline (Moore machine — outputs always registered)
 
-* `pipe[A..=B]` is a flexible A-to-B cycle pipeline (Moore machine)
+* `pipe::[stages=A..=B]` is a flexible A-to-B cycle pipeline (Moore machine)
 
 * `flow` connects combinational/pipeline blocks with explicit timing (`@[cycle]`). Can also use `reg` for persistent state.
 
@@ -549,6 +552,6 @@ must be known/fixed at compilation time.
 
 ```
 assert something::[comptime]
-comptime A_xxx = something            // comptime
+comptime const A_xxx = something      // comptime
 assert A_xxx::[comptime]              // also comptime
 ```

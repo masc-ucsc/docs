@@ -282,9 +282,9 @@ mod counter_mod(update) -> (value) {
   count += 1 when update
 }
 
-// pipe[1]: output 'value' goes through a flop (Moore machine)
+// pipe: output 'value' goes through a flop (Moore machine)
 // Same logic, but output is delayed by 1 cycle compared to mod version
-pipe[1] counter_pipe(update) -> (value) {
+pipe counter_pipe[stages=1](update) -> (value) {
   reg count:u8:[wrap] = 0
 
   value = count              // registered output (goes through output flop)
@@ -415,9 +415,7 @@ test "all fifo checks" {
   const full  = sigref("full")
   const push  = sigref("push")
 
-  for f, p in full, push {
-    assert !(p and f), "enqueue while full"
-  }
+  assert !(push and full), "enqueue while full"
 }
 ```
 

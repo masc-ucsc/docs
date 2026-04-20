@@ -447,7 +447,7 @@ most logical is to trigger a compile error if there is no fast convergence.
 
 ```
 // comptime as prefix modifier
-comptime foo:u32 = xx              // enforce that foo is comptime (shorthand for comptime const)
+comptime const foo:u32 = xx        // enforce that foo is comptime constant
 yyy = xx                           // yyy does not check comptime
 assert yyy::[comptime] == true     // now, checks that 'yyy' is comptime
 
@@ -467,11 +467,12 @@ but the syntax is cleaner.
 === "Attribute Check"
     ```
     const x = y + 1
-    assert  y::[cond,bar==3]
+    assert  y::[cond] and y::[bar]==3
 
     read_state = comb(x) {
-      comptime f:u32 = x      // f is compile time or an error is generated
-      return f                 // f should be compile time constant
+      comptime mut f:u32 = x // f is compile time or an error is generated
+      f = f + 1              // still comptime
+      return f               // f should be compile time constant
     }
 
     mut foo = read_state(zz) // foo will be compile time constant
@@ -498,12 +499,12 @@ statements because it is confusing if applied to the condition or all the
 sub-statements.
 
 ```
-comptime z = xx                      // z is a comptime variable
+comptime mut z = xx            // z is a comptime variable
 
-if cond::[comptime] == true {        // cond is checked to be compile time constant
-  comptime x = a + 1                 // x is comptime
+if cond::[comptime] == true {  // cond is checked to be compile time constant
+  comptime const x = a + 1     // x is comptime
 }else{
-  comptime x = b                     // x is comptime
+  comptime const x = b         // x is comptime
 }
 
 
@@ -522,7 +523,7 @@ semantic. To understand the potential Pyrope syntax, this is a hypothetical
 `::[poison]` attribute that marks tuple.
 
 ```
-const bad = (a=3,b::[poison==true]=4)
+const bad = (a=3,b::[poison=true]=4)
 
 const b = bad.b
 
@@ -693,10 +694,10 @@ must be resolvable at compile/elaboration time. `comptime` alone is shorthand
 for `comptime const`.
 
 ```
-comptime SIZE = 16          // shorthand for comptime const SIZE = 16
-comptime const a = 1        // same as above, explicit const
+comptime const SIZE = 16
+comptime const a = 1        // same as above
 comptime mut counter = 0    // mutable at compile time (updated during elaboration)
-comptime b = a + 2          // OK, comptime const
+comptime const b = a + 2    // OK, comptime const
 comptime c = rand           // compile error, 'c' is not resolvable at compile time
 ```
 
@@ -710,8 +711,8 @@ To avoid too frequent comptime directives, Pyrope treats all the variables that
 start with uppercase as compile time constants.
 
 ```
-comptime Xconst1 = 1    // obvious comptime
-comptime Xvar2 = rand   // compile error, 'Xvar2' is not compile time constant
+comptime const Xconst1 = 1    // obvious comptime
+comptime const Xvar2 = rand   // compile error, 'Xvar2' is not compile time constant
 ```
 
 ### debug attribute

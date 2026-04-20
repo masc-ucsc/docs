@@ -32,8 +32,8 @@ Pyrope divides the lambdas into four categories: `comb`, `pipe`, `flow`, and `mo
   normal programming languages.
 
 - `pipe` is a Moore machine — outputs always go through flops (at least 1
-  stage, never `pipe[0]`). A `pipe` can declare its latency: `pipe[3]` is
-  fixed 3-cycle, `pipe[1..=3]` lets the compiler choose, and bare `pipe`
+  stage, never `pipe::[stages=0]`). A `pipe` can declare its latency: `pipe::[stages=3]` is
+  fixed 3-cycle, `pipe::[stages=1..=3]` lets the compiler choose, and bare `pipe`
   leaves the latency flexible for the caller to specify via `delay[N]` in a
   `flow`. The tool may retime logic for performance, but the behavior is
   equivalent to a `comb` with N flops appended at the outputs. `pipe` can use
@@ -67,11 +67,11 @@ argument, which allows operating on tuples.
 
 === "Pipeline (pipe)"
     ```
-    pipe[3] multiply(a, b) -> (result) {   // fixed 3-cycle latency
+    pipe multiply::[stages=3](a, b) -> (result) {   // fixed 3-cycle latency
       result = a * b
     }
 
-    pipe[1..=3] add_pipe(a, b) -> (result) { // compiler chooses 1-3 cycles
+    pipe add_pipe::[stages=1..=3](a, b) -> (result) { // compiler chooses 1-3 cycles
       result = a + b
     }
 
@@ -618,28 +618,3 @@ it can be error-prone.
 
     c.foo         // compile error, undefined 'foo' field/call
     ```
-
-The `where` statement also allows to constrain arguments. Lambda overloading
-uses `++` to create a tuple of lambda definitions — the compiler selects the
-matching `where` clause at compile time (ambiguous matches are a compile error).
-This is a sample of fibonacci implementation with and without `where` clauses.
-Section [overload](07b-structtype.md#lambda_overloading) has more details on
-the method overloading.
-
-```
-const fib1 = comb(n) where n == 0 { 0 }
-        ++ comb(n) where n == 1 { 1 }
-        ++ comb(n) { fib1(n - 1) + fib1(n - 2) }
-
-assert fib1(10) == 55
-
-const fib2 = comb(n) {
-  match n {
-    == 0 { 0 }
-    == 1 { 1 }
-    else { fib2(n - 1) + fib2(n - 2) }
-  }
-}
-
-assert fib2(10) == 55
-```
