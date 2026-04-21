@@ -32,19 +32,21 @@ Pyrope divides the lambdas into four categories: `comb`, `pipe`, `flow`, and `mo
   normal programming languages.
 
 - `pipe` is a Moore machine — outputs always go through flops (at least 1
-  stage, never `pipe::[stages=0]`). A `pipe` can declare its latency: `pipe::[stages=3]` is
-  fixed 3-cycle, `pipe::[stages=1..=3]` lets the compiler choose, and bare `pipe`
-  leaves the latency flexible for the caller to specify via `delay[N]` in a
+  stage, never `pipe[0]`). The latency is written as an argument to the
+  keyword: `pipe[3] foo(...)` is fixed 3-cycle, `pipe[1..=3] foo(...)` lets
+  the caller pick within a range, and bare `pipe foo(...)` leaves the
+  latency fully flexible for the caller to specify via `await[N]` inside a
   `flow`. The tool may retime logic for performance, but the behavior is
   equivalent to a `comb` with N flops appended at the outputs. `pipe` can use
   `reg` for internal storage, but besides storage, it behaves like a `comb`
   with pipelined outputs.
 
 - `flow` connects `comb`, `pipe`, or other `flow` blocks with explicit timing
-  control. Inside a `flow`, each variable use has a `@[cycle]` annotation
-  indicating its pipeline stage. This gives the designer full control over
-  where pipeline stages are placed. `flow` can also use `reg` for persistent
-  state across cycles.
+  control. Inside a `flow`, a declaration modifier `await[N]` requests N
+  cycles of pipelining for the whole RHS, and `:@[N]` on any variable is a
+  pure timing type check. This gives the designer full control over where
+  pipeline stages are placed. `flow` can also use `reg` for persistent state
+  across cycles.
 
 - `mod` has no constraints on how registers and outputs are used. Unlike `pipe`
   (Moore machine with registered outputs), `mod` can have combinational or
@@ -67,15 +69,15 @@ argument, which allows operating on tuples.
 
 === "Pipeline (pipe)"
     ```
-    pipe multiply::[stages=3](a, b) -> (result) {   // fixed 3-cycle latency
+    pipe[3] multiply(a, b) -> (result) {          // fixed 3-cycle latency
       result = a * b
     }
 
-    pipe add_pipe::[stages=1..=3](a, b) -> (result) { // compiler chooses 1-3 cycles
+    pipe[1..=3] add_pipe(a, b) -> (result) {      // caller picks 1-3 cycles
       result = a + b
     }
 
-    pipe flexible_mul(a, b) -> (result) {  // bare: caller specifies via delay[N]
+    pipe flexible_mul(a, b) -> (result) {         // bare: caller picks via await[N]
       result = a * b
     }
     ```
@@ -86,16 +88,16 @@ argument, which allows operating on tuples.
     pipe add(a, b) -> (c) { c = a + b }
 
     flow multiply_add(in1, in2) -> (out) {
-      const tmp = delay[3] mul(in1@[0], in2@[0])
-      const in1_d = delay[3] in1@[0]
-      out:@[4] = delay[1] add(tmp@[3], in1_d@[3])
+      await[3] tmp      = mul(in1, in2)
+      await[3] in1_d    = in1
+      await[1] out:@[4] = add(tmp:@[3], in1_d:@[3])
     }
 
     flow accum(in1, in2) -> (out) {
       reg total = 0                             // flow can use reg
-      const tmp = delay[3] mul(in1@[0], in2@[0])
-      total::[defer] = add(total@[0], tmp@[3])
-      out = total@[0]
+      await[3] tmp = mul(in1, in2)
+      total::[defer] = add(total, tmp:@[3])
+      out = total
     }
     ```
 
@@ -142,11 +144,16 @@ The lambda definition has the following fields:
 + `GENERIC` is an optional comma separated list of names between `<` and `>` to
   use as generic types in the lambda.
 
-+ `CAPTURE` has the list of capture variables for the lambda. If no capture is
++ `CAPTURE` has the list of **comptime parameters** for the lambda. Each entry
+  may be a bare name (which captures a same-named value from the enclosing
+  scope as its default), a typed declaration (e.g., `n:int`), or a typed
+  declaration with a default (e.g., `n:int=1`). If no capture list is
   provided, no local variable can be captured by value which is equivalent to
-  an empty list (`[]`), The captures are by value only, no capture by reference
-  is allowed. Unlike most languages, capture must be comptime. Section
-  [Closures](10-internals.md#Closures) has more details.
+  an empty list (`[]`). Captures are by value only; no capture by reference is
+  allowed, and all capture values must be comptime. Callers can **override**
+  any comptime parameter at the call site using the same `[...]` slot
+  (`foo[N](args)`). Section [Closures](10-internals.md#Closures) has more
+  details.
 
 + `INPUT` has a list of inputs allowed with optional types. `()` indicates no
   inputs. `(...args)` allow to accept a variable number of arguments.
@@ -176,8 +183,19 @@ const x = 2
 mut add2:comb(a) = ?
 add2 = comb       (a) { x + a }    // compile error, undefined 'x'
 add2 = comb[     ](a) { x + a }    // compile error, undefined 'x'
-add2 = comb[x    ](a) { x + a }    // explicit capture x
+add2 = comb[x    ](a) { x + a }    // explicit capture x (default = enclosing x)
 add2 = comb[foo=x](a) { foo + a }  // capture x but rename to something else
+
+// Comptime parameters can be declared with a type and/or default:
+const scale = comb[n:int=1](a) { n * a }
+assert scale(5) == 5           // uses default n=1
+assert scale[10](5) == 50      // override n=10 at the call site
+
+// Captures can also be overridden at the call site:
+const y = 3
+const addy = comb[y](a) { y + a }
+assert addy(4) == 7            // uses captured y=3
+assert addy[100](4) == 104     // override y=100 at the call site
 
 mut y = (
   val:u32 = 1,

@@ -481,9 +481,29 @@ Closures capture extra state or inputs at definition. The capture variables are
 always immutable `let` no matter the outter scope definition. Therefore,
 capture variables behave like passed by value, not reference.
 
-One important thing is 'when' does the capture happens. Pyrope follows the
-model of most languages like C++ that captures at lambda definition, not lambda
-execution.
+The `[...]` slot on a lambda declaration is a unified **comptime parameter
+slot**: bare names capture same-named enclosing-scope values as defaults,
+typed entries (`n:int`) declare required comptime parameters, and typed
+entries with defaults (`n:int=1`) combine both. Callers can override any
+entry at the call site using the same slot:
+
+```
+const y = 3
+const addy = comb[y](a) { y + a }
+assert addy(4)       == 7      // uses captured y=3
+assert addy[100](4)  == 104    // override y=100 for this call
+```
+
+The override is comptime and produces a call equivalent to one where the
+capture had been bound to the override value at definition time. No runtime
+state is introduced. The captured variable inside the body remains immutable;
+"overridable" means the caller can supply a different *default*, not that the
+lambda can mutate its capture.
+
+One important thing is 'when' the capture default is resolved. Pyrope follows
+the model of most languages like C++ that captures at lambda definition, not
+lambda execution — so without a call-site override, the captured value is
+whatever the enclosing scope held when the lambda was defined.
 
 === "Pyrope capture time"
     ```

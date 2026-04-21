@@ -9,7 +9,7 @@ While it's possible to instantiate low-level flops, the recommended, programmer-
 
 A register's value at the start of a cycle is its **current state**. New values are assigned to its **next state** using the `::[defer]` syntax. This clear separation avoids the ambiguity between a register's input (`din`) and output (`q`) pins that plagues many HDLs.
 
-In our syntax, `total@[0]` refers to the register's current state (its 'q' value). The `total::[defer]` construct defers a write to the end of the cycle, defining the logic for its 'din' pin, which will become the state in the next cycle. In debug contexts (e.g., `assert`), `total@[1]` can also be used to read the next cycle value, and for registers `total::[defer] == total@[1]` always holds.
+In our syntax, a bare reference to `total` reads the register's current state (its 'q' value). The `total::[defer]` construct defers a write to the end of the cycle, defining the logic for its 'din' pin, which will become the state in the next cycle. The `::[defer]` attribute also serves as the canonical way to read the end-of-cycle (next-cycle) value in debug contexts. If you need to snapshot the current 'q' value before later code modifies the register within the cycle, just copy it into a local: `let counter_q = counter`.
 
 === "Structural flop style"
     ```
@@ -28,14 +28,12 @@ In our syntax, `total@[0]` refers to the register's current state (its 'q' value
 === "Pyrope style"
     ```
     reg counter:u8:[wrap=true, reset_pin=ref my_rst, clock_pin=ref my_clk, posclk=true] = 3
-    assert counter == counter@[0]  // counter still has the q value
-    const tmp1 = counter
+    const tmp1 = counter             // snapshot q before any updates this cycle
 
     if my_enable {
       counter = counter + 1
     }
     assert tmp1 != counter  when my_enable
-    assert tmp1 == counter@[0]
     ```
 
 
@@ -58,34 +56,72 @@ reg my_reg::[retime=true, clock=my_clk, init=0]
 ```
 
 
+## Pipelined Lambdas (`pipe`)
+
+A `pipe` lambda is a Moore machine — outputs always go through flops. The
+number of pipeline stages is written as an argument to the `pipe` keyword,
+in the same `[N]` position used by `await[N]`:
+
+```
+pipe mul(a, b) -> (c)          { c = a * b }   // bare: caller picks at call site
+pipe[5]      mul(a, b) -> (c)  { c = a * b }   // fixed 5-cycle latency
+pipe[1..<4]  mul(a, b) -> (c)  { c = a * b }   // flexible range; caller/compiler picks
+```
+
+The three forms behave as follows:
+
+* **Bare `pipe foo(...)`** — latency is unspecified at declaration. The caller
+  must pick a concrete number of cycles at the call site using `await[N]`.
+* **`pipe[N] foo(...)`** — fixed latency. Every call produces its result
+  exactly `N` cycles later, and the caller's `await[M]` must satisfy `M == N`.
+* **`pipe[A..<B] foo(...)`** — flexible range. The caller picks an `await[M]`
+  with `A <= M < B`, and the compiler/synthesizer places stages accordingly.
+
+The tool may retime logic across pipeline stages for performance, but the
+observable behavior is equivalent to a `comb` with `N` flops appended at the
+outputs. `pipe` can use `reg` for internal storage; besides storage, it
+behaves like a `comb` with pipelined outputs.
+
+
 ## Multiply-Add Example
 
 Let's re-examine the example of integrating a 3-cycle multiplier with a 1-cycle adder. The main challenge in most HDLs is that the syntax is not aware of timing, forcing the programmer to manually track and align signals from different pipeline stages. This is error-prone.
 
-Our new syntax solves this with **explicit timing annotations**, making such errors impossible to ignore.
+Our syntax solves this with **explicit timing annotations**, making such errors impossible to ignore.
 
 
-`flow` blocks allow arbitrary mixing of variable clock cycles. They have three
+`flow` blocks allow arbitrary mixing of variable clock cycles. They have two
 complementary timing mechanisms for strong compile-time checking:
 
-* **`delay[N]`** on operations: specifies that an operation takes N cycles.
-  `a = delay[N] b` means "a is b delayed by N cycles".
+* **`await[N]`** on a declaration: a declaration modifier (in the same slot as
+  `const`, `mut`, `reg`) that pipelines the whole RHS over `N` cycles. It is
+  the *action* that inserts or chooses pipeline stages.
+  `await[N] lhs = rhs` reads as "`lhs` is `rhs` delivered `N` cycles later".
 
-* **`var@[N]`** on variable uses (RHS): specifies which cycle to read the value
-  at. The compiler inserts alignment delays if the variable is at an earlier
-  cycle, or errors if the alignment is impossible. For example, `in3@[3]`
-  delays `in3` from cycle 0 to cycle 3, while `in3@[0]` uses it at its
-  original cycle.
+* **`foo:@[N]`** on a variable use: a pure **type check** asserting that `foo`
+  lands at cycle `N`. It never inserts flops; a mismatch is a compile error.
+  Works identically on LHS declarations (`lhs:@[N] = ...`) and on RHS uses
+  (`... = add(a:@[3], b:@[3])`).
 
-* **`:@[N]`** on declarations (LHS): optional timing type check. The compiler
-  verifies that the computed cycle matches N. For example,
-  `const res:@[5] = delay[2] x@[3]` checks that 3 + 2 = 5.
+There is **no** bare `foo@[N]`. To trigger delay flop insertion use an explicit
+`await[N]` declaration.
 
-The `@[N]` annotation with positive N is only valid inside `flow` blocks. It
-is not allowed in `comb` (pure combinational), `pipe` (Moore pipeline), or
-`mod` (module). Outside `flow`, only `@[0]` (current value), `::[defer]` (defer to
-end of cycle), and `@[-N]` (previous cycles, registers only) are permitted in
-non-debug code.
+* Bare `counter` reads the current 'q' value; snapshot with a local
+  (`let counter_q = counter`) if you need to capture it before later
+  in-cycle updates.
+* `past[n](counter)` reads the value `n` cycles ago. The compiler inserts
+  the flops (see [Temporal library](09-verification.md#temporal-library)).
+* `counter::[defer]` reads or writes the end-of-cycle value.
+* `await[N]` pipelines the RHS of a declaration over `N` cycles (flow only).
+* `:@[N]` is a pure cycle type check (flow only).
+* `next`, `eventually`, `rose`, … (debug only) cover future-peek and
+  window-quantified sampling.
+
+`await[N]` is only valid inside `flow` blocks. It is not allowed in `comb`
+(pure combinational), `pipe` (Moore pipeline), or `mod` (module). Outside
+`flow`, register state is read via bare variable references (current value)
+or `::[defer]` (end-of-cycle value), and prior-cycle values via
+`past[n](x)`.
 
 `flow` blocks can also use `reg` for persistent state across cycles, just like
 `mod`. This allows a `flow` to both orchestrate pipeline stages with explicit
@@ -94,46 +130,63 @@ timing and maintain stateful elements like accumulators or counters.
 
 ```
 // Define primitive components with 'pipe'.
-pipe mul(a, b) -> (c) { c = a * b }
-pipe add(a, b) -> (c) { c = a + b }
+pipe mul(a, b) -> (c) { c = a * b }   // bare; caller picks latency via await
+pipe add(a, b) -> (c) { c = a + b }   // bare; caller picks latency via await
 
 // Define the composite flow that orchestrates the primitives.
 flow multiply_add(in1, in2) -> (out) {
-    // Stage 1: The multiplier takes 3 cycles. Its output is at cycle 3.
-    const tmp = delay[3] mul(in1@[0], in2@[0])
+    // Stage 1: run mul over 3 cycles. tmp lands at cycle 3.
+    await[3] tmp = mul(in1, in2)
 
-    // Stage 2: To add 'in1' to the result, we must align it with 'tmp'.
-    // We explicitly delay 'in1' by 3 cycles.
-    const in1_d = delay[3] in1@[0]
+    // Stage 2: to add 'in1' to the result we must align it with 'tmp'.
+    // Insert 3 flops of pure delay.
+    await[3] in1_d = in1
 
-    // Stage 3: Now both inputs to 'add' are correctly aligned at cycle 3.
+    // Stage 3: both inputs to 'add' are aligned at cycle 3.
     // The adder takes 1 cycle, so the final output is at cycle 4.
-    const out:@[4] = delay[1] add(tmp@[3], in1_d@[3])
+    await[1] out:@[4] = add(tmp:@[3], in1_d:@[3])
 }
 ```
 
-The three mechanisms catch different classes of bugs:
+The two mechanisms catch different classes of bugs:
 
-* `delay[N]` catches wrong operation latency
-* `@[N]` on uses catches wrong input alignment
-* `:@[N]` on declarations catches wrong output timing
+* `await[N]` makes the pipelining contract explicit at every declaration site.
+* `:@[N]` on uses and on declarations catches alignment mismatches at compile
+  time — both "the input I'm using isn't at the cycle I expected" and "the
+  output doesn't land at the cycle I promised".
 
 ```
 flow example(in1, in2, in3) -> (out) {
-    const res1 = delay[3] mul(in1@[0], in2@[0])
+    await[3] res1 = mul(in1, in2)
 
-    // in3@[3]: delay in3 to cycle 3 (same input group as in1, in2)
-    const res2a:@[5] = delay[2] res1@[3] + in3@[3]
+    // in3 arrives at cycle 0; we need it at cycle 3 to mix with res1.
+    // Introduce an explicit await binding — no implicit alignment.
+    await[3] in3_d = in3
 
-    // in3@[0]: use in3 at its original cycle (different input group)
-    const res2b:@[5] = delay[2] res1@[3] + in3@[0]
+    await[2] res2a:@[5] = res1:@[3] + in3_d:@[3]
+
+    // Compile error: res1 is at cycle 3, not 2
+    // await[2] bad:@[5] = res1:@[2] + in3_d:@[3]
 
     // Compile error: computed cycle is 5, not 4
-    // const bad:@[4] = delay[2] res1@[3] + in3@[3]
+    // await[2] bad2:@[4] = res1:@[3] + in3_d:@[3]
 }
 ```
 
-This syntax makes the required pipelining obvious and enforces it at compile time, preventing bugs caused by mixing values from different cycles.
+This syntax makes the required pipelining obvious and enforces it at compile
+time, preventing bugs caused by mixing values from different cycles.
+
+## Analogy: `pipe` and `await` vs. software `async`/`await`
+
+Readers familiar with software `async`/`await` will find the model similar:
+`pipe` declares a lambda whose result arrives later (like an `async fn`
+returning a future), and `await[N]` at the call site consumes that future
+after a specified number of cycles. The key difference is that Pyrope's
+`await[N]` is a **static, structural** specification — `N` is part of the
+hardware contract and must be known at elaboration time — whereas software
+`await` is dynamic suspension with runtime-determined latency. Also, `:@[N]`
+has no software counterpart; it is a hardware-specific type check for
+multi-input cycle alignment.
 
 ```mermaid
 graph TD

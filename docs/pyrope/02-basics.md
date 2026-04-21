@@ -291,15 +291,17 @@ Pyrope naming for consistency:
 
 * `comb` is pure combinational logic (zero cycles). Can use `ref` to modify tuples (equivalent to implicit output).
 
-* `pipe::[stages=N]` is a fixed N-cycle pipeline (Moore machine — outputs always registered)
+* `pipe[N]` is a fixed N-cycle pipeline (Moore machine — outputs always registered)
 
-* `pipe::[stages=A..=B]` is a flexible A-to-B cycle pipeline (Moore machine)
+* `pipe[A..=B]` is a flexible A-to-B cycle pipeline; the caller picks a concrete latency via `await[N]`
 
-* `flow` connects combinational/pipeline blocks with explicit timing (`@[cycle]`). Can also use `reg` for persistent state.
+* Bare `pipe` leaves the latency fully flexible; the caller picks it via `await[N]` at the call site
+
+* `flow` connects combinational/pipeline blocks with explicit timing using `await[N]` as a declaration modifier and `:@[N]` as a timing type check. Can also use `reg` for persistent state.
 
 * `mod` has no constraints on registers or outputs (can be Mealy or Moore), operates cycle by cycle.
 
-* `async`/`await` are reserved keywords for future use.
+* `await` is a reserved declaration modifier used inside `flow` blocks. `async` is reserved for future use.
 
 * `comb`, `pipe`, `flow`, or `mod` that uses a `self` parameter is also called a method
 

@@ -73,9 +73,12 @@ Attributes are **set only at declaration** with `:[attr=value]` and are **immuta
 ```pyrope
 reg counter = 0
 counter += 1                    // Immediate update
-counter@[] += 1                // Deferred to end of cycle
+counter::[defer] += 1           // Deferred to end of cycle
 ```
-**LLM Pitfall**: Register updates can be immediate or deferred. Use `@[0]` for current value, `@[]` for end-of-cycle defer, `@[-1]` for previous cycle. `@[1]` (next cycle) is only allowed in debug contexts like `assert`.
+**LLM Pitfall**: Register updates can be immediate or deferred. A bare register
+name reads the current 'q' value, `::[defer]` is the end-of-cycle value, and
+`past[n](x)` reads `n` cycles ago. To snapshot 'q' before later in-cycle
+updates, copy it into a local (`let counter_q = counter`).
 
 ### 8. Memory Declaration Syntax
 ```pyrope
@@ -99,7 +102,7 @@ mut out = ram.port[0][addr]:[rdport=0]      // Read port 0
 - Combinational logic (`mut`) updates immediately
 - `pipe` is a Moore machine (outputs always registered), may use `reg` for internal storage
 - `mod` has no constraints on registers or outputs
-- `flow` has three timing mechanisms: `delay[N]` (operation latency), `var@[N]` (use at cycle N), `:@[N]` (timing type check on LHS)
+- `flow` has two timing mechanisms: `await[N]` (declaration modifier that pipelines the whole RHS over N cycles) and `foo:@[N]` (pure timing type check, works on LHS and RHS uses)
 
 ### No Runtime Loops
 ```pyrope
@@ -164,7 +167,7 @@ reg accumulator = 0             // Persistent register
 ### Function Definition
 ```pyrope
 comb pure_function(x:u8) -> (y:u8) { y = x + 1 }
-pipe stateful_function() -> (reg counter:u8) { counter += 1 }
+pipe[1] stateful_function() -> (reg counter:u8) { counter += 1 }
 ```
 
 ### Memory Operations

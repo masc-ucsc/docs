@@ -243,8 +243,8 @@ const Queue = type<T>(push:comb(T)->(), pop:comb()->(T), empty:comb()->(bool))
 // comb, type, flow, pipe can have an option <parameter_list>
 
 const triadd1 = comb<T>(a:T, b:T, c:T) -> T { a + b + c }
-const triadd2 = pipe<T>::[stages=3] (a:T, b:T, c:T) ->T { a + b + c }
-const triadd3 = flow<T> (a:T, b:T, c:T) ->T { a@[0] + b@[0] + c@[0] }
+const triadd2 = pipe[3]<T>(a:T, b:T, c:T) -> T { a + b + c }
+const triadd3 = flow<T>(a:T, b:T, c:T) -> T { a + b + c }
 cassert triadd1(1,2,3) == 6
 ```
 
@@ -313,10 +313,10 @@ const (out_t) =  mymod(clock=clk, reset=rst, a=in_a)
 
 ### Advanced pipelining (elastic)
 ```pyrope
-pipe stagetocreate::[elastic=true,stages=2..<8] (in:int) -> (out:int) {
+pipe[2..<8] stagetocreate::[elastic=true] (in:int) -> (out:int) {
   out = in + 1
 }
-pipe stage2::[stages=2..<8] (in:int) -> (out:int) {
+pipe[2..<8] stage2(in:int) -> (out:int) {
   out = in + 1
 }
 // NOTE: `elastic` enables validity checks like `in?`; otherwise same syntax.

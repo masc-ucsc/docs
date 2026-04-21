@@ -324,7 +324,7 @@ be expected in a software API.
 
     ```pyrope
     mut c = mul(a,b)
-    assert c == a@[-1] * b@[-1] // read last cycle @[-1] a and b
+    assert c == past(a) * past(b) // compare against last-cycle a and b
     ```
 
 If actors execution resembles concurrent module instantiation execution,

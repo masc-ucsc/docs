@@ -284,7 +284,7 @@ mod counter_mod(update) -> (value) {
 
 // pipe: output 'value' goes through a flop (Moore machine)
 // Same logic, but output is delayed by 1 cycle compared to mod version
-pipe counter_pipe[stages=1](update) -> (value) {
+pipe[1] counter_pipe(update) -> (value) {
   reg count:u8:[wrap] = 0
 
   value = count              // registered output (goes through output flop)
@@ -470,7 +470,8 @@ For combinational signals, `sigref` observes the same value visible at the
 instance boundary in that cycle.
 
 For registers, `sigref` and `regref` read the current `q` value. A test may
-use `@[1]` or `::[defer]` inside debug contexts using the same timing rules as
+use `::[defer]` or the temporal library (`next(x, N)`, `eventually[R](x)`,
+`rose[R](x)`, …) inside debug contexts using the same timing rules as
 ordinary assertions.
 
 Tests acting as monitors follow the same invalid/reset rules as `assert`:

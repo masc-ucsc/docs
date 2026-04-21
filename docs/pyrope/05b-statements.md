@@ -365,29 +365,42 @@ loop {
 
 ## Cycle access and defer
 
-The `@` operator provides cycle-based access to variables. The timing syntax:
+Cycle-based access to values is expressed through a small set of
+constructs:
 
-* `variable@[0]`: current cycle value (before any update this cycle). Same as just `variable`.
-* `variable@[-1]`: value from the previous cycle. Only valid for registers.
-* `variable@[-2]`: value from two cycles ago. Only valid for registers.
-* `variable@[1]`: next cycle value. Compile error unless in a debug context
-  (e.g., `assert`). For registers, `variable::[defer] == variable@[1]` always
-  holds because the deferred end-of-cycle value becomes the register's value
-  at the start of the next cycle.
+* The first bare `variable` reads before update hold the register's 'q' value:
 
-The `@[N]` with negative N (`@[-1]`, `@[-2]`...) is only valid for registers
-(`reg`), since `mut` and `const` variables do not persist across cycles.
+  ```
+  reg counter:u32 = 0
+  let counter_q = counter           // snapshot 'q' before any updates this cycle
 
-The `@[N]` with positive N adds pipeline stages and is therefore only valid
-inside `flow` blocks, where explicit pipeline timing is the primary mechanism.
-It is not allowed in `comb` (pure combinational, no cycles), `pipe` (implicit
-pipeline stages), or `mod` (direct register control, no pipeline annotations).
-In debug contexts (e.g., `assert`), `@[N]` with positive N is allowed anywhere
-to peek at future/next-cycle values.
+  if whatever {
+    counter = counter + 1
+  }
+  ```
+
+* `past[n:int=1](variable)` reads the value `n` cycles ago. The compiler
+  inserts `n` flops automatically — the hardware cost is explicit in the
+  call. `past(x)` is shorthand for `past[1](x)`. See the
+  [Temporal library](09-verification.md#temporal-library).
+
+* `variable::[defer]` reads or writes the end-of-cycle value. Use it for
+  deferred updates and for observing a register's next-cycle value in
+  debug contexts.
+
+* For pipeline timing inside `flow` blocks, use `await[N]` (declaration
+  modifier that pipelines the whole RHS over `N` cycles) and `foo:@[N]`
+  (pure timing type check).
+
+* For debug-only future sampling (inside `assert`, `cover`, `test`, …), use
+  the temporal library — `next(x, N)`, `eventually[R](x)`, `rose[R](x)`,
+  etc.
+
+The raw `@[N]` operator form is not part of the language, only for type check
+`foo:@[3]` checks that foo is 3 pipeline stages ahead of the lambda inputs.
 
 The `::[defer]` attribute provides deferred access to a variable — reading or
-writing the value at the end of the current cycle. Unlike `@[N]` which is a
-cycle index, `::[defer]` is a separate mechanism. It is valid for any variable
+writing the value at the end of the current cycle. It is valid for any variable
 type (`mut`, `const`, `reg`) as it refers to the final value within the current
 cycle.
 
@@ -416,15 +429,16 @@ f4 = ring(d, f3)
 ```
 
 If the intention is to read the result after being a flop, there is no need to
-use the `defer`, a normal register access could do it. The `reg@[0]`
-reads the value before any update, the `::[defer]` read gets values after updates.
+use the `defer`, a normal register access could do it. A bare `reg`
+reference reads the value before any update (the 'q' value), and `::[defer]`
+reads the value after updates.
 
 ```
 reg counter:u32 = ?
 
-const counter_0  = counter@[0]  // current cycle (before updates)
-const counter_1  = counter@[-1] // last cycle
-const counter_2  = counter@[-2] // last last cycle
+const counter_0  = counter         // current cycle (before updates)
+const counter_1  = past(counter)   // last cycle (one flop)
+const counter_2  = past[2](counter) // last last cycle (two flops)
 
 mut deferred = counter::[defer]  // defer read: final value at end of cycle
 
@@ -436,7 +450,7 @@ if counter < 100 {
 
 if counter == 10 {
   assert deferred   == 10
-  assert counter@[1] == 10      // OK in assert (debug), same as deferred
+  assert counter::[defer] == 10 // same as deferred, end-of-cycle value
   assert counter_0  ==  9
   assert counter_1  ==  8
   assert counter_2  ==  7
@@ -457,9 +471,8 @@ reg a:u8 = 1
 if a==1 {
   assert a::[defer] == 200
   a::[defer] = 200 // defer write
-  assert a == 1
-  assert a@[0] == 1
-  assert a@[1] == 200           // OK in assert (debug), same as a::[defer]
+  assert a == 1                 // bare 'a' reads the current 'q' value
+  assert a::[defer] == 200      // end-of-cycle value (after deferred write)
 }else{
   assert a::[defer] == 2
   a::[defer] = 2    // defer write

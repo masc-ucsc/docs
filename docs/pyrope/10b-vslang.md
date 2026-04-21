@@ -55,23 +55,23 @@ function return.
 Pyrope defers the statements not to the end of the scope but to the end of the
 clock cycle. The defer delays the "write" until the end of the clock cycle, the
 defer does not defer the reads, just the write or update. To read the value
-from the end of the cycle an attribute `variable@[1]` must be used.
+from the end of the cycle the attribute `variable::[defer]` must be used.
 
 
 These are constructs not existing in software but needed in hardware because it
 is necessary to connect blocks. Following the control flow from the top only
 allows to connect forward. Some contructs like connecting a ring require a
-"backward edge". The attribute `[defer]` allow such type of constructs.
+"backward edge". The `::[defer]` attribute allows such constructs.
 
 ```
 mut a = 1
 mut b = 2
 
 cassert a==1 and b==2
-b = (a)@[1]            // write defer
+b::[defer] = a         // write defer
 cassert a==1 and b==2
 
-cassert b@[1] == 1     // read defer
+cassert b::[defer] == 1     // read defer
 ```
 
 If there are read and write defers, the read defers happen first, and then the write defers. As a result, the deferred writes are not seen in this cycle.

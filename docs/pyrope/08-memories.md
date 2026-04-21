@@ -206,7 +206,7 @@ mem.latency = (1, 1, 1)
 mem.wensize = 1 // we bit (no write mask)
 mem.rdport  = (-1,1,0) // 0 WR, !=0 -> RD
 
-res = delay[..] __memory(mem)
+await[..] res = __memory(mem)
 
 q0 = res[0]
 q1 = res[1]
@@ -216,8 +216,8 @@ q1 = res[1]
 The previous code directly instantiates a memory and passes the configuration.
 
 
-Multi cycle memories are pipelined elements, and using them requires the `delay[..]`
-syntax and the same rules as pipeline flops apply (See [pipelining](06c-pipelining2.md)).
+Multi cycle memories are pipelined elements, and using them requires the `await[..]`
+declaration modifier and the same rules as pipeline flops apply (See [pipelining](06c-pipelining2.md)).
 
 
 ## Multidimensional arrays
