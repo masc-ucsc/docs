@@ -594,6 +594,11 @@ expanded by the producer (`inou/prp`) into the primitives defined above.
 This section enumerates the canonical lowerings; consumers should never see
 the surface forms directly.
 
+Examples in this section use an **S-expression** shorthand for the LNAST
+tree: `(op dst child1 child2 ...)`. Multiline forms wrap and indent; every
+open paren closes on the same line or on its own matching line. This is a
+documentation convenience — LNAST itself is a node tree, not text.
+
 ## Control flow
 
 ### `match` → chain of `uif`
@@ -604,7 +609,7 @@ source has no `else` arm, the producer synthesises `else { assert false }`.
 Init statements (`match mut x = 2; z + x { ... }`) hoist into an outer
 `stmts` scope.
 
-```
+```pyrope
 // Pyrope
 match state {
   == 0 { n = 1 }
@@ -614,18 +619,15 @@ match state {
 ```
 
 ```
-eq            ___c0 state const(0)
-range         ___r  const(4) const(4)          // ..< → (to-1)
-in            ___c1 state ___r
-uif
+(eq    ___c0 (ref state) (const 0))
+(range ___r  (const 4) (const 4))          ; ..< → (to - 1)
+(in    ___c1 (ref state) ___r)
+(uif
   ___c0
-  stmts
-    assign n const(1)
+  (stmts (assign (ref n) (const 1)))
   ___c1
-  stmts
-    assign n const(2)
-  stmts
-    assign n const(0)
+  (stmts (assign (ref n) (const 2)))
+  (stmts (assign (ref n) (const 0))))
 ```
 
 ### `loop`, `for`, `for`-comprehension → `while`
@@ -646,18 +648,17 @@ An init-stmts prefix (`if mut x = 3; x < 3 { ... }`) hoists into an enclosing
 `stmts` scope. No new child on the control-flow node.
 
 ```
-stmts
-  attr_set x "type" "mut"
-  assign   x const(3)
-  lt       ___c x const(3)
-  if ___c
-    stmts ...
+(stmts
+  (attr_set (ref x) (const "type") (const "mut"))
+  (assign   (ref x) (const 3))
+  (lt       ___c (ref x) (const 3))
+  (if ___c (stmts ...)))
 ```
 
 ### `when` / `unless` statement gates
 
-`stmt when cond`  →  `if cond { stmt }`
-`stmt unless cond` → `if !cond { stmt }`
+`stmt when cond`  →  `(if cond (stmts <stmt>))`
+`stmt unless cond` → `(if (log_not t cond) (stmts <stmt>))`
 
 When the gated statement is a declaration, the declaration is hoisted outside
 the `if`, initialised to `nil`, and only the assignment goes inside the gate.
@@ -665,54 +666,60 @@ the `if`, initialised to `nil`, and only the assignment goes inside the gate.
 ### `break` / `continue` / `return`
 
 Emitted as the dedicated leaf / single-child nodes described above. `return
-expr` assigns `expr` to a tmp first, then `return <tmp>`.
+expr` assigns `expr` to a tmp first, then `(return ___t)`.
 
 ## Operators
 
 ### Compound assignment
 
-`a OP= b` always desugars: `OP ___t a b; assign a ___t`. Covers `+=`, `-=`,
-`*=`, `/=`, `|=`, `&=`, `^=`, `<<=`, `>>=`, `++=`, `or=`, `and=`. `++=` uses
-`tuple_concat` with an additional `assert` over `has` to guard non-overlap.
+`a OP= b` always desugars:
+
+```
+(OP ___t (ref a) (ref b))
+(assign (ref a) ___t)
+```
+
+Covers `+=`, `-=`, `*=`, `/=`, `|=`, `&=`, `^=`, `<<=`, `>>=`, `++=`, `or=`,
+`and=`. `++=` uses `tuple_concat` with an additional `assert` over `has` to
+guard non-overlap.
 
 ### Negated operators
 
 Every negated Pyrope operator is `op + log_not` (or `bit_not` for the `!&`
 / `!^` / `!|` bitwise cousins):
 
-| Surface            | Lowering                                          |
-|--------------------|---------------------------------------------------|
-| `a !and b`         | `log_and t a b; log_not dst t`                    |
-| `a !or b`          | `log_or  t a b; log_not dst t`                    |
-| `a !implies b`     | `log_not t a; log_or u t b; log_not dst u`        |
-| `a !& b`           | `bit_and t a b; bit_not dst t`                    |
-| `a !^ b`           | `bit_xor t a b; bit_not dst t`                    |
-| `a !| b`           | `bit_or  t a b; bit_not dst t`                    |
-| `a !has b`         | `has t a b; log_not dst t`                        |
-| `a !in b`          | `in  t a b; log_not dst t`                        |
-| `a !is b`          | `is  t a b; log_not dst t`                        |
-| `a !does b`        | `does t a b; log_not dst t`                       |
-| `a !case b`        | `(case-desugar); log_not dst t`                   |
-| `a !equals b`      | `(equals-desugar); log_not dst t`                 |
+| Surface            | Lowering                                                       |
+|--------------------|----------------------------------------------------------------|
+| `a !and b`         | `(log_and t a b) (log_not dst t)`                              |
+| `a !or b`          | `(log_or  t a b) (log_not dst t)`                              |
+| `a !implies b`     | `(log_not t a) (log_or u t b) (log_not dst u)`                 |
+| `a !& b`           | `(bit_and t a b) (bit_not dst t)`                              |
+| `a !^ b`           | `(bit_xor t a b) (bit_not dst t)`                              |
+| `a !\| b`          | `(bit_or  t a b) (bit_not dst t)`                              |
+| `a !has b`         | `(has t a b) (log_not dst t)`                                  |
+| `a !in b`          | `(in  t a b) (log_not dst t)`                                  |
+| `a !is b`          | `(is  t a b) (log_not dst t)`                                  |
+| `a !does b`        | `(does t a b) (log_not dst t)`                                 |
+| `a !case b`        | `<case-desugar into t>; (log_not dst t)`                       |
+| `a !equals b`      | `<equals-desugar into t>; (log_not dst t)`                     |
 
 ### Short-circuit boolean
 
-`a and_then b` lowers to `log_and dst a b` **unless** `b` contains a function
-call, in which case the producer emits the guarded form:
+`a and_then b` lowers to `(log_and dst a b)` **unless** `b` contains a
+function call, in which case the producer emits the guarded form:
 
 ```
-log_and ___a a false       // seed with false
-if a
-  stmts
-    assign ___a b          // b only evaluated when a is true
-assign dst ___a
+(log_and ___a (ref a) (const false))          ; seed with false
+(if (ref a)
+  (stmts (assign ___a (ref b))))              ; b only evaluated when a is true
+(assign (ref dst) ___a)
 ```
 
 `or_else` mirrors this with `log_or` and an inverted guard.
 
 ### `implies`
 
-`a implies b` → `log_not t a; log_or dst t b`.
+`a implies b` → `(log_not t a) (log_or dst t b)`.
 
 ### `|>` (pipe-concat) — removed
 
@@ -723,14 +730,25 @@ lowering.
 
 Both are producer-level desugars over `does`:
 
-`a equals b` → `does t1 a b; does t2 b a; log_and dst t1 t2`
-`a case b`  → `does t b a; assert t; in dst b a`
+```
+; a equals b
+(does t1 (ref a) (ref b))
+(does t2 (ref b) (ref a))
+(log_and dst t1 t2)
+
+; a case b
+(does t (ref b) (ref a))
+(assert t)
+(in dst (ref b) (ref a))
+```
 
 ## Ranges
 
-`a..=b` → `range dst a b`
-`a..<b` → `minus ___t b const(1); range dst a ___t`
-`a..+b` → `plus ___t a b; minus ___t2 ___t const(1); range dst a ___t2`
+```
+a..=b   →  (range dst a b)
+a..<b   →  (minus ___t b (const 1)) (range dst a ___t)
+a..+b   →  (plus  ___t a b) (minus ___t2 ___t (const 1)) (range dst a ___t2)
+```
 
 The `step` keyword (`a..<b step c`) populates the optional third child of
 `range`.
@@ -745,18 +763,18 @@ The `step` keyword (`a..<b step c`) populates the optional third child of
 
 All modifier forms lower via `get_mask`:
 
-| Surface           | Lowering                                       |
-|-------------------|-----------------------------------------------|
-| `a#[range]`       | build mask; `get_mask dst a mask`             |
-| `a#[i,j,k]`       | build mask `(1<<i) | (1<<j) | (1<<k)`; `get_mask` |
-| `a#sext[range]`   | `get_mask t a mask; sext dst t <high_bit>`    |
-| `a#zext[range]`   | `get_mask dst a mask` (no extension node)     |
-| `a#|[range]`      | `get_mask t a mask; red_or  dst t`            |
-| `a#&[range]`      | `get_mask t a mask; red_and dst t`            |
-| `a#^[range]`      | `get_mask t a mask; red_xor dst t`            |
-| `a#+[range]`      | `get_mask t a mask; popcount dst t`           |
+| Surface           | Lowering                                                   |
+|-------------------|------------------------------------------------------------|
+| `a#[range]`       | `<build mask>; (get_mask dst a mask)`                      |
+| `a#[i,j,k]`       | mask = `(1<<i) \| (1<<j) \| (1<<k)`; `(get_mask dst a mask)` |
+| `a#sext[range]`   | `(get_mask t a mask) (sext dst t <high_bit>)`              |
+| `a#zext[range]`   | `(get_mask dst a mask)` (no extension node)                |
+| `a#\|[range]`     | `(get_mask t a mask) (red_or  dst t)`                      |
+| `a#&[range]`      | `(get_mask t a mask) (red_and dst t)`                      |
+| `a#^[range]`      | `(get_mask t a mask) (red_xor dst t)`                      |
+| `a#+[range]`      | `(get_mask t a mask) (popcount dst t)`                     |
 
-Write form `a#[range] = v`  →  build mask; `set_mask a a mask v`.
+Write form `a#[range] = v`  →  `<build mask>; (set_mask (ref a) (ref a) mask v)`.
 
 `get_mask(x, mask)` both ANDs and shifts the selected bits down to bit 0, so
 `get_mask(a, 0xF0) == (a & 0xF0) >> 4`.
@@ -776,8 +794,8 @@ on the ram variable. Per-access attributes like `ram[addr]:[rdport=0]`
 attach to the access tmp:
 
 ```
-attr_set xx "rdport" const(0)
-tuple_get xx ram addr
+(attr_set  xx (const "rdport") (const 0))
+(tuple_get xx (ref ram) (ref addr))
 ```
 
 ## Functions and calls
@@ -785,41 +803,55 @@ tuple_get xx ram addr
 ### `comb` / `pipe[N]` / `mod`
 
 The `func_def` kind child is `"comb"`, `"pipe"`, or `"mod"`. `pipe[N]`
-depth is emitted alongside as `attr_set <func> "pipe_depth" N` at the
-declaration site (not a func_def child).
+depth is emitted alongside as `(attr_set <func> (const "pipe_depth") (const N))`
+at the declaration site (not a func_def child).
 
 ### Captures, generics, `requires` / `ensures`, `where`
 
 Captures (`[a, b]`) and generics (`<T>`) become child tuples of `func_def`.
 `where cond` on a `func_def` is deprecated and should be removed from the
 grammar. `requires` / `ensures` are plain `func_call`s to stdlib builtins
-inside the body.
+inside the body (see [Built-in Functions](#built-in-functions)).
 
 ### `test`, `spawn`, `impl`, `import`
 
-| Surface                          | Lowering                                                       |
-|----------------------------------|----------------------------------------------------------------|
-| `test "n" { body }`              | `func_def` + `attr_set f "test" true` + `func_call f`          |
-| `spawn name = { body }`          | `func_def` + `attr_set f "spawn" true` + `func_call f`         |
-| `import X as Y`                  | `func_call Y "import" X`                                       |
-| `impl Trait for T ( comb m(...){...} )` | `func_def tmp ...; assert (does tmp Trait); tuple_set T m tmp` |
+```
+; test "name" { body }
+(func_def ___f (const "comb") (tuple) (tuple) (tuple) (tuple) (stmts <body>))
+(attr_set ___f (const "test") (const true))
+(func_call _ ___f (tuple))
+
+; spawn name = { body }
+(func_def ___s (const "comb") (tuple) (tuple) (tuple) (tuple) (stmts <body>))
+(attr_set ___s (const "spawn") (const true))
+(func_call _ ___s (tuple))
+
+; import X as Y
+(func_call (ref Y) (const "import") (tuple (const "X")))
+
+; impl Trait for T ( comb m(...) { body } )
+(func_def ___tmp (const "comb") ... (stmts <body>))
+(does    ___ok ___tmp (ref Trait))
+(assert  ___ok)
+(tuple_set (ref T) (const "m") ___tmp)
+```
 
 ### `type Name = T`
 
-`type` statements are aliases: `tuple_add Name T` (or `assign Name T` for a
-scalar-ish binding) followed by `attr_set Name "type" const(true)` to mark
-the variable as a type binding.
+`type` statements are aliases: `(tuple_add Name T)` (or `(assign Name T)`
+for a scalar binding) followed by `(attr_set Name (const "type") (const true))`
+to mark the variable as a type binding.
 
 ## Timing
 
-| Surface                 | Lowering                                           |
-|-------------------------|----------------------------------------------------|
-| `a@[N]`                 | `delay_assign tmp N a`                             |
-| `a@[-1]`                | `delay_assign tmp -1 a`                            |
-| `a@[]`                  | `delay_assign tmp 1 a` (shorthand for defer)       |
-| `a::[defer]`            | `delay_assign tmp 1 a`                             |
-| `await[N] dst = rhs`    | `delay_assign dst N rhs`                           |
-| `x:@[N]`                | `assert (does x @[N])::[comptime]` (type check)    |
+| Surface                 | Lowering                                              |
+|-------------------------|-------------------------------------------------------|
+| `a@[N]`                 | `(delay_assign tmp (const N) (ref a))`                |
+| `a@[-1]`                | `(delay_assign tmp (const -1) (ref a))`               |
+| `a@[]`                  | `(delay_assign tmp (const 1) (ref a))`                |
+| `a::[defer]`            | `(delay_assign tmp (const 1) (ref a))`                |
+| `await[N] dst = rhs`    | `(delay_assign (ref dst) (const N) (ref rhs))`        |
+| `x:@[N]`                | `(does t x @[N]) (assert t::[comptime])`              |
 
 `@[N]` is an LNAST timing type (`comp_type_timing`); it is never a flop
 insertion request on its own — only `await[N]` and `::[defer]` actually
@@ -831,15 +863,46 @@ insert delay.
 are plain `const` nodes carrying the literal text. They are never special
 LNAST nodes.
 
-## Stdlib-only constructs
-
-`puts`, `print`, `format`, `always assert`, `optimize`, `cover`, `peek`,
-`poke` are plain `func_call`s to stdlib helpers. String interpolation like
-`"value={x}"` is desugared by the producer into `format("value={}", x)` — a
-regular `func_call`.
+```
+(const "nil")
+(const "0sb1?1")
+```
 
 ## Typecasts
 
 `(expr):T:[attrs]` (expression-level typecast) lowers by: producer creates a
-tmp, emits `type_spec tmp <type>` as a compile-time check, and one
-`attr_set tmp <key> <value>` per attribute.
+tmp, emits `(type_spec tmp <type>)` as a compile-time check, and one
+`(attr_set tmp (const "key") (const value))` per attribute.
+
+# Built-in Functions
+
+Pyrope relies on a small stdlib of functions that the producer lowers to
+plain `func_call` nodes. Consumers recognise them by name — they are not
+LNAST primitives, but every backend should handle them (or skip / strip them
+in non-simulation builds).
+
+| Function             | Surface form                      | Purpose                                                                  |
+|----------------------|-----------------------------------|--------------------------------------------------------------------------|
+| `assert`             | `assert cond`                     | Runtime assertion (LNAST primitive — *not* a `func_call`; see [`assert`](#assert)). |
+| `always_assert`      | `always assert cond`              | Runtime assertion checked every cycle, not gated by surrounding control flow. |
+| `assume`             | `assume cond`                     | Formal verification axiom — solver treats `cond` as guaranteed true.    |
+| `cover`              | `cover cond`                      | Coverage point — tooling records whether `cond` was ever observed true.  |
+| `optimize`           | `optimize cond`                   | Optimisation hint — `cond` is guaranteed to hold; synth may exploit it.  |
+| `peek`               | `peek(path.to.signal)`            | Probe an internal signal from a test-bench context.                      |
+| `poke`               | `poke(path.to.reg, value)`        | Force an internal register/signal from a test-bench context.             |
+| `puts`               | `puts arg1, arg2, ...`            | Simulation print with trailing newline. Strings must be comptime.        |
+| `print`              | `print arg1, arg2, ...`           | Simulation print without trailing newline.                               |
+| `format`             | `format(fmt, args...)`            | Compile-time `fmt::format`-style string formatter. Returns a string.     |
+| `import`             | `import X as Y`                   | Module import. `Y` receives the imported module value.                   |
+| `requires`           | `requires cond` in `func_def`     | Function precondition. Checked at every call site.                       |
+| `ensures`            | `ensures cond` in `func_def`      | Function postcondition. Checked on return.                               |
+| `step`               | `step` (inside `test { ... }`)    | Advance simulation by one cycle.                                         |
+| `test`               | `test "name" { body }`            | Sugar: `func_def` + `attr_set "test" true` + `func_call` (see [Lowerings](#test-spawn-impl-import)). |
+| `spawn`              | `spawn name = { body }`           | Sugar: `func_def` + `attr_set "spawn" true` + `func_call` (see [Lowerings](#test-spawn-impl-import)). |
+
+**String interpolation** (`"value={x}"`) is desugared at the producer into a
+`format("value={}", x)` call — a regular `func_call` to `format`.
+
+**Naming convention:** all built-ins emit as `func_call` with a `(ref
+<name>)` function reference (e.g., `(ref puts)`). The producer never mangles
+these names; consumers can predicate on the exact string to recognise them.
