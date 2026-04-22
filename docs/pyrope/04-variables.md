@@ -19,15 +19,51 @@ have a value. `_` is used to specify the default value (`false` for boolean,
 range).
 
 
-In all the cases, variable declaration is either:
-* `const variable [:type] [:[attrbute list]] = expression`
-* `mut variable [:type] [:[attrbute list]]= expression`
+Every declaration starts with one of six **kind keywords**:
 
-In a tuple scope, `variable [:type] = expression` is equivalent to `mut
-variable [:type] = expression`. This is to avoid the most common case
-where tuple fields are frequently declared `mut` not `const`. This is
-different from lambda captures that declare a new variable but they are
-always immutable (`const`).
+| Kind    | Category | Implicit mutability |
+|---------|----------|---------------------|
+| `const` | data     | immutable           |
+| `mut`   | data     | mutable             |
+| `reg`   | data     | mutable, persists across cycles |
+| `comb`  | lambda   | immutable (always)  |
+| `pipe`  | lambda   | immutable (always)  |
+| `mod`   | lambda   | immutable (always)  |
+
+The three data kinds take `= expression`; the three lambda kinds take a
+parameter list and a body. Data declarations:
+
+* `const variable [:type] [:[attribute list]] = expression`
+* `mut variable [:type] [:[attribute list]] = expression`
+* `reg variable [:type] [:[attribute list]] = reset_expression`
+
+Lambda declarations:
+
+* `comb name[comptime][args] [-> outputs] { body }`
+* `pipe[N] name[comptime][args] [-> outputs] { body }`
+* `mod name[comptime][args] [-> outputs] { body }`
+
+This rule applies uniformly, including inside **tuple literals**: every
+field must start with one of these kind keywords. Bare `field = value`
+inside a data-tuple literal is a compile error.
+
+```
+const point = (mut x:u8 = 0, mut y:u8 = 0)
+
+const counter_iface = (
+  ,mut value:u8 = 0
+  ,comb read(self) -> (v:u8)      { v = self.value }
+  ,comb inc(ref self)             { self.value::[wrap] += 1 }
+  ,mod tick(ref self, enable:bool) { self.value += 1 when enable }
+)
+```
+
+Named-argument passing in calls (`foo(a=3, b=4)`) is **not** a declaration
+— the names are matched against the callee's declared parameters — so no
+kind keyword is required there.
+
+Lambda captures declare a new variable via the `[...]` slot and are always
+immutable (`const`); the kind keyword is implicit there.
 
 
 === "Code Block scope"
@@ -52,7 +88,7 @@ always immutable (`const`).
     assert a == 3        // compile error, undefined variable 'a'
     mut a = 3
     mut x = 10
-    const f1 = comb[a,x=a+1]() {
+    comb f1[a,x=a+1]() {
       assert a == 3
       a = 33             // compile error, capture/inputs are immutable
       x = 300            // compile error, capture/inputs are immutable
@@ -65,10 +101,10 @@ always immutable (`const`).
     assert x == 10
     assert b == 3        // compile error, undefined variable 'b'
 
-    const f2 = comb() {     // no capture of 'a'
+    comb f2() {     // no capture of 'a'
       // assert a == 3   // compile error, undefined variable 'a'
     }
-    const f3 = comb[ff=a]() { // capture 'a' as 'ff'
+    comb f3[ff=a]() { // capture 'a' as 'ff'
       assert ff == 3     // OK
       ff = 3             // compile error, immutable variable
     }
@@ -79,15 +115,17 @@ always immutable (`const`).
     ```
     mut a = 3
     const r1 = (
-      ,a = a+1           // same as mut a = a+1
-      ,c = {assert a == 3 and self.a==4; 50}
+      ,mut a = a+1       // tuple fields must use a kind keyword
+      ,const c = {assert a == 3 and self.a==4; 50}
     )
     r1.a = 33            // compile error, 'r1' is immutable variable
 
-    mut r2 = (a=100, const c=(a=a+1, e=self.a+30))
+    mut r2 = (mut a=100, const c=(mut a=a+1, const e=self.a+30))
     assert r2 == (a=100,c=(a=101, e=131))  // checks values not mutability
     r2.a = 33            // OK
     r2.c.a = 33          // compile error, 'r2.c' is immutable variable
+
+    const r3 = (a = 1)   // compile error: tuple field missing kind keyword
     ```
 
 * Shadowing is not allowed in lambdas or code blocks. Tuples can redefine
@@ -105,8 +143,8 @@ Since the captures and lambda inputs are always immutable, it is not allowed to
 declare them as `mut` and redundant to declare them as `const`.
 
 ```
-const f3 = comb(mut x) { x + 1 }    // compile error, inputs are immutable
-const f4 = comb[mut x](z) { x + z } // compile error, captures are immutable
+comb f3(mut x) { x + 1 }    // compile error, inputs are immutable
+comb f4[mut x](z) { x + z } // compile error, captures are immutable
 ```
 
 
@@ -158,9 +196,9 @@ different constraints):
 mut a:int         = ? // any value, no constrain
 mut b:unsigned    = ? // only positive values
 mut c:u13         = ? // only from 0 to 1<<13
-mut d:int(20..=30)= ? // only values from 20 to 30 (both included)
-mut d:int(-5..<6) = ? // only values from -5 to 6 (6 not included)
-mut e:int(-1,0)   = ? // 1 bit integer: -1 or 0
+mut d:int:[range=20..=30] = ? // only values from 20 to 30 (both included)
+mut d:int:[min=-5, max=5] = ? // only values from -5 to 6 (6 not included)
+mut e:int:[min=-1, max=0] = ? // 1 bit integer: -1 or 0
 ```
 
 Integers can have 3 value (`0`,`1`,`?`) expression or a `nil`. Section
@@ -342,46 +380,50 @@ assert "h" ++ "ell" == ('h','e','l','l') == "hell"
 Each variable has a type, either implicit or explicit, and as such, it can be
 used to declare a new type.
 
-Pyrope does not have a `type` keyword. Instead it leverages the tuples for type
-creation. The difference is that a type should be an immutable variable, and
-therefore it is recommended to start with Uppercase.
+Pyrope provides a `type` keyword for type declarations. It is equivalent to
+a `const` whose value is a type (tuple shape or lambda signature); `type`
+simply makes the intent explicit and is the recommended spelling when
+declaring types ahead. It is recommended to start type names with
+Uppercase. **Complicated lambda types cannot be written inline in a
+`foo:Type` annotation — declare them ahead with `type` and reference them
+by name.**
 
 ```
-mut bund1 = (color:string, value:s33)
-x:bund1        = ?      // OK, declare x of type bund1 with default values
+comb check_is_green(self) { self.color == "green" }
+
+type IsGreen = comb(self)
+
+mut bund1 = (mut color:string = "", mut value:s33 = nil)
+x:bund1        = nil    // OK, declare x of type bund1 with default values
 bund1.color    = "red"  // OK
-bund1.is_green = comb(self) { self.color == "green" }
+bund1.is_green = check_is_green
 x.color        = "blue" // OK
 
-const typ = (color:string, value:s33, is_green:comb(self) = _)
-y:typ        = ?        // OK
-typ.color    = "red"    // compile error
-typ.is_green = comb(self) { self.color == "green" }
+type Typ = (mut color:string = "", mut value:s33 = nil, mut is_green:IsGreen = nil)
+y:Typ        = nil      // OK
+Typ.color    = "red"    // compile error
+
+Typ.is_green = check_is_green
 y.color      = "red"    // OK
 
-const bund3 = (color:string, value:s33)
-z:bund3        = ?                 // OK
-bund3.color    = "red"             // compile error
-bund3.is_green = comb(self) { ... } // compile error
-z.color        = "blue"            // OK
+type Bund3 = (mut color:string = "", mut value:s33 = nil)
+z:Bund3        = nil                // OK
+Bund3.color    = "red"              // compile error
+Bund3.is_green = check_is_green     // compile error (const can not add fields)
+z.color        = "blue"             // OK
 
-assert x equals typ  // same type structure
-assert z equals typ  // same type structure
+assert x equals Typ  // same type structure
+assert z equals Typ  // same type structure
 assert x equals z    // same type structure
 
-assert y is typ
-assert typ is typ
-assert z !is bund3
-assert z !is typ
+assert y is Typ
+assert Typ is Typ
+assert z !is Bund3
+assert z !is Typ
 assert z !is bund1
 ```
 
-Adding a method to a tuple with `tup.fn = comb...` is the same as `tup = tup ++
-(fn=comb...)`.
-
-
 ## Type checks
-
 
 When a type is used in the left-hand-side of a declaration statement, the
 type is set for the whole existence of the variable. It is possible to also
@@ -469,7 +511,7 @@ but the syntax is cleaner.
     const x = y + 1
     assert  y::[cond] and y::[bar]==3
 
-    read_state = comb(x) {
+    comb read_state(x) {
       comptime mut f:u32 = x // f is compile time or an error is generated
       f = f + 1              // still comptime
       return f               // f should be compile time constant
@@ -484,7 +526,7 @@ but the syntax is cleaner.
     cassert y::[cond]
     cassert y::[bar]==3
 
-    read_state = comb(x) {
+    comb read_state(x) {
       const f = x
       cassert f does u32
       cassert f::[comptime] == true
@@ -596,6 +638,10 @@ Registers have the following attributes:
 * `negreset`: active low reset signal
 * `posclk`: true by default, selects a posedge or negnedge flop
 * `retime`: allow to retime across the register
+* `defer`: read or write the end-of-cycle value. `reg::[defer] = rhs` delays
+  the write until the end of the current cycle (becomes the next cycle's 'q').
+  `reg::[defer]` on the RHS reads the final value at the end of the current
+  cycle. See [Pipelining](06c-pipelining2.md).
 
 Pipestage accept the same register attributes but also two more:
 
@@ -627,8 +673,7 @@ are similar to registers, but unlike registers they can have multiple clocks.
 Lambda attributes allow [Introspection](07-typesystem.md#Introspection) which requires some attributes.
 
 * `inputs`: returns the input tuple from the lambda
-* `outputs`: returns the input tuple from the lambda
-* `where`: returns the lambda used in the `where` clause
+* `outputs`: returns the output tuple from the lambda
 
 ### Bitwidth attribute list
 
@@ -640,20 +685,39 @@ of bitwidth related attributes:
 * `min`: the minimum value allowed
 * `ubits`: Maximum number of bits to represent the unsigned value. The number must be positive or zero
 * `sbits`: Maximum number of bits, and the number can be negative
+* `bits`: read-only; returns the number of bits currently required to
+  represent the variable's value (`var::[bits]` in assertions)
 * `wrap`: allows to drop bits that do not fit on the left-hand side. It performs sign
   extension if needed.
 * `saturate` keeps the maximum or minimum (negative integer) that fits on the
   left-hand side.
+
+### Debug and verification attribute list
+
+The following attributes are debug-only — they are elided from synthesis and
+only valid inside `assert`, `cover`, `test`, and `waitfor` contexts:
+
+* `rising`: true on the cycle where the signal transitions from 0/false to
+  non-zero/true (same as `rose(sig)` from the temporal library)
+* `falling`: true on the cycle where the signal transitions from
+  non-zero/true to 0/false (same as `fell(sig)`)
+* `changed`: true on any cycle where the signal differs from its previous
+  value (same as `changed(sig)`)
+* `timeout`: interpreted only by `waitfor`; bounds the wait to `N` cycles
+  (e.g., `waitfor done::[rising, timeout=1000]`)
+
+See [Verification](09-verification.md) for the full temporal library and
+debug constructs.
 
 
 The integer type constructor allows to use a range to set max/min, but it is
 syntax sugar for direct attribute set.
 
 ```
-opt1:uint(300) = 0
+opt1:uint:[max=300] = 0
 opt2:int:[min=0,max=300] = 0  // same
 opt3::[min=0,max=300] = 0     // same
-opt4:int(0..=300) = 0         // same
+opt4:int:[range=0..=300] = 0  // same
 
 assert opt1::[ubits] == 0    // opt1 initialized to 0, so 0 bits
 opt1 = 200
@@ -1219,14 +1283,14 @@ always assert counter.reset implies !counter?
 
 ```
 const custom = (
-  ,data:i16 = ?
-  ,setter = comb(ref self, v) {
+  ,mut data:i16 = nil
+  ,comb setter(ref self, v) {
     self.data = v
     self::[valid] = v != 33
   }
 )
 
-mut x:custom = ?
+mut x:custom = nil
 
 cassert x?
 x.data = 33
@@ -1242,9 +1306,9 @@ adding optional to each of the tuple fields.
 ```
 const complex = (
   ,reg v1:string = "foo"
-  ,v2:string = ?
+  ,mut v2:string = nil
 
-  ,setter = comb(ref self, v) {
+  ,comb setter(ref self, v) {
      self.v1 = v
      self.v2 = v
   }
@@ -1280,80 +1344,67 @@ Variable initialization indicates the default value set every cycle and the
 optional (`::[valid]` attribute).
 
 
-The `const` and `mut` statements require an initialization value for each cycle.
-Pyrope only has undefined values unless explicitly indicated. A variable has an
-undefined value if and only if the value is set to `nil` or all the bits are
-unknown (`0sb?`). Undefined variables always have invalid optional
-(`::[valid]==false`), and defined can have valid or invalid optional.
+The `const` and `mut` statements require an explicit initialization value for
+each cycle. There are exactly two ways to produce an undefined value:
 
+* **`nil`** — the variable is *invalid* (`::[valid]==false`). Reading it is
+  an assertion error at simulation and a compile error at elaboration
+  wherever the compiler can prove the read. Use `nil` when there is no
+  meaningful value yet.
+* **`0sb?`** (and related bit-literal forms like `0b101?`, `0b??10`) —
+  unknown bits, behaving like Verilog `x`. The variable is still *valid*
+  from the optional standpoint; only the bits are unknown. Use this for
+  don't-care states or deliberately unobserved bits.
 
-On any assignment (`v = _`) where the rhs is a single underscore `_`, the
-variable optional is set to false, and it is assigned the default value:
-
-* `0` for integer
-* `false` for boolean
-* `""` for string
-* `nil` otherwise
+The bare `_` sink and the bare `?` shorthand have been removed in favor of
+these two explicit values. Every initialization must supply a concrete
+expression — a literal (`0`, `false`, `""`, `0sb?`), `nil`, or a normal
+expression.
 
 ```
-mut a:int = ?
-cassert a==0 and a::[valid] == false and not a?
+mut a:int = 0
+cassert a==0 and a::[valid] and a?
 
-mut b:int = 0
-cassert b==0 and b::[valid] and b?
-b = nil
+mut b:int = nil
 cassert b==nil and b::[valid] == false and not b?
+b = 0
+cassert b==0 and b::[valid] and b?
 
-mut c:comb(a1) = ?
-cassert c == nil and c::[valid]==false
-c = comb(a1) { cassert true }
-cassert c!= nil and c::[valid]
-
-mut d:[] = ?               // empty tuple
+mut d:[] = ()              // empty tuple literal
 cassert d != nil and d::[valid]
-cassert d[0] == nil and !d[0]::[valid]
 
-mut e:int = nil
-cassert e==nil and !e::[valid] and not e?
-e = 0
-cassert e==0 and e::[valid] and e?
+mut e:int = 0sb?           // valid but with unknown bits
+cassert e::[valid] and e != 0  // any comparison against `?` is unknown
 ```
 
-The same rules apply when a tuple or a type is declared.
+The same rules apply when a tuple or a type is declared. Tuple fields must
+also use explicit initial values:
 
 ```
 const a = "foo"
 
 mut at1 = (
-  ,a:string
+  ,const a:string = a     // copy enclosing 'a' as the initial value
 )
-cassert at1[0] == "foo"
-cassert at1 !has "a"    // at1.a undefined
+cassert at1.a == "foo"
 
 mut at2 = (
-  ,a:string = ?
+  ,mut a:string = nil     // invalid field
 )
-cassert at2.a == ""  and at2.a::[valid]==false
+cassert at2.a::[valid] == false
 at2.a = "torrellas"
 cassert at2.a == "torrellas" and at2[0] == "torrellas"
-
-mut at3:at2 = ?
-cassert at3.a == ""  and at3.a::[valid]==false
-
-mut at4:at2 = (a="josep")
-cassert at4.a == "josep"  and at4.a::[valid] and at4::[valid]
-
 ```
 
-Conditional path affect variable initialization and values. If all the
-conditional passes assign a value, the valid will be true. If only one path
+Conditional paths affect variable initialization and values. If all the
+conditional paths assign a value, the valid will be true. If only one path
 assigns a value, the valid will be set only on that path, but the data may
 always have the path.
 
 ```
-mut x=_
-mut y=2
-mut z=_
+mut x:int = nil
+mut y:int = 2
+mut z:int = nil
 if rand {
   x = 3
   y = 4
@@ -1361,7 +1412,6 @@ if rand {
 }else{
   z = 6
 }
-assert x==3  // Simplified due to the _ initialization
 assert rand      implies x::[valid]
 assert x::[valid] implies rand
 
@@ -1374,13 +1424,12 @@ assert  rand implies z == 5
 assert !rand implies z == 6
 ```
 
-It is also possible to assign to an underscore, it behaves like a sink. It may be useful when dealing
-with structured bindings ()multiple return values) with unused arguments.
-
+For structured bindings where one of the return values is unused, name the
+variable and treat the name as the documentation:
 
 ```
-const weird_pick_bits = comb(b:u32) -> (x:u1, _:u4) {
-  (x=b#[2..<3], b#[5])
+comb weird_pick_bits(b:u32) -> (x:u1, unused:u4) {
+  (x=b#[2..<3], unused=b#[5])
 }
 
 comb fcall_returns_2_values() -> (xx, yy) {
@@ -1388,12 +1437,6 @@ comb fcall_returns_2_values() -> (xx, yy) {
   yy = 7
 }
 
-const (a,_) = fcall_returns_2_values()
+const (a, b_unused) = fcall_returns_2_values()
 assert a == 3
-
-mut b:u8 = 3
-_ = a           // legal, but it is just a "read" to 'a'
-_ = 3
-b = ?
-assert b == 0 and not b::[valid]
 ```

@@ -520,7 +520,7 @@ synthesizable design.
 
 ```pyrope
 // file fifo.prp
-const fifo = mod(clk, rst, push, pop, din) -> (full, empty, dout) {
+mod fifo(clk, rst, push, pop, din) -> (full, empty, dout) {
   reg count:u3 = 0
 
   full  = count == 4

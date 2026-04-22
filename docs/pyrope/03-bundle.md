@@ -367,7 +367,7 @@ y2 = match mut one=1 ; one ++ z {  // same as: y2 = match (1,z) {
   == (1,2) { 4 }
 }
 
-const addb = comb(a, b:u32) -> (a:u32) { // same as: const addb = comb(a,b:u32)->(a:u32)
+comb addb(a, b:u32) -> (a:u32) {
   a = a + b
 }
 ```

@@ -18,7 +18,7 @@ Small Pyrope is a **hardware description language** with these fundamental chara
 
 ### 1. Storage Classes (NOT variable mutability)
 ```pyrope
-comptime SIZE = 16          // Compile-time constant (shorthand for comptime const)
+comptime const SIZE = 16    // Compile-time constant
 comptime mut counter = 0    // Mutable at compile time (elaboration)
 const my_constant = 42      // Immutable after assignment (NOT compile-time)
 mut my_wire = 0             // Combinational (no persistence across cycles)
@@ -30,9 +30,9 @@ reg my_state = 0            // Register (persistent across cycles)
 ```pyrope
 comb add(a:u8, b:u8) -> (result:u8) { result = a + b } // Combinational logic
 pipe[1] counter() -> (reg count:u8) { count += 1 }     // Moore machine (1-cycle pipeline)
-flow alu(in1, in2) -> (out) { /* explicit timing */ }  // Dataflow with timing
+mod alu(in1, in2) -> (out) { /* explicit timing */ }  // Dataflow / orchestration with timing
 ```
-**LLM Pitfall**: `comb`/`pipe`/`flow` are NOT just function modifiers - they define **hardware implementation strategy**. Small Pyrope does not support function capture variables; pass values as arguments.
+**LLM Pitfall**: `comb`/`pipe`/`mod` are NOT just function modifiers — they define **hardware implementation strategy**. `mod` is the only kind that can orchestrate pipelined calls (`await[N]`, `:@[N]`). Small Pyrope does not support function capture variables; pass values as arguments.
 
 ### 3. Bit Selection Syntax
 ```pyrope
@@ -41,7 +41,7 @@ mut bits = value#[3..=6]        // Extract bits 3-6 (NOT array indexing)
 value#[3] = 0                   // Set bit 3 (NOT array assignment)
 ```
 **LLM Pitfall**: `#[...]` is bit selection, NOT array/hash access. Use `[...]` for array indexing.
-**Literal Pitfall**: `_` is only a digit separator (`12_34__ == 1234`), while `?` is a don't-care/unknown bit in binary literals. Use `?` for default/uninitialized values (e.g., `mut x = ?`).
+**Literal Pitfall**: `_` is only a digit separator in numeric literals (`12_34__ == 1234`). `?` marks don't-care/unknown bits *inside* a binary literal (e.g., `0b101?`). There is no bare `_` sink and no bare `?` default — use `nil` for invalid values and `0sb?` for fully-unknown bits.
 
 ### 4. Tuple-Centric Everything
 ```pyrope
@@ -78,7 +78,7 @@ counter::[defer] += 1           // Deferred to end of cycle
 **LLM Pitfall**: Register updates can be immediate or deferred. A bare register
 name reads the current 'q' value, `::[defer]` is the end-of-cycle value, and
 `past[n](x)` reads `n` cycles ago. To snapshot 'q' before later in-cycle
-updates, copy it into a local (`let counter_q = counter`).
+updates, copy it into a local (`const counter_q = counter`).
 
 ### 8. Memory Declaration Syntax
 ```pyrope
@@ -102,7 +102,7 @@ mut out = ram.port[0][addr]:[rdport=0]      // Read port 0
 - Combinational logic (`mut`) updates immediately
 - `pipe` is a Moore machine (outputs always registered), may use `reg` for internal storage
 - `mod` has no constraints on registers or outputs
-- `flow` has two timing mechanisms: `await[N]` (declaration modifier that pipelines the whole RHS over N cycles) and `foo:@[N]` (pure timing type check, works on LHS and RHS uses)
+- `mod` has two pipeline-timing mechanisms: `await[N]` (declaration modifier that pipelines the whole RHS over N cycles) and `foo:@[N]` (pure timing type check, works on LHS and RHS uses)
 
 ### No Runtime Loops
 ```pyrope
@@ -126,7 +126,7 @@ test "description" {           // Test block with simulation
 
 1. **Don't use familiar keywords incorrectly**:
    - `class` doesn't exist - use tuples
-   - `function`/`def`/`fn` doesn't exist - use `comb`/`pipe`/`flow`/`mod`
+   - `function`/`def`/`fn` doesn't exist - use `comb`/`pipe`/`mod`
    - `while`/`for` loop bounds must be `comptime` (unrolled at elaboration)
    - `%` (modulo) is debug-only (too expensive for single-cycle hardware)
 
@@ -159,7 +159,7 @@ test "description" {           // Test block with simulation
 
 ### Variable Declaration
 ```pyrope
-comptime PI = 3.14              // Compile-time constant
+comptime const PI = 3           // Compile-time constant (no FP, so no 3.14)
 mut temp = calculation()        // Combinational
 reg accumulator = 0             // Persistent register
 ```

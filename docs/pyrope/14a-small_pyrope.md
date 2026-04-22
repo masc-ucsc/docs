@@ -20,7 +20,7 @@ Small Pyrope maintains Pyrope's expressiveness while reducing complexity:
 ### Basic Types
 Small Pyrope supports integers (`u8`, `i16`, `int`), `bool`, and `string`. Type annotations use `:` and are optional when they can be inferred.
 
-Number literals may include `_` separators with no meaning (`12_34__ == 1234`). Binary literals may include `?` bits (don't care/unknown). The `?` value also serves as the default/uninitialized value.
+Number literals may include `_` separators with no meaning (`12_34__ == 1234`). Binary literals may include `?` bits (don't care/unknown). For uninitialized / invalid variables, use the explicit `nil` (invalid) or `0sb?` (unknown bits) — there is no bare `_` or bare `?` shorthand.
 
 Attributes are set at declaration with `:[...]` and are independent of the type: `name:Type:[attr=value]`. Use `::[attr]` to read attribute values (see Attributes section).
 ```pyrope
@@ -37,18 +37,15 @@ mut text:string = "hello"
 mut combined = text ++ " world"  // Tuple concatenation (strings are tuples of characters)
 puts "Debug: value is ", combined   // Print for debugging
 
-// Default initialization
-mut x = ?               // Type default (0 for int, false for bool, "" for string)
-mut y = 0               // Explicit value
+// Initialization always requires a concrete value — no bare `_` or `?`.
+mut y:int = 0           // Explicit value
+mut u:int = 0sb?        // Valid, but all bits unknown
+mut z:int = nil         // Invalid; can only be copied until assigned a real value
 
-// '?' bits are unknown (valid but unobserved, like Verilog x)
+// Inside bit literals, '?' marks unknown bits (valid but unobserved, like Verilog x)
 // Arithmetic works: 0sb? + 1 = 0sb??, 0sb? | 1 = 1
 mut unknown = 0b101?    // Bit 0 is unknown
 mut partial = 0b??10    // Multiple unknown bits
-
-// 'nil' is invalid (NOT unknown) — any use is an assertion error
-// The compiler must prove all nil uses are eliminated or compile error
-mut z = nil             // invalid, can only be copied until assigned a real value
 ```
 
 ### Variable Storage Classes
@@ -136,8 +133,8 @@ mut out1 = ram.port[0][addr3]:[rdport=0] // Read port 0
 mut out2 = ram.port[1][addr4]:[rdport=1] // Read port 1
 ```
 
-## Lambda Types: `comb`, `pipe`, `flow`, `mod`
-Small Pyrope functions do not support capture variables (e.g. `comb f[a] { ... }` is not supported). Pass values explicitly as arguments.
+## Lambda Types: `comb`, `pipe`, `mod`
+Small Pyrope functions do not support capture variables (e.g. `comb f[a] { ... }` is not supported) and do not include the `mod` orchestration features (`await[N]` and `:@[N]`). Pass values explicitly as arguments.
 
 ### Combinational or Pure Functions (`comb`)
 
@@ -199,11 +196,11 @@ mod fifo(push:bool, pop:bool, data_in:u18) -> (data_out:u18, full:bool, empty:bo
 }
 ```
 
-### Flow (Connecting Blocks)
+### Module (pipeline orchestration)
 
-A flow connects combinational, pipeline, or other flow blocks with explicit
-timing control. Flows can also use `reg` for persistent state across cycles.
-There are two complementary timing mechanisms inside `flow` blocks:
+A `mod` connects combinational, pipeline, or other `mod` blocks with
+explicit timing control, and can hold `reg` state across cycles. There are
+two complementary timing mechanisms inside `mod` blocks:
 
 * `await[N]` as a declaration modifier: pipelines the whole RHS over N
   cycles (e.g., `await[3] tmp = mul(a, b)`). It is the only *action* that
@@ -215,14 +212,14 @@ There are two complementary timing mechanisms inside `flow` blocks:
 pipe mul(a, b) -> (c) { c = a * b }
 pipe add(a, b) -> (c) { c = a + b }
 
-flow alu(in1, in2) -> (out_pipelined, out_live) {
+mod alu(in1, in2) -> (out_pipelined, out_live) {
   await[3] tmp              = mul(in1, in2)
   await[3] in2_d            = in2
   await[1] out_pipelined:@[4] = add(tmp:@[3], in2_d:@[3])
   await[1] out_live:@[4]      = add(tmp:@[3], in2_d:@[3])
 }
 
-flow accum_alu(in1, in2) -> (out) {
+mod accum_alu(in1, in2) -> (out) {
   reg total:[init=0]
   await[3] tmp = mul(in1, in2)
   const sum_aligned = add(total:@[3], tmp:@[3])  // both operands checked at cycle 3
@@ -231,13 +228,13 @@ flow accum_alu(in1, in2) -> (out) {
 }
 ```
 
-Inside flow blocks, every RHS value at a non-zero cycle must reach it
+Inside `mod` blocks, every RHS value at a non-zero cycle must reach it
 through an `await[N]` declaration; there is no implicit alignment. Use
 `foo:@[N]` on either side to document or enforce cycle expectations. As
 usual, variables can also have type and attribute checks.
 
 ```pyrope
-const (tmp:u32, tmp2:u3:[something=true]) = some_flow_call(a, b:@[3]:u32, c:@[2]::[xxx_should_be_set=true])
+const (tmp:u32, tmp2:u3:[something=true]) = some_mod_call(a, b:@[3], c:@[2]:[xxx_should_be_set=true])
 ```
 
 

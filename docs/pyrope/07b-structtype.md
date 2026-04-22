@@ -25,25 +25,27 @@ equivalance)[07-typesystem.md#Type_equivalence].
 
 ```
 const Animal = (
-  legs:int = ?,
-  name = "unnamed",
-  say_name = comb() { puts name }
+  mut legs:int = nil,
+  mut name = "unnamed",
+  comb say_name() { puts name }
 )
 
 const Dog = Animal ++ (
-  setter = comb(ref self) { self.legs = 4 },
-  bark = comb() { puts "bark bark" }
+  comb setter(ref self) { self.legs = 4 },
+  comb bark() { puts "bark bark" }
 )
 
+comb bird_setter_default(ref self)           { self.legs = 2 }
+comb bird_setter_animal(ref self, a:Animal)  { self.legs = 2; name = "bird animal" }
+
 const Bird = Animal ++ (
-  seeds_eaten:int = ?,
-  setter = comb(ref self) { self.legs = 2 }
-      ++ comb(ref self, a:Animal) { self.legs = 2; name = "bird animal" },
-  eat_seeds = comb(ref self, n) { self.seeds_eaten += n }
+  mut seeds_eaten:int = nil,
+  const setter = [bird_setter_default, bird_setter_animal],
+  comb eat_seeds(ref self, n) { self.seeds_eaten += n }
 )
 
 const Greyhound = Dog ++ ( // also extends Dog
-  race = comb() { puts "running fast" }
+  comb race() { puts "running fast" }
 )
 ```
 
@@ -89,7 +91,7 @@ b_vec[0] = g:Greyhound  // OK, explicit conversion
 b_vec[0] = b:Bird       // OK, 'b does b'
 b_vec[0] = a:Animal     // OK, explicit conversion
 
-const do_animal_vec = comb(a_vec:[?]Animal) -> (r:[?]Animal) {
+comb do_animal_vec(a_vec:[?]Animal) -> (r:[?]Animal) {
   r = a_vec
   r[0] = d:Dog  // OK `d does r[0]`
 }
@@ -137,7 +139,7 @@ The following `f` method has no constraints on the input arguments. It can pass
 anything, but constraints the return value to be an integer.
 
 ```
-const f = comb(a,b) -> (r:int) { r = xx(a) + xx(b) }
+comb f(a,b) -> (r:int) { r = xx(a) + xx(b) }
 ```
 
 The type can be inferred for arguments and return values. If the lambda
@@ -151,7 +153,7 @@ The `f1` example constraints `a` and `b` arguments to have a type that
 satisfies `(a does Some_type_class) and (b does Some_type_class)`.
 
 ```
-const f1 = comb<T:Some_type_class>(a:T,b:T) -> (r:int) { r = xx(a) + xx(b) }
+comb f1<T:Some_type_class>(a:T,b:T) -> (r:int) { r = xx(a) + xx(b) }
 ```
 
 
@@ -175,17 +177,17 @@ overloading check.
 
 
 ```
-const fa_t = comb(a:Animal) { }
-const fd_t = comb(d:Dog) { }
+comb fa_t(a:Animal) { }
+comb fd_t(d:Dog) { }
 
-const call_animal = comb(a:Animal) {
+comb call_animal(a:Animal) {
    puts a.name // OK
 }
-const call_dog = comb(d:Dog) {    // OK
+comb call_dog(d:Dog) {    // OK
    d.bark()    // OK
 }
 
-const f_a = comb(fa:fa_t) {
+comb f_a(fa:fa_t) {
   mut a:Animal = ?
   mut d:Dog = ?
   fa(a)  // OK
@@ -194,7 +196,7 @@ const f_a = comb(fa:fa_t) {
 f_a(call_animal) // OK
 f_a(call_dog)    // compile error, `fa_t does call_dog` is false
 
-const f_d = comb(fd:fd_t) {
+comb f_d(fd:fd_t) {
   mut a:Animal = ?
   mut d:Dog = ?
   fd(a)  // compile error, `a does Dog` is false
@@ -225,7 +227,7 @@ in-place with the relative order left.
 
 
 ```
-const m = comb(a:int, ...x:(_:string, c:int, d), y:int) {
+comb m(a:int, ...x:(_:string, c:int, d), y:int) {
   assert a == 1
   assert x[0] == "here"
   assert x[1] == 2 == x.c
@@ -258,22 +260,16 @@ tuple semantics and the relationship is preserved.
 
 When `x` and `y` are in a lambda passed as reference to another lambda (lambda
 reference), the relationship is not covariant but contravariant. `Dog does
-Animal` is true, but `:comb(x:Dog)->() does _:fun(x:Animal)->()` is false. The
+Animal` is true, but `comb(x:Dog)->()` type `does` type `:fun(x:Animal)->()` is false. The
 reason is shown in the previous example. The `comb(fd:fd_t)` can be called
 with `call_animal` because the fields accessed by `call_animal` are only a
 subset of `Dog` and hence if called inside `f_d` it can handle the `Dog` type.
 The opposite is not the case.
 
 
-`:comb(x1)->(x2) does _:fun(y1)->y2` check is equivalent to `(y1 does x1) and (x2
-does y2)`.
-
-
-
-
-Given a lambda passed as argument (`:comb(x:fun(c:c_t)->(d:d_t))->(y)`), the
+Given a lambda passed as argument (`comb(x:fun(c:c_t)->(d:d_t))->(y)`), the
 check when passing the lambda as argument to `x` a function like
-`comb(w:w_t)->(z:z_t)`. In this case, the `:comb(:w_t)->(_:z_t) does
+`comb(w:w_t)->(z:z_t)`. In this case, the `comb(:w_t)->(_:z_t) does
 comb(:c_t)->(_:d_t)` is a contravariant test for inputs and covariant for
 outputs. This makes it equivalent to `(_:c_t does _:w_t) and (_:z_t does _:d_t)`.
 
@@ -309,18 +305,28 @@ There is a priority of overloading in the tuple order. If the intention is to
 intercept, the lambda must be added at the head of the tuple entry.
 
 ```
+comb base_fun1() { 1 }             // catch all
+comb base_fun2() { 2 }             // catch all
+comb base_fun3() { 3 }             // catch all
 const base = (
-  fun1 = comb() { 1 },         // catch all
-  fun2 = comb() { 2 },         // catch all
-  fun3 = comb() { 3 }          // catch all
-)
-const ext = base ++ (
-  fun1 = comb(a, b) { 4 },   // overwrite allowed with extends
-  fun2 = comb(a, b) { 5 } ++ comb() { 6 } ++ base.fun2,  // append
-  fun3 = comb(a, b) { 7 } ++ comb() { 8 } ++ base.fun3   // prepend
+  const fun1 = base_fun1,
+  const fun2 = base_fun2,
+  const fun3 = base_fun3
 )
 
-mut t:ext = ?
+comb ext_fun1(a, b) { 4 }
+comb ext_fun2_ab(a, b) { 5 }
+comb ext_fun2_noarg() { 6 }
+comb ext_fun3_ab(a, b) { 7 }
+comb ext_fun3_noarg() { 8 }
+
+const ext = base ++ (
+  const fun1 = ext_fun1,                                        // overwrite
+  const fun2 = [ext_fun2_ab, ext_fun2_noarg, base_fun2],        // append
+  const fun3 = [ext_fun3_ab, ext_fun3_noarg, base_fun3]         // prepend
+)
+
+mut t:ext = nil
 
 // t.fun1 only has ext.fun1
 assert t.fun1(a=1,b=2) == 4
@@ -338,8 +344,9 @@ assert t.fun3() == 8     // ext.fun3 catches all ahead of ext.fun3
 A more traditional "overload" calling the is possible by calling the lambda directly:
 
 ```
+comb x_fun1() { base.fun1() + 100 }
 const x = base ++ (
-  fun1 = comb() { base.fun1() + 100 }
+  const fun1 = x_fun1
 )
 ```
 
@@ -360,35 +367,23 @@ lambda call:
 
 * If the list is empty, generate a compile error (no possible lambda to call).
 
-* Once a list of ordered modules is found, evaluate the `where COND`. `COND`
-  can include inputs, self, and outputs. If a `COND` is comptime true (no
-  `COND` is the same as `true`), stop selecting additional modules. If `COND`
-  is comptime `false` remove from the list and continue. All the selected
-  modules will be executed, but the output will be selected based on priority
-  order based on the `COND` result at runtime.
+* If the list has more than one entry, and any of them is a `pipe`/`mod`,
+  generate a compile error. Static dispatch resolves to exactly one
+  `comb`/`pipe`/`mod` based on arg and return types.
 
-* If the list has more than one entry, and any of them is a `proc`, generate a
-  compile error. Dynamic dispatch only works with `comb` functions.
-
-If the `where COND` is not compile time there must be a `where true` condition
-to catch the default behavior.
-
-The previous rules imply that Pyrope has some type of dynamic dispatch. The
-types for the inputs and outputs must be known at compile time (static
-dispatch) but the `where` condition may be known at run-time as long as the
-lambda is immutable (`comb`).
-
-
-The `where` condition is not considered part of the type system, but a syntax
-sugar to allow several function implementations depending on some condition.
-The alternative and equivalent syntax is to add all the `if/else` chain at
-every call but this result in not so maintanable code.
+Pyrope does not have a `where` clause on lambda declarations — dispatch is
+purely static (by argument and return types). Any runtime dispatch is
+expressed explicitly with an `if`/`elif` chain at the call site, picking
+which named lambda to invoke. This keeps control flow visible locally; the
+compiler does not hide the branch behind a declaration-time predicate.
 
 
 ```
-mut fun_list = comb(a, b) { a + b }
-fun_list ++= comb(a, b, c) { a + b + c }
-fun_list ++= comb(a, b, c, d) { a + b + c + d }
+comb fun_list_ab(a, b)       { a + b }
+comb fun_list_abc(a, b, c)   { a + b + c }
+comb fun_list_abcd(a, b, c, d) { a + b + c + d }
+
+const fun_list = [fun_list_ab, fun_list_abc, fun_list_abcd]
 
 assert fun_list::[size] == 3    // 3 lambda entries in fun_list
 
@@ -398,18 +393,21 @@ assert fun_list(1,2,4,5) == 12
 assert fun_list(1,2,4,5,6) == 18 // compile error, no function with 5 args
 
 
-fun_list ++= comb(a, b) { 100 }
-assert fun_list(1, 2) == 3
+comb fun_list_ab100(a, b) { 100 }
+const fun_list2 = [fun_list_ab, fun_list_abc, fun_list_abcd, fun_list_ab100]
+assert fun_list2(1, 2) == 3       // first match wins
 
-fun_list = comb(a, b) { 200 } ++ fun_list
-assert fun_list(1, 2) == 200
+comb fun_list_ab200(a, b) { 200 }
+const fun_list3 = [fun_list_ab200, fun_list_ab, fun_list_abc, fun_list_abcd]
+assert fun_list3(1, 2) == 200
 ```
 
 For untyped named argument calls:
 
 ```
-mut f1 = comb(a, b) { a + b + 100 }
-f1 ++= comb(x, y) { x + y + 200 }
+comb f1_ab(a, b) { a + b + 100 }
+comb f1_xy(x, y) { x + y + 200 }
+const f1 = [f1_ab, f1_xy]
 
 assert f1(a=1, b=2) == 103
 assert f1(x=1, y=2) == 203
@@ -419,9 +417,10 @@ assert f1(1, 2) == 103  // first in list
 For typed calls:
 
 ```
-mut fo = comb(a:int, b:string) -> (result:bool) { result = true }
-fo ++= comb(a:int, b:int) -> (result:bool) { result = false }
-fo ++= comb(a:int, b:int) -> (result:string) { result = "hello" }
+comb fo_is(a:int, b:string) -> (result:bool)   { result = true }
+comb fo_ii_b(a:int, b:int)  -> (result:bool)   { result = false }
+comb fo_ii_s(a:int, b:int)  -> (result:string) { result = "hello" }
+const fo = [fo_is, fo_ii_b, fo_ii_s]
 
 const a = fo(3, hello)
 assert a == true
@@ -434,39 +433,34 @@ const c:string = fo(3, 300)
 assert c == "hello"
 ```
 
-For conditional argument calls:
+For runtime-conditional dispatch, write the condition chain directly at the
+call site:
 
 ```
-mut f1 = comb(a, b) where a > 40 { b + 100 }
-      ++ comb(a, b) -> (x) where x > 300 { x = b + 200 } // output x
-      ++ comb(a, b) -> (a) where a > 20 { a = b + 300 } // input a
-      ++ comb(a, b) -> (x) where x > 10 { x = b + 400 } // output x
-      ++ comb(a, b) { a + b + 1000 } // default
+comb f1_a40(a, b)          { b + 100 }
+comb f1_x300(a, b) -> (x)  { x = b + 200 } // output x
+comb f1_a20(a, b)  -> (a)  { a = b + 300 } // input a
+comb f1_x10(a, b)  -> (x)  { x = b + 400 } // output x
+comb f1_default(a, b)      { a + b + 1000 } // default
 
-mut fun_manual = comb(a, b) {  // equivalent but not as maintainable
+comb f1(a, b) {
   if a > 40 {
-    b + 100
-  } elif {
-    const x = b + 200
-    if x > 300 {
-      (x=x)
-    } elif a > 20 {
-      b + 300
-    } elif {
-      const tmp = a + b
-      if tmp > 10 {
-        (a=tmp)
-      } else {
-        a + b + 1000
-      }
-    }
+    f1_a40(a, b)
+  } elif (b + 200) > 300 {
+    f1_x300(a, b)
+  } elif a > 20 {
+    f1_a20(a, b)
+  } elif (b + 400) > 10 {
+    f1_x10(a, b)
+  } else {
+    f1_default(a, b)
   }
 }
 
-test "check equiv" {
+test "check f1" {
   for a in -100..=100 {
     for b in -100..=100 {
-      assert f1(a,b) == fun_manual(a,b)
+      assert f1(a, b) != nil
     }
   }
 }
@@ -478,7 +472,7 @@ Add-hoc polymorphism overloads a function, and parametric polymorphism allows to
 parametrize types based on arguments.
 
 ```
-const Param_type = comb(a) { return (xx:a = _) }
+comb Param_type(a) { return (mut xx:a = nil) }
 
 const x:Param_type(string) = (xx="hello")
 const x:Param_type(int)    = (xx=130)
@@ -490,19 +484,19 @@ const x:Param_type(int)    = (xx=130)
 Subtype polymorphism: A subtype provides functionality/api for another super type.
 ```
 const Animal = (
-  speak = comb(self) { _ }
+  comb speak(self) { }
 )
 const Cat = Animal ++ (
-  speak = comb(self) { puts "meaow" }
+  comb speak(self) { puts "meaow" }
 )
 const Bird = Animal ++ (
-  speak = comb(self) { puts "pio pio" }
+  comb speak(self) { puts "pio pio" }
 )
 ```
 
 Parametric polymorphism: Same function works for many types
 ```
-const smallest = comb(...a) {
+comb smallest(...a) {
   const x = a[0]
   for i in a[1..] {
     x = i when i < x
@@ -513,14 +507,15 @@ const smallest = comb(...a) {
 
 Ad-hoc polymorphism: capacity to overload the same lambda name with different types.
 ```
-const speak = comb(a:Bird) { puts "pio pio" }
-         ++ comb(a:Cat) { puts "meaow" }
+comb speak_bird(a:Bird) { puts "pio pio" }
+comb speak_cat(a:Cat)   { puts "meaow" }
+const speak = [speak_bird, speak_cat]
 ```
 
 Coercion polymorphism: Capacity to cast a type to another
 ```
 const Type1 = (
-  setter = comb(ref self, a:int) { }
+  comb setter(ref self, a:int) { }
 )
 const a:Type1 = 33
 ```
@@ -537,17 +532,17 @@ immutable, new methods can be added like in mixin.
 
 ```
 const Say_mixin = (
-  say = comb(s) { puts s }
+  comb say(s) { puts s }
 )
 
 const Say_hi_mixin = (
-  say_hi = comb() { self.say("hi {}", self.name) },
-  say_bye = comb() { self.say("bye {}", self.name) }
+  comb say_hi() { self.say("hi {}", self.name) },
+  comb say_bye() { self.say("bye {}", self.name) }
 )
 
 const User = (
-  name:string = ?,
-  setter = comb(ref self, n:string) { self.name = n }
+  mut name:string = "",
+  comb setter(ref self, n:string) { self.name = n }
 )
 
 const Mixing_all = Say_mixin ++ Say_hi_mixin ++ User
@@ -586,19 +581,19 @@ There are also two ways to concatenate tuples in Pyrope. `t1 ++ t2` and
 ```
 const Int1 = (
   mut counter:int:[private] = 0,
-  add = comb(ref self, v) { self.counter += v },
-  get = comb(self) -> (result:int) { result = self.counter },
-  api_pending = comb(ref self, x:int) -> (o:string) { _ }
+  comb add(ref self, v) { self.counter += v },
+  comb get(self) -> (result:int) { result = self.counter },
+  comb api_pending(ref self, x:int) -> (o:string) { }
 )
 
 const Int2 = (
   mut counter:int:[private] = 0,
-  accumulate = comb(ref self, v) { self.counter += v; self.counter },
-  api_pending = comb(ref self, x:string) -> (o:string) { _ }
+  comb accumulate(ref self, v) { self.counter += v; self.counter },
+  comb api_pending(ref self, x:string) -> (o:string) { }
 )
 
 const Combined = (...Int1, ...Int2,
-  api_pending = comb(ref self, x:int) -> (o:string) {
+  comb api_pending(ref self, x:int) -> (o:string) {
     self.add(x)
     o = string(self.accumulate(self.get()))
   }
@@ -613,21 +608,21 @@ function is `nil`.
 
 ```
 const Interface = (
-  const add = comb(ref self, x), // undefined method
-  const sub = comb(ref self, x) { self.add(-x) }
+  comb add(ref self, x),          // undefined method
+  comb sub(ref self, x) { self.add(-x) }
 )
 
 Interface.add(3)                // compile error, undefined method
 
 const My_obj = (
-  val1:u8 = 0,
-  const add = comb(ref self, x) { self.val += x }
+  mut val1:u8 = 0,
+  comb add(ref self, x) { self.val += x }
 ) ++ Interface                  // OK, but not recommended
 
 const My_obj2 = (
   ...Interface,                 // recommended
-  val1:u8 = 0,
-  const add = comb(ref self, x) { self.val += x }
+  mut val1:u8 = 0,
+  comb add(ref self, x) { self.val += x }
 )
 cassert My_obj equals My_obj2   // same behavioir no defined overlap fiels
 
@@ -664,7 +659,7 @@ explicitly create the new methods with some support method.
 
 
 ```
-const exclude = comb(o,...a) {
+comb exclude(o,...a) {
   const new_tup = ()
   for (key,idx,e) in zip(o.keys(),o.enumerate()) {
     // create single tupe and append to preserve key and position order
@@ -676,21 +671,21 @@ const exclude = comb(o,...a) {
 }
 
 const Shape = (
-  name:string = ?,
-  area = comb(self) -> (result:i32) { _ },            // undefined
-  increase_size = comb(ref self, x:i12) { _ },  // undefined
+  mut name:string = "",
+  comb area(self) -> (result:i32) { },           // undefined
+  comb increase_size(ref self, x:i12) { },       // undefined
 
-  setter = comb(ref self, name) { self.name = name }, // implemented
-  say_name = comb(self) { puts "name:{}", name }
+  comb setter(ref self, name) { self.name = name }, // implemented
+  comb say_name(self) { puts "name:{}", name }
 )
 
 const Circle = (
   ...exclude(Shape, 'setter'),
 
-  setter = comb(ref self) { Circle.setter(this, "circle") },
-  increase_size = comb(ref self, x:i12) { self.rad *= x },
-  rad:i32 = ?,
-  area = comb(self) -> (result:i32) {
+  comb setter(ref self) { Circle.setter(this, "circle") },
+  comb increase_size(ref self, x:i12) { self.rad *= x },
+  mut rad:i32 = 0,
+  comb area(self) -> (result:i32) {
      const pi = import("math").pi
      result = pi * self.rad * self.rad
   }
@@ -699,13 +694,15 @@ const Circle = (
 
 ## Row type
 
-Pyrope has structural typing, but also allows to infer the types. The `where`
-statement can be used to implement some functionality that resembles the row
-type inference. The `where` clause is followed by a list of comma separated
-conditions that must evaluate true for the function to be valid.
+Pyrope has structural typing and allows inferring types. Preconditions that
+used to be carried on a `where` clause are now plain `cassert` / `assert`
+statements at the top of the body (compile-time where possible, runtime
+otherwise). The caller is responsible for meeting them.
 
 ```
-const rotate = comb(a) where a has 'x', a has 'y' and a.y != 30 {
+comb rotate(a) {
+  cassert a has 'x' and a has 'y'
+  assert a.y != 30
   mut r = a
   r.x = a.y
   r.y = a.x
@@ -713,5 +710,5 @@ const rotate = comb(a) where a has 'x', a has 'y' and a.y != 30 {
 }
 ```
 
-The previous rotate function is difficult to implement with a traditional
-structural typing.
+Callers decide which `rotate`-like lambda to call based on the tuple shape
+using an `if`/`elif` chain or a match on tuple fields.

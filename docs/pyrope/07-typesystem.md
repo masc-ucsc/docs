@@ -94,7 +94,7 @@ const t1 = (a:int=1, b:string)
 const t2 = (a:int=100, b:string)
 mut v1 = (a=33, b="hello")
 
-const f1 = comb() {
+comb f1() {
   (a=33, b="hello")
 }
 
@@ -115,11 +115,11 @@ Since the `puts` command understands types, it can be used on any variable, and
 it is able to print/dump the results.
 
 ```
-const At:int(33..) = ?      // number bigger than 32
+const At:int:[range=33..<inf] = nil    // number bigger than 32
 const Bt = (
-  c:string = ?,
-  d = 100,
-  setter = comb(ref self, ...args) { self.c = args }
+  mut c:string = nil,
+  mut d = 100,
+  comb setter(ref self, ...args) { self.c = args }
 )
 
 mut a:At = 40
@@ -169,14 +169,16 @@ These are the detailed rules for the `a does b` operator depending on the `a` an
 * The lambdas have a more complicated set of rules explained later.
 
 ```
-assert (a:int:(max=33, min=0) does (a:int(20, 5)))
-assert (a:int(0..=33) !does (a:int(50, 5)))
+assert (a:int:[max=33, min=0] does (a:int:[max=20, min=5]))
+assert (a:int:[range=0..=33] !does (a:int:[max=50, min=5]))
 
 assert (a:string, b:int) does (a:"hello", b:33)
 assert ((b:int, a:string) !does (a:"hello", b:33)) // order matters in tuples
 
-assert _:comb(x, xxx2) -> (y, z) does _:comb(x) -> (y, z)
-assert (_:comb(x) -> (y, z) !does _:comb(x, xxx2) -> (y, z))
+type T_complex = comb(x, xxx2) -> (y, z)
+type T_simple  = comb(x)       -> (y, z)
+assert _:T_complex does _:T_simple
+assert _:T_simple !does _:T_complex
 ```
 
 For named tuples, this code shows some of the corner cases:
@@ -201,14 +203,13 @@ Ignoring the value is what makes `equals` different from `==`. As a result
 different functionality functions could be `equals`.
 
 ```
-const a = comb() { 1 }
-const b = comb() { 2 }
-assert a equals _:comb()    // 1 !equals :comb()
+comb a() { 1 }
+comb b() { 2 }
+type ab_type = comb()
+assert a equals ab_type
 
 assert a() != b()              // 1 != 2
 assert a() equals b()          // 1 equals 2
-
-assert _:a equals _:comb()
 ```
 
 ## Type check with values
@@ -280,9 +281,11 @@ assert t4 equals t1
 assert t4 is t1
 assert t4 !is t2
 
-const f2 = comb(x) where x is X1 {
-  x.b + 1
-}
+comb f2_x1(x:X1) { x.b + 1 }
+comb f2_other(x) { 0 }
+
+// Dispatch explicitly at the call site:
+const result = if x is X1 { f2_x1(x) } else { f2_other(x) }
 ```
 
 ## Enums with types
@@ -295,8 +298,8 @@ time.
 
 ```
 const Rgb = (
-  c:u24,
-  setter = comb(ref self, c) { self.c = c }
+  mut c:u24,
+  comb setter(ref self, c) { self.c = c }
 )
 
 const Color = enum(
@@ -324,7 +327,7 @@ const ADT = enum(
   Robot:(charges_with:string) = ?
 )
 
-const nourish = comb(x:ADT) {
+comb nourish(x:ADT) {
   match x {
     == ADT.Person { puts "eating:{}", x.eats }
     == ADT.Robot { puts "charging:{}", x.charges_with }
@@ -399,7 +402,7 @@ control-flow divergences, the worst possible path is considered.
 
 ```
 mut a = 3                  // a: current(max=3,min=3) constrain()
-mut c:int(0..=10) = ?      // c: current(max=0,min=0) constrain(max=10,min=0)
+mut c:int:[range=0..=10] = ? // c: current(max=0,min=0) constrain(max=10,min=0)
 if b {
   c = a + 1                // c: current(max=4,min=4) constrain(max=10,min=0)
 } else {
@@ -517,7 +520,7 @@ const Vtype = variant(str:String, num:int, b:bool)
 const x1a:Vtype = "hello"                 // implicit variant type
 const x1b:Vtype = (str="hello")           // explicit variant type
 
-comptime x2:Vtype = "hello"                  // comptime
+comptime const x2:Vtype = "hello"                  // comptime
 
 cassert x1a.str == "hello" and x1a == "hello"
 cassert x1b.str == "hello" and x1b == "hello"
@@ -556,9 +559,9 @@ const ct = (
 )
 // different order
 const dt = (
-  d:u32 = ?,
-  c:string = ?,
-  setter = comb(ref self, x:at) { self.d = x.d; self.c = x.c }
+  mut d:u32 = nil,
+  mut c:string = nil,
+  comb setter(ref self, x:at) { self.d = x.d; self.c = x.c }
 )
 
 mut b:bt = (c="hello", d=10000)
@@ -598,15 +601,13 @@ assert a[1]::[id] == ':1:c' and a.c::[id] == ':1:c'
 ```
 
 Function definitions allocate a tuple, which allows to introspect the
-function but not to change the functionality. Functions have 3 fields `inputs`,
-`outputs`, `where`. The `where` is a function that always returns true if unset
-at declaration.
+function but not to change the functionality. Functions have two fields:
+`inputs` and `outputs`.
 
 ```
-const fu = comb(a, b=2) -> (c) where a > 10 { c = a + b }
+comb fu(a, b=2) -> (c) { c = a + b }
 assert fu::[inp] equals ('a', 'b')
 assert fu::[out] equals ('c')
-assert fu::[where](a=200) and !fu::[where](a=1)
 ```
 
 This means that when ignoring named vs unnamed calls, overloading behaves like
@@ -615,21 +616,25 @@ this:
 ```
 const x:u32 = fn(a1, a2)
 
-const model_poly_call = comb(fn, ...args) -> (out) {
+comb model_poly_call(fn, ...args) -> (out) {
   for f in fn {
      continue unless f::[inp] does args
      continue unless f::[out] does out
-     return f(args) when f::[where](args)
+     return f(args)
   }
 }
 const x:u32 = model_poly_call(fn, a1, a2)
 ```
 
+Any runtime precondition is expressed by the caller (e.g., with an
+`if`/`elif` chain that picks which named lambda to invoke); there is no
+`where` clause on declarations.
+
 There are several uses for introspection, but for example, it is possible to build a
 function that returns a randomly mutated tuple.
 
 ```
-const randomize::[debug] = comb(ref self) {
+comb randomize::[debug](ref self) {
   const rnd = import("prp/rnd")
   for i in ref self {
     if i equals _:int {
@@ -675,13 +680,13 @@ Any call to a function or tuple outside requires a prior `import` statement.
 // file: src/my_fun.prp
 comb fun1(a, b) { a + b }
 comb fun2(a) {
-  const inside = comb() { 3 }
+  comb inside() { 3 }
   a
 }
 comb another(a) { a }
 
 const mytup = (
-  call3 = comb() { puts "call called" }
+  comb call3() { puts "call called" }
 )
 ```
 
@@ -845,7 +850,7 @@ or register reference.
 
 ```
 const bpred = ( // complex predictor
-  taken = comb() { self.some_table[som_var] >= 0 }
+  comb taken() { self.some_table[som_var] >= 0 }
 )
 
 test "mocking taken branches" {
@@ -897,9 +902,9 @@ respect the declaration order.
 
 ```
 const Typ2 = (
-  a:string = "none",
-  b:u32 = 0,
-  setter = comb(ref self, a, b) { self.a = a; self.b = b }
+  mut a:string = "none",
+  mut b:u32 = 0,
+  comb setter(ref self, a, b) { self.a = a; self.b = b }
 )
 
 mut x:Typ2 = (a="x", b=0)
@@ -913,19 +918,23 @@ cassert x == y
 Tuples can be multi-dimensional, and the index can handle multiple indexes at once.
 
 ```
-const Matrix8x8 = (
-  data:[8][8]u16 = ?,
-  setter = comb(ref self, x:int(0, 7), y:int(0, 7), v:u16) {
-    self.data[x][y] = v
-  } ++ comb(ref self, x:int(0, 7), v:u16) {
-    for ent in ref data[x] {
-      ent = v
-    }
-  } ++ comb(ref self) { // default initialization
-    for ent in ref data {
-      ent = 0
-    }
+comb matrix8x8_set_xy(ref self, x:int:[min=0,max=7], y:int:[min=0, max=7], v:u16) {
+  self.data[x][y] = v
+}
+comb matrix8x8_set_row(ref self, x:int:[min=0, max=7], v:u16) {
+  for ent in ref data[x] {
+    ent = v
   }
+}
+comb matrix8x8_init(ref self) {       // default initialization
+  for ent in ref data {
+    ent = 0
+  }
+}
+
+const Matrix8x8 = (
+  mut data:[8][8]u16 = 0,
+  const setter = [matrix8x8_set_xy, matrix8x8_set_row, matrix8x8_init]
 )
 
 const m:Matrix8x8 = ?
@@ -948,8 +957,8 @@ which to pick.
 
 ```
 const Matrix2x2 = (
-  data:[2][2]u16 = ?,
-  getter = comb(ref self, x:int(0, 2), y:int(0, 2)) {
+  mut data:[2][2]u16 = 0,
+  comb getter(ref self, x:int:[range=0..=2], y:int:[min=0, max=2]) {
     self.data[x][y] + 1
   }
 )
@@ -966,17 +975,16 @@ variable or tuple field is also a tuple, the getter/setter allow to intercept
 any variable/field. The same array rule applies to the getter.
 
 ```
+comb my_2_elem_set_xv(ref self, x:uint:[range=0..<2], v:string) { self.data[x] = v }
+comb my_2_elem_set_all(ref self, v:My_2_elem)            { self.data = v.data }
+comb my_2_elem_set_default(ref self)                     { self.data = ("", "") }
+comb my_2_elem_get_all(self)                             { self.data }
+comb my_2_elem_get_i(self, i:uint)                       { self.data[i] }
+
 const My_2_elem = (
-  data:[2]string = ?,
-  setter = comb(ref self, x:uint(0..<2), v:string) {
-    self.data[x] = v
-  } ++ comb(ref self, v:My_2_elem) {
-    self.data = v.data
-  } ++ comb(ref self) { // default _ assignment
-    self.data = ?
-  },
-  getter = comb(self) { self.data }
-        ++ comb(self, i:uint) { self.data[i] }
+  mut data:[2]string = ("", ""),
+  const setter = [my_2_elem_set_xv, my_2_elem_set_all, my_2_elem_set_default],
+  const getter = [my_2_elem_get_all, my_2_elem_get_i]
 )
 
 mut v:My_2_elem = ?
@@ -999,13 +1007,13 @@ set/returned.
 
 ```
 const some_obj = (
-  a1:string,
-  a2 = (
-    _val:u32 = ?,                              // hidden field
-    getter = comb(self) { self._val + 100 },
-    setter = comb(ref self, x) { self._val = x + 1 }
+  mut a1:string,
+  mut a2 = (
+    mut _val:u32 = nil,                        // hidden field
+    comb getter(self) { self._val + 100 },
+    comb setter(ref self, x) { self._val = x + 1 }
   ),
-  setter = comb(ref self, a, b) {                 // setter
+  comb setter(ref self, a, b) {                // setter
     self.a1 = a
     self.a2._val = b
   }
@@ -1019,38 +1027,41 @@ x.a2 = 5
 ```
 
 
-The getter method can be [overloaded](06-functions.md#Overloading). This allows
-to customize by return type:
+The getter method can be [overloaded](06-functions.md#Overloading) to
+customize by return type. Runtime conditions (such as "only for big values")
+are dispatched explicitly by the caller with an `if`/`elif` chain:
 
 ```
+comb showcase_get_string(self) -> (_:string) {
+  format("this is a big {} number", self.v)
+}
+comb showcase_get_int(self) -> (_:int) {
+  self.v
+}
 const showcase = (
-  ,v:int = ?
-  ,getter = comb(self)->(_:string) where self.i>10 {
-    format("this is a big {} number", self.v)
-  } ++ comb(self)->(_:int) {
-    self.v
-  }
+  ,mut v:int = nil
+  ,const getter = [showcase_get_string, showcase_get_int]
 )
 
-mut s:showcase = ?
+mut s:showcase = nil
 s.v = 3
-const r1:string = s // compile error, no matching getter
-const r2:int    = s // OK
+const r1:int    = s // OK
 
 s.v = 100
-const r3:string = s // OK
-cassert r3 == "this is a bit 100 number"
+const r2:string = if s.v > 10 { s.showcase_get_string() } else { "" }
+cassert r2 == "this is a big 100 number"
 ```
 
 Like all the lambdas, the getter method can also be overloaded on the return type.
 In this case, it allows building typecast per type.
 
 ```
+comb my_obj_get_string(self) -> (_:string) { string(self.val) }
+comb my_obj_get_bool(self)   -> (_:bool)   { self.val != 0 }
+comb my_obj_get_int(self)    -> (_:int)    { self.val }
 const my_obj = (
-  ,val:u32 = ?
-  ,getter = comb(self)->(_:string ){ string(self.val) }
-       ++ comb(self)->(_:bool){ self.val != 0    }
-       ++ comb(self)->(_:int    ){ self.val         }
+  ,mut val:u32 = 0
+  ,const getter = [my_obj_get_string, my_obj_get_bool, my_obj_get_int]
 )
 ```
 
@@ -1060,8 +1071,8 @@ The setter/getter can also access attributes:
 
 ```
 mut obj1::[attr1] = (
-  ,data:int = ?
-  ,setter = comb(ref self, v) {
+  ,mut data:int = nil
+  ,comb setter(ref self, v) {
     if v::[attr2] {
       self.data::[attr3] = 33
     }
@@ -1072,27 +1083,28 @@ mut obj1::[attr1] = (
 
 ### Default setter value
 
-All the variable declarations need a explicit assigned value. The `_` allows to
-pick the default value based on the type. If the type is an integer, the `_` is equivalent
-to a zero. If the type is a boolean, the default or `_` is false. For more complicated
-tuple types, the setter will be called without any value.
+All variable declarations need an explicit assigned value. For complex tuple
+types, calling the setter with no arguments triggers the no-arg setter
+overload below.
 
 
 ```
-const fint:int = ?
+const fint:int  = 0
 cassert fint == 0
 
-mut fbool:bool = ?
-cassert fbool == 0
+mut fbool:bool = false
+cassert !fbool
 
+comb tup_set_default(ref self) { // no-argument overload
+  cassert self.v == ""
+  self.v = "empty33"
+}
+comb tup_set_v(ref self, v) {
+  self.v = v
+}
 const Tup = (
-  ,v:string = ?  // default to empty
-  ,setter = comb(ref self) { // no args, default setter for _
-     cassert self.v == ""
-     self.v = "empty33"
-  } ++ comb(ref self, v) {
-     self.v = v
-  }
+  ,mut v:string = ""    // default to empty
+  ,const setter = [tup_set_default, tup_set_v]
 )
 
 mut x:Tup = ?
@@ -1113,16 +1125,17 @@ cassert y.v == "ucsc"
 Array index also use the setter or getter methods.
 
 ```
+pipe my_arr_set(ref self, idx:u4, val:u8) {
+   self.vector[idx] = val
+}
+pipe my_arr_set_default(ref self) {
+   // default constructor declaration
+}
+
 mut my_arr = (
-  ,vector:[16]u8 = 0
-  ,getter = comb(self, idx:u4) {
-     self.vector[idx]
-  }
-  ,setter = pipe(ref self, idx:u4, val:u8) {
-     self.vector[idx] = val
-  } ++ pipe(ref self) {
-     // default constructor declaration
-  }
+  ,mut vector:[16]u8 = 0
+  ,comb getter(self, idx:u4) { self.vector[idx] }
+  ,const setter = [my_arr_set, my_arr_set_default]
 )
 
 my_arr[3] = 300           // calls setter
@@ -1138,15 +1151,15 @@ If the getter/setter uses a string argument, this also allows to access tuple fi
 
 ```
 const Point = (
-  ,priv_x:int:[private] = 0
-  ,priv_y:int:[private] = 0
+  ,mut priv_x:int:[private] = 0
+  ,mut priv_y:int:[private] = 0
 
-  ,setter = pipe(ref self, x:int, y:int) {
+  ,pipe setter(ref self, x:int, y:int) {
     self.priv_x = x
     self.priv_y = y
   }
 
-  ,getter = pipe(self, idx:string) {
+  ,pipe getter(self, idx:string) {
     match idx {
      == 'x' { self.priv_x }
      == 'y' { self.priv_y }
@@ -1171,10 +1184,10 @@ comparators. When non-provided the `lt` (Less Than) is a compile error, and the
 
 ```
 const t=(
-  ,v:string = ?
-  ,setter = pipe(ref self) { self.v = a }
-  ,lt = comb(self,other)->(_:bool){ self.v  < other.v }
-  ,eq = comb(self,other)            { self.v == other.v } // infer return
+  ,mut v:string = nil
+  ,pipe setter(ref self) { self.v = a }
+  ,comb lt(self,other)->(_:bool){ self.v  < other.v }
+  ,comb eq(self,other)          { self.v == other.v } // infer return
 )
 
 mut m1:t = 10
@@ -1216,18 +1229,21 @@ cassert a equals b
 With the `eq` overload, it is possible to compare named and unnamed tuples.
 
 ```
-const t1=(
-  ,long_name:string = "foo"
-  ,b=33
+const t1 = (
+  ,mut long_name:string = "foo"
+  ,mut b = 33
 )
-const t2=(
-  ,xx_a=33
-  ,yy_b = "foo"
-  ,eq = comb(self, o:t1) {
-    return self.xx_a == o.b and self.xx_y == o.long_name
-  } ++ comb(self, o:t2) {
-    return self.xx_a == o.xx_a and self.xx_y == o.xx_y
-  }
+
+comb t2_eq_t1(self, o:t1) {
+  return self.xx_a == o.b and self.xx_y == o.long_name
+}
+comb t2_eq_t2(self, o:t2) {
+  return self.xx_a == o.xx_a and self.xx_y == o.xx_y
+}
+const t2 = (
+  ,mut xx_a = 33
+  ,mut yy_b = "foo"
+  ,const eq = [t2_eq_t1, t2_eq_t2]
 )
 
 cassert t1==t2 and t2==t1
@@ -1272,8 +1288,7 @@ const ext = if cfg.foo.bar == 3 {
 ```
 
 
-Non-Pyrope calls use the same Pyrope lambda definition but they do not have
-the `where` clause.
+Non-Pyrope calls use the same Pyrope lambda definition.
 
 
 If no type is provided, a C++ call assumes a `pipe(...inp)->(...out)` type is
@@ -1281,7 +1296,8 @@ can pass many inputs/outputs and has permission to mutate values. Any call to a
 method with two underscores `__` is either a basic gate or a C++ function.
 
 ```
-const __my_typed_cpp:comb(a,b)->(e) = ?
+type T_my_cpp = comb(a, b) -> (e)
+const __my_typed_cpp:T_my_cpp = nil
 ```
 
 Type defining non-Pyrope code is good to catch errors and also because declaring

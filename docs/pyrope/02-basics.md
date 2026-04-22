@@ -277,14 +277,15 @@ call. This allows to have `puts` calls in `functions`.
 
 
 Pyrope only supports anonymous lambdas, but the lambdas can have attributes that restrict
-the lambda functionality to combinational only (`comb`), pipeline
-stages that have all the outputs with the same delay (`pipe`), or lambdas that connect
-multiple combinational or pipeline stages but require explicit timing use (`flow`) to connect
-operations. [Lambda section](06-functions.md) has more details on the allowed syntax.
+the lambda functionality to combinational only (`comb`), pipeline stages
+that have all the outputs with the same delay (`pipe`), or modules that can
+do anything — including orchestrating pipelined calls with explicit timing
+(`mod`). [Lambda section](06-functions.md) has more details on the allowed
+syntax.
 
 
 ```
-mut f = comb(a, b) { a + b }
+comb f(a, b) { a + b }
 ```
 
 Pyrope naming for consistency:
@@ -297,13 +298,11 @@ Pyrope naming for consistency:
 
 * Bare `pipe` leaves the latency fully flexible; the caller picks it via `await[N]` at the call site
 
-* `flow` connects combinational/pipeline blocks with explicit timing using `await[N]` as a declaration modifier and `:@[N]` as a timing type check. Can also use `reg` for persistent state.
+* `mod` has no constraints on registers or outputs (can be Mealy or Moore), operates cycle by cycle, and is also the kind used to orchestrate pipelined calls — `await[N]` and `:@[N]` are the timing constructs available inside `mod`.
 
-* `mod` has no constraints on registers or outputs (can be Mealy or Moore), operates cycle by cycle.
+* `await` is a reserved declaration modifier used inside `mod` blocks. `async` is reserved for future use.
 
-* `await` is a reserved declaration modifier used inside `flow` blocks. `async` is reserved for future use.
-
-* `comb`, `pipe`, `flow`, or `mod` that uses a `self` parameter is also called a method
+* `comb`, `pipe`, or `mod` that uses a `self` parameter is also called a method
 
 
 ## Evaluation order
@@ -335,9 +334,11 @@ The programmer can also set evaluation order with control expressions
 those have no side-effects, and hence the evaluation order is not important.
 
 
-A `pipe` can update state internally and has one or more cycle delays. As such,
-`pipe` statements can do many calls to `comb` lambdas, but not to other
-`pipe` lambdas. `pipe` lambdas can only be called inside `flow` lambdas.
+A `pipe` can update state internally and has one or more cycle delays. As
+such, `pipe` statements can do many calls to `comb` lambdas, but not to
+other `pipe` lambdas. `pipe` lambdas can only be called inside `mod`
+lambdas, where their outputs are consumed via `await[N]` with an explicit
+latency.
 
 
 

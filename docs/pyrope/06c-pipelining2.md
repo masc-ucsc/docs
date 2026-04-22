@@ -9,7 +9,7 @@ While it's possible to instantiate low-level flops, the recommended, programmer-
 
 A register's value at the start of a cycle is its **current state**. New values are assigned to its **next state** using the `::[defer]` syntax. This clear separation avoids the ambiguity between a register's input (`din`) and output (`q`) pins that plagues many HDLs.
 
-In our syntax, a bare reference to `total` reads the register's current state (its 'q' value). The `total::[defer]` construct defers a write to the end of the cycle, defining the logic for its 'din' pin, which will become the state in the next cycle. The `::[defer]` attribute also serves as the canonical way to read the end-of-cycle (next-cycle) value in debug contexts. If you need to snapshot the current 'q' value before later code modifies the register within the cycle, just copy it into a local: `let counter_q = counter`.
+In our syntax, a bare reference to `total` reads the register's current state (its 'q' value). The `total::[defer]` construct defers a write to the end of the cycle, defining the logic for its 'din' pin, which will become the state in the next cycle. The `::[defer]` attribute also serves as the canonical way to read the end-of-cycle (next-cycle) value in debug contexts. If you need to snapshot the current 'q' value before later code modifies the register within the cycle, just copy it into a local: `const counter_q = counter`.
 
 === "Structural flop style"
     ```
@@ -90,7 +90,7 @@ Let's re-examine the example of integrating a 3-cycle multiplier with a 1-cycle 
 Our syntax solves this with **explicit timing annotations**, making such errors impossible to ignore.
 
 
-`flow` blocks allow arbitrary mixing of variable clock cycles. They have two
+`mod` blocks allow arbitrary mixing of variable clock cycles. They have two
 complementary timing mechanisms for strong compile-time checking:
 
 * **`await[N]`** on a declaration: a declaration modifier (in the same slot as
@@ -107,25 +107,24 @@ There is **no** bare `foo@[N]`. To trigger delay flop insertion use an explicit
 `await[N]` declaration.
 
 * Bare `counter` reads the current 'q' value; snapshot with a local
-  (`let counter_q = counter`) if you need to capture it before later
+  (`const counter_q = counter`) if you need to capture it before later
   in-cycle updates.
 * `past[n](counter)` reads the value `n` cycles ago. The compiler inserts
   the flops (see [Temporal library](09-verification.md#temporal-library)).
 * `counter::[defer]` reads or writes the end-of-cycle value.
-* `await[N]` pipelines the RHS of a declaration over `N` cycles (flow only).
-* `:@[N]` is a pure cycle type check (flow only).
+* `await[N]` pipelines the RHS of a declaration over `N` cycles (`mod` only).
+* `:@[N]` is a pure cycle type check (`mod` only).
 * `next`, `eventually`, `rose`, … (debug only) cover future-peek and
   window-quantified sampling.
 
-`await[N]` is only valid inside `flow` blocks. It is not allowed in `comb`
-(pure combinational), `pipe` (Moore pipeline), or `mod` (module). Outside
-`flow`, register state is read via bare variable references (current value)
-or `::[defer]` (end-of-cycle value), and prior-cycle values via
-`past[n](x)`.
+`await[N]` is only valid inside `mod` blocks. It is not allowed in `comb`
+(pure combinational) or `pipe` (Moore pipeline). Inside a `mod`, register
+state is read via bare variable references (current value) or `::[defer]`
+(end-of-cycle value), and prior-cycle values via `past[n](x)`.
 
-`flow` blocks can also use `reg` for persistent state across cycles, just like
-`mod`. This allows a `flow` to both orchestrate pipeline stages with explicit
-timing and maintain stateful elements like accumulators or counters.
+`mod` blocks naturally use `reg` for persistent state across cycles. A
+single `mod` can both orchestrate pipeline stages with explicit timing and
+maintain stateful elements like accumulators or counters.
 
 
 ```
@@ -133,8 +132,8 @@ timing and maintain stateful elements like accumulators or counters.
 pipe mul(a, b) -> (c) { c = a * b }   // bare; caller picks latency via await
 pipe add(a, b) -> (c) { c = a + b }   // bare; caller picks latency via await
 
-// Define the composite flow that orchestrates the primitives.
-flow multiply_add(in1, in2) -> (out) {
+// Define the composite mod that orchestrates the primitives.
+mod multiply_add(in1, in2) -> (out) {
     // Stage 1: run mul over 3 cycles. tmp lands at cycle 3.
     await[3] tmp = mul(in1, in2)
 
@@ -156,7 +155,7 @@ The two mechanisms catch different classes of bugs:
   output doesn't land at the cycle I promised".
 
 ```
-flow example(in1, in2, in3) -> (out) {
+mod example(in1, in2, in3) -> (out) {
     await[3] res1 = mul(in1, in2)
 
     // in3 arrives at cycle 0; we need it at cycle 3 to mix with res1.

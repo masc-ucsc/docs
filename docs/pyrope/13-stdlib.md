@@ -14,7 +14,7 @@ cassert prp.plus(1,2,3) == 6
 
 Library code:
 ```
-const plus = comb(...a:int)->(_:int) {
+comb plus(...a:int) -> (_:int) {
   mut r = 0
   for e in a {
     r += e
@@ -36,7 +36,7 @@ cassert p.len(x) == 3
 
 Library code:
 ```
-const len = comb(x) { x::[size] }
+comb len(x) { x::[size] }
 ```
 
 ### map
@@ -83,7 +83,7 @@ cassrt (1,2,3).reduce(prp.plus) == 6
 Library code:
 
 ```
-const reduce = comb(op:fun<T>(a:T,b:T)->(_:T), ...x) {
+comb reduce(op:fun<T>(a:T,b:T)->(_:T), ...x) {
   return x when x::[size] <= 1
 
   mut res = x[0]

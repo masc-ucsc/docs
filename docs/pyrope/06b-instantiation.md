@@ -176,7 +176,7 @@ or short-circuit (`and`/`or`) expressions.
 === "Lambda call (inlined)"
 
     ```
-    const f = comb(a, b) { if a == 0 { 3 } else { b } }
+    comb f(a, b) { if a == 0 { 3 } else { b } }
 
     mut lhs = c
     if cond {
@@ -207,13 +207,13 @@ can be the SSA name.
 
 === "Lambda call"
     ```
-    const sub = mod(a, b) -> (x) {
+    mod sub(a, b) -> (x) {
       const tmp = sum(a, b)      // instance tmp,sum
 
       x = sum(tmp, 3)          // instance x,sum
     }
 
-    const top = mod(a, b, c) -> (x) {
+    mod top(a, b, c) -> (x) {
 
      x = sub(a, b).x
      if c {
@@ -225,13 +225,13 @@ can be the SSA name.
 
 === "Instance"
     ```
-    const sub = mod(a, b) -> (x) {
+    mod sub(a, b) -> (x) {
       const tmp = sum(a, b)      // instance tmp
 
       x = sum(tmp, 3)          // instance x
     }
 
-    const top = mod(a, b, c) -> (x) {
+    mod top(a, b, c) -> (x) {
 
      x = sub(a, b).x          // instance x
 
@@ -271,11 +271,11 @@ the condition is false.
 === "Conditional proc call"
 
     ```
-    const case_1_counter = mod(runtime) -> (res) {
+    mod case_1_counter(runtime) -> (res) {
 
       const r = (
-        reg total:u16 = ?,          // r is reg, everything is reg
-        increase = comb(a) {
+        reg total:u16 = 0,          // r is reg, everything is reg
+        comb increase(a) {
           puts "hello"
 
           const res = self.total
@@ -296,11 +296,11 @@ the condition is false.
 === "Pyrope inline equivalent"
 
     ```
-    const case_1_counter = mod(runtime) -> (res) {
+    mod case_1_counter(runtime) -> (res) {
 
       const r = (
-        reg total:u16 = ?,
-        increase = comb(a) {
+        reg total:u16 = 0,
+        comb increase(a) {
           puts "hello"
 
           const res = self.total
@@ -420,32 +420,37 @@ reg array:[] = conf.get("some.conf.hex.dump") // dynamic size from config
 
 
 The assignment during declaration to a register is always the reset value. If
-the assignment is a method, the method is called every cycle during reset.
+the assignment is a method (a lambda referenced by name, **not** called —
+i.e., no parentheses), the method is invoked every cycle during reset.
 
 ```
-reg array:[1024]tag:[clock_pin=ref my_clock] = mod(ref self) {
+mod array_reset(ref self) {
   reg reset_iter:u10:[reset_pin=false] = 0sb? // no reset flop
 
   self[reset_iter].state = I
 
   reset_iter::[wrap] = reset_iter + 1
 }
+
+reg array:[1024]tag:[clock_pin=ref my_clock] = array_reset  // no () — pass the method
 ```
 
 
 Since the reset can be high many cycles, it may be practical/necessary to have
 a reset inside the reset lambda. To guarantee determinism, any register
-inside the reset lambda can be either asynchrnous reset or a register
+inside the reset lambda can be either asynchronous reset or a register
 without reset signal.
 
 
 ```
-reg my_flop:[8]u32 = mod(ref self) {
-  reg reset_counter:u3:[sync=false] = ? // asynchronous reset is posedge only
+mod my_flop_reset(ref self) {
+  reg reset_counter:u3:[sync=false] = 0sb? // asynchronous reset is posedge only
 
   self[reset_counter] = reset_counter
   reset_counter::[wrap] += 1
 }
+
+reg my_flop:[8]u32 = my_flop_reset
 ```
 
 A related functionality and constrains happen when a tuple have some register
@@ -477,13 +482,16 @@ cycle Similarly a tuple can have a reset when assigned to a register.
     ```
     const Mix_tup = (
       reg flag:bool = false,
-      state:u2
+      mut state:u2
     )
 
-    mut x:Mix_tup = mod(ref self) {
-      self.flag  = mod(ref self) { self = false }   // reset code
-      self.state = 2                               // every cycle code
+    mod mix_tup_init(ref self) {
+      mod flag_reset(ref self) { self = false }
+      self.flag  = flag_reset            // reset code (pass by name, no ())
+      self.state = 2                     // every cycle code
     }
+
+    mut x:Mix_tup = mix_tup_init
 
     assert x.flag implies x.state == 2
 
@@ -574,14 +582,14 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
 
     ```
     const Inner_t = (
-      setter = comb(ref self, z, y) {
+      comb setter(ref self, z, y) {
         self.a = y & z
         self.h = !(y & z)
       }
     )
 
     const Top2_t = (
-      setter = comb(ref self, a, b) {
+      comb setter(ref self, a, b) {
         const foo:Inner_t = (y=a, z=b)
 
         self.c = foo.a
@@ -596,15 +604,15 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
 
     ```
     const Inner_t = (
-      setter = comb(ref self, z, y) {
+      comb setter(ref self, z, y) {
         self.a = y & z
         self.h = !(y & z)
       }
     )
 
     const Top2_t = (
-      foo:Inner_t = ?,
-      setter = comb(ref self, a, b) {
+      mut foo:Inner_t = nil,
+      comb setter(ref self, a, b) {
         (self.c, self.d) = self.foo(y=a, z=b)
       }
     )

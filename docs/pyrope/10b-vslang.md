@@ -104,17 +104,17 @@ auto max_gap_count(std::vector<int> nums) {
 ```
 
 ```
-const max_gap_count = comb(nums) {
+comb max_gap_count(nums) {
   const max  = import("std").max
   const sort = import("std").sort
-  const adjacent_transform = comb(a, num, f) {
-    mut res:[?] = ?
+  comb adjacent_transform(a, num, f) {
+    mut res:[?] = ()
     for i in 0..<a.length step num {
       res ++= f(a[i..+num])
     }
     res
   }
-  const count = comb(a, b) {
+  comb count(a, b) {
     mut r = 0
     for i in a {
       r += 1 when i == b
@@ -122,10 +122,9 @@ const max_gap_count = comb(nums) {
     r
   }
 
-  numbers
-     |> sort(fun(a, b) { a < b })
-     |> adjacent_transform(num=2, comb(a, b) { a - b })
-     |> comb(a) { count(a, a.max) }
+  const sorted  = sort(numbers, comb(a, b) { a < b })
+  const diffs   = adjacent_transform(sorted, num=2, comb(a, b) { a - b })
+  count(diffs, diffs.max)
 }
 ```
 
@@ -149,7 +148,7 @@ func add<T:Numeric>(a:T, b:T) -> T { a + b }
 ```
 
 ```
-const add = comb(a, b) { a + b }            // OK, no constrains
+comb add(a, b) { a + b }                     // OK, no constrains
 const add = fun<T:int>(a:T, b:T) { a + b } // constrain both to have same type
 ```
 
@@ -173,15 +172,15 @@ func print_share_info<T:Shape>(_ s:T) {
 In Pyrope:
 ```
 const Shape = (
-  name = comb(self) -> (result:string) { _ },    // undefined method
-  area = comb(self) -> (result:float) { _ },     // NOTE: Pyrope does not have float type
-  perimeter = comb(self) -> (result:float) { _ }
+  comb name(self) -> (result:string) { },        // undefined method
+  comb area(self) -> (result:float) { },         // NOTE: Pyrope does not have float type
+  comb perimeter(self) -> (result:float) { }
 )
 
 const Rectangle:(...Shape, ...OtherAPI) = (...some_code_here)
 const Circle:Shape = (...some_code_here)
 
-const print_share_info = comb(s:Shape) { puts "Shape: {s.name()}" }
+comb print_share_info(s:Shape) { puts "Shape: {s.name()}" }
 ```
 
 
@@ -222,12 +221,12 @@ const AnObject = (
   v:i32 = ?
 )
 
-const f1 = comb(ref self:AnObject) -> (result:i32) { // named output tuple
+comb f1(ref self:AnObject) -> (result:i32) { // named output tuple
   const res = self.v
   self.v += 1
   result = res
 }
-const f2 = comb(self:AnObject) -> (result:i32) {
+comb f2(self:AnObject) -> (result:i32) {
   result = self.v
 }
 ```
@@ -236,12 +235,12 @@ A more Pyrope style equivalent:
 
 ```
 const AnObject = (
-  v:i32 = ?,
-  f1 = comb(ref self) -> (res:i32) {
+  mut v:i32 = nil,
+  comb f1(ref self) -> (res:i32) {
     res = self.v
     self.v += 1
   },
-  f2 = comb(self) -> (result:i32) { result = self.v }
+  comb f2(self) -> (result:i32) { result = self.v }
 )
 ```
 

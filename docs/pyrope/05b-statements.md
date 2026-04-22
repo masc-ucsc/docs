@@ -152,9 +152,7 @@ reg my = 3 when some_condition  // no register declared otherwise
 return "fail" unless success_condition
 ```
 
-Complex assignments like `a |> b(1) |> c` can not be gated because it is not
-clear if the gated applies to the last call or the whole pipeline sequence.
-Similarly, gating ifs/match statements do not make much sense. As a result,
+Gating `if`/`match` statements does not make much sense. As a result,
 `when`/`unless` can only be applied to assignments, function calls, and code
 block control statements (`return`, `break`, `continue`).
 
@@ -188,7 +186,7 @@ The main features of code blocks:
 * When used in an expression or lambda, the last expression in the body is the
   implicit return value. The `return` keyword is only needed for early exits —
   not for the normal return path. This applies to all lambda types
-  (`comb`/`pipe`/`flow`/`mod`).
+  (`comb`/`pipe`/`mod`).
 
 ```
 {
@@ -211,17 +209,19 @@ if {const a=1+yy; 13<a} {
   some_code()
 }
 
-const doit = comb(f,a) {
+comb doit(f,a) {
   const x = f(a)
   assert x == 7
   return 3
 }
 
-const z3 = doit(comb(a) {
+comb real_doit(a) {
   assert a!=0
   return 7             // exist the current lambda
   100                  // never reached statement
-}, 33)
+}
+
+const z3 = doit(real_doit, 33)
 cassert z3 == 3
 ```
 
@@ -372,7 +372,7 @@ constructs:
 
   ```
   reg counter:u32 = 0
-  let counter_q = counter           // snapshot 'q' before any updates this cycle
+  const counter_q = counter         // snapshot 'q' before any updates this cycle
 
   if whatever {
     counter = counter + 1
@@ -388,7 +388,7 @@ constructs:
   deferred updates and for observing a register's next-cycle value in
   debug contexts.
 
-* For pipeline timing inside `flow` blocks, use `await[N]` (declaration
+* For pipeline timing inside `mod` blocks, use `await[N]` (declaration
   modifier that pipelines the whole RHS over `N` cycles) and `foo:@[N]`
   (pure timing type check).
 
@@ -512,7 +512,7 @@ randomization outside the test statement increases the number of tests:
 
 === "Parallel tests"
     ```
-    const add = comb(a,b) { a+b }
+    comb add(a,b) { a+b }
 
     for i in 0..<10 { // 10 tests
       const a = (-30..<100).rand
@@ -526,7 +526,7 @@ randomization outside the test statement increases the number of tests:
 
 === "Single test"
     ```
-    const add = comb(a,b) { a+b }
+    comb add(a,b) { a+b }
 
     test "test 10 additions" {
       for i in 0..<10 { // 10 tests

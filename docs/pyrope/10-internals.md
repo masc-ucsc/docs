@@ -20,8 +20,8 @@ operations: `a in b`, `a does b`, and lambda call rules.
 cassert (a=1) in (1,a=1,3)
 cassert (a=1) !does (1,a=1,3)
 
-const f = comb(a) { puts "{a}" }
-const g = comb(long, short) { puts "{long}" }
+comb f(a) { puts "{a}" }
+comb g(long, short) { puts "{long}" }
 
 f(a=1)             // OK
 f(1)               // OK
@@ -464,11 +464,11 @@ access the tuple field, the `self.field` is always required. This avoid the
 problem of true shadowing.
 
 ```
-const f1 = comb() { 1 }
+comb f1() { 1 }
 
 const tup = (
-  f1 = comb() { 2 },
-  code = comb() {
+  comb f1() { 2 },
+  comb code() {
      assert self.f1() == 2
      assert f1() == 1
   }
@@ -478,7 +478,7 @@ const tup = (
 ### Closures
 
 Closures capture extra state or inputs at definition. The capture variables are
-always immutable `let` no matter the outter scope definition. Therefore,
+always immutable (`const`) no matter the outer scope definition. Therefore,
 capture variables behave like passed by value, not reference.
 
 The `[...]` slot on a lambda declaration is a unified **comptime parameter
@@ -489,7 +489,7 @@ entry at the call site using the same slot:
 
 ```
 const y = 3
-const addy = comb[y](a) { y + a }
+comb addy[y](a) { y + a }
 assert addy(4)       == 7      // uses captured y=3
 assert addy[100](4)  == 104    // override y=100 for this call
 ```
@@ -517,7 +517,7 @@ whatever the enclosing scope held when the lambda was defined.
     }
 
     test "capture test" {
-      const tst = comb() {
+      comb tst() {
         mut x_s = 20   // not variable shadowing because fun scope
 
         const x1 = call_captured()
@@ -581,8 +581,8 @@ may do this implementation.
       a += 1
 
       mut addX = (
-        a:i32 = a,                        // copy value, runtime or comptime
-        getter = comb(self, x:i32) {
+        mut a:i32 = a,                    // copy value, runtime or comptime
+        comb getter(self, x:i32) {
           x + self.a
         }
       )
@@ -649,8 +649,8 @@ const f1 = fun[x]() -> (result:int) {
    mut x = ?    // compile error. Shadow captured x
    result = 200
 }
-const f2 = comb() -> (result:int) {
-   mut x = ?    // OK, no captures 'x' variable
+comb f2() -> (result:int) {
+   mut x:int = nil    // OK, no captures 'x' variable
    x = 100
    result = x
 }
@@ -705,23 +705,23 @@ there is no initial value set.
 
 ```
 const X_t = (
-  i1 = (
-    i1_field:u32 = 1,
-    i2_field:u32 = 2,
-    setter = comb(ref self, a) {
+  const i1 = (
+    mut i1_field:u32 = 1,
+    mut i2_field:u32 = 2,
+    comb setter(ref self, a) {
        self.i1_field = a
     }
   ),
-  i2 = (
-    i1_field:i32 = 11,
-    setter = comb(ref self, a) {
+  const i2 = (
+    mut i1_field:i32 = 11,
+    comb setter(ref self, a) {
        self.i1_field = a
     }
   )
 )
 
 mut top = (
-  setter = comb(ref self) {
+  comb setter(ref self) {
     mut x:X_t = ?
     assert x.i1.i1_field == 1
     assert x.i1.i2_field == 2
@@ -894,7 +894,7 @@ This is done to avoid mistakes. If a bit swap is wanted, it must be explicit.
 
 
 ```
-const reverse = comb(x:uint) -> (total:uint) {
+comb reverse(x:uint) -> (total:uint) {
   total = 0
   for i in 0..<x::[bits] {
     total <<= 1
@@ -912,11 +912,11 @@ reference.
 
 
 ```
-const args = comb(x) { puts "args:{x}"; 1 }
-const here = comb() { puts "here"; 3 }
+comb args(x) { puts "args:{x}"; 1 }
+comb here() { puts "here"; 3 }
 
-const call_now = comb(f:fun) { f() }
-const call_defer = comb(f:fun) { f }
+comb call_now(f:fun) { f() }
+comb call_defer(f:fun) { f }
 
 const x0 = call_now(here)          // prints "here"
 const e1 = call_now(args)          // compile error, args needs arguments

@@ -109,7 +109,7 @@ generate a reset value.
 === "Pyrope array syntax"
     ```
     mut mem1:[4][8]u5 = 0
-    comptime reset_value:[3][8]u5 = ? // only used during reset
+    comptime mut reset_value:[3][8]u5 = ? // only used during reset
     for i in 0..<3 {
       for j in 0..<8 {
         reset_value[i][j] = j
@@ -206,7 +206,7 @@ mem.latency = (1, 1, 1)
 mem.wensize = 1 // we bit (no write mask)
 mem.rdport  = (-1,1,0) // 0 WR, !=0 -> RD
 
-await[..] res = __memory(mem)
+await[1..<inf] res = __memory(mem)
 
 q0 = res[0]
 q1 = res[1]
@@ -216,7 +216,7 @@ q1 = res[1]
 The previous code directly instantiates a memory and passes the configuration.
 
 
-Multi cycle memories are pipelined elements, and using them requires the `await[..]`
+Multi cycle memories are pipelined elements, and using them requires the `await[1..<inf]`
 declaration modifier and the same rules as pipeline flops apply (See [pipelining](06c-pipelining2.md)).
 
 
@@ -239,7 +239,7 @@ does in row-major order. This allows building a simple function to flatten
 multi-dimensional arrays.
 
 ```
-const flatten = comb(...arr) {
+comb flatten(...arr) {
   mut res = ()
   for i in arr {
     res ++= i

@@ -4,28 +4,14 @@ This document lists features not included in Small Pyrope with small code exampl
 
 ## Core Language Features
 
-### Lambda capture
-```pyrope
-mut a = 2
-comb make_adder[a]() -> (f) {
-  cassert a::[comptime] == true  // all captures are always comptime
-  // Capture a, b from outer scope
-  const b = 3
-  f = comb[a, b] (x:int) -> (y:int) { a*x + b }
-}
-a= 1000     // Does not affect the capture value
-const add2 = make_adder().f
-assert add2(10) == 23
-```
-
 ### Tuple scope and self
 ```pyrope
-mut point = (x=10, y=20,
+mut point = (mut x=10, mut y=20,
   // Method using tuple scope
   comb move(self, dx:int, dy:int) -> (out) {
     out = (x=self.x + dx, y=self.y + dy)
   }
-  ,move2 = comb(self, dx:int, dy:int) -> (out:int) { // Also legal
+  ,comb move2(self, dx:int, dy:int) -> (out:int) { // another method
     out = (x=self.x + dx, y=self.y + dy)
   }
 )
@@ -176,7 +162,7 @@ type Vtype = variant(str:String, num:int, b:bool)
 const x1a:Vtype = "hello"                 // implicit variant type
 const x1b:Vtype = (str="hello")           // explicit variant type
 
-comptime x2:Vtype = "hello"               // comptime
+comptime const x2:Vtype = "hello"               // comptime
 
 cassert x1a.str == "hello" and x1a == "hello"
 cassert x1b.str == "hello" and x1b == "hello"
@@ -215,7 +201,7 @@ enum ADT = (
   Robot:(charges_with:string) = ?
 )
 
-const nourish = comb(x:ADT) {
+comb nourish(x:ADT) {
   match x {
     does ADT.Person { puts "eating:{x.eats}" }
     does ADT.Robot { puts "charging:{x.charges_with}" }
@@ -234,17 +220,22 @@ enum Token = ( Id:string=?, Lit:variant(IntKind:int, StrKind:string)=? )
 
 ### Generic types
 ```pyrope
-// ->() is an explicit void return
-type Queue<T> = (push:comb(T)->(), pop:comb()->(T), empty:comb()->(bool))
+// Declare the lambda types ahead (inline complex lambda types are not allowed in foo:Type).
+type PushFn<T>  = comb(T) -> ()
+type PopFn<T>   = comb()  -> (T)
+type EmptyFn    = comb()  -> (bool)
 
-// Same meaning, generic list is allowed before tuple declarations
-const Queue = type<T>(push:comb(T)->(), pop:comb()->(T), empty:comb()->(bool))
+type Queue<T> = (
+  mut push:PushFn  = nil,
+  mut pop:PopFn    = nil,
+  mut empty:EmptyFn= nil
+)
 
-// comb, type, flow, pipe can have an option <parameter_list>
+// comb, type, mod, pipe can have an optional <parameter_list>
 
-const triadd1 = comb<T>(a:T, b:T, c:T) -> T { a + b + c }
-const triadd2 = pipe[3]<T>(a:T, b:T, c:T) -> T { a + b + c }
-const triadd3 = flow<T>(a:T, b:T, c:T) -> T { a + b + c }
+comb triadd1<T>(a:T, b:T, c:T) -> T { a + b + c }
+pipe[3] triadd2<T>(a:T, b:T, c:T) -> T { a + b + c }
+mod triadd3<T>(a:T, b:T, c:T) -> T { a + b + c }
 cassert triadd1(1,2,3) == 6
 ```
 
@@ -308,7 +299,7 @@ poke(core.yy.some_register, 1)
 ```pyrope
 // Instantiate external RTL with port mapping
 const (out_t) =  mymod(clock=clk, reset=rst, a=in_a)
-// NOTE: Same form as comb/pipe/flow calls; import handles RTL binding.
+// NOTE: Same form as comb/pipe/mod calls; import handles RTL binding.
 ```
 
 ### Advanced pipelining (elastic)
@@ -403,17 +394,26 @@ const y = add(-1i8, 2i8)
 ```
 A more complex example:
 ```pyrope
+comb base_fun1() { 1 }             // catch all
+comb base_fun2() { 2 }             // catch all
 const base = (
-  fun1 = comb() { 1 },         // catch all
-  fun2 = comb() { 2 },         // catch all
-)
-const ext = base ++ (
-  fun1 = comb(a, b) { 4 },   // overwrite allowed with extends (++), not in-place (...)
-  fun2 = comb(a, b) { 5 } ++ comb() { 6 },  // append
-  fun3 = comb(a, b) { 7 } ++ comb() { 8 }   // base has no fun3
+  const fun1 = base_fun1,
+  const fun2 = base_fun2
 )
 
-mut t:ext = ?
+comb ext_fun1(a, b) { 4 }
+comb ext_fun2_ab(a, b) { 5 }
+comb ext_fun2_noarg() { 6 }
+comb ext_fun3_ab(a, b) { 7 }
+comb ext_fun3_noarg() { 8 }
+
+const ext = base ++ (
+  const fun1 = ext_fun1,                             // overwrite allowed with ++
+  const fun2 = [ext_fun2_ab, ext_fun2_noarg],        // append
+  const fun3 = [ext_fun3_ab, ext_fun3_noarg]         // base has no fun3
+)
+
+mut t:ext = nil
 
 // t.fun1 only has ext.fun1
 assert t.fun1(a=1,b=2) == 4
@@ -438,10 +438,10 @@ comb x2(a:int,b)->(x) { 3 }
 comb x3(a:int,b=5)->(x:int) { 3 }
 comb x4(a:int,b:int3)->(x:int) { 3 }
 
-const x5 = comb(a:int,b)->int { 3 }
-const x6 = comb(a:int=10,b)->(x) { 3 }
-const x7 = comb(a:int,b)->(x:int) { 3 }
-const x8 = comb(a:int,b:int3)->(x:int) { 3 }
+comb x5(a:int,b) -> int { 3 }
+comb x6(a:int=10,b) -> (x) { 3 }
+comb x7(a:int,b) -> (x:int) { 3 }
+comb x8(a:int,b:int3) -> (x:int) { 3 }
 ```
 
 
@@ -478,8 +478,8 @@ assert rb.get() == 3
 // NOTE: Methods inside tuple types are allowed. Also valid:
 
 const RegBox = (reg v:int,
-  get = comb(self) -> int { self.v },
-  set = pipe(self, x:int) -> () { self.v = x }  // pipe as it accesses a register
+  comb get(self) -> int { self.v },
+  pipe set(self, x:int) -> () { self.v = x }  // pipe as it accesses a register
 )
 
 ```
