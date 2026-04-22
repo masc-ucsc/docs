@@ -53,18 +53,24 @@ auto node_assign = Lnast_node::create_assign(token); // The token is not necessa
 ## LNAST Node Types
 |                 |                 |                 |                 |                 |
 |:---------------:|:---------------:|:---------------:|:---------------:|:---------------:|
-| [`top`](#top)                      | [`stmts`](#stmts)                  | [`if`](#if)                        | [`uif`](#uif)                      | [`for`](#for)                      |
-| [`while`](#while)                  | [`func_call`](#func_call)          | [`func_def`](#func_def)            | [`assign`](#assign)                | [`dp_assign`](#dp_assign)          |
-| [`mut`](#mut)                      | [`delay_assign`](#delay_assign)    | [`bit_and`](#bit_and)              | [`bit_or`](#bit_or)                | [`bit_not`](#bit_not)              |
-| [`bit_xor`](#bit_xor)              | [`red_or`](#red_or)                | [`red_and`](#red_and)              | [`red_xor`](#red_xor)              | [`popcount`](#popcount)            |
-| [`log_and`](#log_and)              | [`log_or`](#log_or)                | [`log_not`](#log_not)              | [`plus`](#plus)                    | [`minus`](#minus)                  |
-| [`mult`](#mult)                    | [`div`](#div)                      | [`mod`](#mod)                      | [`shl`](#shl)                      | [`sra`](#sra)                      |
-| [`sext`](#sext)                    | [`set_mask`](#set_mask)            | [`get_mask`](#get_mask)            | [`mask_and`](#mask_and)            | [`mask_popcount`](#mask_popcount)  |
-| [`mask_xor`](#mask_xor)            | [`is`](#is)                        | [`ne`](#ne)                        | [`eq`](#eq)                        | [`lt`](#lt)                        |
-| [`le`](#le)                        | [`gt`](#gt)                        | [`ge`](#ge)                        | [`ref`](#ref)                      | [`const`](#const)                  |
-| [`range`](#range)                  | [`tuple_concat`](#tuple_concat)    | [`tuple_add`](#tuple_add)          | [`tuple_get`](#tuple_get)          | [`tuple_set`](#tuple_set)          |
-| [`attr_set`](#attr_set)            | [`attr_get`](#attr_get)            | [`cassert`](#cassert)              | [`err_flag`](#err_flag)            | [`phi`](#phi)                      |
-| [`hot_phi`](#hot_phi)              | [`type_def`](#type_def)            | [`type_spec`](#type_spec)          | [types](#types)                    | [`invalid`](#invalid)              |
+| [`top`](#top)                      | [`stmts`](#stmts)                  | [`if`](#if)                        | [`uif`](#uif)                      | [`while`](#while)                  |
+| [`func_call`](#func_call)          | [`func_def`](#func_def)            | [`assign`](#assign)                | [`dp_assign`](#dp_assign)          | [`delay_assign`](#delay_assign)    |
+| [`break`](#break)                  | [`continue`](#continue)            | [`return`](#return)                | [`bit_and`](#bit_and)              | [`bit_or`](#bit_or)                |
+| [`bit_not`](#bit_not)              | [`bit_xor`](#bit_xor)              | [`red_or`](#red_or)                | [`red_and`](#red_and)              | [`red_xor`](#red_xor)              |
+| [`popcount`](#popcount)            | [`log_and`](#log_and)              | [`log_or`](#log_or)                | [`log_not`](#log_not)              | [`plus`](#plus)                    |
+| [`minus`](#minus)                  | [`mult`](#mult)                    | [`div`](#div)                      | [`mod`](#mod)                      | [`shl`](#shl)                      |
+| [`sra`](#sra)                      | [`sext`](#sext)                    | [`set_mask`](#set_mask)            | [`get_mask`](#get_mask)            | [`mask_and`](#mask_and)            |
+| [`mask_popcount`](#mask_popcount)  | [`mask_xor`](#mask_xor)            | [`is`](#is)                        | [`has`](#has)                      | [`in`](#in)                        |
+| [`does`](#does)                    | [`ne`](#ne)                        | [`eq`](#eq)                        | [`lt`](#lt)                        | [`le`](#le)                        |
+| [`gt`](#gt)                        | [`ge`](#ge)                        | [`ref`](#ref)                      | [`const`](#const)                  | [`range`](#range)                  |
+| [`tuple_concat`](#tuple_concat)    | [`tuple_add`](#tuple_add)          | [`tuple_get`](#tuple_get)          | [`tuple_set`](#tuple_set)          | [`enum_add`](#enum_add)            |
+| [`attr_set`](#attr_set)            | [`attr_get`](#attr_get)            | [`assert`](#assert)                | [`err_flag`](#err_flag)            | [`phi`](#phi)                      |
+| [`hot_phi`](#hot_phi)              | [`type_def`](#type_def)            | [`type_spec`](#type_spec)          | [types](#types)                    |                                    |
+
+`for`, `loop`, `match`, `mut`, `cassert` from earlier drafts have been dropped —
+see [Pyrope → LNAST Lowerings](#pyrope--lnast-lowerings). `invalid` is no
+longer a node; `nil` and `0sb?`-style unknown literals are plain `const`
+strings.
 
 ### Scope
 #### `top`
@@ -115,30 +121,46 @@ is true.
         | <stmts>     : else branch
 ```
 
-#### `for`
-A `for` node represents a for-loop over a `range` or `tuple`. Note that the loop
-must be unrolled during compilation.
-
-```
-<for> --| <ref>   : iterator variable
-        | <ref>   : iterated variable (tuple or range)
-        | <stmts> : for-loop body
-```
-
 #### `while`
-A `while` node represents a `while`-loop guarded by a boolean condition. Like
-`for`, the loop must be resolvable at compile time.
+A `while` node represents a `while`-loop guarded by a boolean condition. The
+loop body is exited with `break`; surface constructs `for` and `loop` lower to
+`while` (see [Pyrope → LNAST Lowerings](#pyrope--lnast-lowerings)).
 
 ```
 <while> --| <ref/const> : loop condition
           | <stmts>     : loop body
 ```
 
-#### `func_def`
-A `func_def` node represents a functional block with input/output arguments.
+#### `break` / `continue`
+Leaf control-flow nodes inside a `while` body. `break` exits the enclosing
+loop; `continue` restarts the next iteration. Both have no children.
 
 ```
-<func_def> --| <ref/const> : input arguments
+<break>
+<continue>
+```
+
+#### `return`
+Exits the enclosing `func_def`. Optionally carries a single ref naming the
+value to return (the producer assigns any expression to a tmp first).
+
+```
+<return>                    // bare early exit
+<return> --| <ref>          : return value (optional)
+```
+
+#### `func_def`
+A `func_def` node represents a functional block. In addition to inputs/outputs
+and body, it carries a `kind` (one of `"comb"`, `"pipe"`, `"mod"`), an optional
+capture list (from the Pyrope `[a, b]` after the name), and an optional
+generic / attribute child tuple. Pipeline depth for `pipe[N]` is emitted
+separately as `attr_set <func> "pipe_depth" N` at the declaration site.
+
+```
+<func_def> --| <const>     : kind ("comb" | "pipe" | "mod")
+             | <ref/const> : generics (tuple, 0 children when absent)
+             | <ref/const> : captures (tuple, 0 children when absent)
+             | <ref/const> : input arguments
              | <ref/const> : output arguments
              | <stmts>     : function body
 ```
@@ -171,27 +193,18 @@ dropped.
               | <ref/const> : Rvalue
 ```
 
-#### `mut`
-A `mut` node marks an assignment as a redefinition of a mutable variable
-previously declared with an initial value. Shape is identical to `assign`.
-
-```
-<mut> --| <ref>       : Lvalue
-        | <ref/const> : Rvalue
-```
-
 #### `delay_assign`
-Deferred / past-cycle read. Models the value of a variable at a cycle other
-than "now". `dst` is always a fresh compiler temporary. `src` names the
-declared variable (pre-SSA). `offset` is a comptime constant integer: positive
-= future / next-cycle (for a `reg`, D pin; for a wire, the settled end-of-
-block value), `0` = the flop `Q` pin (only valid when `src` is a `reg`),
-negative = past cycle.
+Deferred / past-cycle read, and the lowering target for Pyrope's `await[N] dst
+= rhs` form. `dst` is always a fresh compiler temporary. `offset` is a
+comptime constant integer: positive = future / next-cycle (for a `reg`, D pin;
+for a wire, the settled end-of-block value), `0` = the flop `Q` pin (only
+valid when `src` is a `reg`), negative = past cycle. `src` names the declared
+variable (pre-SSA) or an arbitrary rhs ref when lowering `await[N]`.
 
 ```
 <delay_assign> --| <ref>       : dst (fresh tmp)
-                 | <ref>       : src (declared variable)
                  | <const/ref> : offset (comptime int)
+                 | <ref>       : src (declared variable or rhs)
 ```
 
 ### Primitives
@@ -210,11 +223,14 @@ Variable.
 ```
 
 ### `range`
-Range.
+Range. The optional third child is the step (defaults to 1). Pyrope's
+`..=`, `..<`, `..+`, and `step` forms all lower to this single node — see
+[Ranges](#ranges).
 
 ```
 <range> --| <ref> or <const> : from-value
           | <ref> or <const> : to-value
+          | <ref> or <const> : step (optional, default 1)
 ```
 
 ### Unary Expressions
@@ -262,6 +278,19 @@ Less than or equal to.
 Greater than.
 #### `ge`
 Greater than or equal to.
+#### `is`
+Nominal type check. True iff R-1 and R-2 share the same `typename`
+attribute.
+#### `has`
+True iff R-1 (a tuple / range / enum) contains the field or label R-2.
+#### `in`
+True iff R-1 is a member of R-2, where R-2 is a tuple, range, or enum.
+Behavior varies by R-2's type: range ⇒ bounds check, tuple ⇒ membership,
+enum ⇒ active-variant check.
+#### `does`
+Structural subtype check. True iff the tuple structure of R-1 is a subset of
+R-2 (every field in R-1 exists with the same type in R-2). `a equals b` and
+`a case b` are producer-level desugars over `does`.
 
 ### N-ary Expressions
 
@@ -352,6 +381,21 @@ Bitwise XOR with a constant mask pattern.
               | <ref/const> : Nth-level selection   /
 ```
 
+#### `enum_add`
+Same shape as `tuple_add`, but the resulting value is an enum bundle (one-hot
+encoding for plain enums, tagged for `variant`). The producer emits `enum_add`
+for `enum Name = (...)` / `variant Name = (...)` declarations and tags the
+result via `attr_set` (`"type" "const"`, `"kind" "enum" | "variant"`).
+
+```
+<enum_add> --| <ref> : Lvalue (the enum bundle)
+             | <assign> --| <ref>       \ Variant 0
+                          | <ref/const> /
+             | ...
+             | <assign> --| <ref>       \ Variant N
+                          | <ref/const> /
+```
+
 ### Attributes
 
 Attributes are side-table facts attached to a declaration (e.g., bit-width,
@@ -362,7 +406,9 @@ direction, storage class, reset pin). They are accessed through the
 #### `attr_set`
 Writes `value` into attribute `root.p1.p2...pN` on the declared variable
 referenced by `root`. For example, register declaration is modeled as
-`attr_set <ref X> <const "storage"> <const "reg">`.
+`attr_set <ref X> <const "type"> <const "reg">`. The `type` attribute is the
+canonical storage-class slot — its values are `"const"`, `"mut"`, `"reg"`, or
+`"comptime"`.
 
 ```
 <attr_set> --| <ref>       : root (declaration being decorated)
@@ -385,12 +431,14 @@ Reads the attribute `root.p1.p2...pN` into `dst`.
 
 ### Checks and Types
 
-#### `cassert`
-Compile-time assertion. Its single child is the condition expression that
-must evaluate to a non-zero comptime constant.
+#### `assert`
+Runtime assertion. Its single child is the condition; the assertion fires
+(simulation error / hardware cover miss) if the condition evaluates to zero.
+Pyrope's `cassert c` is sugar for `assert c::[comptime]` — the condition must
+also be comptime-resolvable.
 
 ```
-<cassert> --| <ref/const> : condition
+<assert> --| <ref/const> : condition
 ```
 
 #### `err_flag`
@@ -447,6 +495,9 @@ or as a `func_def` signature element.
 | `comp_type_mixin`    | Mixin / intersection of types.                                          |
 | `comp_type_lambda`   | `lambda(arg_type, ret_type)`.                                           |
 | `comp_type_enum`     | Enum type.                                                              |
+| `comp_type_variant`  | Tagged-union / variant type. Parallel to `comp_type_enum`.              |
+| `comp_type_timing`   | `@[N]` timing type — used by `cassert x does @[N]` checks.              |
+| `prim_type_variadic` | Variadic function argument marker (e.g., `comb f(...args)`).            |
 | `expr_type`          | `expr(ref)` — type "same as this value".                                 |
 | `unknown_type`       | Type to be inferred.                                                    |
 
@@ -488,9 +539,11 @@ auto node_output = Lnast_node::create_ref("%out", line_num, pos1, pos2);
 ```
 
 ## Register
-A register is declared by a sticky `attr_set <ref X> <const "storage"> <const
+A register is declared by a sticky `attr_set <ref X> <const "type"> <const
 "reg">` statement. Uses of the register in subsequent code reference the
-variable by its `#`-prefixed name (`#reg_foo` below).
+variable by its `#`-prefixed name (`#reg_foo` below). `const`, `mut`, and
+`comptime` declarations emit the same `attr_set ... "type" "const" | "mut" |
+"comptime"` pattern.
 
 ```coffescript
 // Pyrope
@@ -508,7 +561,7 @@ reg reg_foo;
 auto stmts_idx    = lnast->add_child(top, Lnast_node::create_stmts());
 auto attr_set_idx = lnast->add_child(stmts_idx, Lnast_node::create_attr_set());
 lnast->add_child(attr_set_idx, Lnast_node::create_ref("#reg_foo", line_num, pos1, pos2));
-lnast->add_child(attr_set_idx, Lnast_node::create_const("storage"));
+lnast->add_child(attr_set_idx, Lnast_node::create_const("type"));
 lnast->add_child(attr_set_idx, Lnast_node::create_const("reg"));
 
 // C++ — subsequent reference
@@ -533,3 +586,260 @@ field. `Lnast::get_sname(nid)` renders the SSA name as `name|<subs>` (pipe
 separator); `Lnast::dump` uses the same `name|<subs>` form and omits the
 subscript entirely when `subs == 0`. Tmp variables are never SSA-renamed
 because they are single-assignment by construction.
+
+# Pyrope → LNAST Lowerings
+
+The LNAST node set is intentionally small. Many Pyrope surface forms are
+expanded by the producer (`inou/prp`) into the primitives defined above.
+This section enumerates the canonical lowerings; consumers should never see
+the surface forms directly.
+
+## Control flow
+
+### `match` → chain of `uif`
+
+`match` is syntax sugar; the producer lowers it into a `uif` chain, combining
+the subject with each arm's operator to form a boolean condition. When the
+source has no `else` arm, the producer synthesises `else { assert false }`.
+Init statements (`match mut x = 2; z + x { ... }`) hoist into an outer
+`stmts` scope.
+
+```
+// Pyrope
+match state {
+  == 0 { n = 1 }
+  in 4..<6 { n = 2 }
+  else { n = 0 }
+}
+```
+
+```
+eq            ___c0 state const(0)
+range         ___r  const(4) const(4)          // ..< → (to-1)
+in            ___c1 state ___r
+uif
+  ___c0
+  stmts
+    assign n const(1)
+  ___c1
+  stmts
+    assign n const(2)
+  stmts
+    assign n const(0)
+```
+
+### `loop`, `for`, `for`-comprehension → `while`
+
+`loop { body }` lowers to `while const(true) { body }`. Every `for i in xs
+{ body }` (including `(index, key, value)` destructuring, `enumerate(...)`,
+`key(...)`, and `ref xs` mutation) is expanded by the producer into an
+explicit `while` with a tmp counter, `tuple_get` / `attr_get` for element /
+index / key, a `break` on size match, and a `tuple_set` back into the
+iterable when `ref` is used. List-comprehensions `[e*2 for e in xs if c]`
+desugar to: an empty tmp tuple, the same expanded `while`, a conditional
+`tuple_concat` of the body value each iteration, and final `assign` to the
+lvalue.
+
+### `if` / `while` / `match` with init-stmts
+
+An init-stmts prefix (`if mut x = 3; x < 3 { ... }`) hoists into an enclosing
+`stmts` scope. No new child on the control-flow node.
+
+```
+stmts
+  attr_set x "type" "mut"
+  assign   x const(3)
+  lt       ___c x const(3)
+  if ___c
+    stmts ...
+```
+
+### `when` / `unless` statement gates
+
+`stmt when cond`  →  `if cond { stmt }`
+`stmt unless cond` → `if !cond { stmt }`
+
+When the gated statement is a declaration, the declaration is hoisted outside
+the `if`, initialised to `nil`, and only the assignment goes inside the gate.
+
+### `break` / `continue` / `return`
+
+Emitted as the dedicated leaf / single-child nodes described above. `return
+expr` assigns `expr` to a tmp first, then `return <tmp>`.
+
+## Operators
+
+### Compound assignment
+
+`a OP= b` always desugars: `OP ___t a b; assign a ___t`. Covers `+=`, `-=`,
+`*=`, `/=`, `|=`, `&=`, `^=`, `<<=`, `>>=`, `++=`, `or=`, `and=`. `++=` uses
+`tuple_concat` with an additional `assert` over `has` to guard non-overlap.
+
+### Negated operators
+
+Every negated Pyrope operator is `op + log_not` (or `bit_not` for the `!&`
+/ `!^` / `!|` bitwise cousins):
+
+| Surface            | Lowering                                          |
+|--------------------|---------------------------------------------------|
+| `a !and b`         | `log_and t a b; log_not dst t`                    |
+| `a !or b`          | `log_or  t a b; log_not dst t`                    |
+| `a !implies b`     | `log_not t a; log_or u t b; log_not dst u`        |
+| `a !& b`           | `bit_and t a b; bit_not dst t`                    |
+| `a !^ b`           | `bit_xor t a b; bit_not dst t`                    |
+| `a !| b`           | `bit_or  t a b; bit_not dst t`                    |
+| `a !has b`         | `has t a b; log_not dst t`                        |
+| `a !in b`          | `in  t a b; log_not dst t`                        |
+| `a !is b`          | `is  t a b; log_not dst t`                        |
+| `a !does b`        | `does t a b; log_not dst t`                       |
+| `a !case b`        | `(case-desugar); log_not dst t`                   |
+| `a !equals b`      | `(equals-desugar); log_not dst t`                 |
+
+### Short-circuit boolean
+
+`a and_then b` lowers to `log_and dst a b` **unless** `b` contains a function
+call, in which case the producer emits the guarded form:
+
+```
+log_and ___a a false       // seed with false
+if a
+  stmts
+    assign ___a b          // b only evaluated when a is true
+assign dst ___a
+```
+
+`or_else` mirrors this with `log_or` and an inverted guard.
+
+### `implies`
+
+`a implies b` → `log_not t a; log_or dst t b`.
+
+### `|>` (pipe-concat) — removed
+
+The `|>` operator is slated for removal from the grammar and has no LNAST
+lowering.
+
+### `equals`, `case`
+
+Both are producer-level desugars over `does`:
+
+`a equals b` → `does t1 a b; does t2 b a; log_and dst t1 t2`
+`a case b`  → `does t b a; assert t; in dst b a`
+
+## Ranges
+
+`a..=b` → `range dst a b`
+`a..<b` → `minus ___t b const(1); range dst a ___t`
+`a..+b` → `plus ___t a b; minus ___t2 ___t const(1); range dst a ___t2`
+
+The `step` keyword (`a..<b step c`) populates the optional third child of
+`range`.
+
+```
+<range> --| <ref/const> : from
+          | <ref/const> : to
+          | <ref/const> : step (optional, default 1)
+```
+
+## Bit selection
+
+All modifier forms lower via `get_mask`:
+
+| Surface           | Lowering                                       |
+|-------------------|-----------------------------------------------|
+| `a#[range]`       | build mask; `get_mask dst a mask`             |
+| `a#[i,j,k]`       | build mask `(1<<i) | (1<<j) | (1<<k)`; `get_mask` |
+| `a#sext[range]`   | `get_mask t a mask; sext dst t <high_bit>`    |
+| `a#zext[range]`   | `get_mask dst a mask` (no extension node)     |
+| `a#|[range]`      | `get_mask t a mask; red_or  dst t`            |
+| `a#&[range]`      | `get_mask t a mask; red_and dst t`            |
+| `a#^[range]`      | `get_mask t a mask; red_xor dst t`            |
+| `a#+[range]`      | `get_mask t a mask; popcount dst t`           |
+
+Write form `a#[range] = v`  →  build mask; `set_mask a a mask v`.
+
+`get_mask(x, mask)` both ANDs and shifts the selected bits down to bit 0, so
+`get_mask(a, 0xF0) == (a & 0xF0) >> 4`.
+
+## Tuples
+
+### Tuple spread `(...a, ...b)`
+
+Lowers to `tuple_concat` with an added `assert` that the new entries don't
+overlap existing fields. Plain `(x, y, z)` tuple literals use `tuple_add`
+(no cassert needed). Mixed forms split per element.
+
+### Register / memory access attributes
+
+Declaration attrs (`latency`, `rdport`, `wrport`, `fwd`, ...) are `attr_set`
+on the ram variable. Per-access attributes like `ram[addr]:[rdport=0]`
+attach to the access tmp:
+
+```
+attr_set xx "rdport" const(0)
+tuple_get xx ram addr
+```
+
+## Functions and calls
+
+### `comb` / `pipe[N]` / `mod`
+
+The `func_def` kind child is `"comb"`, `"pipe"`, or `"mod"`. `pipe[N]`
+depth is emitted alongside as `attr_set <func> "pipe_depth" N` at the
+declaration site (not a func_def child).
+
+### Captures, generics, `requires` / `ensures`, `where`
+
+Captures (`[a, b]`) and generics (`<T>`) become child tuples of `func_def`.
+`where cond` on a `func_def` is deprecated and should be removed from the
+grammar. `requires` / `ensures` are plain `func_call`s to stdlib builtins
+inside the body.
+
+### `test`, `spawn`, `impl`, `import`
+
+| Surface                          | Lowering                                                       |
+|----------------------------------|----------------------------------------------------------------|
+| `test "n" { body }`              | `func_def` + `attr_set f "test" true` + `func_call f`          |
+| `spawn name = { body }`          | `func_def` + `attr_set f "spawn" true` + `func_call f`         |
+| `import X as Y`                  | `func_call Y "import" X`                                       |
+| `impl Trait for T ( comb m(...){...} )` | `func_def tmp ...; assert (does tmp Trait); tuple_set T m tmp` |
+
+### `type Name = T`
+
+`type` statements are aliases: `tuple_add Name T` (or `assign Name T` for a
+scalar-ish binding) followed by `attr_set Name "type" const(true)` to mark
+the variable as a type binding.
+
+## Timing
+
+| Surface                 | Lowering                                           |
+|-------------------------|----------------------------------------------------|
+| `a@[N]`                 | `delay_assign tmp N a`                             |
+| `a@[-1]`                | `delay_assign tmp -1 a`                            |
+| `a@[]`                  | `delay_assign tmp 1 a` (shorthand for defer)       |
+| `a::[defer]`            | `delay_assign tmp 1 a`                             |
+| `await[N] dst = rhs`    | `delay_assign dst N rhs`                           |
+| `x:@[N]`                | `assert (does x @[N])::[comptime]` (type check)    |
+
+`@[N]` is an LNAST timing type (`comp_type_timing`); it is never a flop
+insertion request on its own — only `await[N]` and `::[defer]` actually
+insert delay.
+
+## Constants and unknown values
+
+`nil` and every `0sb?`-style literal (`0sb?`, `0ub010?11??00`, `0sb1?1`, ...)
+are plain `const` nodes carrying the literal text. They are never special
+LNAST nodes.
+
+## Stdlib-only constructs
+
+`puts`, `print`, `format`, `always assert`, `optimize`, `cover`, `peek`,
+`poke` are plain `func_call`s to stdlib helpers. String interpolation like
+`"value={x}"` is desugared by the producer into `format("value={}", x)` — a
+regular `func_call`.
+
+## Typecasts
+
+`(expr):T:[attrs]` (expression-level typecast) lowers by: producer creates a
+tmp, emits `type_spec tmp <type>` as a compile-time check, and one
+`attr_set tmp <key> <value>` per attribute.

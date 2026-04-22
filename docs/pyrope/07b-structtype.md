@@ -520,7 +520,7 @@ const Type1 = (
 const a:Type1 = 33
 ```
 
-## Traits and mixin
+## Tuple mixin
 
 There is no object inheritance in Pyrope, but tuples allow to build mixin and
 composition.
