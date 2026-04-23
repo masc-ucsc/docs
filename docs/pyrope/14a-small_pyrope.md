@@ -89,11 +89,12 @@ mut array = (1, 2, 3, 4)        // Indexed tuple
 mut mixed = (x=1, 2, y=3)       // Mixed named/indexed
 
 // Access
-assert point.x == 10
-assert array[2] == 3            // Array-style access
+cassert point.x == 10
+cassert array[2] == 3           // Array-style access
 
 // Concatenation (++ is always tuple concatenation — strings, lambdas, tuples)
 mut combined = point ++ (z=30)  // (x=10, y=20, z=30)
+cassert combined == (x=10, y=20, z=30)
 ```
 
 ### Ranges
@@ -103,8 +104,11 @@ mut range2 = 0..<4              // Exclusive range: 0,1,2,3
 mut range3 = 2..+3              // Size-based range: 2,3,4
 
 // Range operations
-assert (1..=3) == (1,2,3)       // Range to tuple conversion
-assert int(1..=3) == 0b1110     // Range to one-hot encoding
+cassert (1..=3) == (1,2,3)       // Range to tuple conversion
+cassert int(1..=3) == 0b1110     // Range to one-hot encoding
+cassert range1 == (1,2,3,4,5)
+cassert range2 == (0,1,2,3)
+cassert range3 == (2,3,4)
 ```
 
 ### Arrays and Memories
@@ -156,6 +160,12 @@ comb clamp(x:i16) -> (result:u8) {
     return 255 when x > 255    // Early exit
     result = x                  // Normal path, no return needed
 }
+
+cassert add(3, 4) == 7
+cassert add_simple(3, 4) == 7
+cassert clamp(-10) == 0
+cassert clamp(500) == 255
+cassert clamp(42) == 42
 ```
 
 ### Pipeline
@@ -319,6 +329,10 @@ at a time.
 ```pyrope
 enum State = (Idle, Active, Done)       // One-hot encoding: 1, 2, 4
 
+cassert int(State.Idle)   == 1
+cassert int(State.Active) == 2
+cassert int(State.Done)   == 4
+
 reg current_state:State = State.Idle
 
 match current_state {
@@ -470,9 +484,12 @@ mut sparse2 = value#[0,3,7]      // Select bits 0, 3, and 7
 mut rparse1 = (value#[7], value#[3], value#[0])#[..]
 mut rparse2 = value#[7,3,0]      // Select bits 7, 3, and 0
 
-assert value  == 0b1010_1100
-assert sparse2== 0b1____1__0
-assert rparse2== 0b011           // reverse order of bits (LSB-first packing)
+cassert value  == 0b1010_0100   // bit 3 was cleared above
+cassert sparse2 == 0b1____1__0
+cassert rparse2 == 0b011        // reverse order of bits (LSB-first packing)
+cassert pop_count == 3
+cassert or_reduce  == -1        // any bit set
+cassert and_reduce ==  0        // sign bit (MSB) is 0
 ```
 
 ## Operator Precedence

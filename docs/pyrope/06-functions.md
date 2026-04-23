@@ -252,7 +252,7 @@ comb div2(...x) { x[0] / x[1] }     // unnamed input tuple
 
 comb noarg() { 33 }                 // explicit no args
 
-assert 33 == noarg()              // () always required, even for no-arg calls
+cassert 33 == noarg()             // () always required, even for no-arg calls
 
 assert noarg                      // error: `noarg()` needed for calls
 
@@ -289,11 +289,11 @@ assert 4.f1() != 0       // error: f1 can be called for tup, so shadow
 assert tup.f1() != 0     // error: f1 is shadowing
 
 comb xx[tup]() { tup.f1() } // OK, function restricted scope for f1
-assert xx() == 1
+cassert xx() == 1
 
-assert (4:tup).f1() == 1
-assert 4.f1() == 3        // UFCS call
-assert tup.f1() == 1
+cassert (4:tup).f1() == 1
+cassert 4.f1() == 3       // UFCS call
+cassert tup.f1() == 1
 ```
 
 The keyword `self` is used to indicate that the function is accessing a tuple.
@@ -366,7 +366,7 @@ inc1(ref x)       // error: `x` is immutable but modified inside inc1
 
 mut y = 3
 inc1(ref y)
-assert y == 4
+cassert y == 4
 
 comb banner() { puts "hello" }
 type T_noarg = comb() -> ()
@@ -397,13 +397,13 @@ comb ret3() -> (a, b) {
 }
 
 const a1 = ret1()
-assert a1.a == 1 and a1 == 1  // single-field tuple auto-unwraps
+cassert a1.a == 1 and a1 == 1  // single-field tuple auto-unwraps
 
 const a3 = ret3()
-assert a3.a == 3 and a3.b == 4
+cassert a3.a == 3 and a3.b == 4
 
 const (x1, x2) = ret3()
-assert x1 == 3 and x2 == 4
+cassert x1 == 3 and x2 == 4
 ```
 
 ## Attributes
@@ -513,14 +513,14 @@ mut a_1 = (
 
 a_1.f1(3)
 mut a_2 = a_1.f1(4)  // a_2 is updated, not a_1
-assert a_1.x == 3 and a_2.x == 4
+cassert a_1.x == 3 and a_2.x == 4
 
 // Same behavior as in a function with UFCS
 comb set_x(ref self, x) { self.x = x }
 
 a_1.set_x(10)
 mut a_3 = a_1.set_x(20)
-assert a_1 == 10 and a_3 == 20
+cassert a_1.x == 10 and a_3.x == 20
 ```
 
 Since UFCS does not allow shadowing, a wrapper must be built or a compile error is generated.

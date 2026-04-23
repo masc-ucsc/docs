@@ -154,9 +154,9 @@ Tuple scope is also useful for declaring function default values:
 comb example(a:int, b:int=self.a+5) -> (result:int) {
   result = a + b
 }
-assert example(a=3) == (a+a+5)
-assert example(6,7) == (6+7)
-assert example(6) == (6+6+5)
+cassert example(a=3) == (3+3+5)
+cassert example(6,7) == (6+7)
+cassert example(6) == (6+6+5)
 assert example(b=3) !=0         // error: undefined `a` argument
 ```
 
@@ -234,9 +234,9 @@ if e#[3] {           // OK, bit extraction for single bit returns a boolean
   call(x)
 }
 
-assert 0 == (int(true)  + 1)  // explicity typecast
-assert 1 == (int(false) + 1)  // explicity typecast
-assert boolean(33) or false   // explicity typecast
+cassert 0 == (int(true)  + 1)  // explicity typecast
+cassert 1 == (int(false) + 1)  // explicity typecast
+cassert boolean(33) or false   // explicity typecast
 ```
 
 String input typecase is valid, but anything different than ("0", "1", "-1",
@@ -278,20 +278,20 @@ size in the tuple can be unknown.
 
 ```
 const a = (1,2,3)
-assert a[0..] == (1,2,3)
-assert a[1..] == (2,3)
-assert a[..=1] == (1,2)
-assert a[..<2] == (1,2)
-assert a[1..<10] == (2,3)
+cassert a[0..] == (1,2,3)
+cassert a[1..] == (2,3)
+cassert a[..=1] == (1,2)
+cassert a[..<2] == (1,2)
+cassert a[1..<10] == (2,3)
 
 const b = 0b0110_1001
-assert b#[1..]        == 0b0110_100
-assert b#[1..=-1]     == 0b0110_100
-assert b#[1..=-2]     == 0b0110_100  // unsigned result from bit selector
-assert b#sext[1..=-2] == 0sb110_100
-assert b#[1..=-3]     == 0sb10_100
-assert b#[1..<-3]     == 0b0_100
-assert b#[0]          == false
+cassert b#[1..]        == 0b0110_100
+cassert b#[1..=-1]     == 0b0110_100
+cassert b#[1..=-2]     == 0b0110_100  // unsigned result from bit selector
+cassert b#sext[1..=-2] == 0sb110_100
+cassert b#[1..=-3]     == 0sb10_100
+cassert b#[1..<-3]     == 0b0_100
+cassert b#[0]          == false
 ```
 
 
@@ -305,11 +305,11 @@ to type cast from tuple to range, but it is possible from range to tuple.
 
 ```
 const c = 1..=3
-assert int(c) == 0b1110
-assert range(0b01_1100) == 2..=4
+cassert int(c) == 0b1110
+cassert range(0b01_1100) == 2..=4
 
 assert range(1,2,3)            // error: typecast not allowed
-assert (1,2,3) == tuple(1..=3)
+cassert (1,2,3) == tuple(1..=3)
 ```
 
 In most cases, the range can be used in contructs like `for` for positive and
@@ -318,15 +318,15 @@ semantic is the same. The same `tuple` typecast is also optional when doing a
 comparison. Both ranges a `step` to change the step.
 
 ```
-assert   int(0..=10 step  2) == 0b101_0101_0101
-assert tuple(0..=10 step  2) == ( 0,2,4,6,8,10)
-assert tuple(10..=0 step -2) == (10,8,6,4,2, 0)
-assert      (10..=0 step -2) == (10,8,6,4,2, 0)
+cassert   int(0..=10 step  2) == 0b101_0101_0101
+cassert tuple(0..=10 step  2) == ( 0,2,4,6,8,10)
+cassert tuple(10..=0 step -2) == (10,8,6,4,2, 0)
+cassert      (10..=0 step -2) == (10,8,6,4,2, 0)
 
-assert -1..=2 == (-1,0,1,2)
+cassert -1..=2 == (-1,0,1,2)
 const x = -1..=2
 
-assert (i for i in 0..=10 step 2) == (0,2,4,6,8,10)
+cassert (i for i in 0..=10 step 2) == (0,2,4,6,8,10)
 ```
 
 Since the range is an integer, a decreasing range should have the same meaning
@@ -346,10 +346,10 @@ possible when both begin and end of the range are fully specified.
 
 
 ```
-assert((0..<30 step 10) == (0,10,20)) // ranges and tuples can combined
-assert((1..=3) ++ 4 == (1,2,3,4))   // tuple and range ops become a tuple
-assert 1..=3 == (1,2,3)
-assert((1..=3)#[..] == 0b1110)      // convert range to integer with #[..]
+cassert((0..<30 step 10) == (0,10,20)) // ranges and tuples can combined
+cassert((1..=3) ++ 4 == (1,2,3,4))     // tuple and range ops become a tuple
+cassert 1..=3 == (1,2,3)
+cassert((1..=3)#[..] == 0b1110)        // convert range to integer with #[..]
 ```
 
 ### String
@@ -359,19 +359,19 @@ ASCII sequence. The string encoding assigns the lower bits to the first
 characters in the string, each character has 8 bits associated.
 
 ```
-a = 'cad'              // c is 0x63, a is 0x61, and d is 0x64
-b = 0x64_61_63
-assert a == string(b)  // typecast number to string
-assert int(a) == b     // typecast string to number
-assert a#[..] == b     // typecast string to number
+const a = 'cad'          // c is 0x63, a is 0x61, and d is 0x64
+const b = 0x64_61_63
+cassert a == string(b)   // typecast number to string
+cassert int(a) == b      // typecast string to number
+cassert a#[..] == b      // typecast string to number
 ```
 
 Like ranges, strings can also be seen as a tuple, and when tuple operations are
 performed they are converted to a tuple.
 
 ```
-assert "hello" == ('h','e','l','l','o')
-assert "h" ++ "ell" == ('h','e','l','l') == "hell"
+cassert "hello" == ('h','e','l','l','o')
+cassert "h" ++ "ell" == ('h','e','l','l') == "hell"
 ```
 
 
@@ -763,6 +763,9 @@ comptime const a = 1        // same as above
 comptime mut counter = 0    // mutable at compile time (updated during elaboration)
 comptime const b = a + 2    // OK, comptime const
 comptime c = rand           // error: 'c' is not resolvable at compile time
+
+cassert SIZE == 16
+cassert b == 3
 ```
 
 The `comptime` status can still be queried with `::[comptime]`:
@@ -1048,22 +1051,22 @@ it is considered non-intuitive for programmers.
 
 
 ```
-x = 0b1_0110   // positive
-y = 0s1_0110   // negative
-assert x#[0,2] == 0b10
-assert y#[100,200]       == 0b11   and x#[100,200]       == 0
-assert y#sext[0,100,200] == 0sb110 and x#sext[1,100,200] == 0b001
-assert x#|[..] == -1
-assert x#&[0,1] == 0
-assert x#+[0..=5] == x#+[0..<100] == 3
+const x = 0b1_0110   // positive
+const y = 0s1_0110   // negative
+cassert x#[0,2] == 0b10
+cassert y#[100,200]       == 0b11   and x#[100,200]       == 0
+cassert y#sext[0,100,200] == 0sb110 and x#sext[1,100,200] == 0b001
+cassert x#|[..] == -1
+cassert x#&[0,1] == 0
+cassert x#+[0..=5] == x#+[0..<100] == 3
 assert y#+[0..=5]  // error: 'y' can be negative
-assert y#[..]#+[..] == 3
-assert y#[0..=5]#+[..] == 3
-assert y#[0..=6]#+[..] == 4
+cassert y#[..]#+[..] == 3
+cassert y#[0..=5]#+[..] == 3
+cassert y#[0..=6]#+[..] == 4
 
 mut z     = 0b0110
 z#[0] = 1
-assert z == 0b0111
+cassert z == 0b0111
 z#[0] = 0b11 // error: '0b11` overflows the maximum allowed value of `z#[0]`
 ```
 
@@ -1090,13 +1093,13 @@ such an operation.
 
 ```
 mut v = 0b10
-assert v#[0,1] == v#[1,2] == v#[..] == v#[0..=1] == v#[..=1] == 0b10
+cassert v#[0,1] == v#[1,2] == v#[..] == v#[0..=1] == v#[..=1] == 0b10
 
 mut trans = 0
 
 trans#[0] = v#[1]
 trans#[1] = v#[0]
-assert trans == 0b01
+cassert trans == 0b01
 ```
 
 
@@ -1438,5 +1441,5 @@ comb fcall_returns_2_values() -> (xx, yy) {
 }
 
 const (a, b_unused) = fcall_returns_2_values()
-assert a == 3
+cassert a == 3
 ```

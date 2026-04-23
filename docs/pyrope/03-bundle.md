@@ -11,7 +11,9 @@ mut b = (f1=3,f2=4) // b is named and ordered
 mut c = (1,d=4)     // c is ordered and unnamed (some entries are not named)
 
 mut d = (1,2,3,4)     // array or tuple
-assert d == [1,2,3,4] // the [] also check that all the fields have same type
+cassert d == [1,2,3,4] // the [] also check that all the fields have same type
+cassert b.f1 == 3 and b.f2 == 4
+cassert c[0] == 1 and c.d == 4
 
 assert (true,1) != [true,1]  // error: true is not the same type as 1
 ```
@@ -56,6 +58,8 @@ mut x = (
   ,field3:int = 3     // field3 with explicit type and 3 value
   ,val                // unnamed field with value `val` (4)
 )
+cassert x.field1 == 1 and x.field3 == 3
+cassert x[3] == 4
 ```
 
 ## Tuple index with tuples
@@ -66,12 +70,12 @@ Tuples can be used as index too because all the tuples are ordered at compile ti
 type Person = (name:string, age:u32)
 mut a = (one:Person, two:Person)
 
-x = ('two', 'one')
+const x = ('two', 'one')
 a[x].age = (3,4)
-assert a.one == 4 and a.two == 3
+cassert a.one.age == 4 and a.two.age == 3
 
-a[0,1] = (10,20)
-assert a.one == 10 and a.two == 20
+a[0,1].age = (10,20)
+cassert a.one.age == 10 and a.two.age == 20
 ```
 
 ## Tuple and scope
@@ -243,12 +247,12 @@ entry.
 ```
 const x = (first=(second=3))
 
-assert x.first.second == 3
-assert x.first        == 3
-assert x              == 3
-assert x[0].second    == 3
-assert x.first[0]     == 3
-assert x[0]           == 3
+cassert x.first.second == 3
+cassert x.first        == 3
+cassert x              == 3
+cassert x[0].second    == 3
+cassert x.first[0]     == 3
+cassert x[0]           == 3
 ```
 
 
@@ -258,9 +262,9 @@ Tuples can also use structural binding to unpack a tuple multiple fields into se
 const x = (f1=(f1a=1,f1b=3), f2=4)
 
 const (y,z) = x
-assert y == (1,3) and z == 4
-assert y.f1a == 1 and y.f1b == 3
-assert y == (f1a=1,f1b=3)
+cassert y == (1,3) and z == 4
+cassert y.f1a == 1 and y.f1b == 3
+cassert y == (f1a=1,f1b=3)
 ```
 
 ## Tuples vs arrays
@@ -275,11 +279,11 @@ mut bund1 = (0,1,2,3,4) // ordered and can be used as an array
 mut array1 = [0,1,2,3,4]  // [] force array, so all the entries have same type
 
 mut bund2 = (bund1,bund1,((10,20),30))
-assert bund2[0][1] == 1
-assert bund2[1][1] == 1
-assert bund2[2][0] == (10,20)
-assert bund2[2][0][1] == 20
-assert bund2[2][1] == 30
+cassert bund2[0][1] == 1
+cassert bund2[1][1] == 1
+cassert bund2[2][0] == (10,20)
+cassert bund2[2][0][1] == 20
+cassert bund2[2][1] == 30
 ```
 
 Pyrope tries to be compatible with synthesizable Verilog. In Verilog, when an
@@ -335,7 +339,7 @@ mut y = (
   ,ff ++= 2
   ,zz ++= 3
 )
-assert y == (ff=(1,2),zz=3)
+cassert y == (ff=(1,2),zz=3)
 ```
 
 
@@ -381,13 +385,13 @@ reason is that it is a bit confusing.
 mut a,b = (2,3)    // error: left-hand-side must be a tuple (a,b)
 mut (a,b) = 2,3    // error: right-hand-side must be a tuple (2,3)
 mut (a,b) = (2,3)
-assert a==2 and b==3
+cassert a==2 and b==3
 
 mut (c,d) = 1..=2  // error: range is a single entry assignment
 mut c = 1..=2      // OK
 mut (c,d) = 1      // error: 2 entry tuple in lhs, same in rhs
 mut (c,d) = (1,2)  // OK
-assert c == 1 and d == 2
+cassert c == 1 and d == 2
 ```
 
 One thing to remember is that the `=` separates the statement in two parts

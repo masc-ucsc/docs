@@ -469,8 +469,8 @@ comb f1() { 1 }
 const tup = (
   comb f1() { 2 },
   comb code() {
-     assert self.f1() == 2
-     assert f1() == 1
+     cassert self.f1() == 2
+     cassert f1() == 1
   }
 )
 ```
@@ -490,8 +490,8 @@ entry at the call site using the same slot:
 ```
 const y = 3
 comb addy[y](a) { y + a }
-assert addy(4)       == 7      // uses captured y=3
-assert addy[100](4)  == 104    // override y=100 for this call
+cassert addy(4)       == 7      // uses captured y=3
+cassert addy[100](4)  == 104    // override y=100 for this call
 ```
 
 The override is comptime and produces a call equivalent to one where the
@@ -511,7 +511,7 @@ whatever the enclosing scope held when the lambda was defined.
 
     const call_captured = fun[x_s]() {
       fun[x_s]() {
-        assert x_s == 10
+        cassert x_s == 10
         x_s
       }
     }
@@ -521,12 +521,12 @@ whatever the enclosing scope held when the lambda was defined.
         mut x_s = 20   // not variable shadowing because fun scope
 
         const x1 = call_captured()
-        assert x1 == 10
+        cassert x1 == 10
 
         x_s = 30;
 
         const x2 = call_captured()
-        assert x2 == 10
+        cassert x2 == 10
       }
       tst // call the test
     }
@@ -574,7 +574,7 @@ may do this implementation.
       result = x + j
     }
 
-    assert b(1) == 2
+    cassert b(1) == 2
 
     test "closure with tuple" {
       mut a: i32 = 1
@@ -589,7 +589,7 @@ may do this implementation.
 
       a += 100;
 
-      assert addX(2) == 4
+      cassert addX(2) == 4
     }
 
     test "plain closure" {
@@ -602,7 +602,7 @@ may do this implementation.
 
       a += 100;
 
-      assert addX(2) == 4
+      cassert addX(2) == 4
     }
     ```
 
@@ -669,7 +669,7 @@ const fun2 = fun[y]() -> (result:int) {
   result = y + x
 }
 x = 1000
-assert fun2() == 203
+cassert fun2() == 210
 ```
 
 ### Lambda arguments
@@ -681,9 +681,9 @@ behavior:
 
 
 ```
-assert 0 == (0)  // OK, same as assert( 0 == (0) )
-assert (0) == 0  // error: (assert(0)) == 0 is an expression
-assert(0 == 0)   // OK
+cassert 0 == (0)  // OK, same as cassert( 0 == (0) )
+assert (0) == 0   // error: (assert(0)) == 0 is an expression
+cassert(0 == 0)   // OK
 ```
 
 It is also easy to forget that parenthesis can be ommited in simple expressions,
@@ -691,7 +691,7 @@ not when ranges or tuples are involed.
 
 ```
 assert 2 in (1,2)  // error: not allowed to drop parenthesis
-assert(2 in (1,2)) // OK
+cassert(2 in (1,2)) // OK
 ```
 
 ### Multiple tuples
@@ -723,21 +723,21 @@ const X_t = (
 mut top = (
   comb setter(ref self) {
     mut x:X_t = ?
-    assert x.i1.i1_field == 1
-    assert x.i1.i2_field == 2
-    assert x.i2.i1_field == 11
+    cassert x.i1.i1_field == 1
+    cassert x.i1.i2_field == 2
+    cassert x.i2.i1_field == 11
 
     x.i1 = 400
 
-    assert x.i1.i1_field == 400
-    assert x.i1.i2_field == 2
-    assert x.i2.i1_field == 11
+    cassert x.i1.i1_field == 400
+    cassert x.i1.i2_field == 2
+    cassert x.i2.i1_field == 11
 
     x.i2 = 1000
 
-    assert x.i1.i1_field == 400
-    assert x.i1.i2_field == 2
-    assert x.i2.i1_field == 1000
+    cassert x.i1.i1_field == 400
+    cassert x.i1.i2_field == 2
+    cassert x.i2.i1_field == 1000
   }
 )
 ```
@@ -762,10 +762,10 @@ if all the possible values are true, which is quite counter-intuitive behavior
 for programmers not used to 4 value logic.
 
 ```
-assert !(0sb? == 0)
-assert !(0sb? != 0)
-assert !(0sb? == 0sb?)
-assert !(0sb? != 0sb?)
+cassert !(0sb? == 0)
+cassert !(0sb? != 0)
+cassert !(0sb? == 0sb?)
+cassert !(0sb? != 0sb?)
 ```
 
 There is no way to know at run-time if a value is unknown, but a compile trick
@@ -774,7 +774,7 @@ can work. The reason is that integers can be converted to strings in a C++ API
 ```
 mut x = 0sb10?
 const str = __to_string(x) // only works for compile time constants
-assert x == "0sb10?"
+cassert str == "0sb10?"
 ```
 
 ### for loop
@@ -794,7 +794,7 @@ for (idx,i) in s.enumerate() {
    == 2 { "l" }
    == 3 { "l" }
   }
-  assert v == i
+  cassert v == i
 }
 
 const t = (1,2,3)
@@ -804,7 +804,7 @@ for (idx,i) in t.enumerate() {
    == 1 { 2 }
    == 2 { 3 }
   }
-  assert v == i
+  cassert v == i
 }
 
 const r=2..<5
@@ -814,18 +814,18 @@ for (idx,i) in r.enumerate() {
    == 1 { 3 }
    == 2 { 4 }
   }
-  assert v == i
+  cassert v == i
 }
 
 const r2=4..=2 step -1
-assert r2 == (4,3,2)
+cassert r2 == (4,3,2)
 for (idx,i) in r2.enumerate() {
   const v = match idx {
    == 0 { 4 }
    == 1 { 3 }
    == 2 { 2 }
   }
-  assert v == r2[i]
+  cassert v == r2[i]
 }
 
 for i in 2..<5 {
@@ -837,11 +837,11 @@ for i in 2..<5 {
    == 1 { 3 }
    == 2 { 2 }
   }
-  assert v == ri
+  cassert v == ri
 }
 
 for (idx,i) in enumerate(123) {
-  assert i == 123 and idx==0
+  cassert i == 123 and idx==0
 }
 ```
 
@@ -853,34 +853,34 @@ iterators, but also in bit section:
 ```
 const v = 0xF0
 
-assert v#[0] == 0
-assert v#[4] == 1       // unsigned output
-assert v#sext[4] == -1  // signed output
+cassert v#[0] == 0
+cassert v#[4] == 1       // unsigned output
+cassert v#sext[4] == -1  // signed output
 
-assert v#[3..=4] == 0b010 == v#[3,4]
-assert v#[4..=3 step -1] == 0b010
-assert v#[4,3] == v#[3,4] == 0b010
+cassert v#[3..=4] == 0b010 == v#[3,4]
+cassert v#[4..=3 step -1] == 0b010
+cassert v#[4,3] == v#[3,4] == 0b010
 
 const tmp1 = (v#[4], v#[3])#[..]  // typecast from
 const tmp2 = (v#[3], v#[4])#[..]
 const tmp3 = v#[3,4]
-assert tmp1 == 0b01
-assert tmp2 == 0b100
-assert tmp3 == 0b10
+cassert tmp1 == 0b01
+cassert tmp2 == 0b100
+cassert tmp3 == 0b10
 
 const tmp1s = (v#sext[4], v#sext[3])#[..]  // typecast from
 const tmp2s = (v#sext[3], v#sext[4])#[..]
 const tmp3s = v#[4,3]
-assert tmp1s == 0b01
-assert tmp2s == 0b10
-assert tmp3s == 0b10
+cassert tmp1s == 0b01
+cassert tmp2s == 0b10
+cassert tmp3s == 0b10
 
 const tmp1ss = (v#sext[4], v#sext[3])#sext[..]  // typecast from
 const tmp2ss = (v#sext[3], v#sext[4])#sext[..]
 const tmp3ss = v#sext[3,4]
-assert tmp1ss == 0b01  ==  1
-assert tmp2ss == 0sb10 == -2
-assert tmp3ss == 0sb10 == -2 == v#sext[4,3]
+cassert tmp1ss == 0b01  ==  1
+cassert tmp2ss == 0sb10 == -2
+cassert tmp3ss == 0sb10 == -2 == v#sext[4,3]
 ```
 
 
@@ -901,7 +901,7 @@ comb reverse(x:uint) -> (total:uint) {
     total |= x#[i]
   }
 }
-assert reverse(0b10110) == 0b01101
+cassert reverse(0b10110) == 0b01101
 ```
 
 ### Unexpected calls
@@ -922,18 +922,18 @@ const x0 = call_now(here)          // prints "here"
 const e1 = call_now(args)          // error: args needs arguments
 const x1 = call_defer(here)        // nothing printed
 const e2 = call_defer(args)        // error: args needs arguments
-assert x0  == 3                  // nothing printed
-assert x1  == 3                  // nothing printed
+cassert x0  == 3                  // nothing printed
+cassert x1  == 3                  // nothing printed
 
 const x2 = call_now(ref here)      // prints "here"
 const e3 = call_now(ref args)      // error: args needs arguments
 const x3 = call_defer(ref here)    // nothing printed
 const x4 = call_defer(ref args)    // nothing printed
-assert x2  == 3                  // nothing printed
-assert x3()  == 3                // prints "here"
+cassert x2  == 3                  // nothing printed
+cassert x3()  == 3               // prints "here"
 assert x3  == 3                  // error: explicit call needed
 assert x4  == 1                  // error: args needs arguments
-assert x4("xx") == 1             // prints "args:xx"
+cassert x4("xx") == 1            // prints "args:xx"
 
 ```
 

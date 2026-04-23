@@ -98,11 +98,11 @@ comb f1() {
   (a=33, b="hello")
 }
 
-assert t1 equals t2
-assert t1 equals v1
-assert f1() equals t1
-assert _:f1 !equals t1
-assert _:t1 equals t2
+cassert t1 equals t2
+cassert t1 equals v1
+cassert f1() equals t1
+cassert _:f1 !equals t1
+cassert _:t1 equals t2
 ```
 
 
@@ -169,16 +169,16 @@ These are the detailed rules for the `a does b` operator depending on the `a` an
 * The lambdas have a more complicated set of rules explained later.
 
 ```
-assert (a:int:[max=33, min=0] does (a:int:[max=20, min=5]))
-assert (a:int:[range=0..=33] !does (a:int:[max=50, min=5]))
+cassert (a:int:[max=33, min=0] does (a:int:[max=20, min=5]))
+cassert (a:int:[range=0..=33] !does (a:int:[max=50, min=5]))
 
-assert (a:string, b:int) does (a:"hello", b:33)
-assert ((b:int, a:string) !does (a:"hello", b:33)) // order matters in tuples
+cassert (a:string, b:int) does (a:"hello", b:33)
+cassert ((b:int, a:string) !does (a:"hello", b:33)) // order matters in tuples
 
 type T_complex = comb(x, xxx2) -> (y, z)
 type T_simple  = comb(x)       -> (y, z)
-assert _:T_complex does _:T_simple
-assert _:T_simple !does _:T_complex
+cassert _:T_complex does _:T_simple
+cassert _:T_simple !does _:T_complex
 ```
 
 For named tuples, this code shows some of the corner cases:
@@ -195,8 +195,8 @@ mut c:t1 = (a="hello", b=3) // OK
 mut c1:t1 = (b=3, a="hello") // OK
 
 mut d:t2 = c                 // OK, both fully named
-assert d[0] == c[1] and c[0] == d[1]
-assert d.a == c.a and d.b == c.b
+cassert d[0] == c[1] and c[0] == d[1]
+cassert d.a == c.a and d.b == c.b
 ```
 
 Ignoring the value is what makes `equals` different from `==`. As a result
@@ -206,10 +206,10 @@ different functionality functions could be `equals`.
 comb a() { 1 }
 comb b() { 2 }
 type ab_type = comb()
-assert a equals ab_type
+cassert a equals ab_type
 
-assert a() != b()              // 1 != 2
-assert a() equals b()          // 1 equals 2
+cassert a() != b()              // 1 != 2
+cassert a() equals b()          // 1 equals 2
 ```
 
 ## Type check with values
@@ -271,15 +271,15 @@ const X2 = (b:u32)
 
 const t1:X1 = (b=3)
 const t2:X2 = (b=3)
-assert (b=3) !is X2  // same as (b=3) !is X2
-assert t1 equals t2
-assert t1 !is t2
+cassert (b=3) !is X2  // same as (b=3) !is X2
+cassert t1 equals t2
+cassert t1 !is t2
 
 const t4:X1 = (b=5)
 
-assert t4 equals t1
-assert t4 is t1
-assert t4 !is t2
+cassert t4 equals t1
+cassert t4 is t1
+cassert t4 !is t2
 
 comb f2_x1(x:X1) { x.b + 1 }
 comb f2_other(x) { 0 }
@@ -380,20 +380,20 @@ When the attributes are read, it reads the current. it does not read the constra
 
 ```pyrope
 mut val:u8 = 0   // designer constraints a to be between 0 and 255
-assert val::[sbits] == 0
+cassert val::[sbits] == 0
 
 val = 3          // val has 3 bits (0sb011 all the numbers are signed)
 
 val = 300        // error: '300' overflows the maximum allowed value of 'val'
 
 val = 1          // max=1,min=1 sbits=2, ubits=1
-assert val::[ubits] == 1 and val::[min] == 1 and val::[max] == 1 and val::[sbits] == 2
+cassert val::[ubits] == 1 and val::[min] == 1 and val::[max] == 1 and val::[sbits] == 2
 
 val::[wrap] = 0x1F0 // Drop bits from 0x1F0 to fit in constrained type
-assert val == 240 == 0xF0
+cassert val == 240 == 0xF0
 
 val = u8(0x1F0)    // same
-assert val == 0xF0
+cassert val == 0xF0
 ```
 
 Pyrope leverages LiveHD bitwidth pass to compute the maximum and minimum value
@@ -583,21 +583,21 @@ mut d:dt = a   // OK, call initial to type cast
 Introspection is possible for tuples.
 
 ```
-a = (b=1, c:u32=2)
+const a = (b=1, c:u32=2)
 mut b = a
 b.c = 100
 
-assert a equals b
-assert a.size == 2
-assert a['b'] == 1
-assert a['c'] equals u32
+cassert a equals b
+cassert a.size == 2
+cassert a['b'] == 1
+cassert a['c'] equals u32
 
-assert a has 'c'
-assert !(a has 'foo')
+cassert a has 'c'
+cassert !(a has 'foo')
 
-assert a::[id] == 'a'
-assert a[0]::[id] == ':0:b' and a.b::[id] == ':0:b'
-assert a[1]::[id] == ':1:c' and a.c::[id] == ':1:c'
+cassert a::[id] == 'a'
+cassert a[0]::[id] == ':0:b' and a.b::[id] == ':0:b'
+cassert a[1]::[id] == ':1:c' and a.c::[id] == ':1:c'
 ```
 
 Function definitions allocate a tuple, which allows to introspect the
@@ -606,8 +606,8 @@ function but not to change the functionality. Functions have two fields:
 
 ```
 comb fu(a, b=2) -> (c) { c = a + b }
-assert fu::[inp] equals ('a', 'b')
-assert fu::[out] equals ('c')
+cassert fu::[inp] equals ('a', 'b')
+cassert fu::[out] equals ('c')
 ```
 
 This means that when ignoring named vs unnamed calls, overloading behaves like

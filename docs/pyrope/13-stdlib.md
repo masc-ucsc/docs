@@ -31,7 +31,7 @@ Sample use:
 ```
 const x = (1,2,23)
 
-cassert p.len(x) == 3
+cassert prp.len(x) == 3
 ```
 
 Library code:
@@ -77,7 +77,7 @@ const filter = fun<T>(f:fun(a:T)->(_:Bool),...x:[]T) {
 Sample use:
 
 ```
-cassrt (1,2,3).reduce(prp.plus) == 6
+cassert (1,2,3).reduce(prp.plus) == 6
 ```
 
 Library code:

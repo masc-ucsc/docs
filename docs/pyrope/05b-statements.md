@@ -74,7 +74,7 @@ In addition to functionality, the syntax is different to avoid redundancy.
 form a valid expression.
 
 ```
-x = 1
+const x = 1
 match x {
   == 1            { puts "always true" }
   in 2,3          { puts "never"       }
@@ -82,7 +82,7 @@ match x {
 // It is equivalent to:
 unique if x == 1  { puts "always true" }
 elif x in (2,3)   { puts "never"       }
-else              { assert false       }
+else              { cassert false      }
 ```
 
 Like the `if`, it can also be used as an expression.
@@ -106,6 +106,7 @@ Like the `if` statement, a sequence of statements and declarations are possible 
 ```
 match const one=1 ; one ++ (2) {
   == (1,2) { puts "one:{}", one }      // should always hit
+  else     { cassert false }
 }
 ```
 
@@ -144,7 +145,7 @@ conditional assignments, or early returns.
 ```
 mut a = 3
 a += 1 when false             // never executes
-assert a == 3
+cassert a == 3
 assert a == 1000 when a > 10  // assert never executed either
 
 reg my = 3 when some_condition  // no register declared otherwise
@@ -189,22 +190,25 @@ The main features of code blocks:
   (`comb`/`pipe`/`mod`).
 
 ```
+mut yy = 0
 {
   mut x=1
-  mut z=_
+  mut z=0
   {
     z = 10
     mut x=_           // error: 'x' is a shadow variable
   }
-  assert z == 10
+  cassert z == 10
+  yy = x
 }
 const zz = x            // error: `x` is out of scope
+cassert yy == 1
 
-mut yy = {const x=3 ; 33/3} + 1
-assert yy == 12
+mut yy2 = {const x=3 ; 33/3} + 1
+cassert yy2 == 12
 const xx = {yy=1 ; 33}  // error: 'yy' has side effects
 
-if {const a=1+yy; 13<a} {
+if {const a=1+yy2; 13<a} {
   // a is not visible in this scope
   some_code()
 }
@@ -248,21 +252,21 @@ for (index,i) in bund.enumerate() {
 
 ```
 const b = (a=1,b=3,c=5,7,11)
-assert b.keys() == ('a', 'b', 'c', '', '')
-assert b.enumerate() == ((0,1), (1,3), (2,5), (3,7), (4,11))
+cassert b.keys() == ('a', 'b', 'c', '', '')
+cassert b.enumerate() == ((0,1), (1,3), (2,5), (3,7), (4,11))
 const xx= zip(b.keys(), b.enumerate())
 cassert xx == (('a',0,a=1), ('b',1,b=3), ('c',2,c=5), ('',3,7), ('',4,11))
 
 for (key,index,i) in zip(keys(b),b.enumerate()) {
-  assert i==1  implies (index==0 and key == 'a')
-  assert i==3  implies (index==1 and key == 'b')
-  assert i==5  implies (index==2 and key == 'c')
-  assert i==7  implies (index==3 and key == '' )
-  assert i==11 implies (index==4 and key == '' )
+  cassert i==1  implies (index==0 and key == 'a')
+  cassert i==3  implies (index==1 and key == 'b')
+  cassert i==5  implies (index==2 and key == 'c')
+  cassert i==7  implies (index==3 and key == '' )
+  cassert i==11 implies (index==4 and key == '' )
 }
 
 const c = ((1,a=3), b=4, c=(x=1,y=6))
-assert c.enumerate() == ((0,(1,a=3)), (1,b=4), (2,c=(x=1,y=6)))
+cassert c.enumerate() == ((0,(1,a=3)), (1,b=4), (2,c=(x=1,y=6)))
 ```
 
 The `for` can also be used in an expression that allows building comprehensions
@@ -272,8 +276,8 @@ to initialize arrays. Pyrope uses a comprehension similar to Julia or Python.
 mut c = for i in 1..<5 { mut xx = i }  // error: no expression
 mut d = i for i in 0..<5
 mut e = i for i in 0..<5 if i
-assert (0,1,2,3,4) == d
-assert e == (1,2,3,4)
+cassert (0,1,2,3,4) == d
+cassert e == (1,2,3,4)
 ```
 
 The iterating element is copied by value, if the intention is to iterate over a
@@ -283,12 +287,12 @@ function call return (value). The mutable for can not be used in
 comprehensions.
 
 ```
-b = (1,2,3,4,5)
+mut b = (1,2,3,4,5)
 
 for x in ref b {
   x += 1
 }
-assert b == (2,3,4,5,6)
+cassert b == (2,3,4,5,6)
 ```
 
 ### Code block control
@@ -317,14 +321,14 @@ for a in 1..=10 {
   total ++= a
   break when a == 3    // exit for scope
 }
-assert total == (1,3)
+cassert total == (1,3)
 
 if true {
   code(x)
   continue             // error: no upper loop scope
 }
 
-a = 3
+mut a = 3
 mut total2:[] = ?
 while a>0 {
   total2 ++= a
@@ -333,10 +337,10 @@ while a>0 {
   continue
   assert false         // never executed
 }
-assert total2 == (3,2)
+cassert total2 == (3,2)
 
-total = i+10 for i in 1..=9 if i<3
-assert total == (11, 12)
+mut total3 = i+10 for i in 1..=9 if i<3
+cassert total3 == (11, 12)
 ```
 
 ## while/loop

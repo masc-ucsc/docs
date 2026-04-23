@@ -92,11 +92,12 @@ x3 = array[first..+size]  // from first to first+size, first+size. not included
 Since tuples are multi-dimensional, arrays or async memories are multi-dimensional too.
 
 ```
+mut a:[][] = 0
 a[3][4] = 1
 
 mut b:[4][8]u8 = 13
 
-assert b[2][7] == 13
+cassert b[2][7] == 13
 assert b[2][10]      // error: '10' is out of bound access for 'b[2]'
 ```
 
@@ -229,9 +230,9 @@ dimension. The entries are in a row-major order.
 
 ```
 mut d2:[2][2] = ((1,2),(3,4))
-assert d2[0][0] == 1 and d2[0][1] == 2 and d2[1][0] == 3 and d2[1][1] == 4
+cassert d2[0][0] == 1 and d2[0][1] == 2 and d2[1][0] == 3 and d2[1][1] == 4
 
-assert d2[0] == (1,2) and d2[1] == (3,4)
+cassert d2[0] == (1,2) and d2[1] == (3,4)
 ```
 
 The `for` iterator goes over each entry of the tuple/array. If a matrix, it
@@ -247,8 +248,8 @@ comb flatten(...arr) {
   res
 }
 
-assert flatten(d2) == (1,2,3,4)
-assert flatten((((1),2),3),4) == (1,2,3,4)
+cassert flatten(d2) == (1,2,3,4)
+cassert flatten((((1),2),3),4) == (1,2,3,4)
 ```
 
 ## Array index
@@ -259,7 +260,7 @@ with tuples or by requiring an enumerate.
 
 ```
 mut x1:[2]u3 = (0,1)
-assert x1[0] == 0 and x1[1] == 1
+cassert x1[0] == 0 and x1[1] == 1
 
 enum X = (
   t1 = 0, // sequential enum, not one hot enum (explicit assign)
@@ -276,7 +277,7 @@ mut x3:[-8..<7]u3 = ?  // accept signed values
 
 mut x4:[100..<132]u3 = ?
 
-assert x4[100] == 0
+cassert x4[100] == 0
 assert x4[3]       // error: out of bounds index
 ```
 

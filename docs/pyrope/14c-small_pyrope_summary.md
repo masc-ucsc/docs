@@ -50,14 +50,18 @@ mut array = (1, 2, 3, 4)        // Indexed tuple (like array)
 mut mixed = (x=1, 2, y=3)       // Mixed named/indexed
 
 // Access patterns
-assert point.x == 10            // Named access
-assert array[2] == 3            // Array-style access
+cassert point.x == 10           // Named access
+cassert array[2] == 3           // Array-style access
 ```
 ### 5. Ranges with Multiple Operators
 ```pyrope
 mut range1 = 1..=5              // Inclusive: 1,2,3,4,5
 mut range2 = 0..<4              // Exclusive: 0,1,2,3
 mut range3 = 2..+3              // Size-based: 2,3,4 (3 elements starting at 2)
+
+cassert range1 == (1,2,3,4,5)
+cassert range2 == (0,1,2,3)
+cassert range3 == (2,3,4)
 ```
 **LLM Pitfall**: Three different range operators with different semantics. `..+` is size-based, not addition.
 
@@ -168,6 +172,8 @@ reg accumulator = 0             // Persistent register
 ```pyrope
 comb pure_function(x:u8) -> (y:u8) { y = x + 1 }
 pipe[1] stateful_function() -> (reg counter:u8) { counter += 1 }
+
+cassert pure_function(5) == 6
 ```
 
 ### Memory Operations

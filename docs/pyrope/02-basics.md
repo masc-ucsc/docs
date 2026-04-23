@@ -17,12 +17,13 @@ Pyrope has unlimited precision signed integers. Any literal starting with a
 digit is a likely integer constant.
 
 ```
-cassert 0xF_a_0 == 4000 // Underscores have no meaning
-cassert 0b1100  == 12
-cassert 0sb1110 == -2   // sb signed binary
-cassert 33      == 33   // 33 in decimal
-cassert 0o111   == 73   // octal
-cassert 0111    == 111  // decimal (some languages use octal here)
+cassert 0xF_a_0  == 4000 // Underscores have no meaning
+cassert 0b1100   == 12
+cassert 0ub1100  == 12   // ub explicit unsigned binary (same as 0b)
+cassert 0sb1110  == -2   // sb signed binary
+cassert 33       == 33   // 33 in decimal
+cassert 0o111    == 73   // octal
+cassert 0111     == 111  // decimal (some languages use octal here)
 ```
 
 Since powers of two are very common, Pyrope decimal integers can use the `K`, `M`, `G`, and `T` modifiers.
@@ -39,10 +40,12 @@ aims at being compatible with synthesizable Verilog, as such `?` is also support
 the binary encoding.
 
 ```
-0b?             // 0 or 1 in decimal
-0sb?            // 0 or -1 in decimal
+0b?             // 0 or 1 in decimal (unsigned, `0b` prefix)
+0ub?            // 0 or 1 in decimal (unsigned, `0ub` explicit prefix — same as 0b?)
+0sb?            // 0 or -1 in decimal (signed)
 0b?0            // 0 or 2 in decimal
-0sb0?0          // 0 or 2 in decimal
+0ub10??1?01     // mixed known and unknown bits (unsigned)
+0sb0?0          // 0 or 2 in decimal (signed)
 ```
 
 The Verilog high impedance `z` is not supported. Tri-state behavior can be
@@ -51,16 +54,16 @@ when appropriate.
 
 Like in many HDLs, Pyrope supports unknown bits for Verilog compatibility,
 but only as digits inside a binary integer literal — never as a standalone
-value. `0b?`, `0sb?`, `0b101?`, and `0b??10` are valid integer values;
-bare `?` is **not** an integer and cannot be used in arithmetic (`? + 1`
-is a type error, `0sb? + 1` is `0sb??`). Bare `?` is a separate concept —
-a declaration placeholder meaning "use the type's default" (see
+value. `0b?`, `0ub?`, `0sb?`, `0b101?`, and `0ub??10` are valid integer
+values; bare `?` is **not** an integer and cannot be used in arithmetic
+(`? + 1` is a type error, `0sb? + 1` is `0sb??`). Bare `?` is a separate
+concept — a declaration placeholder meaning "use the type's default" (see
 [Initialization](#initialization)).
 
 There are two distinct "no value" concepts in Pyrope — unknown-bit integer
-literals (`0sb?` / `0b?`) and `nil`:
+literals (`0sb?` / `0b?` / `0ub?`) and `nil`:
 
-* **`0sb?` / `0b?` (undefined bits)**: An integer value in which one or
+* **`0sb?` / `0b?` / `0ub?` (undefined bits)**: An integer value in which one or
   more bits have not been decided by the designer, but the resulting
   circuit must be correct whether each bit turns out to be 0 or 1. During
   simulation, each `?` bit is randomly resolved to 0 or 1 to verify
@@ -87,10 +90,10 @@ Notice that `nil` is a state in the integer basic type, it is not a new type by
 itself, it does not represent an invalid pointer, but rather an invalid
 integer.
 
-The advice is not to use unknown-bit literals (`0sb?`, `0b?`, …) outside of
-`match` pattern matching. It is less error prone to use the concrete default
-value (zero or empty string), but sometimes it is easier to use `nil` when
-converting Verilog code to Pyrope.
+The advice is not to use unknown-bit literals (`0sb?`, `0b?`, `0ub?`, …)
+outside of `match` pattern matching. It is less error prone to use the
+concrete default value (zero or empty string), but sometimes it is easier to
+use `nil` when converting Verilog code to Pyrope.
 
 
 ### Strings
@@ -222,8 +225,10 @@ is formatted using the c++23 std::format. There is an implicit newline printed.
 The same without a newline can be achieved with print.
 
 ```
-a = 1
-puts "Hello a is {a}"
+const a = 1
+const msg = "Hello a is {a}"
+puts msg
+cassert msg == "Hello a is 1"
 ```
 
 Pyrope does string interpolation, and it has attributes to access line of code
@@ -294,6 +299,7 @@ syntax.
 
 ```
 comb f(a, b) { a + b }
+cassert f(2, 3) == 5
 ```
 
 Pyrope naming for consistency:
@@ -357,8 +363,8 @@ side-effects. In a way, expression code blocks can be seen as a type of
 
 ```
 mut a = {mut d=3 ; d+1} + 100 // OK
-assert a == (3+1+100)
-assert a == {3+1+100}  // same, expression evaluated as 104 and returned
+cassert a == (3+1+100)
+cassert a == {3+1+100}  // same, expression evaluated as 104 and returned
 ```
 
 
@@ -523,17 +529,17 @@ a  = 3        // error: no previous const or mut
 mut b = 3
 b  = 5        // OK
 b += 1        // OK
+cassert b == 6
 
-const cu3 = if runtime { 3 }else{ 5 }
-
-const (a:u32,b) = (1,"string_inferred")
+const (a:u32,b2) = (1,"string_inferred")
+cassert a == 1 and b2 == "string_inferred"
 
 const d = "hello"  // OK
 d = "bar"        // error: 'd' is immutable
 mut d = "bar"    // error: 'd' already declared
 
-mut e = ?        // OK, no type or default value, just scope declaration
-e:u32 = 33       // OK
+mut e:u32 = 33
+cassert e == 33
 
 mut Foo = 33     // error: 'const Foo = 33'
 Foo  = 33        // error: `Foo` already declared as immutable

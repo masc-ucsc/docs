@@ -97,7 +97,7 @@ comb do_animal_vec(a_vec:[?]Animal) -> (r:[?]Animal) {
 }
 
 mut x = do_animal_vec(b_vec:[?]Bird) // OK
-assert x does _:[?]Animal  // not :[?]Bird
+cassert x does _:[?]Animal  // not :[?]Bird
 ```
 
 ### Basic types
@@ -115,10 +115,10 @@ const Weight = (
   weight:int = ?
 )
 
-assert Age !does Weight
+cassert Age !does Weight
 
 mut a:Age = 3
-assert a == a.age == a[0] == 3
+cassert a == a.age == a[0] == 3
 
 mut w:Weight = 100
 
@@ -399,7 +399,7 @@ assert fun_list2(1, 2) == 3       // first match wins
 
 comb fun_list_ab200(a, b) { 200 }
 const fun_list3 = [fun_list_ab200, fun_list_ab, fun_list_abc, fun_list_abcd]
-assert fun_list3(1, 2) == 200
+cassert fun_list3(1, 2) == 200
 ```
 
 For untyped named argument calls:
@@ -409,9 +409,9 @@ comb f1_ab(a, b) { a + b + 100 }
 comb f1_xy(x, y) { x + y + 200 }
 const f1 = [f1_ab, f1_xy]
 
-assert f1(a=1, b=2) == 103
-assert f1(x=1, y=2) == 203
-assert f1(1, 2) == 103  // first in list
+cassert f1(a=1, b=2) == 103
+cassert f1(x=1, y=2) == 203
+cassert f1(1, 2) == 103  // first in list
 ```
 
 For typed calls:
@@ -422,15 +422,15 @@ comb fo_ii_b(a:int, b:int)  -> (result:bool)   { result = false }
 comb fo_ii_s(a:int, b:int)  -> (result:string) { result = "hello" }
 const fo = [fo_is, fo_ii_b, fo_ii_s]
 
-const a = fo(3, hello)
-assert a == true
+const a = fo(3, "hello")
+cassert a == true
 
 const b = fo(3, 300)        // first in list return bool
-assert b == false
+cassert b == false
 
 const c:int = fo(3, 300)    // error: no lambda fulfills constrains
 const c:string = fo(3, 300)
-assert c == "hello"
+cassert c == "hello"
 ```
 
 For runtime-conditional dispatch, write the condition chain directly at the

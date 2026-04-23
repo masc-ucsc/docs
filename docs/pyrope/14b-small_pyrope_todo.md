@@ -16,7 +16,7 @@ mut point = (mut x=10, mut y=20,
   }
 )
 const p2 = point.move(1, -2)
-assert p2.x == 11 and p2.y == 18
+cassert p2.x == 11 and p2.y == 18
 // NOTE: `self` is explicit; earlier drafts suggested implicit `self`, which is invalid.
 ```
 
@@ -27,7 +27,7 @@ cassert maybe_u8::[valid] == false
 maybe_u8 = 5
 cassert maybe_u8::[valid] == true
 if maybe_u8? {               // test valid (sugar for maybe_u8::[valid] == true)
-  assert maybe_u8 == 5
+  cassert maybe_u8 == 5
 }
 mut pkt = (data:u16, valid:bool)
 if pkt.data? { // sugar for pkt.data::[valid] == true
@@ -43,9 +43,9 @@ type Point = (x:int, y:int)
 impl Eq for Point ( comb eq(self, o:Point) -> bool { self.x == o.x and self.y == o.y } )
 
 const p:Point = (x=1, y=2)
-assert p does Eq
-assert (Point does p)
-assert (Point does (x:int, y:int))
+cassert p does Eq
+cassert (Point does p)
+cassert (Point does (x:int, y:int))
 
 // NOTE: No `trait` keyword; use `type` for interfaces and `impl` blocks for attachment.
 type Eq = (comb eq(self, other) -> bool)
@@ -100,13 +100,16 @@ cassert r == 1+2
 if mut x=3; x<4 {
   cassert x==3
 }
+
+mut x = 3
 while mut z=1; x {
   x -= z
 }
-mut z=0
+cassert x == 0
+cassert z == 0 // error: z is out of scope
+mut z = 0
 match mut x=2 ; z+x {
   case 2 { cassert true  }
-  != 7   { cassert true  }
   else   { cassert false }
 }
 ```
@@ -118,14 +121,15 @@ match mut x=2 ; z+x {
 const name = "Pyrope"
 const msg  = "Hello {name}!"
 puts msg
+cassert msg == "Hello Pyrope!"
 ```
 
 ### String methods
 ```pyrope
 const s = "hello"
-assert s.len() == 5
-assert s.find("ll") == 2
-assert s.substr(1,3) == "ell"
+cassert s.len() == 5
+cassert s.find("ll") == 2
+cassert s.substr(1,3) == "ell"
 // NOTE: Names/returns similar to C++23 string_view; not grammar-relevant.
 ```
 
@@ -192,6 +196,7 @@ comb eval(e: Expr) -> int {
 }
 
 const expr = Expr.add(Expr.number(2), Expr.number(3))
+cassert eval(expr) == 5
 puts "result:{eval(expr)} should be 5"
 ```
 
