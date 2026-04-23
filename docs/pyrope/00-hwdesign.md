@@ -545,7 +545,7 @@ There are three leading solutions categories:
 
     ```verilog
     // there is no agreement on the community, but possible solutions:
-    x = 0b? // (1): compile error
+    x = 0b? // error: (1)
     if x {  // (2): randomly pick 1 or 0
     }
     reg signed [3:0] a = -1;

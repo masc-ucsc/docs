@@ -142,10 +142,10 @@ puts cfg
 
 ```pyrope
 // NOTE: The following snippet is not valid Pyrope
-type Option[T] = Some(T) | None  // compile error or invalid syntax
+type Option[T] = Some(T) | None  // error: or invalid syntax
 const a:Option(_:u8) = Some(3)
-const b:Option[u8] = None          // compile error as None is not a valid type/variable either
-match a { Some(v): v+1, None: 0 } // compile error, wrong match syntax
+const b:Option[u8] = None          // error: as None is not a valid type/variable either
+match a { Some(v): v+1, None: 0 } // error: wrong match syntax
 ```
 // NOTE: Correct Pyrope variant example follows:
 ```pyrope
@@ -155,7 +155,7 @@ const another_x:variant(IntKind:int, StrKind:string)=?
 
 mut vv:v_type = (num=0x65)
 cassert vv.num == 0x65
-const xx = vv.str                         // compile error: active variant is `num`
+const xx = vv.str                         // error: active variant is `num`
 
 type Vtype = variant(str:String, num:int, b:bool)
 
@@ -167,9 +167,9 @@ comptime const x2:Vtype = "hello"               // comptime
 cassert x1a.str == "hello" and x1a == "hello"
 cassert x1b.str == "hello" and x1b == "hello"
 
-const err1 = x1a.num                      // compile error: active variant is `str`
-const err2 = x1b.b                        // compile error: active variant is `str`
-const err3 = x2.num                       // compile error: comptime value is `str`
+const err1 = x1a.num                      // error: active variant is `str`
+const err2 = x1b.b                        // error: active variant is `str`
+const err3 = x2.num                       // error: comptime value is `str`
 ```
 
 ### Complex enumerations (ADTs)
@@ -253,7 +253,7 @@ cassert 42.show() == "_42_"
 // NOTE: Use `...r` binding; prior `..r` was incorrect.
 const r:(z:int) = 100
 const p:(x:int, y:int, ...r) = (x=1, y=2, z=3)
-const q_wrong:(x:int, ...r) = p     // compile error: `r` binds only (z:int); `p` has extra fields
+const q_wrong:(x:int, ...r) = p     // error: `r` binds only (z:int); `p` has extra fields
 const q:(x:int, ...r) = (x=1,z=10)  // OK
 ```
 
@@ -354,7 +354,7 @@ for::[
 
 ### Advanced import features
 ```pyrope
-import math::*        // compile error: wildcard import not allowed
+import math::*        // error: wildcard import not allowed
 import io as I
 // NOTE: No wildcard-imports; use assignment or explicit aliasing.
 // Some legal equivalent options:
@@ -368,15 +368,15 @@ import "some/io/lib" as myio2
 
 ### Register references and no namespaces
 ```pyrope
-namespace top { reg counter = 0 } // compile error, no namespace
-regref r = top::counter      // compile error: no namespace access like this
+namespace top { reg counter = 0 } // error: no namespace
+regref r = top::counter      // error: no namespace access like this
 const r = regref(top.counter) // library function call
 // NOTE: Treat regref as a library call; no grammar impact.
 ```
 
 ### Library versioning
 ```pyrope
-import std@1.2 as s  // compile error: version pinning not supported
+import std@1.2 as s  // error: version pinning not supported
 // NOTE: Use import hierarchy/path to select versions if needed.
 ```
 
@@ -417,7 +417,7 @@ mut t:ext = nil
 
 // t.fun1 only has ext.fun1
 assert t.fun1(a=1,b=2) == 4
-t.fun1()                 // compile error: no overload without arguments
+t.fun1()                 // error: no overload without arguments
 
 // t.fun2 has base.fun2 and then ext.fun2
 assert t.fun2(1,2) == 5  // EXACT match of arguments has higher priority
@@ -462,7 +462,7 @@ mut join1 = (...a,...b)
 assert join1 == (a=1,b=2,c=3)
 assert join1 == (1,2,3)
 
-mut join2 = (...a,...(b=20)) // compile error, 'b' already exists
+mut join2 = (...a,...(b=20)) // error: 'b' already exists
 ```
 
 ### Getter/setter methods
@@ -497,8 +497,8 @@ const v = (x=1,y=2).add(x=3,y=4)
 
 ### Introspection
 ```pyrope
-assert type_of(1) == int            // compile error: use attributes, not `type_of`
-const flds = fields_of((x=1, y=2))    // compile error: use `has`/pattern-matching
+assert type_of(1) == int            // error: use attributes, not `type_of`
+const flds = fields_of((x=1, y=2))    // error: use `has`/pattern-matching
 // NOTE: Prefer attributes and operators (`has`/`does`/`equals`). Examples:
 cassert 1::[typename] == int::[typename]
 cassert ((x=1,y=2) has "x")
@@ -508,7 +508,7 @@ cassert ((x=1,y=2) has "x")
 ### Union/bit reinterpretation
 ```pyrope
 const x:u32 = 0xDEADBEEF
-const b:(u8,u8,u8,u8) = reinterpret x   // compile error: no `reinterpret` operator
+const b:(u8,u8,u8,u8) = reinterpret x   // error: no `reinterpret` operator
 // NOTE: Use explicit slicing/packing for reinterprets.
 const b:(u8,u8,u8,u8) = (x[0..=7], x[8..=15], x[16..=23], x[24..=31])
 ```

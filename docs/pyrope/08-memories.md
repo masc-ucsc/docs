@@ -97,7 +97,7 @@ a[3][4] = 1
 mut b:[4][8]u8 = 13
 
 assert b[2][7] == 13
-assert b[2][10]      // compile error, '10' is out of bound access for 'b[2]'
+assert b[2][10]      // error: '10' is out of bound access for 'b[2]'
 ```
 
 It is possible to initialize the async memory with an array. The initialization
@@ -270,14 +270,14 @@ enum X = (
 mut x2:[X]u3 = ?
 x2[X.t1] = 0
 x2[X.t2] = 1
-x2[0]              // compile error, only enum index
+x2[0]              // error: only enum index
 
 mut x3:[-8..<7]u3 = ?  // accept signed values
 
 mut x4:[100..<132]u3 = ?
 
 assert x4[100] == 0
-assert x4[3]       // compile error, out of bounds index
+assert x4[3]       // error: out of bounds index
 ```
 
 ### Reset and initialization

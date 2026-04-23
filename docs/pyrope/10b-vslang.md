@@ -143,7 +143,7 @@ There are many diffirences with Swift, but this section just highlights a couple
 Swift protocols resemble type classes. As such require consent for implementing a functionality. Pyrope resembles C++ concepts that constraint functionality.
 
 ```swift
-func add<T>(a:T, b:T) -> T { a + b }  // compile error
+func add<T>(a:T, b:T) -> T { a + b }  // error:
 func add<T:Numeric>(a:T, b:T) -> T { a + b }
 ```
 
@@ -284,7 +284,7 @@ In Go:
 ```
 func larger(a, b []string) []string {
   len := len(a)
-  if len > len(b) { // Error: invalid operation: cannot call non-function len (variable of type int)
+  if len > len(b) { // error: invalid operation: cannot call non-function len (variable of type int)
     return a
   }
   return b

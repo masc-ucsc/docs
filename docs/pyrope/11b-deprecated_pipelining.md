@@ -199,11 +199,11 @@ that there are between 0 and 3 cycles, and open range could be used when there
 are loops (E.g: `=@[2..]`).
 
 ```
-let x = mul3(in1, in2)      // compile error: 'mul3' is pipelined
+let x = mul3(in1, in2)      // error: 'mul3' is pipelined
 let x =@[..] mul3(in1, in2) // OK
 out  =@[..] add1(x,in3)     // OK (in3 has 0 cycles, x has 3 cycles)
-out  =@[1] add1(x,in3)      // compile error: 'x' is pipelined with '3' cycles
-out  =@[3] add1(x,in3)      // compile error: 'in3' is pipelined with '1' cycle
+out  =@[1] add1(x,in3)      // error: 'x' is pipelined with '3' cycles
+out  =@[3] add1(x,in3)      // error: 'in3' is pipelined with '1' cycle
 out  =@[1..<4] add1(x,in3)  // OK
 ```
 

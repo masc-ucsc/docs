@@ -27,7 +27,7 @@ f(a=1)             // OK
 f(1)               // OK
 
 g(long=1, short=1) // OK
-g(1,1)             // compile error
+g(1,1)             // error:
 const long=1
 g(long, short=1)   // OK
 const short=1
@@ -646,7 +646,7 @@ mut x = 3
 
 const f1 = fun[x]() -> (result:int) {
    assert x == 3
-   mut x = ?    // compile error. Shadow captured x
+   mut x = ?    // error: Shadow captured x
    result = 200
 }
 comb f2() -> (result:int) {
@@ -664,7 +664,7 @@ mut x = 3
 mut y = 10
 
 const fun2 = fun[y]() -> (result:int) {
-  y = 100              // compile error, y is immutable when captured
+  y = 100              // error: y is immutable when captured
   mut x = 200
   result = y + x
 }
@@ -682,7 +682,7 @@ behavior:
 
 ```
 assert 0 == (0)  // OK, same as assert( 0 == (0) )
-assert (0) == 0  // compile error: (assert(0)) == 0 is an expression
+assert (0) == 0  // error: (assert(0)) == 0 is an expression
 assert(0 == 0)   // OK
 ```
 
@@ -690,7 +690,7 @@ It is also easy to forget that parenthesis can be ommited in simple expressions,
 not when ranges or tuples are involed.
 
 ```
-assert 2 in (1,2)  // compile error, not allowed to drop parenthesis
+assert 2 in (1,2)  // error: not allowed to drop parenthesis
 assert(2 in (1,2)) // OK
 ```
 
@@ -919,20 +919,20 @@ comb call_now(f:fun) { f() }
 comb call_defer(f:fun) { f }
 
 const x0 = call_now(here)          // prints "here"
-const e1 = call_now(args)          // compile error, args needs arguments
+const e1 = call_now(args)          // error: args needs arguments
 const x1 = call_defer(here)        // nothing printed
-const e2 = call_defer(args)        // compile error, args needs arguments
+const e2 = call_defer(args)        // error: args needs arguments
 assert x0  == 3                  // nothing printed
 assert x1  == 3                  // nothing printed
 
 const x2 = call_now(ref here)      // prints "here"
-const e3 = call_now(ref args)      // compile error, args needs arguments
+const e3 = call_now(ref args)      // error: args needs arguments
 const x3 = call_defer(ref here)    // nothing printed
 const x4 = call_defer(ref args)    // nothing printed
 assert x2  == 3                  // nothing printed
 assert x3()  == 3                // prints "here"
-assert x3  == 3                  // compile error, explicit call needed
-assert x4  == 1                  // compile error, args needs arguments
+assert x3  == 3                  // error: explicit call needed
+assert x4  == 1                  // error: args needs arguments
 assert x4("xx") == 1             // prints "args:xx"
 
 ```

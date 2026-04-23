@@ -188,9 +188,9 @@ const t1 = (a:string, b:int)
 const t2 = (b:int, a:string)
 
 mut a:t1 = ("hello", 3)     // OK
-mut a1:t1 = (3, "hello")     // compile error, positions do not match
+mut a1:t1 = (3, "hello")     // error: positions do not match
 mut b:t1 = (a="hello", 3)   // OK
-mut b1:t1 = (3, a="hello")   // compile error, positions do not match
+mut b1:t1 = (3, a="hello")   // error: positions do not match
 mut c:t1 = (a="hello", b=3) // OK
 mut c1:t1 = (b=3, a="hello") // OK
 
@@ -384,7 +384,7 @@ assert val::[sbits] == 0
 
 val = 3          // val has 3 bits (0sb011 all the numbers are signed)
 
-val = 300        // compile error, '300' overflows the maximum allowed value of 'val'
+val = 300        // error: '300' overflows the maximum allowed value of 'val'
 
 val = 1          // max=1,min=1 sbits=2, ubits=1
 assert val::[ubits] == 1 and val::[min] == 1 and val::[max] == 1 and val::[sbits] == 2
@@ -506,7 +506,7 @@ const v_type = variant(str:String, num:int) // No default value in variant
 
 mut vv:v_type = (num=0x65)
 cassert vv.num == 0x65
-const xx = vv.str                         // compile or simulation error
+const xx = vv.str                         // error:
 ```
 
 
@@ -525,16 +525,16 @@ comptime const x2:Vtype = "hello"                  // comptime
 cassert x1a.str == "hello" and x1a == "hello"
 cassert x1b.str == "hello" and x1b == "hello"
 
-const err1 = x1a.num                      // compile or simulation error
-const err2 = x1b.b                        // compile or simulation error
-const err3 = x2.num                       // compile error
+const err1 = x1a.num                      // error:
+const err2 = x1b.b                        // error:
+const err3 = x2.num                       // error:
 ```
 
 As a reference, `enums` allow to compare for field but not update enum entries.
 
 ```
 mut ee = e_type
-ee.str = "new_string"       // compile error, enum is immutable
+ee.str = "new_string"       // error: enum is immutable
 
 match ee {
  == e_type.str { }
@@ -694,8 +694,8 @@ const mytup = (
 // file: src/user.prp
 a = import("my_fun/*comb*")
 a.fun1(a=1, b=2)        // OK
-a.another(a=1, 2)       // compile error, 'another' is not an imported function
-a.fun2.inside()         // compile error, `inside` is not in top scope variable
+a.another(a=1, 2)       // error: 'another' is not an imported function
+a.fun2.inside()         // error: `inside` is not in top scope variable
 
 const fun1 = import("my_fun/fun1")
 lec fun1, a.fun1
@@ -967,7 +967,7 @@ const n:Matrix2x2 = ?
 n.data[0][1] = 2      // default setter
 
 cassert n[0][1] == 3  // getter does + 1
-cassert n[0] == (0, 3) // compile error, no getter for comb(ref self, x)
+cassert n[0] == (0, 3) // error: no getter for comb(ref self, x)
 ```
 
 The symmetric getter method is called whenever the tuple is read. Since each
@@ -1170,7 +1170,7 @@ const Point = (
 const p:Point = (1,2)
 
 cassert p['x'] == 1 and p['y'] == 2
-cassert p.x == 1 and p.y == 2          // compile error
+cassert p.x == 1 and p.y == 2          // error:
 ```
 
 ## Compare method
@@ -1217,7 +1217,7 @@ const t3=(
 
 cassert t1==t2
 cassert t1 !equals t3
-const x = t1==t3           // compile error, t1 !equals t3
+const x = t1==t3           // error: t1 !equals t3
 ```
 
 The comparator `a == b` when `a` or `b` are tuples is equivalent to:

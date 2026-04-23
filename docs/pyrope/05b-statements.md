@@ -194,15 +194,15 @@ The main features of code blocks:
   mut z=_
   {
     z = 10
-    mut x=_           // compiler error, 'x' is a shadow variable
+    mut x=_           // error: 'x' is a shadow variable
   }
   assert z == 10
 }
-const zz = x            // compile error, `x` is out of scope
+const zz = x            // error: `x` is out of scope
 
 mut yy = {const x=3 ; 33/3} + 1
 assert yy == 12
-const xx = {yy=1 ; 33}  // compile error, 'yy' has side effects
+const xx = {yy=1 ; 33}  // error: 'yy' has side effects
 
 if {const a=1+yy; 13<a} {
   // a is not visible in this scope
@@ -269,7 +269,7 @@ The `for` can also be used in an expression that allows building comprehensions
 to initialize arrays. Pyrope uses a comprehension similar to Julia or Python.
 
 ```
-mut c = for i in 1..<5 { mut xx = i }  // compile error, no expression
+mut c = for i in 1..<5 { mut xx = i }  // error: no expression
 mut d = i for i in 0..<5
 mut e = i for i in 0..<5 if i
 assert (0,1,2,3,4) == d
@@ -321,7 +321,7 @@ assert total == (1,3)
 
 if true {
   code(x)
-  continue             // compile error, no upper loop scope
+  continue             // error: no upper loop scope
 }
 
 a = 3

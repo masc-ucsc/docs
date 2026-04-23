@@ -54,7 +54,7 @@ mut a:Animal = ?
 mut b:Bird = ?
 mut d:Dog = ?
 
-d = a // compile error, 'a does d' is false
+d = a // error: 'a does d' is false
 b = a // OK, explicit setter in Bird for Animal
 
 a = d // OK, 'd does a' is true
@@ -83,8 +83,8 @@ a_vec[1] = b:Bird   // OK
 
 d_vec[0] = d:Dog        // OK  'd does d'
 d_vec[0] = g:Greyhound  // OK  'g does d'
-d_vec[0] = b:Bird       // Compile error
-d_vec[0] = a:Animal     // Compile error
+d_vec[0] = b:Bird       // error:
+d_vec[0] = a:Animal     // error:
 
 b_vec[0] = d:Dog        // OK, explicit conversion
 b_vec[0] = g:Greyhound  // OK, explicit conversion
@@ -122,7 +122,7 @@ assert a == a.age == a[0] == 3
 
 mut w:Weight = 100
 
-const err = a == w // compile error, not (a equals w) or overload
+const err = a == w // error: not (a equals w) or overload
 ```
 
 
@@ -194,12 +194,12 @@ comb f_a(fa:fa_t) {
   fa(d)  // OK, `d does Animal` is true
 }
 f_a(call_animal) // OK
-f_a(call_dog)    // compile error, `fa_t does call_dog` is false
+f_a(call_dog)    // error: `fa_t does call_dog` is false
 
 comb f_d(fd:fd_t) {
   mut a:Animal = ?
   mut d:Dog = ?
-  fd(a)  // compile error, `a does Dog` is false
+  fd(a)  // error: `a does Dog` is false
   fd(d)  // OK
 }
 f_d(call_animal) // OK, `fd_t does call_animal` is true
@@ -244,8 +244,8 @@ m(a=1,"here",2,"x",3)       // OK
 m(a=1,"here",c=2,"x",3)     // OK
 m(a=1,"here",c=2,33,y=3)    // OK
 
-m("1","here",2,33,3)       // compile error, a:int
-m("1","here",2,3)          // compile error, x has 3 fields
+m("1","here",2,33,3)       // error: a:int
+m("1","here",2,3)          // error: x has 3 fields
 ```
 
 
@@ -330,7 +330,7 @@ mut t:ext = nil
 
 // t.fun1 only has ext.fun1
 assert t.fun1(a=1,b=2) == 4
-t.fun1()                 // compile error, no option without arguments
+t.fun1()                 // error: no option without arguments
 
 // t.fun2 has base.fun2 and then ext.fun2
 assert t.fun2(1,2) == 5  // EXACT match of arguments has higher priority
@@ -390,7 +390,7 @@ assert fun_list::[size] == 3    // 3 lambda entries in fun_list
 assert fun_list(1,2) == 3
 assert fun_list(1,2,4) == 7
 assert fun_list(1,2,4,5) == 12
-assert fun_list(1,2,4,5,6) == 18 // compile error, no function with 5 args
+assert fun_list(1,2,4,5,6) == 18 // error: no function with 5 args
 
 
 comb fun_list_ab100(a, b) { 100 }
@@ -428,7 +428,7 @@ assert a == true
 const b = fo(3, 300)        // first in list return bool
 assert b == false
 
-const c:int = fo(3, 300)    // compile error, no lambda fulfills constrains
+const c:int = fo(3, 300)    // error: no lambda fulfills constrains
 const c:string = fo(3, 300)
 assert c == "hello"
 ```
@@ -612,7 +612,7 @@ const Interface = (
   comb sub(ref self, x) { self.add(-x) }
 )
 
-Interface.add(3)                // compile error, undefined method
+Interface.add(3)                // error: undefined method
 
 const My_obj = (
   mut val1:u8 = 0,

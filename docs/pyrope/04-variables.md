@@ -69,44 +69,44 @@ immutable (`const`); the kind keyword is implicit there.
 === "Code Block scope"
 
     ```
-    assert a == 3        // compile error, undefined variable 'a'
+    assert a == 3        // error: undefined variable 'a'
     mut a = 3
     {
       assert a == 3
       a = 33             // OK. assign 33
       a:int = 33         // OK, assign 33 and check that 'a' has type int
       const b = 4
-      const a = 3333       // compile error, variable shadowing
-      mut a = 33         // compile error, variable shadowing
+      const a = 3333       // error: variable shadowing
+      mut a = 33         // error: variable shadowing
     }
-    assert b == 3        // compile error, undefined variable 'b'
+    assert b == 3        // error: undefined variable 'b'
     ```
 
 === "Lambda scope"
 
     ```
-    assert a == 3        // compile error, undefined variable 'a'
+    assert a == 3        // error: undefined variable 'a'
     mut a = 3
     mut x = 10
     comb f1[a,x=a+1]() {
       assert a == 3
-      a = 33             // compile error, capture/inputs are immutable
-      x = 300            // compile error, capture/inputs are immutable
+      a = 33             // error: capture/inputs are immutable
+      x = 300            // error: capture/inputs are immutable
       const b = 4
-      const a = 3333       // compile error, variable shadowing
-      mut a = 33         // compile error, variable shadowing
+      const a = 3333       // error: variable shadowing
+      mut a = 33         // error: variable shadowing
       return b+3
     }
     assert f1() == 7
     assert x == 10
-    assert b == 3        // compile error, undefined variable 'b'
+    assert b == 3        // error: undefined variable 'b'
 
     comb f2() {     // no capture of 'a'
-      // assert a == 3   // compile error, undefined variable 'a'
+      // assert a == 3   // error: undefined variable 'a'
     }
     comb f3[ff=a]() { // capture 'a' as 'ff'
       assert ff == 3     // OK
-      ff = 3             // compile error, immutable variable
+      ff = 3             // error: immutable variable
     }
     ```
 
@@ -118,14 +118,14 @@ immutable (`const`); the kind keyword is implicit there.
       ,mut a = a+1       // tuple fields must use a kind keyword
       ,const c = {assert a == 3 and self.a==4; 50}
     )
-    r1.a = 33            // compile error, 'r1' is immutable variable
+    r1.a = 33            // error: 'r1' is immutable variable
 
     mut r2 = (mut a=100, const c=(mut a=a+1, const e=self.a+30))
     assert r2 == (a=100,c=(a=101, e=131))  // checks values not mutability
     r2.a = 33            // OK
-    r2.c.a = 33          // compile error, 'r2.c' is immutable variable
+    r2.c.a = 33          // error: 'r2.c' is immutable variable
 
-    const r3 = (a = 1)   // compile error: tuple field missing kind keyword
+    const r3 = (a = 1)   // error: tuple field missing kind keyword
     ```
 
 * Shadowing is not allowed in lambdas or code blocks. Tuples can redefine
@@ -143,8 +143,8 @@ Since the captures and lambda inputs are always immutable, it is not allowed to
 declare them as `mut` and redundant to declare them as `const`.
 
 ```
-comb f3(mut x) { x + 1 }    // compile error, inputs are immutable
-comb f4[mut x](z) { x + z } // compile error, captures are immutable
+comb f3(mut x) { x + 1 }    // error: inputs are immutable
+comb f4[mut x](z) { x + z } // error: captures are immutable
 ```
 
 
@@ -157,7 +157,7 @@ comb example(a:int, b:int=self.a+5) -> (result:int) {
 assert example(a=3) == (a+a+5)
 assert example(6,7) == (6+7)
 assert example(6) == (6+6+5)
-assert example(b=3) !=0         // compile error: undefined `a` argument
+assert example(b=3) !=0         // error: undefined `a` argument
 ```
 
 ## Basic types
@@ -223,11 +223,11 @@ boolean will raise an assertion when the integer has undefined bits (`?`) or
 const b = true
 const c = 3
 
-if c    { call(x) }  // compile error, 'c' is not a boolean expression
+if c    { call(x) }  // error: 'c' is not a boolean expression
 if c!=0 { call(x) }  // OK
 
 mut d = b or false   // OK
-mut e = c or false   // compile error, 'c' is not a boolean
+mut e = c or false   // error: 'c' is not a boolean
 
 const e = 0xfeed
 if e#[3] {           // OK, bit extraction for single bit returns a boolean
@@ -246,7 +246,7 @@ Logical and arithmetic operations can not be mixed.
 
 ```
 const x = a and b
-const y = x + 1    // compile error: 'x' is a boolean, '1' is integer
+const y = x + 1    // error: 'x' is a boolean, '1' is integer
 ```
 
 ### Functions (`comb`/`pipe`/`mod`)
@@ -308,7 +308,7 @@ const c = 1..=3
 assert int(c) == 0b1110
 assert range(0b01_1100) == 2..=4
 
-assert range(1,2,3)            // compile error, typecast not allowed
+assert range(1,2,3)            // error: typecast not allowed
 assert (1,2,3) == tuple(1..=3)
 ```
 
@@ -334,7 +334,7 @@ that an increasing range (`1..=3 == 3..=1`) but to avoid mistakes/confusions,
 Pyrope generates a compile error in decreasing ranges.
 
 ```
-assert 5..=0                           // compile error, 5 + 1 never reaches 0
+assert 5..=0                           // error: 5 + 1 never reaches 0
 assert 5..=0 step -1 == (5,4,3,2,1,0)
 ```
 
@@ -401,15 +401,15 @@ x.color        = "blue" // OK
 
 type Typ = (mut color:string = "", mut value:s33 = nil, mut is_green:IsGreen = nil)
 y:Typ        = nil      // OK
-Typ.color    = "red"    // compile error
+Typ.color    = "red"    // error:
 
 Typ.is_green = check_is_green
 y.color      = "red"    // OK
 
 type Bund3 = (mut color:string = "", mut value:s33 = nil)
 z:Bund3        = nil                // OK
-Bund3.color    = "red"              // compile error
-Bund3.is_green = check_is_green     // compile error (const can not add fields)
+Bund3.color    = "red"              // error:
+Bund3.is_green = check_is_green     // error: (const can not add fields)
 z.color        = "blue"             // OK
 
 assert x equals Typ  // same type structure
@@ -736,18 +736,18 @@ w:u5:[wrap] = 0     // attribute set for all the 'w' uses
 
 b = a               // OK, o precision lost
 c::[wrap] = a       // OK, same as c = a#[0..<5] (Since 100 is 0b1100100, c==4)
-c = a               // compile error, 100 overflows the maximum value of 'c'
+c = a               // error: 100 overflows the maximum value of 'c'
 w = a               // OK, 'w' has a wrap set at declaration
 
 c::[saturate] = a   // OK, c == 31
 c = 31
-d = c + 1           // compile error, '32' overflows the maximum value of 'd'
+d = c + 1           // error: '32' overflows the maximum value of 'd'
 
 d::[wrap] = c + 1   // OK d == 0
 d::[saturate] = c+1 // OK, d==31
 d::[saturate] = c+1 // OK, d==31
 
-x::[saturate] boolean = c // compile error, saturate only allowed in integers
+x::[saturate] boolean = c // error: saturate only allowed in integers
 ```
 
 ### comptime modifier
@@ -762,7 +762,7 @@ comptime const SIZE = 16
 comptime const a = 1        // same as above
 comptime mut counter = 0    // mutable at compile time (updated during elaboration)
 comptime const b = a + 2    // OK, comptime const
-comptime c = rand           // compile error, 'c' is not resolvable at compile time
+comptime c = rand           // error: 'c' is not resolvable at compile time
 ```
 
 The `comptime` status can still be queried with `::[comptime]`:
@@ -776,7 +776,7 @@ start with uppercase as compile time constants.
 
 ```
 comptime const Xconst1 = 1    // obvious comptime
-comptime const Xvar2 = rand   // compile error, 'Xvar2' is not compile time constant
+comptime const Xvar2 = rand   // error: 'Xvar2' is not compile time constant
 ```
 
 ### debug attribute
@@ -805,7 +805,7 @@ all the results as debug, it allows to read any public/private variable/field.
 ```
 x:(_priv=3, zz=4) = ?
 
-const tmp = x._priv         // compile error
+const tmp = x._priv         // error:
 const tmp::[debug] = x.priv // OK
 
 assert x._priv == 3    // OK, assert is a debug statement
@@ -1056,7 +1056,7 @@ assert y#sext[0,100,200] == 0sb110 and x#sext[1,100,200] == 0b001
 assert x#|[..] == -1
 assert x#&[0,1] == 0
 assert x#+[0..=5] == x#+[0..<100] == 3
-assert y#+[0..=5]  // compile error, 'y' can be negative
+assert y#+[0..=5]  // error: 'y' can be negative
 assert y#[..]#+[..] == 3
 assert y#[0..=5]#+[..] == 3
 assert y#[0..=6]#+[..] == 4
@@ -1064,7 +1064,7 @@ assert y#[0..=6]#+[..] == 4
 mut z     = 0b0110
 z#[0] = 1
 assert z == 0b0111
-z#[0] = 0b11 // compile error, '0b11` overflows the maximum allowed value of `z#[0]`
+z#[0] = 0b11 // error: '0b11` overflows the maximum allowed value of `z#[0]`
 ```
 
 !!!Note
@@ -1126,10 +1126,10 @@ assert((x or !y) == (x or (!y)) == (x or not y))
 assert((3*5+5) == ((3*5) + 5) == 3*5 + 5)
 
 a = x1 or x2==x3 // same as b = x1 or (x2==x3)
-b = 3 & 4 * 4    // compile error: use parenthesis for explicit precedence
+b = 3 & 4 * 4    // error: use parenthesis for explicit precedence
 c = 3
   & 4 * 4
-  & 5 + 3        // compile error: use parenthesis for explicit precedence
+  & 5 + 3        // error: use parenthesis for explicit precedence
 c2 = 3
   & (4 * 4)
   & (5 + 3)      // OK
@@ -1138,7 +1138,7 @@ d = 3 + 3 - 5    // OK, same result right-left
 
 e = 1
   | 5
-  & 6           // compile error: use parenthesis for explicit precedence
+  & 6           // error: use parenthesis for explicit precedence
 
 f = (1 & 4)
   | (1 + 5)
@@ -1156,7 +1156,7 @@ g2= (1 + 3)
   * (1 + 2)
   + 5           // OK
 
-h = x or y and z// compile error: use parenthesis for explicit precedence
+h = x or y and z// error: use parenthesis for explicit precedence
 
 i = a == 3 <= b == d
 assert i == (a==3 and 3<=b and b == d)
@@ -1168,8 +1168,8 @@ direction is the same.
 ```
 assert a <= b <= c  // same as a<=b and b<=c
 assert a <  b <= c  // same as a< b and b<=c
-assert a == b <= c  // compile error, chained only allowed with same comparator
-assert a <= b >  c  // compile error, not same direction
+assert a == b <= c  // error: chained only allowed with same comparator
+assert a <= b >  c  // error: not same direction
 ```
 
 ## Optional

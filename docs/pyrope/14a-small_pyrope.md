@@ -71,9 +71,9 @@ mut a = 3
 {
     assert a == 3       // Visible from outer scope
     mut b = 4           // Local to this block
-    // const a = 33     // Error: no shadowing allowed
+    // const a = 33     // error: no shadowing allowed
 }
-// assert b == 4       // Error: 'b' not visible outside block
+// assert b == 4       // error: 'b' not visible outside block
 
 // Functions have their own scope (Small Pyrope does not support capture variables)
 comb example() {
@@ -490,7 +490,7 @@ Small Pyrope follows the same precedence rules as full Pyrope for compatibility:
 ```pyrope
 // Explicit parentheses required for mixed precedence
 mut result = (a * b) + (c & d)   // Clear precedence
-// mut mixed = a * b + c & d     // Error: use parentheses
+// mut mixed = a * b + c & d     // error: use parentheses
 
 // Chained comparisons allowed
 assert a <= b <= c               // Same as: a <= b and b <= c

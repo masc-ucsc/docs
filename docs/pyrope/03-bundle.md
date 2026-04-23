@@ -13,7 +13,7 @@ mut c = (1,d=4)     // c is ordered and unnamed (some entries are not named)
 mut d = (1,2,3,4)     // array or tuple
 assert d == [1,2,3,4] // the [] also check that all the fields have same type
 
-assert (true,1) != [true,1]  // compile error, true is not the same type as 1
+assert (true,1) != [true,1]  // error: true is not the same type as 1
 ```
 
 To access fields in a tuple we use the dot `.` or `[]`
@@ -152,19 +152,19 @@ used to declare a mutable field. `(a=3)` is equivalent to `(mut a=3)`.
 ```
 mut c=(x=1,const b = 2, mut d=3)
 c.x   = 3  // OK
-x.foo = 2  // compile error, tuple 'x' does not have field 'foo'
-c.b   = 10 // compile error, 'c.b' is immutable
+x.foo = 2  // error: tuple 'x' does not have field 'foo'
+c.b   = 10 // error: 'c.b' is immutable
 c.d   = 30 // OK, d was already mutable type
 
 const d=(x=1, const y=2, mut z=3)
 d.x   = 2  // OK
-d.foo = 3  // compile error, tuple 'd' does not have field foo'
-d.z   = 4  // compile error, 'd' is immutable
+d.foo = 3  // error: tuple 'd' does not have field foo'
+d.z   = 4  // error: 'd' is immutable
 
 mut e:d = ?
 assert e.x==1 and e.y==2 and e.z==3
 e.x = 30   // OK
-e.y = 30   // compile error, 'e.y' is immutable
+e.y = 30   // error: 'e.y' is immutable
 e.z = 30   // OK
 ```
 
@@ -179,13 +179,13 @@ assert a == (100, 100, 200, 4)
 
 mut f = (b=3, const e=5)
 f.b = 4                 // OK
-f.e = 10                // compile error, `f.e` is immutable
+f.e = 10                // error: `f.e` is immutable
 
 const x = (1,2)
-x[0] = 3                // compile error, 'x' is immutable
+x[0] = 3                // error: 'x' is immutable
 mut y = (1, const _ = 3)  // 2nd field is unnamed (only const allows that)
 y[0] = 100              // OK
-y[1] = 101              // compile error, `y[1]` is immutable
+y[1] = 101              // error: `y[1]` is immutable
 ```
 
 
@@ -209,7 +209,7 @@ mut join1 = (...a,...b)
 assert join1 == (a=1,b=2,c=3)
 assert join1 == (1,2,3)
 
-mut join2 = (...a,...(b=20)) // compile error, 'b' already exists
+mut join2 = (...a,...(b=20)) // error: 'b' already exists
 ```
 
 
@@ -295,14 +295,14 @@ possible to create an array index that may perform an out of bounds access.
 
 ```
 mut array = (0,1,2)       // size 3, not 4
-const tmp = array[3]        // compile error, out of bounds access
+const tmp = array[3]        // error: out of bounds access
 mut index = 2
 if runtime {
   index = 4
 }
 // Index can be 2 or 4
 
-mut res1 = array[index]   // compile error, out of bounds access
+mut res1 = array[index]   // error: out of bounds access
 
 mut res2 = 0sb?           // Possible code to be compatible with Verilog
 if index<3 {
@@ -327,7 +327,7 @@ append or concatenate in a given field the `++=` operator can be assigned.
 ```
 mut x = (
   ,ff = 1
-  ,ff = 2 // compile error
+  ,ff = 2 // error:
 )
 
 mut y = (
@@ -378,14 +378,14 @@ allowed to avoid the parenthesis at the right-hand-side of the statement. The
 reason is that it is a bit confusing.
 
 ```
-mut a,b = (2,3)    // compile error, left-hand-side must be a tuple (a,b)
-mut (a,b) = 2,3    // compile error, right-hand-side must be a tuple (2,3)
+mut a,b = (2,3)    // error: left-hand-side must be a tuple (a,b)
+mut (a,b) = 2,3    // error: right-hand-side must be a tuple (2,3)
 mut (a,b) = (2,3)
 assert a==2 and b==3
 
-mut (c,d) = 1..=2  // compile error, range is a single entry assignment
+mut (c,d) = 1..=2  // error: range is a single entry assignment
 mut c = 1..=2      // OK
-mut (c,d) = 1      // compile error, 2 entry tuple in lhs, same in rhs
+mut (c,d) = 1      // error: 2 entry tuple in lhs, same in rhs
 mut (c,d) = (1,2)  // OK
 assert c == 1 and d == 2
 ```

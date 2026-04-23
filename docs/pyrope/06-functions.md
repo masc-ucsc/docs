@@ -129,13 +129,13 @@ comb a_lambda() -> (v) { v = 4 }   // kind-first form
 
 comb get_five() -> (v) { v = 5 }   // public lambda that can be imported by other files
 
-const x = a_3()             // compile error, explicit call not possible in scope
+const x = a_3()             // error: explicit call not possible in scope
 const x = a_lambda()        // OK, explicit call needed when no arguments
 
-assert a_3 == 3
+cassert a_3 == 3
 type a_lambda_type = comb()->(v)
-assert a_lambda equals a_lambda_type
-assert a_lambda() == 4
+cassert a_lambda equals a_lambda_type
+cassert a_lambda() == 4
 ```
 
 The lambda definition has the following fields:
@@ -183,21 +183,21 @@ comb add8<T>(a:T, b:T, c:T) { a + b + c }   // same
 const add = [add1, add2, add3, add4, add5, add6, add7, add8]
 
 const x = 2
-comb addx1       (a) { x + a }    // compile error, undefined 'x'
-comb addx2[     ](a) { x + a }    // compile error, undefined 'x'
+comb addx1       (a) { x + a }    // error: undefined 'x'
+comb addx2[     ](a) { x + a }    // error: undefined 'x'
 comb addx3[x    ](a) { x + a }    // explicit capture x (default = enclosing x)
 comb addx4[foo=x](a) { foo + a }  // capture x but rename to something else
 
 /// Comptime parameters can be declared with a type and/or default:
 comb scale[n:int=1](a) { n * a }
-assert scale(5) == 5           // uses default n=1
-assert scale[10](5) == 50      // override n=10 at the call site
+cassert scale(5) == 5           // uses default n=1
+cassert scale[10](5) == 50      // override n=10 at the call site
 
 /// Captures can also be overridden at the call site:
 const y = 3
 comb addy[y](a) { y + a }
-assert addy(4) == 7            // uses captured y=3
-assert addy[100](4) == 104     // override y=100 at the call site
+cassert addy(4) == 7            // uses captured y=3
+cassert addy[100](4) == 104     // override y=100 at the call site
 
 mut y = (
   mut val:u32 = 1,
@@ -213,7 +213,7 @@ comb my_log::[debug](...inp) {
 }
 
 comb f<X>(a:X, b:X) { a + b }   // enforces a and b with same type
-assert f(33:u22, 100:u22) == 133
+cassert f(33:u22, 100:u22) == 133
 
 my_log(a, false, x + 1)
 ```
@@ -254,19 +254,19 @@ comb noarg() { 33 }                 // explicit no args
 
 assert 33 == noarg()              // () always required, even for no-arg calls
 
-assert noarg                      // compile error, `noarg()` needed for calls
+assert noarg                      // error: `noarg()` needed for calls
 
-a = div(3, 4, 3)         // compile error, div has 2 inputs
+a = div(3, 4, 3)         // error: div has 2 inputs
 b = div(self=8, b=4)     // OK, 2
 d = (self=8).div(b=2)    // OK, 4
 d = (8).div(b=2)         // OK, 4 . self does not need to be named
 d = 8.div(2)             // OK, single character inputs no need to be named
 
 h = div2(8, 4, 3)        // OK, 2 (3rd arg is not used)
-i = 8.div2(4, 3)         // compile error, no self in div2
+i = 8.div2(4, 3)         // error: no self in div2
 
-n = div((8, 4), 3)       // compile error: (8,4)/3 is undefined
-o = (8, 4).div2(1)       // compile error: (8,4)/1 is undefined
+n = div((8, 4), 3)       // error: (8,4)/3 is undefined
+o = (8, 4).div2(1)       // error: (8,4)/1 is undefined
 ```
 
 
@@ -280,13 +280,13 @@ mut tup = (
   comb f1(self) { 1 }
 )
 
-comb f1(self) { 2 } // compile error, f1 shadows tup.f1
+comb f1(self) { 2 } // error: f1 shadows tup.f1
 comb f1() { 3 }     // OK, no self
 
-assert f1() != 0         // compile error, missing argument
-assert f1(tup) != 0      // compile error, f1 shadowing (tup.f1 and f1)
-assert 4.f1() != 0       // compile error, f1 can be called for tup, so shadow
-assert tup.f1() != 0     // compile error, f1 is shadowing
+assert f1() != 0         // error: missing argument
+assert f1(tup) != 0      // error: f1 shadowing (tup.f1 and f1)
+assert 4.f1() != 0       // error: f1 can be called for tup, so shadow
+assert tup.f1() != 0     // error: f1 is shadowing
 
 comb xx[tup]() { tup.f1() } // OK, function restricted scope for f1
 assert xx() == 1
@@ -362,7 +362,7 @@ only useful for lambda input arguments.
 comb inc1(ref a) { a += 1 }
 
 const x = 3
-inc1(ref x)       // compile error, `x` is immutable but modified inside inc1
+inc1(ref x)       // error: `x` is immutable but modified inside inc1
 
 mut y = 3
 inc1(ref y)
@@ -494,7 +494,7 @@ const Nested_call = (
   mut x = 1,
   comb outter(ref self) { self.x = 100; self.inner(); self.x = 5 },
   comb inner(self) { assert self.x == 100 },
-  comb faulty(self) { self.x = 55 }, // compile error, immutable self
+  comb faulty(self) { self.x = 55 }, // error: immutable self
   comb okcall(ref self) { self.x = 55 }
 )
 ```
@@ -536,7 +536,7 @@ counter.inc(3)
 assert counter.val == 3
 
 comb inc(ref self, v) { self.var *= v } // NOT INC but multiply
-counter.inc(2)             // compile error, multiple inc options
+counter.inc(2)             // error: multiple inc options
 assert 44.inc(2) == 8
 
 counter.val = 5
@@ -561,7 +561,7 @@ comb t1_do_double(ref self) { self.a *= 2 }
 t1.double = t1_do_double
 
 mut y:t1 = (a=3)
-x.double             // compile error, double method does not exit
+x.double             // error: double method does not exit
 y.double             // OK
 assert y.a == 6
 ```
@@ -622,5 +622,5 @@ it can be error-prone.
     a.foo().bar() // prints "mem.foo" and then "bar"
     a.foo().bar   // prints "mem.foo" and then "bar"
 
-    c.foo         // compile error, undefined 'foo' field/call
+    c.foo         // error: undefined 'foo' field/call
     ```

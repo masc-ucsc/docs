@@ -17,21 +17,21 @@ Pyrope has unlimited precision signed integers. Any literal starting with a
 digit is a likely integer constant.
 
 ```
-0xF_a_0 // 4000 in hexa. Underscores have no meaning
-0b1100  // 12 in binary
-0sb1110 // -2 in binary (sb signed binary)
-33      // 33 in decimal
-0o111   // 73 in octal
-0111    // 111 in decimal (some languages use octal here)
+cassert 0xF_a_0 == 4000 // Underscores have no meaning
+cassert 0b1100  == 12
+cassert 0sb1110 == -2   // sb signed binary
+cassert 33      == 33   // 33 in decimal
+cassert 0o111   == 73   // octal
+cassert 0111    == 111  // decimal (some languages use octal here)
 ```
 
 Since powers of two are very common, Pyrope decimal integers can use the `K`, `M`, `G`, and `T` modifiers.
 
 ```
-assert 1K == 1024
-assert 1M == 1024*1024
-assert 1G == 1024*1024*1024
-assert 1T == 1024*1024*1024*1024
+cassert 1K == 1024
+cassert 1M == 1024*1024
+cassert 1G == 1024*1024*1024
+cassert 1T == 1024*1024*1024*1024
 ```
 
 Several hardware languages support unknown bits (`?`) or high-impedance (`z`). Pyrope
@@ -49,18 +49,25 @@ The Verilog high impedance `z` is not supported. Tri-state behavior can be
 expressed with `unique if`, which EDA tools can optimize to tri-state buffers
 when appropriate.
 
-Like in many HDLs, Pyrope has unknowns `?`. Pyrope has `x` or `?` to be
-compatible with Verilog existing designs.
+Like in many HDLs, Pyrope supports unknown bits for Verilog compatibility,
+but only as digits inside a binary integer literal — never as a standalone
+value. `0b?`, `0sb?`, `0b101?`, and `0b??10` are valid integer values;
+bare `?` is **not** an integer and cannot be used in arithmetic (`? + 1`
+is a type error, `0sb? + 1` is `0sb??`). Bare `?` is a separate concept —
+a declaration placeholder meaning "use the type's default" (see
+[Initialization](#initialization)).
 
-There are two distinct "no value" concepts in Pyrope — `?` and `nil`:
+There are two distinct "no value" concepts in Pyrope — unknown-bit integer
+literals (`0sb?` / `0b?`) and `nil`:
 
-* **`?` (undefined)**: A bit whose value has not been decided by the designer,
-  but the resulting circuit must be correct whether the bit turns out to be 0
-  or 1. During simulation, each `?` bit is randomly resolved to 0 or 1 to
-  verify correctness under both possibilities. Arithmetic follows Verilog
+* **`0sb?` / `0b?` (undefined bits)**: An integer value in which one or
+  more bits have not been decided by the designer, but the resulting
+  circuit must be correct whether each bit turns out to be 0 or 1. During
+  simulation, each `?` bit is randomly resolved to 0 or 1 to verify
+  correctness under both possibilities. Arithmetic follows Verilog
   x-propagation semantics: `0sb? + 1` is `0sb??`, `0sb? | 1` is `1`. In
-  synthesized hardware, `?` bits give the synthesis tool freedom to choose
-  whichever value produces a smaller or faster circuit.
+  synthesized hardware, `?` bits give the synthesis tool freedom to
+  choose whichever value produces a smaller or faster circuit.
 
 * **`nil` (invalid)**: An invalid value that must never be used in any
   expression. Any arithmetic or decision with `nil` triggers a simulation
@@ -71,18 +78,19 @@ There are two distinct "no value" concepts in Pyrope — `?` and `nil`:
   simulation-time safety mechanism.
 
 ```
-0sb? | 1     // OK: result is 1 (unknown OR 1 = 1)
-0sb? + 1     // OK: result is 0sb?? (unknown propagation)
-nil | 1      // assertion error: nil is invalid, not unknown
+cassert (0sb? | 1) == 1    // OK: unknown OR 1 = 1
+cassert (0sb? + 1) == 0sb?? // unknown propagation
+nil | 1      // error: nil is invalid, not unknown
 ```
 
 Notice that `nil` is a state in the integer basic type, it is not a new type by
 itself, it does not represent an invalid pointer, but rather an invalid
 integer.
 
-The advice is not to use `?` besides `match` statement pattern matching. It is
-less error prone to use the default value (zero or empty string), but sometimes
-it is easier to use `nil` when converting Verilog code to Pyrope code.
+The advice is not to use unknown-bit literals (`0sb?`, `0b?`, …) outside of
+`match` pattern matching. It is less error prone to use the concrete default
+value (zero or empty string), but sometimes it is easier to use `nil` when
+converting Verilog code to Pyrope.
 
 
 ### Strings
@@ -129,9 +137,9 @@ Integers and strings can be converted back and forth:
 mut a:string = "127"
 mut b:int = a        // same as mut b = int(a)
 mut c:string = b     // same as mut c = string(b)
-assert a == c
-assert b == 0x7F
-assert a == b        // compile error, 'a' and 'b' have different types
+cassert a == c
+cassert b == 0x7F
+assert a == b        // error: 'a' and 'b' have different types
 ```
 
 
@@ -435,8 +443,8 @@ evaluation order for logical expressions.
 
 === "Incorrect code with side-effects"
     ```
-    mut r3 = mcall1() +   mcall2()  // compile error
-    // compile error only if mcall1/mcall2 can have side effects
+    mut r3 = mcall1() +   mcall2()  // error:
+    // error: only if mcall1/mcall2 can have side effects
     ```
 
 === "Fix with separate statements"
@@ -510,7 +518,7 @@ Each variable declaration (`mut` or `const`) must have an assigned value. The
 type default value is `?` (unknown/uninitialized).
 
 ```
-a  = 3        // compile error, no previous const or mut
+a  = 3        // error: no previous const or mut
 
 mut b = 3
 b  = 5        // OK
@@ -521,14 +529,14 @@ const cu3 = if runtime { 3 }else{ 5 }
 const (a:u32,b) = (1,"string_inferred")
 
 const d = "hello"  // OK
-d = "bar"        // compile error, 'd' is immutable
-mut d = "bar"    // compile error, 'd' already declared
+d = "bar"        // error: 'd' is immutable
+mut d = "bar"    // error: 'd' already declared
 
 mut e = ?        // OK, no type or default value, just scope declaration
 e:u32 = 33       // OK
 
-mut Foo = 33     // compiler error, 'const Foo = 33'
-Foo  = 33        // compiler error, `Foo` already declared as immutable
+mut Foo = 33     // error: 'const Foo = 33'
+Foo  = 33        // error: `Foo` already declared as immutable
 ```
 
 When the variable is a tuple or a range style, the default initialization is

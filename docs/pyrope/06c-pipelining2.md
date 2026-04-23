@@ -164,10 +164,10 @@ mod example(in1, in2, in3) -> (out) {
 
     await[2] res2a:@[5] = res1:@[3] + in3_d:@[3]
 
-    // Compile error: res1 is at cycle 3, not 2
+    // error: res1 is at cycle 3, not 2
     // await[2] bad:@[5] = res1:@[2] + in3_d:@[3]
 
-    // Compile error: computed cycle is 5, not 4
+    // error: computed cycle is 5, not 4
     // await[2] bad2:@[4] = res1:@[3] + in3_d:@[3]
 }
 ```
