@@ -55,23 +55,23 @@ function return.
 Pyrope defers the statements not to the end of the scope but to the end of the
 clock cycle. The defer delays the "write" until the end of the clock cycle, the
 defer does not defer the reads, just the write or update. To read the value
-from the end of the cycle the attribute `variable::[defer]` must be used.
+from the end of the cycle the attribute `variable.[defer]` must be used.
 
 
 These are constructs not existing in software but needed in hardware because it
 is necessary to connect blocks. Following the control flow from the top only
 allows to connect forward. Some contructs like connecting a ring require a
-"backward edge". The `::[defer]` attribute allows such constructs.
+"backward edge". The `.[defer]` attribute allows such constructs.
 
 ```
 mut a = 1
 mut b = 2
 
 cassert a==1 and b==2
-b::[defer] = a         // write defer
+b.[defer] = a         // write defer
 cassert a==1 and b==2
 
-cassert b::[defer] == 1     // read defer
+cassert b.[defer] == 1     // read defer
 ```
 
 If there are read and write defers, the read defers happen first, and then the write defers. As a result, the deferred writes are not seen in this cycle.
@@ -122,15 +122,18 @@ comb max_gap_count(nums) {
     r
   }
 
-  const sorted  = sort(numbers, comb(a, b) { a < b })
-  const diffs   = adjacent_transform(sorted, num=2, comb(a, b) { a - b })
+  comb less(a,b) { a < b}
+  comb dosub(a,b) { a - b}
+
+  const sorted  = sort(numbers, less)
+  const diffs   = adjacent_transform(sorted, num=2, dosub)
   count(diffs, diffs.max)
 }
 ```
 
 A significant difference is that Pyrope everything is by value. In C++, you could do code with undefined behaviour very easily by mistake when dealing with pointers.
 
-```
+```cpp
 const T& f2(T t)        { return t; } // returns pointer to local
 ```
 
@@ -149,7 +152,7 @@ func add<T:Numeric>(a:T, b:T) -> T { a + b }
 
 ```
 comb add(a, b) { a + b }                     // OK, no constrains
-const add = fun<T:int>(a:T, b:T) { a + b } // constrain both to have same type
+comb add2<T:int>(a:T, b:T) { a + b } // constrain both to have same type
 ```
 
 When a protocol defines an interface, in Swift:
@@ -281,7 +284,7 @@ Pyrope and go have several similarities but with slightly different syntax. For 
 Some significant difference is the built-in and imports.
 
 In Go:
-```
+```go
 func larger(a, b []string) []string {
   len := len(a)
   if len > len(b) { // error: invalid operation: cannot call non-function len (variable of type int)
@@ -295,7 +298,7 @@ In Pyrope:
 ```
 import std as std
 
-fun larger(a:[?]string, b:[?]string) -> (result:[?]string) {
+comb larger(a:string, b:string) -> (result:string) {
   const strlen = std.strlen(a)
   if strlen > std.strlen(b) {
     result = a
@@ -305,7 +308,7 @@ fun larger(a:[?]string, b:[?]string) -> (result:[?]string) {
 }
 
 // Using attributes (bits != strlen, but works too)
-fun larger(a:[?]string, b:[?]string) -> (result:[?]string) {
-  result = if a::[bits] > b::[bits] { a } else { b }
+comb larger(a:string, b:string) -> (result:string) {
+  result = if a.[bits] > b.[bits] { a } else { b }
 }
 ```

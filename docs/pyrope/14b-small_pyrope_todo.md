@@ -23,17 +23,17 @@ cassert p2.x == 11 and p2.y == 18
 ### Optional types ("?")
 ```pyrope
 mut maybe_u8:u8 = ?         // default invalid
-cassert maybe_u8::[valid] == false
+cassert maybe_u8.[valid] == false
 maybe_u8 = 5
-cassert maybe_u8::[valid] == true
-if maybe_u8? {               // test valid (sugar for maybe_u8::[valid] == true)
+cassert maybe_u8.[valid] == true
+if maybe_u8? {               // test valid (sugar for maybe_u8.[valid] == true)
   cassert maybe_u8 == 5
 }
 mut pkt = (data:u16, valid:bool)
-if pkt.data? { // sugar for pkt.data::[valid] == true
+if pkt.data? { // sugar for pkt.data.[valid] == true
   puts "data=", pkt.data
 }
-// NOTE: `?` is default value (unknown/invalid). Invalid means `x::[valid] == false`.
+// NOTE: `?` is default value (unknown/invalid). Invalid means `x.[valid] == false`.
 ```
 
 ### Type operators (does, equals, case, is)
@@ -70,7 +70,7 @@ Some case/does/equals assertion:
 * `a equals b` same as `(a does b) and (b does a)`
 * `a case b` same as `cassert a does b` and for each `b` field with a defined value,
   the value matches `a` (`nil`, `0sb?` are undefined values)
-* `a is b` is a nominal type check. Equivalent to `a::[typename] == b::[typename]`
+* `a is b` is a nominal type check. Equivalent to `a.[typename] == b.[typename]`
 cassert((a=1,b=2) has "a")
 
 cassert (a=1,b=3) does (b=100,a=333,e=40,5)
@@ -434,8 +434,10 @@ assert t.fun3() == 8     // ext.fun3 catches all ahead of ext.fun3
 
 ```
 
-Pyrope function declaration matches swift with the exception than Pyrope captures only compile time variables
-with `[var1,var2,...]` list after the generic and before the parenthesis.
+Pyrope function declaration matches Swift with the exception that Pyrope does
+not have explicit capture lists. Visible comptime bindings are available
+lexically inside lambdas, and the `[ ... ]` list after the generic and before
+the parenthesis is only for explicit comptime parameters.
 
 ```pyrope
 comb x1(a:int,b)->int { 3 }
@@ -505,7 +507,7 @@ const v = (x=1,y=2).add(x=3,y=4)
 assert type_of(1) == int            // error: use attributes, not `type_of`
 const flds = fields_of((x=1, y=2))    // error: use `has`/pattern-matching
 // NOTE: Prefer attributes and operators (`has`/`does`/`equals`). Examples:
-cassert 1::[typename] == int::[typename]
+cassert 1.[typename] == int.[typename]
 cassert ((x=1,y=2) has "x")
 
 ```

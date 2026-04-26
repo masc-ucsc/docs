@@ -533,7 +533,7 @@ There are three leading solutions categories:
 === "Problematic code"
 
     ```verilog
-    x = 0b?   // a ? state
+    x = 0ub?   // a ? state
     if x {
        puts "x is never true"
     }

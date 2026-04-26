@@ -189,7 +189,7 @@ Direct access in operations like `plus` behave like a `tup_set` or `tup_get`.
       ref      x
       const    3
     var
-      ref      a.0b
+      ref      a
       ref      2
     plus
       ref      ___t1
@@ -200,7 +200,7 @@ Direct access in operations like `plus` behave like a `tup_set` or `tup_get`.
       ref      ___t1
     plus
       ref      ___t2
-      const    a.0b
+      const    a
       const    1
     var
       ref     a.2y
@@ -401,16 +401,18 @@ Attribute set are in left-hand-side of assignments which can also be in tuple en
       ref ___1
     ```
 
-Attribute checks are always right-hand-side. The constraint in all the cases is
-that an attribute name can be check against an expression but only 3 basic
-comparisons are valid (`[attr==(expr)` or `[attr]` or `[!attr]`). The
-expression can not use other attribute fields. If complex relationships must be
-checked between attributes a `cassert` must be used.
+Attribute reads (`var.[attr]`) appear anywhere a normal expression is
+allowed and lower to `attr_get`. To turn a read into a check, wrap it in
+`cassert`/`assert`. As a fast path, the parser may recognise specific
+patterns (`cassert var.[attr]`, `cassert var.[attr] == const`) and lower
+them directly to `attr_ref_check` instead of going through a full
+`attr_get` + comparison chain. More complex attribute comparisons always
+go through `attr_get` and `cassert`.
 
 === "Pyrope"
     ```
-    mut x = (const z=x::[!y], 4::[foo])
-    const y = a::[f==3,b] + 1
+    mut x = (const z=x.[y], 4)
+    const y = a.[b] + 1
     ```
 
 === "LNAST option 1"
@@ -426,11 +428,7 @@ checked between attributes a `cassert` must be used.
         ref x
           attr_ref_check
             const y
-            const false
-      ref ___tmp
-        attr_ref_check
-          const foo
-          const true
+            const true
     var
       ref x
       ref ___4
@@ -438,9 +436,6 @@ checked between attributes a `cassert` must be used.
     plus
       ref ___1
       ref a
-        attr_ref_check
-          const f
-          const 3
         attr_ref_check
           const b
           const true
@@ -501,9 +496,9 @@ the attribute to the left-hand-side expression. Non-sticky attributes
 do not affect or propagate.
 
 
-Attributes are not sticky by default, but some like `::[debug]` is a sticky
-attribute. This means that if any of the elements in any operation has a debug
-attribute, the result also has a `::[debug]` attribute. There is no way to
+Attributes are not sticky by default, but some like `debug` are sticky.
+This means that if any of the elements in any operation has a `debug`
+attribute, the result also has a `debug` attribute. There is no way to
 remove these attributes.
 
 === "Pyrope"
@@ -512,7 +507,7 @@ remove these attributes.
 
     mut a = d + 100
 
-    cassert a::[debug]  // debug is sticky
+    cassert a.[debug]  // debug is sticky
     ```
 
 === "LNAST"
@@ -553,20 +548,19 @@ with arithmetic operations and/or bit selection.
 const foo::[attr1=2] = 3
 
 mut foo2 = foo
-cassert foo2::[attr1] == 2
+cassert foo2.[attr1] == 2
 
 const foo3 = foo#[..]
-cassert foo3 !has ::[attr1]
+cassert foo3.[attr1] != nil          // existence check via nil
 
-mut xx = 4
-xx::[attr2=5] = 1
+mut xx::[attr2=5] = 1                 // sets attr2 at declaration
 
 const xx2 = xx
-cassert xx2::[attr2] == 5
-cassert xx2 has ::[attr2]
+cassert xx2.[attr2] == 5
+cassert xx2.[attr2] != nil
 
 const xx3 = xx + 0
-cassert xx3 !has ::[attr2]
+cassert xx3.[attr2] == nil           // dropped after arithmetic
 ```
 
 
@@ -919,64 +913,6 @@ land
   ref a
   ref ___0
 ```
-
-
-Short-circuit boolean (`and_then`/`or_else`)
-
-The short-circuit boolean prevent expressions from being evaluated. This only
-matters if there is a procedure call, but at LNAST it is not possible to know
-due to getter overload. As a result, the sequence of statments is translated to
-a sequence of nested if statements.
-
-=== "Pyrope"
-    ```
-    a = b and_then c and_then (d or e)
-    ```
-=== "LNAST"
-  ```lnast
-  land
-    ref ___0
-    ref b
-    ref c
-  assign
-    ref a
-    ref ___0
-  if
-    ref ___0
-    stmts
-      lor ___1
-        ref d
-        ref e
-      assign
-        ref a
-        ref ___1
-  ```
-
-=== "Pyrope"
-    ```
-    a = b or_else c or_else (d and e)
-    ```
-=== "LNAST"
-  ```lnast
-  lor
-    ref ___0
-    ref b
-    ref c
-  assign
-    ref a
-    ref ___0
-  if
-    ref ___0
-    stmts
-    stmts  // else only
-      land
-        ref ___1
-        ref d
-        ref e
-      assign
-        ref a
-        ref ___1
-  ```
 
 ### Tuple/Set operators
 

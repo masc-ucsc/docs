@@ -18,8 +18,8 @@ digit is a likely integer constant.
 
 ```
 cassert 0xF_a_0  == 4000 // Underscores have no meaning
-cassert 0b1100   == 12
-cassert 0ub1100  == 12   // ub explicit unsigned binary (same as 0b)
+cassert 0b1100   == 12   // error: use 0ub1100 or 0sb1100
+cassert 0ub1100  == 12   // ub explicit unsigned binary
 cassert 0sb1110  == -2   // sb signed binary
 cassert 33       == 33   // 33 in decimal
 cassert 0o111    == 73   // octal
@@ -40,10 +40,9 @@ aims at being compatible with synthesizable Verilog, as such `?` is also support
 the binary encoding.
 
 ```
-0b?             // 0 or 1 in decimal (unsigned, `0b` prefix)
-0ub?            // 0 or 1 in decimal (unsigned, `0ub` explicit prefix — same as 0b?)
+0ub?            // 0 or 1 in decimal (unsigned, `0ub` explicit prefix)
 0sb?            // 0 or -1 in decimal (signed)
-0b?0            // 0 or 2 in decimal
+0ub?0           // 0 or 2 in decimal
 0ub10??1?01     // mixed known and unknown bits (unsigned)
 0sb0?0          // 0 or 2 in decimal (signed)
 ```
@@ -54,16 +53,16 @@ when appropriate.
 
 Like in many HDLs, Pyrope supports unknown bits for Verilog compatibility,
 but only as digits inside a binary integer literal — never as a standalone
-value. `0b?`, `0ub?`, `0sb?`, `0b101?`, and `0ub??10` are valid integer
+value. `0ub?`, `0sb?`, `0ub101?`, and `0ub??10` are valid integer
 values; bare `?` is **not** an integer and cannot be used in arithmetic
 (`? + 1` is a type error, `0sb? + 1` is `0sb??`). Bare `?` is a separate
 concept — a declaration placeholder meaning "use the type's default" (see
 [Initialization](#initialization)).
 
 There are two distinct "no value" concepts in Pyrope — unknown-bit integer
-literals (`0sb?` / `0b?` / `0ub?`) and `nil`:
+literals (`0sb?` / `0ub?`) and `nil`:
 
-* **`0sb?` / `0b?` / `0ub?` (undefined bits)**: An integer value in which one or
+* **`0sb?` / `0ub?` (undefined bits)**: An integer value in which one or
   more bits have not been decided by the designer, but the resulting
   circuit must be correct whether each bit turns out to be 0 or 1. During
   simulation, each `?` bit is randomly resolved to 0 or 1 to verify
@@ -90,7 +89,7 @@ Notice that `nil` is a state in the integer basic type, it is not a new type by
 itself, it does not represent an invalid pointer, but rather an invalid
 integer.
 
-The advice is not to use unknown-bit literals (`0sb?`, `0b?`, `0ub?`, …)
+The advice is not to use unknown-bit literals (`0sb?`, `0ub?`, …)
 outside of `match` pattern matching. It is less error prone to use the
 concrete default value (zero or empty string), but sometimes it is easier to
 use `nil` when converting Verilog code to Pyrope.
@@ -240,8 +239,8 @@ easier tracing.
 ```
 a = 1
 
-puts "{}:{} a:{} tracing a", a::[file], a::[loc], a
-puts "{a::[file]}:{a::[loc]} a:{a} tracing a"        // Same
+puts "{}:{} a:{} tracing a", a.[file], a.[loc], a
+puts "{a.[file]}:{a.[loc]} a:{a} tracing a"          // Same
 ```
 
 The previous statements print "foo:3 a:1 tracing a" in the 3 cases. The line of
@@ -312,7 +311,7 @@ Pyrope naming for consistency:
 
 * Bare `pipe` leaves the latency fully flexible; the caller picks it via `await[N]` at the call site
 
-* `mod` has no constraints on registers or outputs (can be Mealy or Moore), operates cycle by cycle, and is also the kind used to orchestrate pipelined calls — `await[N]` and `:@[N]` are the timing constructs available inside `mod`.
+* `mod` has no constraints on registers or outputs (can be Mealy or Moore), operates cycle by cycle, and is also the kind used to orchestrate pipelined calls — `await[N]` and `@[N]` are the timing constructs available inside `mod`.
 
 * `await` is a reserved declaration modifier used inside `mod` blocks. `async` is reserved for future use.
 
@@ -552,7 +551,7 @@ restricted for integers. `nil` should be used in those cases.
 ```
 mut tup = nil
 
-assert cond::[comptime] // Tuples are compile time, it would fail otherwise
+assert cond.[comptime] // Tuples are compile time, it would fail otherwise
 if cond == true {
   tup = (a=1,b=2)
 }else{
@@ -568,7 +567,7 @@ Variables with first character upper case are `comptime`. This means that the co
 must be known/fixed at compilation time.
 
 ```
-assert something::[comptime]
+assert something.[comptime]
 comptime const A_xxx = something      // comptime
-assert A_xxx::[comptime]              // also comptime
+assert A_xxx.[comptime]               // also comptime
 ```

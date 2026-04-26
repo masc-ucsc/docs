@@ -52,7 +52,7 @@ is buffered and ordered at the end of the cycle to be deterministic.
 The only source of non-determinism is non-Pyrope (C++) calls from `procedures`
 executed at different pipeline stages. The pipeline stages could be executed in
 any order, it is just that the same order must be repeated deterministically
-during simulation. The non-Pyrope calls must be `::[comptime] == true` to affect
+during simulation. The non-Pyrope calls must be `.[comptime]` to affect
 synthesis. So the synthesis is deterministic, but the testing like cosimulation
 may not.
 
@@ -162,17 +162,17 @@ In the compiler passes, we have the following semantics:
     - An index with unknowns does not perform value propagation.
 
 + Shifts, additions and substractions propagate unknowns at computation. E.g:
-  `0b11?0 + 0b1` is `0b11?1`, `0b1?0 >> 1` is `0b1?`.
+  `0ub11?0 + 0ub1` is `0ub11?1`, `0ub1?0 >> 1` is `0ub1?`.
 
 + Other arithmetic are more conservative. When an input is unknown, the result
-  is unknown only respecting the sign when possible. E.g: `0b1?0? * -1` is
+  is unknown only respecting the sign when possible. E.g: `0ub1?0? * -1` is
   `0sb1?`.
 
-+ Logic operations behave like Verilog. `0b000111??? | 0b01?01?01?` is
-  `0b01?111?1?`.
++ Logic operations behave like Verilog. `0ub000111??? | 0ub01?01?01?` is
+  `0ub01?111?1?`.
 
 + Equality comparisons (`==` and `!=`) use unknowns, this means that at compile
-  time `0b1? != 0b10`. Comparisons is consistent with the equivalent logic
+  time `0ub1? != 0ub10`. Comparisons is consistent with the equivalent logic
   operations `a == b` is the same as `(a ^ b) == -1`.
 
 + Other comparisons (`<=`, `<`, `>`, `>=`) return true if the comparison is
@@ -210,7 +210,7 @@ In the compiler passes, we have the following semantics:
 At the end of the LNAST generation, a Lgraph is created. Only the registers and
 memory initialization are allowed to have unknowns in Lgraph.  Any invalid
 (`nil`) assigned to an output or register triggers a compile error. Any unknown constant
-bit is translated preserved (`0b10?`).
+bit is translated preserved (`0ub10?`).
 
 
 The semantics on the generated simulator are similar to CHISEL, any unknowns
@@ -248,9 +248,9 @@ if the compiler optimized over assertions.
     ```
     optimize sel==1 or sel==2 or sel==4 // not needed. match sets it
     match sel {
-      == 0b001 { f = i0 }
-      == 0b010 { f = i2 }
-      == 0b100 { f = i3 }
+      == 0ub001 { f = i0 }
+      == 0ub010 { f = i2 }
+      == 0ub100 { f = i3 }
     }
     ```
 
@@ -313,7 +313,7 @@ if cond == 3 {
   x1 = 1
 }
 assert  x1==1 // still not optimized (cassert fails)
-assert !x1 and x1::[comptime] == true
+assert !x1 and x1.[comptime]
 
 mut x2 = 0sb?
 optimize cond==3
@@ -321,7 +321,7 @@ if cond == 3 {
   x2 = 1
 }
 cassert x2==1
-cassert x2::[comptime] == true
+cassert x2.[comptime]
 ```
 
 ## LNAST optimization
@@ -364,7 +364,7 @@ depending on the LNAST node:
     - trivial identity simplification for existing node, also performed as
       instruction combining proceeds. E.g: `a^a == a`, `a-a=0` ...
 
-+ If the node is a `::[comptime] == true` trigger a compile error unless all the inputs are
++ If the node reads `.[comptime]` and asserts it true, trigger a compile error unless all the inputs are
   constant
 
     - `cassert` should satisfy the condition or a compile error is generated
@@ -475,201 +475,66 @@ const tup = (
 )
 ```
 
-### Closures
+### Comptime lexical scope
 
-Closures capture extra state or inputs at definition. The capture variables are
-always immutable (`const`) no matter the outer scope definition. Therefore,
-capture variables behave like passed by value, not reference.
+Pyrope lambdas do not have runtime closures or explicit capture lists. Runtime
+`const`, `mut`, and `reg` declarations from an enclosing lambda scope are not
+implicitly available inside a nested lambda. Pass those values as normal inputs,
+or place them in an explicit tuple/object and pass that object.
 
-The `[...]` slot on a lambda declaration is a unified **comptime parameter
-slot**: bare names capture same-named enclosing-scope values as defaults,
-typed entries (`n:int`) declare required comptime parameters, and typed
-entries with defaults (`n:int=1`) combine both. Callers can override any
-entry at the call site using the same slot:
+Comptime bindings are different: they are elaboration-time names, not hardware
+resources. Visible comptime bindings from enclosing scopes are available
+lexically inside lambda bodies and signatures. This includes imports,
+`comptime const` declarations, and `comptime mut` declarations after their
+elaboration-time value is known. The compiler records every lexical comptime
+reference as an explicit dependency of the lambda, so the dependency is still
+visible to elaboration and incremental compilation without a user-written
+capture list.
 
 ```
-const y = 3
-comb addy[y](a) { y + a }
-cassert addy(4)       == 7      // uses captured y=3
-cassert addy[100](4)  == 104    // override y=100 for this call
+comptime const W = 32
+const math = import("lib.math")// imports are comptime aliases
+
+comb add(a:u(W), b:u(W)) -> (result:u(W + 1)) {
+  result = a + b
+}
+
+pipe do_arith(op:math.OpType, a:u32, b:u32) -> (result:u32) {
+  match op {
+    case math.AddOp { wrap result = a + b }
+    else { result = 0 }
+  }
+}
 ```
 
-The override is comptime and produces a call equivalent to one where the
-capture had been bound to the override value at definition time. No runtime
-state is introduced. The captured variable inside the body remains immutable;
-"overridable" means the caller can supply a different *default*, not that the
-lambda can mutate its capture.
+The `[...]` slot on a lambda declaration is only for explicit comptime
+parameters. Defaults may refer to visible comptime bindings:
 
-One important thing is 'when' the capture default is resolved. Pyrope follows
-the model of most languages like C++ that captures at lambda definition, not
-lambda execution — so without a call-site override, the captured value is
-whatever the enclosing scope held when the lambda was defined.
+```
+comptime const DefaultScale = 3
 
-=== "Pyrope capture time"
-    ```
-    mut x_s = 10
+comb scale[n:int=DefaultScale](a) { n * a }
 
-    const call_captured = fun[x_s]() {
-      fun[x_s]() {
-        cassert x_s == 10
-        x_s
-      }
-    }
+cassert scale(5) == 15
+cassert scale[10](5) == 50
+```
 
-    test "capture test" {
-      comb tst() {
-        mut x_s = 20   // not variable shadowing because fun scope
-
-        const x1 = call_captured()
-        cassert x1 == 10
-
-        x_s = 30;
-
-        const x2 = call_captured()
-        cassert x2 == 10
-      }
-      tst // call the test
-    }
-    ```
-
-=== "C++17 capture time"
-    ```c++
-    #include <iostream>
-
-    int main() {
-
-      int x_s{ 10 };
-
-      auto call_captured{
-        [x_s]() {
-          assert(x_s == 10);
-          return x_s;
-        }
-      };
-      }
-
-      x_s = 20;
-
-      auto x1 = call_captured();
-      assert(x1==10);
-
-      x_s = 30;
-
-      auto x2 = call_captured();
-      assert(x2==10);
-    }
-    ```
-
-Some languages like ZIG do not allow closures, but they allow structs with a lambda to
-implement an equivalent functionality. It is possible in Pyrope to also create a tuple
-and populate the getter. This effectively behaves as the closures. Internally, Pyrope
-may do this implementation.
-
-
-=== "Pyrope tuple closure style"
-
-    ```
-    const j = 1
-    const b = fun[j](x:i32) -> (result:i32) {
-      result = x + j
-    }
-
-    cassert b(1) == 2
-
-    test "closure with tuple" {
-      mut a: i32 = 1
-      a += 1
-
-      mut addX = (
-        mut a:i32 = a,                    // copy value, runtime or comptime
-        comb getter(self, x:i32) {
-          x + self.a
-        }
-      )
-
-      a += 100;
-
-      cassert addX(2) == 4
-    }
-
-    test "plain closure" {
-      mut a:i32 = 1
-      a += 1
-
-      const addX = fun[a](x:i32) { // Same behaviour as closure with tuple
-        x + a
-      }
-
-      a += 100;
-
-      cassert addX(2) == 4
-    }
-    ```
-
-=== "ZIG closure style with struct"
-
-    ```zig
-    pub fn main() void {
-        const j = 1;
-        mut b = struct{
-            fn function(x: i32) i32 {
-                return x+j;
-            }
-        }.function;
-
-        @import("std").debug.assert(b(1) == 2);
-    }
-
-    test "closure with runtime" {
-      mut a: i32 = 1;
-      a += 1;
-
-      const addX = (struct {
-        a: i32,
-        fn call(self: @This(), x: i32) i32 {
-          return x + self.a;
-        }
-      } { .a = a }).call;
-
-      a += 100;
-
-      @import("std").debug.assert(addX(2) == 4);
-    }
-    ```
-
-
-Capture values must be explicit, or no capture happens. This means that
-`...fun[](...)...` is the same as `...fun(...)...`.
+Because runtime closures are not implicit, the following is an error:
 
 ```
 mut x = 3
 
-const f1 = fun[x]() -> (result:int) {
-   assert x == 3
-   mut x = ?    // error: Shadow captured x
-   result = 200
-}
-comb f2() -> (result:int) {
-   mut x:int = nil    // OK, no captures 'x' variable
-   x = 100
-   result = x
+comb f() -> (result:int) {
+  result = x       // error: runtime outer variable is not visible in lambda
 }
 ```
 
-Capture variables pass the value at capture time:
-
+Use an explicit input or tuple field instead:
 
 ```
-mut x = 3
-mut y = 10
-
-const fun2 = fun[y]() -> (result:int) {
-  y = 100              // error: y is immutable when captured
-  mut x = 200
-  result = y + x
+comb f(x:int) -> (result:int) {
+  result = x
 }
-x = 1000
-cassert fun2() == 210
 ```
 
 ### Lambda arguments
@@ -857,28 +722,28 @@ cassert v#[0] == 0
 cassert v#[4] == 1       // unsigned output
 cassert v#sext[4] == -1  // signed output
 
-cassert v#[3..=4] == 0b010 == v#[3,4]
-cassert v#[4..=3 step -1] == 0b010
-cassert v#[4,3] == v#[3,4] == 0b010
+cassert v#[3..=4] == 0ub010 == v#[3,4]
+cassert v#[4..=3 step -1] == 0ub010
+cassert v#[4,3] == v#[3,4] == 0ub010
 
 const tmp1 = (v#[4], v#[3])#[..]  // typecast from
 const tmp2 = (v#[3], v#[4])#[..]
 const tmp3 = v#[3,4]
-cassert tmp1 == 0b01
-cassert tmp2 == 0b100
-cassert tmp3 == 0b10
+cassert tmp1 == 0ub01
+cassert tmp2 == 0ub100
+cassert tmp3 == 0ub10
 
 const tmp1s = (v#sext[4], v#sext[3])#[..]  // typecast from
 const tmp2s = (v#sext[3], v#sext[4])#[..]
 const tmp3s = v#[4,3]
-cassert tmp1s == 0b01
-cassert tmp2s == 0b10
-cassert tmp3s == 0b10
+cassert tmp1s == 0ub01
+cassert tmp2s == 0ub10
+cassert tmp3s == 0ub10
 
 const tmp1ss = (v#sext[4], v#sext[3])#sext[..]  // typecast from
 const tmp2ss = (v#sext[3], v#sext[4])#sext[..]
 const tmp3ss = v#sext[3,4]
-cassert tmp1ss == 0b01  ==  1
+cassert tmp1ss == 0ub01  ==  1
 cassert tmp2ss == 0sb10 == -2
 cassert tmp3ss == 0sb10 == -2 == v#sext[4,3]
 ```
@@ -896,12 +761,12 @@ This is done to avoid mistakes. If a bit swap is wanted, it must be explicit.
 ```
 comb reverse(x:uint) -> (total:uint) {
   total = 0
-  for i in 0..<x::[bits] {
+  for i in 0..<x.[bits] {
     total <<= 1
     total |= x#[i]
   }
 }
-cassert reverse(0b10110) == 0b01101
+cassert reverse(0ub10110) == 0ub01101
 ```
 
 ### Unexpected calls

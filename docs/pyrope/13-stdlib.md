@@ -36,7 +36,7 @@ cassert prp.len(x) == 3
 
 Library code:
 ```
-comb len(x) { x::[size] }
+comb len(x) { x.[size] }
 ```
 
 ### map
@@ -84,7 +84,7 @@ Library code:
 
 ```
 comb reduce(op:fun<T>(a:T,b:T)->(_:T), ...x) {
-  return x when x::[size] <= 1
+  return x when x.[size] <= 1
 
   mut res = x[0]
   for i in x[1..] {

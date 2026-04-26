@@ -22,7 +22,7 @@ Small Pyrope supports integers (`u8`, `i16`, `int`), `bool`, and `string`. Type 
 
 Number literals may include `_` separators with no meaning (`12_34__ == 1234`). Binary literals may include `?` bits (don't care/unknown). For uninitialized / invalid variables, use the explicit `nil` (invalid) or `0sb?` (unknown bits) — there is no bare `_` or bare `?` shorthand.
 
-Attributes are set at declaration with `:[...]` and are independent of the type: `name:Type:[attr=value]`. Use `::[attr]` to read attribute values (see Attributes section).
+Attributes are set at declaration with `::[…]` (or `:Type:[…]`) and are independent of the type: `name:Type:[attr=value]`. Use `name.[attr]` to read attribute values (see Attributes section).
 ```pyrope
 // Integers (signed/unsigned with bit constraints)
 mut a:u8 = 100          // 8-bit unsigned
@@ -44,8 +44,8 @@ mut z:int = nil         // Invalid; can only be copied until assigned a real val
 
 // Inside bit literals, '?' marks unknown bits (valid but unobserved, like Verilog x)
 // Arithmetic works: 0sb? + 1 = 0sb??, 0sb? | 1 = 1
-mut unknown = 0b101?    // Bit 0 is unknown
-mut partial = 0b??10    // Multiple unknown bits
+mut unknown = 0ub101?    // Bit 0 is unknown
+mut partial = 0ub??10    // Multiple unknown bits
 ```
 
 ### Variable Storage Classes
@@ -75,7 +75,7 @@ mut a = 3
 }
 // assert b == 4       // error: 'b' not visible outside block
 
-// Functions have their own scope (Small Pyrope does not support capture variables)
+// Functions have their own runtime scope; visible comptime bindings are lexical
 comb example() {
     mut local = 5       // Function-local variable
     local + 1
@@ -105,7 +105,7 @@ mut range3 = 2..+3              // Size-based range: 2,3,4
 
 // Range operations
 cassert (1..=3) == (1,2,3)       // Range to tuple conversion
-cassert int(1..=3) == 0b1110     // Range to one-hot encoding
+cassert int(1..=3) == 0ub1110     // Range to one-hot encoding
 cassert range1 == (1,2,3,4,5)
 cassert range2 == (0,1,2,3)
 cassert range3 == (2,3,4)
@@ -138,7 +138,10 @@ mut out2 = ram.port[1][addr4]:[rdport=1] // Read port 1
 ```
 
 ## Lambda Types: `comb`, `pipe`, `mod`
-Small Pyrope functions do not support capture variables (e.g. `comb f[a] { ... }` is not supported) and do not include the `mod` orchestration features (`await[N]` and `:@[N]`). Pass values explicitly as arguments.
+Small Pyrope functions do not support runtime capture variables and do not
+include the `mod` orchestration features (`await[N]` and `@[N]`). Visible
+comptime bindings, such as imports and `comptime const` declarations, are
+available lexically. Pass runtime values explicitly as arguments.
 
 ### Combinational or Pure Functions (`comb`)
 
@@ -215,7 +218,7 @@ two complementary timing mechanisms inside `mod` blocks:
 * `await[N]` as a declaration modifier: pipelines the whole RHS over N
   cycles (e.g., `await[3] tmp = mul(a, b)`). It is the only *action* that
   inserts or chooses pipeline stages.
-* `foo:@[N]` on a variable (LHS or RHS): a pure timing *type check*. It
+* `foo@[N]` on a variable (LHS or RHS): a pure timing *type check*. It
   never inserts flops; a mismatch is a compile error.
 
 ```pyrope
@@ -225,26 +228,29 @@ pipe add(a, b) -> (c) { c = a + b }
 mod alu(in1, in2) -> (out_pipelined, out_live) {
   await[3] tmp              = mul(in1, in2)
   await[3] in2_d            = in2
-  await[1] out_pipelined:@[4] = add(tmp:@[3], in2_d:@[3])
-  await[1] out_live:@[4]      = add(tmp:@[3], in2_d:@[3])
+  await[1] out_pipelined@[4] = add(tmp@[3], in2_d@[3])
+  await[1] out_live@[4]      = add(tmp@[3], in2_d@[3])
 }
 
 mod accum_alu(in1, in2) -> (out) {
   reg total:[init=0]
   await[3] tmp = mul(in1, in2)
-  const sum_aligned = add(total:@[3], tmp:@[3])  // both operands checked at cycle 3
-  total::[defer] = sum_aligned                    // defer write to end of cycle
+  const sum_aligned = add(total@[3], tmp@[3])  // both operands checked at cycle 3
+  total.[defer] = sum_aligned                     // defer write to end of cycle
   out = total                                     // bare name reads current 'q'
 }
 ```
 
 Inside `mod` blocks, every RHS value at a non-zero cycle must reach it
 through an `await[N]` declaration; there is no implicit alignment. Use
-`foo:@[N]` on either side to document or enforce cycle expectations. As
-usual, variables can also have type and attribute checks.
+`foo@[N]` on either side to document or enforce cycle expectations. Type
+and attribute *binding* happen only at declarations on the left-hand side;
+checks on RHS values use separate `cassert` statements.
 
 ```pyrope
-const (tmp:u32, tmp2:u3:[something=true]) = some_mod_call(a, b:@[3], c:@[2]:[xxx_should_be_set=true])
+cassert b does u8                                         // RHS type check
+cassert c.[xxx_should_be_set]                             // RHS attribute check
+const (tmp:u32, tmp2:u3:[something=true]) = some_mod_call(a, b@[3], c@[2])
 ```
 
 
@@ -354,23 +360,23 @@ Attributes provide compile-time metadata and constraints for variables, enabling
 
 ### Attribute Syntax
 
-Attributes are **set only at declaration** using `:[attr=value]`. The `::[]` syntax is **only for reading** attribute values.
+Attributes are **set only at declaration** using `::[attr=value]` (or `:Type:[attr=value]` when a type is also given). The `.[attr]` syntax is used to **read** attribute values everywhere else.
 
 ```pyrope
 // Set attribute (only at declaration)
-reg counter:[reset_pin=ref rst] = 0 // Set reset pin (ref connects the wire)
+reg counter::[reset_pin=ref rst] = 0 // Set reset pin (ref connects the wire)
 
 // Read attribute value
-const num_bits = counter::[bits]    // Read number of bits
+const num_bits = counter.[bits]     // Read number of bits
 
-// Check attribute (read and compare)
-cassert counter::[bits] == 8        // Check bit width
-cassert z::[bits] < 32              // Check bit width constraint
+// Check attribute (read inside cassert)
+cassert counter.[bits] == 8         // Check bit width
+cassert z.[bits] < 32               // Check bit width constraint
 
 // Compile-time uses the 'comptime' prefix modifier (not an attribute)
 comptime const SIZE = 16
 comptime mut elaboration_cnt = 0   // mutable at compile time
-cassert SIZE::[comptime] == true   // Can still query comptime status
+cassert SIZE.[comptime]            // Can still query comptime status
 ```
 
 ### Common Attributes
@@ -385,12 +391,14 @@ mut data:u32:[max=1000, min=0] = 0
 mut counter_wrap:u8:[wrap=true] = 0      // Always wraps on overflow
 mut counter_sat:u8:[saturate=true] = 0   // Always saturates on overflow
 
-// One-off overflow behavior (typecast with attributes)
-mut result = (a + b):u8:[wrap=true]      // This operation wraps to u8
-mut clamped = (x + y):u8:[saturate=true] // This operation saturates to u8
+// One-off overflow behavior — statement-level prefix
+mut result:u8  = 0
+wrap result = a + b                      // This operation wraps to u8
+mut clamped:u8 = 0
+sat clamped = x + y                      // This operation saturates to u8
 
-// Typecast without attributes
-mut truncated = (large_val):u8           // Explicit typecast to u8
+// Typecast: call the type as a constructor
+mut truncated = u8(large_val)            // Explicit typecast to u8
 
 // Compile-time uses the 'comptime' prefix modifier
 comptime const SIZE = 16                // Known at elaboration time
@@ -461,7 +469,7 @@ mut less = a < b; mut less_eq = a <= b; mut greater = a > b; mut greater_eq = a 
 
 ### Bit Selection and Reduction
 ```pyrope
-mut value = 0b1010_1100
+mut value = 0ub1010_1100
 mut bits = value#[3..=6]        // Extract bits 3-6
 value#[3] = 0                   // Set 3rd bit to 0
 
@@ -484,9 +492,9 @@ mut sparse2 = value#[0,3,7]      // Select bits 0, 3, and 7
 mut rparse1 = (value#[7], value#[3], value#[0])#[..]
 mut rparse2 = value#[7,3,0]      // Select bits 7, 3, and 0
 
-cassert value  == 0b1010_0100   // bit 3 was cleared above
-cassert sparse2 == 0b1____1__0
-cassert rparse2 == 0b011        // reverse order of bits (LSB-first packing)
+cassert value  == 0ub1010_0100   // bit 3 was cleared above
+cassert sparse2 == 0ub1____1__0
+cassert rparse2 == 0ub011        // reverse order of bits (LSB-first packing)
 cassert pop_count == 3
 cassert or_reduce  == -1        // any bit set
 cassert and_reduce ==  0        // sign bit (MSB) is 0
@@ -548,16 +556,16 @@ counter += 1                    // Immediate update
 tmp += 1
 assert counter == tmp
 
-counter::[defer] += 1           // Defer write to end of cycle
+counter.[defer] += 1            // Defer write to end of cycle
 assert counter == tmp
 tmp += 1
 
 assert counter != tmp
-assert counter::[defer] == tmp  // Read deferred value (end of cycle)
+assert counter.[defer] == tmp   // Read deferred value (end of cycle)
 
 // Timing syntax summary:
 // counter         - current ('q' value if not modified)
-// counter::[defer]- deferred value (end of current cycle)
+// counter.[defer] - deferred value (end of current cycle)
 // past(counter)   - value from previous cycle
 // past[2](counter)- two cycles ago
 ```

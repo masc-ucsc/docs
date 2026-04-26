@@ -36,7 +36,7 @@ use the explicit Pyrope type syntax because it is more readable and easier to
 optimize.
 
 
-=== "Snippet with types"
+=== "Snippet with declaration-site types"
 
     ```
     mut b = "hello"
@@ -45,12 +45,14 @@ optimize.
 
     a += 1
 
-    a = b                       // incorrect
+    a = b                       // incorrect (b is string)
 
 
     mut dest:u32 = 0
+    mut foo:u16 = 0
+    mut v:u8   = 0
 
-    dest = foo:u16 + v:u8
+    dest = foo + v              // types come from the declarations
     ```
 
 === "Snippet with comptime assert"
@@ -63,11 +65,13 @@ optimize.
     a += 1
     cassert a does u32
     a = b                       // incorrect
-    cassert b does u32  // fails
+    cassert b does u32          // fails
 
     mut dest:u32 = 0
+    mut foo:u16 = 0
+    mut v:u8   = 0
     cassert (dest does u32) and (foo does u16) and (v does u8)
-    dest = foo:u16 + v:u8
+    dest = foo + v
     ```
 
 
@@ -82,8 +86,11 @@ constraints from the type system. Pyrope type system constructs to handle types:
   Unicode character "\u02287" could be used as an alternative to `does` (`a`
 &#8839 `b`).
 
-* `a:b` is equivalent to `a does b` for type check, but it is also used by type
-  synthesis when used in the left-hand-side of assignments.
+* `a:b` binds variable `a` to type `b`. It is **only** allowed at
+  declaration sites (`mut`/`reg`/`const`/`comb`/`pipe`/`mod`, lambda
+  parameters and return types, and tuple field declarations). To check
+  that an existing value has type `b`, use `a does b` or `a is b`. To
+  convert a value to type `b`, call the type as a constructor: `b(a)`.
 
 * `a equals b`: Checks that `a does b` and `b does a`. Effectively checking
   that they have the same type. Notice that this is not like checking for
@@ -253,7 +260,7 @@ cassert a is b
 
 const c:u32 = 10
 cassert a !is c
-cassert a::[typename] == "int" and c::[typename] == "u32"
+cassert a.[typename] == "int" and c.[typename] == "u32"
 
 const d:u32 = nil
 cassert c is d
@@ -380,16 +387,16 @@ When the attributes are read, it reads the current. it does not read the constra
 
 ```pyrope
 mut val:u8 = 0   // designer constraints a to be between 0 and 255
-cassert val::[sbits] == 0
+cassert val.[sbits] == 0
 
 val = 3          // val has 3 bits (0sb011 all the numbers are signed)
 
 val = 300        // error: '300' overflows the maximum allowed value of 'val'
 
 val = 1          // max=1,min=1 sbits=2, ubits=1
-cassert val::[ubits] == 1 and val::[min] == 1 and val::[max] == 1 and val::[sbits] == 2
+cassert val.[ubits] == 1 and val.[min] == 1 and val.[max] == 1 and val.[sbits] == 2
 
-val::[wrap] = 0x1F0 // Drop bits from 0x1F0 to fit in constrained type
+wrap val = 0x1F0 // Drop bits from 0x1F0 to fit in constrained type
 cassert val == 240 == 0xF0
 
 val = u8(0x1F0)    // same
@@ -595,9 +602,9 @@ cassert a['c'] equals u32
 cassert a has 'c'
 cassert !(a has 'foo')
 
-cassert a::[id] == 'a'
-cassert a[0]::[id] == ':0:b' and a.b::[id] == ':0:b'
-cassert a[1]::[id] == ':1:c' and a.c::[id] == ':1:c'
+cassert a.[id] == 'a'
+cassert a[0].[id] == ':0:b' and a.b.[id] == ':0:b'
+cassert a[1].[id] == ':1:c' and a.c.[id] == ':1:c'
 ```
 
 Function definitions allocate a tuple, which allows to introspect the
@@ -606,8 +613,8 @@ function but not to change the functionality. Functions have two fields:
 
 ```
 comb fu(a, b=2) -> (c) { c = a + b }
-cassert fu::[inp] equals ('a', 'b')
-cassert fu::[out] equals ('c')
+cassert fu.[inp] equals ('a', 'b')
+cassert fu.[out] equals ('c')
 ```
 
 This means that when ignoring named vs unnamed calls, overloading behaves like
@@ -618,8 +625,8 @@ const x:u32 = fn(a1, a2)
 
 comb model_poly_call(fn, ...args) -> (out) {
   for f in fn {
-     continue unless f::[inp] does args
-     continue unless f::[out] does out
+     continue unless f.[inp] does args
+     continue unless f.[out] does out
      return f(args)
   }
 }
@@ -638,7 +645,7 @@ comb randomize::[debug](ref self) {
   const rnd = import("prp/rnd")
   for i in ref self {
     if i equals _:int {
-      i = rnd.between(i::[max], i::[min])
+      i = rnd.between(i.[max], i.[min])
     } elif i equals _:bool {
       i = rnd.boolean()
     }
@@ -1073,10 +1080,10 @@ The setter/getter can also access attributes:
 mut obj1::[attr1] = (
   ,mut data:int = nil
   ,comb setter(ref self, v) {
-    if v::[attr2] {
-      self.data::[attr3] = 33
+    if v.[attr2] {
+      self.data.[attr3] = 33
     }
-    cassert self::[attr1]
+    cassert self.[attr1]
   }
 )
 ```

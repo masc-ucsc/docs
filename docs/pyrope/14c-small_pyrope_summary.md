@@ -32,16 +32,16 @@ comb add(a:u8, b:u8) -> (result:u8) { result = a + b } // Combinational logic
 pipe[1] counter() -> (reg count:u8) { count += 1 }     // Moore machine (1-cycle pipeline)
 mod alu(in1, in2) -> (out) { /* explicit timing */ }  // Dataflow / orchestration with timing
 ```
-**LLM Pitfall**: `comb`/`pipe`/`mod` are NOT just function modifiers — they define **hardware implementation strategy**. `mod` is the only kind that can orchestrate pipelined calls (`await[N]`, `:@[N]`). Small Pyrope does not support function capture variables; pass values as arguments.
+**LLM Pitfall**: `comb`/`pipe`/`mod` are NOT just function modifiers — they define **hardware implementation strategy**. `mod` is the only kind that can orchestrate pipelined calls (`await[N]`, `@[N]`). Small Pyrope does not support runtime function captures; pass runtime values as arguments. Visible comptime bindings are lexical.
 
 ### 3. Bit Selection Syntax
 ```pyrope
-mut value = 0b1010_1100
+mut value = 0ub1010_1100
 mut bits = value#[3..=6]        // Extract bits 3-6 (NOT array indexing)
 value#[3] = 0                   // Set bit 3 (NOT array assignment)
 ```
 **LLM Pitfall**: `#[...]` is bit selection, NOT array/hash access. Use `[...]` for array indexing.
-**Literal Pitfall**: `_` is only a digit separator in numeric literals (`12_34__ == 1234`). `?` marks don't-care/unknown bits *inside* a binary literal (e.g., `0b101?`). There is no bare `_` sink and no bare `?` default — use `nil` for invalid values and `0sb?` for fully-unknown bits.
+**Literal Pitfall**: `_` is only a digit separator in numeric literals (`12_34__ == 1234`). `?` marks don't-care/unknown bits *inside* a binary literal (e.g., `0ub101?`). There is no bare `_` sink and no bare `?` default — use `nil` for invalid values and `0sb?` for fully-unknown bits.
 
 ### 4. Tuple-Centric Everything
 ```pyrope
@@ -69,18 +69,18 @@ cassert range3 == (2,3,4)
 ```pyrope
 mut data:u32:[max=1000, min=0] = 0          // Type with constraints
 reg counter:[reset_pin=rst] = 0             // Hardware attributes
-cassert counter::[bits] == 8                // Read and check attribute
+cassert counter.[bits] == 8                 // Read and check attribute
 ```
-Attributes are **set only at declaration** with `:[attr=value]` and are **immutable** afterwards. Use `::[attr]` to **read** attribute values. Check by comparing: `foo::[attr] == value`. For one-off overflow, use typecast syntax: `(expr):Type:[wrap=true]`.
+Attributes are **set only at declaration** with `::[attr=value]` (or `:Type:[attr=value]`) and are **immutable** afterwards. Use `name.[attr]` to **read** attribute values. Check by comparing: `foo.[attr] == value`. For one-off overflow, use the statement-level prefix: `wrap result = a + b` or `sat result = x + y`.
 
 ### 7. Assignment Operators in Hardware Context
 ```pyrope
 reg counter = 0
 counter += 1                    // Immediate update
-counter::[defer] += 1           // Deferred to end of cycle
+counter.[defer] += 1            // Deferred to end of cycle
 ```
 **LLM Pitfall**: Register updates can be immediate or deferred. A bare register
-name reads the current 'q' value, `::[defer]` is the end-of-cycle value, and
+name reads the current 'q' value, `.[defer]` is the end-of-cycle value, and
 `past[n](x)` reads `n` cycles ago. To snapshot 'q' before later in-cycle
 updates, copy it into a local (`const counter_q = counter`).
 
@@ -106,7 +106,7 @@ mut out = ram.port[0][addr]:[rdport=0]      // Read port 0
 - Combinational logic (`mut`) updates immediately
 - `pipe` is a Moore machine (outputs always registered), may use `reg` for internal storage
 - `mod` has no constraints on registers or outputs
-- `mod` has two pipeline-timing mechanisms: `await[N]` (declaration modifier that pipelines the whole RHS over N cycles) and `foo:@[N]` (pure timing type check, works on LHS and RHS uses)
+- `mod` has two pipeline-timing mechanisms: `await[N]` (declaration modifier that pipelines the whole RHS over N cycles) and `foo@[N]` (pure timing type check, works on LHS and RHS uses)
 
 ### No Runtime Loops
 ```pyrope

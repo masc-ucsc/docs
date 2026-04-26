@@ -201,7 +201,7 @@ or short-circuit (`and`/`or`) expressions.
 
 Lambda calls are either inlined or become a specific instance (module). When
 the instance is located in a conditional path, the instance is moved to the
-main scope toggling the inputs valid attribute `::[valid] == false`. The instance
+main scope toggling the inputs valid attribute `.[valid] = false`. The instance
 has the assigned variable name. If the instance is a `mut`, the variable name
 can be the SSA name.
 
@@ -242,7 +242,7 @@ can be the SSA name.
        const tmp = 3
        sub_arg_0 = b
        sub_arg_1 = tmp
-       x += x_0::[defer]   // defer read (instance after conditional code)
+       x += x_0.[defer]   // defer read (instance after conditional code)
      }
      x_0 = sub(sub_arg_0, sub_arg_1).x   // instance x_0 (SSA)
     }
@@ -279,7 +279,7 @@ the condition is false.
           puts "hello"
 
           const res = self.total
-          self.total::[wrap] = res + a
+          wrap self.total = res + a
 
           res
         }
@@ -304,7 +304,7 @@ the condition is false.
           puts "hello"
 
           const res = self.total
-          self.total::[wrap] = res + a
+          wrap self.total = res + a
 
           res
         }
@@ -314,13 +314,13 @@ the condition is false.
         puts "hello"
 
         const res = r.total
-        r.total::[wrap] = res + 3
+        wrap r.total = res + 3
         res = res
       }elif runtime == 4 {
         puts "hello"
 
         const res = r.total
-        r.total::[wrap] = res + 9
+        wrap r.total = res + 9
         res = res
       }
     }
@@ -429,7 +429,7 @@ mod array_reset(ref self) {
 
   self[reset_iter].state = I
 
-  reset_iter::[wrap] = reset_iter + 1
+  wrap reset_iter = reset_iter + 1
 }
 
 reg array:[1024]tag:[clock_pin=ref my_clock] = array_reset  // no () — pass the method
@@ -447,7 +447,7 @@ mod my_flop_reset(ref self) {
   reg reset_counter:u3:[sync=false] = 0sb? // asynchronous reset is posedge only
 
   self[reset_counter] = reset_counter
-  reset_counter::[wrap] += 1
+  wrap reset_counter += 1
 }
 
 reg my_flop:[8]u32 = my_flop_reset
@@ -630,7 +630,7 @@ are advantages to each approach but the code quality should be the same.
 
 ```
 reg a:u4 = 3
-a::[saturate] = a + 1
+sat a = a + 1
 
 reg b = 4
 if cond {
@@ -640,13 +640,13 @@ if cond {
 }
 
 // RTL equivalent
-a_qpin = __flop(reset=ref reset, clk=ref clk, initial=3, din=a::[defer]) // defer to get final value
+a_qpin = __flop(reset=ref reset, clk=ref clk, initial=3, din=a.[defer]) // defer to get final value
 tmp    = __sum(A=(a_qpin, 1))
 a      = __mux(tmp[4], tmp#[0..=3], 0xF)    // saturate, not wrap
 
-b_qpin = __flop(reset=ref reset, clk=ref clk, initial=4, din=b::[defer])
+b_qpin = __flop(reset=ref reset, clk=ref clk, initial=4, din=b.[defer])
 b      = __mux(cond, b_qpin, 5)
 
-c_cond_qpin = __flop(reset=ref reset, clk=ref clk, initial=0, din=c_cond::[defer])
+c_cond_qpin = __flop(reset=ref reset, clk=ref clk, initial=0, din=c_cond.[defer])
 c_cond      = __sum(A=(b, 1))
 ```

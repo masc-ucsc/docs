@@ -43,7 +43,7 @@ Pyrope divides the lambdas into three categories: `comb`, `pipe`, and `mod`.
 - `mod` has no constraints on registers or outputs. It can be combinational,
   Mealy, Moore, or a pipeline orchestrator. When a `mod` calls `pipe`
   lambdas and needs to align their outputs with other signals, it uses the
-  `await[N]` declaration modifier and the `:@[N]` cycle type check (these
+  `await[N]` declaration modifier and the `@[N]` cycle type check (these
   constructs used to belong to the separate `flow` category, which has
   been merged into `mod`).
 
@@ -80,13 +80,13 @@ argument, which allows operating on tuples.
     mod multiply_add(in1, in2) -> (out) {
       await[3] tmp      = mul(in1, in2)
       await[3] in1_d    = in1
-      await[1] out:@[4] = add(tmp:@[3], in1_d:@[3])
+      await[1] out@[4] = add(tmp@[3], in1_d@[3])
     }
 
     mod accum(in1, in2) -> (out) {
       reg total = 0                             // mod can use reg
       await[3] tmp = mul(in1, in2)
-      total::[defer] = add(total, tmp:@[3])
+      total.[defer] = add(total, tmp@[3])
       out = total
     }
     ```
@@ -141,22 +141,27 @@ cassert a_lambda() == 4
 The lambda definition has the following fields:
 
 ```txt
-[GENERIC] [CAPTURE] [INPUT] [-> OUTPUT] |
+[GENERIC] [COMPTIME] [INPUT] [-> OUTPUT] |
 ```
 
 + `GENERIC` is an optional comma separated list of names between `<` and `>` to
   use as generic types in the lambda.
 
-+ `CAPTURE` has the list of **comptime parameters** for the lambda. Each entry
-  may be a bare name (which captures a same-named value from the enclosing
-  scope as its default), a typed declaration (e.g., `n:int`), or a typed
-  declaration with a default (e.g., `n:int=1`). If no capture list is
-  provided, no local variable can be captured by value which is equivalent to
-  an empty list (`[]`). Captures are by value only; no capture by reference is
-  allowed, and all capture values must be comptime. Callers can **override**
-  any comptime parameter at the call site using the same `[...]` slot
-  (`foo[N](args)`). Section [Closures](10-internals.md#Closures) has more
-  details.
++ `COMPTIME` has the optional list of explicit comptime parameters for the
+  lambda. Each entry is a typed declaration (e.g., `n:int`) or a typed
+  declaration with a default (e.g., `n:int=1`). Defaults may refer to visible
+  comptime bindings from the enclosing scope. Callers can override any
+  comptime parameter at the call site using the same `[...]` slot
+  (`foo[N](args)`).
+
++ Lambdas do not have an explicit capture list. Visible comptime bindings from
+  enclosing scopes, including imports and `comptime const` declarations, are
+  available lexically inside the lambda body and signature. The compiler records
+  those references as explicit comptime dependencies of the lambda; no capture
+  syntax is written by the programmer. Runtime `const`, `mut`, and `reg`
+  declarations from enclosing lambda scopes are not visible inside a nested
+  lambda unless passed as normal inputs or stored in an explicit tuple/object
+  that the lambda receives.
 
 + `INPUT` has a list of inputs allowed with optional types. `()` indicates no
   inputs. `(...args)` allow to accept a variable number of arguments.
@@ -183,21 +188,26 @@ comb add8<T>(a:T, b:T, c:T) { a + b + c }   // same
 const add = [add1, add2, add3, add4, add5, add6, add7, add8]
 
 const x = 2
-comb addx1       (a) { x + a }    // error: undefined 'x'
-comb addx2[     ](a) { x + a }    // error: undefined 'x'
-comb addx3[x    ](a) { x + a }    // explicit capture x (default = enclosing x)
-comb addx4[foo=x](a) { foo + a }  // capture x but rename to something else
+comb addx1(a) { x + a }           // error: x is runtime, not visible in lambda
+
+/// Visible comptime bindings are available lexically:
+comptime const Scale = 2
+comb addx2(a) { Scale + a }       // OK: Scale is comptime
+
+/// Imports are comptime aliases:
+const lib = import("lib.math")
+comb is_add(op:lib.OpType) { op == lib.AddOp }
 
 /// Comptime parameters can be declared with a type and/or default:
 comb scale[n:int=1](a) { n * a }
 cassert scale(5) == 5           // uses default n=1
 cassert scale[10](5) == 50      // override n=10 at the call site
 
-/// Captures can also be overridden at the call site:
-const y = 3
-comb addy[y](a) { y + a }
-cassert addy(4) == 7            // uses captured y=3
-cassert addy[100](4) == 104     // override y=100 at the call site
+/// Defaults can use visible comptime bindings:
+comptime const DefaultScale = 3
+comb scale_default[n:int=DefaultScale](a) { n * a }
+cassert scale_default(4) == 12
+cassert scale_default[100](4) == 400
 
 mut y = (
   mut val:u32 = 1,
@@ -213,7 +223,7 @@ comb my_log::[debug](...inp) {
 }
 
 comb f<X>(a:X, b:X) { a + b }   // enforces a and b with same type
-cassert f(33:u22, 100:u22) == 133
+cassert f(u22(33), u22(100)) == 133
 
 my_log(a, false, x + 1)
 ```
@@ -288,8 +298,8 @@ assert f1(tup) != 0      // error: f1 shadowing (tup.f1 and f1)
 assert 4.f1() != 0       // error: f1 can be called for tup, so shadow
 assert tup.f1() != 0     // error: f1 is shadowing
 
-comb xx[tup]() { tup.f1() } // OK, function restricted scope for f1
-cassert xx() == 1
+comb xx(self:tup) { self.f1() } // OK, explicit input restricts scope for f1
+cassert xx(tup) == 1
 
 cassert (4:tup).f1() == 1
 cassert 4.f1() == 3       // UFCS call
@@ -307,7 +317,7 @@ cycle-level state.
 ```
 mut tup2 = (
   mut val:u8 = 0sb?,
-  comb upd(ref self) { self.val::[saturate] += 1 },
+  comb upd(ref self) { sat self.val += 1 },
   comb calc(self) { self.val }
 )
 ```

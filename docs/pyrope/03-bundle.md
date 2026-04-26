@@ -99,7 +99,8 @@ cassert tup2[0] == 100
 Some constructs like enumerates and attributes typically pass identifiers
 without assigning a value. The problem is that the syntax becomes not so
 "nice".  To address these cases, Pyrope does not use a variable reference but a
-"string" in the enumerate (`enum(a,b=3)`) and attribute (`foo::[attr]`).
+"string" in the enumerate (`enum(a,b=3)`) and attribute set/read forms
+(`foo::[attr]` at declaration, `foo.[attr]` to read).
 
 ```
 const aa = 3
@@ -315,7 +316,7 @@ if index<3 {
 ```
 
 Pyrope compiler will allow an index of an array/tuple with unknowns. If the
-index has unknown bits (`0sb?` or `0b1?0`) but the compiler can not know, the
+index has unknown bits (`0sb?` or `0ub1?0`) but the compiler can not know, the
 result will have unknowns (see [internals](10-internals.md) for more details).
 Notice that the only way to have unknowns is that somewhere else a variable or
 a memory was explicitly initialized with unknowns. The default initialization
@@ -400,7 +401,8 @@ apply to the immediatly declared variable or item.
 
 ```
 const c = 4
-const (x,b) = (true, c:u3) // assign x=true, b=4 AND check that c is type u3
+cassert c does u3                  // type check on 'c' is a separate statement
+const (x, b) = (true, c)           // assign x=true, b=4
 
 cassert x == true
 cassert b == 4
@@ -496,12 +498,12 @@ cassert Animal.bird.eagle != Animal.mammal
 cassert Animal.bird != Animal.mammal.human
 cassert Animal.bird == Animal.bird.parrot
 
-cassert int(Animal.bird        ) == 0b000001
-cassert int(Animal.bird.eagle  ) == 0b000011
-cassert int(Animal.bird.parrot ) == 0b000101
-cassert int(Animal.mammal      ) == 0b001000
-cassert int(Animal.mammal.rat  ) == 0b011000
-cassert int(Animal.mammal.human) == 0b101000
+cassert int(Animal.bird        ) == 0ub000001
+cassert int(Animal.bird.eagle  ) == 0ub000011
+cassert int(Animal.bird.parrot ) == 0ub000101
+cassert int(Animal.mammal      ) == 0ub001000
+cassert int(Animal.mammal.rat  ) == 0ub011000
+cassert int(Animal.mammal.human) == 0ub101000
 ```
 
 In general, for each leaf enum, the number of bits is equivalent to the number

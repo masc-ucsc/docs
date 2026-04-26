@@ -7,15 +7,15 @@ In hardware, registers (built from flip-flops) are essential for storing informa
 
 While it's possible to instantiate low-level flops, the recommended, programmer-friendly method is to declare a **register** using the `reg` keyword. This makes statefulness explicit and prevents common bugs. The compiler guarantees that a `reg` is a state-holding element.
 
-A register's value at the start of a cycle is its **current state**. New values are assigned to its **next state** using the `::[defer]` syntax. This clear separation avoids the ambiguity between a register's input (`din`) and output (`q`) pins that plagues many HDLs.
+A register's value at the start of a cycle is its **current state**. New values are assigned to its **next state** using the `.[defer]` syntax. This clear separation avoids the ambiguity between a register's input (`din`) and output (`q`) pins that plagues many HDLs.
 
-In our syntax, a bare reference to `total` reads the register's current state (its 'q' value). The `total::[defer]` construct defers a write to the end of the cycle, defining the logic for its 'din' pin, which will become the state in the next cycle. The `::[defer]` attribute also serves as the canonical way to read the end-of-cycle (next-cycle) value in debug contexts. If you need to snapshot the current 'q' value before later code modifies the register within the cycle, just copy it into a local: `const counter_q = counter`.
+In our syntax, a bare reference to `total` reads the register's current state (its 'q' value). The `total.[defer]` construct defers a write to the end of the cycle, defining the logic for its 'din' pin, which will become the state in the next cycle. The `.[defer]` attribute also serves as the canonical way to read the end-of-cycle (next-cycle) value in debug contexts. If you need to snapshot the current 'q' value before later code modifies the register within the cycle, just copy it into a local: `const counter_q = counter`.
 
 === "Structural flop style"
     ```
     mut counter_next:u8:[wrap=true] = ?
 
-    const counter_q = __flop(din=counter_next::[defer]  // defer to get final update
+    const counter_q = __flop(din=counter_next.[defer]  // defer to get final update
                        ,reset_pin=ref my_rst, clock_pin=ref my_clk
                        ,enable=my_enable            // enable control
                        ,posclk=true
@@ -98,28 +98,29 @@ complementary timing mechanisms for strong compile-time checking:
   the *action* that inserts or chooses pipeline stages.
   `await[N] lhs = rhs` reads as "`lhs` is `rhs` delivered `N` cycles later".
 
-* **`foo:@[N]`** on a variable use: a pure **type check** asserting that `foo`
+* **`foo@[N]`** on a variable use: a pure **type check** asserting that `foo`
   lands at cycle `N`. It never inserts flops; a mismatch is a compile error.
-  Works identically on LHS declarations (`lhs:@[N] = ...`) and on RHS uses
-  (`... = add(a:@[3], b:@[3])`).
+  Works identically on LHS declarations (`lhs@[N] = ...`) and on RHS uses
+  (`... = add(a@[3], b@[3])`).
 
-There is **no** bare `foo@[N]`. To trigger delay flop insertion use an explicit
-`await[N]` declaration.
+`foo@[N]` never inserts flops — it is *only* an alignment assertion. To
+trigger delay flop insertion use an explicit `await[N]` declaration. To
+read a value at a different cycle, use `past[N](x)` or `next[N](x)`.
 
 * Bare `counter` reads the current 'q' value; snapshot with a local
   (`const counter_q = counter`) if you need to capture it before later
   in-cycle updates.
 * `past[n](counter)` reads the value `n` cycles ago. The compiler inserts
   the flops (see [Temporal library](09-verification.md#temporal-library)).
-* `counter::[defer]` reads or writes the end-of-cycle value.
+* `counter.[defer]` reads or writes the end-of-cycle value.
 * `await[N]` pipelines the RHS of a declaration over `N` cycles (`mod` only).
-* `:@[N]` is a pure cycle type check (`mod` only).
+* `@[N]` is a pure cycle type check (`mod` only).
 * `next`, `eventually`, `rose`, … (debug only) cover future-peek and
   window-quantified sampling.
 
 `await[N]` is only valid inside `mod` blocks. It is not allowed in `comb`
 (pure combinational) or `pipe` (Moore pipeline). Inside a `mod`, register
-state is read via bare variable references (current value) or `::[defer]`
+state is read via bare variable references (current value) or `.[defer]`
 (end-of-cycle value), and prior-cycle values via `past[n](x)`.
 
 `mod` blocks naturally use `reg` for persistent state across cycles. A
@@ -143,14 +144,14 @@ mod multiply_add(in1, in2) -> (out) {
 
     // Stage 3: both inputs to 'add' are aligned at cycle 3.
     // The adder takes 1 cycle, so the final output is at cycle 4.
-    await[1] out:@[4] = add(tmp:@[3], in1_d:@[3])
+    await[1] out@[4] = add(tmp@[3], in1_d@[3])
 }
 ```
 
 The two mechanisms catch different classes of bugs:
 
 * `await[N]` makes the pipelining contract explicit at every declaration site.
-* `:@[N]` on uses and on declarations catches alignment mismatches at compile
+* `@[N]` on uses and on declarations catches alignment mismatches at compile
   time — both "the input I'm using isn't at the cycle I expected" and "the
   output doesn't land at the cycle I promised".
 
@@ -162,13 +163,13 @@ mod example(in1, in2, in3) -> (out) {
     // Introduce an explicit await binding — no implicit alignment.
     await[3] in3_d = in3
 
-    await[2] res2a:@[5] = res1:@[3] + in3_d:@[3]
+    await[2] res2a@[5] = res1@[3] + in3_d@[3]
 
     // error: res1 is at cycle 3, not 2
-    // await[2] bad:@[5] = res1:@[2] + in3_d:@[3]
+    // await[2] bad@[5] = res1@[2] + in3_d@[3]
 
     // error: computed cycle is 5, not 4
-    // await[2] bad2:@[4] = res1:@[3] + in3_d:@[3]
+    // await[2] bad2@[4] = res1@[3] + in3_d@[3]
 }
 ```
 
@@ -183,7 +184,7 @@ returning a future), and `await[N]` at the call site consumes that future
 after a specified number of cycles. The key difference is that Pyrope's
 `await[N]` is a **static, structural** specification — `N` is part of the
 hardware contract and must be known at elaboration time — whereas software
-`await` is dynamic suspension with runtime-determined latency. Also, `:@[N]`
+`await` is dynamic suspension with runtime-determined latency. Also, `@[N]`
 has no software counterpart; it is a hardware-specific type check for
 multi-input cycle alignment.
 

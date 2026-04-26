@@ -385,7 +385,7 @@ comb fun_list_abcd(a, b, c, d) { a + b + c + d }
 
 const fun_list = [fun_list_ab, fun_list_abc, fun_list_abcd]
 
-assert fun_list::[size] == 3    // 3 lambda entries in fun_list
+assert fun_list.[size] == 3    // 3 lambda entries in fun_list
 
 assert fun_list(1,2) == 3
 assert fun_list(1,2,4) == 7
@@ -689,7 +689,8 @@ const Circle = (
      const pi = import("math").pi
      result = pi * self.rad * self.rad
   }
-):Shape  // extra check that the exclude did not remove too many fields
+)
+cassert Circle does Shape  // extra check that the exclude did not remove too many fields
 ```
 
 ## Row type

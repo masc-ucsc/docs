@@ -39,9 +39,9 @@ parameter list and a body. Data declarations:
 
 Lambda declarations:
 
-* `comb name[comptime][args] [-> outputs] { body }`
-* `pipe[N] name[comptime][args] [-> outputs] { body }`
-* `mod name[comptime][args] [-> outputs] { body }`
+* `comb name[comptime_params][args] [-> outputs] { body }`
+* `pipe[N] name[comptime_params][args] [-> outputs] { body }`
+* `mod name[comptime_params][args] [-> outputs] { body }`
 
 This rule applies uniformly, including inside **tuple literals**: every
 field must start with one of these kind keywords. Bare `field = value`
@@ -53,7 +53,7 @@ const point = (mut x:u8 = 0, mut y:u8 = 0)
 const counter_iface = (
   ,mut value:u8 = 0
   ,comb read(self) -> (v:u8)      { v = self.value }
-  ,comb inc(ref self)             { self.value::[wrap] += 1 }
+  ,comb inc(ref self)             { wrap self.value += 1 }
   ,mod tick(ref self, enable:bool) { self.value += 1 when enable }
 )
 ```
@@ -62,8 +62,12 @@ Named-argument passing in calls (`foo(a=3, b=4)`) is **not** a declaration
 — the names are matched against the callee's declared parameters — so no
 kind keyword is required there.
 
-Lambda captures declare a new variable via the `[...]` slot and are always
-immutable (`const`); the kind keyword is implicit there.
+The `[...]` slot after a lambda name declares explicit comptime parameters.
+It is not a capture list. Lambdas can lexically read visible comptime bindings
+from enclosing scopes, but runtime `const`, `mut`, and `reg` declarations from
+enclosing lambda scopes are not visible in nested lambdas unless passed as
+normal inputs. The compiler records lexical comptime references as explicit
+comptime dependencies of the lambda.
 
 
 === "Code Block scope"
@@ -86,27 +90,26 @@ immutable (`const`); the kind keyword is implicit there.
 
     ```
     assert a == 3        // error: undefined variable 'a'
-    mut a = 3
-    mut x = 10
-    comb f1[a,x=a+1]() {
-      assert a == 3
-      a = 33             // error: capture/inputs are immutable
-      x = 300            // error: capture/inputs are immutable
+    comptime const A = 3
+    comptime const X = A + 1
+    comb f1() {
+      cassert A == 3
+      // A = 33          // error: comptime const is immutable
       const b = 4
-      const a = 3333       // error: variable shadowing
-      mut a = 33         // error: variable shadowing
+      // const A = 3333  // error: variable shadowing
+      // mut A = 33      // error: variable shadowing
       return b+3
     }
     assert f1() == 7
-    assert x == 10
     assert b == 3        // error: undefined variable 'b'
 
-    comb f2() {     // no capture of 'a'
-      // assert a == 3   // error: undefined variable 'a'
+    mut a = 3
+    comb f2() {
+      // assert a == 3   // error: runtime outer variable not visible
     }
-    comb f3[ff=a]() { // capture 'a' as 'ff'
-      assert ff == 3     // OK
-      ff = 3             // error: immutable variable
+    comb f3[ff:int=A]() {
+      cassert ff == 3    // OK, default uses visible comptime A
+      // ff = 3          // error: comptime parameter is immutable
     }
     ```
 
@@ -132,19 +135,20 @@ immutable (`const`); the kind keyword is implicit there.
   (shadow) the same variable but to use inside the tuple, the `self` keyword
   must be used always to access tuple scoped variables.
 
-* Lambdas and tuples upper scope variables are always immutable.
+* Tuple upper scope variables are always immutable.
 
-* Lambdas can restrict upper scope visibility with `[]`.
+* Lambdas lexically see only visible comptime bindings from upper scopes.
+  Runtime upper scope variables must be passed explicitly.
 
 * A variable is visible from definition until the end of scope in program order.
 
 
-Since the captures and lambda inputs are always immutable, it is not allowed to
-declare them as `mut` and redundant to declare them as `const`.
+Since lambda inputs and comptime parameters are always immutable, it is not
+allowed to declare them as `mut` and redundant to declare them as `const`.
 
 ```
-comb f3(mut x) { x + 1 }    // error: inputs are immutable
-comb f4[mut x](z) { x + z } // error: captures are immutable
+comb f3(mut x) { x + 1 }        // error: inputs are immutable
+comb f4[mut x:int](z) { x + z } // error: comptime parameters are immutable
 ```
 
 
@@ -169,7 +173,7 @@ Pyrope has 8 basic types:
 * `comb`: A function or pure combinational logic
 * `int`: which is signed integer of unlimited precision
 * `mod`: A module with state/clock or side-effects
-* `range`: A one hot encoding of values `1..=3 == 0b1110`
+* `range`: A one hot encoding of values `1..=3 == 0ub1110`
 * `string`: which is a sequence of characters
 * `variant`: An union without typecast
 
@@ -253,9 +257,10 @@ const y = x + 1    // error: 'x' is a boolean, '1' is integer
 
 Functions have several options (see [Functions](06-functions.md)), but from a
 high level they provide a sequence of statements and they have a tuple for
-input and a tuple for output. Functions can capture values from declaration.
-Like strings, functions are always immutable objects but they can be assigned
-to mutable variables.
+input and a tuple for output. Functions can have explicit comptime parameters
+and can lexically read visible comptime bindings from enclosing scopes. Like
+strings, functions are always immutable objects but they can be assigned to
+mutable variables.
 
 
 ### Range
@@ -284,13 +289,13 @@ cassert a[..=1] == (1,2)
 cassert a[..<2] == (1,2)
 cassert a[1..<10] == (2,3)
 
-const b = 0b0110_1001
-cassert b#[1..]        == 0b0110_100
-cassert b#[1..=-1]     == 0b0110_100
-cassert b#[1..=-2]     == 0b0110_100  // unsigned result from bit selector
+const b = 0ub0110_1001
+cassert b#[1..]        == 0ub0110_100
+cassert b#[1..=-1]     == 0ub0110_100
+cassert b#[1..=-2]     == 0ub0110_100  // unsigned result from bit selector
 cassert b#sext[1..=-2] == 0sb110_100
 cassert b#[1..=-3]     == 0sb10_100
-cassert b#[1..<-3]     == 0b0_100
+cassert b#[1..<-3]     == 0ub0_100
 cassert b#[0]          == false
 ```
 
@@ -305,8 +310,8 @@ to type cast from tuple to range, but it is possible from range to tuple.
 
 ```
 const c = 1..=3
-cassert int(c) == 0b1110
-cassert range(0b01_1100) == 2..=4
+cassert int(c) == 0ub1110
+cassert range(0ub01_1100) == 2..=4
 
 assert range(1,2,3)            // error: typecast not allowed
 cassert (1,2,3) == tuple(1..=3)
@@ -318,7 +323,7 @@ semantic is the same. The same `tuple` typecast is also optional when doing a
 comparison. Both ranges a `step` to change the step.
 
 ```
-cassert   int(0..=10 step  2) == 0b101_0101_0101
+cassert   int(0..=10 step  2) == 0ub101_0101_0101
 cassert tuple(0..=10 step  2) == ( 0,2,4,6,8,10)
 cassert tuple(10..=0 step -2) == (10,8,6,4,2, 0)
 cassert      (10..=0 step -2) == (10,8,6,4,2, 0)
@@ -349,7 +354,7 @@ possible when both begin and end of the range are fully specified.
 cassert((0..<30 step 10) == (0,10,20)) // ranges and tuples can combined
 cassert((1..=3) ++ 4 == (1,2,3,4))     // tuple and range ops become a tuple
 cassert 1..=3 == (1,2,3)
-cassert((1..=3)#[..] == 0b1110)        // convert range to integer with #[..]
+cassert((1..=3)#[..] == 0ub1110)        // convert range to integer with #[..]
 ```
 
 ### String
@@ -425,61 +430,93 @@ assert z !is bund1
 
 ## Type checks
 
-When a type is used in the left-hand-side of a declaration statement, the
-type is set for the whole existence of the variable. It is possible to also
-use type checks outside the variable declaration. Those are to check that
-the variable `does` comply with the type specified.
+A `:Type` annotation is **only** valid at a declaration site (`mut`, `reg`,
+`const`, `comb`, `pipe`, `mod`, lambda parameters, lambda return types, and
+tuple field declarations). Once the variable is declared, the type is set
+for its whole existence.
 
+To check that an existing value matches a type, use the `does` or `is`
+operator inside `cassert`/`assert`. To convert a value to a type, call the
+type as a constructor — `u8(value)`.
 
 ```
-mut a = true  // infer a is a boolean
+mut a = true                // infer a is a boolean
 
-foo = a:bool or false // checks that 'a' is a boolean
+cassert a does bool         // type check on an existing variable
+foo = a or false            // ordinary use; no inline type annotation
 ```
 
 ## Attributes
 
 Attributes is the mechanism that the programmer specifies some special
 checks/functionality that the compiler should perform. Attributes are
-associates to variables either setting an attribute or checking the value. Some
-example of check is to mark statements compile time constant, or read the
-number of bits in an assertion, or placement hints, or even interact with the
-synthesis flow to read timing delays.
+associated to variables either by setting them at declaration or by reading
+their value at use sites. Some example of attribute use is to mark statements
+compile time constant, read the number of bits in an assertion, give placement
+hints, or even interact with the synthesis flow to read timing delays.
 
 
-A key difference from attribute and tuple fields is that attributes are always
-compile time and the compiler flow has special meaning functionality for them.
+A key difference between attributes and tuple fields is that attributes are
+always compile time and the compiler flow has special meaning functionality
+for them.
 
 
 Pyrope does not specify all the attributes, the compiler flow specifies them.
 There are some built-in required attributes like checking the number of bits.
 
-Reading attributes should not affect a logical equivalence check. Writing
-attributes can have a side-effect because it can change bits use for
+Reading attributes should not affect a logical equivalence check. Setting
+attributes can have a side-effect because it can change bits used for
 wrap/saturate or change pins like reset/clock in registers. Additionally,
 attributes can affect assertions, so they can stop/abort the compilation.
 
 
-The are three operations that can be done with attributes: set, check, read.
+There are two operations that can be done with attributes: **set** and
+**read**. The two operations have distinct syntax so the reader (and the
+parser) can never confuse them.
 
-* Set: when associated to a variable type in the left-hand-side of an
-  assignment or directly accessed. If a variable definition, this binds the
-  attribute with all the use cases of the variable. If the variable just
-  changes attribute value, a direct assignment is possible E.g: `foo::[max=300]
-  = 4` or `baz::[attr = 10]`
+* **Set** (`var::[attr]` when no explicit type; `var:Type:[attr]` when a
+  type is given — the colon between the type and the attribute block is
+  not doubled): only allowed at *declaration* sites — `mut`, `reg`,
+  `const`, `comb`, `pipe`, `mod` — and on tuple fields at the point they
+  are introduced. The set binds the attribute to all uses of the variable.
+  If no value is given, the attribute is set to `true`. E.g:
+  `mut foo:uint:[max=300] = 4`, `reg counter::[clock_pin=clk1] = 0`,
+  `const c::[debug] = 3`, `mut x2:complex:[valid=false] = 0`.
 
-* Check: when associated to a type property in the right-hand-side of an
-  assignment. The attribute is a comma separated list of boolean expression
-  that must evaluate true only at this statement. E.g: `mut tmp =
-  yy::[comptime, attr2>0] + xx`
+* **Read** (`var.[attr]`): allowed everywhere a normal expression is
+  allowed. Returns the attribute's current value (any type — usually
+  integer, boolean, or string). If the attribute was not set, the read
+  returns `nil`. E.g: `tmp.[bits] < 30`, `assert.[failed]`,
+  `x.[size]`, `i.[max]`.
 
-* Read: a direct read of an attribute value is possible with `variable.field::[field_attribute]`
+A small subset of attributes correspond to a *runtime* hardware signal
+rather than to compile-time metadata — for example `valid` (the per-cycle
+optional bit) and `defer` (the end-of-cycle register port). For these the
+`.[attr]` form can also appear on the *left-hand side* of an assignment to
+drive the underlying wire: `self.[valid] = v != 33`,
+`reg.[defer] = rhs`. Compile-time-only attributes (`max`, `bits`,
+`comptime`, `debug`, `file`, …) are read-only at use sites; bind them with
+`::[…]` at the declaration.
 
+Since attributes are always compile time, the read happens at elaboration
+time. To turn a read into a check, wrap it in `cassert` (or `assert`):
 
-The attribute set, writes a value to the attribute. If no value is given a
-boolean `true` is set. The attribute checks are expressions that must evaluate
-true.
+```
+cassert y.[comptime]            // 'y' must be comptime
+cassert y.[bar] == 3            // 'y.[bar]' must equal 3
+cassert tmp.[bits] < 30
+```
 
+To check whether an attribute is set at all (without caring about its
+value), compare against `nil`. Inside `.[...]` reads, comparisons against
+`nil` are exempt from "the attribute must be defined" — they return `true`
+or `false` rather than erroring at compile time:
+
+```
+cassert foo.[attr1] != nil      // attr1 was set on 'foo'
+cassert xx.[attr2] == nil       // attr2 was never set on 'xx'
+cassert foo.[attr1] == 2        // value check (errors at compile time if unset)
+```
 
 Since conditional code can depend on an attribute, which results in executing a
 different code sequence that can lead to the change of the attribute. This can
@@ -489,52 +526,18 @@ most logical is to trigger a compile error if there is no fast convergence.
 
 ```
 // comptime as prefix modifier
-comptime const foo:u32 = xx        // enforce that foo is comptime constant
-yyy = xx                           // yyy does not check comptime
-assert yyy::[comptime] == true     // now, checks that 'yyy' is comptime
+comptime const foo:u32 = xx     // enforce that foo is comptime constant
+yyy = xx                        // yyy does not check comptime
+cassert yyy.[comptime]          // now, checks that 'yyy' is comptime
 
-// attribute check
+// reading attributes
 if bar == 3 {
-  tmp = bar ; assert bar::[comptime] == true
+  tmp = bar
+  cassert bar.[comptime]
 }
 
-// attribute read
-assert tmp::[bits] < 30 and tmp::[comptime] == false
+cassert tmp.[bits] < 30 and not tmp.[comptime]
 ```
-
-The attribute check is like a type check, both can be converted to assertions,
-but the syntax is cleaner.
-
-
-=== "Attribute Check"
-    ```
-    const x = y + 1
-    assert  y::[cond] and y::[bar]==3
-
-    comb read_state(x) {
-      comptime mut f:u32 = x // f is compile time or an error is generated
-      f = f + 1              // still comptime
-      return f               // f should be compile time constant
-    }
-
-    mut foo = read_state(zz) // foo will be compile time constant
-    ```
-
-=== "Assertion Equivalent Check"
-    ```
-    const x = y + 1
-    cassert y::[cond]
-    cassert y::[bar]==3
-
-    comb read_state(x) {
-      const f = x
-      cassert f does u32
-      cassert f::[comptime] == true
-      f
-    }
-
-    mut foo = read_state(zz) // foo will be compile time constant
-    ```
 
 Pyrope allows to assign the attribute to a variable or a function call. Not to
 statements because it is confusing if applied to the condition or all the
@@ -543,14 +546,14 @@ sub-statements.
 ```
 comptime mut z = xx            // z is a comptime variable
 
-if cond::[comptime] == true {  // cond is checked to be compile time constant
+if cond.[comptime] {           // cond is checked to be compile time constant
   comptime const x = a + 1     // x is comptime
 }else{
   comptime const x = b         // x is comptime
 }
 
 
-if cond::[comptime] == true {  // checks if cond is compute at comptime
+if cond.[comptime] {           // checks if cond is comptime
   const v = cond
   if cond {
     puts "cond is compile time and true"
@@ -562,14 +565,14 @@ if cond::[comptime] == true {  // checks if cond is compute at comptime
 The programmer could create custom attributes but then a LiveHD compiler pass
 to deal with the new attribute is needed to handle based on their specific
 semantic. To understand the potential Pyrope syntax, this is a hypothetical
-`::[poison]` attribute that marks tuple.
+`poison` attribute that marks a tuple field.
 
 ```
-const bad = (a=3,b::[poison=true]=4)
+const bad = (a=3, b::[poison=true]=4)
 
 const b = bad.b
 
-assert b::[poison] and b==4
+cassert b.[poison] and b==4
 ```
 
 
@@ -638,9 +641,9 @@ Registers have the following attributes:
 * `negreset`: active low reset signal
 * `posclk`: true by default, selects a posedge or negnedge flop
 * `retime`: allow to retime across the register
-* `defer`: read or write the end-of-cycle value. `reg::[defer] = rhs` delays
+* `defer`: read or write the end-of-cycle value. `reg.[defer] = rhs` delays
   the write until the end of the current cycle (becomes the next cycle's 'q').
-  `reg::[defer]` on the RHS reads the final value at the end of the current
+  `reg.[defer]` on the RHS reads the final value at the end of the current
   cycle. See [Pipelining](06c-pipelining2.md).
 
 Pipestage accept the same register attributes but also two more:
@@ -686,7 +689,7 @@ of bitwidth related attributes:
 * `ubits`: Maximum number of bits to represent the unsigned value. The number must be positive or zero
 * `sbits`: Maximum number of bits, and the number can be negative
 * `bits`: read-only; returns the number of bits currently required to
-  represent the variable's value (`var::[bits]` in assertions)
+  represent the variable's value (`var.[bits]` in assertions)
 * `wrap`: allows to drop bits that do not fit on the left-hand side. It performs sign
   extension if needed.
 * `saturate` keeps the maximum or minimum (negative integer) that fits on the
@@ -704,7 +707,8 @@ only valid inside `assert`, `cover`, `test`, and `waitfor` contexts:
 * `changed`: true on any cycle where the signal differs from its previous
   value (same as `changed(sig)`)
 * `timeout`: interpreted only by `waitfor`; bounds the wait to `N` cycles
-  (e.g., `waitfor done::[rising, timeout=1000]`)
+  (e.g., `waitfor(ref done_rising, timeout=1000)` after binding
+  `mut done_rising = done.[rising]`)
 
 See [Verification](09-verification.md) for the full temporal library and
 debug constructs.
@@ -719,36 +723,48 @@ opt2:int:[min=0,max=300] = 0  // same
 opt3::[min=0,max=300] = 0     // same
 opt4:int:[range=0..=300] = 0  // same
 
-assert opt1::[ubits] == 0    // opt1 initialized to 0, so 0 bits
+cassert opt1.[ubits] == 0    // opt1 initialized to 0, so 0 bits
 opt1 = 200
-assert opt1::[ubits] == 8    // last assignment needs 9 sbits or 8 ubits
+cassert opt1.[ubits] == 8    // last assignment needs 9 sbits or 8 ubits
 ```
 
-The wrap/saturate are attributes that only make sense for attribute set. There
-is not much to check/read besides checking that it was set before.
+`wrap` and `saturate` control how the right-hand side of an assignment
+narrows into the left-hand side when the value would otherwise overflow.
+Two forms are supported:
+
+* **Sticky** — set as an attribute at declaration. Every assignment to that
+  variable is then wrapped (or saturated) automatically.
+* **Per-statement** — use `wrap` or `sat` as a statement-level prefix
+  modifier (similar to `comptime` or `debug`). The modifier controls the
+  narrowing for that single assignment.
 
 ```
 a:u32 = 100
 b:u10 = 0
 c:u5  = 0
 d:u5  = 0
-w:u5:[wrap] = 0     // attribute set for all the 'w' uses
+w:u5:[wrap] = 0     // sticky: every assignment to 'w' wraps
 
-b = a               // OK, o precision lost
-c::[wrap] = a       // OK, same as c = a#[0..<5] (Since 100 is 0b1100100, c==4)
+b = a               // OK, no precision lost
+wrap c = a          // OK, same as c = a#[0..<5] (since 100 is 0ub1100100, c==4)
 c = a               // error: 100 overflows the maximum value of 'c'
 w = a               // OK, 'w' has a wrap set at declaration
 
-c::[saturate] = a   // OK, c == 31
+sat c = a           // OK, c == 31
 c = 31
 d = c + 1           // error: '32' overflows the maximum value of 'd'
 
-d::[wrap] = c + 1   // OK d == 0
-d::[saturate] = c+1 // OK, d==31
-d::[saturate] = c+1 // OK, d==31
+wrap d = c + 1      // OK, d == 0
+sat  d = c + 1      // OK, d == 31
+sat  d += 1         // OK, compound assignment
 
-x::[saturate] boolean = c // error: saturate only allowed in integers
+sat x:bool = c      // error: saturate only allowed in integers
 ```
+
+The prefix is part of the assignment statement; it controls the narrowing
+of the final RHS into the LHS. To narrow individual sub-expressions
+independently, factor them into intermediate variables with their own
+sticky `::[wrap]` or `::[saturate]`.
 
 ### comptime modifier
 
@@ -768,10 +784,10 @@ cassert SIZE == 16
 cassert b == 3
 ```
 
-The `comptime` status can still be queried with `::[comptime]`:
+The `comptime` status can still be queried with `.[comptime]`:
 
 ```
-cassert a::[comptime] == true
+cassert a.[comptime]
 ```
 
 To avoid too frequent comptime directives, Pyrope treats all the variables that
@@ -886,7 +902,7 @@ provided by a tuple on the right-hand side or amount. This is useful to create
 one-hot encodings.
 
 ```
-cassert 1<<(1,4,3) == 0b01_1010
+cassert 1<<(1,4,3) == 0ub01_1010
 ```
 
 
@@ -965,7 +981,7 @@ cassert((a=1,b=2) has "a")
 * `a equals b` same as `(a does b) and (b does a)`
 * `a case b` same as `cassert a does b` and for each `b` field with a defined value,
   the value matches `a` (`nil`, `0sb?` are undefined values)
-* `a is b` is a nominal type check. Equivalent to `a::[typename] == b::[typename]`
+* `a is b` is a nominal type check. Equivalent to `a.[typename] == b.[typename]`
 
 Each type operator also has the negated `(a !does b) == !(a does b)`, `(a
 !equals b) == !(a equals b)`, `a !case b == !(a case b)`
@@ -1051,11 +1067,11 @@ it is considered non-intuitive for programmers.
 
 
 ```
-const x = 0b1_0110   // positive
+const x = 0ub1_0110   // positive
 const y = 0s1_0110   // negative
-cassert x#[0,2] == 0b10
-cassert y#[100,200]       == 0b11   and x#[100,200]       == 0
-cassert y#sext[0,100,200] == 0sb110 and x#sext[1,100,200] == 0b001
+cassert x#[0,2] == 0ub10
+cassert y#[100,200]       == 0ub11   and x#[100,200]       == 0
+cassert y#sext[0,100,200] == 0sb110 and x#sext[1,100,200] == 0ub001
 cassert x#|[..] == -1
 cassert x#&[0,1] == 0
 cassert x#+[0..=5] == x#+[0..<100] == 3
@@ -1064,10 +1080,10 @@ cassert y#[..]#+[..] == 3
 cassert y#[0..=5]#+[..] == 3
 cassert y#[0..=6]#+[..] == 4
 
-mut z     = 0b0110
+mut z     = 0ub0110
 z#[0] = 1
-cassert z == 0b0111
-z#[0] = 0b11 // error: '0b11` overflows the maximum allowed value of `z#[0]`
+cassert z == 0ub0111
+z#[0] = 0ub11 // error: '0ub11` overflows the maximum allowed value of `z#[0]`
 ```
 
 !!!Note
@@ -1092,14 +1108,14 @@ the bit selection can not be used to transpose bits. A tuple must be used for
 such an operation.
 
 ```
-mut v = 0b10
-cassert v#[0,1] == v#[1,2] == v#[..] == v#[0..=1] == v#[..=1] == 0b10
+mut v = 0ub10
+cassert v#[0,1] == v#[1,2] == v#[..] == v#[0..=1] == v#[..=1] == 0ub10
 
 mut trans = 0
 
 trans#[0] = v#[1]
 trans#[1] = v#[0]
-cassert trans == 0b01
+cassert trans == 0ub01
 ```
 
 
@@ -1179,12 +1195,12 @@ assert a <= b >  c  // error: not same direction
 
 The `?` is used by several languages to handle optional or null pointer
 references. In non-hardware languages, `?` is used to check if there is valid
-data or a null pointer. This is the same as checking the `::[valid]` attribute
+data or a null pointer. This is the same as checking the `.[valid]` attribute
 with a more friendly syntax.
 
 
 Pyrope does not have null pointers or memory associated management. Pyrope uses
-`?` to handle `::[valid]` data. Instead, the data is left to behave without the
+`?` to handle `.[valid]` data. Instead, the data is left to behave without the
 optional, but there is a new "valid" field associated with each tuple entry.
 Notice that it is not for each tuple level but each tuple entry.
 
@@ -1193,7 +1209,7 @@ There are 4 explicitly interact with valids:
 
 * `tup.f1?` reads the valid for field `f1` from tuple `tup`
 
-* `tup?.f1.f2` returns `0bs0` if tuple fields `f1` or `f2` are invalid
+* `tup?.f1.f2` returns `0ubs0` if tuple fields `f1` or `f2` are invalid
 
 * `tup.f1? = cond` explicitly sets the field `f1` valid to `cond`
 
@@ -1255,9 +1271,9 @@ status.
 
 ```
 mut v1:u32 = ?                 // v1 is zero every cycle AND not valid
-assert v1::[valid] == false
+assert v1.[valid] == false
 mut v2:u32 = 0                 // v2 is zero every cycle AND     valid
-assert v2::[valid] == true
+assert v2.[valid] == true
 
 cassert v1?
 cassert not v2?
@@ -1289,7 +1305,7 @@ const custom = (
   ,mut data:i16 = nil
   ,comb setter(ref self, v) {
     self.data = v
-    self::[valid] = v != 33
+    self.[valid] = v != 33
   }
 )
 
@@ -1320,7 +1336,7 @@ const complex = (
 mut x1:complex = ?
 mut x2:complex:[valid=false] = 0  // toggle valid, and set zero
 mut x3:complex = 0
-x3::[valid] == false                 // set invalid
+x3.[valid] = false                  // set invalid
 
 assert x1.v1 == "" and x1.v2 == ""
 assert not x2? and not x2.v1? and not v2.v2?
@@ -1344,17 +1360,17 @@ assert x2? and x2?.v1 == "world" and x2.v1 == "world"
 
 
 Variable initialization indicates the default value set every cycle and the
-optional (`::[valid]` attribute).
+optional (`.[valid]` attribute).
 
 
 The `const` and `mut` statements require an explicit initialization value for
 each cycle. There are exactly two ways to produce an undefined value:
 
-* **`nil`** — the variable is *invalid* (`::[valid]==false`). Reading it is
+* **`nil`** — the variable is *invalid* (`.[valid]==false`). Reading it is
   an assertion error at simulation and a compile error at elaboration
   wherever the compiler can prove the read. Use `nil` when there is no
   meaningful value yet.
-* **`0sb?`** (and related bit-literal forms like `0b101?`, `0b??10`) —
+* **`0sb?`** (and related bit-literal forms like `0ub101?`, `0ub??10`) —
   unknown bits, behaving like Verilog `x`. The variable is still *valid*
   from the optional standpoint; only the bits are unknown. Use this for
   don't-care states or deliberately unobserved bits.
@@ -1366,18 +1382,18 @@ expression.
 
 ```
 mut a:int = 0
-cassert a==0 and a::[valid] and a?
+cassert a==0 and a.[valid] and a?
 
 mut b:int = nil
-cassert b==nil and b::[valid] == false and not b?
+cassert b==nil and b.[valid] == false and not b?
 b = 0
-cassert b==0 and b::[valid] and b?
+cassert b==0 and b.[valid] and b?
 
 mut d:[] = ()              // empty tuple literal
-cassert d != nil and d::[valid]
+cassert d != nil and d.[valid]
 
 mut e:int = 0sb?           // valid but with unknown bits
-cassert e::[valid] and e != 0  // any comparison against `?` is unknown
+cassert e.[valid] and e != 0  // any comparison against `?` is unknown
 ```
 
 The same rules apply when a tuple or a type is declared. Tuple fields must
@@ -1394,7 +1410,7 @@ cassert at1.a == "foo"
 mut at2 = (
   ,mut a:string = nil     // invalid field
 )
-cassert at2.a::[valid] == false
+cassert at2.a.[valid] == false
 at2.a = "torrellas"
 cassert at2.a == "torrellas" and at2[0] == "torrellas"
 ```
@@ -1415,14 +1431,14 @@ if rand {
 }else{
   z = 6
 }
-assert rand      implies x::[valid]
-assert x::[valid] implies rand
+assert rand      implies x.[valid]
+assert x.[valid] implies rand
 
-assert y::[valid]
+assert y.[valid]
 assert  rand implies y == 4
 assert !rand implies y == 2
 
-assert z::[valid]
+assert z.[valid]
 assert  rand implies z == 5
 assert !rand implies z == 6
 ```

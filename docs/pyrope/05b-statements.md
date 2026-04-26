@@ -167,10 +167,10 @@ variables have scope from definition until the end of the code block.
 
 
 Code blocks are different from lambdas. A lambda consists of a code block but
-it has several differences. In lambdas, (1) variables defined in upper scopes
-are accessed inside as immutable copies only when captured by scope; (2) inputs
-and outputs could be constrained, and (3) the `return` statement finishes a
-lambda not a code block.
+it has several differences. In lambdas, (1) visible comptime bindings from
+upper scopes are available lexically, but runtime upper-scope variables are not
+implicitly visible; (2) inputs and outputs could be constrained, and (3) the
+`return` statement finishes a lambda not a code block.
 
 
 The main features of code blocks:
@@ -388,37 +388,39 @@ constructs:
   call. `past(x)` is shorthand for `past[1](x)`. See the
   [Temporal library](09-verification.md#temporal-library).
 
-* `variable::[defer]` reads or writes the end-of-cycle value. Use it for
+* `variable.[defer]` reads or writes the end-of-cycle value. Use it for
   deferred updates and for observing a register's next-cycle value in
   debug contexts.
 
 * For pipeline timing inside `mod` blocks, use `await[N]` (declaration
-  modifier that pipelines the whole RHS over `N` cycles) and `foo:@[N]`
+  modifier that pipelines the whole RHS over `N` cycles) and `foo@[N]`
   (pure timing type check).
 
 * For debug-only future sampling (inside `assert`, `cover`, `test`, …), use
   the temporal library — `next(x, N)`, `eventually[R](x)`, `rose[R](x)`,
   etc.
 
-The raw `@[N]` operator form is not part of the language, only for type check
-`foo:@[3]` checks that foo is 3 pipeline stages ahead of the lambda inputs.
+`foo@[N]` is a pure cycle-alignment type check, never a flop insertion.
+`foo@[3]` checks that `foo` is 3 pipeline stages ahead of the lambda inputs.
+To actually delay a value, use `await[N] lhs = rhs`. To read past or future
+cycles, use `past[N](x)` or `next[N](x)`.
 
-The `::[defer]` attribute provides deferred access to a variable — reading or
+The `.[defer]` attribute provides deferred access to a variable — reading or
 writing the value at the end of the current cycle. It is valid for any variable
 type (`mut`, `const`, `reg`) as it refers to the final value within the current
 cycle.
 
 ### Defer reads
 
-When used to read a variable, `::[defer]` returns the last value written to the
+When used to read a variable, `.[defer]` returns the last value written to the
 variable at the end of the current cycle. This is needed if we need to have any
 loop in connecting blocks or for delaying assertion checks to the end of the
 cycle like post condition checks.
 
 ```
 mut c = 10
-assert b::[defer] == 33    // behaves like a postcondition
-b = c::[defer]
+assert b.[defer] == 33    // behaves like a postcondition
+b = c.[defer]
 assert b == 33
 c += 20
 c += 3
@@ -426,7 +428,7 @@ c += 3
 
 To connect the `ring` function calls in a loop.
 ```
-f1 = ring(a, f4::[defer])
+f1 = ring(a, f4.[defer])
 f2 = ring(b, f1)
 f3 = ring(c, f2)
 f4 = ring(d, f3)
@@ -434,7 +436,7 @@ f4 = ring(d, f3)
 
 If the intention is to read the result after being a flop, there is no need to
 use the `defer`, a normal register access could do it. A bare `reg`
-reference reads the value before any update (the 'q' value), and `::[defer]`
+reference reads the value before any update (the 'q' value), and `.[defer]`
 reads the value after updates.
 
 ```
@@ -444,7 +446,7 @@ const counter_0  = counter         // current cycle (before updates)
 const counter_1  = past(counter)   // last cycle (one flop)
 const counter_2  = past[2](counter) // last last cycle (two flops)
 
-mut deferred = counter::[defer]  // defer read: final value at end of cycle
+mut deferred = counter.[defer]  // defer read: final value at end of cycle
 
 if counter < 100 {
   counter += 1
@@ -454,7 +456,7 @@ if counter < 100 {
 
 if counter == 10 {
   assert deferred   == 10
-  assert counter::[defer] == 10 // same as deferred, end-of-cycle value
+  assert counter.[defer] == 10 // same as deferred, end-of-cycle value
   assert counter_0  ==  9
   assert counter_1  ==  8
   assert counter_2  ==  7
@@ -463,7 +465,7 @@ if counter == 10 {
 
 ### Defer writes
 
-The `::[defer]` can also be applied to writes to delay the update to the end of
+The `.[defer]` can also be applied to writes to delay the update to the end of
 the cycle while reads use the current value. If there are many defers to the
 same variable, they are ordered in program order. Defer writes only make sense
 if there is a register or array because `mut` and `const` variables restart
@@ -473,13 +475,13 @@ final value within the cycle.
 ```
 reg a:u8 = 1
 if a==1 {
-  assert a::[defer] == 200
-  a::[defer] = 200 // defer write
+  assert a.[defer] == 200
+  a.[defer] = 200 // defer write
   assert a == 1                 // bare 'a' reads the current 'q' value
-  assert a::[defer] == 200      // end-of-cycle value (after deferred write)
+  assert a.[defer] == 200      // end-of-cycle value (after deferred write)
 }else{
-  assert a::[defer] == 2
-  a::[defer] = 2    // defer write
+  assert a.[defer] == 2
+  a.[defer] = 2    // defer write
 }
 ```
 
@@ -489,11 +491,11 @@ are performed ahead of the deferred reads.
 ```
 mut a = 1
 mut x = 100
-x = a::[defer]
+x = a.[defer]
 a = 200
 
 cassert x == 100
-assert x::[defer] == x          // defer read equals final value
+assert x.[defer] == x          // defer read equals final value
 ```
 
 ## Testing (`test`)

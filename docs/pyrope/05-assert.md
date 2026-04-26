@@ -112,7 +112,7 @@ lec fun1, fun2
 ```
 
 In addition, there is the `lec_valid` command. It is similar to `lec` but it
-checks the optional or valid (`::[valid]`) from the output. It can take several
+checks the optional or valid (`.[valid]`) from the output. It can take several
 cycles to show the same result.
 
 ```
@@ -180,7 +180,7 @@ In hardware is common to have an undefined state during the reset period. To
 avoid unnecessary assertion failures, if any of the inputs depends on a
 register directly or indirectly, the assertion is not checked when the reset is
 high for the given registers. In Pyrope, the registers and memory contents
-outputs are "invalid" (`::[valid]` attribute). `assert` and `optimize` will not
+outputs are "invalid" (`.[valid]` attribute). `assert` and `optimize` will not
 check when any of the signals are invalid. This is useful to avoid unnecessary
 assert checks during reset or when the lambda is called with invalid data.
 
@@ -204,19 +204,19 @@ always assert memory[1] == 2 unless memory.reset  // should not fail
 ## Random
 
 Random number generation are quite useful for verification. Pyrope provides
-easy interfaces to generate "compile time" (`::[crand]`) and "simulation time"
-random number (`::[rand]`) generation.
+easy interfaces to generate "compile time" (`.[crand]`) and "simulation time"
+random number (`.[rand]`) generation.
 
 
 ```
 mut x:u8 = ?
 
 for i in 1..=99 {
-  cassert 0 <= x::[crand] <= 255
+  cassert 0 <= x.[crand] <= 255
 }
 
 comb get_rand_0_255(a:u8) {
-  return a::[rand]
+  return a.[rand]
 }
 ```
 
@@ -228,13 +228,13 @@ When applied to a tuple, it randomly picks an entry from the tuple.
 
 ```
 mut a = (1, 2, 3, b=4)
-mut x = a::[rand]
+mut x = a.[rand]
 
 cassert x == 1 or x == 2 or x == 3 or x == 4
 cassert x.b == 4 when x == 4
 ```
 
-The simulation random number is considered a `::[debug]` statement, this means
+The simulation random number is considered a `.[debug]` statement, this means
 that it can not have an impact on synthesis or a compile error is generated.
 
 ## Test
@@ -295,7 +295,7 @@ pipe[1] counter_pipe(update) -> (value) {
 test "counter_mod through several cycles" {
 
   mut inp = true
-  mut x = counter_mod(inp::[defer])  // inp contents at the end of each cycle
+  mut x = counter_mod(inp.[defer])   // inp contents at the end of each cycle
 
   assert x == 0 // x.value == 0
   assert inp == true
@@ -324,18 +324,18 @@ test "counter_mod through several cycles" {
 During `test` simulation, all the assertions are checked but the test does not
 stop with a failure until the end. Sometimes it is useful to write tests to
 check that assertions fail. Assertion failures will be printed but the test
-will continue and fail only if the `assert::[failed]` is true. The `test` code
+will continue and fail only if the `assert.[failed]` is true. The `test` code
 block also accepts to read and/or clear failed attribute.
 
 ```
 test "assert should fail" {
 
- const n = assert::[failed]
+ const n = assert.[failed]
  assert n == false
 
  assert false // FAILS
 
- assert assert::[failed]
+ assert assert.[failed]
 }
 ```
 
@@ -470,7 +470,7 @@ For combinational signals, `sigref` observes the same value visible at the
 instance boundary in that cycle.
 
 For registers, `sigref` and `regref` read the current `q` value. A test may
-use `::[defer]` or the temporal library (`next(x, N)`, `eventually[R](x)`,
+use `.[defer]` or the temporal library (`next(x, N)`, `eventually[R](x)`,
 `rose[R](x)`, …) inside debug contexts using the same timing rules as
 ordinary assertions.
 
