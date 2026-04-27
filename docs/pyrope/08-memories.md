@@ -240,12 +240,11 @@ does in row-major order. This allows building a simple function to flatten
 multi-dimensional arrays.
 
 ```
-comb flatten(...arr) {
-  mut res = ()
+comb flatten(...arr) -> (res) {
+  res = ()
   for i in arr {
     res ++= i
   }
-  res
 }
 
 cassert flatten(d2) == (1,2,3,4)

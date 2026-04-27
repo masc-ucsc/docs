@@ -1058,8 +1058,10 @@ has
   ref b
 ```
 
-To check the tuple structure, Pyrope has `a does b`. It returns true if the
-tuple of `a` a subset of `b`. `x = a does b` translates to:
+To check the tuple structure, Pyrope has `a does b`. It returns true if `a`
+provides all the tuple structure required by `b`; in other words, `a` may have
+extra fields, but it must contain the required fields from `b`. `x = a does b`
+translates to:
 ```lnast
 does
   ref x
@@ -1083,22 +1085,23 @@ land
   ref ___1
 ```
 
-The `a case b` does match operation. `a case b` same as `cassert b does a` and
-for each `b` field with a defined value, the value matches `a` (`nil`, `0sb?`
-are undefined values). `x = a case b` translates to:
+The `a case b` does match operation. `a case b` first checks `a does b`, then
+checks that every defined value in `b` has the same value in `a`. Undefined
+values in `b` (`nil`, `0sb?`) act as wildcards and do not participate in the
+value check. `x = a case b` translates to:
 ```lnast
 does
   ref ___0
-  ref b
   ref a
-fcall
-  ref ___1
-  ref cassert
-  ref ___0
+  ref b
 in
-  ref x
+  ref ___1
   ref b
   ref a
+land
+  ref x
+  ref ___0
+  ref ___1
 ```
 
 To perform a nominal type check, the attributes can be accessed directly. `x = a is b` translates to:

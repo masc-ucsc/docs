@@ -66,16 +66,25 @@ match p {
 ```
 
 Some case/does/equals assertion:
-* `a does b` is the tuple structure of `a` a subset of `b`
+* `a does b` is true when `a` has all the tuple structure required by `b`
 * `a equals b` same as `(a does b) and (b does a)`
-* `a case b` same as `cassert a does b` and for each `b` field with a defined value,
-  the value matches `a` (`nil`, `0sb?` are undefined values)
+* `a case b` same as `(a does b)` plus value matching for every defined value
+  in `b`. Values in `b` that are undefined (`nil`, `0sb?`) act as wildcards.
 * `a is b` is a nominal type check. Equivalent to `a.[typename] == b.[typename]`
 cassert((a=1,b=2) has "a")
 
-cassert (a=1,b=3) does (b=100,a=333,e=40,5)
-cassert (a=1,3) does (a=100,300,b=333,e=40,5)
-cassert (a=1,3) !does (b=100,300,a=333,e=40,5)
+cassert (b=100,a=333,e=40,5) does (a=1,b=3)
+cassert (a=100,300,b=333,e=40,5) does (a=1,3)
+cassert (b=100,300,a=333,e=40,5) !does (a=1,3)
+cassert u32 does u16
+cassert u16 does u32
+cassert u32 !does string
+cassert (100,30) does 30
+cassert 30 !does (30,200)
+cassert (a=3) !does (30,a=200)
+cassert (a=3) !does (a=30,200)
+cassert (3) !does (30,a=200)
+cassert (3) !does (a=30,200)
 
 mut t1 = (a:int=1, b:string)
 const t2 = (a:int=100, b:string)

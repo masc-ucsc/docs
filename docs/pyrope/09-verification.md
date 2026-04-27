@@ -282,7 +282,7 @@ control flow.
 test "random legal opcodes" {
   mut opcode:u4 = 0
 
-  for _ in 0..<100 {
+  for i in 0..<100 {
     while true {
       opcode = opcode.[rand]
       break when opcode <= 10
@@ -381,7 +381,7 @@ may refer to visible comptime bindings, and callers can override the parameter:
 
 ```pyrope
 comptime const window = 1..=8
-comb ack_within[w:range=window](req, ack) { req implies eventually[w](ack) }
+comb ack_within[w:range=window](req, ack) -> (r:bool) { r = req implies eventually[w](ack) }
 
 assert ack_within(req, ack)           // uses default w = 1..=8
 assert ack_within[1..=4](req, ack)    // tighter window at this call site

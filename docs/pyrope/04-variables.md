@@ -43,9 +43,17 @@ Lambda declarations:
 * `pipe[N] name[comptime_params][args] [-> outputs] { body }`
 * `mod name[comptime_params][args] [-> outputs] { body }`
 
-This rule applies uniformly, including inside **tuple literals**: every
-field must start with one of these kind keywords. Bare `field = value`
-inside a data-tuple literal is a compile error.
+This rule applies uniformly, including inside **tuple literals**: any
+**named** field must start with one of these kind keywords. Bare
+`field = value` inside a data-tuple literal is a compile error.
+
+A **positional** (unnamed) field is just a value expression and inherits
+its mutability from the enclosing tuple. To override that mutability on a
+single positional field, prefix the value with `const` or `mut` —
+`(1, const 3)` is two positional fields, the second one immutable.
+Positional fields take no name slot, so `const _ = 3` is not valid (and
+bare `_` is reserved as a future placeholder, see
+[Identifiers](02-basics.md#identifiers)).
 
 ```
 const point = (mut x:u8 = 0, mut y:u8 = 0)
@@ -56,6 +64,8 @@ const counter_iface = (
   ,comb inc(ref self)             { wrap self.value += 1 }
   ,mod tick(ref self, enable:bool) { self.value += 1 when enable }
 )
+
+mut y = (1, const 3)              // 2nd field positional and immutable
 ```
 
 Named-argument passing in calls (`foo(a=3, b=4)`) is **not** a declaration
@@ -92,13 +102,13 @@ comptime dependencies of the lambda.
     assert a == 3        // error: undefined variable 'a'
     comptime const A = 3
     comptime const X = A + 1
-    comb f1() {
+    comb f1() -> (r) {
       cassert A == 3
       // A = 33          // error: comptime const is immutable
       const b = 4
       // const A = 3333  // error: variable shadowing
       // mut A = 33      // error: variable shadowing
-      return b+3
+      r = b + 3
     }
     assert f1() == 7
     assert b == 3        // error: undefined variable 'b'
@@ -186,9 +196,11 @@ integer.
 
 Integers have unlimited precision and they are always signed. Unlike most other
 languages, there is only one type for integer (unlimited), but the type system
-allows to add constrains to be checked when assigning the variable contents.
+allows to add constraints to be checked when assigning the variable contents.
 Notice that the type is the same (`u32` is the same type as `i3`, they just have
-different constraints):
+different constraints). As a result, `u32 does u16` and `u16 does u32` are both
+true as type-structure checks; assignment still performs the additional range
+and precision checks described in the attribute section:
 
 * `int`: an unlimited precision integer number.
 * `unsigned`: An integer basic type constrained to be a natural number.
@@ -680,7 +692,7 @@ Lambda attributes allow [Introspection](07-typesystem.md#Introspection) which re
 
 ### Bitwidth attribute list
 
-To set constrains on integer, boolean, and range basic types, the compiler has a set
+To set constraints on integer, boolean, and range basic types, the compiler has a set
 of bitwidth related attributes:
 
 
@@ -977,27 +989,39 @@ cassert (1,b=2,...(nil,c=3),0sb?,6) == (1,b=2,nil,c=3,0sb?,6)
 cassert((a=1,b=2) has "a")
 ```
 
-* `a does b` is the tuple structure of `a` a subset of `b`
+* `a does b` is true when `a` has all the tuple structure required by `b`
 * `a equals b` same as `(a does b) and (b does a)`
-* `a case b` same as `cassert a does b` and for each `b` field with a defined value,
-  the value matches `a` (`nil`, `0sb?` are undefined values)
+* `a case b` same as `(a does b)` plus value matching for every defined value
+  in `b`. Values in `b` that are undefined (`nil`, `0sb?`) act as wildcards.
 * `a is b` is a nominal type check. Equivalent to `a.[typename] == b.[typename]`
 
 Each type operator also has the negated `(a !does b) == !(a does b)`, `(a
 !equals b) == !(a equals b)`, `a !case b == !(a case b)`
 
-The `does` performs just name matching when the LHS is a named tuple. It
-reverts to name and position matching when some of the LHS entries are unnamed.
+The `does` performs just name matching when the required tuple is fully named.
+It reverts to name and position matching when some of the required tuple entries
+are unnamed. Values are ignored by `does`; use `case` when the values should be
+matched too.
 
 ```
-cassert (a=1,b=3) does (b=100,a=333,e=40,5)
-cassert (a=1,3) does (a=100,300,b=333,e=40,5)
-cassert (a=1,3) !does (b=100,300,a=333,e=40,5)
+cassert (b=100,a=333,e=40,5) does (a=1,b=3)
+cassert (a=100,300,b=333,e=40,5) does (a=1,3)
+cassert (b=100,300,a=333,e=40,5) !does (a=1,3)
+cassert u32 does u16
+cassert u16 does u32
+cassert u32 !does string
+cassert (100,30) does 30
+cassert 30 !does (30,200)
+cassert (a=3) !does (30,a=200)
+cassert (a=3) !does (a=30,200)
+cassert (3) !does (30,a=200)
+cassert (3) !does (a=30,200)
 ```
 
-A `a case b` is equivalent to `cassert b does a` and for each defined value in
-`b` there has to be the same value in `a`. This can be used in any expression
-but it is quite useful for `match ... case` patterns.
+A `a case b` first checks `a does b`, then checks that every defined value in
+`b` has the same value in `a`. Undefined values in `b` (`nil`, `0sb?`) do not
+participate in the value check and act as wildcards. This can be used in any
+expression but it is quite useful for `match ... case` patterns.
 
 ```
 match (a=1,b=3) {
@@ -1015,8 +1039,9 @@ match const t=(a=1,b=3); t {
 An `x = a case b` can be translated to:
 
 ```
-cassert b does a
-x = b in a
+___0 = a does b
+___1 = b in a
+x = ___0 and ___1
 ```
 
 ### Reduce and bit selection operators

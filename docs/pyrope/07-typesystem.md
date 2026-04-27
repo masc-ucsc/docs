@@ -210,9 +210,9 @@ Ignoring the value is what makes `equals` different from `==`. As a result
 different functionality functions could be `equals`.
 
 ```
-comb a() { 1 }
-comb b() { 2 }
-type ab_type = comb()
+comb a() -> (r) { r = 1 }
+comb b() -> (r) { r = 2 }
+type ab_type = comb() -> (r)
 cassert a equals ab_type
 
 cassert a() != b()              // 1 != 2
@@ -288,8 +288,8 @@ cassert t4 equals t1
 cassert t4 is t1
 cassert t4 !is t2
 
-comb f2_x1(x:X1) { x.b + 1 }
-comb f2_other(x) { 0 }
+comb f2_x1(x:X1) -> (r) { r = x.b + 1 }
+comb f2_other(x) -> (r) { r = 0 }
 
 // Dispatch explicitly at the call site:
 const result = if x is X1 { f2_x1(x) } else { f2_other(x) }
@@ -627,7 +627,8 @@ comb model_poly_call(fn, ...args) -> (out) {
   for f in fn {
      continue unless f.[inp] does args
      continue unless f.[out] does out
-     return f(args)
+     out = f(args)
+     return
   }
 }
 const x:u32 = model_poly_call(fn, a1, a2)
@@ -685,12 +686,12 @@ Any call to a function or tuple outside requires a prior `import` statement.
 
 ```
 // file: src/my_fun.prp
-comb fun1(a, b) { a + b }
-comb fun2(a) {
-  comb inside() { 3 }
-  a
+comb fun1(a, b) -> (r) { _0 + _1 }
+comb fun2(a) -> (r) {
+  comb inside() -> (r) { r = 3 }
+  r = a
 }
-comb another(a) { a }
+comb another(a) -> (r) { r = a }
 
 const mytup = (
   comb call3() { puts "call called" }
@@ -857,7 +858,7 @@ or register reference.
 
 ```
 const bpred = ( // complex predictor
-  comb taken() { self.some_table[som_var] >= 0 }
+  comb taken() -> (r:bool) { r = self.some_table[som_var] >= 0 }
 )
 
 test "mocking taken branches" {
@@ -985,8 +986,8 @@ any variable/field. The same array rule applies to the getter.
 comb my_2_elem_set_xv(ref self, x:uint:[range=0..<2], v:string) { self.data[x] = v }
 comb my_2_elem_set_all(ref self, v:My_2_elem)            { self.data = v.data }
 comb my_2_elem_set_default(ref self)                     { self.data = ("", "") }
-comb my_2_elem_get_all(self)                             { self.data }
-comb my_2_elem_get_i(self, i:uint)                       { self.data[i] }
+comb my_2_elem_get_all(self) -> (r)             { r = self.data }
+comb my_2_elem_get_i(self, i:uint) -> (r)        { r = self.data[i] }
 
 const My_2_elem = (
   mut data:[2]string = ("", ""),
@@ -1017,7 +1018,7 @@ const some_obj = (
   mut a1:string,
   mut a2 = (
     mut _val:u32 = nil,                        // hidden field
-    comb getter(self) { self._val + 100 },
+    comb getter(self) -> (r) { r = self._val + 100 },
     comb setter(ref self, x) { self._val = x + 1 }
   ),
   comb setter(ref self, a, b) {                // setter
@@ -1039,11 +1040,11 @@ customize by return type. Runtime conditions (such as "only for big values")
 are dispatched explicitly by the caller with an `if`/`elif` chain:
 
 ```
-comb showcase_get_string(self) -> (_:string) {
-  format("this is a big {} number", self.v)
+comb showcase_get_string(self) -> (r:string) {
+  r = format("this is a big {} number", self.v)
 }
-comb showcase_get_int(self) -> (_:int) {
-  self.v
+comb showcase_get_int(self) -> (r:int) {
+  r = self.v
 }
 const showcase = (
   ,mut v:int = nil
@@ -1063,9 +1064,9 @@ Like all the lambdas, the getter method can also be overloaded on the return typ
 In this case, it allows building typecast per type.
 
 ```
-comb my_obj_get_string(self) -> (_:string) { string(self.val) }
-comb my_obj_get_bool(self)   -> (_:bool)   { self.val != 0 }
-comb my_obj_get_int(self)    -> (_:int)    { self.val }
+comb my_obj_get_string(self) -> (r:string) { r = string(self.val) }
+comb my_obj_get_bool(self)   -> (r:bool)   { r = self.val != 0 }
+comb my_obj_get_int(self)    -> (r:int)    { r = self.val }
 const my_obj = (
   ,mut val:u32 = 0
   ,const getter = [my_obj_get_string, my_obj_get_bool, my_obj_get_int]
@@ -1193,8 +1194,8 @@ comparators. When non-provided the `lt` (Less Than) is a compile error, and the
 const t=(
   ,mut v:string = nil
   ,pipe setter(ref self) { self.v = a }
-  ,comb lt(self,other)->(_:bool){ self.v  < other.v }
-  ,comb eq(self,other)          { self.v == other.v } // infer return
+  ,comb lt(self,other)->(r:bool){ r = self.v  < other.v }
+  ,comb eq(self,other)->(r:bool){ r = self.v == other.v }
 )
 
 mut m1:t = 10
@@ -1241,11 +1242,11 @@ const t1 = (
   ,mut b = 33
 )
 
-comb t2_eq_t1(self, o:t1) {
-  return self.xx_a == o.b and self.xx_y == o.long_name
+comb t2_eq_t1(self, o:t1) -> (r:bool) {
+  r = self.xx_a == o.b and self.xx_y == o.long_name
 }
-comb t2_eq_t2(self, o:t2) {
-  return self.xx_a == o.xx_a and self.xx_y == o.xx_y
+comb t2_eq_t2(self, o:t2) -> (r:bool) {
+  r = self.xx_a == o.xx_a and self.xx_y == o.xx_y
 }
 const t2 = (
   ,mut xx_a = 33

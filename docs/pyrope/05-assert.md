@@ -106,8 +106,8 @@ implementation bit.
     follows."
 
 ```
-comb fun1(a, b) { a | b }
-comb fun2(a, b) { ~(~a | ~b) }
+comb fun1(a, b) -> (r) { _0 | _1 }
+comb fun2(a, b) -> (r) { ~(~_0 | ~_1) }
 lec fun1, fun2
 ```
 
@@ -215,8 +215,8 @@ for i in 1..=99 {
   cassert 0 <= x.[crand] <= 255
 }
 
-comb get_rand_0_255(a:u8) {
-  return a.[rand]
+comb get_rand_0_255(a:u8) -> (r) {
+  r = a.[rand]
 }
 ```
 
@@ -243,7 +243,7 @@ Pyrope has the `test [message [,args]+] ( [stmts+] }`.
 
 === "Many parallel tests"
     ```
-    comb add(a, b) { a + b }
+    comb add(a, b) -> (r) { _0 + _1 }
 
     for a in 0..=20 {
       for b in 0..=20 {
@@ -256,7 +256,7 @@ Pyrope has the `test [message [,args]+] ( [stmts+] }`.
 
 === "Single large test"
     ```
-    comb add(a, b) { a + b }
+    comb add(a, b) -> (r) { _0 + _1 }
 
     test "checking add" {
       for a in 0..=20 {

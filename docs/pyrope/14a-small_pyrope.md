@@ -152,16 +152,16 @@ comb add(a:u8, b:u8) -> (result:u8) {
     result = a + b
 }
 
-// Implicit return: last expression is the return value
-comb add_simple(a:u8, b:u8) {
-    a + b                       // Returns single-element tuple
+// Placeholder lambda sugar (single-output comb): expression body, _N for args
+comb add_simple(a:u8, b:u8) -> (r:u8) {
+    _0 + _1                     // implicit assignment to the single output `r`
 }
 
-// 'return' is only needed for early exits
+// 'return' is a terminator only — assign the output first, then return
 comb clamp(x:i16) -> (result:u8) {
-    return 0 when x < 0        // Early exit
-    return 255 when x > 255    // Early exit
-    result = x                  // Normal path, no return needed
+    if x < 0   { result = 0;   return }   // early exit
+    if x > 255 { result = 255; return }   // early exit
+    result = x                            // normal path
 }
 
 cassert add(3, 4) == 7
@@ -187,7 +187,7 @@ pipe[1] counter(enable:bool) -> (reg count:u8) {
 }
 
 mod fifo(push:bool, pop:bool, data_in:u18) -> (data_out:u18, full:bool, empty:bool) {
-    reg buffer:[16]u18 = _
+    reg buffer:[16]u18 = 0sb?
     reg head:u4 = 0
     reg tail:u4 = 0
     reg count:u5 = 0
@@ -309,7 +309,7 @@ match state {
     else { next_state = 0 }
 }
 
-// `case` is an alias for `==` in match statements
+// `case` checks structure with `does`, then checks defined values
 match state {
     case 0 { next_state = 1 }
     case 1 { next_state = 2 }

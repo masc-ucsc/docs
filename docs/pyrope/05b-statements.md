@@ -150,7 +150,7 @@ assert a == 1000 when a > 10  // assert never executed either
 
 reg my = 3 when some_condition  // no register declared otherwise
 
-return "fail" unless success_condition
+return unless success_condition       // bare terminator; outputs already assigned
 ```
 
 Gating `if`/`match` statements does not make much sense. As a result,
@@ -184,10 +184,10 @@ The main features of code blocks:
   order](02-basics.md#evaluation-order) provides more details on expressions
   evaluation order.
 
-* When used in an expression or lambda, the last expression in the body is the
-  implicit return value. The `return` keyword is only needed for early exits —
-  not for the normal return path. This applies to all lambda types
-  (`comb`/`pipe`/`mod`).
+* A code block used as an expression evaluates to the value of its last
+  expression. This is a property of code blocks, not lambdas — see
+  [lambdas](06-functions.md#output-tuple) for how lambda outputs work
+  (declared by name, assigned in the body, no implicit return).
 
 ```
 mut yy = 0
@@ -213,16 +213,17 @@ if {const a=1+yy2; 13<a} {
   some_code()
 }
 
-comb doit(f,a) {
+comb doit(f, a) -> (r) {
   const x = f(a)
   assert x == 7
-  return 3
+  r = 3
 }
 
-comb real_doit(a) {
-  assert a!=0
-  return 7             // exist the current lambda
-  100                  // never reached statement
+comb real_doit(a) -> (r) {
+  assert a != 0
+  r = 7
+  return               // exit the current lambda; later statements skipped
+  r = 100              // never reached
 }
 
 const z3 = doit(real_doit, 33)
@@ -298,13 +299,15 @@ cassert b == (2,3,4,5,6)
 ### Code block control
 
 Code block control statements allow changing the control flow for `lambdas` and
-loop statements (`for`, `loop`, and `while`). `return` can have a value.
+loop statements (`for`, `loop`, and `while`). **`return` is a terminator only
+— it never carries a value.** Whatever has been assigned to the lambda's
+declared output names is what the caller sees.
 
 * `return` is for early exits — it terminates the current lambda before
-  reaching the end. The current output variables are provided as the `lambda`
-  output. If a tuple is provided, the tuple is the returned value, the output
-  variables are not used. For the normal return path, the last expression in
-  the body is the implicit return value and no `return` is needed.
+  reaching the end of the body. It takes no arguments; `return X` is a
+  syntax error. To return early with a specific value, assign the output
+  first: `r = X; return`. The condition forms `return when cond` /
+  `return unless cond` are gated terminators, not value-carrying returns.
 
 * `break` terminates the closest inner loop (`for`/`while`/`loop`). If none is
   found, a compile error is generated.
@@ -518,7 +521,7 @@ randomization outside the test statement increases the number of tests:
 
 === "Parallel tests"
     ```
-    comb add(a,b) { a+b }
+    comb add(a,b) -> (r) { _0 + _1 }
 
     for i in 0..<10 { // 10 tests
       const a = (-30..<100).rand
@@ -532,7 +535,7 @@ randomization outside the test statement increases the number of tests:
 
 === "Single test"
     ```
-    comb add(a,b) { a+b }
+    comb add(a,b) -> (r) { _0 + _1 }
 
     test "test 10 additions" {
       for i in 0..<10 { // 10 tests

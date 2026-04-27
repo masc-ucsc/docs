@@ -173,8 +173,10 @@ e.y = 30   // error: 'e.y' is immutable
 e.z = 30   // OK
 ```
 
-Tuples are always ordered, but they can have unnamed entries. If needed a `_`
-can be used for name or default value during the tuple declaration.
+Tuples are always ordered, but they can have unnamed entries. A field
+without a name is *positional*; it can still carry a kind keyword
+(`const` / `mut`) as a prefix on the value to override the default
+mutability inherited from the enclosing tuple.
 
 ```
 mut b = 100
@@ -188,7 +190,7 @@ f.e = 10                // error: `f.e` is immutable
 
 const x = (1,2)
 x[0] = 3                // error: 'x' is immutable
-mut y = (1, const _ = 3)  // 2nd field is unnamed (only const allows that)
+mut y = (1, const 3)    // 2nd field is positional and immutable
 y[0] = 100              // OK
 y[1] = 101              // error: `y[1]` is immutable
 ```

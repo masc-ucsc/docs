@@ -206,6 +206,12 @@ order:
 * All the other identifiers that start with an alpha character `[a-z]` are
   always lower case.
 
+The bare underscore (`_`) and any name of the form `_<digits>` (e.g., `_0`,
+`_1`, `_2`, ...) are reserved and may not be used as binding names. They
+are reserved for future syntax (anonymous lambda placeholders). Using the
+backtick form (`` `_` ``, `` `_0` ``) bypasses the reservation if a Verilog
+import really needs that exact spelling.
+
 ## Semicolons
 
 Semicolons are not needed to separate statements. In Pyrope, a semicolon (`;`)
@@ -297,7 +303,7 @@ syntax.
 
 
 ```
-comb f(a, b) { a + b }
+comb f(a, b) -> (r) { r = a + b }
 cassert f(2, 3) == 5
 ```
 

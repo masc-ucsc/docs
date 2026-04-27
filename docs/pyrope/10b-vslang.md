@@ -104,30 +104,28 @@ auto max_gap_count(std::vector<int> nums) {
 ```
 
 ```
-comb max_gap_count(nums) {
+comb max_gap_count(nums) -> (r) {
   const max  = import("std").max
   const sort = import("std").sort
-  comb adjacent_transform(a, num, f) {
-    mut res:[?] = ()
+  comb adjacent_transform(a, num, f) -> (res) {
+    res = ()
     for i in 0..<a.length step num {
       res ++= f(a[i..+num])
     }
-    res
   }
-  comb count(a, b) {
-    mut r = 0
+  comb count(a, b) -> (r) {
+    r = 0
     for i in a {
       r += 1 when i == b
     }
-    r
   }
 
-  comb less(a,b) { a < b}
-  comb dosub(a,b) { a - b}
+  comb less(a,b)  -> (r:bool) { _0 < _1 }
+  comb dosub(a,b) -> (r)      { _0 - _1 }
 
-  const sorted  = sort(numbers, less)
-  const diffs   = adjacent_transform(sorted, num=2, dosub)
-  count(diffs, diffs.max)
+  const sorted = sort(numbers, less)
+  const diffs  = adjacent_transform(sorted, num=2, dosub)
+  r = count(diffs, diffs.max)
 }
 ```
 
@@ -151,8 +149,8 @@ func add<T:Numeric>(a:T, b:T) -> T { a + b }
 ```
 
 ```
-comb add(a, b) { a + b }                     // OK, no constrains
-comb add2<T:int>(a:T, b:T) { a + b } // constrain both to have same type
+comb add(a, b)  -> (r) { _0 + _1 }                  // OK, no constrains
+comb add2<T:int>(a:T, b:T) -> (r:T) { _0 + _1 }     // constrain both to have same type
 ```
 
 When a protocol defines an interface, in Swift:

@@ -14,12 +14,11 @@ cassert prp.plus(1,2,3) == 6
 
 Library code:
 ```
-comb plus(...a:int) -> (_:int) {
-  mut r = 0
+comb plus(...a:int) -> (r:int) {
+  r = 0
   for e in a {
     r += e
   }
-  r
 }
 ```
 
@@ -36,7 +35,7 @@ cassert prp.len(x) == 3
 
 Library code:
 ```
-comb len(x) { x.[size] }
+comb len(x) -> (r) { r = x.[size] }
 ```
 
 ### map
@@ -46,13 +45,13 @@ Sample use:
 ```
 const x = (1,2,3)
 
-cassert x.map(fun(i){ i+1 }) == (2,3,4)
+cassert x.map(_ + 1) == (2,3,4)
 ```
 
 Library code:
 ```
-const map = fun<T>(f:fun(a:T),...x:[]T) {
-  return f(e) for e in x
+comb map<T>(f:comb(a:T)->(_), ...x:[]T) -> (r) {
+  r = f(e) for e in x
 }
 ```
 
@@ -61,14 +60,14 @@ const map = fun<T>(f:fun(a:T),...x:[]T) {
 Sample use:
 
 ```
-cassert (1,2,3).filter(fun(i){ i!=2 }) == (1,3)
+cassert (1,2,3).filter(_ != 2) == (1,3)
 ```
 
 Library code:
 
 ```
-const filter = fun<T>(f:fun(a:T)->(_:Bool),...x:[]T) {
-  return e for e in x if not f(e)
+comb filter<T>(f:comb(a:T)->(_:Bool), ...x:[]T) -> (r) {
+  r = e for e in x if not f(e)
 }
 ```
 
@@ -83,14 +82,16 @@ cassert (1,2,3).reduce(prp.plus) == 6
 Library code:
 
 ```
-comb reduce(op:fun<T>(a:T,b:T)->(_:T), ...x) {
-  return x when x.[size] <= 1
+comb reduce<T>(op:comb(a:T,b:T)->(_:T), ...x:[]T) -> (res:T) {
+  if x.[size] <= 1 {
+    res = x
+    return
+  }
 
-  mut res = x[0]
+  res = x[0]
   for i in x[1..] {
     res = op(res, i)
   }
-  return res
 }
 ```
 

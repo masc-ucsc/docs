@@ -176,7 +176,7 @@ or short-circuit (`and`/`or`) expressions.
 === "Lambda call (inlined)"
 
     ```
-    comb f(a, b) { if a == 0 { 3 } else { b } }
+    comb f(a, b) -> (r) { r = if a == 0 { 3 } else { b } }
 
     mut lhs = c
     if cond {
@@ -275,13 +275,11 @@ the condition is false.
 
       const r = (
         reg total:u16 = 0,          // r is reg, everything is reg
-        comb increase(a) {
+        comb increase(a) -> (r) {
           puts "hello"
 
-          const res = self.total
-          wrap self.total = res + a
-
-          res
+          r = self.total
+          wrap self.total = r + a
         }
       )
 
@@ -300,13 +298,11 @@ the condition is false.
 
       const r = (
         reg total:u16 = 0,
-        comb increase(a) {
+        comb increase(a) -> (r) {
           puts "hello"
 
-          const res = self.total
-          wrap self.total = res + a
-
-          res
+          r = self.total
+          wrap self.total = r + a
         }
       )
 

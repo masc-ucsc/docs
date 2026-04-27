@@ -166,8 +166,10 @@ The lambda definition has the following fields:
 + `INPUT` has a list of inputs allowed with optional types. `()` indicates no
   inputs. `(...args)` allow to accept a variable number of arguments.
 
-+ `OUTPUT` has a list of outputs allowed with optional types. `()` indicates no
-  outputs.
++ `OUTPUT` has a list of outputs allowed with optional types. `()` or an
+  omitted `-> (...)` indicates no outputs. Outputs are **always declared by
+  name** — there are no anonymous/positional return lists. The body assigns
+  to those names.
 
 Dispatch between alternative lambdas is always explicit at the call site
 using `if`/`elif` chains. Pyrope does not have a `where` clause on lambda
@@ -175,46 +177,44 @@ declarations (an earlier design did); this keeps the call flow visible and
 locally readable.
 
 ```
-comb add1(...x) { x[0] + x[1] + x[2] }      // no IO specified
-comb add2(a, b, c) { a + b + c }            // constrain inputs to a,b,c
-comb add3(a, b, c) { a + b + c }            // same
-comb add4(a:u32, b:s3, c) { a + b + c }     // constrain some input types
-comb add5(a, b, c) -> (x:u32) { a + b + c } // constrain result to u32
-comb add6(a, b, c) -> (result) { a + b + c } // constrain result to be named result
-comb add7(a, b:a, c:a) { a + b + c }        // constrain inputs to have same type
-comb add8<T>(a:T, b:T, c:T) { a + b + c }   // same
+comb add1(...x) -> (r) { r = x[0] + x[1] + x[2] }   // var-args, single output
+comb add2(a, b, c) -> (r) { r = a + b + c }         // constrain inputs to a,b,c
+comb add3(a, b, c) -> (r:u32) { r = a + b + c }     // constrain result to u32
+comb add4(a:u32, b:s3, c) -> (r) { r = a + b + c }  // constrain some input types
+comb add5(a, b:a, c:a) -> (r) { r = a + b + c }     // constrain inputs to same type
+comb add6<T>(a:T, b:T, c:T) -> (r) { r = a + b + c} // generic, single output
 
 // To overload, declare each lambda separately and gather them:
-const add = [add1, add2, add3, add4, add5, add6, add7, add8]
+const add = [add1, add2, add3, add4, add5, add6]
 
 const x = 2
-comb addx1(a) { x + a }           // error: x is runtime, not visible in lambda
+comb addx1(a) -> (r) { r = x + a }    // error: x is runtime, not visible in lambda
 
 /// Visible comptime bindings are available lexically:
 comptime const Scale = 2
-comb addx2(a) { Scale + a }       // OK: Scale is comptime
+comb addx2(a) -> (r) { r = Scale + a }       // OK: Scale is comptime
 
 /// Imports are comptime aliases:
 const lib = import("lib.math")
-comb is_add(op:lib.OpType) { op == lib.AddOp }
+comb is_add(op:lib.OpType) -> (r) { r = op == lib.AddOp }
 
 /// Comptime parameters can be declared with a type and/or default:
-comb scale[n:int=1](a) { n * a }
+comb scale[n:int=1](a) -> (r) { r = n * a }
 cassert scale(5) == 5           // uses default n=1
 cassert scale[10](5) == 50      // override n=10 at the call site
 
 /// Defaults can use visible comptime bindings:
 comptime const DefaultScale = 3
-comb scale_default[n:int=DefaultScale](a) { n * a }
+comb scale_default[n:int=DefaultScale](a) -> (r) { r = n * a }
 cassert scale_default(4) == 12
 cassert scale_default[100](4) == 400
 
 mut y = (
   mut val:u32 = 1,
-  comb inc1(ref self) { self.val = u32(self.val + 1) }
+  comb inc1(ref self) { self.val = u32(self.val + 1) } // no outputs; mutates via ref
 )
 
-comb my_log::[debug](...inp) {
+comb my_log::[debug](...inp) {       // no outputs; side-effecting print
   print "logging:"
   for i in inp {
     print " {}", i
@@ -222,7 +222,7 @@ comb my_log::[debug](...inp) {
   puts
 }
 
-comb f<X>(a:X, b:X) { a + b }   // enforces a and b with same type
+comb f<X>(a:X, b:X) -> (r) { r = a + b }   // enforces a and b with same type
 cassert f(u22(33), u22(100)) == 133
 
 my_log(a, false, x + 1)
@@ -257,10 +257,10 @@ Pyrope uses a Uniform Function Call Syntax (UFCS) when the first argument is
 other languages.
 
 ```
-comb div(self, b) { self / b }      // named input tuple
-comb div2(...x) { x[0] / x[1] }     // unnamed input tuple
+comb div(self, b) -> (r) { r = self / b }     // named input tuple
+comb div2(...x) -> (r) { r = x[0] / x[1] }    // unnamed input tuple
 
-comb noarg() { 33 }                 // explicit no args
+comb noarg() -> (r) { r = 33 }                // explicit no args
 
 cassert 33 == noarg()             // () always required, even for no-arg calls
 
@@ -287,18 +287,18 @@ but only explicit one as explained later.
 
 ```
 mut tup = (
-  comb f1(self) { 1 }
+  comb f1(self) -> (r) { r = 1 }
 )
 
-comb f1(self) { 2 } // error: f1 shadows tup.f1
-comb f1() { 3 }     // OK, no self
+comb f1(self) -> (r) { r = 2 } // error: f1 shadows tup.f1
+comb f1() -> (r) { r = 3 }     // OK, no self
 
 assert f1() != 0         // error: missing argument
 assert f1(tup) != 0      // error: f1 shadowing (tup.f1 and f1)
 assert 4.f1() != 0       // error: f1 can be called for tup, so shadow
 assert tup.f1() != 0     // error: f1 is shadowing
 
-comb xx(self:tup) { self.f1() } // OK, explicit input restricts scope for f1
+comb xx(self:tup) -> (r) { r = self.f1() } // OK, explicit input restricts scope for f1
 cassert xx(tup) == 1
 
 cassert (4:tup).f1() == 1
@@ -318,7 +318,7 @@ cycle-level state.
 mut tup2 = (
   mut val:u8 = 0sb?,
   comb upd(ref self) { sat self.val += 1 },
-  comb calc(self) { self.val }
+  comb calc(self) -> (r) { r = self.val }
 )
 ```
 
@@ -332,7 +332,7 @@ arg_fun(1, 2)    // parenthesis required
 
 mut intercepted:(
   mut field:u32,
-  comb getter(self) { self.field + 1 },
+  comb getter(self) -> (r) { r = self.field + 1 },
   comb setter(ref self, v) { self.field = v }
 ) = 0
 
@@ -393,8 +393,26 @@ a function call and a pass of the lambda.
 
 ## Output tuple
 
-Pyrope everything is a tuple, even the output or return from a lambda. The
-output type always uses parenthesis.
+Everything in Pyrope is a tuple, including the result of a lambda call. There
+are three rules that work together:
+
+1. **Outputs are always declared by name in `-> ( ... )`.** There is no
+   anonymous/positional output list. A lambda with no outputs simply omits
+   the `-> (...)` clause (or writes `-> ()`).
+
+2. **The body assigns to the declared output names.** The "last expression
+   is an implicit return" sugar from earlier Pyrope drafts is gone — a bare
+   expression at the end of a body is a no-op unless it is the placeholder
+   lambda form described below.
+
+3. **`return` is a terminator only.** The keyword ends the current lambda
+   and never carries a value (`return X` is a syntax error). Whatever has
+   been assigned to the declared output names so far is what the caller
+   sees. Use `return when cond` / `return unless cond` for early exits.
+
+Callers always see a named tuple. They can read fields by name
+(`r.a`, `r.b`) or destructure positionally with `const (x1, x2) = ret3()`.
+A single-field output tuple auto-unwraps when used in scalar context.
 
 ```
 comb ret1() -> (a:int) {
@@ -406,6 +424,12 @@ comb ret3() -> (a, b) {
   b = 4
 }
 
+comb early(x) -> (r) {
+  r = 0
+  return when x == 0       // bail out; r already assigned
+  r = 100 / x
+}
+
 const a1 = ret1()
 cassert a1.a == 1 and a1 == 1  // single-field tuple auto-unwraps
 
@@ -415,6 +439,41 @@ cassert a3.a == 3 and a3.b == 4
 const (x1, x2) = ret3()
 cassert x1 == 3 and x2 == 4
 ```
+
+### Placeholder lambda (single-output `comb` only)
+
+The fully explicit form `comb add(a, b) -> (r) { r = a + b }` is verbose
+when the body is a one-liner. Pyrope offers a Scala-style **placeholder
+lambda** sugar that applies *only* to combinational lambdas with exactly
+one output:
+
+* The body is written as a single expression. Its value is implicitly
+  assigned to the single output.
+* Inside that expression, `_0`, `_1`, ... refer to positional arguments
+  (`_0` is the first arg). `_` is shorthand for `_0` when the lambda
+  takes a single argument.
+* The sugar is *only* legal when the lambda is a `comb` and has one
+  output. `pipe` and `mod`, multi-output combs, and bodies that need
+  more than one statement use the explicit form.
+
+```
+comb add(a, b) -> (r) { _0 + _1 }     // sugar: equivalent to { r = a + b }
+comb inc(a)    -> (r) { _ + 1 }       // sugar: equivalent to { r = a + 1 }
+
+// Anonymous lambdas use the same placeholder syntax — args and the single
+// output are inferred from the placeholders used:
+const my_tup = (myinc = _ + 1, mut 3)   // myinc is comb(x) -> (r) { r = x + 1 }
+mymap.each(_0 + 1)                       // each() receives a comb(x) -> (r) { r = x + 1 }
+```
+
+Which form to pick:
+
+* **Use the explicit form** for any `pipe`/`mod`, anything with multiple
+  outputs, anything that needs more than one statement, or anywhere
+  clarity matters more than brevity.
+* **Use the placeholder form** for short combinational helpers and
+  one-liner lambdas passed to higher-order calls (`map`, `each`,
+  `reduce`, ...).
 
 ## Attributes
 
@@ -463,7 +522,7 @@ fields hold the state, and the methods operate on it via `ref self`.
         self._result = a + 1
       },
       mut _result = 0,
-      comb getter(self) { self._result }
+      comb getter(self) -> (r) { r = self._result }
     )
 
     mut p2 = p1       // copy
@@ -503,8 +562,8 @@ any `self` updates should generate a compile error.
 const Nested_call = (
   mut x = 1,
   comb outter(ref self) { self.x = 100; self.inner(); self.x = 5 },
-  comb inner(self) { assert self.x == 100 },
-  comb faulty(self) { self.x = 55 }, // error: immutable self
+  comb inner(self)      { assert self.x == 100 },
+  comb faulty(self)     { self.x = 55 }, // error: immutable self
   comb okcall(ref self) { self.x = 55 }
 )
 ```
@@ -515,9 +574,8 @@ variable return.
 ```
 mut a_1 = (
   mut x:u10,
-  comb f1(ref self, x) -> (self) { // BOTH ref self and return self is OK
-    self.x = x
-    self
+  comb f1(ref self, x) -> (self) { // output named `self` mirrors the ref input
+    self.x = x                     // mutates the ref; output `self` reflects the new value
   }
 )
 
@@ -586,10 +644,10 @@ it can be error-prone.
     ```
     comb foo(self) { puts "comb.foo" }
     const a = (
-      ,comb foo() {
+      ,comb foo() -> (r) {
          comb bar() { puts "bar" }
          puts "mem.foo"
-         return (bar=bar)
+         r = (bar=bar)
       }
     )
     const b = 3
@@ -613,10 +671,10 @@ it can be error-prone.
     ```
     comb foo(self:int) { puts "comb.foo" }
     const a = (
-      ,comb foo() {
+      ,comb foo() -> (r) {
          comb bar() { puts "bar" }
          puts "mem.foo"
-         return (bar=bar)
+         r = (bar=bar)
       }
     )
     const b = 3

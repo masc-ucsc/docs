@@ -11,7 +11,8 @@ operations: `a in b`, `a does b`, and lambda call rules.
 
 * `a in b` allows to work when `b` is a name/unnamed tuple even when `a` is named.
 
-* `a does b` requires `b` to be named consistent with names in `a`.
+* `a does b` requires `a` to provide the named and positional fields required
+  by `b`.
 
 * lambda call matches the arguments with the definition in a third different set of rules.
 
@@ -19,6 +20,7 @@ operations: `a in b`, `a does b`, and lambda call rules.
 ```
 cassert (a=1) in (1,a=1,3)
 cassert (a=1) !does (1,a=1,3)
+cassert (1,a=1,3) does (a=1)
 
 comb f(a) { puts "{a}" }
 comb g(long, short) { puts "{long}" }
@@ -464,10 +466,10 @@ access the tuple field, the `self.field` is always required. This avoid the
 problem of true shadowing.
 
 ```
-comb f1() { 1 }
+comb f1() -> (r) { r = 1 }
 
 const tup = (
-  comb f1() { 2 },
+  comb f1() -> (r) { r = 2 },
   comb code() {
      cassert self.f1() == 2
      cassert f1() == 1
@@ -513,7 +515,7 @@ parameters. Defaults may refer to visible comptime bindings:
 ```
 comptime const DefaultScale = 3
 
-comb scale[n:int=DefaultScale](a) { n * a }
+comb scale[n:int=DefaultScale](a) -> (r) { r = n * a }
 
 cassert scale(5) == 15
 cassert scale[10](5) == 50
@@ -777,11 +779,12 @@ reference.
 
 
 ```
-comb args(x) { puts "args:{x}"; 1 }
-comb here() { puts "here"; 3 }
+comb args(x) -> (r) { puts "args:{x}"; r = 1 }
+comb here()  -> (r) { puts "here";   r = 3 }
 
-comb call_now(f:fun) { f() }
-comb call_defer(f:fun) { f }
+type NullaryInt = comb() -> (_:int)
+comb call_now(f:NullaryInt)   -> (r:int)        { r = f() }
+comb call_defer(f:NullaryInt) -> (g:NullaryInt) { g = f }
 
 const x0 = call_now(here)          // prints "here"
 const e1 = call_now(args)          // error: args needs arguments

@@ -10,9 +10,10 @@ everything is passed by value, no union types.
 ## Type check
 
 
-The `x does y` checks that `x` does the same as `y` and maybe more. It type
-system syntax means that `x` is a subtype of `y`, or that `y` is a supertype
-`x`.
+The `x does y` checks that `x` provides all the structure required by `y`, and
+maybe more. In type system syntax, `x` is a subtype of `y`, or `y` is a
+supertype of `x`. For tuples, this means every required field in `y` must be
+available in `x`; extra fields in `x` are allowed.
 
 
 Using the typical `Animal`, `Dog`, `Greyhound` set of tuples, `Dog does Animal`
@@ -62,8 +63,11 @@ a = b // OK, 'Bird does Animal' is true
 ```
 
 When the `x` in `x = y` is an `integer` basic type, there is an additional
-check to guarantee that no precision is lost. Otherwise, an explicit `wrap` or
-`drop` directive must be used.
+check to guarantee that no precision is lost. Integer widths such as `u16` and
+`u32` are constraints on the same basic `int` type, so `u32 does u16` and
+`u16 does u32` are both true as type-structure checks, but `x = y` may still
+fail if the right-hand side can not be proven to fit in the left-hand side.
+Otherwise, an explicit `wrap` or `drop` directive must be used.
 
 
 ### Arrays
@@ -305,20 +309,20 @@ There is a priority of overloading in the tuple order. If the intention is to
 intercept, the lambda must be added at the head of the tuple entry.
 
 ```
-comb base_fun1() { 1 }             // catch all
-comb base_fun2() { 2 }             // catch all
-comb base_fun3() { 3 }             // catch all
+comb base_fun1() -> (r) { r = 1 }             // catch all
+comb base_fun2() -> (r) { r = 2 }             // catch all
+comb base_fun3() -> (r) { r = 3 }             // catch all
 const base = (
   const fun1 = base_fun1,
   const fun2 = base_fun2,
   const fun3 = base_fun3
 )
 
-comb ext_fun1(a, b) { 4 }
-comb ext_fun2_ab(a, b) { 5 }
-comb ext_fun2_noarg() { 6 }
-comb ext_fun3_ab(a, b) { 7 }
-comb ext_fun3_noarg() { 8 }
+comb ext_fun1(a, b)    -> (r) { r = 4 }
+comb ext_fun2_ab(a, b) -> (r) { r = 5 }
+comb ext_fun2_noarg()  -> (r) { r = 6 }
+comb ext_fun3_ab(a, b) -> (r) { r = 7 }
+comb ext_fun3_noarg()  -> (r) { r = 8 }
 
 const ext = base ++ (
   const fun1 = ext_fun1,                                        // overwrite
@@ -344,7 +348,7 @@ assert t.fun3() == 8     // ext.fun3 catches all ahead of ext.fun3
 A more traditional "overload" calling the is possible by calling the lambda directly:
 
 ```
-comb x_fun1() { base.fun1() + 100 }
+comb x_fun1() -> (r) { r = base.fun1() + 100 }
 const x = base ++ (
   const fun1 = x_fun1
 )
@@ -379,9 +383,9 @@ compiler does not hide the branch behind a declaration-time predicate.
 
 
 ```
-comb fun_list_ab(a, b)       { a + b }
-comb fun_list_abc(a, b, c)   { a + b + c }
-comb fun_list_abcd(a, b, c, d) { a + b + c + d }
+comb fun_list_ab(a, b)         -> (r) { r = a + b }
+comb fun_list_abc(a, b, c)     -> (r) { r = a + b + c }
+comb fun_list_abcd(a, b, c, d) -> (r) { r = a + b + c + d }
 
 const fun_list = [fun_list_ab, fun_list_abc, fun_list_abcd]
 
@@ -393,11 +397,11 @@ assert fun_list(1,2,4,5) == 12
 assert fun_list(1,2,4,5,6) == 18 // error: no function with 5 args
 
 
-comb fun_list_ab100(a, b) { 100 }
+comb fun_list_ab100(a, b) -> (r) { r = 100 }
 const fun_list2 = [fun_list_ab, fun_list_abc, fun_list_abcd, fun_list_ab100]
 assert fun_list2(1, 2) == 3       // first match wins
 
-comb fun_list_ab200(a, b) { 200 }
+comb fun_list_ab200(a, b) -> (r) { r = 200 }
 const fun_list3 = [fun_list_ab200, fun_list_ab, fun_list_abc, fun_list_abcd]
 cassert fun_list3(1, 2) == 200
 ```
@@ -405,8 +409,8 @@ cassert fun_list3(1, 2) == 200
 For untyped named argument calls:
 
 ```
-comb f1_ab(a, b) { a + b + 100 }
-comb f1_xy(x, y) { x + y + 200 }
+comb f1_ab(a, b) -> (r) { r = a + b + 100 }
+comb f1_xy(x, y) -> (r) { r = x + y + 200 }
 const f1 = [f1_ab, f1_xy]
 
 cassert f1(a=1, b=2) == 103
@@ -437,23 +441,23 @@ For runtime-conditional dispatch, write the condition chain directly at the
 call site:
 
 ```
-comb f1_a40(a, b)          { b + 100 }
-comb f1_x300(a, b) -> (x)  { x = b + 200 } // output x
-comb f1_a20(a, b)  -> (a)  { a = b + 300 } // input a
-comb f1_x10(a, b)  -> (x)  { x = b + 400 } // output x
-comb f1_default(a, b)      { a + b + 1000 } // default
+comb f1_a40(a, b)     -> (r) { r = b + 100 }
+comb f1_x300(a, b)    -> (x) { x = b + 200 } // output x
+comb f1_a20(a, b)     -> (a) { a = b + 300 } // input a
+comb f1_x10(a, b)     -> (x) { x = b + 400 } // output x
+comb f1_default(a, b) -> (r) { r = a + b + 1000 } // default
 
-comb f1(a, b) {
+comb f1(a, b) -> (r) {
   if a > 40 {
-    f1_a40(a, b)
+    r = f1_a40(a, b)
   } elif (b + 200) > 300 {
-    f1_x300(a, b)
+    r = f1_x300(a, b)
   } elif a > 20 {
-    f1_a20(a, b)
+    r = f1_a20(a, b)
   } elif (b + 400) > 10 {
-    f1_x10(a, b)
+    r = f1_x10(a, b)
   } else {
-    f1_default(a, b)
+    r = f1_default(a, b)
   }
 }
 
@@ -472,7 +476,7 @@ Add-hoc polymorphism overloads a function, and parametric polymorphism allows to
 parametrize types based on arguments.
 
 ```
-comb Param_type(a) { return (mut xx:a = nil) }
+comb Param_type(a) -> (r) { r = (mut xx:a = nil) }
 
 const x:Param_type(string) = (xx="hello")
 const x:Param_type(int)    = (xx=130)
@@ -496,12 +500,11 @@ const Bird = Animal ++ (
 
 Parametric polymorphism: Same function works for many types
 ```
-comb smallest(...a) {
-  const x = a[0]
+comb smallest(...a) -> (r) {
+  r = a[0]
   for i in a[1..] {
-    x = i when i < x
+    r = i when i < r
   }
-  return x
 }
 ```
 
