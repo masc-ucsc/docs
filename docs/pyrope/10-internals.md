@@ -461,16 +461,16 @@ the Pyrope main ones to address and learn more about the language.
 
 ### Shadowing
 
-Pyrope does not allow shadowing, but you can still have it with tuples. To
-access the tuple field, the `self.field` is always required. This avoid the
-problem of true shadowing.
+Pyrope does not allow shadowing in code blocks or lambda bodies. Tuple methods
+can still refer to their receiver through an explicit `self` argument, so
+method-local names do not need to shadow tuple fields.
 
 ```
 comb f1() -> (r) { r = 1 }
 
 const tup = (
   comb f1() -> (r) { r = 2 },
-  comb code() {
+  comb code(self) {
      cassert self.f1() == 2
      cassert f1() == 1
   }
@@ -611,7 +611,7 @@ mut top = (
 
 
 If a lambda in the hierarchy does not have a setter/constructor, the program order
-follows the tuple scope which is in tuple ordered asignment.
+follows tuple scope in tuple ordered assignment.
 
 
 

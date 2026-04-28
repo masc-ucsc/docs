@@ -125,7 +125,7 @@ Direct access in operations like `plus` behave like a `tup_set` or `tup_get`.
 === "Tuple in Pyrope"
     ```
     x = 3
-    a = (b=2, x=x+1, y=self.b+1)
+    a = (b=2, x=x+1, y=b+1)
     ```
 
 === "LNAST direct"
@@ -148,13 +148,13 @@ Direct access in operations like `plus` behave like a `tup_set` or `tup_get`.
       ref      a
       var
         ref      b
-        ref      __t1
+        ref      ___t1
       var
         ref      x
         ref      ___t2
       var
         ref      y
-        ref      ___t4
+        ref      ___t3
     ```
 
 === "LNAST optimized"
@@ -168,7 +168,7 @@ Direct access in operations like `plus` behave like a `tup_set` or `tup_get`.
       const    1
     plus
       ref      ___t3
-      ref      ___t1
+      const    2
       const    1
     tup_add
       ref      a
@@ -180,7 +180,7 @@ Direct access in operations like `plus` behave like a `tup_set` or `tup_get`.
         ref      ___t2
       var
         ref      y
-        ref      ___t4
+        ref      ___t3
     ```
 
 === "LNAST Alternative"

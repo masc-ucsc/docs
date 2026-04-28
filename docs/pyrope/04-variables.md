@@ -126,24 +126,26 @@ comptime dependencies of the lambda.
 === "Tuple scope"
 
     ```
-    mut a = 3
+    mut base = 3
     const r1 = (
-      ,mut a = a+1       // tuple fields must use a kind keyword
-      ,const c = {assert a == 3 and self.a==4; 50}
+      ,mut a = base+1    // tuple fields must use a kind keyword
+      ,const c = {assert a == 4; 50}
     )
     r1.a = 33            // error: 'r1' is immutable variable
 
-    mut r2 = (mut a=100, const c=(mut a=a+1, const e=self.a+30))
-    assert r2 == (a=100,c=(a=101, e=131))  // checks values not mutability
+    mut r2 = (mut a=100, const c=(mut next=a+1, const e=next+30))
+    assert r2 == (a=100,c=(next=101, e=131))  // checks values not mutability
     r2.a = 33            // OK
-    r2.c.a = 33          // error: 'r2.c' is immutable variable
+    r2.c.next = 33       // error: 'r2.c' is immutable variable
 
     const r3 = (a = 1)   // error: tuple field missing kind keyword
     ```
 
-* Shadowing is not allowed in lambdas or code blocks. Tuples can redefine
-  (shadow) the same variable but to use inside the tuple, the `self` keyword
-  must be used always to access tuple scoped variables.
+* Shadowing is not allowed in lambdas or code blocks. Tuple field initializers
+  follow program order and can read earlier tuple fields by name.
+
+* Data tuple literals do not have a `self` binding. The `self` name is only
+  available when declared as a lambda argument, such as in tuple methods.
 
 * Tuple upper scope variables are always immutable.
 
@@ -165,7 +167,7 @@ comb f4[mut x:int](z) { x + z } // error: comptime parameters are immutable
 Tuple scope is also useful for declaring function default values:
 
 ```
-comb example(a:int, b:int=self.a+5) -> (result:int) {
+comb example(a:int, b:int=a+5) -> (result:int) {
   result = a + b
 }
 cassert example(a=3) == (3+3+5)

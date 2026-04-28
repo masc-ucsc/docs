@@ -4,10 +4,10 @@ This document lists features not included in Small Pyrope with small code exampl
 
 ## Core Language Features
 
-### Tuple scope and self
+### Tuple methods and self
 ```pyrope
 mut point = (mut x=10, mut y=20,
-  // Method using tuple scope
+  // Method with explicit self
   comb move(self, dx:int, dy:int) -> (out) {
     out = (x=self.x + dx, y=self.y + dy)
   }
