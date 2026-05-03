@@ -64,45 +64,42 @@ names that do not allow to use compact tuple representation like `foo here.field
       const 2
     ```
 
-The three LNAST nodes to set values in variables are `let`/`var`/`assign`. Each can have
-types and/or attributes.
+The three LNAST nodes to set values in variables are `let`/`var`/`assign`. Each can
+carry type information on its `ref` sub-nodes. Attributes are never sub-nodes of
+`ref`; they are set with separate `attr_set` statements.
 
 === "Pyrope"
     ```
-    const a:u2:[foo] = b:u1:[bar]
+    const a:u2:[foo] = b:u1
 
-    x:u2:[foo] = y:u1:[bar]
+    x:u2:[foo] = y:u1
     ```
 
 === "LNAST"
     ```lnast
-    set
+    let
       ref a
         prim_type_uint
           const 2
-        attr_ref_set
-          const foo
-          const true
       ref b
         prim_type_uint
           const 2
-        attr_check
-          const bar
-          const true
+    attr_set
+      ref a
+      const foo
+      const true
 
     assign
       ref x
         prim_type_uint
           const 2
-        attr_ref_set
-          const foo
-          const true
       ref y
         prim_type_uint
           const 2
-        attr_check
-          const bar
-          const true
+    attr_set
+      ref x
+      const foo
+      const true
     ```
 
 ## Tuples
@@ -356,17 +353,17 @@ Tuple concatenation does not use `plus` but the `tup_concat` operator.
 
 ## Attributes
 
-There are 3 main operations with attributes: set, get, check, but 4 types of
-LNAST nodes (`attr_get`/`attr_set` and `attr_ref_set`/`attr_ref_check`).
-`attr_get`/`attr_set` operate at the root level and have the same syntax as
-`tup_set`/`tup_get` but the last entry is an attribute name.
-`attr_ref_set`/`attr_ref_check` are sub-nodes of `ref`, as such they operate
-over the associated `ref` node destination.
+There are 2 LNAST nodes for attributes: `attr_set` and `attr_get`. They operate
+at statement level and follow the same syntax as `tup_set`/`tup_get`, where the
+last entry is the attribute name. Attributes never appear as sub-nodes of
+`ref`; an attribute set or check is always its own statement.
 
-`attr_ref_check` only works comparing equal to a `const` or `ref`. More complex
-attribute comparisons needs `attr_get` and `casserts` to operate.
+Attribute checks lower through `attr_get` followed by a `cassert` (or
+`attr_get` followed by a comparison and `cassert` for more complex checks).
 
-Attribute set are in left-hand-side of assignments which can also be in tuple entries.
+Attribute set declarations like `a::[f=3,b]` lower to the assignment plus one
+`attr_set` per attribute. The same pattern applies to attributes set on tuple
+entries.
 
 === "Pyrope"
     ```
@@ -374,28 +371,31 @@ Attribute set are in left-hand-side of assignments which can also be in tuple en
     x = (y::[z=7]=2, 4)
     ```
 
-=== "LNAST direct"
+=== "LNAST"
     ```lnast
     assign
       ref a
-        attr_ref_set
-          const f
-          const 3
-        attr_ref_set
-          const b
-          const true
       const 1
+    attr_set
+      ref a
+      const f
+      const 3
+    attr_set
+      ref a
+      const b
+      const true
 
     tup_add
       ref ___1
       var
         ref y
-          attr_ref_set
-            const z
-            const 7
         const 2
       const 4
-
+    attr_set
+      ref ___1
+      const y
+      const z
+      const 7
     assign
       ref x
       ref ___1
@@ -403,88 +403,37 @@ Attribute set are in left-hand-side of assignments which can also be in tuple en
 
 Attribute reads (`var.[attr]`) appear anywhere a normal expression is
 allowed and lower to `attr_get`. To turn a read into a check, wrap it in
-`cassert`/`assert`. As a fast path, the parser may recognise specific
-patterns (`cassert var.[attr]`, `cassert var.[attr] == const`) and lower
-them directly to `attr_ref_check` instead of going through a full
-`attr_get` + comparison chain. More complex attribute comparisons always
-go through `attr_get` and `cassert`.
+`cassert`/`assert`; that lowers to `attr_get` followed by an `fcall` to
+`cassert`. More complex attribute comparisons go through `attr_get`, a
+comparison node, and then `cassert`.
 
 === "Pyrope"
     ```
-    mut x = (const z=x.[y], 4)
+    const z = q.[y]
     const y = a.[b] + 1
     ```
 
-=== "LNAST option 1"
+=== "LNAST"
     ```lnast
-    assign
-      ref ___tmp
-      const 4
-
-    tup_add
-      ref ___4
-      let
-        ref z
-        ref x
-          attr_ref_check
-            const y
-            const true
-    var
-      ref x
-      ref ___4
-
-    plus
+    attr_get
       ref ___1
-      ref a
-        attr_ref_check
-          const b
-          const true
-      const 1
+      ref q
+      const y
     let
-      ref y
+      ref z
       ref ___1
-    ```
-
-=== "LNAST option 2"
-    ```lnast
-    tup_add
-      ref ___4
-      let
-        ref z
-        ref x
-          attr_ref_check
-            const y
-            const false
-      const 4
 
     attr_get
-      ref ___no_attr_const_check
-      const 4
-      const foo
-
-    fcall
-      ref ___0
-      ref cassert
-      ref ___no_attr_const_check
-
-    var
-      ref x
-      ref ___4
-
-    plus
-      ref ___1
+      ref ___2
       ref a
-        attr_ref_check
-          const f
-          const 3
-        attr_ref_check
-          const b
-          const true
+      const b
+    plus
+      ref ___3
+      ref ___2
       const 1
     let
       ref y
-      ref ___1
-
+      ref ___3
     ```
 
 
@@ -514,13 +463,14 @@ remove these attributes.
     ```lnast
     let
       ref d
-        attr_ref_set
-          const debug
-          const true
       const 3
+    attr_set
+      ref d
+      const debug
+      const true
 
     plus
-      ___tmp
+      ref ___tmp
       ref d
       const 100
 
@@ -534,7 +484,7 @@ remove these attributes.
       const debug
 
     fcall
-      ___unused
+      ref ___unused
       ref cassert
       ref ___get
     ```

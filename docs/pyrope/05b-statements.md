@@ -157,6 +157,25 @@ Gating `if`/`match` statements does not make much sense. As a result,
 `when`/`unless` can only be applied to assignments, function calls, and code
 block control statements (`return`, `break`, `continue`).
 
+The condition can be a runtime value only when gating an **assignment** or
+**function call** (the gate becomes a mux / enable on the operation). In every
+other case the condition must be **compile-time**:
+
+* Declarations (`mut`, `var`, `reg`, `let`/`const`): the variable's existence
+  is being gated, and hardware cannot conditionally instantiate a wire or
+  register based on a runtime signal.
+* Terminators (`return`, `break`, `continue`): `for`/`while`/`loop` are
+  fully unrolled at elaboration, and `return` is a structural early-exit; a
+  runtime condition there has no hardware meaning.
+
+A runtime condition in any of those cases is a compile error. To get runtime
+behavior, declare the variable unconditionally and gate the *update* instead:
+
+```
+mut x = c              // always declared
+x = other when cond    // runtime-gated assignment, fine
+```
+
 
 ## Code block
 

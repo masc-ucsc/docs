@@ -475,10 +475,8 @@ Which form to pick:
   one-liner lambdas passed to higher-order calls (`map`, `each`,
   `reduce`, ...).
 
-## Attributes
+## Getter/setter
 
-Variables can have attributes. Attributes can only be `integer`, `bool`, or
-`string`. Depending on the type, they are initialized to `0`, `false`, or `""`.
 
 Stateful behavior can be modeled as a tuple with fields and methods. The tuple
 fields hold the state, and the methods operate on it via `ref self`.

@@ -474,6 +474,9 @@ A key difference between attributes and tuple fields is that attributes are
 always compile time and the compiler flow has special meaning functionality
 for them.
 
+Internally, types are also propagated as attributes, but basic types can only be
+`integer`, `bool`, or `string`.
+
 
 Pyrope does not specify all the attributes, the compiler flow specifies them.
 There are some built-in required attributes like checking the number of bits.
@@ -615,39 +618,75 @@ always implement: Bitwidth, comptime, debug.
 ### Variable attribute list
 
 In the future, the compiler may implement some of the following attributes, as
-such, these attribute names are reserved and not allowed for custom attribute
-passes:
+such. The attributes are by category.
+
+Attributes are always compile time, but have the property of being sticky
+(propagate across assignments and expression usage) or just being used for
+checks/instantiation/hints on the assigned variable. From the following lists,
+only `_debug` is a sticky, but all the "user custom" attributes can be sticky
+or not. All the user attributes starting with `_` (like `_foo`) are sticky.
+Otherwise, they are not sticky.
+
+#### Synthesis attribute list
+
+There are a list of reserved attribute names for synthesis. These are hints and
+can be ignored if not supported by the tool:
 
 * `clock`: indicate a signal/input is a clock wire
+* `reset`: indicate a signal/input is a reset wire
 * `critical`: synthesis time criticality
-* `debug` (sticky): variable use for debug only, not synthesis allowed
-* `delay`: synthesis time delay
-* `deprecated`: to generate special warnigns about usage
-* `donttouch`: do not touch/optimize away
-* `file`: to print the file where the variable was declared
-* `inline`, `noinline`: to indicate if a module is inlined
+* `delay`: synthesis optimization target delay hint
+* `donttouch` or `keep`: do not touch/optimize away
 * `inp_delay`, `out_delay`: synthesis optimizations hints
-* `keep`: same as donttouch but shorter
-* `key`: variable/entry key name
 * `left_of`, `right_of`, `top_of`, `bottom_of`, `align_with`: placement hints
-* `const` and `mut`: is the variable declared as `const` and/or `mut`
-* `loc`: line of code information
 * `max_delay`, `min_delay`: synthesis optimizations checked at simulation
 * `max_load`, `max_fanout`, `max_cap`: synthesis optimization hints
-* `multicycle`: number of cycles for optimizations checked at simulation
-* `pipeline`: pipeline related information
-* `private`: variable/field not visible to import/regref
+
+#### Debug attribute list
+
+There are a list of reserved attribute names for debug:
+
+* `debug` and `_debug`: variable use for debug only, not synthesis allowed
+* `file`: to print the file where the variable was declared
+* `key`: variable/entry key name
+* `deprecated`: to generate warning about usage
+* `loc`: line of code information
 * `rand` and `crand`: simulation and compile time random number generation
-* `reset`: indicate a signal/input is a reset wire
-* `size`: Number of entries in tuple or array
-* `typename`: type name at variable declaration
-* `valid`, `retry`: for elastic pipelines
 * `warn`: is a boolean what when set to false disables compile warnings for associated variable
 
-### Registers and pipestage attribute list
+#### Type attribute list
+
+* `private`: variable/field not visible to import/regref
+* `comptime`: indicates that the variable should be compile time or a compile error is generated
+* `const`: indicates that only one assignment to the variable can be done per cycle
+* `mut`: multiple assignments to the variable can be done
+* `type`: Either `integer` or `string` or `boolean` or `range` or complex tuple typename.
+* `typename`: type name at variable declaration
+* `size`: Number of entries in tuple or array (1 if not a multi-entry tuple)
+
+#### Integer Bitwidth attribute list
+
+To set constraints on integer, the compiler has a set of bitwidth related
+attributes. Only `max` and `min` exist internally as attributes to control bit
+size, the others (`ubits`/`sbits`/`bits`) are "syntax sugar" and translated
+from `max`/`min`.
+
+* `max`: the maximum value allowed
+* `min`: the minimum value allowed
+* `ubits`: Maximum number of bits to represent the unsigned value. The number must be positive or zero
+* `sbits`: Maximum number of bits, and the number can be negative
+* `bits`: read-only; returns the number of bits currently required to
+  represent the variable's value (`var.[bits]` in assertions)
+* `wrap`: allows to drop bits that do not fit on the left-hand side. It performs sign
+  extension if needed.
+* `saturate` keeps the maximum or minimum (negative integer) that fits on the
+  left-hand side.
+
+#### Registers and pipestage attribute list
 
 Registers have the following attributes:
 
+* `valid`, `retry`: for elastic pipelines
 * `sync`: true by default, when false selects an asynchronous reset (posedge only)
 * `initial`: reset value when reset is high
 * `clock`: connected to `clock` by default
@@ -663,9 +702,9 @@ Registers have the following attributes:
 Pipestage accept the same register attributes but also two more:
 
 * `lat`: latency for the pipestage
-* `num`: Number of unitsi used when the pipestage is not fully pipelined.
+* `num`: maximum number of units allowed
 
-### Memories attribute list
+#### Memories attribute list
 
 Memories are arrays with persistence like registers. As such, some of the attributes
 are similar to registers, but unlike registers they can have multiple clocks.
@@ -685,29 +724,13 @@ are similar to registers, but unlike registers they can have multiple clocks.
 * `rdport`: Indicates which of the ports are read and which are written ports.
 * `posclk`: Positive edge clock memory for all the memory clocks. The default is `true` but it can be set to `false`.
 
-### Lambda attribute list
+#### Lambda attribute list
 
 Lambda attributes allow [Introspection](07-typesystem.md#Introspection) which requires some attributes.
 
 * `inputs`: returns the input tuple from the lambda
 * `outputs`: returns the output tuple from the lambda
 
-### Bitwidth attribute list
-
-To set constraints on integer, boolean, and range basic types, the compiler has a set
-of bitwidth related attributes:
-
-
-* `max`: the maximum value allowed
-* `min`: the minimum value allowed
-* `ubits`: Maximum number of bits to represent the unsigned value. The number must be positive or zero
-* `sbits`: Maximum number of bits, and the number can be negative
-* `bits`: read-only; returns the number of bits currently required to
-  represent the variable's value (`var.[bits]` in assertions)
-* `wrap`: allows to drop bits that do not fit on the left-hand side. It performs sign
-  extension if needed.
-* `saturate` keeps the maximum or minimum (negative integer) that fits on the
-  left-hand side.
 
 ### Debug and verification attribute list
 
