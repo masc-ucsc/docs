@@ -187,10 +187,8 @@ There are a list of reserved attribute names for debug:
 * `debug` and `_debug`: variable use for debug only, not synthesis allowed
 * `file`: to print the file where the variable was declared
 * `key`: variable/entry key name
-* `deprecated`: to generate warning about usage
 * `loc`: line of code information
 * `rand` and `crand`: simulation and compile time random number generation
-* `warn`: is a boolean what when set to false disables compile warnings for associated variable
 
 ### Type attribute list
 

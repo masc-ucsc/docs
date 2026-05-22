@@ -117,10 +117,6 @@ comptime dependencies of the lambda.
     comb f2() {
       // assert a == 3   // error: runtime outer variable not visible
     }
-    comb f3[ff:int=A]() {
-      cassert ff == 3    // OK, default uses visible comptime A
-      // ff = 3          // error: comptime parameter is immutable
-    }
     ```
 
 === "Tuple scope"
@@ -157,11 +153,6 @@ comptime dependencies of the lambda.
 
 Since lambda inputs and comptime parameters are always immutable, it is not
 allowed to declare them as `mut` and redundant to declare them as `const`.
-
-```
-comb f3(mut x) { x + 1 }        // error: inputs are immutable
-comb f4[mut x:int](z) { x + z } // error: comptime parameters are immutable
-```
 
 
 Tuple scope is also useful for declaring function default values:

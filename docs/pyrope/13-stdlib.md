@@ -50,7 +50,7 @@ cassert x.map(_ + 1) == (2,3,4)
 
 Library code:
 ```
-comb map<T>(f:comb(a:T)->(_), ...x:[]T) -> (r) {
+comb map<T>(f, ...x:[]T) -> (r) {
   r = f(e) for e in x
 }
 ```
@@ -66,7 +66,7 @@ cassert (1,2,3).filter(_ != 2) == (1,3)
 Library code:
 
 ```
-comb filter<T>(f:comb(a:T)->(_:Bool), ...x:[]T) -> (r) {
+comb filter<T>(f, ...x:[]T) -> (r) {
   r = e for e in x if not f(e)
 }
 ```
@@ -82,7 +82,7 @@ cassert (1,2,3).reduce(prp.plus) == 6
 Library code:
 
 ```
-comb reduce<T>(op:comb(a:T,b:T)->(_:T), ...x:[]T) -> (res:T) {
+comb reduce<T>(op, ...x:[]T) -> (res:T) {
   if x.[size] <= 1 {
     res = x
     return

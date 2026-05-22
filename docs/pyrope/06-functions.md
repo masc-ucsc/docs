@@ -198,17 +198,6 @@ comb addx2(a) -> (r) { r = Scale + a }       // OK: Scale is comptime
 const lib = import("lib.math")
 comb is_add(op:lib.OpType) -> (r) { r = op == lib.AddOp }
 
-/// Comptime parameters can be declared with a type and/or default:
-comb scale[n:int=1](a) -> (r) { r = n * a }
-cassert scale(5) == 5           // uses default n=1
-cassert scale[10](5) == 50      // override n=10 at the call site
-
-/// Defaults can use visible comptime bindings:
-comptime const DefaultScale = 3
-comb scale_default[n:int=DefaultScale](a) -> (r) { r = n * a }
-cassert scale_default(4) == 12
-cassert scale_default[100](4) == 400
-
 mut y = (
   mut val:u32 = 1,
   comb inc1(ref self) { self.val = u32(self.val + 1) } // no outputs; mutates via ref

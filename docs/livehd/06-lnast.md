@@ -151,19 +151,38 @@ value to return (the producer assigns any expression to a tmp first).
 
 #### `func_def`
 A `func_def` node represents a functional block. In addition to inputs/outputs
-and body, it carries a `kind` (one of `"comb"`, `"pipe"`, `"mod"`), an optional
-capture list (from the Pyrope `[a, b]` after the name), and an optional
-generic / attribute child tuple. Pipeline depth for `pipe[N]` is emitted
-separately as `attr_set <func> "pipe_depth" N` at the declaration site.
+and body, it carries a `kind` (one of `"comb"`, `"pipe"`, `"mod"`) and an
+optional generic / attribute child tuple. Pipeline depth for `pipe[N]` is
+emitted separately as `attr_set <func> "pipe_depth" N` at the declaration
+site.
+
+Pyrope has no capture list (the slot has been removed); comptime values
+referenced from the lambda body are picked up as implicit comptime
+dependencies rather than via an explicit capture tuple.
 
 ```
-<func_def> --| <const>     : kind ("comb" | "pipe" | "mod")
-             | <ref/const> : generics (tuple, 0 children when absent)
-             | <ref/const> : captures (tuple, 0 children when absent)
-             | <ref/const> : input arguments
-             | <ref/const> : output arguments
+<func_def> --| <ref>       : function name (or tmp ref for anon lambdas)
+             | <const>     : kind ("comb" | "pipe" | "mod")
+             | <tuple_add> : generics (0 children when absent)
+             | <tuple_add> : input arguments
+             | <tuple_add> : output arguments
              | <stmts>     : function body
 ```
+
+Each input/output argument is encoded as an `assign` child of the inputs /
+outputs `tuple_add`:
+
+```
+<assign> --| <ref>             : argument name
+           | <ref/const>       : default value (const "nil" when no default,
+                                 const "ref" for `ref a` mod with no default)
+           | <type-subtree>    : optional, the `:Type` annotation when present
+```
+
+The type subtree is one of the [type nodes](#types) (`prim_type_uint`,
+`prim_type_boolean`, …). A composite tuple type `(zz1:T, zz2:U, …)` lowers
+to a `tuple_add` whose children are recursive `assign` arg nodes — i.e. the
+same shape used by the inputs/outputs tuples themselves.
 
 #### `func_call`
 A `func_call` node represents an instantiation of a functional block.
@@ -806,9 +825,10 @@ The `func_def` kind child is `"comb"`, `"pipe"`, or `"mod"`. `pipe[N]`
 depth is emitted alongside as `(attr_set <func> (const "pipe_depth") (const N))`
 at the declaration site (not a func_def child).
 
-### Captures, generics, `requires` / `ensures`, `where`
+### Generics, `requires` / `ensures`, `where`
 
-Captures (`[a, b]`) and generics (`<T>`) become child tuples of `func_def`.
+Generics (`<T>`) become a child tuple of `func_def`. Captures (`[a, b]`)
+were removed from Pyrope — there is no capture-list slot on `func_def`.
 `where cond` on a `func_def` is deprecated and should be removed from the
 grammar. `requires` / `ensures` are plain `func_call`s to stdlib builtins
 inside the body (see [Built-in Functions](#built-in-functions)).
@@ -817,7 +837,7 @@ inside the body (see [Built-in Functions](#built-in-functions)).
 
 ```
 ; test "name" { body }
-(func_def ___f (const "comb") (tuple) (tuple) (tuple) (tuple) (stmts <body>))
+(func_def ___f (const "comb") (tuple) (tuple) (tuple) (stmts <body>))
 (attr_set ___f (const "test") (const true))
 (func_call _ ___f (tuple))
 

@@ -509,18 +509,6 @@ pipe do_arith(op:math.OpType, a:u32, b:u32) -> (result:u32) {
 }
 ```
 
-The `[...]` slot on a lambda declaration is only for explicit comptime
-parameters. Defaults may refer to visible comptime bindings:
-
-```
-comptime const DefaultScale = 3
-
-comb scale[n:int=DefaultScale](a) -> (r) { r = n * a }
-
-cassert scale(5) == 15
-cassert scale[10](5) == 50
-```
-
 Because runtime closures are not implicit, the following is an error:
 
 ```
