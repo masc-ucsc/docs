@@ -26,7 +26,7 @@ if cond {
 // RTL equivalent (mux of 4 bits in a,b,res2)
 mut res2:s4 = __mux(cond, b, a)
 
-lec res, res2
+lec(res, res2)
 ```
 
 An expression `if/else` is also a mux.
@@ -37,7 +37,7 @@ mut res = if cond { a } else { b }
 // RTL equivalent
 mut res2 = __mux(cond, b, a)
 
-lec res, res2
+lec(res, res2)
 ```
 
 The `when/unless` is also a mux.
@@ -49,7 +49,7 @@ res = b unless cond
 // RTL equivalent
 mut res2 = __mux(cond, b, a)
 
-lec res, res2
+lec(res, res2)
 ```
 
 Chaining `if`/`elif` creates a chain of muxes. If not all the inputs are
@@ -63,14 +63,14 @@ if cond1 {
 } elif cond2 {
   res = c
 } else {
-  assert true // no res
+  assert(true) // no res
 }
 
 // RTL equivalent
 mut tmp = __mux(cond2, a, c)
 mut res2 = __mux(cond1, tmp, b)
 
-lec res, res2
+lec(res, res2)
 ```
 
 `unique if`/`elif` is similar but avoids mux nesting using a one-hot encoded
@@ -87,9 +87,9 @@ unique if cond1 {
 // RTL equivalent
 mut sel = (!cond1 and !cond2, cond1, cond2)#[..]  // one hot encode
 mut res2 = __hotmux(sel, a, b, c)
-optimize !(cond1 and cond2)                       // one hot check
+optimize(!(cond1 and cond2)) // one hot check
 
-lec res, res2
+lec(res, res2)
 ```
 
 The `match` is similar to the `unique if` but also checks that one of the
@@ -103,6 +103,7 @@ match x {
   == c1 { res = b }
   == c2 { res = c }
   == c3 { res = d }
+  else  { }
 }
 
 // RTL equivalent
@@ -115,7 +116,7 @@ optimize ( cond1 and !cond2 and !cond3)
       or (!cond1 and  cond2 and !cond3)
       or (!cond1 and !cond2 and  cond3)    // one hot check (no else allowed)
 
-lec res, res2
+lec(res, res2)
 ```
 
 ## Optional expression
@@ -135,8 +136,8 @@ or short-circuit (`and`/`or`) expressions.
     const lhs2  = __or(v1, v2)
     const lhs2_v = __or(__and(v1?, v1), __and(v2?, v2))
 
-    lec lhs , lhs2
-    lec lhs?, lhs2_v
+    lec(lhs , lhs2)
+    lec(lhs?, lhs2_v)
     ```
 
 === "Usual expression"
@@ -148,8 +149,8 @@ or short-circuit (`and`/`or`) expressions.
     const lhs2   = __sum(A=(v1, v2))
     const lhs2_v = __and(v1?, v2?)
 
-    lec lhs , lhs2
-    lec lhs?, lhs2_v
+    lec(lhs , lhs2)
+    lec(lhs?, lhs2_v)
     ```
 
 === "Conditionals"
@@ -169,8 +170,8 @@ or short-circuit (`and`/`or`) expressions.
     const tmp_v = __mux(cond2, v0?, v2?)
     const lhs2_v= __mux(cond1, tmp_v, v1?)
 
-    lec lhs , lhs2
-    lec lhs?, lhs2_v
+    lec(lhs , lhs2)
+    lec(lhs?, lhs2_v)
     ```
 
 === "Lambda call (inlined)"
@@ -193,8 +194,8 @@ or short-circuit (`and`/`or`) expressions.
 
     const lhs2_v = __mux(cond, c?, tmp_v)
 
-    lec lhs , lhs2
-    lec lhs?, lhs2_v
+    lec(lhs , lhs2)
+    lec(lhs?, lhs2_v)
     ```
 
 ## Lambda calls
@@ -276,7 +277,7 @@ the condition is false.
       const r = (
         reg total:u16 = 0,          // r is reg, everything is reg
         comb increase(a) -> (r) {
-          puts "hello"
+          puts("hello")
 
           r = self.total
           wrap self.total = r + a
@@ -299,7 +300,7 @@ the condition is false.
       const r = (
         reg total:u16 = 0,
         comb increase(a) -> (r) {
-          puts "hello"
+          puts("hello")
 
           r = self.total
           wrap self.total = r + a
@@ -307,13 +308,13 @@ the condition is false.
       )
 
       if runtime == 2 {
-        puts "hello"
+        puts("hello")
 
         const res = r.total
         wrap r.total = res + 3
         res = res
       }elif runtime == 4 {
-        puts "hello"
+        puts("hello")
 
         const res = r.total
         wrap r.total = res + 9
@@ -464,7 +465,7 @@ cycle Similarly a tuple can have a reset when assigned to a register.
 
     mut x:Mix_tup = (false, 1)  // false used at reset, 1 used every cycle
 
-    assert x.flag implies x.state == 2
+    assert(x.flag implies x.state == 2)
 
     x.state = 0
     if x.flag {
@@ -489,7 +490,7 @@ cycle Similarly a tuple can have a reset when assigned to a register.
 
     mut x:Mix_tup = mix_tup_init
 
-    assert x.flag implies x.state == 2
+    assert(x.flag implies x.state == 2)
 
     x.state = 0
     if x.flag {
@@ -511,7 +512,7 @@ if my_async_other_reg == 33 {
   my_async_other_reg = 4
 }
 
-assert my_async_other_reg in (4, 33)
+assert(my_async_other_reg in (4, 33))
 ```
 
 ### retime

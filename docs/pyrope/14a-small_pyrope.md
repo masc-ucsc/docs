@@ -20,7 +20,9 @@ Small Pyrope maintains Pyrope's expressiveness while reducing complexity:
 ### Basic Types
 Small Pyrope supports integers (`u8`, `i16`, `int`), `bool`, and `string`. Type annotations use `:` and are optional when they can be inferred.
 
-Number literals may include `_` separators with no meaning (`12_34__ == 1234`). Binary literals may include `?` bits (don't care/unknown). For uninitialized / invalid variables, use the explicit `nil` (invalid) or `0sb?` (unknown bits) — there is no bare `_` or bare `?` shorthand.
+Number literals may include `_` separators with no meaning (`12_34__ == 1234`). Binary literals may include `?` bits (don't care/unknown). For unset variables, use the explicit `nil` placeholder; for unknown bits, use `0sb?`. There is no bare `_` or bare `?` shorthand.
+
+`nil` marks "no value yet" — it is only legal as the *placeholder* for a not-yet-assigned variable. **Reading a `nil` value in any expression is a compile error.** Assign a real value before any use.
 
 Attributes are set at declaration with `::[…]` (or `:Type:[…]`) and are independent of the type: `name:Type:[attr=value]`. Use `name.[attr]` to read attribute values (see Attributes section).
 ```pyrope
@@ -35,12 +37,12 @@ mut flag:bool = true
 // String (basic operations)
 mut text:string = "hello"
 mut combined = text ++ " world"  // Tuple concatenation (strings are tuples of characters)
-puts "Debug: value is ", combined   // Print for debugging
+puts("Debug: value is ", combined)   // Print for debugging
 
 // Initialization always requires a concrete value — no bare `_` or `?`.
 mut y:int = 0           // Explicit value
 mut u:int = 0sb?        // Valid, but all bits unknown
-mut z:int = nil         // Invalid; can only be copied until assigned a real value
+mut z:int = nil         // Placeholder; any read of `z` before assignment is a compile error
 
 // Inside bit literals, '?' marks unknown bits (valid but unobserved, like Verilog x)
 // Arithmetic works: 0sb? + 1 = 0sb??, 0sb? | 1 = 1
@@ -69,7 +71,7 @@ prefix modifier means the value must be resolvable at compile/elaboration time.
 // Code block scope
 mut a = 3
 {
-    assert a == 3       // Visible from outer scope
+    assert(a == 3)      // Visible from outer scope
     mut b = 4           // Local to this block
     // const a = 33     // error: no shadowing allowed
 }
@@ -89,12 +91,12 @@ mut array = (1, 2, 3, 4)        // Indexed tuple
 mut mixed = (x=1, 2, y=3)       // Mixed named/indexed
 
 // Access
-cassert point.x == 10
-cassert array[2] == 3           // Array-style access
+cassert(point.x == 10)
+cassert(array[2] == 3)          // Array-style access
 
 // Concatenation (++ is always tuple concatenation — strings, lambdas, tuples)
 mut combined = point ++ (z=30)  // (x=10, y=20, z=30)
-cassert combined == (x=10, y=20, z=30)
+cassert(combined == (x=10, y=20, z=30))
 ```
 
 ### Ranges
@@ -104,11 +106,11 @@ mut range2 = 0..<4              // Exclusive range: 0,1,2,3
 mut range3 = 2..+3              // Size-based range: 2,3,4
 
 // Range operations
-cassert (1..=3) == (1,2,3)       // Range to tuple conversion
-cassert int(1..=3) == 0ub1110     // Range to one-hot encoding
-cassert range1 == (1,2,3,4,5)
-cassert range2 == (0,1,2,3)
-cassert range3 == (2,3,4)
+cassert((1..=3) == (1,2,3))       // Range to tuple conversion
+cassert(int(1..=3) == 0ub1110)    // Range to one-hot encoding
+cassert(range1 == (1,2,3,4,5))
+cassert(range2 == (0,1,2,3))
+cassert(range3 == (2,3,4))
 ```
 
 ### Arrays and Memories
@@ -139,22 +141,17 @@ mut out2 = ram.port[1][addr4]:[rdport=1] // Read port 1
 
 ## Lambda Types: `comb`, `pipe`, `mod`
 Small Pyrope functions do not support runtime capture variables and do not
-include the `mod` orchestration features (`await[N]` and `@[N]`). Visible
+include the `mod` orchestration features (`stage[N]` and `@[N]`). Visible
 comptime bindings, such as imports and `comptime const` declarations, are
 available lexically. Pass runtime values explicitly as arguments.
 
 ### Combinational or Pure Functions (`comb`)
 
-In Pyrope, a combinational or pure function is a stateless function without memory or registers. As such, it can not have side-effects.
+In Pyrope, a combinational or pure function is a stateless function without memory or registers. As such, it can not have side-effects. A `comb` **may not** declare a `reg` (the only exception is debug state explicitly marked `::[debug]`, which is forbidden from affecting non-debug outputs). If you need state, write a `pipe` or `mod`.
 
 ```pyrope
 comb add(a:u8, b:u8) -> (result:u8) {
     result = a + b
-}
-
-// Placeholder lambda sugar (single-output comb): expression body, _N for args
-comb add_simple(a:u8, b:u8) -> (r:u8) {
-    _0 + _1                     // implicit assignment to the single output `r`
 }
 
 // 'return' is a terminator only — assign the output first, then return
@@ -164,11 +161,10 @@ comb clamp(x:i16) -> (result:u8) {
     result = x                            // normal path
 }
 
-cassert add(3, 4) == 7
-cassert add_simple(3, 4) == 7
-cassert clamp(-10) == 0
-cassert clamp(500) == 255
-cassert clamp(42) == 42
+cassert(add(3, 4) == 7)
+cassert(clamp(-10) == 0)
+cassert(clamp(500) == 255)
+cassert(clamp(42) == 42)
 ```
 
 ### Pipeline
@@ -183,7 +179,7 @@ pipelined outputs.
 
 ```pyrope
 pipe[1] counter(enable:bool) -> (reg count:u8) {
-    count += 1 when enable
+    if enable { count += 1 }
 }
 
 mod fifo(push:bool, pop:bool, data_in:u18) -> (data_out:u18, full:bool, empty:bool) {
@@ -215,8 +211,8 @@ A `mod` connects combinational, pipeline, or other `mod` blocks with
 explicit timing control, and can hold `reg` state across cycles. There are
 two complementary timing mechanisms inside `mod` blocks:
 
-* `await[N]` as a declaration modifier: pipelines the whole RHS over N
-  cycles (e.g., `await[3] tmp = mul(a, b)`). It is the only *action* that
+* `stage[N]` as a declaration modifier: pipelines the whole RHS over N
+  cycles (e.g., `stage[3] tmp = mul(a, b)`). It is the only *action* that
   inserts or chooses pipeline stages.
 * `foo@[N]` on a variable (LHS or RHS): a pure timing *type check*. It
   never inserts flops; a mismatch is a compile error.
@@ -226,30 +222,30 @@ pipe mul(a, b) -> (c) { c = a * b }
 pipe add(a, b) -> (c) { c = a + b }
 
 mod alu(in1, in2) -> (out_pipelined, out_live) {
-  await[3] tmp              = mul(in1, in2)
-  await[3] in2_d            = in2
-  await[1] out_pipelined@[4] = add(tmp@[3], in2_d@[3])
-  await[1] out_live@[4]      = add(tmp@[3], in2_d@[3])
+  stage[3] tmp              = mul(in1, in2)
+  stage[3] in2_d            = in2
+  stage[1] out_pipelined@[4] = add(tmp@[3], in2_d@[3])
+  stage[1] out_live@[4]      = add(tmp@[3], in2_d@[3])
 }
 
 mod accum_alu(in1, in2) -> (out) {
   reg total:[init=0]
-  await[3] tmp = mul(in1, in2)
+  stage[3] tmp = mul(in1, in2)
   const sum_aligned = add(total@[3], tmp@[3])  // both operands checked at cycle 3
-  total.[defer] = sum_aligned                     // defer write to end of cycle
-  out = total                                     // bare name reads current 'q'
+  total = sum_aligned                          // register write
+  out = total                                  // bare name reads current 'q'
 }
 ```
 
 Inside `mod` blocks, every RHS value at a non-zero cycle must reach it
-through an `await[N]` declaration; there is no implicit alignment. Use
+through a `stage[N]` declaration; there is no implicit alignment. Use
 `foo@[N]` on either side to document or enforce cycle expectations. Type
 and attribute *binding* happen only at declarations on the left-hand side;
 checks on RHS values use separate `cassert` statements.
 
 ```pyrope
-cassert b does u8                                         // RHS type check
-cassert c.[xxx_should_be_set]                             // RHS attribute check
+cassert(b does u8)                                        // RHS type check
+cassert(c.[xxx_should_be_set])                            // RHS attribute check
 const (tmp:u32, tmp2:u3:[something=true]) = some_mod_call(a, b@[3], c@[2])
 ```
 
@@ -266,16 +262,24 @@ if condition {
 ```
 
 Pyrope also has `when`/`unless` trailing modifiers for single-statement
-conditionals. `when cond` executes the statement only if `cond` is true;
-`unless cond` executes only if `cond` is false. Unlike `if` blocks, these do
-not create a new scope — the statement stays in the current scope. They can be
-applied to assignments, function calls, assertions, and control statements
-(`return`, `break`, `continue`).
-```
-return when    enable
-return unless !enable  // Same
+**compile-time** conditionals. The condition must be `comptime`: think of
+them as `#if` / `#ifndef`, not as a runtime mux. They include or omit the
+statement during elaboration based on compile options, types, or other
+comptime values. They do not create a new scope.
 
-assert !enable
+```
+comptime const DEBUG = true
+
+assert(!enable) when    DEBUG    // included only when DEBUG is true
+return          unless DEBUG    // omitted when DEBUG is true
+```
+
+For *runtime* gating (a mux or enable on a signal), use an `if` block or
+an `if` expression on the RHS:
+
+```
+if enable { count += 1 }         // runtime mux
+result = if cond { a } else { b }
 ```
 
 ### Compile-Time Loops
@@ -299,14 +303,15 @@ for val in 1..<10 step 2 {  // 1,3,5,7,9
 ### Match (Pattern Matching)
 
 `match` is always unique (mutually exclusive branches, like `unique if`). It
-supports any comparison operator, not just equality.
+supports any comparison operator, not just equality. **Every `match` must
+end with an `else` arm** — omitting it is a parse error.
 
 ```pyrope
 match state {
     == 0 { next_state = 1 }
     == 1 { next_state = 2 }
     == 2 { next_state = 0 }
-    else { next_state = 0 }
+    else { next_state = 0 }   // required
 }
 
 // `case` checks structure with `does`, then checks defined values
@@ -319,9 +324,10 @@ match state {
 
 // Other comparison operators are allowed
 match value {
-    < 0   { result = -1 }
-    == 0  { result = 0 }
-    > 0   { result = 1 }
+    < 0  { result = -1 }
+    == 0 { result = 0 }
+    > 0  { result = 1 }
+    else { result = 0 }       // required; unreachable here, but must be written
 }
 ```
 
@@ -335,22 +341,23 @@ at a time.
 ```pyrope
 enum State = (Idle, Active, Done)       // One-hot encoding: 1, 2, 4
 
-cassert int(State.Idle)   == 1
-cassert int(State.Active) == 2
-cassert int(State.Done)   == 4
+cassert(int(State.Idle)   == 1)
+cassert(int(State.Active) == 2)
+cassert(int(State.Done)   == 4)
 
 reg current_state:State = State.Idle
 
 match current_state {
     case State.Idle {
-        current_state = State.Active when start
+        if start    { current_state = State.Active }
     }
     case State.Active {
-        current_state = State.Done when complete
+        if complete { current_state = State.Done }
     }
     case State.Done {
         current_state = State.Idle
     }
+    else { /* unreachable: all states covered above */ }
 }
 ```
 
@@ -370,13 +377,13 @@ reg counter::[reset_pin=ref rst] = 0 // Set reset pin (ref connects the wire)
 const num_bits = counter.[bits]     // Read number of bits
 
 // Check attribute (read inside cassert)
-cassert counter.[bits] == 8         // Check bit width
-cassert z.[bits] < 32               // Check bit width constraint
+cassert(counter.[bits] == 8)        // Check bit width
+cassert(z.[bits] < 32)              // Check bit width constraint
 
 // Compile-time uses the 'comptime' prefix modifier (not an attribute)
 comptime const SIZE = 16
 comptime mut elaboration_cnt = 0   // mutable at compile time
-cassert SIZE.[comptime]            // Can still query comptime status
+cassert(SIZE.[comptime])           // Can still query comptime status
 ```
 
 ### Common Attributes
@@ -387,11 +394,10 @@ Attributes are **immutable after declaration**. To change attributes, create a n
 // Bitwidth constraints
 mut data:u32:[max=1000, min=0] = 0
 
-// Overflow behavior (set at declaration - applies to all operations)
-mut counter_wrap:u8:[wrap=true] = 0      // Always wraps on overflow
-mut counter_sat:u8:[saturate=true] = 0   // Always saturates on overflow
-
-// One-off overflow behavior — statement-level prefix
+// Overflow behavior — always written as a statement-level prefix.
+// There is no sticky :[wrap=true] / :[saturate=true] attribute; every
+// narrowing assignment must annotate its overflow choice locally, or the
+// compiler rejects the assignment.
 mut result:u8  = 0
 wrap result = a + b                      // This operation wraps to u8
 mut clamped:u8 = 0
@@ -413,9 +419,6 @@ reg pipeline:[retime=true] = 0      // Allow synthesis retiming
 
 // Debug attributes
 mut debug_val:[debug=true] = counter // Debug-only variable
-
-// To "change" attributes, create a new variable
-mut new_data:[wrap=true] = data     // new_data has wrap, data unchanged
 ```
 
 ### Memory Attributes
@@ -492,12 +495,12 @@ mut sparse2 = value#[0,3,7]      // Select bits 0, 3, and 7
 mut rparse1 = (value#[7], value#[3], value#[0])#[..]
 mut rparse2 = value#[7,3,0]      // Select bits 7, 3, and 0
 
-cassert value  == 0ub1010_0100   // bit 3 was cleared above
-cassert sparse2 == 0ub1____1__0
-cassert rparse2 == 0ub011        // reverse order of bits (LSB-first packing)
-cassert pop_count == 3
-cassert or_reduce  == -1        // any bit set
-cassert and_reduce ==  0        // sign bit (MSB) is 0
+cassert(value  == 0ub1010_0100) // bit 3 was cleared above
+cassert(sparse2 == 0ub1____1__0)
+cassert(rparse2 == 0ub011)      // reverse order of bits (LSB-first packing)
+cassert(pop_count == 3)
+cassert(or_reduce  == -1)       // any bit set
+cassert(and_reduce ==  0)       // sign bit (MSB) is 0
 ```
 
 ## Operator Precedence
@@ -518,31 +521,31 @@ mut result = (a * b) + (c & d)   // Clear precedence
 // mut mixed = a * b + c & d     // error: use parentheses
 
 // Chained comparisons allowed
-assert a <= b <= c               // Same as: a <= b and b <= c
+assert(a <= b <= c)              // Same as: a <= b and b <= c
 ```
 
 ## Testing and Verification
 
 ### Assertions
 ```pyrope
-assert condition               // Runtime assertion
-cassert compile_time_expr      // Compile-time assertion
+assert(condition)              // Runtime assertion
+cassert(compile_time_expr)     // Compile-time assertion
 
 test "counter test" {
     const cnt = counter(true)
-    puts "Counter value: ", cnt   // Debug output
-    step                      // Advance one cycle
-    assert cnt == 1
-    cassert SIZE == 16         // Compile-time constant check
+    puts("Counter value: ", cnt)   // Debug output
+    step( )// Advance one cycle
+    assert(cnt == 1)
+    cassert(SIZE == 16)        // Compile-time constant check
 }
 ```
 
 ### Debug Output
 ```pyrope
 // Basic puts for debugging
-puts "Hello World"            // Simple string output
-puts "Value: ", variable      // Print variable
-puts "Count: ", count, " Max: ", max_val  // Multiple values
+puts("Hello World")            // Simple string output
+puts("Value: ", variable)      // Print variable
+puts("Count: ", count, " Max: ", max_val)  // Multiple values
 ```
 
 ## Hardware Semantics
@@ -552,20 +555,20 @@ puts "Count: ", count, " Max: ", max_val  // Multiple values
 reg counter:u8 = 0
 mut tmp:u8 = counter
 
-counter += 1                    // Immediate update
+counter += 1                    // Register write
 tmp += 1
-assert counter == tmp
+assert(counter == tmp)
 
-counter.[defer] += 1            // Defer write to end of cycle
-assert counter == tmp
-tmp += 1
+// `.[defer]` is RHS-only — it reads the value the register will hold
+// at end of cycle (after all in-cycle writes have accumulated).
+assert(counter.[defer] == tmp)
 
-assert counter != tmp
-assert counter.[defer] == tmp   // Read deferred value (end of cycle)
+// There is no LHS `.[defer] = ...` form. Just write `counter = ...`.
 
 // Timing syntax summary:
-// counter         - current ('q' value if not modified)
-// counter.[defer] - deferred value (end of current cycle)
+// counter         - current value (cycle-start 'q' or in-cycle accumulator,
+//                   per the register-write rules)
+// counter.[defer] - end-of-cycle value (RHS read only)
 // past(counter)   - value from previous cycle
 // past[2](counter)- two cycles ago
 ```
@@ -617,8 +620,8 @@ pipe[1] reg_file(
     rd_b = if rb == 0 { 0 } else { registers[rb] }
 
     // Write port
-    if we {
-        registers[wa] = wd when (wa != 0)  // Register 0 is always 0
+    if we and wa != 0 {        // Register 0 is always 0
+        registers[wa] = wd
     }
 }
 
@@ -626,22 +629,22 @@ test "register file" {
     // Cycle 0: write 42 to register 1, read regs 3 and 1
     const rf = reg_file(we=true, ra=3, rb=1, wa=1, wd=42)
     // pipe[1] outputs are registered — these reflect the initial state (all zeros)
-    assert rf.rd_a == 0          // reg[3] = 0 (initial), delayed 1 cycle
-    assert rf.rd_b == 0          // reg[1] = 0 (initial), delayed 1 cycle
+    assert(rf.rd_a == 0)         // reg[3] = 0 (initial), delayed 1 cycle
+    assert(rf.rd_b == 0)         // reg[1] = 0 (initial), delayed 1 cycle
 
     step
 
     // Cycle 1: no write, read reg 1 (was written last cycle)
     const rf2 = reg_file(we=false, ra=1, rb=0, wa=0, wd=0)
     // Output still reflects cycle 0 reads due to pipe[1] delay
-    assert rf2.rd_a == 0         // reg[3] still 0
+    assert(rf2.rd_a == 0)        // reg[3] still 0
 
     step
 
     // Cycle 2: pipe[1] output now reflects cycle 1 reads
     const rf3 = reg_file(we=false, ra=1, rb=0, wa=0, wd=0)
-    assert rf3.rd_a == 42        // reg[1] = 42 (written in cycle 0, read in cycle 1, output in cycle 2)
-    assert rf3.rd_b == 0         // reg[0] always 0
+    assert(rf3.rd_a == 42)       // reg[1] = 42 (written in cycle 0, read in cycle 1, output in cycle 2)
+    assert(rf3.rd_b == 0)        // reg[0] always 0
 }
 ```
 

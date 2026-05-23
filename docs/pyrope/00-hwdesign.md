@@ -317,14 +317,14 @@ be expected in a software API.
 
     ```pyrope
     mut c = mul(a,b)
-    assert c == a * b // assert fails!!
+    assert(c == a * b) // assert fails!!
     ```
 
 === "HLS possible solution"
 
     ```pyrope
     mut c = mul(a,b)
-    assert c == past(a) * past(b) // compare against last-cycle a and b
+    assert(c == past(a) * past(b)) // compare against last-cycle a and b
     ```
 
 If actors execution resembles concurrent module instantiation execution,
@@ -465,7 +465,7 @@ scheduled update.
     // Do not use non-blocking
     counter = counter + 1  // blocking assignment
     tmp     = counter + 2  // blocking assignment
-    assert tmp == (counter+1) // this never fails
+    assert(tmp == (counter+1)) // this never fails
     ```
 
 !!! Artifact
@@ -535,7 +535,7 @@ There are three leading solutions categories:
     ```verilog
     x = 0ub?   // a ? state
     if x {
-       puts "x is never true"
+       puts("x is never true")
     }
     reg signed [3:0] a = -1;
     $display("%b\n", a[5:1]); // displays xx111

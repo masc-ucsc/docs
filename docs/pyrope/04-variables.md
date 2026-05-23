@@ -83,35 +83,35 @@ comptime dependencies of the lambda.
 === "Code Block scope"
 
     ```
-    assert a == 3        // error: undefined variable 'a'
+    assert(a == 3) // error: undefined variable 'a'
     mut a = 3
     {
-      assert a == 3
+      assert(a == 3)
       a = 33             // OK. assign 33
       a:int = 33         // OK, assign 33 and check that 'a' has type int
       const b = 4
       const a = 3333       // error: variable shadowing
       mut a = 33         // error: variable shadowing
     }
-    assert b == 3        // error: undefined variable 'b'
+    assert(b == 3) // error: undefined variable 'b'
     ```
 
 === "Lambda scope"
 
     ```
-    assert a == 3        // error: undefined variable 'a'
+    assert(a == 3) // error: undefined variable 'a'
     comptime const A = 3
     comptime const X = A + 1
     comb f1() -> (r) {
-      cassert A == 3
+      cassert(A == 3)
       // A = 33          // error: comptime const is immutable
       const b = 4
       // const A = 3333  // error: variable shadowing
       // mut A = 33      // error: variable shadowing
       r = b + 3
     }
-    assert f1() == 7
-    assert b == 3        // error: undefined variable 'b'
+    assert(f1() == 7)
+    assert(b == 3) // error: undefined variable 'b'
 
     mut a = 3
     comb f2() {
@@ -125,12 +125,12 @@ comptime dependencies of the lambda.
     mut base = 3
     const r1 = (
       ,mut a = base+1    // tuple fields must use a kind keyword
-      ,const c = {assert a == 4; 50}
+      ,const c = {assert(a == 4); 50}
     )
     r1.a = 33            // error: 'r1' is immutable variable
 
     mut r2 = (mut a=100, const c=(mut next=a+1, const e=next+30))
-    assert r2 == (a=100,c=(next=101, e=131))  // checks values not mutability
+    assert(r2 == (a=100,c=(next=101, e=131))) // checks values not mutability
     r2.a = 33            // OK
     r2.c.next = 33       // error: 'r2.c' is immutable variable
 
@@ -161,10 +161,10 @@ Tuple scope is also useful for declaring function default values:
 comb example(a:int, b:int=a+5) -> (result:int) {
   result = a + b
 }
-cassert example(a=3) == (3+3+5)
-cassert example(6,7) == (6+7)
-cassert example(6) == (6+6+5)
-assert example(b=3) !=0         // error: undefined `a` argument
+cassert(example(a=3) == (3+3+5))
+cassert(example(6,7) == (6+7))
+cassert(example(6) == (6+6+5))
+assert(example(b=3) !=0) // error: undefined `a` argument
 ```
 
 ## Basic types
@@ -243,9 +243,9 @@ if e#[3] {           // OK, bit extraction for single bit returns a boolean
   call(x)
 }
 
-cassert 0 == (int(true)  + 1)  // explicity typecast
-cassert 1 == (int(false) + 1)  // explicity typecast
-cassert boolean(33) or false   // explicity typecast
+cassert(0 == (int(true)  + 1)) // explicity typecast
+cassert(1 == (int(false) + 1)) // explicity typecast
+cassert(boolean(33) or false) // explicity typecast
 ```
 
 String input typecase is valid, but anything different than ("0", "1", "-1",
@@ -288,20 +288,20 @@ size in the tuple can be unknown.
 
 ```
 const a = (1,2,3)
-cassert a[0..] == (1,2,3)
-cassert a[1..] == (2,3)
-cassert a[..=1] == (1,2)
-cassert a[..<2] == (1,2)
-cassert a[1..<10] == (2,3)
+cassert(a[0..] == (1,2,3))
+cassert(a[1..] == (2,3))
+cassert(a[..=1] == (1,2))
+cassert(a[..<2] == (1,2))
+cassert(a[1..<10] == (2,3))
 
 const b = 0ub0110_1001
-cassert b#[1..]        == 0ub0110_100
-cassert b#[1..=-1]     == 0ub0110_100
-cassert b#[1..=-2]     == 0ub0110_100  // unsigned result from bit selector
-cassert b#sext[1..=-2] == 0sb110_100
-cassert b#[1..=-3]     == 0sb10_100
-cassert b#[1..<-3]     == 0ub0_100
-cassert b#[0]          == false
+cassert(b#[1..]        == 0ub0110_100)
+cassert(b#[1..=-1]     == 0ub0110_100)
+cassert(b#[1..=-2]     == 0ub0110_100) // unsigned result from bit selector
+cassert(b#sext[1..=-2] == 0sb110_100)
+cassert(b#[1..=-3]     == 0sb10_100)
+cassert(b#[1..<-3]     == 0ub0_100)
+cassert(b#[0]          == false)
 ```
 
 
@@ -315,10 +315,10 @@ to type cast from tuple to range, but it is possible from range to tuple.
 
 ```
 const c = 1..=3
-cassert int(c) == 0ub1110
-cassert range(0ub01_1100) == 2..=4
+cassert(int(c) == 0ub1110)
+cassert(range(0ub01_1100) == 2..=4)
 
-assert range(1,2,3)            // error: typecast not allowed
+assert(range(1,2,3)) // error: typecast not allowed
 cassert (1,2,3) == tuple(1..=3)
 ```
 
@@ -328,12 +328,12 @@ semantic is the same. The same `tuple` typecast is also optional when doing a
 comparison. Both ranges a `step` to change the step.
 
 ```
-cassert   int(0..=10 step  2) == 0ub101_0101_0101
-cassert tuple(0..=10 step  2) == ( 0,2,4,6,8,10)
-cassert tuple(10..=0 step -2) == (10,8,6,4,2, 0)
-cassert      (10..=0 step -2) == (10,8,6,4,2, 0)
+cassert(int(0..=10 step  2) == 0ub101_0101_0101)
+cassert(tuple(0..=10 step  2) == ( 0,2,4,6,8,10))
+cassert(tuple(10..=0 step -2) == (10,8,6,4,2, 0))
+cassert((10..=0 step -2) == (10,8,6,4,2, 0))
 
-cassert -1..=2 == (-1,0,1,2)
+cassert(-1..=2 == (-1,0,1,2))
 const x = -1..=2
 
 cassert (i for i in 0..=10 step 2) == (0,2,4,6,8,10)
@@ -344,8 +344,8 @@ that an increasing range (`1..=3 == 3..=1`) but to avoid mistakes/confusions,
 Pyrope generates a compile error in decreasing ranges.
 
 ```
-assert 5..=0                           // error: 5 + 1 never reaches 0
-assert 5..=0 step -1 == (5,4,3,2,1,0)
+assert(5..=0) // error: 5 + 1 never reaches 0
+assert(5..=0 step -1 == (5,4,3,2,1,0))
 ```
 
 A closed range can be converted to a single integer or a tuple. A range
@@ -358,7 +358,7 @@ possible when both begin and end of the range are fully specified.
 ```
 cassert((0..<30 step 10) == (0,10,20)) // ranges and tuples can combined
 cassert((1..=3) ++ 4 == (1,2,3,4))     // tuple and range ops become a tuple
-cassert 1..=3 == (1,2,3)
+cassert(1..=3 == (1,2,3))
 cassert((1..=3)#[..] == 0ub1110)        // convert range to integer with #[..]
 ```
 
@@ -371,17 +371,17 @@ characters in the string, each character has 8 bits associated.
 ```
 const a = 'cad'          // c is 0x63, a is 0x61, and d is 0x64
 const b = 0x64_61_63
-cassert a == string(b)   // typecast number to string
-cassert int(a) == b      // typecast string to number
-cassert a#[..] == b      // typecast string to number
+cassert(a == string(b)) // typecast number to string
+cassert(int(a) == b) // typecast string to number
+cassert(a#[..] == b) // typecast string to number
 ```
 
 Like ranges, strings can also be seen as a tuple, and when tuple operations are
 performed they are converted to a tuple.
 
 ```
-cassert "hello" == ('h','e','l','l','o')
-cassert "h" ++ "ell" == ('h','e','l','l') == "hell"
+cassert("hello" == ('h','e','l','l','o'))
+cassert("h" ++ "ell" == ('h','e','l','l') == "hell")
 ```
 
 
@@ -422,15 +422,15 @@ Bund3.color    = "red"              // error:
 Bund3.is_green = check_is_green     // error: (const can not add fields)
 z.color        = "blue"             // OK
 
-assert x equals Typ  // same type structure
-assert z equals Typ  // same type structure
-assert x equals z    // same type structure
+assert(x equals Typ) // same type structure
+assert(z equals Typ) // same type structure
+assert(x equals z) // same type structure
 
-assert y is Typ
-assert Typ is Typ
-assert z !is Bund3
-assert z !is Typ
-assert z !is bund1
+assert(y is Typ)
+assert(Typ is Typ)
+assert(z !is Bund3)
+assert(z !is Typ)
+assert(z !is bund1)
 ```
 
 ## Type checks
@@ -447,7 +447,7 @@ type as a constructor — `u8(value)`.
 ```
 mut a = true                // infer a is a boolean
 
-cassert a does bool         // type check on an existing variable
+cassert(a does bool) // type check on an existing variable
 foo = a or false            // ordinary use; no inline type annotation
 ```
 
@@ -532,7 +532,7 @@ provided by a tuple on the right-hand side or amount. This is useful to create
 one-hot encodings.
 
 ```
-cassert 1<<(1,4,3) == 0ub01_1010
+cassert(1<<(1,4,3) == 0ub01_1010)
 ```
 
 
@@ -625,11 +625,11 @@ matched too.
 cassert (b=100,a=333,e=40,5) does (a=1,b=3)
 cassert (a=100,300,b=333,e=40,5) does (a=1,3)
 cassert (b=100,300,a=333,e=40,5) !does (a=1,3)
-cassert u32 does u16
-cassert u16 does u32
-cassert u32 !does string
+cassert(u32 does u16)
+cassert(u16 does u32)
+cassert(u32 !does string)
 cassert (100,30) does 30
-cassert 30 !does (30,200)
+cassert(30 !does (30,200))
 cassert (a=3) !does (30,a=200)
 cassert (a=3) !does (a=30,200)
 cassert (3) !does (30,a=200)
@@ -643,14 +643,14 @@ expression but it is quite useful for `match ... case` patterns.
 
 ```
 match (a=1,b=3) {
-  case (a=1) { cassert true }
-  else { cassert false }
+  case (a=1) { cassert(true) }
+  else { cassert(false) }
 }
 
 match const t=(a=1,b=3); t {
-  case (a=1  ,c=4) { cassert false }
-  case (b=nil,a=1) { cassert t.b==3 and t.a==1 }
-  else { cassert false }
+  case (a=1  ,c=4) { cassert(false) }
+  case (b=nil,a=1) { cassert(t.b==3 and t.a==1) }
+  else { cassert(false) }
 }
 ```
 
@@ -712,20 +712,20 @@ it is considered non-intuitive for programmers.
 ```
 const x = 0ub1_0110   // positive
 const y = 0s1_0110   // negative
-cassert x#[0,2] == 0ub10
-cassert y#[100,200]       == 0ub11   and x#[100,200]       == 0
-cassert y#sext[0,100,200] == 0sb110 and x#sext[1,100,200] == 0ub001
-cassert x#|[..] == -1
-cassert x#&[0,1] == 0
-cassert x#+[0..=5] == x#+[0..<100] == 3
-assert y#+[0..=5]  // error: 'y' can be negative
-cassert y#[..]#+[..] == 3
-cassert y#[0..=5]#+[..] == 3
-cassert y#[0..=6]#+[..] == 4
+cassert(x#[0,2] == 0ub10)
+cassert(y#[100,200]       == 0ub11   and x#[100,200]       == 0)
+cassert(y#sext[0,100,200] == 0sb110 and x#sext[1,100,200] == 0ub001)
+cassert(x#|[..] == -1)
+cassert(x#&[0,1] == 0)
+cassert(x#+[0..=5] == x#+[0..<100] == 3)
+assert(y#+[0..=5]) // error: 'y' can be negative
+cassert(y#[..]#+[..] == 3)
+cassert(y#[0..=5]#+[..] == 3)
+cassert(y#[0..=6]#+[..] == 4)
 
 mut z     = 0ub0110
 z#[0] = 1
-cassert z == 0ub0111
+cassert(z == 0ub0111)
 z#[0] = 0ub11 // error: '0ub11` overflows the maximum allowed value of `z#[0]`
 ```
 
@@ -752,13 +752,13 @@ such an operation.
 
 ```
 mut v = 0ub10
-cassert v#[0,1] == v#[1,2] == v#[..] == v#[0..=1] == v#[..=1] == 0ub10
+cassert(v#[0,1] == v#[1,2] == v#[..] == v#[0..=1] == v#[..=1] == 0ub10)
 
 mut trans = 0
 
 trans#[0] = v#[1]
 trans#[1] = v#[0]
-cassert trans == 0ub01
+cassert(trans == 0ub01)
 ```
 
 
@@ -821,17 +821,17 @@ g2= (1 + 3)
 h = x or y and z// error: use parenthesis for explicit precedence
 
 i = a == 3 <= b == d
-assert i == (a==3 and 3<=b and b == d)
+assert(i == (a==3 and 3<=b and b == d))
 ```
 
 Comparators can be chained, but only when they follow the same type or the
 direction is the same.
 
 ```
-assert a <= b <= c  // same as a<=b and b<=c
-assert a <  b <= c  // same as a< b and b<=c
-assert a == b <= c  // error: chained only allowed with same comparator
-assert a <= b >  c  // error: not same direction
+assert(a <= b <= c) // same as a<=b and b<=c
+assert(a <  b <= c) // same as a< b and b<=c
+assert(a == b <= c) // error: chained only allowed with same comparator
+assert(a <= b >  c) // error: not same direction
 ```
 
 ## Optional
@@ -914,31 +914,31 @@ status.
 
 ```
 mut v1:u32 = ?                 // v1 is zero every cycle AND not valid
-assert v1.[valid] == false
+assert(v1.[valid] == false)
 mut v2:u32 = 0                 // v2 is zero every cycle AND     valid
-assert v2.[valid] == true
+assert(v2.[valid] == true)
 
-cassert v1?
-cassert not v2?
+cassert(v1?)
+cassert(not v2?)
 
-assert v1 == 0 and v2 == 3     // data still same as usual
+assert(v1 == 0 and v2 == 3) // data still same as usual
 
 v1 = 0sb?                      // OK, poison data
 v2 = 0sb?                      // OK, poison data, and update valid
-assert v2?                     // valid even though data is not
+assert(v2?) // valid even though data is not
 
-assert v1 != 0                 // usual verilog x logic
-assert v2 != 0                 // usual verilog x logic
+assert(v1 != 0) // usual verilog x logic
+assert(v2 != 0) // usual verilog x logic
 
 const res1 = v1 + 0              // valid with just unknown 0sb? data
 const res2 = v2 + 0              // valid with just unknown 0sb? data
 
-assert res1?
-assert res2?
+assert(res1?)
+assert(res2?)
 
 reg counter:u32 = 0
 
-always assert counter.reset implies !counter?
+always_assert(counter.reset implies !counter?)
 ```
 
 `valid` can be overwritten by the setter method:
@@ -954,11 +954,11 @@ const custom = (
 
 mut x:custom = nil
 
-cassert x?
+cassert(x?)
 x.data = 33
-cassert not x?
+cassert(not x?)
 x.data = 100
-cassert x?
+cassert(x?)
 ```
 
 The contents of the tuple field do not affect the field valid bit. It is
@@ -981,21 +981,21 @@ mut x2:complex:[valid=false] = 0  // toggle valid, and set zero
 mut x3:complex = 0
 x3.[valid] = false                  // set invalid
 
-assert x1.v1 == "" and x1.v2 == ""
-assert not x2? and not x2.v1? and not v2.v2?
-assert x2.v1 == "" and x2.v2 == ""
+assert(x1.v1 == "" and x1.v2 == "")
+assert(not x2? and not x2.v1? and not v2.v2?)
+assert(x2.v1 == "" and x2.v2 == "")
 
-assert x2?.v1 == "" and x2?.v1 != ""  // any comparison is false
+assert(x2?.v1 == "" and x2?.v1 != "") // any comparison is false
 
 // When x2? is false, any x2?.foo returns 0sb? with the associated x rules
 
 x2.v2 = "hello" // direct access still OK
 
-assert not x2? and x2.v1 == "" and x2.v2 == "hello"
+assert(not x2? and x2.v1 == "" and x2.v2 == "hello")
 
 x2 = "world"
 
-assert x2? and x2?.v1 == "world" and x2.v1 == "world"
+assert(x2? and x2?.v1 == "world" and x2.v1 == "world")
 ```
 
 
@@ -1025,18 +1025,18 @@ expression.
 
 ```
 mut a:int = 0
-cassert a==0 and a.[valid] and a?
+cassert(a==0 and a.[valid] and a?)
 
 mut b:int = nil
-cassert b==nil and b.[valid] == false and not b?
+cassert(b==nil and b.[valid] == false and not b?)
 b = 0
-cassert b==0 and b.[valid] and b?
+cassert(b==0 and b.[valid] and b?)
 
 mut d:[] = ()              // empty tuple literal
-cassert d != nil and d.[valid]
+cassert(d != nil and d.[valid])
 
 mut e:int = 0sb?           // valid but with unknown bits
-cassert e.[valid] and e != 0  // any comparison against `?` is unknown
+cassert(e.[valid] and e != 0) // any comparison against `?` is unknown
 ```
 
 The same rules apply when a tuple or a type is declared. Tuple fields must
@@ -1048,14 +1048,14 @@ const a = "foo"
 mut at1 = (
   ,const a:string = a     // copy enclosing 'a' as the initial value
 )
-cassert at1.a == "foo"
+cassert(at1.a == "foo")
 
 mut at2 = (
   ,mut a:string = nil     // invalid field
 )
-cassert at2.a.[valid] == false
+cassert(at2.a.[valid] == false)
 at2.a = "torrellas"
-cassert at2.a == "torrellas" and at2[0] == "torrellas"
+cassert(at2.a == "torrellas" and at2[0] == "torrellas")
 ```
 
 Conditional paths affect variable initialization and values. If all the
@@ -1074,16 +1074,16 @@ if rand {
 }else{
   z = 6
 }
-assert rand      implies x.[valid]
-assert x.[valid] implies rand
+assert(rand      implies x.[valid])
+assert(x.[valid] implies rand)
 
-assert y.[valid]
-assert  rand implies y == 4
-assert !rand implies y == 2
+assert(y.[valid])
+assert(rand implies y == 4)
+assert(!rand implies y == 2)
 
-assert z.[valid]
-assert  rand implies z == 5
-assert !rand implies z == 6
+assert(z.[valid])
+assert(rand implies z == 5)
+assert(!rand implies z == 6)
 ```
 
 For structured bindings where one of the return values is unused, name the
@@ -1100,5 +1100,5 @@ comb fcall_returns_2_values() -> (xx, yy) {
 }
 
 const (a, b_unused) = fcall_returns_2_values()
-cassert a == 3
+cassert(a == 3)
 ```

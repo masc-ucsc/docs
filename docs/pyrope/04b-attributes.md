@@ -46,20 +46,21 @@ parser) can never confuse them.
 
 A small subset of attributes correspond to a *runtime* hardware signal
 rather than to compile-time metadata — for example `valid` (the per-cycle
-optional bit) and `defer` (the end-of-cycle register port). For these the
-`.[attr]` form can also appear on the *left-hand side* of an assignment to
-drive the underlying wire: `self.[valid] = v != 33`,
-`reg.[defer] = rhs`. Compile-time-only attributes (`max`, `bits`,
-`comptime`, `debug`, `file`, …) are read-only at use sites; bind them with
-`::[…]` at the declaration.
+optional bit) and `defer` (the end-of-cycle register port). `valid` may
+appear on the LHS to drive the underlying wire (`self.[valid] = v != 33`).
+`defer` is **RHS-only** — there is no `reg.[defer] = rhs` write form;
+register writes use plain `=`, and `reg.[defer]` on the RHS reads the
+end-of-cycle value. Compile-time-only attributes (`max`, `bits`,
+`comptime`, `debug`, `file`, …) are read-only at use sites; bind them
+with `::[…]` at the declaration.
 
 Since attributes are always compile time, the read happens at elaboration
 time. To turn a read into a check, wrap it in `cassert` (or `assert`):
 
 ```
-cassert y.[comptime]            // 'y' must be comptime
-cassert y.[bar] == 3            // 'y.[bar]' must equal 3
-cassert tmp.[bits] < 30
+cassert(y.[comptime]) // 'y' must be comptime
+cassert(y.[bar] == 3) // 'y.[bar]' must equal 3
+cassert(tmp.[bits] < 30)
 ```
 
 To check whether an attribute is set at all (without caring about its
@@ -68,9 +69,9 @@ value), compare against `nil`. Inside `.[...]` reads, comparisons against
 or `false` rather than erroring at compile time:
 
 ```
-cassert foo.[attr1] != nil      // attr1 was set on 'foo'
-cassert xx.[attr2] == nil       // attr2 was never set on 'xx'
-cassert foo.[attr1] == 2        // value check (errors at compile time if unset)
+cassert(foo.[attr1] != nil) // attr1 was set on 'foo'
+cassert(xx.[attr2] == nil) // attr2 was never set on 'xx'
+cassert(foo.[attr1] == 2) // value check (errors at compile time if unset)
 ```
 
 Since conditional code can depend on an attribute, which results in executing a
@@ -83,15 +84,15 @@ most logical is to trigger a compile error if there is no fast convergence.
 // comptime as prefix modifier
 comptime const foo:u32 = xx     // enforce that foo is comptime constant
 yyy = xx                        // yyy does not check comptime
-cassert yyy.[comptime]          // now, checks that 'yyy' is comptime
+cassert(yyy.[comptime]) // now, checks that 'yyy' is comptime
 
 // reading attributes
 if bar == 3 {
   tmp = bar
-  cassert bar.[comptime]
+  cassert(bar.[comptime])
 }
 
-cassert tmp.[bits] < 30 and not tmp.[comptime]
+cassert(tmp.[bits] < 30 and not tmp.[comptime])
 ```
 
 Pyrope allows to assign the attribute to a variable or a function call. Not to
@@ -111,7 +112,7 @@ if cond.[comptime] {           // cond is checked to be compile time constant
 if cond.[comptime] {           // checks if cond is comptime
   const v = cond
   if cond {
-    puts "cond is compile time and true"
+    puts("cond is compile time and true")
   }
 }
 ```
@@ -127,7 +128,7 @@ const bad = (a=3, b::[poison=true]=4)
 
 const b = bad.b
 
-cassert b.[poison] and b==4
+cassert(b.[poison] and b==4)
 ```
 
 
@@ -230,10 +231,10 @@ Registers have the following attributes:
 * `negreset`: active low reset signal
 * `posclk`: true by default, selects a posedge or negnedge flop
 * `retime`: allow to retime across the register
-* `defer`: read or write the end-of-cycle value. `reg.[defer] = rhs` delays
-  the write until the end of the current cycle (becomes the next cycle's 'q').
-  `reg.[defer]` on the RHS reads the final value at the end of the current
-  cycle. See [Pipelining](06c-pipelining2.md).
+* `defer`: **RHS-only** read of the end-of-cycle value (the final value the
+  register will hold for the next cycle's 'q', after all in-cycle writes
+  have accumulated). There is no `reg.[defer] = rhs` write form — register
+  writes use plain `=`. See [Pipelining](06c-pipelining2.md).
 
 Pipestage accept the same register attributes but also two more:
 
@@ -296,32 +297,30 @@ opt2:int:[min=0,max=300] = 0  // same
 opt3::[min=0,max=300] = 0     // same
 opt4:int:[range=0..=300] = 0  // same
 
-cassert opt1.[ubits] == 0    // opt1 initialized to 0, so 0 bits
+cassert(opt1.[ubits] == 0) // opt1 initialized to 0, so 0 bits
 opt1 = 200
-cassert opt1.[ubits] == 8    // last assignment needs 9 sbits or 8 ubits
+cassert(opt1.[ubits] == 8) // last assignment needs 9 sbits or 8 ubits
 ```
 
-`wrap` and `saturate` control how the right-hand side of an assignment
-narrows into the left-hand side when the value would otherwise overflow.
-Two forms are supported:
+`wrap` and `sat` control how the right-hand side of an assignment narrows
+into the left-hand side when the value would otherwise overflow. They are
+**statement-level prefix modifiers** (similar to `comptime` or `debug`),
+applied to each individual assignment.
 
-* **Sticky** — set as an attribute at declaration. Every assignment to that
-  variable is then wrapped (or saturated) automatically.
-* **Per-statement** — use `wrap` or `sat` as a statement-level prefix
-  modifier (similar to `comptime` or `debug`). The modifier controls the
-  narrowing for that single assignment.
+There is no sticky `:[wrap=true]` / `:[saturate=true]` attribute. Every
+narrowing assignment must annotate locally; an unannotated narrowing
+assignment is a compile error. This forces the choice to be visible at
+every overflow-risking line.
 
 ```
 a:u32 = 100
 b:u10 = 0
 c:u5  = 0
 d:u5  = 0
-w:u5:[wrap] = 0     // sticky: every assignment to 'w' wraps
 
 b = a               // OK, no precision lost
 wrap c = a          // OK, same as c = a#[0..<5] (since 100 is 0ub1100100, c==4)
 c = a               // error: 100 overflows the maximum value of 'c'
-w = a               // OK, 'w' has a wrap set at declaration
 
 sat c = a           // OK, c == 31
 c = 31
@@ -337,7 +336,7 @@ sat x:bool = c      // error: saturate only allowed in integers
 The prefix is part of the assignment statement; it controls the narrowing
 of the final RHS into the LHS. To narrow individual sub-expressions
 independently, factor them into intermediate variables with their own
-sticky `::[wrap]` or `::[saturate]`.
+`wrap`/`sat` assignment.
 
 ## comptime modifier
 
@@ -353,14 +352,14 @@ comptime mut counter = 0    // mutable at compile time (updated during elaborati
 comptime const b = a + 2    // OK, comptime const
 comptime c = rand           // error: 'c' is not resolvable at compile time
 
-cassert SIZE == 16
-cassert b == 3
+cassert(SIZE == 16)
+cassert(b == 3)
 ```
 
 The `comptime` status can still be queried with `.[comptime]`:
 
 ```
-cassert a.[comptime]
+cassert(a.[comptime])
 ```
 
 To avoid too frequent comptime directives, Pyrope treats all the variables that
@@ -400,5 +399,5 @@ x:(_priv=3, zz=4) = ?
 const tmp = x._priv         // error:
 const tmp::[debug] = x.priv // OK
 
-assert x._priv == 3    // OK, assert is a debug statement
+assert(x._priv == 3) // OK, assert is a debug statement
 ```

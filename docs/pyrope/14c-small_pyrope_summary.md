@@ -32,7 +32,7 @@ comb add(a:u8, b:u8) -> (result:u8) { result = a + b } // Combinational logic
 pipe[1] counter() -> (reg count:u8) { count += 1 }     // Moore machine (1-cycle pipeline)
 mod alu(in1, in2) -> (out) { /* explicit timing */ }  // Dataflow / orchestration with timing
 ```
-**LLM Pitfall**: `comb`/`pipe`/`mod` are NOT just function modifiers — they define **hardware implementation strategy**. `mod` is the only kind that can orchestrate pipelined calls (`await[N]`, `@[N]`). Small Pyrope does not support runtime function captures; pass runtime values as arguments. Visible comptime bindings are lexical.
+**LLM Pitfall**: `comb`/`pipe`/`mod` are NOT just function modifiers — they define **hardware implementation strategy**. `mod` is the only kind that can orchestrate pipelined calls (`stage[N]`, `@[N]`). A `comb` can never hold state — registers, `pipe`, or `mod` orchestration require the corresponding kind. The one exception is debug state marked `::[debug]`, which is not allowed to influence non-debug results. Small Pyrope does not support runtime function captures; pass runtime values as arguments. Visible comptime bindings are lexical.
 
 ### 3. Bit Selection Syntax
 ```pyrope
@@ -41,7 +41,7 @@ mut bits = value#[3..=6]        // Extract bits 3-6 (NOT array indexing)
 value#[3] = 0                   // Set bit 3 (NOT array assignment)
 ```
 **LLM Pitfall**: `#[...]` is bit selection, NOT array/hash access. Use `[...]` for array indexing.
-**Literal Pitfall**: `_` is only a digit separator in numeric literals (`12_34__ == 1234`). `?` marks don't-care/unknown bits *inside* a binary literal (e.g., `0ub101?`). There is no bare `_` sink and no bare `?` default — use `nil` for invalid values and `0sb?` for fully-unknown bits.
+**Literal Pitfall**: `_` is only a digit separator in numeric literals (`12_34__ == 1234`). `?` marks don't-care/unknown bits *inside* a binary literal (e.g., `0ub101?`). There is no bare `_` sink and no bare `?` default — use `nil` for unset values and `0sb?` for fully-unknown bits. Reading a `nil` value (in any expression) is a **compile error**; `nil` only documents "no value yet" and must be assigned before any use.
 
 ### 4. Tuple-Centric Everything
 ```pyrope
@@ -50,8 +50,8 @@ mut array = (1, 2, 3, 4)        // Indexed tuple (like array)
 mut mixed = (x=1, 2, y=3)       // Mixed named/indexed
 
 // Access patterns
-cassert point.x == 10           // Named access
-cassert array[2] == 3           // Array-style access
+cassert(point.x == 10)          // Named access
+cassert(array[2] == 3)          // Array-style access
 ```
 ### 5. Ranges with Multiple Operators
 ```pyrope
@@ -59,9 +59,9 @@ mut range1 = 1..=5              // Inclusive: 1,2,3,4,5
 mut range2 = 0..<4              // Exclusive: 0,1,2,3
 mut range3 = 2..+3              // Size-based: 2,3,4 (3 elements starting at 2)
 
-cassert range1 == (1,2,3,4,5)
-cassert range2 == (0,1,2,3)
-cassert range3 == (2,3,4)
+cassert(range1 == (1,2,3,4,5))
+cassert(range2 == (0,1,2,3))
+cassert(range3 == (2,3,4))
 ```
 **LLM Pitfall**: Three different range operators with different semantics. `..+` is size-based, not addition.
 
@@ -69,20 +69,22 @@ cassert range3 == (2,3,4)
 ```pyrope
 mut data:u32:[max=1000, min=0] = 0          // Type with constraints
 reg counter:[reset_pin=rst] = 0             // Hardware attributes
-cassert counter.[bits] == 8                 // Read and check attribute
+cassert(counter.[bits] == 8)                // Read and check attribute
 ```
-Attributes are **set only at declaration** with `::[attr=value]` (or `:Type:[attr=value]`) and are **immutable** afterwards. Use `name.[attr]` to **read** attribute values. Check by comparing: `foo.[attr] == value`. For one-off overflow, use the statement-level prefix: `wrap result = a + b` or `sat result = x + y`.
+Attributes are **set only at declaration** with `::[attr=value]` (or `:Type:[attr=value]`) and are **immutable** afterwards. Use `name.[attr]` to **read** attribute values. Check by comparing: `foo.[attr] == value`. Overflow behavior is **per-statement**: use the statement-level prefix `wrap result = a + b` or `sat result = x + y`. There is no sticky `:[wrap=true]` / `:[saturate=true]` attribute — every narrowing assignment must annotate locally, or the compiler rejects it.
 
 ### 7. Assignment Operators in Hardware Context
 ```pyrope
 reg counter = 0
-counter += 1                    // Immediate update
-counter.[defer] += 1            // Deferred to end of cycle
+counter += 1                    // Register update
+const peek = counter.[defer]    // Read end-of-cycle value on RHS
 ```
-**LLM Pitfall**: Register updates can be immediate or deferred. A bare register
-name reads the current 'q' value, `.[defer]` is the end-of-cycle value, and
-`past[n](x)` reads `n` cycles ago. To snapshot 'q' before later in-cycle
-updates, copy it into a local (`const counter_q = counter`).
+**LLM Pitfall**: A bare register name reads the current 'q' value. `.[defer]`
+is **read-only on the RHS** — it returns the in-cycle accumulating value
+(useful inside loops or for end-of-cycle assertions). There is no
+`counter.[defer] = ...` LHS form; just write `counter = ...`. Use
+`past[n](x)` to read the value `n` cycles ago. To snapshot 'q' before later
+in-cycle updates, copy into a local (`const counter_q = counter`).
 
 ### 8. Memory Declaration Syntax
 ```pyrope
@@ -106,7 +108,7 @@ mut out = ram.port[0][addr]:[rdport=0]      // Read port 0
 - Combinational logic (`mut`) updates immediately
 - `pipe` is a Moore machine (outputs always registered), may use `reg` for internal storage
 - `mod` has no constraints on registers or outputs
-- `mod` has two pipeline-timing mechanisms: `await[N]` (declaration modifier that pipelines the whole RHS over N cycles) and `foo@[N]` (pure timing type check, works on LHS and RHS uses)
+- `mod` has two pipeline-timing mechanisms: `stage[N]` (declaration modifier that pipelines the whole RHS over N cycles) and `foo@[N]` (pure timing type check, works on LHS and RHS uses)
 
 ### No Runtime Loops
 ```pyrope
@@ -119,12 +121,14 @@ for i in 0..=7 {
 
 ### Testing and Assertions
 ```pyrope
-assert condition               // Runtime assertion (hardware check)
-cassert compile_time_expr      // Compile-time assertion
+assert(condition)              // Runtime assertion (hardware check)
+cassert(compile_time_expr)     // Compile-time assertion
 test "description" {           // Test block with simulation
-    step                       // Advance clock cycle
+    step( )// Advance clock cycle
 }
 ```
+**LLM Pitfall**: Always write explicit parentheses for calls and verification
+conditions. Use `foo(x)`, `foo()`, `assert(expr)`, and `cassert(expr)`.
 
 ## Common LLM Mistakes to Avoid
 
@@ -173,7 +177,7 @@ reg accumulator = 0             // Persistent register
 comb pure_function(x:u8) -> (y:u8) { y = x + 1 }
 pipe[1] stateful_function() -> (reg counter:u8) { counter += 1 }
 
-cassert pure_function(5) == 6
+cassert(pure_function(5) == 6)
 ```
 
 ### Memory Operations
@@ -186,19 +190,26 @@ mut read_data = ram[addr]      // Read
 ### Control Flow
 ```pyrope
 if condition { /* ... */ }     // Standard conditional
-match value {                  // Pattern matching
+match value {                  // Pattern matching — `else` arm is mandatory
   case 0 { /* ... */ }         // `case` is alias for `==`
   == 1 { /* ... */ }           // `==` also works
-  else { /* ... */ }
+  else { /* ... */ }           // required terminator
 }
 ```
+**LLM Pitfall**: `match` *must* end with `else { ... }`. A `match` without
+`else` is a parse error.
+
+`when` / `unless` postfix gates are **compile-time only** — they include
+or omit a statement based on `comptime` conditions (think `#if`, not a
+runtime mux). For runtime gating, use `if` blocks or a ternary `if`
+expression on the RHS.
 
 ### Testing
 ```pyrope
 test "my test" {
     mut result = my_function(input)
-    assert result == expected
-    step                       // Advance simulation
+    assert(result == expected)
+    step( )// Advance simulation
 }
 ```
 

@@ -61,20 +61,21 @@ from the end of the cycle the attribute `variable.[defer]` must be used.
 These are constructs not existing in software but needed in hardware because it
 is necessary to connect blocks. Following the control flow from the top only
 allows to connect forward. Some contructs like connecting a ring require a
-"backward edge". The `.[defer]` attribute allows such constructs.
+"backward edge". The `.[defer]` RHS read allows such constructs.
 
 ```
 mut a = 1
 mut b = 2
 
-cassert a==1 and b==2
-b.[defer] = a         // write defer
-cassert a==1 and b==2
+cassert(a==1 and b==2)
+b = a.[defer]         // read the end-of-cycle value of 'a' (= 1)
+cassert(a==1 and b==1)
 
-cassert b.[defer] == 1     // read defer
+cassert(b.[defer] == 1) // read defer
 ```
 
-If there are read and write defers, the read defers happen first, and then the write defers. As a result, the deferred writes are not seen in this cycle.
+`.[defer]` is RHS-only — a backward edge is expressed by reading another
+variable's end-of-cycle value, not by writing into one.
 
 
 ### Pipelining
@@ -120,8 +121,8 @@ comb max_gap_count(nums) -> (r) {
     }
   }
 
-  comb less(a,b)  -> (r:bool) { _0 < _1 }
-  comb dosub(a,b) -> (r)      { _0 - _1 }
+  comb less(a,b)  -> (r:bool) { r = a < b }
+  comb dosub(a,b) -> (r)      { r = a - b }
 
   const sorted = sort(numbers, less)
   const diffs  = adjacent_transform(sorted, num=2, dosub)
@@ -149,8 +150,8 @@ func add<T:Numeric>(a:T, b:T) -> T { a + b }
 ```
 
 ```
-comb add(a, b)  -> (r) { _0 + _1 }                  // OK, no constrains
-comb add2<T:int>(a:T, b:T) -> (r:T) { _0 + _1 }     // constrain both to have same type
+comb add(a, b)  -> (r) { r = a + b }                  // OK, no constrains
+comb add2<T:int>(a:T, b:T) -> (r:T) { r = a + b }     // constrain both to have same type
 ```
 
 When a protocol defines an interface, in Swift:
@@ -181,7 +182,7 @@ const Shape = (
 const Rectangle:(...Shape, ...OtherAPI) = (...some_code_here)
 const Circle:Shape = (...some_code_here)
 
-comb print_share_info(s:Shape) { puts "Shape: {s.name()}" }
+comb print_share_info(s:Shape) { puts("Shape: {s.name()}") }
 ```
 
 
@@ -270,9 +271,9 @@ in Pyrope both `()` and `[]` are allowed and have the same meaning.
 
 ```
 const x = ((1, 2), (3, 4))
-assert x == ((1, 2), (3, 4))
-assert x[0, 1] == 2 == x[0][1]
-assert x[1, 0] == 3 == x[1][0]
+assert(x == ((1, 2), (3, 4)))
+assert(x[0, 1] == 2 == x[0][1])
+assert(x[1, 0] == 3 == x[1][0])
 ```
 
 ## Go

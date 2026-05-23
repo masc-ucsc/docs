@@ -97,8 +97,8 @@ a[3][4] = 1
 
 mut b:[4][8]u8 = 13
 
-cassert b[2][7] == 13
-assert b[2][10]      // error: '10' is out of bound access for 'b[2]'
+cassert(b[2][7] == 13)
+assert(b[2][10]) // error: '10' is out of bound access for 'b[2]'
 ```
 
 It is possible to initialize the async memory with an array. The initialization
@@ -207,7 +207,7 @@ mem.latency = (1, 1, 1)
 mem.wensize = 1 // we bit (no write mask)
 mem.rdport  = (-1,1,0) // 0 WR, !=0 -> RD
 
-await[1..<inf] res = __memory(mem)
+stage[1..<inf] res = __memory(mem)
 
 q0 = res[0]
 q1 = res[1]
@@ -217,7 +217,7 @@ q1 = res[1]
 The previous code directly instantiates a memory and passes the configuration.
 
 
-Multi cycle memories are pipelined elements, and using them requires the `await[1..<inf]`
+Multi cycle memories are pipelined elements, and using them requires the `stage[1..<inf]`
 declaration modifier and the same rules as pipeline flops apply (See [pipelining](06c-pipelining2.md)).
 
 
@@ -230,9 +230,9 @@ dimension. The entries are in a row-major order.
 
 ```
 mut d2:[2][2] = ((1,2),(3,4))
-cassert d2[0][0] == 1 and d2[0][1] == 2 and d2[1][0] == 3 and d2[1][1] == 4
+cassert(d2[0][0] == 1 and d2[0][1] == 2 and d2[1][0] == 3 and d2[1][1] == 4)
 
-cassert d2[0] == (1,2) and d2[1] == (3,4)
+cassert(d2[0] == (1,2) and d2[1] == (3,4))
 ```
 
 The `for` iterator goes over each entry of the tuple/array. If a matrix, it
@@ -247,8 +247,8 @@ comb flatten(...arr) -> (res) {
   }
 }
 
-cassert flatten(d2) == (1,2,3,4)
-cassert flatten((((1),2),3),4) == (1,2,3,4)
+cassert(flatten(d2) == (1,2,3,4))
+cassert(flatten((((1),2),3),4) == (1,2,3,4))
 ```
 
 ## Array index
@@ -259,7 +259,7 @@ with tuples or by requiring an enumerate.
 
 ```
 mut x1:[2]u3 = (0,1)
-cassert x1[0] == 0 and x1[1] == 1
+cassert(x1[0] == 0 and x1[1] == 1)
 
 enum X = (
   t1 = 0, // sequential enum, not one hot enum (explicit assign)
@@ -276,8 +276,8 @@ mut x3:[-8..<7]u3 = ?  // accept signed values
 
 mut x4:[100..<132]u3 = ?
 
-cassert x4[100] == 0
-assert x4[3]       // error: out of bounds index
+cassert(x4[100] == 0)
+assert(x4[3]) // error: out of bounds index
 ```
 
 ### Reset and initialization
@@ -300,12 +300,12 @@ reg r_ver = 0sb?
 reg r = ?
 mut v = ?
 
-assert v == 0 and r == 0
+assert(v == 0 and r == 0)
 
-assert !(r_ver != 0)    // it will randomly fail
-assert !(r_ver == 0)    // it will randomly fail
-assert !(r_ver != 0sb?) // it will randomly fail
-assert !(r_ver == 0sb?) // it will randomly fail
+assert(!(r_ver != 0)) // it will randomly fail
+assert(!(r_ver == 0)) // it will randomly fail
+assert(!(r_ver != 0sb?)) // it will randomly fail
+assert(!(r_ver == 0sb?)) // it will randomly fail
 ```
 
 
@@ -317,11 +317,11 @@ initialization before reset.
 ```
 mut arr:[] = (0,1,2,3,4,5,6,7)
 
-always assert arr[0] == 0 and arr[7] == 7  // may FAIL during reset
+always_assert(arr[0] == 0 and arr[7] == 7) // may FAIL during reset
 
 reg mem:[] = (0,1,2,3,4,5,6,7)
 
-always assert mem[7] == 7                  // may FAIL during reset
-always assert mem[7] == 7 unless mem.reset // OK
-assert mem[7] == 7                         // OK, not checked during reset
+always_assert(mem[7] == 7) // may FAIL during reset
+always_assert(mem[7] == 7) unless mem.reset // OK
+assert(mem[7] == 7) // OK, not checked during reset
 ```

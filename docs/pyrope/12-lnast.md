@@ -456,7 +456,7 @@ remove these attributes.
 
     mut a = d + 100
 
-    cassert a.[debug]  // debug is sticky
+    cassert(a.[debug]) // debug is sticky
     ```
 
 === "LNAST"
@@ -498,19 +498,19 @@ with arithmetic operations and/or bit selection.
 const foo::[attr1=2] = 3
 
 mut foo2 = foo
-cassert foo2.[attr1] == 2
+cassert(foo2.[attr1] == 2)
 
 const foo3 = foo#[..]
-cassert foo3.[attr1] != nil          // existence check via nil
+cassert(foo3.[attr1] != nil) // existence check via nil
 
 mut xx::[attr2=5] = 1                 // sets attr2 at declaration
 
 const xx2 = xx
-cassert xx2.[attr2] == 5
-cassert xx2.[attr2] != nil
+cassert(xx2.[attr2] == 5)
+cassert(xx2.[attr2] != nil)
 
 const xx3 = xx + 0
-cassert xx3.[attr2] == nil           // dropped after arithmetic
+cassert(xx3.[attr2] == nil) // dropped after arithmetic
 ```
 
 
@@ -876,9 +876,9 @@ const tup=(1,2,3)
 const ran=1..<5
 const enu = enum(a,b=(x,y),c)
 
-cassert 2 in tup
-cassert 3 in ran
-cassert enu.b.x in enu.b
+cassert(2 in tup)
+cassert(3 in ran)
+cassert(enu.b.x in enu.b)
 ```
 
 The resul is a common `in` LNAST operation that gets different functionality
@@ -1203,7 +1203,7 @@ the `elif` conditions.
     const tmp1 = a<3
     const tmp2 = a>40
     const tmp3 = 1<<(tmp1,tmp2)
-    optimize tmp3#+[..]<=1        // at most one bit set
+    optimize(tmp3#+[..]<=1) // at most one bit set
 
     if tmp1 {
       y = 10
@@ -1266,6 +1266,7 @@ false }` is created.
     match x {
      == 3 { z = 1 }
      in 4..<6 { z = 2 }
+     else { }
     }
 
     match x {
@@ -1373,16 +1374,16 @@ statements.
 === "Pyrope"
     ```
     if mut x=3; x<4 {
-      cassert x==3
+      cassert(x==3)
     }
     while mut z=1; x {
       x -= z
     }
     mut z=0
     match mut x=2 ; z+x {
-      == 2 { cassert true  }
-      != 7 { cassert true  }
-      else { cassert false }
+      == 2 { cassert(true)  }
+      != 7 { cassert(true)  }
+      else { cassert(false) }
     }
     ```
 

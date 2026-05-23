@@ -28,12 +28,12 @@ equivalance)[07-typesystem.md#Type_equivalence].
 const Animal = (
   mut legs:int = nil,
   mut name = "unnamed",
-  comb say_name() { puts name }
+  comb say_name() { puts(name) }
 )
 
 const Dog = Animal ++ (
   comb setter(ref self) { self.legs = 4 },
-  comb bark() { puts "bark bark" }
+  comb bark() { puts("bark bark") }
 )
 
 comb bird_setter_default(ref self)           { self.legs = 2 }
@@ -46,7 +46,7 @@ const Bird = Animal ++ (
 )
 
 const Greyhound = Dog ++ ( // also extends Dog
-  comb race() { puts "running fast" }
+  comb race() { puts("running fast") }
 )
 ```
 
@@ -101,7 +101,7 @@ comb do_animal_vec(a_vec:[?]Animal) -> (r:[?]Animal) {
 }
 
 mut x = do_animal_vec(b_vec:[?]Bird) // OK
-cassert x does _:[?]Animal  // not :[?]Bird
+cassert(x does _:[?]Animal) // not :[?]Bird
 ```
 
 ### Basic types
@@ -119,10 +119,10 @@ const Weight = (
   weight:int = ?
 )
 
-cassert Age !does Weight
+cassert(Age !does Weight)
 
 mut a:Age = 3
-cassert a == a.age == a[0] == 3
+cassert(a == a.age == a[0] == 3)
 
 mut w:Weight = 100
 
@@ -185,7 +185,7 @@ comb fa_t(a:Animal) { }
 comb fd_t(d:Dog) { }
 
 comb call_animal(a:Animal) {
-   puts a.name // OK
+   puts(a.name) // OK
 }
 comb call_dog(d:Dog) {    // OK
    d.bark()    // OK
@@ -232,14 +232,14 @@ in-place with the relative order left.
 
 ```
 comb m(a:int, ...x:(_:string, c:int, d), y:int) {
-  assert a == 1
-  assert x[0] == "here"
-  assert x[1] == 2 == x.c
-  assert y == 3
+  assert(a == 1)
+  assert(x[0] == "here")
+  assert(x[1] == 2 == x.c)
+  assert(y == 3)
   if d does int { // inferred type
-    assert d == 33
+    assert(d == 33)
   }else{
-    assert d == "x"
+    assert(d == "x")
   }
 }
 
@@ -333,16 +333,16 @@ const ext = base ++ (
 mut t:ext = nil
 
 // t.fun1 only has ext.fun1
-assert t.fun1(a=1,b=2) == 4
+assert(t.fun1(a=1,b=2) == 4)
 t.fun1()                 // error: no option without arguments
 
 // t.fun2 has base.fun2 and then ext.fun2
-assert t.fun2(1,2) == 5  // EXACT match of arguments has higher priority
-assert t.fun2() == 2     // base.fun2 catches all ahead of ext.fun2
+assert(t.fun2(1,2) == 5) // EXACT match of arguments has higher priority
+assert(t.fun2() == 2)    // base.fun2 catches all ahead of ext.fun2
 
 // t.fun3 has ext.fun3 and then base.fun3
-assert t.fun3(1,2) == 7  // EXACT match of arguments has higher priority
-assert t.fun3() == 8     // ext.fun3 catches all ahead of ext.fun3
+assert(t.fun3(1,2) == 7) // EXACT match of arguments has higher priority
+assert(t.fun3() == 8)    // ext.fun3 catches all ahead of ext.fun3
 ```
 
 A more traditional "overload" calling the is possible by calling the lambda directly:
@@ -389,21 +389,21 @@ comb fun_list_abcd(a, b, c, d) -> (r) { r = a + b + c + d }
 
 const fun_list = [fun_list_ab, fun_list_abc, fun_list_abcd]
 
-assert fun_list.[size] == 3    // 3 lambda entries in fun_list
+assert(fun_list.[size] == 3) // 3 lambda entries in fun_list
 
-assert fun_list(1,2) == 3
-assert fun_list(1,2,4) == 7
-assert fun_list(1,2,4,5) == 12
-assert fun_list(1,2,4,5,6) == 18 // error: no function with 5 args
+assert(fun_list(1,2) == 3)
+assert(fun_list(1,2,4) == 7)
+assert(fun_list(1,2,4,5) == 12)
+assert(fun_list(1,2,4,5,6) == 18) // error: no function with 5 args
 
 
 comb fun_list_ab100(a, b) -> (r) { r = 100 }
 const fun_list2 = [fun_list_ab, fun_list_abc, fun_list_abcd, fun_list_ab100]
-assert fun_list2(1, 2) == 3       // first match wins
+assert(fun_list2(1, 2) == 3) // first match wins
 
 comb fun_list_ab200(a, b) -> (r) { r = 200 }
 const fun_list3 = [fun_list_ab200, fun_list_ab, fun_list_abc, fun_list_abcd]
-cassert fun_list3(1, 2) == 200
+cassert(fun_list3(1, 2) == 200)
 ```
 
 For untyped named argument calls:
@@ -413,9 +413,9 @@ comb f1_ab(a, b) -> (r) { r = a + b + 100 }
 comb f1_xy(x, y) -> (r) { r = x + y + 200 }
 const f1 = [f1_ab, f1_xy]
 
-cassert f1(a=1, b=2) == 103
-cassert f1(x=1, y=2) == 203
-cassert f1(1, 2) == 103  // first in list
+cassert(f1(a=1, b=2) == 103)
+cassert(f1(x=1, y=2) == 203)
+cassert(f1(1, 2) == 103) // first in list
 ```
 
 For typed calls:
@@ -427,14 +427,14 @@ comb fo_ii_s(a:int, b:int)  -> (result:string) { result = "hello" }
 const fo = [fo_is, fo_ii_b, fo_ii_s]
 
 const a = fo(3, "hello")
-cassert a == true
+cassert(a == true)
 
 const b = fo(3, 300)        // first in list return bool
-cassert b == false
+cassert(b == false)
 
 const c:int = fo(3, 300)    // error: no lambda fulfills constrains
 const c:string = fo(3, 300)
-cassert c == "hello"
+cassert(c == "hello")
 ```
 
 For runtime-conditional dispatch, write the condition chain directly at the
@@ -464,7 +464,7 @@ comb f1(a, b) -> (r) {
 test "check f1" {
   for a in -100..=100 {
     for b in -100..=100 {
-      assert f1(a, b) != nil
+      assert(f1(a, b) != nil)
     }
   }
 }
@@ -491,10 +491,10 @@ const Animal = (
   comb speak(self) { }
 )
 const Cat = Animal ++ (
-  comb speak(self) { puts "meaow" }
+  comb speak(self) { puts("meaow") }
 )
 const Bird = Animal ++ (
-  comb speak(self) { puts "pio pio" }
+  comb speak(self) { puts("pio pio") }
 )
 ```
 
@@ -510,8 +510,8 @@ comb smallest(...a) -> (r) {
 
 Ad-hoc polymorphism: capacity to overload the same lambda name with different types.
 ```
-comb speak_bird(a:Bird) { puts "pio pio" }
-comb speak_cat(a:Cat)   { puts "meaow" }
+comb speak_bird(a:Bird) { puts("pio pio") }
+comb speak_cat(a:Cat)   { puts("meaow") }
 const speak = [speak_bird, speak_cat]
 ```
 
@@ -535,7 +535,7 @@ immutable, new methods can be added like in mixin.
 
 ```
 const Say_mixin = (
-  comb say(s) { puts s }
+  comb say(s) { puts(s) }
 )
 
 const Say_hi_mixin = (
@@ -627,15 +627,15 @@ const My_obj2 = (
   mut val1:u8 = 0,
   comb add(ref self, x) { self.val += x }
 )
-cassert My_obj equals My_obj2   // same behavioir no defined overlap fiels
+cassert(My_obj equals My_obj2) // same behavioir no defined overlap fiels
 
 const xx:My_obj = ?               // default initialization
 
-cassert xx.val1 == 0
+cassert(xx.val1 == 0)
 xx.add(3)
-cassert xx.val1 == 3
+cassert(xx.val1 == 3)
 xx.sub(2)
-cassert xx.val1 == 1
+cassert(xx.val1 == 1)
 ```
 
 Pyrope does not directly check that all the undefined methods are implemented,
@@ -679,7 +679,7 @@ const Shape = (
   comb increase_size(ref self, x:i12) { },       // undefined
 
   comb setter(ref self, name) { self.name = name }, // implemented
-  comb say_name(self) { puts "name:{}", name }
+  comb say_name(self) { puts("name:{}", name) }
 )
 
 const Circle = (
@@ -693,7 +693,7 @@ const Circle = (
      result = pi * self.rad * self.rad
   }
 )
-cassert Circle does Shape  // extra check that the exclude did not remove too many fields
+cassert(Circle does Shape) // extra check that the exclude did not remove too many fields
 ```
 
 ## Row type
@@ -705,8 +705,8 @@ otherwise). The caller is responsible for meeting them.
 
 ```
 comb rotate(a) {
-  cassert a has 'x' and a has 'y'
-  assert a.y != 30
+  cassert(a has 'x' and a has 'y')
+  assert(a.y != 30)
   mut r = a
   r.x = a.y
   r.y = a.x

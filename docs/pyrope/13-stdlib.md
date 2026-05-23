@@ -9,7 +9,7 @@ creation of operations: `plus`, `minus`, `mult`, `div`, `mod`, `ror`...
 
 ```
 const prp = import("prp")
-cassert prp.plus(1,2,3) == 6
+cassert(prp.plus(1,2,3) == 6)
 ```
 
 Library code:
@@ -30,7 +30,7 @@ Sample use:
 ```
 const x = (1,2,23)
 
-cassert prp.len(x) == 3
+cassert(prp.len(x) == 3)
 ```
 
 Library code:
@@ -45,7 +45,7 @@ Sample use:
 ```
 const x = (1,2,3)
 
-cassert x.map(_ + 1) == (2,3,4)
+cassert(x.map(_ + 1) == (2,3,4))
 ```
 
 Library code:

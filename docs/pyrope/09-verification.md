@@ -69,12 +69,12 @@ test "producer consumer" {
       waitfor(ref not_empty)
       poke("fifo/pop", true)
       step
-      assert sigref("fifo/dout") == i
+      assert(sigref("fifo/dout") == i)
       poke("fifo/pop", false)
     }
   }
 
-  join producer, consumer
+  join(producer, consumer)
 }
 ```
 
@@ -103,12 +103,12 @@ test "temporary monitor" {
     mut req_rose = req.[rising]
     while true {
       waitfor(ref req_rose)
-      puts "req rose"
+      puts("req rose")
     }
   }
 
-  step 1000
-  cancel mon
+  step(1000)
+  cancel(mon)
 }
 ```
 
@@ -139,8 +139,8 @@ test "wait for valid" {
 
   waitfor(ref valid_rose)
 
-  assert valid
-  puts "valid just went high"
+  assert(valid)
+  puts("valid just went high")
 }
 ```
 
@@ -160,8 +160,8 @@ These reads are debug-only. They compare the current value against
 test "edge in assertions" {
   const clk_en = sigref("top/clk_en")
 
-  assert !clk_en.[rising], "unexpected clock enable"
-  cover  clk_en.[falling]
+  assert(!clk_en.[rising], "unexpected clock enable")
+  cover(clk_en.[falling])
 }
 ```
 
@@ -181,7 +181,7 @@ test "bounded wait" {
   mut done_rose = done.[rising]
 
   waitfor(ref done_rose, timeout=1000)
-  assert done, "done did not rise within 1000 cycles"
+  assert(done, "done did not rise within 1000 cycles")
 }
 ```
 
@@ -195,7 +195,7 @@ waitfor(ref valid_rose, timeout=500)
 
 mut done_var = done
 waitfor(ref done_var, timeout=2000)
-step 5
+step(5)
 ```
 
 
@@ -211,15 +211,15 @@ persistent overrides:
 test "inject fault then release" {
   const mem_err = sigref("top/mem/error")
 
-  assert !mem_err
+  assert(!mem_err)
 
   force("top/mem/error", true)
-  step 3
-  assert sigref("top/core/exception")
+  step(3)
+  assert(sigref("top/core/exception"))
 
   release("top/mem/error")
   step
-  assert !mem_err
+  assert(!mem_err)
 }
 ```
 
@@ -251,15 +251,15 @@ test "req ack monitor" {
     mut ack_rose = ack.[rising]
     while true {
       waitfor(ref ack_rose)
-      assert outstanding > 0, "ack without req"
+      assert(outstanding > 0, "ack without req")
       outstanding -= 1
     }
   }
 
-  step 1000
-  cancel req_mon
-  cancel ack_mon
-  assert outstanding == 0
+  step(1000)
+  cancel(req_mon)
+  cancel(ack_mon)
+  assert(outstanding == 0)
 }
 ```
 
@@ -354,24 +354,24 @@ assert property (@(posedge clk) $rose(req) |-> ##[1:10] $rose(ack));
 translates directly:
 
 ```pyrope
-assert rose(req) implies rose[1..=10](ack)
+assert(rose(req) implies rose[1..=10](ack))
 ```
 
 More examples:
 
 ```pyrope
 // x stable during a 5-cycle handshake window
-assert req implies stable[1..=5](payload)
+assert(req implies stable[1..=5](payload))
 
 // ack must eventually rise within 32 cycles of req
-assert rose(req) implies eventually[1..=32](ack)
+assert(rose(req) implies eventually[1..=32](ack))
 
 // grant is always clean-high while sel is held
-assert sel implies always[1..=10](grant)
+assert(sel implies always[1..=10](grant))
 
 // past values
-assert counter == past(counter) + 1 when enable
-assert x == past[3](x)              // same value three cycles ago
+assert(counter == past(counter) + 1) when enable
+assert(x == past[3](x)) // same value three cycles ago
 ```
 
 ### Overriding comptime parameters
@@ -383,8 +383,8 @@ may refer to visible comptime bindings, and callers can override the parameter:
 comptime const window = 1..=8
 comb ack_within(w:range=window, req, ack) -> (r:bool) { r = req implies eventually[w](ack) }
 
-assert ack_within(req, ack)           // uses default w = 1..=8
-assert ack_within(w=1..<4, req, ack)  // tighter window at this call site
+assert(ack_within(req, ack)) // uses default w = 1..=8
+assert(ack_within(w=1..<4, req, ack)) // tighter window at this call site
 ```
 
 

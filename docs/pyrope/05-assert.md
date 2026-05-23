@@ -33,6 +33,13 @@ There are 5 main verification statements:
 * `ensures` is a statement similar to `requires` but the clause specifies a
   post condition. `ensures` allows code optimizations like `optimize` statement.
 
+Use the parenthesized form for verification conditions: `assert(expr)`,
+`cassert(expr)`, `optimize(expr)`, `requires(expr)`, `ensures(expr)`, and
+`cover(expr)`. This is the canonical style for new code and examples because it
+keeps the checked expression visually grouped and avoids newline/precedence
+ambiguity. A trailing message or gate still belongs to the statement:
+`assert(expr, "message") when enable`.
+
 
 Hardware setups always have an extensive CI/verification setup. This means that
 run-time assertion failures are OK, better compile time to reduce design time,
@@ -45,15 +52,15 @@ checked only at compile time a `cassert` must be used. `assert`, `requires`,
 
 ```pyrope
 a = 3
-assert a == 3          // checked at runtime (or compile time)
-cassert a == 3         // checked at compile time
+assert(a == 3)         // checked at runtime (or compile time)
+cassert(a == 3)        // checked at compile time
 
-optimize b > 3         // may optimize and perform a runtime check
+optimize(b > 3)        // may optimize and perform a runtime check
 
 comb max_not_zero(a, b) -> (result) {
-  requires a > 0
-  requires b > 0
-  ensures result == a or result == b
+  requires(a > 0)
+  requires(b > 0)
+  ensures(result == a or result == b)
 
   result = if a > b { a } else { b }
 }
@@ -69,9 +76,9 @@ a = 0
 if cond {
   a = 3
 }
-assert cond implies a == 3, "the branch was taken, so it must be 3??"
-assert a == 3, "the same error" when   cond
-assert a == 0, "the same error" unless cond
+assert(cond implies a == 3, "the branch was taken, so it must be 3??")
+assert(a == 3, "the same error") when   cond
+assert(a == 0, "the same error") unless cond
 ```
 
 
@@ -106,9 +113,9 @@ implementation bit.
     follows."
 
 ```
-comb fun1(a, b) -> (r) { _0 | _1 }
-comb fun2(a, b) -> (r) { ~(~_0 | ~_1) }
-lec fun1, fun2
+comb fun1(a, b) -> (r) { r = a | b }
+comb fun2(a, b) -> (r) { r = ~(~a | ~b) }
+lec(fun1, fun2)
 ```
 
 In addition, there is the `lec_valid` command. It is similar to `lec` but it
@@ -126,7 +133,7 @@ mod mul2(a, b) -> (reg out) {
 
 comb mul0(a, b) -> (out) { out = a * b }
 
-lec_valid mul0, mul2
+lec_valid(mul0, mul2)
 ```
 
 ## Coverage
@@ -150,15 +157,15 @@ System Verilog `coverpoint` and `covergroup` but the meaning is not the same.
 
 ```pyrope
 // coverage case NUM group states that random should be odd or even
-covercase NUM,   random&1 , "odd number"
-covercase NUM, !(random&1), "even number"
+covercase(NUM,   random&1 , "odd number")
+covercase(NUM, !(random&1), "even number")
 
-covercase COND1, reset, "in reset"
-covercase COND1, val>3, "bigger than 3"
+covercase(COND1, reset, "in reset")
+covercase(COND1, val>3, "bigger than 3")
 
 assert((!reset and val>3) or reset)  // less checks than COND1
 
-cover a==3, "at least a is 3 once in a while"
+cover(a==3, "at least a is 3 once in a while")
 ```
 
 The `covercase` is similar to writing the assertions, but it checks that all
@@ -188,17 +195,17 @@ assert checks during reset or when the lambda is called with invalid data.
 Adding the `always` modifier before the assert/coverage keywords guarantees
 that the check is performed every cycle independent of the valid attribute.
 
-To provide assert/optimize during reset, Pyrope provides a `always assert`,
-`always cassert`, `always optimize`, `always covercase`, and
-`always cover`.
+To provide assert/optimize during reset, Pyrope provides a `always_assert`,
+`always_cassert`, `always_optimize`, `always_covercase`, and
+`always_cover`.
 
 ```
 reg memory:[3]u33 = (1, 2, 3) // may take cycles to load this contents
 
-assert memory[0] == 1 // not checked during reset
+assert(memory[0] == 1) // not checked during reset
 
-always assert memory[1] == 2 // may fail during reset
-always assert memory[1] == 2 unless memory.reset  // should not fail
+always_assert(memory[1] == 2) // may fail during reset
+always_assert(memory[1] == 2) unless memory.reset  // should not fail
 ```
 
 ## Random
@@ -212,7 +219,7 @@ random number (`.[rand]`) generation.
 mut x:u8 = ?
 
 for i in 1..=99 {
-  cassert 0 <= x.[crand] <= 255
+  cassert(0 <= x.[crand] <= 255)
 }
 
 comb get_rand_0_255(a:u8) -> (r) {
@@ -230,8 +237,8 @@ When applied to a tuple, it randomly picks an entry from the tuple.
 mut a = (1, 2, 3, b=4)
 mut x = a.[rand]
 
-cassert x == 1 or x == 2 or x == 3 or x == 4
-cassert x.b == 4 when x == 4
+cassert(x == 1 or x == 2 or x == 3 or x == 4)
+cassert(x.b == 4) when x == 4
 ```
 
 The simulation random number is considered a `.[debug]` statement, this means
@@ -243,12 +250,12 @@ Pyrope has the `test [message [,args]+] ( [stmts+] }`.
 
 === "Many parallel tests"
     ```
-    comb add(a, b) -> (r) { _0 + _1 }
+    comb add(a, b) -> (r) { r = a + b }
 
     for a in 0..=20 {
       for b in 0..=20 {
         test "checking add({},{})", a, b {
-           cassert a + b == add(a, b)
+           cassert(a + b == add(a, b))
         }
       }
     }
@@ -256,12 +263,12 @@ Pyrope has the `test [message [,args]+] ( [stmts+] }`.
 
 === "Single large test"
     ```
-    comb add(a, b) -> (r) { _0 + _1 }
+    comb add(a, b) -> (r) { r = a + b }
 
     test "checking add" {
       for a in 0..=20 {
         for b in 0..=20 {
-           cassert a + b == add(a, b)
+           cassert(a + b == add(a, b))
         }
       }
     }
@@ -275,21 +282,21 @@ lambda is instantiated and we want to check/update the inputs/outputs.
 ```
 // mod: output 'value' is combinational (reads register directly)
 mod counter_mod(update) -> (value) {
-  reg count:u8:[wrap] = 0
+  reg count:u8 = 0
 
   value = count              // combinational output (no extra flop)
 
-  count += 1 when update
+  if update { wrap count = count + 1 }
 }
 
 // pipe: output 'value' goes through a flop (Moore machine)
 // Same logic, but output is delayed by 1 cycle compared to mod version
 pipe[1] counter_pipe(update) -> (value) {
-  reg count:u8:[wrap] = 0
+  reg count:u8 = 0
 
   value = count              // registered output (goes through output flop)
 
-  count += 1 when update
+  if update { wrap count = count + 1 }
 }
 
 test "counter_mod through several cycles" {
@@ -297,27 +304,27 @@ test "counter_mod through several cycles" {
   mut inp = true
   mut x = counter_mod(inp.[defer])   // inp contents at the end of each cycle
 
-  assert x == 0 // x.value == 0
-  assert inp == true
+  assert(x == 0) // x.value == 0
+  assert(inp == true)
 
   step
 
-  assert x == 1
+  assert(x == 1)
   inp = false
 
   step
 
-  assert x == 1
-  assert inp == false
+  assert(x == 1)
+  assert(inp == false)
   inp = true
 
-  assert inp == true
-  assert x == 1
+  assert(inp == true)
+  assert(x == 1)
 
   step
 
-  assert inp == true
-  assert x == 2
+  assert(inp == true)
+  assert(x == 2)
 }
 ```
 
@@ -331,11 +338,11 @@ block also accepts to read and/or clear failed attribute.
 test "assert should fail" {
 
  const n = assert.[failed]
- assert n == false
+ assert(n == false)
 
- assert false // FAILS
+ assert(false) // FAILS
 
- assert assert.[failed]
+ assert(assert.[failed])
 }
 ```
 
@@ -395,11 +402,11 @@ test "fifo0 checks" {
   const full  = sigref("top/core0/fifo0/full")
   const empty = sigref("top/core0/fifo0/empty")
 
-  assert !(push and full),  "enqueue while full"
-  assert !(pop and empty),  "dequeue while empty"
+  assert(!(push and full),  "enqueue while full")
+  assert(!(pop and empty),  "dequeue while empty")
 
-  cover push
-  cover pop
+  cover(push)
+  cover(pop)
 }
 ```
 
@@ -415,7 +422,7 @@ test "all fifo checks" {
   const full  = sigref("full")
   const push  = sigref("push")
 
-  assert !(push and full), "enqueue while full"
+  assert(!(push and full), "enqueue while full")
 }
 ```
 
@@ -434,7 +441,7 @@ test "req ack protocol" {
   pending = true  when req
   pending = false when ack
 
-  assert !ack or pending, "ack without earlier req"
+  assert(!ack or pending, "ack without earlier req")
 }
 ```
 
@@ -447,10 +454,10 @@ regular lambda can encapsulate the checks. The caller passes `sigref` and
 
 ```pyrope
 comb fifo_checks(push, pop, full, empty) {
-  assert !(push and full),  "enqueue while full"
-  assert !(pop and empty),  "dequeue while empty"
-  cover push
-  cover pop
+  assert(!(push and full),  "enqueue while full")
+  assert(!(pop and empty),  "dequeue while empty")
+  cover(push)
+  cover(pop)
 }
 
 test "fifo0 monitor" {
@@ -477,7 +484,7 @@ ordinary assertions.
 Tests acting as monitors follow the same invalid/reset rules as `assert`:
 
 * `assert` and `cover` are skipped when an observed value is invalid.
-* `always assert` and `always cover` force checking independent of valid.
+* `always_assert` and `always_cover` force checking independent of valid.
 
 
 ## Relation with test and poke
@@ -493,7 +500,7 @@ Tests acting as monitors follow the same invalid/reset rules as `assert`:
 test "mocking taken branches" {
   const taken = sigref("core/fetch/bpred0/taken")
 
-  cover taken
+  cover(taken)
 
   poke("core/fetch/bpred0/taken", true)
 
@@ -538,11 +545,11 @@ test "fifo invariants" {
   const empty = sigref("fifo/empty")
   const count = regref("fifo/count")
 
-  assert !(push and full)
-  assert !(pop and empty)
-  assert count <= 4
-  assert empty implies count == 0
-  assert full  implies count == 4
+  assert(!(push and full))
+  assert(!(pop and empty))
+  assert(count <= 4)
+  assert(empty implies count == 0)
+  assert(full  implies count == 4)
 }
 ```
 

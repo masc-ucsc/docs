@@ -24,18 +24,21 @@ which lambda to call.
 Pyrope divides the lambdas into three categories: `comb`, `pipe`, and `mod`.
 
 - `comb` is pure combinational logic. The outputs are purely a function of
-  the inputs — no registers, no state, no cycle-level side effects. Any
-  external call inside a `comb` can only affect debug statements (e.g.,
-  `puts`), not synthesizable code. `comb` can use `ref` arguments to modify
-  tuples; `ref` is equivalent to having the argument as both input and
-  output, which is still purely combinational. `comb` resembles `pure
-  functions` in normal programming languages.
+  the inputs — no registers, no state, no cycle-level side effects. A
+  `comb` may not declare a `reg` and may not call a `pipe` or `mod`. The
+  only state it can hold is debug state marked `::[debug]`, which is
+  forbidden from influencing non-debug outputs (the compiler enforces
+  this). Any external call inside a `comb` can only affect debug
+  statements (e.g., `puts`), not synthesizable code. `comb` can use `ref`
+  arguments to modify tuples; `ref` is equivalent to having the argument
+  as both input and output, which is still purely combinational. `comb`
+  resembles `pure functions` in normal programming languages.
 
 - `pipe` is a Moore machine — every output goes through at least one flop.
   The latency is written as an argument to the keyword: `pipe[3] foo(...)`
   is fixed 3-cycle, `pipe[1..=3] foo(...)` lets the caller pick within a
   range, and bare `pipe foo(...)` leaves the latency fully flexible for the
-  caller to specify via `await[N]` at the call site. The tool may retime
+  caller to specify via `stage[N]` at the call site. The tool may retime
   logic for performance, but the behavior is equivalent to a `comb` with N
   flops appended at the outputs. `pipe` can use `reg` for internal storage;
   besides storage, it behaves like a `comb` with pipelined outputs.
@@ -43,7 +46,7 @@ Pyrope divides the lambdas into three categories: `comb`, `pipe`, and `mod`.
 - `mod` has no constraints on registers or outputs. It can be combinational,
   Mealy, Moore, or a pipeline orchestrator. When a `mod` calls `pipe`
   lambdas and needs to align their outputs with other signals, it uses the
-  `await[N]` declaration modifier and the `@[N]` cycle type check (these
+  `stage[N]` declaration modifier and the `@[N]` cycle type check (these
   constructs used to belong to the separate `flow` category, which has
   been merged into `mod`).
 
@@ -67,7 +70,7 @@ argument, which allows operating on tuples.
       result = a + b
     }
 
-    pipe flexible_mul(a, b) -> (result) {         // bare: caller picks via await[N]
+    pipe flexible_mul(a, b) -> (result) {         // bare: caller picks via stage[N]
       result = a * b
     }
     ```
@@ -78,15 +81,15 @@ argument, which allows operating on tuples.
     pipe add(a, b) -> (c) { c = a + b }
 
     mod multiply_add(in1, in2) -> (out) {
-      await[3] tmp      = mul(in1, in2)
-      await[3] in1_d    = in1
-      await[1] out@[4] = add(tmp@[3], in1_d@[3])
+      stage[3] tmp      = mul(in1, in2)
+      stage[3] in1_d    = in1
+      stage[1] out@[4]  = add(tmp@[3], in1_d@[3])
     }
 
     mod accum(in1, in2) -> (out) {
       reg total = 0                             // mod can use reg
-      await[3] tmp = mul(in1, in2)
-      total.[defer] = add(total, tmp@[3])
+      stage[3] tmp = mul(in1, in2)
+      total = add(total, tmp@[3])
       out = total
     }
     ```
@@ -94,7 +97,7 @@ argument, which allows operating on tuples.
 === "Module with registered outputs (mod)"
     ```
     mod counter(enable) -> (reg count) {
-      count += 1 when enable
+      if enable { count += 1 }
     }
 
     mod add_reg(a, b) -> (reg result) {
@@ -132,10 +135,10 @@ comb get_five() -> (v) { v = 5 }   // public lambda that can be imported by othe
 const x = a_3()             // error: explicit call not possible in scope
 const x = a_lambda()        // OK, explicit call needed when no arguments
 
-cassert a_3 == 3
+cassert(a_3 == 3)
 type a_lambda_type = comb()->(v)
-cassert a_lambda equals a_lambda_type
-cassert a_lambda() == 4
+cassert(a_lambda equals a_lambda_type)
+cassert(a_lambda() == 4)
 ```
 
 The lambda definition has the following fields:
@@ -204,15 +207,15 @@ mut y = (
 )
 
 comb my_log::[debug](...inp) {       // no outputs; side-effecting print
-  print "logging:"
+  print("logging:")
   for i in inp {
-    print " {}", i
+    print(" {}", i)
   }
-  puts
+  puts()
 }
 
 comb f<X>(a:X, b:X) -> (r) { r = a + b }   // enforces a and b with same type
-cassert f(u22(33), u22(100)) == 133
+cassert(f(u22(33), u22(100)) == 133)
 
 my_log(a, false, x + 1)
 ```
@@ -251,9 +254,9 @@ comb div2(...x) -> (r) { r = x[0] / x[1] }    // unnamed input tuple
 
 comb noarg() -> (r) { r = 33 }                // explicit no args
 
-cassert 33 == noarg()             // () always required, even for no-arg calls
+cassert(33 == noarg())            // () always required, even for no-arg calls
 
-assert noarg                      // error: `noarg()` needed for calls
+assert(noarg)                     // error: `noarg()` needed for calls
 
 a = div(3, 4, 3)         // error: div has 2 inputs
 b = div(self=8, b=4)     // OK, 2
@@ -282,17 +285,17 @@ mut tup = (
 comb f1(self) -> (r) { r = 2 } // error: f1 shadows tup.f1
 comb f1() -> (r) { r = 3 }     // OK, no self
 
-assert f1() != 0         // error: missing argument
-assert f1(tup) != 0      // error: f1 shadowing (tup.f1 and f1)
-assert 4.f1() != 0       // error: f1 can be called for tup, so shadow
-assert tup.f1() != 0     // error: f1 is shadowing
+assert(f1() != 0)        // error: missing argument
+assert(f1(tup) != 0)     // error: f1 shadowing (tup.f1 and f1)
+assert(4.f1() != 0)      // error: f1 can be called for tup, so shadow
+assert(tup.f1() != 0)    // error: f1 is shadowing
 
 comb xx(self:tup) -> (r) { r = self.f1() } // OK, explicit input restricts scope for f1
-cassert xx(tup) == 1
+cassert(xx(tup) == 1)
 
-cassert (4:tup).f1() == 1
-cassert 4.f1() == 3       // UFCS call
-cassert tup.f1() == 1
+cassert((4:tup).f1() == 1)
+cassert(4.f1() == 3)      // UFCS call
+cassert(tup.f1() == 1)
 ```
 
 The keyword `self` is used to indicate that the function is accessing a tuple.
@@ -315,6 +318,11 @@ A lambda call always uses parentheses (`foo()` or `foo(1, 2)`). The only
 exception is a variable with a getter method — reading the variable (without
 parens) implicitly invokes the getter.
 
+Getter and setter methods are implicit read/write hooks, so they must be
+`comb`. If an operation needs registers, pipeline latency, or cycle-level
+side effects, use an explicit `mod` or `pipe` method call instead of a
+getter/setter.
+
 ```
 no_arg_fun()     // parentheses always required
 arg_fun(1, 2)    // parenthesis required
@@ -325,8 +333,8 @@ mut intercepted:(
   comb setter(ref self, v) { self.field = v }
 ) = 0
 
-cassert intercepted == 1  // will call getter method without explicit call
-cassert intercepted.field == 0
+cassert(intercepted == 1) // will call getter method without explicit call
+cassert(intercepted.field == 0)
 ```
 
 ## Pass by reference
@@ -365,9 +373,9 @@ inc1(ref x)       // error: `x` is immutable but modified inside inc1
 
 mut y = 3
 inc1(ref y)
-cassert y == 4
+cassert(y == 4)
 
-comb banner() { puts "hello" }
+comb banner() { puts("hello") }
 type T_noarg = comb() -> ()
 comb execute_method(fn:T_noarg) {  // explicit type for fn (declared ahead)
   fn() // prints hello when banner passed as argument
@@ -376,9 +384,10 @@ comb execute_method(fn:T_noarg) {  // explicit type for fn (declared ahead)
 execute_method(banner)     // OK
 ```
 
-In Pyrope, to call a method, parenthesis are needed only when the method has arguments.
-This is needed to distinguish for higher order functions that need to distinguish between
-a function call and a pass of the lambda.
+In Pyrope, every method call uses parentheses, including no-argument calls.
+A bare lambda name is a value reference used for higher-order functions, not
+a call. This keeps no-argument calls visually distinct from passing the lambda
+itself.
 
 ## Output tuple
 
@@ -420,55 +429,38 @@ comb early(x) -> (r) {
 }
 
 const a1 = ret1()
-cassert a1.a == 1 and a1 == 1  // single-field tuple auto-unwraps
+cassert(a1.a == 1 and a1 == 1) // single-field tuple auto-unwraps
 
 const a3 = ret3()
-cassert a3.a == 3 and a3.b == 4
+cassert(a3.a == 3 and a3.b == 4)
 
 const (x1, x2) = ret3()
-cassert x1 == 3 and x2 == 4
+cassert(x1 == 3 and x2 == 4)
 ```
 
-### Placeholder lambda (single-output `comb` only)
+### Lambda body
 
-The fully explicit form `comb add(a, b) -> (r) { r = a + b }` is verbose
-when the body is a one-liner. Pyrope offers a Scala-style **placeholder
-lambda** sugar that applies *only* to combinational lambdas with exactly
-one output:
-
-* The body is written as a single expression. Its value is implicitly
-  assigned to the single output.
-* Inside that expression, `_0`, `_1`, ... refer to positional arguments
-  (`_0` is the first arg). `_` is shorthand for `_0` when the lambda
-  takes a single argument.
-* The sugar is *only* legal when the lambda is a `comb` and has one
-  output. `pipe` and `mod`, multi-output combs, and bodies that need
-  more than one statement use the explicit form.
+Every lambda body uses the explicit form: name your output(s) in `-> (...)`,
+assign to them by name in the body, and terminate normally or with a bare
+`return`. There is **no placeholder lambda sugar** — `_`, `_0`, `_1`, etc.
+are not positional-argument shorthands. Higher-order calls take a fully
+explicit lambda:
 
 ```
-comb add(a, b) -> (r) { _0 + _1 }     // sugar: equivalent to { r = a + b }
-comb inc(a)    -> (r) { _ + 1 }       // sugar: equivalent to { r = a + 1 }
+comb add(a, b) -> (r) { r = a + b }
+comb inc(a)    -> (r) { r = a + 1 }
 
-// Anonymous lambdas use the same placeholder syntax — args and the single
-// output are inferred from the placeholders used:
-const my_tup = (myinc = _ + 1, mut 3)   // myinc is comb(x) -> (r) { r = x + 1 }
-mymap.each(_0 + 1)                       // each() receives a comb(x) -> (r) { r = x + 1 }
+mymap.each(inc)
 ```
-
-Which form to pick:
-
-* **Use the explicit form** for any `pipe`/`mod`, anything with multiple
-  outputs, anything that needs more than one statement, or anywhere
-  clarity matters more than brevity.
-* **Use the placeholder form** for short combinational helpers and
-  one-liner lambdas passed to higher-order calls (`map`, `each`,
-  `reduce`, ...).
 
 ## Getter/setter
 
 
 Stateful behavior can be modeled as a tuple with fields and methods. The tuple
 fields hold the state, and the methods operate on it via `ref self`.
+Getter/setter methods are always combinational hooks around reads and writes.
+They may update fields through `ref self`, but they cannot be `mod` or `pipe`;
+stateful or pipelined behavior should be exposed as an explicit method.
 
 === "Explicit call"
     ```
@@ -484,19 +476,19 @@ fields hold the state, and the methods operate on it via `ref self`.
     mut p3 = ref p1   // reference
 
     test "testing p1" {
-      assert p1.found_once == false
-      assert p2.found_once == false
+      assert(p1.found_once == false)
+      assert(p2.found_once == false)
 
-      cassert p1.call(3) == 4
-      assert p1.found_once == false
+      cassert(p1.call(3) == 4)
+      assert(p1.found_once == false)
 
-      cassert p1.call(0) == 1
-      assert p1.found_once == true
+      cassert(p1.call(0) == 1)
+      assert(p1.found_once == true)
 
-      cassert p1.call(50) == 51
-      assert p1.found_once == true
-      assert p2.found_once == false
-      assert p3.found_once == true
+      cassert(p1.call(50) == 51)
+      assert(p1.found_once == true)
+      assert(p2.found_once == false)
+      assert(p3.found_once == true)
     }
     ```
 
@@ -504,7 +496,7 @@ fields hold the state, and the methods operate on it via `ref self`.
     ```
     mut p1 = (
       mut found_once:bool = false,
-      mod setter(ref self, a) {
+      comb setter(ref self, a) {
         self.found_once or= (a == 0)
         self._result = a + 1
       },
@@ -516,22 +508,22 @@ fields hold the state, and the methods operate on it via `ref self`.
     mut p3 = ref p1   // reference
 
     test "testing p1" {
-      assert p1.found_once == false
-      assert p2.found_once == false
+      assert(p1.found_once == false)
+      assert(p2.found_once == false)
 
       p1 = 3                         // calls setter
-      cassert p1 == 4                // calls getter
-      assert p1.found_once == false
+      cassert(p1 == 4)               // calls getter
+      assert(p1.found_once == false)
 
       p1 = 0
-      cassert p1 == 1
-      assert p1.found_once == true
+      cassert(p1 == 1)
+      assert(p1.found_once == true)
 
       p1 = 50
-      cassert p1 == 51
-      assert p1.found_once == true
-      assert p2.found_once == false
-      assert p3.found_once == true
+      cassert(p1 == 51)
+      assert(p1.found_once == true)
+      assert(p2.found_once == false)
+      assert(p3.found_once == true)
     }
     ```
 
@@ -549,7 +541,7 @@ any `self` updates should generate a compile error.
 const Nested_call = (
   mut x = 1,
   comb outter(ref self) { self.x = 100; self.inner(); self.x = 5 },
-  comb inner(self)      { assert self.x == 100 },
+  comb inner(self)      { assert(self.x == 100) },
   comb faulty(self)     { self.x = 55 }, // error: immutable self
   comb okcall(ref self) { self.x = 55 }
 )
@@ -568,14 +560,14 @@ mut a_1 = (
 
 a_1.f1(3)
 mut a_2 = a_1.f1(4)  // a_2 is updated, not a_1
-cassert a_1.x == 3 and a_2.x == 4
+cassert(a_1.x == 3 and a_2.x == 4)
 
 // Same behavior as in a function with UFCS
 comb set_x(ref self, x) { self.x = x }
 
 a_1.set_x(10)
 mut a_3 = a_1.set_x(20)
-cassert a_1.x == 10 and a_3.x == 20
+cassert(a_1.x == 10 and a_3.x == 20)
 ```
 
 Since UFCS does not allow shadowing, a wrapper must be built or a compile error is generated.
@@ -586,21 +578,21 @@ mut counter = (
   ,comb inc(ref self, v) { self.var += v }
 )
 
-assert counter.val == 0
+assert(counter.val == 0)
 counter.inc(3)
-assert counter.val == 3
+assert(counter.val == 3)
 
 comb inc(ref self, v) { self.var *= v } // NOT INC but multiply
 counter.inc(2)             // error: multiple inc options
-assert 44.inc(2) == 8
+assert(44.inc(2) == 8)
 
 counter.val = 5
 const mul = inc
 counter.mul(2)             // call the new mul method with UFCS
-assert counter.val == 10
+assert(counter.val == 10)
 
 mul(counter, 2)            // also legal
-assert counter.val == 20
+assert(counter.val == 20)
 ```
 
 
@@ -616,9 +608,9 @@ comb t1_do_double(ref self) { self.a *= 2 }
 t1.double = t1_do_double
 
 mut y:t1 = (a=3)
-x.double             // error: double method does not exit
-y.double             // OK
-assert y.a == 6
+x.double()           // error: double method does not exist
+y.double()           // OK
+assert(y.a == 6)
 ```
 
 ### Constraining arguments
@@ -629,53 +621,45 @@ it can be error-prone.
 
 === "unconstrained declaration"
     ```
-    comb foo(self) { puts "comb.foo" }
+    comb foo(self) { puts("comb.foo") }
     const a = (
       ,comb foo() -> (r) {
-         comb bar() { puts "bar" }
-         puts "mem.foo"
+         comb bar() { puts("bar") }
+         puts("mem.foo")
          r = (bar=bar)
       }
     )
     const b = 3
     const c = "string"
 
-    b.foo         // prints "comb.foo"
     b.foo()       // prints "comb.foo"
-    x = a.foo     // prints "mem.foo"
     y = a.foo()   // prints "mem.foo"
-    x()           // prints "bar"
+    y.bar()       // prints "bar"
 
-    a.foo.bar()   // prints "mem.foo" and then "bar"
     a.foo().bar() // prints "mem.foo" and then "bar"
-    a.foo().bar   // prints "mem.foo" and then "bar"
 
-    c.foo         // prints "comb.foo"
+    c.foo()       // prints "comb.foo"
     ```
 
 === "constrained declaration"
 
     ```
-    comb foo(self:int) { puts "comb.foo" }
+    comb foo(self:int) { puts("comb.foo") }
     const a = (
       ,comb foo() -> (r) {
-         comb bar() { puts "bar" }
-         puts "mem.foo"
+         comb bar() { puts("bar") }
+         puts("mem.foo")
          r = (bar=bar)
       }
     )
     const b = 3
     const c = "string"
 
-    b.foo         // prints "comb.foo"
     b.foo()       // prints "comb.foo"
-    const x = a.foo     // prints "mem.foo"
     const y = a.foo()   // prints "mem.foo"
-    x()           // prints "bar"
+    y.bar()       // prints "bar"
 
-    a.foo.bar()   // prints "mem.foo" and then "bar"
     a.foo().bar() // prints "mem.foo" and then "bar"
-    a.foo().bar   // prints "mem.foo" and then "bar"
 
-    c.foo         // error: undefined 'foo' field/call
+    c.foo()       // error: undefined 'foo' field/call
     ```

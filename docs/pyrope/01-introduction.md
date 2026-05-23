@@ -37,7 +37,7 @@ Populate the Pyrope code
 `src/hello.prp`
 ```
 test "my first test" {
-  puts "hello world"
+  puts("hello world")
 }
 ```
 
@@ -79,9 +79,9 @@ Populate the Pyrope code
         test "check.gcd({},{})",a,b {
           const z = gcd(a, b)
 
-          waitfor z?
+          waitfor(z?)
 
-          assert z == __my_cpp_gcd(v1=a, v2=b)
+          assert(z == __my_cpp_gcd(v1=a, v2=b))
         }
       }
     }

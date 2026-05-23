@@ -11,9 +11,9 @@ mut b = (f1=3,f2=4) // b is named and ordered
 mut c = (1,d=4)     // c is ordered and unnamed (some entries are not named)
 
 mut d = (1,2,3,4)     // array or tuple
-cassert d == [1,2,3,4] // the [] also check that all the fields have same type
-cassert b.f1 == 3 and b.f2 == 4
-cassert c[0] == 1 and c.d == 4
+cassert(d == [1,2,3,4]) // the [] also check that all the fields have same type
+cassert(b.f1 == 3 and b.f2 == 4)
+cassert(c[0] == 1 and c.d == 4)
 
 assert (true,1) != [true,1]  // error: true is not the same type as 1
 ```
@@ -25,27 +25,27 @@ mut a = (
   ,r2 = (3,4)
 )
 // tuple position is from left to right like most languages
-cassert a.r1 == (1,2) and a.r2 == (3,4)
-cassert a[0] == (1,2) and a[1] == (3,4)
+cassert(a.r1 == (1,2) and a.r2 == (3,4))
+cassert(a[0] == (1,2) and a[1] == (3,4))
 
 // different ways to access the same field
-cassert a.r1.c    == 2
-cassert a['r1'].c == 2
-cassert a.r1[1]   == 2
-cassert a[0][1]   == 2
-cassert a[0]['c'] == 2
+cassert(a.r1.c    == 2)
+cassert(a['r1'].c == 2)
+cassert(a.r1[1]   == 2)
+cassert(a[0][1]   == 2)
+cassert(a[0]['c'] == 2)
 ```
 
 There is introspection to check for an existing field with the `has` and `!has` operators.
 
 ```
 mut a = (foo = 3)
-cassert a has 'foo'
-cassert !(a has 'bar')
-cassert a !has 'bar' // "has no" is the opposite of "has"
-cassert a has 0
-cassert a !has 1
-cassert a !has 1
+cassert(a has 'foo')
+cassert(!(a has 'bar'))
+cassert(a !has 'bar') // "has no" is the opposite of "has"
+cassert(a has 0)
+cassert(a !has 1)
+cassert(a !has 1)
 ```
 
 Tuple named fields can have a default type and or contents:
@@ -58,8 +58,8 @@ mut x = (
   ,field3:int = 3     // field3 with explicit type and 3 value
   ,val                // unnamed field with value `val` (4)
 )
-cassert x.field1 == 1 and x.field3 == 3
-cassert x[3] == 4
+cassert(x.field1 == 1 and x.field3 == 3)
+cassert(x[3] == 4)
 ```
 
 ## Tuple index with tuples
@@ -72,10 +72,10 @@ mut a = (one:Person, two:Person)
 
 const x = ('two', 'one')
 a[x].age = (3,4)
-cassert a.one.age == 4 and a.two.age == 3
+cassert(a.one.age == 4 and a.two.age == 3)
 
 a[0,1].age = (10,20)
-cassert a.one.age == 10 and a.two.age == 20
+cassert(a.one.age == 10 and a.two.age == 20)
 ```
 
 ## Tuple and scope
@@ -92,8 +92,8 @@ mut x=100
 mut tup1 = ('x',y=4)
 mut tup2 = (x,y=4)
 
-cassert tup1[0] == 'x'
-cassert tup2[0] == 100
+cassert(tup1[0] == 'x')
+cassert(tup2[0] == 100)
 ```
 
 Some constructs like enumerates and attributes typically pass identifiers
@@ -105,7 +105,7 @@ without assigning a value. The problem is that the syntax becomes not so
 ```
 const aa = 3
 const a = enum(,aa, ,b=3)
-cassert a==b
+cassert(a==b)
 
 ```
 
@@ -132,9 +132,9 @@ mut a = (1,2)   // tuple of 2 entries, 1 and 2
 mut b = (1)     // tuple of 1 entry, 1
 mut c = 1       // tuple of 1 entry, 1
 mut d = (,,1,,) // tuple of 1 entry, 1
-cassert a[0] == b[0] == c[0] == d[0]
-cassert a!=b
-cassert b == c == d
+cassert(a[0] == b[0] == c[0] == d[0])
+cassert(a!=b)
+cassert(b == c == d)
 ```
 
 A tuple with a single entry element is called a scalar.
@@ -167,7 +167,7 @@ d.foo = 3  // error: tuple 'd' does not have field foo'
 d.z   = 4  // error: 'd' is immutable
 
 mut e:d = ?
-assert e.x==1 and e.y==2 and e.z==3
+assert(e.x==1 and e.y==2 and e.z==3)
 e.x = 30   // OK
 e.y = 30   // error: 'e.y' is immutable
 e.z = 30   // OK
@@ -182,7 +182,7 @@ mutability inherited from the enclosing tuple.
 mut b = 100
 mut a = (b:u8, b, b:u8 = ?, const c=4) // a[0] and a[1] are unnamed, a[2]==a.b
 a.b = 200
-assert a == (100, 100, 200, 4)
+assert(a == (100, 100, 200, 4))
 
 mut f = (b=3, const e=5)
 f.b = 4                 // OK
@@ -205,16 +205,16 @@ mut a=(a=1,b=2)
 const b=(c=3)
 
 const ccat1 = a ++ b
-assert ccat1 == (a=1,b=2,c=3)
-assert ccat1 == (1,2,3)
+assert(ccat1 == (a=1,b=2,c=3))
+assert(ccat1 == (1,2,3))
 
 mut ccat2 = a ++ (b=20) ++ b
-assert ccat2 == (a=1,b=(2,20),c=3)
-assert ccat2 == (1,(2,20),3)
+assert(ccat2 == (a=1,b=(2,20),c=3))
+assert(ccat2 == (1,(2,20),3))
 
 mut join1 = (...a,...b)
-assert join1 == (a=1,b=2,c=3)
-assert join1 == (1,2,3)
+assert(join1 == (a=1,b=2,c=3))
+assert(join1 == (1,2,3))
 
 mut join2 = (...a,...(b=20)) // error: 'b' already exists
 ```
@@ -250,12 +250,12 @@ entry.
 ```
 const x = (first=(second=3))
 
-cassert x.first.second == 3
-cassert x.first        == 3
-cassert x              == 3
-cassert x[0].second    == 3
-cassert x.first[0]     == 3
-cassert x[0]           == 3
+cassert(x.first.second == 3)
+cassert(x.first        == 3)
+cassert(x              == 3)
+cassert(x[0].second    == 3)
+cassert(x.first[0]     == 3)
+cassert(x[0]           == 3)
 ```
 
 
@@ -265,9 +265,9 @@ Tuples can also use structural binding to unpack a tuple multiple fields into se
 const x = (f1=(f1a=1,f1b=3), f2=4)
 
 const (y,z) = x
-cassert y == (1,3) and z == 4
-cassert y.f1a == 1 and y.f1b == 3
-cassert y == (f1a=1,f1b=3)
+cassert(y == (1,3) and z == 4)
+cassert(y.f1a == 1 and y.f1b == 3)
+cassert(y == (f1a=1,f1b=3))
 ```
 
 ## Tuples vs arrays
@@ -282,11 +282,11 @@ mut bund1 = (0,1,2,3,4) // ordered and can be used as an array
 mut array1 = [0,1,2,3,4]  // [] force array, so all the entries have same type
 
 mut bund2 = (bund1,bund1,((10,20),30))
-cassert bund2[0][1] == 1
-cassert bund2[1][1] == 1
-cassert bund2[2][0] == (10,20)
-cassert bund2[2][0][1] == 20
-cassert bund2[2][1] == 30
+cassert(bund2[0][1] == 1)
+cassert(bund2[1][1] == 1)
+cassert(bund2[2][0] == (10,20))
+cassert(bund2[2][0][1] == 20)
+cassert(bund2[2][1] == 30)
 ```
 
 Pyrope tries to be compatible with synthesizable Verilog. In Verilog, when an
@@ -342,7 +342,7 @@ mut y = (
   ,ff ++= 2
   ,zz ++= 3
 )
-cassert y == (ff=(1,2),zz=3)
+cassert(y == (ff=(1,2),zz=3))
 ```
 
 
@@ -353,14 +353,15 @@ cassert y == (ff=(1,2),zz=3)
 Parenthesis marks the beginning and the end of a tuple. Those parentheses can
 be avoided for an unnamed tuple in some cases:
 
-* When doing a simple function call at the beginning of a line.
 * When used inside a selector `[...]`.
 * When used after an `in` operator followed by a `{` like in a `for` and `match` statements.
 * For the inputs in a match statement.
 * A single element lambda return value.
 
+Function and method calls **always** use parentheses (`foo(1, 2)`, never
+`foo 1, 2`). The bare-argument statement-call form has been removed.
+
 ```
-fcall 1,2         // same as: fcall(1,2)
 b = xx[1,2]       // same as: xx[(1,2)]
 
 for a in 1,2,3 {  // same as: for a in (1,2,3) {
@@ -372,6 +373,7 @@ y = match z {
 }
 y2 = match mut one=1 ; one ++ z {  // same as: y2 = match (1,z) {
   == (1,2) { 4 }
+  else     { 0 }
 }
 
 comb addb(a, b:u32) -> (a:u32) {
@@ -388,13 +390,13 @@ reason is that it is a bit confusing.
 mut a,b = (2,3)    // error: left-hand-side must be a tuple (a,b)
 mut (a,b) = 2,3    // error: right-hand-side must be a tuple (2,3)
 mut (a,b) = (2,3)
-cassert a==2 and b==3
+cassert(a==2 and b==3)
 
 mut (c,d) = 1..=2  // error: range is a single entry assignment
 mut c = 1..=2      // OK
 mut (c,d) = 1      // error: 2 entry tuple in lhs, same in rhs
 mut (c,d) = (1,2)  // OK
-cassert c == 1 and d == 2
+cassert(c == 1 and d == 2)
 ```
 
 One thing to remember is that the `=` separates the statement in two parts
@@ -403,11 +405,11 @@ apply to the immediatly declared variable or item.
 
 ```
 const c = 4
-cassert c does u3                  // type check on 'c' is a separate statement
+cassert(c does u3) // type check on 'c' is a separate statement
 const (x, b) = (true, c)           // assign x=true, b=4
 
-cassert x == true
-cassert b == 4
+cassert(x == true)
+cassert(b == 4)
 ```
 
 ## Enumerate (`enum`)
@@ -422,9 +424,9 @@ const b = "foo"
 const c = 1
 const test1     = enum(a=c,b)    // OK
 const something = (b)            // OK
-cassert something == "foo"
-cassert test1.a != test1.b
-cassert test1.a==1 and test1.b==2
+cassert(something == "foo")
+cassert(test1.a != test1.b)
+cassert(test1.a==1 and test1.b==2)
 ```
 
 The `enum` keyword does not reference scope variables unless the reference is
@@ -438,10 +440,10 @@ expression with a string type or a named tuple.
 const a = "field"
 const c = (foo=4)
 const my_other_enum = enum(...a,b=3,...c)
-cassert my_other_enum.field != my_other_enum.b
-cassert my_other_enum.b   == 3
-cassert my_other_enum.foo == 4
-cassert my_other_enum.foo != my_other_enum.b
+cassert(my_other_enum.field != my_other_enum.b)
+cassert(my_other_enum.b   == 3)
+cassert(my_other_enum.foo == 4)
+cassert(my_other_enum.foo != my_other_enum.b)
 ```
 
 The enum default values are NOT like typical non-hardware languages. The enum
@@ -465,23 +467,23 @@ enum V3 = (
    ,b
    ,c
 )
-cassert V3.a == 1
-cassert V3.b == 2
-cassert V3.c == 4
+cassert(V3.a == 1)
+cassert(V3.b == 2)
+cassert(V3.c == 4)
 
 // Always compare against enum entries, not raw values:
 mut state:V3 = V3.a
-cassert state == V3.a      // correct
-// cassert state == 1      // discouraged: relies on encoding details
+cassert(state == V3.a) // correct
+// cassert(state == 1)      // discouraged: relies on encoding details
 
 enum V4 = (
    ,a
    ,b=5
    ,c
 )
-cassert V4.a == 0
-cassert V4.b == 5
-cassert V4.c == 6
+cassert(V4.a == 0)
+cassert(V4.b == 5)
+cassert(V4.c == 6)
 ```
 
 ### Hierarchical enumerates
@@ -496,16 +498,16 @@ enum Animal = (
   ,mammal=(,rat  , ,human )
 )
 
-cassert Animal.bird.eagle != Animal.mammal
-cassert Animal.bird != Animal.mammal.human
-cassert Animal.bird == Animal.bird.parrot
+cassert(Animal.bird.eagle != Animal.mammal)
+cassert(Animal.bird != Animal.mammal.human)
+cassert(Animal.bird == Animal.bird.parrot)
 
-cassert int(Animal.bird        ) == 0ub000001
-cassert int(Animal.bird.eagle  ) == 0ub000011
-cassert int(Animal.bird.parrot ) == 0ub000101
-cassert int(Animal.mammal      ) == 0ub001000
-cassert int(Animal.mammal.rat  ) == 0ub011000
-cassert int(Animal.mammal.human) == 0ub101000
+cassert(int(Animal.bird        ) == 0ub000001)
+cassert(int(Animal.bird.eagle  ) == 0ub000011)
+cassert(int(Animal.bird.parrot ) == 0ub000101)
+cassert(int(Animal.mammal      ) == 0ub001000)
+cassert(int(Animal.mammal.rat  ) == 0ub011000)
+cassert(int(Animal.mammal.human) == 0ub101000)
 ```
 
 In general, for each leaf enum, the number of bits is equivalent to the number
@@ -522,9 +524,9 @@ enum V5 = (
    ,b=5
    ,c
 )
-cassert int(V5.a) == 0
-cassert int(V5.b) == 5
-cassert int(V5.c) == 6
+cassert(int(V5.a) == 0)
+cassert(int(V5.b) == 5)
+cassert(int(V5.c) == 6)
 ```
 
 The same syntax is used for enums to different objects. The hierarchy is not
@@ -538,9 +540,9 @@ Enumerates of the same type can perform bitwise binary operations
 ```
 const human_rat = Animal.mammal.rat | Animal.mammal.human  // union op
 
-assert Animal.mammal      in human_rat
-assert Animal.mammal.rat  in human_rat
-assert Animal.bird       !in human_rat
+assert(Animal.mammal      in human_rat)
+assert(Animal.mammal.rat  in human_rat)
+assert(Animal.bird       !in human_rat)
 ```
 
 ### Enumerate typecast
@@ -557,7 +559,7 @@ enum E3 = (
     )
   ,l2
   )
-cassert string(E3.l1.l1a) == "E3.l1.l1a"
-cassert string(E3.l1) == "E3.l1"
-cassert E3("l1.l2") == E3.l1.l2
+cassert(string(E3.l1.l1a) == "E3.l1.l1a")
+cassert(string(E3.l1) == "E3.l1")
+cassert(E3("l1.l2") == E3.l1.l2)
 ```

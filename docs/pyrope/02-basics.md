@@ -17,22 +17,22 @@ Pyrope has unlimited precision signed integers. Any literal starting with a
 digit is a likely integer constant.
 
 ```
-cassert 0xF_a_0  == 4000 // Underscores have no meaning
-cassert 0b1100   == 12   // error: use 0ub1100 or 0sb1100
-cassert 0ub1100  == 12   // ub explicit unsigned binary
-cassert 0sb1110  == -2   // sb signed binary
-cassert 33       == 33   // 33 in decimal
-cassert 0o111    == 73   // octal
-cassert 0111     == 111  // decimal (some languages use octal here)
+cassert(0xF_a_0  == 4000) // Underscores have no meaning
+cassert(0b1100   == 12) // error: use 0ub1100 or 0sb1100
+cassert(0ub1100  == 12) // ub explicit unsigned binary
+cassert(0sb1110  == -2) // sb signed binary
+cassert(33       == 33) // 33 in decimal
+cassert(0o111    == 73) // octal
+cassert(0111     == 111) // decimal (some languages use octal here)
 ```
 
 Since powers of two are very common, Pyrope decimal integers can use the `K`, `M`, `G`, and `T` modifiers.
 
 ```
-cassert 1K == 1024
-cassert 1M == 1024*1024
-cassert 1G == 1024*1024*1024
-cassert 1T == 1024*1024*1024*1024
+cassert(1K == 1024)
+cassert(1M == 1024*1024)
+cassert(1G == 1024*1024*1024)
+cassert(1T == 1024*1024*1024*1024)
 ```
 
 Several hardware languages support unknown bits (`?`) or high-impedance (`z`). Pyrope
@@ -124,13 +124,13 @@ const extension = "s"
 
 const txt1 = "I have {num:d} {color} potato{extension}"
 const txt2 = string("I have {:d} {} potato{}", num, color, extension)
-cassert txt1 == txt2 == "I have 2 blue potatos"
+cassert(txt1 == txt2 == "I have 2 blue potatos")
 
 const txt3 = 'I have {num}'     // single quote does not do interpolation
-cassert txt3 == "I have \{num\}"  // \{ escapes the interpolation
+cassert(txt3 == "I have \{num\}") // \{ escapes the interpolation
 
 comptime const text4 = "I have {num+1} x"
-cassert text4 == "I have 3 x"
+cassert(text4 == "I have 3 x")
 ```
 
 Integers and strings can be converted back and forth:
@@ -139,9 +139,9 @@ Integers and strings can be converted back and forth:
 mut a:string = "127"
 mut b:int = a        // same as mut b = int(a)
 mut c:string = b     // same as mut c = string(b)
-cassert a == c
-cassert b == 0x7F
-assert a == b        // error: 'a' and 'b' have different types
+cassert(a == c)
+cassert(b == 0x7F)
+assert(a == b) // error: 'a' and 'b' have different types
 ```
 
 
@@ -167,7 +167,7 @@ mut (a,b,c,d) = ?
 a = 1
   + 3           // 1st stmt
 (b,c) = (1,3)   // 2nd stmt
-cassert a == 4 and b == 1 and c == 3
+cassert(a == 4 and b == 1 and c == 3)
 
 d = 1 +         // OK, but not formatted to style
     3
@@ -191,7 +191,7 @@ as strings.
 ```
 `foo is . strange!\nidentifier` = 4
 `for` = 3
-cassert `for`+1 == `foo is . strange!\nidentifier`
+cassert(`for`+1 == `foo is . strange!\nidentifier`)
 ```
 
 Using the backtick, Pyrope can use any string as an identifier, even reserved
@@ -200,7 +200,11 @@ errors for non \` escaped identifiers that do not follow these conditions in
 order:
 
 * Identifiers with a single character followed by a number can be upper or lower case.
-* An all upper case variable must be a compile time constant `comptime`.
+* `comptime` is not inferred from casing. To make a binding compile-time,
+  prefix the declaration with `comptime` explicitly (e.g.,
+  `comptime const SIZE = 16`). An all-uppercase name without `comptime`
+  is just a runtime constant — the compiler does not treat casing as a
+  comptime signal.
 * Types should either: (1) start the first character uppercase and everything
   else lower case; (2) be all lower case and finish with `_t`.
 * All the other identifiers that start with an alpha character `[a-z]` are
@@ -232,21 +236,21 @@ The same without a newline can be achieved with print.
 ```
 const a = 1
 const msg = "Hello a is {a}"
-puts msg
-cassert msg == "Hello a is 1"
+puts(msg)
+cassert(msg == "Hello a is 1")
 ```
 
 Pyrope does string interpolation, and it has attributes to access line of code
 and file name. Since tracing or debugging variables is quite common, the `dbg`
-statement behaves like puts and also prints the line of code and file name for
-easier tracing.
+statement behaves like `puts` and also prints the line of code and file name
+for easier tracing.
 
 
 ```
 a = 1
 
-puts "{}:{} a:{} tracing a", a.[file], a.[loc], a
-puts "{a.[file]}:{a.[loc]} a:{a} tracing a"          // Same
+puts("{}:{} a:{} tracing a", a.[file], a.[loc], a)
+puts("{a.[file]}:{a.[loc]} a:{a} tracing a")          // Same
 ```
 
 The previous statements print "foo:3 a:1 tracing a" in the 3 cases. The line of
@@ -254,11 +258,11 @@ code corresponds to the latest update of variable, not the `dbg` statement.
 
 
 Since many modules can print at the same cycle, it is possible to put a
-relative priority between puts (`priority`). If no relative priority is
+relative priority between `puts` calls (`priority`). If no relative priority is
 provided, a default 0 priority is provided. Messages are kept to the end of the
 cycle, and then printed in alphabetical order for a given priority. This is
 done to be deterministic. Higher priority (higher value) are printed after
-lower priority. Messages generated by assertions also get serialized like puts
+lower priority. Messages generated by assertions also get serialized like `puts`
 statements but have the highest priority.
 
 
@@ -282,7 +286,7 @@ The available puts/print arguments:
 * `file`: file to send the message. E.g: `stdout`, `stderr`, `my_large.log`,...
 
 
-A related command to the puts is the `format` it behaves like `print` but
+A related command to `puts` is `format` — it behaves like `print` but
 returns a string.
 
 `puts/print` are a bit special. In most languages, IO operations like `puts` are
@@ -304,7 +308,7 @@ syntax.
 
 ```
 comb f(a, b) -> (r) { r = a + b }
-cassert f(2, 3) == 5
+cassert(f(2, 3) == 5)
 ```
 
 Pyrope naming for consistency:
@@ -313,13 +317,13 @@ Pyrope naming for consistency:
 
 * `pipe[N]` is a fixed N-cycle pipeline (Moore machine — outputs always registered)
 
-* `pipe[A..=B]` is a flexible A-to-B cycle pipeline; the caller picks a concrete latency via `await[N]`
+* `pipe[A..=B]` is a flexible A-to-B cycle pipeline; the caller picks a concrete latency via `stage[N]`
 
-* Bare `pipe` leaves the latency fully flexible; the caller picks it via `await[N]` at the call site
+* Bare `pipe` leaves the latency fully flexible; the caller picks it via `stage[N]` at the call site
 
-* `mod` has no constraints on registers or outputs (can be Mealy or Moore), operates cycle by cycle, and is also the kind used to orchestrate pipelined calls — `await[N]` and `@[N]` are the timing constructs available inside `mod`.
+* `mod` has no constraints on registers or outputs (can be Mealy or Moore), operates cycle by cycle, and is also the kind used to orchestrate pipelined calls — `stage[N]` and `@[N]` are the timing constructs available inside `mod`.
 
-* `await` is a reserved declaration modifier used inside `mod` blocks. `async` is reserved for future use.
+* `stage` is a reserved declaration modifier used inside `mod` blocks. `async`/`await` are reserved for future use.
 
 * `comb`, `pipe`, or `mod` that uses a `self` parameter is also called a method
 
@@ -356,7 +360,7 @@ those have no side-effects, and hence the evaluation order is not important.
 A `pipe` can update state internally and has one or more cycle delays. As
 such, `pipe` statements can do many calls to `comb` lambdas, but not to
 other `pipe` lambdas. `pipe` lambdas can only be called inside `mod`
-lambdas, where their outputs are consumed via `await[N]` with an explicit
+lambdas, where their outputs are consumed via `stage[N]` with an explicit
 latency.
 
 
@@ -368,15 +372,15 @@ side-effects. In a way, expression code blocks can be seen as a type of
 
 ```
 mut a = {mut d=3 ; d+1} + 100 // OK
-cassert a == (3+1+100)
-cassert a == {3+1+100}  // same, expression evaluated as 104 and returned
+cassert(a == (3+1+100))
+cassert(a == {3+1+100}) // same, expression evaluated as 104 and returned
 ```
 
 
 For most expressions, Pyrope is more restrictive than other languages because
 it wants to be a fully defined deterministic independent of implementation. To
 handle logging/messaging in `comb` calls, Pyrope treats `puts` as a special
-instruction. Pyrope runtime delays the puts output until the end of the cycle.
+instruction. Pyrope runtime delays the `puts` output until the end of the cycle.
 See the Printing section above for more details.
 
 
@@ -534,17 +538,17 @@ a  = 3        // error: no previous const or mut
 mut b = 3
 b  = 5        // OK
 b += 1        // OK
-cassert b == 6
+cassert(b == 6)
 
 const (a:u32,b2) = (1,"string_inferred")
-cassert a == 1 and b2 == "string_inferred"
+cassert(a == 1 and b2 == "string_inferred")
 
 const d = "hello"  // OK
 d = "bar"        // error: 'd' is immutable
 mut d = "bar"    // error: 'd' already declared
 
 mut e:u32 = 33
-cassert e == 33
+cassert(e == 33)
 
 mut Foo = 33     // error: 'const Foo = 33'
 Foo  = 33        // error: `Foo` already declared as immutable
@@ -557,23 +561,23 @@ restricted for integers. `nil` should be used in those cases.
 ```
 mut tup = nil
 
-assert cond.[comptime] // Tuples are compile time, it would fail otherwise
+assert(cond.[comptime]) // Tuples are compile time, it would fail otherwise
 if cond == true {
   tup = (a=1,b=2)
 }else{
   tup = (a=1,b:u4=3,c=3)
 }
 
-cassert tup.a == 1
-cassert cond implies tup.b==2
-cassert !cond implies tup.b==3
+cassert(tup.a == 1)
+cassert(cond implies tup.b==2)
+cassert(!cond implies tup.b==3)
 ```
 
 Variables with first character upper case are `comptime`. This means that the contents
 must be known/fixed at compilation time.
 
 ```
-assert something.[comptime]
+assert(something.[comptime])
 comptime const A_xxx = something      // comptime
-assert A_xxx.[comptime]               // also comptime
+assert(A_xxx.[comptime]) // also comptime
 ```

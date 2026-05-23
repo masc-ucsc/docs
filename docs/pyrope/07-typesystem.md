@@ -63,9 +63,9 @@ optimize.
     mut a:u32 = 0
 
     a += 1
-    cassert a does u32
+    cassert(a does u32)
     a = b                       // incorrect
-    cassert b does u32          // fails
+    cassert(b does u32) // fails
 
     mut dest:u32 = 0
     mut foo:u16 = 0
@@ -105,11 +105,11 @@ comb f1() {
   (a=33, b="hello")
 }
 
-cassert t1 equals t2
-cassert t1 equals v1
-cassert f1() equals t1
-cassert _:f1 !equals t1
-cassert _:t1 equals t2
+cassert(t1 equals t2)
+cassert(t1 equals v1)
+cassert(f1() equals t1)
+cassert(_:f1 !equals t1)
+cassert(_:t1 equals t2)
 ```
 
 
@@ -131,14 +131,14 @@ const Bt = (
 
 mut a:At = 40
 mut a2 = At(40)
-cassert a == a2
+cassert(a == a2)
 
 mut b:Bt = "hello"
 mut b2 = Bt("hello")
-cassert b == b2
+cassert(b == b2)
 
-puts "a:{} or {}", a, at // a:40 or 33
-puts "b:{}", b           // b:(c="hello",d=100)
+puts("a:{} or {}", a, at) // a:40 or 33
+puts("b:{}", b)           // b:(c="hello",d=100)
 ```
 
 ### Type equivalence
@@ -184,8 +184,8 @@ cassert ((b:int, a:string) !does (a:"hello", b:33)) // order matters in tuples
 
 type T_complex = comb(x, xxx2) -> (y, z)
 type T_simple  = comb(x)       -> (y, z)
-cassert _:T_complex does _:T_simple
-cassert _:T_simple !does _:T_complex
+cassert(_:T_complex does _:T_simple)
+cassert(_:T_simple !does _:T_complex)
 ```
 
 For named tuples, this code shows some of the corner cases:
@@ -202,8 +202,8 @@ mut c:t1 = (a="hello", b=3) // OK
 mut c1:t1 = (b=3, a="hello") // OK
 
 mut d:t2 = c                 // OK, both fully named
-cassert d[0] == c[1] and c[0] == d[1]
-cassert d.a == c.a and d.b == c.b
+cassert(d[0] == c[1] and c[0] == d[1])
+cassert(d.a == c.a and d.b == c.b)
 ```
 
 Ignoring the value is what makes `equals` different from `==`. As a result
@@ -213,10 +213,10 @@ different functionality functions could be `equals`.
 comb a() -> (r) { r = 1 }
 comb b() -> (r) { r = 2 }
 type ab_type = comb() -> (r)
-cassert a equals ab_type
+cassert(a equals ab_type)
 
-cassert a() != b()              // 1 != 2
-cassert a() equals b()          // 1 equals 2
+cassert(a() != b()) // 1 != 2
+cassert(a() equals b()) // 1 equals 2
 ```
 
 ## Type check with values
@@ -256,18 +256,18 @@ inferred type name is used.
 ```
 const a = 3
 const b = 200
-cassert a is b
+cassert(a is b)
 
 const c:u32 = 10
-cassert a !is c
-cassert a.[typename] == "int" and c.[typename] == "u32"
+cassert(a !is c)
+cassert(a.[typename] == "int" and c.[typename] == "u32")
 
 const d:u32 = nil
-cassert c is d
+cassert(c is d)
 
 const e = (a:u32=1)
 const f:(a:u32) = 33
-cassert e is f
+cassert(e is f)
 ```
 
 Since it checks equivalence, when `a is b == b is a`.
@@ -279,14 +279,14 @@ const X2 = (b:u32)
 const t1:X1 = (b=3)
 const t2:X2 = (b=3)
 cassert (b=3) !is X2  // same as (b=3) !is X2
-cassert t1 equals t2
-cassert t1 !is t2
+cassert(t1 equals t2)
+cassert(t1 !is t2)
 
 const t4:X1 = (b=5)
 
-cassert t4 equals t1
-cassert t4 is t1
-cassert t4 !is t2
+cassert(t4 equals t1)
+cassert(t4 is t1)
+cassert(t4 !is t2)
 
 comb f2_x1(x:X1) -> (r) { r = x.b + 1 }
 comb f2_other(x) -> (r) { r = 0 }
@@ -318,7 +318,7 @@ const Color = enum(
 
 mut y:Color = Color.Red
 if y == Color.Red {
-  puts "c1:{} c2:{}\n", y, y.c  // prints: c1:Color.Red c2:0xff0000
+  puts("c1:{} c2:{}\n", y, y.c)  // prints: c1:Color.Red c2:0xff0000
 }
 ```
 
@@ -336,8 +336,9 @@ const ADT = enum(
 
 comb nourish(x:ADT) {
   match x {
-    == ADT.Person { puts "eating:{}", x.eats }
-    == ADT.Robot { puts "charging:{}", x.charges_with }
+    == ADT.Person { puts("eating:{}", x.eats) }
+    == ADT.Robot { puts("charging:{}", x.charges_with) }
+    else { }
   }
 }
 
@@ -387,20 +388,20 @@ When the attributes are read, it reads the current. it does not read the constra
 
 ```pyrope
 mut val:u8 = 0   // designer constraints a to be between 0 and 255
-cassert val.[sbits] == 0
+cassert(val.[sbits] == 0)
 
 val = 3          // val has 3 bits (0sb011 all the numbers are signed)
 
 val = 300        // error: '300' overflows the maximum allowed value of 'val'
 
 val = 1          // max=1,min=1 sbits=2, ubits=1
-cassert val.[ubits] == 1 and val.[min] == 1 and val.[max] == 1 and val.[sbits] == 2
+cassert(val.[ubits] == 1 and val.[min] == 1 and val.[max] == 1 and val.[sbits] == 2)
 
 wrap val = 0x1F0 // Drop bits from 0x1F0 to fit in constrained type
-cassert val == 240 == 0xF0
+cassert(val == 240 == 0xF0)
 
 val = u8(0x1F0)    // same
-cassert val == 0xF0
+cassert(val == 0xF0)
 ```
 
 Pyrope leverages LiveHD bitwidth pass to compute the maximum and minimum value
@@ -466,7 +467,7 @@ if cmd? {
 } else {
   y = y - x
 }
-x:cmd.a:[wrap] = x  // use cmd.a type for x, and drop bits as needed
+wrap x:cmd.a = x  // use cmd.a type for x, and drop bits as needed
 y = cmd.b(y)        // typecast y to cmd.b type (this can add a mux)
 ```
 
@@ -512,7 +513,7 @@ const e_type = enum(str:String = "hello", num=22)
 const v_type = variant(str:String, num:int) // No default value in variant
 
 mut vv:v_type = (num=0x65)
-cassert vv.num == 0x65
+cassert(vv.num == 0x65)
 const xx = vv.str                         // error:
 ```
 
@@ -529,8 +530,8 @@ const x1b:Vtype = (str="hello")           // explicit variant type
 
 comptime const x2:Vtype = "hello"                  // comptime
 
-cassert x1a.str == "hello" and x1a == "hello"
-cassert x1b.str == "hello" and x1b == "hello"
+cassert(x1a.str == "hello" and x1a == "hello")
+cassert(x1b.str == "hello" and x1b == "hello")
 
 const err1 = x1a.num                      // error:
 const err2 = x1b.b                        // error:
@@ -546,6 +547,7 @@ ee.str = "new_string"       // error: enum is immutable
 match ee {
  == e_type.str { }
  == e_type.num { }
+ else { }
 }
 ```
 
@@ -594,17 +596,17 @@ const a = (b=1, c:u32=2)
 mut b = a
 b.c = 100
 
-cassert a equals b
-cassert a.size == 2
-cassert a['b'] == 1
-cassert a['c'] equals u32
+cassert(a equals b)
+cassert(a.size == 2)
+cassert(a['b'] == 1)
+cassert(a['c'] equals u32)
 
-cassert a has 'c'
-cassert !(a has 'foo')
+cassert(a has 'c')
+cassert(!(a has 'foo'))
 
-cassert a.[id] == 'a'
-cassert a[0].[id] == ':0:b' and a.b.[id] == ':0:b'
-cassert a[1].[id] == ':1:c' and a.c.[id] == ':1:c'
+cassert(a.[id] == 'a')
+cassert(a[0].[id] == ':0:b' and a.b.[id] == ':0:b')
+cassert(a[1].[id] == ':1:c' and a.c.[id] == ':1:c')
 ```
 
 Function definitions allocate a tuple, which allows to introspect the
@@ -613,8 +615,8 @@ function but not to change the functionality. Functions have two fields:
 
 ```
 comb fu(a, b=2) -> (c) { c = a + b }
-cassert fu.[inp] equals ('a', 'b')
-cassert fu.[out] equals ('c')
+cassert(fu.[inp] equals ('a', 'b'))
+cassert(fu.[out] equals ('c'))
 ```
 
 This means that when ignoring named vs unnamed calls, overloading behaves like
@@ -657,10 +659,10 @@ comb randomize::[debug](ref self) {
 const x = (a=1, b=true, c="hello")
 const y = x.randomize()
 
-assert x.a == 1 and x.b == true and x.c == "hello"
-cover y.a != 1
-cover y.b != true
-assert y.c == "hello"  // string is not supposed to mutate in randomize()
+assert(x.a == 1 and x.b == true and x.c == "hello")
+cover(y.a != 1)
+cover(y.b != true)
+assert(y.c == "hello") // string is not supposed to mutate in randomize()
 ```
 
 
@@ -686,7 +688,7 @@ Any call to a function or tuple outside requires a prior `import` statement.
 
 ```
 // file: src/my_fun.prp
-comb fun1(a, b) -> (r) { _0 + _1 }
+comb fun1(a, b) -> (r) { r = a + b }
 comb fun2(a) -> (r) {
   comb inside() -> (r) { r = 3 }
   r = a
@@ -694,7 +696,7 @@ comb fun2(a) -> (r) {
 comb another(a) -> (r) { r = a }
 
 const mytup = (
-  comb call3() { puts "call called" }
+  comb call3() { puts("call called") }
 )
 ```
 
@@ -706,7 +708,7 @@ a.another(a=1, 2)       // error: 'another' is not an imported function
 a.fun2.inside()         // error: `inside` is not in top scope variable
 
 const fun1 = import("my_fun/fun1")
-lec fun1, a.fun1
+lec(fun1, a.fun1)
 
 x = import("my_fun/mytup")
 
@@ -779,15 +781,15 @@ register, it can not be used to import functions or variables.
 
 ```
 mod do_increase() {
-  reg counter = 0
+  reg counter:u32 = 0
 
-  counter:u32:[wrap] = counter + 1
+  wrap counter = counter + 1
 }
 
 mod do_debug() {
   const cntr = regref("do_increase/counter")
 
-  puts "The counter value is {}", cntr
+  puts("The counter value is {}", cntr)
 }
 ```
 
@@ -821,7 +823,7 @@ set a different value for each uart base register.
 
 mod xxx(some, code) {
   reg uart_addr:u32 = ?
-  assert 0x400 > uart_addr >= 0x300
+  assert(0x400 > uart_addr >= 0x300)
 }
 
 // file local.prp
@@ -895,14 +897,17 @@ const v:Typ1 = Typ1(a="foo", b=33)  // OK, but redundant Typ1
 const y:Typ1 = ("foo", 33)          // OK, because no conflict by type
 
 mut z:Typ1 = ?                    // OK, default field values
-cassert z.a == "none" and z.b == 0
+cassert(z.a == "none" and z.b == 0)
 z = ("foo", 33)
 
-cassert v == w == x == y == z
+cassert(v == w == x == y == z)
 ```
 
 Pyrope allows a setter method to intercept assignments or construction. The same
-setter method is called in all the previous cases.
+setter method is called in all the previous cases. Setter and getter methods are
+implicit read/write hooks and must be declared as `comb`. If an operation needs
+register state, pipeline latency, or other cycle-level side effects, make it an
+explicit `mod` or `pipe` method instead of a setter/getter.
 
 The setter method can use single character arguments for array index, but they must
 respect the declaration order.
@@ -920,7 +925,7 @@ mut y:Typ2 = (a="x", b=0)
 
 x["hello"] = 44
 y = ("hello", 44)
-cassert x == y
+cassert(x == y)
 ```
 
 Tuples can be multi-dimensional, and the index can handle multiple indexes at once.
@@ -946,17 +951,17 @@ const Matrix8x8 = (
 )
 
 const m:Matrix8x8 = ?
-cassert m.data[0][3] == 0
+cassert(m.data[0][3] == 0)
 
 m[1, 2] = 100
-cassert m.data[1][2] == 100
+cassert(m.data[1][2] == 100)
 m[1] = 3
-cassert m.data[1][2] == 3
+cassert(m.data[1][2] == 3)
 m[4][5] = 33
-cassert m.data[4][5] == 33
+cassert(m.data[4][5] == 33)
 
 m[1] = 40
-cassert m[1] == (3, 40, 3, 3, 3, 3, 3, 3)
+cassert(m[1] == (3, 40, 3, 3, 3, 3, 3, 3))
 ```
 
 The default `getter`/`setter` allows for indexing each of the dimentions and returns
@@ -974,8 +979,8 @@ const Matrix2x2 = (
 const n:Matrix2x2 = ?
 n.data[0][1] = 2      // default setter
 
-cassert n[0][1] == 3  // getter does + 1
-cassert n[0] == (0, 3) // error: no getter for comb(ref self, x)
+cassert(n[0][1] == 3) // getter does + 1
+cassert(n[0] == (0, 3)) // error: no getter for comb(ref self, x)
 ```
 
 The symmetric getter method is called whenever the tuple is read. Since each
@@ -1001,11 +1006,11 @@ mut x:My_2_elem = ?
 v = (x=0, "hello")
 v[1] = "world"
 
-cassert v[0] == "hello"
-cassert v == ("hello", "world")  // not
+cassert(v[0] == "hello")
+cassert(v == ("hello", "world")) // not
 
 const z = v
-cassert z !equals v   // v has v.data, z does not
+cassert(z !equals v) // v has v.data, z does not
 ```
 
 
@@ -1029,8 +1034,8 @@ const some_obj = (
 
 mut x:some_obj = ("hello", 3)
 
-assert x.a1 == "hello"
-assert x.a2 == 103
+assert(x.a1 == "hello")
+assert(x.a2 == 103)
 x.a2 = 5
 ```
 
@@ -1057,7 +1062,7 @@ const r1:int    = s // OK
 
 s.v = 100
 const r2:string = if s.v > 10 { s.showcase_get_string() } else { "" }
-cassert r2 == "this is a big 100 number"
+cassert(r2 == "this is a big 100 number")
 ```
 
 Like all the lambdas, the getter method can also be overloaded on the return type.
@@ -1084,7 +1089,7 @@ mut obj1::[attr1] = (
     if v.[attr2] {
       self.data.[attr3] = 33
     }
-    cassert self.[attr1]
+    cassert(self.[attr1])
   }
 )
 ```
@@ -1098,13 +1103,13 @@ overload below.
 
 ```
 const fint:int  = 0
-cassert fint == 0
+cassert(fint == 0)
 
 mut fbool:bool = false
-cassert !fbool
+cassert(!fbool)
 
 comb tup_set_default(ref self) { // no-argument overload
-  cassert self.v == ""
+  cassert(self.v == "")
   self.v = "empty33"
 }
 comb tup_set_v(ref self, v) {
@@ -1116,16 +1121,16 @@ const Tup = (
 )
 
 mut x:Tup = ?
-cassert x.v == "empty33"
+cassert(x.v == "empty33")
 
 x = "Padua"
-cassert x.v == "Padua"
+cassert(x.v == "Padua")
 
 mut y = Tup()
-cassert y.v == "empty33"
+cassert(y.v == "empty33")
 
 y = "ucsc"
-cassert y.v == "ucsc"
+cassert(y.v == "ucsc")
 ```
 
 ### Array/Tuple getter/setter
@@ -1147,7 +1152,7 @@ mut my_arr = (
 )
 
 my_arr[3] = 300           // calls setter
-cassert my_add[3] == 300  // calls getter
+cassert(my_add[3] == 300) // calls getter
 ```
 
 Unlike languages like C++, the setter is only called if there is a new value
@@ -1162,23 +1167,24 @@ const Point = (
   ,mut priv_x:int:[private] = 0
   ,mut priv_y:int:[private] = 0
 
-  ,pipe setter(ref self, x:int, y:int) {
+  ,comb setter(ref self, x:int, y:int) {
     self.priv_x = x
     self.priv_y = y
   }
 
-  ,pipe getter(self, idx:string) {
+  ,comb getter(self, idx:string) {
     match idx {
      == 'x' { self.priv_x }
      == 'y' { self.priv_y }
+     else   { 0            }
     }
   }
 )
 
 const p:Point = (1,2)
 
-cassert p['x'] == 1 and p['y'] == 2
-cassert p.x == 1 and p.y == 2          // error:
+cassert(p['x'] == 1 and p['y'] == 2)
+cassert(p.x == 1 and p.y == 2) // error:
 ```
 
 ## Compare method
@@ -1192,16 +1198,16 @@ comparators. When non-provided the `lt` (Less Than) is a compile error, and the
 
 ```
 const t=(
-  ,mut v:string = nil
-  ,pipe setter(ref self) { self.v = a }
+  ,mut v:int = 0
+  ,comb setter(ref self, a:int) { self.v = a }
   ,comb lt(self,other)->(r:bool){ r = self.v  < other.v }
   ,comb eq(self,other)->(r:bool){ r = self.v == other.v }
 )
 
 mut m1:t = 10
 mut m2:t = 4
-assert m1 < m2 and !(m1==m2)
-assert m1 <= m2 and m1 != m2 and m2 > m1 and m2 >= m1
+assert(m1 < m2 and !(m1==m2))
+assert(m1 <= m2 and m1 != m2 and m2 > m1 and m2 >= m1)
 ```
 
 
@@ -1223,15 +1229,15 @@ const t3=(
   ,long_name:string = "foo"
 )
 
-cassert t1==t2
-cassert t1 !equals t3
+cassert(t1==t2)
+cassert(t1 !equals t3)
 const x = t1==t3           // error: t1 !equals t3
 ```
 
 The comparator `a == b` when `a` or `b` are tuples is equivalent to:
 ```
 cassert (a==b) == ((a in b) and (b in a))
-cassert a equals b
+cassert(a equals b)
 ```
 
 With the `eq` overload, it is possible to compare named and unnamed tuples.
@@ -1254,7 +1260,7 @@ const t2 = (
   ,const eq = [t2_eq_t1, t2_eq_t2]
 )
 
-cassert t1==t2 and t2==t1
+cassert(t1==t2 and t2==t1)
 ```
 
 Since `a == b` can compare two different objects, it is not clear if `a.eq` or `b.eq` method

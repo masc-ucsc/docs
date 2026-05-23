@@ -22,8 +22,8 @@ cassert (a=1) in (1,a=1,3)
 cassert (a=1) !does (1,a=1,3)
 cassert (1,a=1,3) does (a=1)
 
-comb f(a) { puts "{a}" }
-comb g(long, short) { puts "{long}" }
+comb f(a) { puts("{a}") }
+comb g(long, short) { puts("{long}") }
 
 f(a=1)             // OK
 f(1)               // OK
@@ -248,11 +248,12 @@ if the compiler optimized over assertions.
 === "Pyrope `match`"
 
     ```
-    optimize sel==1 or sel==2 or sel==4 // not needed. match sets it
+    optimize(sel==1 or sel==2 or sel==4) // not needed. match sets it
     match sel {
       == 0ub001 { f = i0 }
       == 0ub010 { f = i2 }
       == 0ub100 { f = i3 }
+      else      { f = 0  }
     }
     ```
 
@@ -286,7 +287,7 @@ Optimize allows more freedom, without dangerous Verilog x-optimizations:
 === "Pyrope optimize"
 
     ```
-    optimize a != 0
+    optimize(a != 0)
 
 
     if (1 + a) != 1 { // always false
@@ -295,7 +296,7 @@ Optimize allows more freedom, without dangerous Verilog x-optimizations:
       out = 3
     }
 
-    optimize b != 3
+    optimize(b != 3)
     // array = (1,2,3,4,5,6,7,8)
     res = array[b]
     ```
@@ -308,22 +309,22 @@ not trigger optimizations. The `optimize` statement should be use for such behav
 
 
 ```
-assert cond==3     // Not cassert or optimize, so no optimized
+assert(cond==3)    // Not cassert(or optimize, so no optimized)
 mut x1 = 0sb?
 
 if cond == 3 {
   x1 = 1
 }
-assert  x1==1 // still not optimized (cassert fails)
-assert !x1 and x1.[comptime]
+assert(x1==1) // still not optimized (cassert(fails))
+assert(!x1 and x1.[comptime])
 
 mut x2 = 0sb?
-optimize cond==3
+optimize(cond==3)
 if cond == 3 {
   x2 = 1
 }
-cassert x2==1
-cassert x2.[comptime]
+cassert(x2==1)
+cassert(x2.[comptime])
 ```
 
 ## LNAST optimization
@@ -471,8 +472,8 @@ comb f1() -> (r) { r = 1 }
 const tup = (
   comb f1() -> (r) { r = 2 },
   comb code(self) {
-     cassert self.f1() == 2
-     cassert f1() == 1
+     cassert(self.f1() == 2)
+     cassert(f1() == 1)
   }
 )
 ```
@@ -530,22 +531,23 @@ comb f(x:int) -> (result:int) {
 ### Lambda arguments
 
 
-Lambda calls happen whenever an identifer is followed by a list of expressions.
-If the first expression in the list has parenthesis, it can lead to unexpected
-behavior:
+Lambda calls happen whenever an identifer is followed by a parenthesized list of
+expressions. Verification statements use the same explicit grouping style.
+Avoid the old compact form because it can make the boundary between the
+statement and the checked expression unclear:
 
 
 ```
-cassert 0 == (0)  // OK, same as cassert( 0 == (0) )
-assert (0) == 0   // error: (assert(0)) == 0 is an expression
-cassert(0 == 0)   // OK
+cassert(0 == (0)) // OK
+assert((0) == 0)  // OK
 ```
 
-It is also easy to forget that parenthesis can be ommited in simple expressions,
-not when ranges or tuples are involed.
+It is also easy to forget that parentheses can be omitted in simple expressions,
+but not when ranges or tuples are involved. Keep the verification condition
+inside the statement parentheses:
 
 ```
-assert 2 in (1,2)  // error: not allowed to drop parenthesis
+assert(2 in 1,2)    // error: not allowed to drop tuple parentheses
 cassert(2 in (1,2)) // OK
 ```
 
@@ -554,7 +556,9 @@ cassert(2 in (1,2)) // OK
 
 The evaluation order is always the same program order starting from the top
 module. Remember that the setter method is the constructor called even when
-there is no initial value set.
+there is no initial value set. Setter and getter methods are implicit hooks
+and must be `comb`; stateful or pipelined behavior must be modeled with
+explicit methods.
 
 
 
@@ -578,21 +582,21 @@ const X_t = (
 mut top = (
   comb setter(ref self) {
     mut x:X_t = ?
-    cassert x.i1.i1_field == 1
-    cassert x.i1.i2_field == 2
-    cassert x.i2.i1_field == 11
+    cassert(x.i1.i1_field == 1)
+    cassert(x.i1.i2_field == 2)
+    cassert(x.i2.i1_field == 11)
 
     x.i1 = 400
 
-    cassert x.i1.i1_field == 400
-    cassert x.i1.i2_field == 2
-    cassert x.i2.i1_field == 11
+    cassert(x.i1.i1_field == 400)
+    cassert(x.i1.i2_field == 2)
+    cassert(x.i2.i1_field == 11)
 
     x.i2 = 1000
 
-    cassert x.i1.i1_field == 400
-    cassert x.i1.i2_field == 2
-    cassert x.i2.i1_field == 1000
+    cassert(x.i1.i1_field == 400)
+    cassert(x.i1.i2_field == 2)
+    cassert(x.i2.i1_field == 1000)
   }
 )
 ```
@@ -617,10 +621,10 @@ if all the possible values are true, which is quite counter-intuitive behavior
 for programmers not used to 4 value logic.
 
 ```
-cassert !(0sb? == 0)
-cassert !(0sb? != 0)
-cassert !(0sb? == 0sb?)
-cassert !(0sb? != 0sb?)
+cassert(!(0sb? == 0))
+cassert(!(0sb? != 0))
+cassert(!(0sb? == 0sb?))
+cassert(!(0sb? != 0sb?))
 ```
 
 There is no way to know at run-time if a value is unknown, but a compile trick
@@ -629,7 +633,7 @@ can work. The reason is that integers can be converted to strings in a C++ API
 ```
 mut x = 0sb10?
 const str = __to_string(x) // only works for compile time constants
-cassert str == "0sb10?"
+cassert(str == "0sb10?")
 ```
 
 ### for loop
@@ -648,8 +652,9 @@ for (idx,i) in s.enumerate() {
    == 1 { "e" }
    == 2 { "l" }
    == 3 { "l" }
+   else { ""  }
   }
-  cassert v == i
+  cassert(v == i)
 }
 
 const t = (1,2,3)
@@ -658,8 +663,9 @@ for (idx,i) in t.enumerate() {
    == 0 { 1 }
    == 1 { 2 }
    == 2 { 3 }
+   else { 0 }
   }
-  cassert v == i
+  cassert(v == i)
 }
 
 const r=2..<5
@@ -668,19 +674,21 @@ for (idx,i) in r.enumerate() {
    == 0 { 2 }
    == 1 { 3 }
    == 2 { 4 }
+   else { 0 }
   }
-  cassert v == i
+  cassert(v == i)
 }
 
 const r2=4..=2 step -1
-cassert r2 == (4,3,2)
+cassert(r2 == (4,3,2))
 for (idx,i) in r2.enumerate() {
   const v = match idx {
    == 0 { 4 }
    == 1 { 3 }
    == 2 { 2 }
+   else { 0 }
   }
-  cassert v == r2[i]
+  cassert(v == r2[i])
 }
 
 for i in 2..<5 {
@@ -691,12 +699,13 @@ for i in 2..<5 {
    == 0 { 4 }
    == 1 { 3 }
    == 2 { 2 }
+   else { 0 }
   }
-  cassert v == ri
+  cassert(v == ri)
 }
 
 for (idx,i) in enumerate(123) {
-  cassert i == 123 and idx==0
+  cassert(i == 123 and idx==0)
 }
 ```
 
@@ -708,34 +717,34 @@ iterators, but also in bit section:
 ```
 const v = 0xF0
 
-cassert v#[0] == 0
-cassert v#[4] == 1       // unsigned output
-cassert v#sext[4] == -1  // signed output
+cassert(v#[0] == 0)
+cassert(v#[4] == 1)       // unsigned output
+cassert(v#sext[4] == -1)  // signed output
 
-cassert v#[3..=4] == 0ub010 == v#[3,4]
-cassert v#[4..=3 step -1] == 0ub010
-cassert v#[4,3] == v#[3,4] == 0ub010
+cassert(v#[3..=4] == 0ub010 == v#[3,4])
+cassert(v#[4..=3 step -1] == 0ub010)
+cassert(v#[4,3] == v#[3,4] == 0ub010)
 
 const tmp1 = (v#[4], v#[3])#[..]  // typecast from
 const tmp2 = (v#[3], v#[4])#[..]
 const tmp3 = v#[3,4]
-cassert tmp1 == 0ub01
-cassert tmp2 == 0ub100
-cassert tmp3 == 0ub10
+cassert(tmp1 == 0ub01)
+cassert(tmp2 == 0ub100)
+cassert(tmp3 == 0ub10)
 
 const tmp1s = (v#sext[4], v#sext[3])#[..]  // typecast from
 const tmp2s = (v#sext[3], v#sext[4])#[..]
 const tmp3s = v#[4,3]
-cassert tmp1s == 0ub01
-cassert tmp2s == 0ub10
-cassert tmp3s == 0ub10
+cassert(tmp1s == 0ub01)
+cassert(tmp2s == 0ub10)
+cassert(tmp3s == 0ub10)
 
 const tmp1ss = (v#sext[4], v#sext[3])#sext[..]  // typecast from
 const tmp2ss = (v#sext[3], v#sext[4])#sext[..]
 const tmp3ss = v#sext[3,4]
-cassert tmp1ss == 0ub01  ==  1
-cassert tmp2ss == 0sb10 == -2
-cassert tmp3ss == 0sb10 == -2 == v#sext[4,3]
+cassert(tmp1ss == 0ub01  ==  1)
+cassert(tmp2ss == 0sb10 == -2)
+cassert(tmp3ss == 0sb10 == -2 == v#sext[4,3])
 ```
 
 
@@ -756,7 +765,7 @@ comb reverse(x:uint) -> (total:uint) {
     total |= x#[i]
   }
 }
-cassert reverse(0ub10110) == 0ub01101
+cassert(reverse(0ub10110) == 0ub01101)
 ```
 
 ### Unexpected calls
@@ -767,8 +776,8 @@ reference.
 
 
 ```
-comb args(x) -> (r) { puts "args:{x}"; r = 1 }
-comb here()  -> (r) { puts "here";   r = 3 }
+comb args(x) -> (r) { puts("args:{x}"); r = 1 }
+comb here()  -> (r) { puts("here");   r = 3 }
 
 type NullaryInt = comb() -> (_:int)
 comb call_now(f:NullaryInt)   -> (r:int)        { r = f() }
@@ -778,18 +787,18 @@ const x0 = call_now(here)          // prints "here"
 const e1 = call_now(args)          // error: args needs arguments
 const x1 = call_defer(here)        // nothing printed
 const e2 = call_defer(args)        // error: args needs arguments
-cassert x0  == 3                  // nothing printed
-cassert x1  == 3                  // nothing printed
+cassert(x0  == 3)                 // nothing printed
+cassert(x1  == 3)                 // nothing printed
 
 const x2 = call_now(ref here)      // prints "here"
 const e3 = call_now(ref args)      // error: args needs arguments
 const x3 = call_defer(ref here)    // nothing printed
 const x4 = call_defer(ref args)    // nothing printed
-cassert x2  == 3                  // nothing printed
-cassert x3()  == 3               // prints "here"
-assert x3  == 3                  // error: explicit call needed
-assert x4  == 1                  // error: args needs arguments
-cassert x4("xx") == 1            // prints "args:xx"
+cassert(x2  == 3)                 // nothing printed
+cassert(x3()  == 3)               // prints "here"
+assert(x3  == 3)                  // error: explicit call needed
+assert(x4  == 1)                  // error: args needs arguments
+cassert(x4("xx") == 1)            // prints "args:xx"
 
 ```
 
@@ -800,7 +809,7 @@ Since `if`, `for`, `match` are expressions, you can build some strange code:
 
 ```
 if if x == 3 { true }else{ false } {
-  puts "x is 3"
+  puts("x is 3")
 }
 ```
 
@@ -811,5 +820,5 @@ be followed by a negative number `-3`.
 
 ```
 const v = (3)--3
-assert v == 6
+assert(v == 6)
 ```

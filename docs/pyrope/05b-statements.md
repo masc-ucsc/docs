@@ -32,7 +32,7 @@ exclusive, providing the same behavior as a hardware bus without needing a
 separate `bus` construct.
 
 ```
-optimize !(x1==1 and x2==2)
+optimize(!(x1==1 and x2==2))
 a = if x1 == 1 {
     300
   }elif x2 == 2 {
@@ -51,38 +51,41 @@ the remaining if/else statement blocks.
 mut tmp = x+1
 
 if mut x1=x+1; x1 == tmp {
-   puts "x1:{} is the same as tmp:{}", x1, tmp
+   puts("x1:{} is the same as tmp:{}", x1, tmp)
 }elif mut x2=x+2; x2 == tmp {
-   puts "x1:{} != x2:{} == tmp:{}", x1, x2, tmp
+   puts("x1:{} != x2:{} == tmp:{}", x1, x2, tmp)
 }
 ```
 
 
 ## Unique parallel conditional (`match`)
 
-The `match` statement is similar to a chain of unique if/elif, like the `unique
-if/elif` sequence, one of the options in the match must be true. The difference
-is that one of the entries must be truth or an error is generated. This makes
-the `match` statement a replacement for the common "unique parallel case"
-Verilog directive. The `match` statement behaves like also having an `optimize`
-statement which allows for more efficient code generation than a sequence of
-`if/else`.
+The `match` statement is similar to a chain of unique if/elif, like the
+`unique if/elif` sequence. The `match` statement is a replacement for the
+common "unique parallel case" Verilog directive, and behaves like also
+having an `optimize` statement, which allows for more efficient code
+generation than a sequence of `if/else`.
 
+Every `match` **must end with an `else` arm** — omitting it is a parse
+error. This guarantees there is always exactly one matching branch,
+removes the silent "no-case-matched" failure mode, and gives a single
+place to put a catch-all (`cassert(false`, a default value, etc.).)
 
 In addition to functionality, the syntax is different to avoid redundancy.
-`match` joins the match expression with the beginning of the matching entry must
-form a valid expression.
+`match` joins the match expression with the beginning of the matching
+entry to form a valid expression.
 
 ```
 const x = 1
 match x {
-  == 1            { puts "always true" }
-  in 2,3          { puts "never"       }
+  == 1            { puts("always true") }
+  in 2,3          { puts("never")       }
+  else            { cassert(false)      }
 }
 // It is equivalent to:
-unique if x == 1  { puts "always true" }
-elif x in (2,3)   { puts "never"       }
-else              { cassert false      }
+unique if x == 1  { puts("always true") }
+elif x in (2,3)   { puts("never")       }
+else              { cassert(false)      }
 ```
 
 Like the `if`, it can also be used as an expression.
@@ -92,21 +95,22 @@ mut hot = match x {
     == 0sb001 { a }
     == 0sb010 { b }
     == 0sb100 { c }
+    else      { cassert(false); 0 }
   }
 
 // Equivalent
 optimize (x==0sb001 or x==0sb010 or x==0sb100)
 mut hot2 = __hotmux(x, a, b, c)
 
-assert hot==hot2
+assert(hot==hot2)
 ```
 
 Like the `if` statement, a sequence of statements and declarations are possible in the match statement.
 
 ```
 match const one=1 ; one ++ (2) {
-  == (1,2) { puts "one:{}", one }      // should always hit
-  else     { cassert false }
+  == (1,2) { puts("one:{}", one) }      // should always hit
+  else     { cassert(false) }
 }
 ```
 
@@ -126,54 +130,46 @@ for x in 1..=5 {
     == 4 { "four" }
     else { "neither"}
   }
-  cassert v1 == v2
+  cassert(v1 == v2)
 }
 ```
 
 
 ## Gate statements (`when`/`unless`)
 
-A simple statement can be conditionally executed by appending `when cond` or
-`unless cond` at the end. `when cond` executes the statement only if `cond` is
-true. `unless cond` executes the statement only if `cond` is false.
-
-These are equivalent to a trailing `if`/`if not`, but unlike `if` blocks, they
-do not create a new scope — the statement stays in the current scope. This
-makes them ideal for single-statement conditionals like gating assertions,
-conditional assignments, or early returns.
+A simple statement can be conditionally **included or omitted at
+elaboration** by appending `when cond` or `unless cond` at the end. These
+are compile-time gates — think `#if` / `#ifndef`. The condition must be
+`comptime`; a runtime condition is a compile error. The statement stays
+in the current scope (no new scope is created), which makes them ideal
+for conditional declarations, conditional assertions, and conditionally
+omitted statements driven by compile options.
 
 ```
+comptime const DEBUG = true
 mut a = 3
-a += 1 when false             // never executes
-cassert a == 3
-assert a == 1000 when a > 10  // assert never executed either
 
-reg my = 3 when some_condition  // no register declared otherwise
+a += 1 when false              // omitted: statement does not exist
+cassert(a == 3)
+assert(a == 1000) when DEBUG   // included only when DEBUG is true
 
-return unless success_condition       // bare terminator; outputs already assigned
+reg my = 3 when some_comptime  // register exists only when some_comptime is true
+
+return unless DEBUG            // omitted when DEBUG is true
 ```
 
 Gating `if`/`match` statements does not make much sense. As a result,
-`when`/`unless` can only be applied to assignments, function calls, and code
-block control statements (`return`, `break`, `continue`).
+`when`/`unless` can only be applied to assignments, function calls,
+declarations, and code-block control statements (`return`, `break`,
+`continue`).
 
-The condition can be a runtime value only when gating an **assignment** or
-**function call** (the gate becomes a mux / enable on the operation). In every
-other case the condition must be **compile-time**:
-
-* Declarations (`mut`, `var`, `reg`, `let`/`const`): the variable's existence
-  is being gated, and hardware cannot conditionally instantiate a wire or
-  register based on a runtime signal.
-* Terminators (`return`, `break`, `continue`): `for`/`while`/`loop` are
-  fully unrolled at elaboration, and `return` is a structural early-exit; a
-  runtime condition there has no hardware meaning.
-
-A runtime condition in any of those cases is a compile error. To get runtime
-behavior, declare the variable unconditionally and gate the *update* instead:
+For **runtime** gating (a mux or enable on a signal) use an `if` block
+or an `if` expression:
 
 ```
-mut x = c              // always declared
-x = other when cond    // runtime-gated assignment, fine
+mut x = c                      // always declared
+if cond { x = other }          // runtime-gated assignment
+result = if cond { other } else { c }
 ```
 
 
@@ -217,14 +213,14 @@ mut yy = 0
     z = 10
     mut x=_           // error: 'x' is a shadow variable
   }
-  cassert z == 10
+  cassert(z == 10)
   yy = x
 }
 const zz = x            // error: `x` is out of scope
-cassert yy == 1
+cassert(yy == 1)
 
 mut yy2 = {const x=3 ; 33/3} + 1
-cassert yy2 == 12
+cassert(yy2 == 12)
 const xx = {yy=1 ; 33}  // error: 'yy' has side effects
 
 if {const a=1+yy2; 13<a} {
@@ -234,19 +230,19 @@ if {const a=1+yy2; 13<a} {
 
 comb doit(f, a) -> (r) {
   const x = f(a)
-  assert x == 7
+  assert(x == 7)
   r = 3
 }
 
 comb real_doit(a) -> (r) {
-  assert a != 0
+  assert(a != 0)
   r = 7
   return               // exit the current lambda; later statements skipped
   r = 100              // never reached
 }
 
 const z3 = doit(real_doit, 33)
-cassert z3 == 3
+cassert(z3 == 3)
 ```
 
 ## Loop (`for`)
@@ -266,27 +262,27 @@ for i in 0..<100 {
 
 mut bund = (1,2,3,4)
 for (index,i) in bund.enumerate() {
-  assert bund[j] == i
+  assert(bund[j] == i)
 }
 ```
 
 ```
 const b = (a=1,b=3,c=5,7,11)
-cassert b.keys() == ('a', 'b', 'c', '', '')
-cassert b.enumerate() == ((0,1), (1,3), (2,5), (3,7), (4,11))
+cassert(b.keys() == ('a', 'b', 'c', '', ''))
+cassert(b.enumerate() == ((0,1), (1,3), (2,5), (3,7), (4,11)))
 const xx= zip(b.keys(), b.enumerate())
-cassert xx == (('a',0,a=1), ('b',1,b=3), ('c',2,c=5), ('',3,7), ('',4,11))
+cassert(xx == (('a',0,a=1), ('b',1,b=3), ('c',2,c=5), ('',3,7), ('',4,11)))
 
 for (key,index,i) in zip(keys(b),b.enumerate()) {
-  cassert i==1  implies (index==0 and key == 'a')
-  cassert i==3  implies (index==1 and key == 'b')
-  cassert i==5  implies (index==2 and key == 'c')
-  cassert i==7  implies (index==3 and key == '' )
-  cassert i==11 implies (index==4 and key == '' )
+  cassert(i==1  implies (index==0 and key == 'a'))
+  cassert(i==3  implies (index==1 and key == 'b'))
+  cassert(i==5  implies (index==2 and key == 'c'))
+  cassert(i==7  implies (index==3 and key == '' ))
+  cassert(i==11 implies (index==4 and key == '' ))
 }
 
 const c = ((1,a=3), b=4, c=(x=1,y=6))
-cassert c.enumerate() == ((0,(1,a=3)), (1,b=4), (2,c=(x=1,y=6)))
+cassert(c.enumerate() == ((0,(1,a=3)), (1,b=4), (2,c=(x=1,y=6))))
 ```
 
 The `for` can also be used in an expression that allows building comprehensions
@@ -297,7 +293,7 @@ mut c = for i in 1..<5 { mut xx = i }  // error: no expression
 mut d = i for i in 0..<5
 mut e = i for i in 0..<5 if i
 cassert (0,1,2,3,4) == d
-cassert e == (1,2,3,4)
+cassert(e == (1,2,3,4))
 ```
 
 The iterating element is copied by value, if the intention is to iterate over a
@@ -312,7 +308,7 @@ mut b = (1,2,3,4,5)
 for x in ref b {
   x += 1
 }
-cassert b == (2,3,4,5,6)
+cassert(b == (2,3,4,5,6))
 ```
 
 ### Code block control
@@ -339,11 +335,11 @@ declared output names is what the caller sees.
 ```
 mut total:[] = ?
 for a in 1..=10 {
-  continue when a == 2
+  if a == 2 { continue }
   total ++= a
-  break when a == 3    // exit for scope
+  if a == 3 { break }    // exit for scope
 }
-cassert total == (1,3)
+cassert(total == (1,3))
 
 if true {
   code(x)
@@ -354,15 +350,15 @@ mut a = 3
 mut total2:[] = ?
 while a>0 {
   total2 ++= a
-  break when a == 2    // exit if scope
+  if a == 2 { break }    // exit if scope
   a = a - 1
   continue
-  assert false         // never executed
+  assert(false) // never executed
 }
-cassert total2 == (3,2)
+cassert(total2 == (3,2))
 
 mut total3 = i+10 for i in 1..=9 if i<3
-cassert total3 == (11, 12)
+cassert(total3 == (11, 12))
 ```
 
 ## while/loop
@@ -381,11 +377,11 @@ variable declarations visible only inside the while statements.
 
 mut a = 0
 loop {
-  puts "a:{}",a
+  puts("a:{}",a)
 
   a += 1
 
-  break unless a < 10
+  if a >= 10 { break }
 } // do{ ... }while(a<10)
 ```
 
@@ -410,11 +406,11 @@ constructs:
   call. `past(x)` is shorthand for `past[1](x)`. See the
   [Temporal library](09-verification.md#temporal-library).
 
-* `variable.[defer]` reads or writes the end-of-cycle value. Use it for
-  deferred updates and for observing a register's next-cycle value in
-  debug contexts.
+* `variable.[defer]` is **RHS-only**: it reads the end-of-cycle value
+  (after all in-cycle writes have accumulated). There is no
+  `variable.[defer] = ...` write form — writes use plain `=`.
 
-* For pipeline timing inside `mod` blocks, use `await[N]` (declaration
+* For pipeline timing inside `mod` blocks, use `stage[N]` (declaration
   modifier that pipelines the whole RHS over `N` cycles) and `foo@[N]`
   (pure timing type check).
 
@@ -424,13 +420,13 @@ constructs:
 
 `foo@[N]` is a pure cycle-alignment type check, never a flop insertion.
 `foo@[3]` checks that `foo` is 3 pipeline stages ahead of the lambda inputs.
-To actually delay a value, use `await[N] lhs = rhs`. To read past or future
+To actually delay a value, use `stage[N] lhs = rhs`. To read past or future
 cycles, use `past[N](x)` or `next[N](x)`.
 
-The `.[defer]` attribute provides deferred access to a variable — reading or
-writing the value at the end of the current cycle. It is valid for any variable
-type (`mut`, `const`, `reg`) as it refers to the final value within the current
-cycle.
+The `.[defer]` attribute provides RHS-only deferred read access to a
+variable — the value at the end of the current cycle. It is valid for any
+variable type (`mut`, `const`, `reg`) as it refers to the final value
+within the current cycle.
 
 ### Defer reads
 
@@ -441,9 +437,9 @@ cycle like post condition checks.
 
 ```
 mut c = 10
-assert b.[defer] == 33    // behaves like a postcondition
+assert(b.[defer] == 33) // behaves like a postcondition
 b = c.[defer]
-assert b == 33
+assert(b == 33)
 c += 20
 c += 3
 ```
@@ -477,47 +473,44 @@ if counter < 100 {
 }
 
 if counter == 10 {
-  assert deferred   == 10
-  assert counter.[defer] == 10 // same as deferred, end-of-cycle value
-  assert counter_0  ==  9
-  assert counter_1  ==  8
-  assert counter_2  ==  7
+  assert(deferred   == 10)
+  assert(counter.[defer] == 10) // same as deferred, end-of-cycle value
+  assert(counter_0  ==  9)
+  assert(counter_1  ==  8)
+  assert(counter_2  ==  7)
 }
 ```
 
-### Defer writes
+### `.[defer]` is RHS-only
 
-The `.[defer]` can also be applied to writes to delay the update to the end of
-the cycle while reads use the current value. If there are many defers to the
-same variable, they are ordered in program order. Defer writes only make sense
-if there is a register or array because `mut` and `const` variables restart
-every cycle. Defer reads make sense even for `mut` variables as it is the
-final value within the cycle.
+`.[defer]` is read-only on the right-hand side. There is **no
+`a.[defer] = ...` write form** — register writes always use plain `=`
+(or `+=`, `&=`, …). Within a cycle, multiple writes to the same register
+are accumulated in program order, and `.[defer]` reads the final
+end-of-cycle value.
 
 ```
 reg a:u8 = 1
-if a==1 {
-  assert a.[defer] == 200
-  a.[defer] = 200 // defer write
-  assert a == 1                 // bare 'a' reads the current 'q' value
-  assert a.[defer] == 200      // end-of-cycle value (after deferred write)
-}else{
-  assert a.[defer] == 2
-  a.[defer] = 2    // defer write
+if a == 1 {
+  a = 200                       // register write
+  assert(a == 1)                // bare 'a' still reads the current 'q' value
+  assert(a.[defer] == 200)      // .[defer] sees the in-cycle write
+} else {
+  a = 2
+  assert(a.[defer] == 2)
 }
 ```
 
-If there are `defer` reads and `defer` assignments/writes, the deferred writes
-are performed ahead of the deferred reads.
+The same RHS-only `.[defer]` form is also useful for `mut` variables when
+you want the in-cycle final value:
 
 ```
 mut a = 1
 mut x = 100
-x = a.[defer]
+x = a.[defer]                   // RHS read of the eventual final value
 a = 200
 
-cassert x == 100
-assert x.[defer] == x          // defer read equals final value
+cassert(x == 200)
 ```
 
 ## Testing (`test`)
@@ -530,7 +523,7 @@ effect outside.
 
 ```pyrope
 test "my test {}", 1 {
-  assert true
+  assert(true)
 }
 ```
 
@@ -540,28 +533,28 @@ randomization outside the test statement increases the number of tests:
 
 === "Parallel tests"
     ```
-    comb add(a,b) -> (r) { _0 + _1 }
+    comb add(a,b) -> (r) { r = a + b }
 
     for i in 0..<10 { // 10 tests
       const a = (-30..<100).rand
       const b = (-30..<100).rand
 
       test "test {}+{}",a,b {
-        assert add(a,b) == (a+b)
+        assert(add(a,b) == (a+b))
       }
     }
     ```
 
 === "Single test"
     ```
-    comb add(a,b) -> (r) { _0 + _1 }
+    comb add(a,b) -> (r) { r = a + b }
 
     test "test 10 additions" {
       for i in 0..<10 { // 10 tests
         const a = (-30..<100).rand
         const b = (-30..<100).rand
 
-        assert add(a,b) == (a+b)
+        assert(add(a,b) == (a+b))
       }
     }
     ```
@@ -580,9 +573,9 @@ will preserve the value, the inputs may change value.
 ```pyrope
 test "wait 1 cycle" {
   const a = 1 + input
-  puts "printed every cycle input={}", a
-  step 1
-  puts "also every cycle a={}",a  // printed on cycle later
+  puts("printed every cycle input={}", a)
+  step(1)
+  puts("also every cycle a={}",a)  // printed on cycle later
 }
 ```
 
@@ -594,9 +587,9 @@ The `waitfor` command is equivalent to a `while` with a `step`.
     ```
     total = 3
 
-    waitfor a_cond  // wait until a_cond is true
+    waitfor(a_cond)  // wait until a_cond is true
 
-    assert total == 3 and a_cond
+    assert(total == 3 and a_cond)
     ```
 
 === "equivalent Pyrope"
@@ -608,7 +601,7 @@ The `waitfor` command is equivalent to a `while` with a `step`.
       step
     }
 
-    assert total == 3 and a_cond
+    assert(total == 3 and a_cond)
     ```
 
 The main reason for using the `step` is that the "equivalent" `#>[1]` is a more
