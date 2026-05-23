@@ -19,7 +19,7 @@ operations: `a in b`, `a does b`, and lambda call rules.
 
 ```
 cassert (a=1) in (1,a=1,3)
-cassert (a=1) !does (1,a=1,3)
+cassert(not ((a=1) does (1,a=1,3)))
 cassert (1,a=1,3) does (a=1)
 
 comb f(a) { puts("{a}") }
@@ -87,7 +87,7 @@ The solution to this problem is to pick an order, and import at least three
 times the files involved in the cyclic dependency. The files involved in the
 cylic dependency are alphabetically sorted and called three times: (1) `a
 import b`, then `b import a`; (2) `a import b` and `b import a`; (3) `a import
-b` and `b import a`. Only the last import chain can perform procedure `proc`
+b` and `b import a`. Only the last import chain can perform `mod`
 calls (Pyrope and non-Pyrope) and puts/debug statements.
 
 

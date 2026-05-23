@@ -119,7 +119,7 @@ const Weight = (
   weight:int = ?
 )
 
-cassert(Age !does Weight)
+cassert(not (Age does Weight))
 
 mut a:Age = 3
 cassert(a == a.age == a[0] == 3)
@@ -264,14 +264,14 @@ tuple semantics and the relationship is preserved.
 
 When `x` and `y` are in a lambda passed as reference to another lambda (lambda
 reference), the relationship is not covariant but contravariant. `Dog does
-Animal` is true, but `comb(x:Dog)->()` type `does` type `:fun(x:Animal)->()` is false. The
+Animal` is true, but `comb(x:Dog)->()` type `does` type `:comb(x:Animal)->()` is false. The
 reason is shown in the previous example. The `comb(fd:fd_t)` can be called
 with `call_animal` because the fields accessed by `call_animal` are only a
 subset of `Dog` and hence if called inside `f_d` it can handle the `Dog` type.
 The opposite is not the case.
 
 
-Given a lambda passed as argument (`comb(x:fun(c:c_t)->(d:d_t))->(y)`), the
+Given a lambda passed as argument (`comb(x:comb(c:c_t)->(d:d_t))->(y)`), the
 check when passing the lambda as argument to `x` a function like
 `comb(w:w_t)->(z:z_t)`. In this case, the `comb(:w_t)->(_:z_t) does
 comb(:c_t)->(_:d_t)` is a contravariant test for inputs and covariant for

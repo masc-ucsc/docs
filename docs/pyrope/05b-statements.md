@@ -79,7 +79,7 @@ entry to form a valid expression.
 const x = 1
 match x {
   == 1            { puts("always true") }
-  in 2,3          { puts("never")       }
+  in (2,3)        { puts("never")       }
   else            { cassert(false)      }
 }
 // It is equivalent to:

@@ -826,7 +826,7 @@ lor
   ref b
 ```
 
-Logical nand (`x = a !and b`):
+Logical nand (`x = not (a and b)`):
 ```lnast
 land
   ref ___0
@@ -837,7 +837,7 @@ not
   ref ___0
 ```
 
-Logical nor (`x = a !or b`):
+Logical nor (`x = not (a or b)`):
 ```lnast
 lor
   ref ___0
@@ -848,7 +848,7 @@ not
   ref ___0
 ```
 
-Logical not implication (`x = a !implies b`):
+Logical not implication (`x = not (a implies b)`):
 ```lnast
 not
   ref ___0
@@ -883,7 +883,7 @@ dependent on the input type.
 === "Pyrope"
     ```
     c = a in b
-    d = a !in b
+    d = not (a in b)
     ```
 
 === "LNAST"

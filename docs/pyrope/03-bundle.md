@@ -36,16 +36,15 @@ cassert(a[0][1]   == 2)
 cassert(a[0]['c'] == 2)
 ```
 
-There is introspection to check for an existing field with the `has` and `!has` operators.
+There is introspection to check for an existing field with the `has` operator.
+Negate with `not (...)` (there is no dedicated `!has` operator).
 
 ```
 mut a = (foo = 3)
 cassert(a has 'foo')
-cassert(!(a has 'bar'))
-cassert(a !has 'bar') // "has no" is the opposite of "has"
+cassert(not (a has 'bar'))
 cassert(a has 0)
-cassert(a !has 1)
-cassert(a !has 1)
+cassert(not (a has 1))
 ```
 
 Tuple named fields can have a default type and or contents:
@@ -354,25 +353,21 @@ cassert(y == (ff=(1,2),zz=3))
 
 ## Optional tuple parenthesis
 
-Parenthesis marks the beginning and the end of a tuple. Those parentheses can
-be avoided for an unnamed tuple in some cases:
+Parenthesis marks the beginning and the end of a tuple. Tuple parentheses
+can be omitted in only one place:
 
-* When used after an `in` operator followed by a `{` like in a `for` and `match` statements.
-* For the inputs in a match statement.
 * A single element lambda return value.
 
-Function and method calls **always** use parentheses (`foo(1, 2)`, never
-`foo 1, 2`). The bare-argument statement-call form has been removed.
-
-Selectors `[...]` take a single expression, not a tuple; the comma-as-tuple
-shortcut does not apply inside `[]`.
+Everywhere else — function calls, selectors `[...]`, `for ... in`, `match`
+case patterns — tuples are always parenthesized. Bare-tuple sugar inside
+`in`, `[…]`, and call arguments has been removed.
 
 ```
-for a in 1,2,3 {  // same as: for a in (1,2,3) {
+for a in (1,2,3) {
   x = a
 }
 y = match z {
-  in 1,2 { 4 }    // same as: in (1,2) { 4 }
+  in (1,2) { 4 }
   else { 5 }
 }
 y2 = match mut one=1 ; one ++ z {  // same as: y2 = match (1,z) {
@@ -539,14 +534,14 @@ allowed when an ordered numbering is requested.
 
 
 Enumerates of the same type can perform bitwise binary operations
-(and/or/xor/nand/xnor/xnor) and set operators (in/!in).
+(and/or/xor) and the set operator `in` (negate with `not (...)`).
 
 ```
 const human_rat = Animal.mammal.rat | Animal.mammal.human  // union op
 
 assert(Animal.mammal      in human_rat)
 assert(Animal.mammal.rat  in human_rat)
-assert(Animal.bird       !in human_rat)
+assert(not (Animal.bird   in human_rat))
 ```
 
 ### Enumerate typecast

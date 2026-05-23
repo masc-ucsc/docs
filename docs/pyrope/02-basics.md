@@ -74,7 +74,7 @@ literals (`0sb?` / `0ub?`) and `nil`:
 * **`nil` (invalid)**: An invalid value that must never be used in any
   expression. Any arithmetic or decision with `nil` triggers a simulation
   assertion error. The only allowed operation is copying or checking for
-  validity (`x?` returns false for `nil`). The compiler must prove that all
+  validity (`x.[valid]` returns false for `nil`). The compiler must prove that all
   `nil` uses are eliminated at compile time, or a compile error is generated.
   `nil` never exists in synthesized hardware — it is a compile-time and
   simulation-time safety mechanism.

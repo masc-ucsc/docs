@@ -141,10 +141,10 @@ or short-circuit (`and`/`or`) expressions.
 
     // RTL equivalent
     const lhs2  = __or(v1, v2)
-    const lhs2_v = __or(__and(v1?, v1), __and(v2?, v2))
+    const lhs2_v = __or(__and(v1.[valid], v1), __and(v2.[valid], v2))
 
     lec(lhs , lhs2)
-    lec(lhs?, lhs2_v)
+    lec(lhs.[valid], lhs2_v)
     ```
 
 === "Usual expression"
@@ -154,10 +154,10 @@ or short-circuit (`and`/`or`) expressions.
 
     // RTL equivalent
     const lhs2   = __sum(A=(v1, v2))
-    const lhs2_v = __and(v1?, v2?)
+    const lhs2_v = __and(v1.[valid], v2.[valid])
 
     lec(lhs , lhs2)
-    lec(lhs?, lhs2_v)
+    lec(lhs.[valid], lhs2_v)
     ```
 
 === "Conditionals"
@@ -174,11 +174,11 @@ or short-circuit (`and`/`or`) expressions.
     const tmp = __mux(cond2, v0, v2)
     const lhs2= __mux(cond1, tmp, v1)
 
-    const tmp_v = __mux(cond2, v0?, v2?)
-    const lhs2_v= __mux(cond1, tmp_v, v1?)
+    const tmp_v = __mux(cond2, v0.[valid], v2.[valid])
+    const lhs2_v= __mux(cond1, tmp_v, v1.[valid])
 
     lec(lhs , lhs2)
-    lec(lhs?, lhs2_v)
+    lec(lhs.[valid], lhs2_v)
     ```
 
 === "Lambda call (inlined)"
@@ -197,12 +197,12 @@ or short-circuit (`and`/`or`) expressions.
     mut lhs2   = c
     lhs2       = __mux(cond, lhs2, tmp)
 
-    const tmp_v  = __mux(a_cond, a?, __and(a?, b?)) // a? or (a==0 and b?)
+    const tmp_v  = __mux(a_cond, a.[valid], __and(a.[valid], b.[valid])) // a.[valid] or (a==0 and b.[valid])
 
-    const lhs2_v = __mux(cond, c?, tmp_v)
+    const lhs2_v = __mux(cond, c.[valid], tmp_v)
 
     lec(lhs , lhs2)
-    lec(lhs?, lhs2_v)
+    lec(lhs.[valid], lhs2_v)
     ```
 
 ## Lambda calls
@@ -276,7 +276,7 @@ functions. The `puts` is not called if the function is conditionally called and
 the condition is false.
 
 
-=== "Conditional proc call"
+=== "Conditional mod call"
 
     ```
     mod case_1_counter(runtime) -> (res) {

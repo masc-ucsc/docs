@@ -108,7 +108,7 @@ comb f1() {
 cassert(t1 equals t2)
 cassert(t1 equals v1)
 cassert(f1() equals t1)
-cassert(_:f1 !equals t1)
+cassert(not (_:f1 equals t1))
 cassert(_:t1 equals t2)
 ```
 
@@ -177,15 +177,15 @@ These are the detailed rules for the `a does b` operator depending on the `a` an
 
 ```
 cassert (a:int:[max=33, min=0] does (a:int:[max=20, min=5]))
-cassert (a:int:[range=0..=33] !does (a:int:[max=50, min=5]))
+cassert(not ((a:int:[range=0..=33] does (a:int:[max=50, min=5]))))
 
 cassert (a:string, b:int) does (a:"hello", b:33)
-cassert ((b:int, a:string) !does (a:"hello", b:33)) // order matters in tuples
+cassert(not (((b:int, a:string) does (a:"hello", b:33)))) // order matters in tuples
 
 type T_complex = comb(x, xxx2) -> (y, z)
 type T_simple  = comb(x)       -> (y, z)
 cassert(_:T_complex does _:T_simple)
-cassert(_:T_simple !does _:T_complex)
+cassert(not (_:T_simple does _:T_complex))
 ```
 
 For named tuples, this code shows some of the corner cases:
@@ -235,9 +235,9 @@ are present, both need to match type.
 cassert (a:u32=0, b:bool) does (a:u32, c:string="hello", b=false)
 cassert (a:u32=0, c:string="hello", b=false) case (a = 0, b:bool) // b is nil
 
-cassert (a:u32=0, c:string="hello", b=false) !case (a:u32 = 1, b:bool=nil)
-cassert (a:u32=0, c:string="hello", b=false) !case (a:bool=nil, b:bool=nil)
-cassert (a:u32=0, c:string="hello", b=false) !case (a = 0, b = true)
+cassert(not ((a:u32=0, c:string="hello", b=false) case (a:u32 = 1, b:bool=nil)))
+cassert(not ((a:u32=0, c:string="hello", b=false) case (a:bool=nil, b:bool=nil)))
+cassert(not ((a:u32=0, c:string="hello", b=false) case (a = 0, b = true)))
 ```
 
 ## Nominal type check
@@ -259,7 +259,7 @@ const b = 200
 cassert(a is b)
 
 const c:u32 = 10
-cassert(a !is c)
+cassert(not (a is c))
 cassert(a.[typename] == "int" and c.[typename] == "u32")
 
 const d:u32 = nil
@@ -278,15 +278,15 @@ const X2 = (b:u32)
 
 const t1:X1 = (b=3)
 const t2:X2 = (b=3)
-cassert (b=3) !is X2  // same as (b=3) !is X2
+cassert(not ((b=3) is X2))  // same as (b=3) !is X2
 cassert(t1 equals t2)
-cassert(t1 !is t2)
+cassert(not (t1 is t2))
 
 const t4:X1 = (b=5)
 
 cassert(t4 equals t1)
 cassert(t4 is t1)
-cassert(t4 !is t2)
+cassert(not (t4 is t2))
 
 comb f2_x1(x:X1) -> (r) { r = x.b + 1 }
 comb f2_other(x) -> (r) { r = 0 }
@@ -435,7 +435,7 @@ the input/output size, but narrowing allows it to work without typecasts.  To
 understand, the comments show the max/min bitwidth computations.
 
 ```
-if cmd? {
+if cmd.[valid] {
   (x, y) = cmd  // x.max=cmd.a.max; x.min = 0 (uint) ; ....
 } elif x > y {
                 // narrowing: x.min = y.min + 1 = 1
@@ -460,7 +460,7 @@ the bitwidth by typecasting. For example, this could work:
 ```
 reg x = 0
 reg y = 0
-if cmd? {
+if cmd.[valid] {
   (x, y) = cmd
 } elif x > y {
   x = x - y
@@ -480,62 +480,53 @@ remove the extra unnecessary bit when it is guaranteed to be zero. This
 effectively "packs" the encoding.
 
 
-## Variants
+## Tagged unions (enum `enum`)
 
 
-A Pyrope variant is the equivalent of an union type. A variant type spifices a
-set of types allowed for a given variable. In Pyrope, a variant looks like a
-tuple where each entry has a different type. Unlike tuples all the "space" or
-bits used are shared because the tuple can have only one entry with data at a
-given time.
+A tagged union — the equivalent of a `enum` type — is spelled with `enum`
+in Pyrope and carries a payload per case. The bits used are shared across
+cases (only one case is active at a time), so the storage is the size of the
+largest case plus the tag.
 
 
-Pyrope supports variants but not unions. The difference between typical (like
-C++) `union` and `variant` is that union can be used for a typecast to convert
-between values, the variant is the same but it does not allow bit convertion.
-It tracks the type from the assignment, and an error is generated if the
-incorrect type is accesed. Pyrope requires explicit type conversion with
-bitwise operations.
+Unlike a C-style `union`, the tag is tracked from the assignment, and an
+error is generated if the wrong case is accessed. Bit-level reinterpretation
+across cases requires explicit bitwise operations.
 
 
-Variant shares syntax with enums declaration, but the usage and functionality
-is quite different. Enums do not allow to update values and variants are tuples
-with multiple labels sharing a single storage location.
-
-
-The main advantage of variant is to save space. This means that the most
-typical use is in combination with registers or memories, when alternative
-types can be stored across cycles.
+The main advantage of a tagged enum is to save space, so the typical use is
+in combination with registers or memories, where alternative types share a
+single storage location.
 
 
 ```
 const e_type = enum(str:String = "hello", num=22)
-const v_type = variant(str:String, num:int) // No default value in variant
+const v_type = enum(str:String, num:int) // No default value when used as a tagged union
 
 mut vv:v_type = (num=0x65)
 cassert(vv.num == 0x65)
-const xx = vv.str                         // error:
+const xx = vv.str                         // error: active case is `num`
 ```
 
 
-The variant variable allows to explicitly or implicitly access the subtype.
-Variants may not be solved at compile time, and the error will be a simulation
-error. A `comptime` directive can force a compile time-only variant.
+The variable allows to explicitly or implicitly access the active case.
+Cases may not be solved at compile time, and the error will be a simulation
+error. A `comptime` directive can force a compile time-only check.
 
 ```
-const Vtype = variant(str:String, num:int, b:bool)
+const Vtype = enum(str:String, num:int, b:bool)
 
-const x1a:Vtype = "hello"                 // implicit variant type
-const x1b:Vtype = (str="hello")           // explicit variant type
+const x1a:Vtype = "hello"                 // implicit case
+const x1b:Vtype = (str="hello")           // explicit case
 
 comptime const x2:Vtype = "hello"                  // comptime
 
 cassert(x1a.str == "hello" and x1a == "hello")
 cassert(x1b.str == "hello" and x1b == "hello")
 
-const err1 = x1a.num                      // error:
-const err2 = x1b.b                        // error:
-const err3 = x2.num                       // error:
+const err1 = x1a.num                      // error: active case is `str`
+const err2 = x1b.b                        // error: active case is `str`
+const err3 = x2.num                       // error: comptime value is `str`
 ```
 
 As a reference, `enums` allow to compare for field but not update enum entries.
@@ -1011,7 +1002,7 @@ cassert(v[0] == "hello")
 cassert(v == ("hello", "world")) // not
 
 const z = v
-cassert(z !equals v) // v has v.data, z does not
+cassert(not (z equals v)) // v has v.data, z does not
 ```
 
 
@@ -1231,7 +1222,7 @@ const t3=(
 )
 
 cassert(t1==t2)
-cassert(t1 !equals t3)
+cassert(not (t1 equals t3))
 const x = t1==t3           // error: t1 !equals t3
 ```
 

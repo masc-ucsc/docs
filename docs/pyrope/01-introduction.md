@@ -79,7 +79,7 @@ Populate the Pyrope code
         test "check.gcd({},{})",a,b {
           const z = gcd(a, b)
 
-          waitfor(z?)
+          waitfor(z.[valid])
 
           assert(z == __my_cpp_gcd(v1=a, v2=b))
         }

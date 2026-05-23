@@ -169,16 +169,15 @@ assert(example(b=3) !=0) // error: undefined `a` argument
 
 ## Basic types
 
-Pyrope has 8 basic types:
+Pyrope has 7 basic types:
 
 * `boolean`: either `true` or `false`
-* `enum`: enumerated
+* `enum`: enumerated values, optionally with a per-case payload (the equivalent of a tagged union)
 * `comb`: A function or pure combinational logic
 * `int`: which is signed integer of unlimited precision
 * `mod`: A module with state/clock or side-effects
 * `range`: A one hot encoding of values `1..=3 == 0ub1110`
 * `string`: which is a sequence of characters
-* `variant`: An union without typecast
 
 
 All the types except functions can be converted back and forth to an
@@ -428,9 +427,9 @@ assert(x equals z) // same type structure
 
 assert(y is Typ)
 assert(Typ is Typ)
-assert(z !is Bund3)
-assert(z !is Typ)
-assert(z !is bund1)
+assert(not (z is Bund3))
+assert(not (z is Typ))
+assert(not (z is bund1))
 ```
 
 ## Type checks
@@ -541,14 +540,15 @@ cassert(1<<(1,4,3) == 0ub01_1010)
 * `a and b` logical and
 * `a or b` logical or
 * `a implies b` logical implication
-* `a !and b` logical nand
-* `a !or b` logical nor
-* `a !implies b` logical not implication
+
+
+Negation uses the unary `not` (e.g. `not (a and b)` for nand). There are no
+dedicated `!and` / `!or` / `!implies` operators.
 
 ### Tuple/Set operators
 
-* `a in b` is element `a` in tuple `b`
-* `a !in b` true when element `a` is not in tuple `b`
+* `a in b` is element `a` in tuple `b`. Negate compositionally with
+  `not (a in b)`.
 * `tuple(a)` converts `a` to tuple, `a` can be a boolean, range, integer,
   string, or already a tuple
 
@@ -560,22 +560,22 @@ tuples. If `a` is a named tuple, the entries in `b` match by name, and then
 contents. If `a` is unnamed, it matches only contents by position.
 
 ```
-cassert (1,2) in (0,1,3,2,4)
-cassert (1,2) in (a=0,b=1,c=3,2,e=4)
-cassert (a=2) !in (1,2,3)
-cassert (a=2) in (1,a=2,c=3)
-cassert (a=1,2) in (3,2,4,a=1)
-cassert (a=1,2) !in (1,2,4,a=4)
-cassert (a=1) !in (a=(1,2))
+cassert((1,2) in (0,1,3,2,4))
+cassert((1,2) in (a=0,b=1,c=3,2,e=4))
+cassert(not ((a=2) in (1,2,3)))
+cassert((a=2) in (1,a=2,c=3))
+cassert((a=1,2) in (3,2,4,a=1))
+cassert(not ((a=1,2) in (1,2,4,a=4)))
+cassert(not ((a=1) in (a=(1,2))))
 ```
 
 The `a in b` has to deal with undefined values (`nil`, `0sb?`). The LHS with an undefined
 will be true if the RHS has the same named entry either defined or undefined.
 
 ```
-cassert (x=nil,c=3) in (x=3,c=3)
-cassert (x=nil,c=3) in (x=nil,c=3,d=4)
-cassert (c=3)      !in (c=nil,d=4)
+cassert((x=nil,c=3) in (x=3,c=3))
+cassert((x=nil,c=3) in (x=nil,c=3,d=4))
+cassert(not ((c=3) in (c=nil,d=4)))
 ```
 
 * `a ++ b` concatenate two tuples. If field appears in both, concatenate field. The a field is
@@ -613,8 +613,8 @@ cassert((a=1,b=2) has "a")
   in `b`. Values in `b` that are undefined (`nil`, `0sb?`) act as wildcards.
 * `a is b` is a nominal type check. Equivalent to `a.[typename] == b.[typename]`
 
-Each type operator also has the negated `(a !does b) == !(a does b)`, `(a
-!equals b) == !(a equals b)`, `a !case b == !(a case b)`
+Negate any type operator with `not (...)`, e.g. `not (a does b)`,
+`not (a equals b)`, `not (a case b)`.
 
 The `does` performs just name matching when the required tuple is fully named.
 It reverts to name and position matching when some of the required tuple entries
@@ -624,16 +624,16 @@ matched too.
 ```
 cassert (b=100,a=333,e=40,5) does (a=1,b=3)
 cassert (a=100,300,b=333,e=40,5) does (a=1,3)
-cassert (b=100,300,a=333,e=40,5) !does (a=1,3)
+cassert(not ((b=100,300,a=333,e=40,5) does (a=1,3)))
 cassert(u32 does u16)
 cassert(u16 does u32)
-cassert(u32 !does string)
+cassert(not (u32 does string))
 cassert (100,30) does 30
-cassert(30 !does (30,200))
-cassert (a=3) !does (30,a=200)
-cassert (a=3) !does (a=30,200)
-cassert (3) !does (30,a=200)
-cassert (3) !does (a=30,200)
+cassert(not (30 does (30,200)))
+cassert(not ((a=3) does (30,a=200)))
+cassert(not ((a=3) does (a=30,200)))
+cassert(not ((3) does (30,a=200)))
+cassert(not ((3) does (a=30,200)))
 ```
 
 A `a case b` first checks `a does b`, then checks that every defined value in
@@ -864,15 +864,16 @@ optional, but there is a new "valid" field associated with each tuple entry.
 Notice that it is not for each tuple level but each tuple entry.
 
 
-There are 4 explicitly interact with valids:
+There are 3 explicit ways to interact with valids:
 
-* `tup.f1?` reads the valid for field `f1` from tuple `tup`
+* `tup.f1.[valid]` reads the valid for field `f1` from tuple `tup`.
 
-* `tup?.f1.f2` returns `0ubs0` if tuple fields `f1` or `f2` are invalid
+* `tup.f1.[valid] = cond` explicitly sets the field `f1` valid to `cond`.
 
-* `tup.f1? = cond` explicitly sets the field `f1` valid to `cond`
+* `a = b op c` — variable `a` will be valid if `b` AND `c` are valid.
 
-* `a = b op c` variable `a` will be valid if `b` AND `c` are valid
+To produce a value only when the source is valid, write the conditional
+explicitly: `if tup.f1.[valid] and tup.f2.[valid] { tup.f1 + tup.f2 } else { 0sb? }`.
 
 
 The optional or valid attached to each variable and tuple field is implicitly
@@ -934,14 +935,14 @@ assert(v1.[valid] == false)
 mut v2:u32 = 0                 // v2 is zero every cycle AND     valid
 assert(v2.[valid] == true)
 
-cassert(v1?)
-cassert(not v2?)
+cassert(v1.[valid])
+cassert(not v2.[valid])
 
 assert(v1 == 0 and v2 == 3) // data still same as usual
 
 v1 = 0sb?                      // OK, poison data
 v2 = 0sb?                      // OK, poison data, and update valid
-assert(v2?) // valid even though data is not
+assert(v2.[valid]) // valid even though data is not
 
 assert(v1 != 0) // usual verilog x logic
 assert(v2 != 0) // usual verilog x logic
@@ -949,12 +950,12 @@ assert(v2 != 0) // usual verilog x logic
 const res1 = v1 + 0              // valid with just unknown 0sb? data
 const res2 = v2 + 0              // valid with just unknown 0sb? data
 
-assert(res1?)
-assert(res2?)
+assert(res1.[valid])
+assert(res2.[valid])
 
 reg counter:u32 = 0
 
-always_assert(counter.reset implies !counter?)
+always_assert(counter.reset implies !counter.[valid])
 ```
 
 `valid` can be overwritten by the setter method:
@@ -970,11 +971,11 @@ const custom = (
 
 mut x:custom = nil
 
-cassert(x?)
+cassert(x.[valid])
 x.data = 33
-cassert(not x?)
+cassert(not x.[valid])
 x.data = 100
-cassert(x?)
+cassert(x.[valid])
 ```
 
 The contents of the tuple field do not affect the field valid bit. It is
@@ -998,20 +999,19 @@ mut x3:complex = 0
 x3.[valid] = false                  // set invalid
 
 assert(x1.v1 == "" and x1.v2 == "")
-assert(not x2? and not x2.v1? and not v2.v2?)
+assert(not x2.[valid] and not x2.v1.[valid] and not v2.v2.[valid])
 assert(x2.v1 == "" and x2.v2 == "")
 
-assert(x2?.v1 == "" and x2?.v1 != "") // any comparison is false
-
-// When x2? is false, any x2?.foo returns 0sb? with the associated x rules
+// When x2 is invalid, reads of x2 fields propagate 0sb?; comparisons against
+// concrete values are false in both directions.
 
 x2.v2 = "hello" // direct access still OK
 
-assert(not x2? and x2.v1 == "" and x2.v2 == "hello")
+assert(not x2.[valid] and x2.v1 == "" and x2.v2 == "hello")
 
 x2 = "world"
 
-assert(x2? and x2?.v1 == "world" and x2.v1 == "world")
+assert(x2.[valid] and x2.v1 == "world")
 ```
 
 
@@ -1029,7 +1029,7 @@ each cycle. There are exactly two ways to produce an undefined value:
   an assertion error at simulation and a compile error at elaboration
   wherever the compiler can prove the read. Use `nil` when there is no
   meaningful value yet.
-* **`0sb?`** (and related bit-literal forms like `0ub101?`, `0ub??10`) —
+* **`0sb?`** (and related bit-literal forms like `0ub101.[valid]`, `0ub??10`) —
   unknown bits, behaving like Verilog `x`. The variable is still *valid*
   from the optional standpoint; only the bits are unknown. Use this for
   don't-care states or deliberately unobserved bits.
@@ -1041,12 +1041,12 @@ expression.
 
 ```
 mut a:int = 0
-cassert(a==0 and a.[valid] and a?)
+cassert(a==0 and a.[valid] and a.[valid])
 
 mut b:int = nil
-cassert(b==nil and b.[valid] == false and not b?)
+cassert(b==nil and b.[valid] == false and not b.[valid])
 b = 0
-cassert(b==0 and b.[valid] and b?)
+cassert(b==0 and b.[valid] and b.[valid])
 
 mut d:[] = ()              // empty tuple literal
 cassert(d != nil and d.[valid])

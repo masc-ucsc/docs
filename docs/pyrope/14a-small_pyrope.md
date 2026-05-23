@@ -333,10 +333,11 @@ match value {
 
 ## Enumerations
 
-`enum` uses one-hot encoding (each value maps to a single bit), which is ideal
-for FSMs in hardware. `variant` is a tagged union that shares bits between
-entries for more compact representation. Both allow only one entry to be active
-at a time.
+`enum` declares a set of named values. When the variants have no payload, the
+representation is one-hot (one bit per value), which is ideal for FSMs. When
+the variants carry payloads (per-case types), the representation packs the
+shared storage as a tagged union (the equivalent of a `variant` in some
+languages). Either way, only one variant is active at a time.
 
 ```pyrope
 enum State = (Idle, Active, Done)       // One-hot encoding: 1, 2, 4

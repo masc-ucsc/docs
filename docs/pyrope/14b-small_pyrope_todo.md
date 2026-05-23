@@ -26,11 +26,11 @@ mut maybe_u8:u8 = ?         // default invalid
 cassert(maybe_u8.[valid] == false)
 maybe_u8 = 5
 cassert(maybe_u8.[valid] == true)
-if maybe_u8? {               // test valid (sugar for maybe_u8.[valid] == true)
+if maybe_u8.[valid] {               // test valid (sugar for maybe_u8.[valid] == true)
   cassert(maybe_u8 == 5)
 }
 mut pkt = (data:u16, valid:bool)
-if pkt.data? { // sugar for pkt.data.[valid] == true
+if pkt.data.[valid] { // sugar for pkt.data.[valid] == true
   puts("data=", pkt.data)
 }
 // NOTE: `?` is default value (unknown/invalid). Invalid means `x.[valid] == false`.
@@ -57,7 +57,7 @@ const x:Point = (x=3, y=2)
 cassert(p does Point)
 cassert(p does Eq)
 cassert(p is Point) // nominal type matches declared type
-cassert(p !is Eq) // `is` is nominal; interfaces are not nominally equal
+cassert(not (p is Eq)) // `is` is nominal; interfaces are not nominally equal
 cassert(p.eq(p))
 cassert(!p.eq(x))
 match p {
@@ -76,16 +76,16 @@ cassert((a=1,b=2) has "a")
 
 cassert((b=100,a=333,e=40,5) does (a=1,b=3))
 cassert((a=100,300,b=333,e=40,5) does (a=1,3))
-cassert((b=100,300,a=333,e=40,5) !does (a=1,3))
+cassert(not ((b=100,300,a=333,e=40,5) does (a=1,3)))
 cassert(u32 does u16)
 cassert(u16 does u32)
-cassert(u32 !does string)
+cassert(not (u32 does string))
 cassert((100,30) does 30)
-cassert(30 !does (30,200))
-cassert((a=3) !does (30,a=200))
-cassert((a=3) !does (a=30,200))
-cassert((3) !does (30,a=200))
-cassert((3) !does (a=30,200))
+cassert(not (30 does (30,200)))
+cassert(not ((a=3) does (30,a=200)))
+cassert(not ((a=3) does (a=30,200)))
+cassert(not ((3) does (30,a=200)))
+cassert(not ((3) does (a=30,200)))
 
 mut t1 = (a:int=1, b:string)
 const t2 = (a:int=100, b:string)
@@ -161,28 +161,28 @@ const a:Option(_:u8) = Some(3)
 const b:Option[u8] = None          // error: as None is not a valid type/variable either
 match a { Some(v): v+1, None: 0 } // error: wrong match syntax
 ```
-// NOTE: Correct Pyrope variant example follows:
+// NOTE: Correct Pyrope enum example follows:
 ```pyrope
-type v_type = variant(str:String, num:int) // No default value in variant
+type v_type = enum(str:String, num:int) // No default value in enum
 
-const another_x:variant(IntKind:int, StrKind:string)=?
+const another_x:enum(IntKind:int, StrKind:string)=?
 
 mut vv:v_type = (num=0x65)
 cassert(vv.num == 0x65)
-const xx = vv.str                         // error: active variant is `num`
+const xx = vv.str                         // error: active enum is `num`
 
-type Vtype = variant(str:String, num:int, b:bool)
+type Vtype = enum(str:String, num:int, b:bool)
 
-const x1a:Vtype = "hello"                 // implicit variant type
-const x1b:Vtype = (str="hello")           // explicit variant type
+const x1a:Vtype = "hello"                 // implicit enum type
+const x1b:Vtype = (str="hello")           // explicit enum type
 
 comptime const x2:Vtype = "hello"               // comptime
 
 cassert(x1a.str == "hello" and x1a == "hello")
 cassert(x1b.str == "hello" and x1b == "hello")
 
-const err1 = x1a.num                      // error: active variant is `str`
-const err2 = x1b.b                        // error: active variant is `str`
+const err1 = x1a.num                      // error: active enum is `str`
+const err2 = x1b.b                        // error: active enum is `str`
 const err3 = x2.num                       // error: comptime value is `str`
 ```
 
@@ -232,7 +232,7 @@ test "my main" {
 
 ### Hierarchical enums
 ```pyrope
-enum Token = ( Id:string=?, Lit:variant(IntKind:int, StrKind:string)=? )
+enum Token = ( Id:string=?, Lit:enum(IntKind:int, StrKind:string)=? )
 ```
 
 ### Generic types
@@ -327,9 +327,9 @@ pipe[2..<8] stagetocreate::[elastic=true] (in:int) -> (out:int) {
 pipe[2..<8] stage2(in:int) -> (out:int) {
   out = in + 1
 }
-// NOTE: `elastic` enables validity checks like `in?`; otherwise same syntax.
+// NOTE: `elastic` enables validity checks like `in.[valid]`; otherwise same syntax.
 // Example usage:
-const v = if in? { stage(in) } else { 0 }
+const v = if in.[valid] { stage(in) } else { 0 }
 ```
 
 ### Tri-state behavior
