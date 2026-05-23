@@ -84,8 +84,11 @@ unique if cond1 {
   res = c
 } // no res in else
 
-// RTL equivalent
-mut sel = (!cond1 and !cond2, cond1, cond2)#[..]  // one hot encode
+// RTL equivalent — build the one-hot select bit-by-bit
+mut sel:u3 = nil
+sel#[0] = cond2
+sel#[1] = cond1
+sel#[2] = !cond1 and !cond2
 mut res2 = __hotmux(sel, a, b, c)
 optimize(!(cond1 and cond2)) // one hot check
 
@@ -110,7 +113,11 @@ match x {
 const cond1 = x == c1
 const cond2 = x == c2
 const cond3 = x == c3
-mut sel = (cond1, cond2, !cond1 and !cond2)#[..]  // one hot encode (no cond3)
+// one hot encode (no cond3) — built bit-by-bit
+mut sel:u3 = nil
+sel#[0] = cond1
+sel#[1] = cond2
+sel#[2] = !cond1 and !cond2
 mut res2 = __hotmux(sel, b, c, d)
 optimize ( cond1 and !cond2 and !cond3)
       or (!cond1 and  cond2 and !cond3)

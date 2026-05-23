@@ -133,10 +133,10 @@ reg ram:[1024]u32:[
 ] = 0
 
 // Dual-port access (simple Pyrope requires explicit port attribute for multiport)
-ram[addr1]:[wrport=2] = data1            // Write port 2
-ram[addr2]:[wrport=3] = data2            // Write port 3
-mut out1 = ram.port[0][addr3]:[rdport=0] // Read port 0
-mut out2 = ram.port[1][addr4]:[rdport=1] // Read port 1
+ram[addr1]::[wrport=2] = data1            // Write port 2
+ram[addr2]::[wrport=3] = data2            // Write port 3
+mut out1 = ram.port[0][addr3]::[rdport=0] // Read port 0
+mut out2 = ram.port[1][addr4]::[rdport=1] // Read port 1
 ```
 
 ## Lambda Types: `comb`, `pipe`, `mod`
@@ -229,7 +229,7 @@ mod alu(in1, in2) -> (out_pipelined, out_live) {
 }
 
 mod accum_alu(in1, in2) -> (out) {
-  reg total:[init=0]
+  reg total::[init=0]
   stage[3] tmp = mul(in1, in2)
   const sum_aligned = add(total@[3], tmp@[3])  // both operands checked at cycle 3
   total = sum_aligned                          // register write
@@ -411,14 +411,14 @@ comptime const SIZE = 16                // Known at elaboration time
 mut array_size = SIZE               // Uses compile-time value
 
 // Hardware attributes
-reg state:[reset_pin=ref my_reset] = 0  // Custom reset signal (ref = wire connection)
-reg clocked:[clock_pin=ref fast_clk] = 0 // Custom clock signal
-reg no_reset:[reset_pin=false] = 0      // Tied low (comptime value, no ref needed)
-reg async_reg:[async=true] = 0      // Asynchronous reset
-reg pipeline:[retime=true] = 0      // Allow synthesis retiming
+reg state::[reset_pin=ref my_reset] = 0  // Custom reset signal (ref = wire connection)
+reg clocked::[clock_pin=ref fast_clk] = 0 // Custom clock signal
+reg no_reset::[reset_pin=false] = 0      // Tied low (comptime value, no ref needed)
+reg async_reg::[async=true] = 0      // Asynchronous reset
+reg pipeline::[retime=true] = 0      // Allow synthesis retiming
 
 // Debug attributes
-mut debug_val:[debug=true] = counter // Debug-only variable
+mut debug_val::[debug=true] = counter // Debug-only variable
 ```
 
 ### Memory Attributes
@@ -486,18 +486,26 @@ mut pop_count = value#+[..]     // Population count
 mut extended = value#sext[0..=3] // Sign extend bits 0-3 (3 is sign)
 mut zero_ext = value#zext[1..=5] // Zero extend bits 1-5 (no sign)
 
-// Non-contiguous bit selection is a short-cut for bit selection and tuple typecast
-// Careful to avoid endian confusion (think about tuple order)
+// Selectors take a single expression (bit index, range, or conditional).
+// Multi-entry tuple indices like `value#[0,3,7]` are NOT allowed: the
+// ordering of a bit set is ambiguous and easy to misread. To pack
+// non-contiguous bits, declare a destination and assign each bit
+// explicitly. Every bit must be driven exactly once or it is a compile
+// error.
 
-mut sparse1 = (value#[0], value#[3], value#[7])#[..]
-mut sparse2 = value#[0,3,7]      // Select bits 0, 3, and 7
+mut sparse:u3 = nil
+sparse#[0] = value#[0]
+sparse#[1] = value#[3]
+sparse#[2] = value#[7]
 
-mut rparse1 = (value#[7], value#[3], value#[0])#[..]
-mut rparse2 = value#[7,3,0]      // Select bits 7, 3, and 0
+mut rparse:u3 = nil
+rparse#[0] = value#[7]
+rparse#[1] = value#[3]
+rparse#[2] = value#[0]
 
 cassert(value  == 0ub1010_0100) // bit 3 was cleared above
-cassert(sparse2 == 0ub1____1__0)
-cassert(rparse2 == 0ub011)      // reverse order of bits (LSB-first packing)
+cassert(sparse  == 0ub100)     // bit 7 of value is 1, bit 3 is 0, bit 0 is 0
+cassert(rparse  == 0ub001)     // bits placed in reverse order
 cassert(pop_count == 3)
 cassert(or_reduce  == -1)       // any bit set
 cassert(and_reduce ==  0)       // sign bit (MSB) is 0

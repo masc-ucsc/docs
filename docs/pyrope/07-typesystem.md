@@ -425,7 +425,7 @@ if d == 4 {
   d = e + 1                // d: current(max=3,min=3) constrain()
 }
 mut g:u3 = d               // g: current(max=4,min=3) constrain(max=7,min=0)
-mut h = c#[0, 1]           // h: current(max=3,min=0) constrain()
+mut h = c#[0..=1]          // h: current(max=3,min=0) constrain()
 ```
 
 
@@ -928,7 +928,8 @@ y = ("hello", 44)
 cassert(x == y)
 ```
 
-Tuples can be multi-dimensional, and the index can handle multiple indexes at once.
+Tuples can be multi-dimensional, and each dimension is indexed with its own
+`[...]` (e.g. `m[i][j]`, not `m[i,j]`).
 
 ```
 comb matrix8x8_set_xy(ref self, x:int:[min=0,max=7], y:int:[min=0, max=7], v:u16) {
@@ -953,7 +954,7 @@ const Matrix8x8 = (
 const m:Matrix8x8 = ?
 cassert(m.data[0][3] == 0)
 
-m[1, 2] = 100
+m[1][2] = 100
 cassert(m.data[1][2] == 100)
 m[1] = 3
 cassert(m.data[1][2] == 3)

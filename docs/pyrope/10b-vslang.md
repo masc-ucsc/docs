@@ -272,8 +272,8 @@ in Pyrope both `()` and `[]` are allowed and have the same meaning.
 ```
 const x = ((1, 2), (3, 4))
 assert(x == ((1, 2), (3, 4)))
-assert(x[0, 1] == 2 == x[0][1])
-assert(x[1, 0] == 3 == x[1][0])
+assert(x[0][1] == 2)
+assert(x[1][0] == 3)
 ```
 
 ## Go

@@ -68,7 +68,7 @@ cassert(range3 == (2,3,4))
 ### 6. Type Annotations and Attributes
 ```pyrope
 mut data:u32:[max=1000, min=0] = 0          // Type with constraints
-reg counter:[reset_pin=rst] = 0             // Hardware attributes
+reg counter::[reset_pin=rst] = 0            // Hardware attributes
 cassert(counter.[bits] == 8)                // Read and check attribute
 ```
 Attributes are **set only at declaration** with `::[attr=value]` (or `:Type:[attr=value]`) and are **immutable** afterwards. Use `name.[attr]` to **read** attribute values. Check by comparing: `foo.[attr] == value`. Overflow behavior is **per-statement**: use the statement-level prefix `wrap result = a + b` or `sat result = x + y`. There is no sticky `:[wrap=true]` / `:[saturate=true]` attribute — every narrowing assignment must annotate locally, or the compiler rejects it.
@@ -96,7 +96,7 @@ reg dual_port:[1024]u16:[                   // Complex memory with attributes
 ] = 0
 
 // Port access uses .port[] for clarity
-mut out = ram.port[0][addr]:[rdport=0]      // Read port 0
+mut out = ram.port[0][addr]::[rdport=0]     // Read port 0
 ```
 **LLM Pitfall**: Memory attributes go AFTER the type, using `:[...]` syntax.
 

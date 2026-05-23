@@ -524,33 +524,28 @@ single bit is operated. The one-hot encoding can be created with a `range` or
 with a `shl` operator.
 
 
+The selector takes a single expression (bit index or range). To write
+non-contiguous bits, emit one assignment per range — each lowers to its own
+`set_mask`.
+
 === "Pyrope"
     ```
-    foo#[1,2] = xx
+    foo#[1..=2] = xx
     yy = foo#[5] + xx#[1..<4]
     ```
 
 === "LNAST direct"
     ```lnast
-    shl
-      ref ___c1
-      const 1
-      const 1
-
-    shl
-      ref ___c2
+    range
+      ref ___r
       const 1
       const 2
-
-    tup_add
-      ref ___t
-      ref ___c1
-      ref ___c2
+      const 1
 
     set_mask
       ref foo
       ref foo
-      ref ___t
+      ref ___r
       ref xx
 
     range
@@ -583,16 +578,16 @@ with a `shl` operator.
 
 === "LNAST optimized"
     ```lnast
-    shl
-      ref ___t
-      const 1
+    range
+      ref ___r
       const 1
       const 2
+      const 1
 
     set_mask
       ref foo
       ref foo
-      ref ___t
+      ref ___r
       ref xx
 
     get_mask

@@ -709,10 +709,14 @@ for (idx,i) in enumerate(123) {
 }
 ```
 
-### Multiple bit selection
+### Bit selection and concatenation
 
-Ranges are sets, this creates potentially unexpected results in reverse `for`
-iterators, but also in bit section:
+The bit selection operator `#[sel]` takes a single expression: a bit index, a
+close-range like `3..=4`, an open range like `3..`, or any expression that
+evaluates to one of those (including a conditional). Multi-entry tuple indices
+like `#[3,4]` are not supported, because the ordering of a bit set is
+ambiguous and easy to misread. To pack or transpose bits, declare a destination
+of fixed width and assign each piece explicitly.
 
 ```
 const v = 0xF0
@@ -721,49 +725,39 @@ cassert(v#[0] == 0)
 cassert(v#[4] == 1)       // unsigned output
 cassert(v#sext[4] == -1)  // signed output
 
-cassert(v#[3..=4] == 0ub010 == v#[3,4])
-cassert(v#[4..=3 step -1] == 0ub010)
-cassert(v#[4,3] == v#[3,4] == 0ub010)
-
-const tmp1 = (v#[4], v#[3])#[..]  // typecast from
-const tmp2 = (v#[3], v#[4])#[..]
-const tmp3 = v#[3,4]
-cassert(tmp1 == 0ub01)
-cassert(tmp2 == 0ub100)
-cassert(tmp3 == 0ub10)
-
-const tmp1s = (v#sext[4], v#sext[3])#[..]  // typecast from
-const tmp2s = (v#sext[3], v#sext[4])#[..]
-const tmp3s = v#[4,3]
-cassert(tmp1s == 0ub01)
-cassert(tmp2s == 0ub10)
-cassert(tmp3s == 0ub10)
-
-const tmp1ss = (v#sext[4], v#sext[3])#sext[..]  // typecast from
-const tmp2ss = (v#sext[3], v#sext[4])#sext[..]
-const tmp3ss = v#sext[3,4]
-cassert(tmp1ss == 0ub01  ==  1)
-cassert(tmp2ss == 0sb10 == -2)
-cassert(tmp3ss == 0sb10 == -2 == v#sext[4,3])
+cassert(v#[3..=4] == 0ub11)
+cassert(v#[4..=3 step -1] == 0ub11)
+cassert(v#sext[3..=4] == 0sb11 == -1)
 ```
 
+To build a value from several bit pieces, use the explicit bit-assignment
+idiom. The destination must declare its width, and every bit must be driven
+exactly once — undriven (`nil`) bits and overlapping writes are compile
+errors. This replaces what other HDLs spell as `{a,b,c}` (SystemVerilog),
+`Cat(a,b,c)` (Chisel), or `concat(a,b,c)` (Spade), and makes the layout local
+and unambiguous.
 
-The reason is that for multiple bit selection assumes a smaller to larger bits.
-If the opposite order is needed, support functions/code must explicitly do it.
+```
+const a = 0ub1010   // 4 bits
+const b = 0ub01     // 2 bits
+const c = 0ub1      // 1 bit
 
+mut r:u7 = nil
+r#[0]    = c
+r#[1..=2] = b
+r#[3..=6] = a
+cassert(r == 0ub1010_01_1)
+```
 
-In Pyrope, there is no order in bit selection (`xx#[0,1,2,3] == xx#[3,2,1,0]`) even when bit slicing.
-This is different from Verilog when endianness in declaration only happens when bit slicing.
-This is done to avoid mistakes. If a bit swap is wanted, it must be explicit.
-
+A pure bit reversal is a `for` loop with explicit indices:
 
 ```
 comb reverse(x:uint) -> (total:uint) {
-  total = 0
+  mut t:uint = nil
   for i in 0..<x.[bits] {
-    total <<= 1
-    total |= x#[i]
+    t#[i] = x#[x.[bits]-1-i]
   }
+  total = t
 }
 cassert(reverse(0ub10110) == 0ub01101)
 ```

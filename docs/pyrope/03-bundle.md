@@ -62,20 +62,24 @@ cassert(x.field1 == 1 and x.field3 == 3)
 cassert(x[3] == 4)
 ```
 
-## Tuple index with tuples
+## Selector expressions
 
-Tuples can be used as index too because all the tuples are ordered at compile time.
+A selector `[...]` takes a single expression. The expression can be an integer,
+a string (named field), a range, or any expression that produces one of those
+(including a conditional `if ... {} else {}`). Multi-entry tuple indices like
+`a[0,1]` or `a['x','y']` are not allowed: write one assignment per field
+instead. This keeps the bit/field layout local and avoids ordering ambiguity.
 
 ```
 type Person = (name:string, age:u32)
 mut a = (one:Person, two:Person)
 
-const x = ('two', 'one')
-a[x].age = (3,4)
-cassert(a.one.age == 4 and a.two.age == 3)
-
-a[0,1].age = (10,20)
+a[0].age = 10
+a[1].age = 20
 cassert(a.one.age == 10 and a.two.age == 20)
+
+const pick = if cond { 0 } else { 1 }
+a[pick].age = 7   // conditional expression as index is fine
 ```
 
 ## Tuple and scope
@@ -143,7 +147,7 @@ Tuples are used in many places:
 
 * The arguments for a call function are a tuple. E.g: `fcall(1,2)`
 * The return of a function call is always a tuple. E.g: `foo = fcall()`
-* The index for a selector `[...]` is a tuple. As syntax sugar, the tuple parenthesis can be omitted. E.g: `foo#[0,2,3]`
+* The index for a selector `[...]` is a single expression (integer, string, range, or conditional). Multi-entry tuple indices are not allowed.
 * The complex type declaration are a tuple. E.g: `const Xtype = (f=1,b:string)`
 
 
@@ -353,7 +357,6 @@ cassert(y == (ff=(1,2),zz=3))
 Parenthesis marks the beginning and the end of a tuple. Those parentheses can
 be avoided for an unnamed tuple in some cases:
 
-* When used inside a selector `[...]`.
 * When used after an `in` operator followed by a `{` like in a `for` and `match` statements.
 * For the inputs in a match statement.
 * A single element lambda return value.
@@ -361,9 +364,10 @@ be avoided for an unnamed tuple in some cases:
 Function and method calls **always** use parentheses (`foo(1, 2)`, never
 `foo 1, 2`). The bare-argument statement-call form has been removed.
 
-```
-b = xx[1,2]       // same as: xx[(1,2)]
+Selectors `[...]` take a single expression, not a tuple; the comma-as-tuple
+shortcut does not apply inside `[]`.
 
+```
 for a in 1,2,3 {  // same as: for a in (1,2,3) {
   x = a
 }

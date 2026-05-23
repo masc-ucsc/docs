@@ -679,9 +679,10 @@ The reduce operators and bit selection share a common syntax
     * `sext`: Sign extends selected bits.
     * `zext`: Zero sign extends selected bits (default option)
 
-+ `sel` can be a close-range like `1..<=4` or `(1,4,6)` or an open range like
-  `3..`. Internally, the open range is converted to a close-range based on the
-  variable size.
++ `sel` is a single expression: an integer (one bit), a close-range like
+  `1..=4`, or an open range like `3..`. Internally, the open range is converted
+  to a close-range based on the variable size. Multi-entry tuple indices like
+  `#[1,4,6]` are not allowed; use one bit-range assignment per group of bits.
 
 
 The or/and/xor reduce have a single bit signed result (not boolean). This means
@@ -712,11 +713,12 @@ it is considered non-intuitive for programmers.
 ```
 const x = 0ub1_0110   // positive
 const y = 0s1_0110   // negative
-cassert(x#[0,2] == 0ub10)
-cassert(y#[100,200]       == 0ub11   and x#[100,200]       == 0)
-cassert(y#sext[0,100,200] == 0sb110 and x#sext[1,100,200] == 0ub001)
+cassert(x#[2]    == 1)
+cassert(x#[0..=2] == 0ub110)
+cassert(y#[100]       == 1   and x#[100]       == 0) // out-of-range follows sign
+cassert(y#sext[0..=2] == 0sb110 and x#sext[0..=2] == 0ub110)
 cassert(x#|[..] == -1)
-cassert(x#&[0,1] == 0)
+cassert(x#&[0..=1] == 0)
 cassert(x#+[0..=5] == x#+[0..<100] == 3)
 assert(y#+[0..=5]) // error: 'y' can be negative
 cassert(y#[..]#+[..] == 3)
@@ -743,22 +745,36 @@ does not work with tuples or strings. For converting in these object a `union:`
 must be used.
 
 
-Another important characteristic of the bit selection is that the order of the
-bits on the selection does not affect the result. Internally, it is a bitmask
-that has no order. For the `zext` and `sext`, the same order as the input
-variable is respected. This means that `var#[1,2] == var#[2,1]`. As a result,
-the bit selection can not be used to transpose bits. A tuple must be used for
-such an operation.
+The bit selection operator takes a single expression: a bit index, a range, or
+any expression that produces one of those (including a conditional). Picking
+non-contiguous bits in one shot is intentionally not supported, because the
+ordering of a bit set is ambiguous and easy to get wrong (e.g. is `#[1,2]` the
+same as `#[2,1]`?). To build or transpose a value from non-contiguous bits,
+declare a destination and assign bits explicitly: each line states which bit
+range receives which value, and the compiler checks widths and coverage.
 
 ```
 mut v = 0ub10
-cassert(v#[0,1] == v#[1,2] == v#[..] == v#[0..=1] == v#[..=1] == 0ub10)
+cassert(v#[0..=1] == v#[..] == v#[..=1] == 0ub10)
 
-mut trans = 0
+mut trans:u2 = nil
 
 trans#[0] = v#[1]
 trans#[1] = v#[0]
 cassert(trans == 0ub01)
+
+// Building a wider value from several pieces — the destination layout is
+// written verbatim. Every bit of `r` must be driven exactly once or it is
+// a compile error.
+const a = 0ub1010  // 4 bits
+const b = 0ub01    // 2 bits
+const c = 0ub1     // 1 bit
+
+mut r:u7 = nil
+r#[0]    = c
+r#[1..=2] = b
+r#[3..=6] = a
+cassert(r == 0ub1010_01_1)
 ```
 
 

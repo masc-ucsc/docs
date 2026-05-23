@@ -539,7 +539,7 @@ const b:(u8,u8,u8,u8) = (x[0..=7], x[8..=15], x[16..=23], x[24..=31])
 
 ### Placement, timing, power attributes
 ```pyrope
-reg r:[left_of=other, max_delay=2, low_power=true, donttouch=true] = 0
+reg r::[left_of=other, max_delay=2, low_power=true, donttouch=true] = 0
 ```
 
 ## Standard Library
