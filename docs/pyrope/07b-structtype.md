@@ -67,7 +67,7 @@ check to guarantee that no precision is lost. Integer widths such as `u16` and
 `u32` are constraints on the same basic `int` type, so `u32 does u16` and
 `u16 does u32` are both true as type-structure checks, but `x = y` may still
 fail if the right-hand side can not be proven to fit in the left-hand side.
-Otherwise, an explicit `wrap` or `drop` directive must be used.
+Otherwise, an explicit `wrap` or `sat` statement-level prefix must be used.
 
 
 ### Arrays

@@ -285,14 +285,24 @@ const c = ((1,a=3), b=4, c=(x=1,y=6))
 cassert(c.enumerate() == ((0,(1,a=3)), (1,b=4), (2,c=(x=1,y=6))))
 ```
 
-The `for` can also be used in an expression that allows building comprehensions
-to initialize arrays. Pyrope uses a comprehension similar to Julia or Python.
+To build a tuple/array from a loop, use an explicit `for` over a `mut`
+accumulator and `++=` each element. Trailing-`for` comprehensions on
+expressions are not supported (they make trailing tokens of every expression
+ambiguous to parse) — write the loop out instead.
 
 ```
-mut c = for i in 1..<5 { mut xx = i }  // error: no expression
-mut d = i for i in 0..<5
-mut e = i for i in 0..<5 if i
-cassert (0,1,2,3,4) == d
+mut d:[] = ?
+for i in 0..<5 {
+  d ++= i
+}
+
+mut e:[] = ?
+for i in 0..<5 {
+  if i {
+    e ++= i
+  }
+}
+cassert ((0,1,2,3,4) == d)
 cassert(e == (1,2,3,4))
 ```
 
@@ -357,7 +367,12 @@ while a>0 {
 }
 cassert(total2 == (3,2))
 
-mut total3 = i+10 for i in 1..=9 if i<3
+mut total3:[] = ?
+for i in 1..=9 {
+  if i<3 {
+    total3 ++= i+10
+  }
+}
 cassert(total3 == (11, 12))
 ```
 

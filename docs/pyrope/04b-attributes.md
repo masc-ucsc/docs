@@ -20,8 +20,8 @@ Pyrope does not specify all the attributes, the compiler flow specifies them.
 There are some built-in required attributes like checking the number of bits.
 
 Reading attributes should not affect a logical equivalence check. Setting
-attributes can have a side-effect because it can change bits used for
-wrap/saturate or change pins like reset/clock in registers. Additionally,
+attributes can have a side-effect because it can change bits used for an
+integer or change pins like reset/clock in registers. Additionally,
 attributes can affect assertions, so they can stop/abort the compilation.
 
 
@@ -199,7 +199,8 @@ There are a list of reserved attribute names for debug:
 * `mut`: multiple assignments to the variable can be done
 * `type`: Either `integer` or `string` or `boolean` or `range` or complex tuple typename.
 * `typename`: type name at variable declaration
-* `size`: Number of entries in tuple or array (1 if not a multi-entry tuple)
+* `size`: Number of unnamed entries in tuple or array (0 if no unnamed entries)
+* `fields`: string list (tuple) with tuple named fields
 
 ### Integer Bitwidth attribute list
 
@@ -214,10 +215,10 @@ from `max`/`min`.
 * `sbits`: Maximum number of bits, and the number can be negative
 * `bits`: read-only; returns the number of bits currently required to
   represent the variable's value (`var.[bits]` in assertions)
-* `wrap`: allows to drop bits that do not fit on the left-hand side. It performs sign
-  extension if needed.
-* `saturate` keeps the maximum or minimum (negative integer) that fits on the
-  left-hand side.
+
+Overflow handling (`wrap`/`sat`) is **not** an attribute. It is a
+statement-level prefix on the assignment — see the
+[wrap/sat modifier](#wrap-and-sat-modifier) section below.
 
 ### Registers and pipestage attribute list
 
@@ -302,13 +303,14 @@ opt1 = 200
 cassert(opt1.[ubits] == 8) // last assignment needs 9 sbits or 8 ubits
 ```
 
+## wrap and sat modifier
+
 `wrap` and `sat` control how the right-hand side of an assignment narrows
 into the left-hand side when the value would otherwise overflow. They are
 **statement-level prefix modifiers** (similar to `comptime` or `debug`),
-applied to each individual assignment.
+applied to each individual assignment — *not* attributes.
 
-There is no sticky `:[wrap=true]` / `:[saturate=true]` attribute. Every
-narrowing assignment must annotate locally; an unannotated narrowing
+Every narrowing assignment must annotate locally; an unannotated narrowing
 assignment is a compile error. This forces the choice to be visible at
 every overflow-risking line.
 

@@ -226,7 +226,8 @@ comb nourish(x:ADT) {
 }
 
 test "my main" {
-  (_:Person="pizza", _:Robot="electricity").each(nourish)
+  const cases = (_:Person="pizza", _:Robot="electricity")
+  cases.each(nourish)
 }
 ```
 
@@ -513,7 +514,8 @@ type addition<T> = comb(a:T, b:T) -> T
 impl addition for Vec2 (
   comb add(a:Vec2, b:Vec2) -> Vec2 { (x=a.x+b.x, y=a.y+b.y) }
 )
-const v = (x=1,y=2).add(x=3,y=4)
+const lhs = (x=1,y=2)
+const v = lhs.add(x=3,y=4)
 // NOTE: Overloading via interface type + `impl`; example adjusted.
 ```
 

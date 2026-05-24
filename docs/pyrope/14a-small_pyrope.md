@@ -246,7 +246,10 @@ checks on RHS values use separate `cassert` statements.
 ```pyrope
 cassert(b does u8)                                        // RHS type check
 cassert(c.[xxx_should_be_set])                            // RHS attribute check
-const (tmp:u32, tmp2:u3:[something=true]) = some_mod_call(a, b@[3], c@[2])
+// Destructure by return-field name (LHS local names must match field
+// names of `some_mod_call`'s return tuple, or use `field = local` to
+// rename).
+const (out=tmp:u32, status=tmp2:u3:[something=true]) = some_mod_call(a, b@[3], c@[2])
 ```
 
 
@@ -395,10 +398,9 @@ Attributes are **immutable after declaration**. To change attributes, create a n
 // Bitwidth constraints
 mut data:u32:[max=1000, min=0] = 0
 
-// Overflow behavior — always written as a statement-level prefix.
-// There is no sticky :[wrap=true] / :[saturate=true] attribute; every
-// narrowing assignment must annotate its overflow choice locally, or the
-// compiler rejects the assignment.
+// Overflow behavior — always written as a statement-level prefix
+// (not an attribute). Every narrowing assignment must annotate its
+// overflow choice locally, or the compiler rejects the assignment.
 mut result:u8  = 0
 wrap result = a + b                      // This operation wraps to u8
 mut clamped:u8 = 0

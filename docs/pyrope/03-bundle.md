@@ -156,24 +156,35 @@ The tuple entries can be mutable/immutable and named/unnamed. Tuple entries
 follow the variable mutability rules with the exception that `=` can be
 used to declare a mutable field. `(a=3)` is equivalent to `(mut a=3)`.
 
+**The enclosing binding wins.** A field's effective mutability is the
+**intersection** of the outer binding's mutability and the field's own
+declaration. In particular, **an outer `const` makes every field immutable
+regardless of inner `mut` markers** — the binding to the whole tuple is
+immutable, so no field can be reassigned through it. Inner `const` on a
+field of an outer `mut` tuple still pins that field as read-only.
+
+| Outer | Inner field | Effective |
+|-------|-------------|-----------|
+| `mut`   | `mut` / unmarked | writable |
+| `mut`   | `const`          | read-only |
+| `const` | `mut` / unmarked | **read-only** (outer wins) |
+| `const` | `const`          | read-only |
 
 ```
-mut c=(x=1,const b = 2, mut d=3)
-c.x   = 3  // OK
-x.foo = 2  // error: tuple 'x' does not have field 'foo'
-c.b   = 10 // error: 'c.b' is immutable
-c.d   = 30 // OK, d was already mutable type
+mut c = (x=1, const b=2, mut d=3)
+c.x = 3   // OK     (mut tuple, default-mut field)
+c.b = 10  // error: 'c.b' is immutable (inner const)
+c.d = 30  // OK     (mut tuple, mut field)
 
-const d=(x=1, const y=2, mut z=3)
-d.x   = 2  // OK
-d.foo = 3  // error: tuple 'd' does not have field foo'
-d.z   = 4  // error: 'd' is immutable
+const d = (x=1, const y=2, mut z=3)
+d.x = 2   // error: 'd' is immutable — inner `mut` is overridden
+d.z = 4   // error: 'd' is immutable — outer `const` wins over inner `mut z`
 
 mut e:d = ?
 assert(e.x==1 and e.y==2 and e.z==3)
-e.x = 30   // OK
-e.y = 30   // error: 'e.y' is immutable
-e.z = 30   // OK
+e.x = 30  // OK
+e.y = 30  // error: 'e.y' is immutable (inner const)
+e.z = 30  // OK     (outer mut + inner mut)
 ```
 
 Tuples are always ordered, but they can have unnamed entries. A field
@@ -396,6 +407,41 @@ mut c = 1..=2      // OK
 mut (c,d) = 1      // error: 2 entry tuple in lhs, same in rhs
 mut (c,d) = (1,2)  // OK
 cassert(c == 1 and d == 2)
+```
+
+### Named-tuple destructuring
+
+When the RHS is a **named** tuple (e.g. a lambda return whose outputs are
+declared by name, or any tuple literal with named fields), destructuring on
+the LHS matches **by name**, not by position. This mirrors the call-site
+rule for named arguments and prevents the silent-rebind footgun where two
+outputs are swapped in the declaration.
+
+* A bare LHS name like `b` matches the RHS field whose name is also `b`.
+  If no such field exists, it is a compile error.
+* An explicit `name = local` slot binds RHS field `name` to local `local`.
+  Use this when you want a different local name from the field name, or
+  just want to be explicit.
+* LHS order is irrelevant under named binding: `(b, c) = r` and
+  `(c, b) = r` are the same.
+
+```
+comb dox(a) -> (b, c) { b = a + 1; c = a + 2 }
+
+(b, c) = dox(a=3)        // local `b` ← dox.b, local `c` ← dox.c
+(c, b) = dox(a=3)        // same: order doesn't matter
+(b=x, c=y) = dox(a=3)    // rename: dox.b → x, dox.c → y
+(c=y, b=x) = dox(a=3)    // same as above
+(y, x) = dox(a=3)        // error: `y` is not a field of dox's return
+```
+
+When the RHS is an **unnamed** tuple (no field labels — e.g. a literal
+`(2, 3)` or `1..=2`), there are no names to match against, so destructuring
+falls back to positional binding by tuple index:
+
+```
+mut (a, b) = (2, 3)      // a=2, b=3 (positional — RHS has no names)
+mut (b, a) = (2, 3)      // a=3, b=2 (still positional)
 ```
 
 One thing to remember is that the `=` separates the statement in two parts

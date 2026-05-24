@@ -50,8 +50,11 @@ cassert(x.map(_ + 1) == (2,3,4))
 
 Library code:
 ```
-comb map<T>(f, ...x:[]T) -> (r) {
-  r = f(e) for e in x
+comb map<T>(f, ...x:[]T) -> (r:[]) {
+  r = ?
+  for e in x {
+    r ++= f(e)
+  }
 }
 ```
 
@@ -66,8 +69,13 @@ cassert (1,2,3).filter(_ != 2) == (1,3)
 Library code:
 
 ```
-comb filter<T>(f, ...x:[]T) -> (r) {
-  r = e for e in x if not f(e)
+comb filter<T>(f, ...x:[]T) -> (r:[]) {
+  r = ?
+  for e in x {
+    if not f(e) {
+      r ++= e
+    }
+  }
 }
 ```
 

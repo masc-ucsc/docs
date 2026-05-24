@@ -335,7 +335,7 @@ cassert((10..=0 step -2) == (10,8,6,4,2, 0))
 cassert(-1..=2 == (-1,0,1,2))
 const x = -1..=2
 
-cassert (i for i in 0..=10 step 2) == (0,2,4,6,8,10)
+cassert((0..=10 step 2) == (0,2,4,6,8,10))
 ```
 
 Since the range is an integer, a decreasing range should have the same meaning
@@ -458,7 +458,8 @@ checks/functionality that the compiler should perform (bitwidth constraints,
 are bound at declaration with `::[…]` and read at use sites with `.[…]`.
 
 See [Attributes](04b-attributes.md) for the full description, the reserved
-attribute lists, and the `wrap`/`saturate`/`comptime`/`debug` modifiers.
+attribute lists, and the `wrap`/`sat`/`comptime`/`debug` statement-level
+prefix modifiers.
 
 ## Register
 

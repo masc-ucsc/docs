@@ -81,9 +81,9 @@ argument, which allows operating on tuples.
     pipe add(a, b) -> (c) { c = a + b }
 
     mod multiply_add(in1, in2) -> (out) {
-      stage[3] tmp      = mul(in1, in2)
-      stage[3] in1_d    = in1
-      stage[1] out@[4]  = add(tmp@[3], in1_d@[3])
+      stage[3] tmp     = mul(in1, in2)         // mul picks 3 stages
+      stage[3] in1_d   = in1                   // delay in1 by 3
+      stage[1] out@[4] = add(tmp@[3], in1_d@[3]) // adder takes 1 stage; out@[4] typechecks
     }
 
     mod accum(in1, in2) -> (out) {
@@ -260,15 +260,16 @@ assert(noarg)                     // error: `noarg()` needed for calls
 
 a = div(3, 4, 3)         // error: div has 2 inputs
 b = div(self=8, b=4)     // OK, 2
-d = (self=8).div(b=2)    // OK, 4
-d = (8).div(b=2)         // OK, 4 . self does not need to be named
+const t = (self=8); d = t.div(b=2)  // OK, 4 — name the tuple, then UFCS
+d = (8).div(b=2)         // OK, 4 — single-expression paren is grouping
 d = 8.div(2)             // OK, single character inputs no need to be named
 
 h = div2(8, 4, 3)        // OK, 2 (3rd arg is not used)
 i = 8.div2(4, 3)         // error: no self in div2
 
 n = div((8, 4), 3)       // error: (8,4)/3 is undefined
-o = (8, 4).div2(1)       // error: (8,4)/1 is undefined
+// Multi-element tuples cannot host a suffix chain directly; bind first.
+const t2 = (8, 4); o = t2.div2(1)   // error: (8,4)/1 is undefined
 ```
 
 
@@ -409,7 +410,21 @@ are three rules that work together:
    sees. Use `return when cond` / `return unless cond` for early exits.
 
 Callers always see a named tuple. They can read fields by name
-(`r.a`, `r.b`) or destructure positionally with `const (x1, x2) = ret3()`.
+(`r.a`, `r.b`) or destructure on the LHS. Destructuring is **by name**, not
+by position: each LHS slot must either match a return field name exactly,
+or use the explicit `field = local` form to rename. This mirrors the
+call-site rule for named arguments.
+
+```
+comb dox(a) -> (b, c) { b = a + 1; c = a + 2 }
+
+(b, c) = dox(a=3)        // OK — local names match return-field names
+(c, b) = dox(a=3)        // OK — order doesn't matter, bind by name
+(b=x, c=y) = dox(a=3)    // OK — rename: dox.b → x, dox.c → y
+(c=y, b=x) = dox(a=3)    // OK — order doesn't matter under named binding
+(y, x) = dox(a=3)        // error: `y` is not a field of dox's return
+```
+
 A single-field output tuple auto-unwraps when used in scalar context.
 
 ```

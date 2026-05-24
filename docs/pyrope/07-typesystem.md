@@ -322,32 +322,6 @@ if y == Color.Red {
 }
 ```
 
-
-It is also possible to support an algebraic data type with enums. This requires
-each enumerate entry to have an associated type. In can also be seen as a union
-type, where the enumerate has to be either of the enum entries where each is
-associated to a type.
-
-```
-const ADT = enum(
-  Person:(eats:string) = ?,
-  Robot:(charges_with:string) = ?
-)
-
-comb nourish(x:ADT) {
-  match x {
-    == ADT.Person { puts("eating:{}", x.eats) }
-    == ADT.Robot { puts("charging:{}", x.charges_with) }
-    else { }
-  }
-}
-
-test "my main" {
-  (_:Person="pizza", _:Robot="electricity").each(nourish)
-}
-```
-
-
 ## Bitwidth
 
 Integers can be constrained based on the maximum and minimum value (not by
@@ -596,8 +570,11 @@ cassert(a has 'c')
 cassert(!(a has 'foo'))
 
 cassert(a.[id] == 'a')
-cassert(a[0].[id] == ':0:b' and a.b.[id] == ':0:b')
-cassert(a[1].[id] == ':1:c' and a.c.[id] == ':1:c')
+cassert(a['b'].[id] == 'b' and a.b.[id] == 'b')
+cassert(a['c'].[id] == 'c' and a.c.[id] == 'c')
+
+cassert(a.[size] == 0)  // 0 unnamed entries
+cassert(a.[fields] == ('b','c'))
 ```
 
 Function definitions allocate a tuple, which allows to introspect the

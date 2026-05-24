@@ -121,8 +121,13 @@ read a value at a different cycle, use `past[N](x)` or `next[N](x)`.
 * `past[n](counter)` reads the value `n` cycles ago. The compiler inserts
   the flops (see [Temporal library](09-verification.md#temporal-library)).
 * `counter.[defer]` is **RHS-only** — it reads the end-of-cycle value.
-* `stage[N]` pipelines the RHS of a declaration over `N` cycles (`mod` only).
-* `@[N]` is a pure cycle type check (`mod` only).
+* `stage[N]` picks how many pipeline stages the RHS `pipe` call inserts
+  (`mod` only). A `pipe` may accept a single fixed count or a range; the
+  caller picks within it with `stage[N]`. `stage[A..=B]` accepts any count
+  in the range, and `stage[]` lets the toolchain pick a default.
+* `@[N]` is a pure cycle-count typecheck — it asserts that the value is
+  produced at (LHS) or read at (RHS) absolute cycle `N`, counted from the
+  enclosing `mod`/`pipe` inputs. `@[]` opts out of that check.
 * `next`, `eventually`, `rose`, … (debug only) cover future-peek and
   window-quantified sampling.
 
@@ -158,10 +163,18 @@ mod multiply_add(in1, in2) -> (out) {
 
 The two mechanisms catch different classes of bugs:
 
-* `stage[N]` makes the pipelining contract explicit at every declaration site.
+* `stage[N]` makes the pipelining contract explicit at every declaration
+  site. The number `N` is the **latency of the RHS call**, not an absolute
+  cycle.
 * `@[N]` on uses and on declarations catches alignment mismatches at compile
   time — both "the input I'm using isn't at the cycle I expected" and "the
-  output doesn't land at the cycle I promised".
+  output doesn't land at the cycle I promised". The number `N` is the
+  **absolute cycle** counted from the enclosing module/pipe inputs.
+
+Use the empty forms (`stage[]`, `x@[]`) when you deliberately want to skip
+one of those checks — for instance during exploration, or when the cycle
+budget is determined elsewhere and you don't want the local check to
+constrain it.
 
 ```
 mod example(in1, in2, in3) -> (out) {
