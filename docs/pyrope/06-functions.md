@@ -222,17 +222,23 @@ my_log(a, false, x + 1)
 
 ## Argument naming
 
-Input arguments must be named. E.g: `fcall(a=2,b=3)` There are the following
-exceptions that avoid naming arguments:
+Every input argument must be named at the call site (`fcall(a=2, b=3)`),
+whether the call is direct or UFCS. There are a few narrow exceptions that
+let an argument be passed unnamed:
 
-* If the type system can distinguish between unnamed arguments (no ambiguity)
+* The lambda has exactly one argument (and `self` does not count, see
+  below). With nothing to disambiguate, position is unambiguous.
 
-* If there is an argument/call match. The calling variable name has the same as an argument
+* The calling expression is a variable whose name matches a parameter name
+  (`fcall(a)` matches a parameter named `a`).
 
-* If the argument is a single letter, and there is no name match, only position is used
+* The argument types make the mapping unambiguous with no implicit
+  conversion required (e.g. parameters `(a:bool, b:int, c:string)` can be
+  filled positionally because each call-site value matches exactly one
+  parameter by type).
 
-* `self` does not need to be named (first argument position)
-
+* `self` is always bound positionally — by the value before the dot in a
+  UFCS call — and is never named at the call site.
 
 There are several rules on how to handle arguments.
 
@@ -241,40 +247,59 @@ There are several rules on how to handle arguments.
   or "drop parens after a pipeline operator" sugar. This keeps every call
   site unambiguously identifiable.
 
-* Calls use the Uniform Function Call Syntax (UFCS) when `self` is defined as
-  the first argument. `(a,b).f(x,y)` is equivalent to `f((a,b),x,y)`.
+* **Calls use Uniform Function Call Syntax (UFCS).** `x.f(args)` is
+  rewritten to `f(x, args)`. If the lambda declares `self`, `x` is bound
+  to `self`. Otherwise `x` must be a named tuple whose fields match the
+  lambda's parameters by name.
 
-Pyrope uses a Uniform Function Call Syntax (UFCS) when the first argument is
-`self`. It resembles Nim or D UFCS but it can be different from the order in
-other languages.
+* **If a lambda declares `self`, it can ONLY be called via UFCS.** The
+  direct form `method(self=..., ...)` is rejected; the caller must write
+  `value.method(...)`. This avoids two equivalent spellings for the same
+  method call.
+
+### Uniform Function Call Syntax (UFCS)
+
+Pyrope's UFCS resembles Nim or D, but the naming rules above apply at the
+call site. Every argument inside the parentheses must follow the naming
+rules — UFCS is not a shortcut for skipping argument names.
 
 ```
-comb div(self, b) -> (r) { r = self / b }     // named input tuple
-comb div2(...x) -> (r) { r = x[0] / x[1] }    // unnamed input tuple
+comb div(self, b) -> (r) { r = self / b }     // method: declares self
+comb div2(a, b)   -> (r) { r = a / b }        // free function: no self
+comb noarg()      -> (r) { r = 33 }           // explicit no args
 
-comb noarg() -> (r) { r = 33 }                // explicit no args
+cassert(33 == noarg())               // () always required, even for no-arg calls
 
-cassert(33 == noarg())            // () always required, even for no-arg calls
+const b1 = (8).div(b=2)              // OK: 8 → self, b named (4)
+const c1 = (a=8, b=2).div2()         // OK: named tuple matches a, b (4)
+const c2 = (b=2, a=8).div2()         // OK: field order does not matter (4)
+const d1 = div2(a=8, b=2)            // OK: direct call, all named (4)
 
-assert(noarg)                     // error: `noarg()` needed for calls
+const t1 = (8).div2(b=2)             // error: div2 has no self; `8` is unnamed
+const t2 = 8.div(2)                  // error: `2` is not named
+const t3 = div(self=8, b=2)          // error: `div` declares self → UFCS only
 
-a = div(3, 4, 3)         // error: div has 2 inputs
-b = div(self=8, b=4)     // OK, 2
-c = (self=8).div(b=2)    // OK, 4
-d = 8.div(2)             // OK, single character inputs no need to be named
-
-h = div2(8, 4, 3)        // OK, 2 (3rd arg is not used)
-i = 8.div2(4, 3)         // error: no self in div2
-
-n = div((8, 4), 3)       // error: (8,4)/3 is undefined
-o = (8, 4).div2(1)       // error: (8,4)/1 is undefined
+assert(noarg)                        // error: `noarg()` needed for calls
 ```
 
+When the lambda declares `self`, the leading dotted value may be any value
+(scalar, array, or tuple) — it is bound positionally to `self`. The
+remaining arguments still follow the naming rules.
 
-The UFCS allows to have `lambdas` to call any tuple, but if the called tuple
-has a lambda defined with the same name a compile error is generated. Like with
-variables, Pyrope does not allow `lambda` call shadowing. Polymorphism is allowed
-but only explicit one as explained later.
+```
+comb some_op(self, d=3) -> (r) { /* ... */ }
+
+(8).some_op(d=3)        // scalar bound to self
+[8, 2, a].some_op(d=3)  // array bound to self
+(8, 2).some_op(d=2)     // unnamed tuple bound to self
+
+some_op(self=8, d=3)    // error: declares self → UFCS only
+```
+
+The UFCS allows `lambdas` to call any tuple, but if the called tuple has a
+lambda defined with the same name a compile error is generated. Like with
+variables, Pyrope does not allow `lambda` call shadowing. Polymorphism is
+allowed but only explicit one as explained later.
 
 ```
 mut tup = (
@@ -285,15 +310,15 @@ comb f1(self) -> (r) { r = 2 } // error: f1 shadows tup.f1
 comb f1() -> (r) { r = 3 }     // OK, no self
 
 assert(f1() != 0)        // error: missing argument
-assert(f1(tup) != 0)     // error: f1 shadowing (tup.f1 and f1)
-assert(4.f1() != 0)      // error: f1 can be called for tup, so shadow
+assert(f1(tup) != 0)     // error: free `f1` has no self; UFCS would be `tup.f1()` but that is shadowed
+assert(4.f1() != 0)      // error: f1 can be called for tup, so shadowed
 assert(tup.f1() != 0)    // error: f1 is shadowing
 
 comb xx(self:tup) -> (r) { r = self.f1() } // OK, explicit input restricts scope for f1
-cassert(xx(tup) == 1)
+cassert((tup).xx() == 1)                   // xx declares self → UFCS only
 
 cassert((4:tup).f1() == 1)
-cassert(4.f1() == 3)      // UFCS call
+cassert((4).f1() == 3)    // UFCS call, scalar bound to self
 cassert(tup.f1() == 1)
 ```
 
@@ -463,7 +488,7 @@ explicit lambda:
 comb add(a, b) -> (r) { r = a + b }
 comb inc(a)    -> (r) { r = a + 1 }
 
-mymap.each(inc)
+mymap.each(inc)   // OK: `each` has one non-self argument
 ```
 
 ## Getter/setter
@@ -604,8 +629,7 @@ const mul = inc
 counter.mul(2)             // call the new mul method with UFCS
 assert(counter.val == 10)
 
-mul(counter, 2)            // also legal
-assert(counter.val == 20)
+mul(counter, 2)            // error: `inc` (aliased as `mul`) declares self → UFCS only
 ```
 
 
