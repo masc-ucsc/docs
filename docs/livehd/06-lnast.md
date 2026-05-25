@@ -912,6 +912,7 @@ in non-simulation builds).
 | `poke`               | `poke(path.to.reg, value)`        | Force an internal register/signal from a test-bench context.             |
 | `puts`               | `puts arg1, arg2, ...`            | Simulation print with trailing newline. Strings must be comptime.        |
 | `print`              | `print arg1, arg2, ...`           | Simulation print without trailing newline.                               |
+| `cputs`              | `cputs(msg)`                      | Compile-time print. Operand must fold to a comptime string (otherwise compile error). Verifier upass emits `prp:<msg>` on stderr during elaboration. |
 | `format`             | `format(fmt, args...)`            | Compile-time `fmt::format`-style string formatter. Returns a string.     |
 | `import`             | `import X as Y`                   | Module import. `Y` receives the imported module value.                   |
 | `requires`           | `requires cond` in `func_def`     | Function precondition. Checked at every call site.                       |

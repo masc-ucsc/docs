@@ -94,6 +94,41 @@ is because they can be enabled/disabled at simulation time.
 
 In a way, most type checks have equivalent `cassert` checks.
 
+## Compile-time prints
+
+`cputs(msg)` is the compile-time analog of `puts`. The compiler evaluates the
+single string argument during elaboration and emits it on the compiler's
+stderr, so the message is visible while the design is being built rather than
+during simulation. Each `cputs` output is prefixed with `prp:` on its own line
+so it can be grepped out of the surrounding compiler log:
+
+```
+prp:<message>
+```
+
+Rules:
+
+* Exactly one argument is accepted.
+* The argument must resolve to a comptime-known string. String interpolation
+  (`"a is {a}"`) works because the producer lowers it to `format(...)`, which
+  the upass folds at compile time when its operands are comptime-known.
+* Any deviation — extra arguments, non-string operand, or an operand that
+  cannot be folded to a known value at compile time — is a compile error, not
+  a deferred runtime print.
+
+```pyrope
+a = 7
+cputs("a is {a}")    // prints: prp:a is 7
+cputs("plain")       // prints: prp:plain
+
+b = some_runtime_signal
+cputs("b is {b}")    // compile error: operand not comptime-known
+```
+
+Use `cputs` for elaboration-time diagnostics (which branch of a `comptime
+if` was taken, which generic parameter was selected, etc.); use `puts` for
+messages that should appear in the simulator at run time.
+
 ## LEC
 
 The `lec` command is a formal verification step that checks that all the
