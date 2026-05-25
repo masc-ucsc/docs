@@ -260,16 +260,14 @@ assert(noarg)                     // error: `noarg()` needed for calls
 
 a = div(3, 4, 3)         // error: div has 2 inputs
 b = div(self=8, b=4)     // OK, 2
-const t = (self=8); d = t.div(b=2)  // OK, 4 — name the tuple, then UFCS
-d = (8).div(b=2)         // OK, 4 — single-expression paren is grouping
+c = (self=8).div(b=2)    // OK, 4
 d = 8.div(2)             // OK, single character inputs no need to be named
 
 h = div2(8, 4, 3)        // OK, 2 (3rd arg is not used)
 i = 8.div2(4, 3)         // error: no self in div2
 
 n = div((8, 4), 3)       // error: (8,4)/3 is undefined
-// Multi-element tuples cannot host a suffix chain directly; bind first.
-const t2 = (8, 4); o = t2.div2(1)   // error: (8,4)/1 is undefined
+o = (8, 4).div2(1)       // error: (8,4)/1 is undefined
 ```
 
 

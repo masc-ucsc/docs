@@ -489,7 +489,7 @@ The private has different meaning depending on when it is applied:
 
 * When applied to a `pipestage` variable (`mut foo::[private] = 3`), it means that the
   variable is not pipelined to the next type stage. Section
-  [pipestage](06c-pipelining2.md) has more details.
+  [pipestage](06c-pipelining.md) has more details.
 
 * When is applied to a pyrope file upper scope variable (`reg top_reg:[private]
   = 0`), it means that an `import` command or register reference can not access

@@ -235,7 +235,7 @@ Registers have the following attributes:
 * `defer`: **RHS-only** read of the end-of-cycle value (the final value the
   register will hold for the next cycle's 'q', after all in-cycle writes
   have accumulated). There is no `reg.[defer] = rhs` write form — register
-  writes use plain `=`. See [Pipelining](06c-pipelining2.md).
+  writes use plain `=`. See [Pipelining](06c-pipelining.md).
 
 Pipestage accept the same register attributes but also two more:
 

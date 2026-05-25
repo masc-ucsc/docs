@@ -218,7 +218,7 @@ The previous code directly instantiates a memory and passes the configuration.
 
 
 Multi cycle memories are pipelined elements, and using them requires the `stage[1..<inf]`
-declaration modifier and the same rules as pipeline flops apply (See [pipelining](06c-pipelining2.md)).
+declaration modifier and the same rules as pipeline flops apply (See [pipelining](06c-pipelining.md)).
 
 
 ## Multidimensional arrays
