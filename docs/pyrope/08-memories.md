@@ -54,14 +54,14 @@ In most cases, the arrays and async memories can be inferred automatically. The
 maximum/minimum value on the index effectively sets the size and the default
 initialization is zero.
 
-```
+```pyrope
 reg mem:[] = 0
 mem[3]   = something // async memory
 mut array:[] = nil
 array[3] = something // array no cross cycles persistence
 ```
 
-```
+```pyrope
 mut index:u7 = nil
 mut index2:u6 = nil
 
@@ -73,7 +73,7 @@ In the previous example, the compiler infers that the tuple at most has 127 entr
 
 There are several constructs to declare arrays or async memories:
 
-```
+```pyrope
 reg mem1:[16]i8 = 3        // mem 16 entry init to 3 with type i8
 reg mem2:[16]i8 = nil      // mem 16 entry init to 0 with type i8
 mut mem3:[] = 0sb?         // array infer size and type, 0sb? initialized
@@ -83,7 +83,7 @@ reg mem5:[4]i3 = (1,2,3,4) // mem 4 entries 3 bits each, initialized
 
 Pyrope allows slicing of tuples and hence arrays.
 
-```
+```pyrope
 x1 = array[first..<last]  // from first to last, last not included
 x2 = array[first..=last]  // from first to last, last included
 x3 = array[first..+size]  // from first to first+size, first+size. not included
@@ -91,7 +91,7 @@ x3 = array[first..+size]  // from first to first+size, first+size. not included
 
 Since tuples are multi-dimensional, arrays or async memories are multi-dimensional too.
 
-```
+```pyrope
 mut a:[][] = 0
 a[3][4] = 1
 
@@ -108,7 +108,7 @@ be `comptime` while `memories` and `reg` can have a sequence of statements to
 generate a reset value.
 
 === "Pyrope array syntax"
-    ```
+    ```pyrope
     mut mem1:[4][8]u5 = 0
     comptime mut reset_value:[3][8]u5 = nil // only used during reset
     for i in 0..<3 {
@@ -120,7 +120,7 @@ generate a reset value.
     ```
 
 === "Explicit initialization"
-    ```
+    ```pyrope
     mut mem = (
       (u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0)),
       (u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0)),
@@ -159,7 +159,7 @@ To illustrate the point of simple single dimensional synchronous memories, this
 is a typical decode stage from an in-order CPU:
 
 === "Flop the inputs"
-    ```
+    ```pyrope
     reg rf:[32]i64 = 0sb?   // random initialized
 
     reg a:(addr1:u5, addr2:u5) = (0,0)
@@ -171,7 +171,7 @@ is a typical decode stage from an in-order CPU:
     ```
 
 === "Flop the outputs"
-    ```
+    ```pyrope
     mut rf:[32]i64 = 0sb?
 
     reg a:(data1:i64, data2:i64) = nil
@@ -192,7 +192,7 @@ negative edge clock...
 Pyrope allows for a direct call to LiveHD cells with the RTL instantiation, as
 such that memories can be created directly.
 
-```
+```pyrope
 // A 2rd+1wr memory (RF type)
 
 mem.addr    = (raddr0, raddr1, wraddr)
@@ -228,7 +228,7 @@ Pyrope supports multi-dimensional arrays, it is possible to slice the array by
 dimension. The entries are in a row-major order.
 
 
-```
+```pyrope
 mut d2:[2][2] = ((1,2),(3,4))
 cassert(d2[0][0] == 1 and d2[0][1] == 2 and d2[1][0] == 3 and d2[1][1] == 4)
 
@@ -239,7 +239,7 @@ The `for` iterator goes over each entry of the tuple/array. If a matrix, it
 does in row-major order. This allows building a simple function to flatten
 multi-dimensional arrays.
 
-```
+```pyrope
 comb flatten(...arr) -> (res) {
   res = ()
   for i in arr {
@@ -257,7 +257,7 @@ Array index by default are unsigned integers, but the index can be constrained
 with tuples or by requiring an enumerate.
 
 
-```
+```pyrope
 mut x1:[2]u3 = (0,1)
 cassert(x1[0] == 0 and x1[1] == 1)
 
@@ -294,7 +294,7 @@ randomly generate a zero/ones for each simulation. As a result assertions can
 fail with unknowns.
 
 
-```
+```pyrope
 reg r_ver = 0sb?
 
 reg r = nil
@@ -314,7 +314,7 @@ unexpected results during the reset period. Memories and registers are randomly
 initialized before reset during simulation. There is no guarantee of zero
 initialization before reset.
 
-```
+```pyrope
 mut arr:[] = (0,1,2,3,4,5,6,7)
 
 always_assert(arr[0] == 0 and arr[7] == 7) // may FAIL during reset

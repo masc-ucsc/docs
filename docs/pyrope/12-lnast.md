@@ -17,7 +17,7 @@ underscore use double tick in the name `_foo here`. Those are special variables
 names that do not allow to use compact tuple representation like `foo here.field`.
 
 === "Pyrope"
-    ```
+    ```pyrope
     const x = 3 + 1
     mut z = 4
     `foo x` = x + z + 2
@@ -69,7 +69,7 @@ carry type information on its `ref` sub-nodes. Attributes are never sub-nodes of
 `ref`; they are set with separate `attr_set` statements.
 
 === "Pyrope"
-    ```
+    ```pyrope
     const a:u2:[foo] = b:u1
 
     x:u2:[foo] = y:u1
@@ -120,7 +120,7 @@ Direct access in operations like `plus` behave like a `tup_set` or `tup_get`.
 
 
 === "Tuple in Pyrope"
-    ```
+    ```pyrope
     x = 3
     a = (b=2, x=x+1, y=b+1)
     ```
@@ -210,7 +210,7 @@ construction. `attr_get` and `attr_set` follow the same syntax as
 `tup_get`/`tup_set`.
 
 === "Pyrope"
-    ```
+    ```pyrope
     x = tup[1].foo[xx]
     tup[4].foo[yy] = y
 
@@ -250,7 +250,7 @@ construction. `attr_get` and `attr_set` follow the same syntax as
 Tuples can have a `let` in declaration to indicate that the field is immutable.
 
 === "Tuple in Pyrope"
-    ```
+    ```pyrope
     mut a = (b=2, const x=1+1)
     ```
 
@@ -290,7 +290,7 @@ Tuples can have a `let` in declaration to indicate that the field is immutable.
 Tuple concatenation does not use `plus` but the `tup_concat` operator.
 
 === "Tuple in Pyrope"
-    ```
+    ```pyrope
     mut a = (2, 1+1)
     const x = a ++ (c=3) ++ 1
     ```
@@ -366,7 +366,7 @@ Attribute set declarations like `a::[f=3,b]` lower to the assignment plus one
 entries.
 
 === "Pyrope"
-    ```
+    ```pyrope
     a::[f=3,b] = 1
     x = (y::[z=7]=2, 4)
     ```
@@ -408,7 +408,7 @@ allowed and lower to `attr_get`. To turn a read into a check, wrap it in
 comparison node, and then `cassert`.
 
 === "Pyrope"
-    ```
+    ```pyrope
     const z = q.[y]
     const y = a.[b] + 1
     ```
@@ -451,7 +451,7 @@ attribute, the result also has a `debug` attribute. There is no way to
 remove these attributes.
 
 === "Pyrope"
-    ```
+    ```pyrope
     const d::[debug] = 3
 
     mut a = d + 100
@@ -494,7 +494,7 @@ variable and any variables that got a direct copy. The only way to remove it is
 with arithmetic operations and/or bit selection.
 
 
-```
+```pyrope
 const foo::[attr1=2] = 3
 
 mut foo2 = foo
@@ -529,7 +529,7 @@ non-contiguous bits, emit one assignment per range — each lowers to its own
 `set_mask`.
 
 === "Pyrope"
-    ```
+    ```pyrope
     foo#[1..=2] = xx
     yy = foo#[5] + xx#[1..<4]
     ```
@@ -621,7 +621,7 @@ operations.
 
 
 === "Pyrope"
-    ```
+    ```pyrope
     const t1 = foo#sext[..=4]
     const t2 = foo#|[..=4]
     const t3 = foo#&[..=4]
@@ -687,7 +687,7 @@ like `plus`, `LUT`, `memory`. In LNAST this is translated like a lambda call.
 
 
 === "Pyrope"
-    ```
+    ```pyrope
     const foo = 3
     const bar = 300
     const b = __plus(1,2,foo,bar)
@@ -717,7 +717,7 @@ A direct LNAST call can be done calling an LNAST method, where the first entry
 is the root LNAST node, and rest follow a tree syntax with strings.
 
 === "Pyrope"
-    ```
+    ```pyrope
     LNAST("let", ("ref", "x"), ("const", "5"))
     ```
 
@@ -866,7 +866,7 @@ dependent: tuple, range, or enumerate. The range and enumerate can get
 translated to an AND gate over the bitcode translation, but the tuple check
 requires a tuple check.
 
-```
+```pyrope
 const tup=(1,2,3)
 const ran=1..<5
 const enu = enum(a,b=(x,y),c)
@@ -881,7 +881,7 @@ dependent on the input type.
 
 
 === "Pyrope"
-    ```
+    ```pyrope
     c = a in b
     d = not (a in b)
     ```
@@ -1080,7 +1080,7 @@ check can not have side-effects. Hence, they can not have `procedure` calls,
 only `function` calls.
 
 === "Pyrope"
-    ```
+    ```pyrope
     mut total=3
     if mut x=3; x<3 {
       total+=x
@@ -1090,7 +1090,7 @@ only `function` calls.
     ```
 
 === "Pyrope Equivalent"
-    ```
+    ```pyrope
     mut total=3
     {
       mut x=3
@@ -1122,7 +1122,7 @@ that the condition is a one-hot encoding.
 
 
 === "Pyrope"
-    ```
+    ```pyrope
     if mut x=a ; x<3 {
       t = 100+x               // z not in scope
     }elif mut z = x+c ; z>5 {
@@ -1180,7 +1180,7 @@ have initial statement. It is not allowed to have initialization statements in
 the `elif` conditions.
 
 === "Pyrope"
-    ```
+    ```pyrope
 
 
 
@@ -1194,7 +1194,7 @@ the `elif` conditions.
     ```
 
 === "Pyrope Equivalent"
-    ```
+    ```pyrope
     const tmp1 = a<3
     const tmp2 = a>40
     const tmp3 = 1<<(tmp1,tmp2)
@@ -1256,7 +1256,7 @@ false }` is created.
 
 
 === "Pyrope"
-    ```
+    ```pyrope
     mut z = 0
     match x {
      == 3 { z = 1 }
@@ -1367,7 +1367,7 @@ New variables can have a statement scope for `if`, `while`, and `match`
 statements.
 
 === "Pyrope"
-    ```
+    ```pyrope
     if mut x=3; x<4 {
       cassert(x==3)
     }
@@ -1481,7 +1481,7 @@ In all the cases, the loops must be expanded at LNAST compile time. In LNAST, th
 is only `loop` construct.
 
 === "Pyrope loop"
-    ```
+    ```pyrope
     loop {
       i += 1
       break when i==3
@@ -1508,7 +1508,7 @@ is only `loop` construct.
 The `while` translates to a `loop` with a `break` statement.
 
 === "Pyrope while"
-    ```
+    ```pyrope
     while mut i=0 ; i!=3 {
       i += 1
     }
@@ -1537,13 +1537,13 @@ The `while` translates to a `loop` with a `break` statement.
 The `for` construct is also a loop, but it can have element, index, and key in the iterator. Also, it can allow a `ref` to mutate the contents.
 
 === "Pyrope for"
-    ```
+    ```pyrope
     for (index,key,value) in enumerate(key(tup)) {
       mycall(value,index,key)
     }
     ```
 === "Pyrope ref for"
-    ```
+    ```pyrope
     for value in ref tup {
       mycall(value)
       value = 0
@@ -1686,7 +1686,7 @@ code.
 
 
 === "Pyrope"
-    ```
+    ```pyrope
     const num = 1
     const color = "blue"
     const extension = "s"
@@ -1740,7 +1740,7 @@ unless an argument is an expression.
 
 
 === "Pyrope"
-    ```
+    ```pyrope
     x = fcall(a,b=3,foo,1+2)
     ```
 === "LNAST"

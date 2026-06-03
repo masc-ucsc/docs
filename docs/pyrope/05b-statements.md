@@ -12,7 +12,7 @@ which allows a parallel mux. The `unique` is a cleaner way to write an
 
 The `if` sequence can be used in expressions too.
 
-```
+```pyrope
 a = unique if x1 == 1 {
     300
   }elif x2 == 2 {
@@ -31,7 +31,7 @@ optimize `unique if` to tri-state buffers when the conditions are mutually
 exclusive, providing the same behavior as a hardware bus without needing a
 separate `bus` construct.
 
-```
+```pyrope
 optimize(!(x1==1 and x2==2))
 a = if x1 == 1 {
     300
@@ -47,7 +47,7 @@ in the evaluation condition. If variables are declared, they are restricted to
 the remaining if/else statement blocks.
 
 
-```
+```pyrope
 mut tmp = x+1
 
 if mut x1=x+1; x1 == tmp {
@@ -75,7 +75,7 @@ In addition to functionality, the syntax is different to avoid redundancy.
 `match` joins the match expression with the beginning of the matching
 entry to form a valid expression.
 
-```
+```pyrope
 const x = 1
 match x {
   == 1            { puts("always true") }
@@ -90,7 +90,7 @@ else              { cassert(false)      }
 
 Like the `if`, it can also be used as an expression.
 
-```
+```pyrope
 mut hot = match x {
     == 0sb001 { a }
     == 0sb010 { b }
@@ -107,7 +107,7 @@ assert(hot==hot2)
 
 Like the `if` statement, a sequence of statements and declarations are possible in the match statement.
 
-```
+```pyrope
 match const one=1 ; one ++ (2) {
   == (1,2) { puts("one:{}", one) }      // should always hit
   else     { cassert(false) }
@@ -117,7 +117,7 @@ match const one=1 ; one ++ (2) {
 Since the `==` is the most common condition in the `match` statement, it can be
 omitted.
 
-```
+```pyrope
 for x in 1..=5 {
   const v1 = match x {
     3 { "three" }
@@ -145,7 +145,7 @@ in the current scope (no new scope is created), which makes them ideal
 for conditional declarations, conditional assertions, and conditionally
 omitted statements driven by compile options.
 
-```
+```pyrope
 comptime const DEBUG = true
 mut a = 3
 
@@ -166,7 +166,7 @@ declarations, and code-block control statements (`return`, `break`,
 For **runtime** gating (a mux or enable on a signal) use an `if` block
 or an `if` expression:
 
-```
+```pyrope
 mut x = c                      // always declared
 if cond { x = other }          // runtime-gated assignment
 result = if cond { other } else { c }
@@ -204,7 +204,7 @@ The main features of code blocks:
   [lambdas](06-functions.md#output-tuple) for how lambda outputs work
   (declared by name, assigned in the body, no implicit return).
 
-```
+```pyrope
 mut yy = 0
 {
   mut x=1
@@ -255,7 +255,7 @@ compile time. The loop exit condition can not be run-time data-dependent.
 The loop can have an early exit when calling `break` and skip of the current
 iteration with the `continue` keyword.
 
-```
+```pyrope
 for i in 0..<100 {
  some_code(i)
 }
@@ -266,7 +266,7 @@ for (index,i) in bund.enumerate() {
 }
 ```
 
-```
+```pyrope
 const b = (a=1,b=3,c=5,7,11)
 cassert(b.keys() == ('a', 'b', 'c', '', ''))
 cassert(b.enumerate() == ((0,1), (1,3), (2,5), (3,7), (4,11)))
@@ -290,7 +290,7 @@ accumulator and `++=` each element. Trailing-`for` comprehensions on
 expressions are not supported (they make trailing tokens of every expression
 ambiguous to parse) — write the loop out instead.
 
-```
+```pyrope
 mut d:[] = nil
 for i in 0..<5 {
   d ++= i
@@ -312,7 +312,7 @@ is mutable. When a `ref` is used, it must be a variable reference, not a
 function call return (value). The mutable for can not be used in
 comprehensions.
 
-```
+```pyrope
 mut b = (1,2,3,4,5)
 
 for x in ref b {
@@ -342,7 +342,7 @@ declared output names is what the caller sees.
   is found, a compile error is generated.
 
 
-```
+```pyrope
 mut total:[] = nil
 for a in 1..=10 {
   if a == 2 { continue }
@@ -387,7 +387,7 @@ true { [stmts]+ }`.
 Like `if`/`match`, the `while` condition can have a sequence of statements with
 variable declarations visible only inside the while statements.
 
-```
+```pyrope
 // a do while contruct does not exist, but a loop is quite clean/close
 
 mut a = 0
@@ -407,7 +407,7 @@ constructs:
 
 * The first bare `variable` reads before update hold the register's 'q' value:
 
-  ```
+  ```pyrope
   reg counter:u32 = 0
   const counter_q = counter         // snapshot 'q' before any updates this cycle
 
@@ -450,7 +450,7 @@ variable at the end of the current cycle. This is needed if we need to have any
 loop in connecting blocks or for delaying assertion checks to the end of the
 cycle like post condition checks.
 
-```
+```pyrope
 mut c = 10
 assert(b.[defer] == 33) // behaves like a postcondition
 b = c.[defer]
@@ -460,7 +460,7 @@ c += 3
 ```
 
 To connect the `ring` function calls in a loop.
-```
+```pyrope
 f1 = ring(a, f4.[defer])
 f2 = ring(b, f1)
 f3 = ring(c, f2)
@@ -472,7 +472,7 @@ use the `defer`, a normal register access could do it. A bare `reg`
 reference reads the value before any update (the 'q' value), and `.[defer]`
 reads the value after updates.
 
-```
+```pyrope
 reg counter:u32 = nil
 
 const counter_0  = counter         // current cycle (before updates)
@@ -504,7 +504,7 @@ if counter == 10 {
 are accumulated in program order, and `.[defer]` reads the final
 end-of-cycle value.
 
-```
+```pyrope
 reg a:u8 = 1
 if a == 1 {
   a = 200                       // register write
@@ -519,7 +519,7 @@ if a == 1 {
 The same RHS-only `.[defer]` form is also useful for `mut` variables when
 you want the in-cycle final value:
 
-```
+```pyrope
 mut a = 1
 mut x = 100
 x = a.[defer]                   // RHS read of the eventual final value
@@ -547,7 +547,7 @@ randomization outside the test statement increases the number of tests:
 
 
 === "Parallel tests"
-    ```
+    ```pyrope
     comb add(a,b) -> (r) { r = a + b }
 
     for i in 0..<10 { // 10 tests
@@ -561,7 +561,7 @@ randomization outside the test statement increases the number of tests:
     ```
 
 === "Single test"
-    ```
+    ```pyrope
     comb add(a,b) -> (r) { r = a + b }
 
     test "test 10 additions" {
@@ -599,7 +599,7 @@ The `waitfor` command is equivalent to a `while` with a `step`.
 
 === "`waitfor`"
 
-    ```
+    ```pyrope
     total = 3
 
     waitfor(a_cond)  // wait until a_cond is true
@@ -609,7 +609,7 @@ The `waitfor` command is equivalent to a `while` with a `step`.
 
 === "equivalent Pyrope"
 
-    ```
+    ```pyrope
     total = 3
 
     while !a_cond {

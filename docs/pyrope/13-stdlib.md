@@ -7,13 +7,13 @@ This is a list of functionality that `import prp` should produce.
 All the LNAST node have an associated function matching name to simplify the
 creation of operations: `plus`, `minus`, `mult`, `div`, `mod`, `ror`...
 
-```
+```pyrope
 const prp = import("prp")
 cassert(prp.plus(1,2,3) == 6)
 ```
 
 Library code:
-```
+```pyrope
 comb plus(...a:int) -> (r:int) {
   r = 0
   for e in a {
@@ -27,14 +27,14 @@ comb plus(...a:int) -> (r:int) {
 ### Size of length
 
 Sample use:
-```
+```pyrope
 const x = (1,2,23)
 
 cassert(prp.len(x) == 3)
 ```
 
 Library code:
-```
+```pyrope
 comb len(x) -> (r) { r = x.[size] }
 ```
 
@@ -42,14 +42,14 @@ comb len(x) -> (r) { r = x.[size] }
 
 Sample use:
 
-```
+```pyrope
 const x = (1,2,3)
 
 cassert(x.map(_ + 1) == (2,3,4))
 ```
 
 Library code:
-```
+```pyrope
 comb map<T>(f, ...x:[]T) -> (r:[]) {
   r = nil
   for e in x {
@@ -62,13 +62,13 @@ comb map<T>(f, ...x:[]T) -> (r:[]) {
 
 Sample use:
 
-```
+```pyrope
 cassert (1,2,3).filter(_ != 2) == (1,3)
 ```
 
 Library code:
 
-```
+```pyrope
 comb filter<T>(f, ...x:[]T) -> (r:[]) {
   r = nil
   for e in x {
@@ -83,13 +83,13 @@ comb filter<T>(f, ...x:[]T) -> (r:[]) {
 
 Sample use:
 
-```
+```pyrope
 cassert (1,2,3).reduce(prp.plus) == 6
 ```
 
 Library code:
 
-```
+```pyrope
 comb reduce<T>(op, ...x:[]T) -> (res:T) {
   if x.[size] <= 1 {
     res = x

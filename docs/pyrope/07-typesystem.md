@@ -38,7 +38,7 @@ optimize.
 
 === "Snippet with declaration-site types"
 
-    ```
+    ```pyrope
     mut b = "hello"
 
     mut a:u32 = 0
@@ -57,7 +57,7 @@ optimize.
 
 === "Snippet with comptime assert"
 
-    ```
+    ```pyrope
     mut b = "hello"
 
     mut a:u32 = 0
@@ -96,7 +96,7 @@ constraints from the type system. Pyrope type system constructs to handle types:
   that they have the same type. Notice that this is not like checking for
   logical equivalence, just type equivalence.
 
-```
+```pyrope
 const t1 = (a:int=1, b:string)
 const t2 = (a:int=100, b:string)
 mut v1 = (a=33, b="hello")
@@ -121,7 +121,7 @@ call and you do not want to call it. The solution in this case is to use the
 Since the `puts` command understands types, it can be used on any variable, and
 it is able to print/dump the results.
 
-```
+```pyrope
 const At:int:[range=33..<inf] = nil    // number bigger than 32
 const Bt = (
   mut c:string = nil,
@@ -175,7 +175,7 @@ These are the detailed rules for the `a does b` operator depending on the `a` an
 
 * The lambdas have a more complicated set of rules explained later.
 
-```
+```pyrope
 cassert (a:int:[max=33, min=0] does (a:int:[max=20, min=5]))
 cassert(not ((a:int:[range=0..=33] does (a:int:[max=50, min=5]))))
 
@@ -190,7 +190,7 @@ cassert(not (_:T_simple does _:T_complex))
 
 For named tuples, this code shows some of the corner cases:
 
-```
+```pyrope
 const t1 = (a:string, b:int)
 const t2 = (b:int, a:string)
 
@@ -209,7 +209,7 @@ cassert(d.a == c.a and d.b == c.b)
 Ignoring the value is what makes `equals` different from `==`. As a result
 different functionality functions could be `equals`.
 
-```
+```pyrope
 comb a() -> (r) { r = 1 }
 comb b() -> (r) { r = 2 }
 type ab_type = comb() -> (r)
@@ -231,7 +231,7 @@ checks that for the matching fields, the value is the same.
 The previous explanation of `a does b` and `a case b` ignored types. When types
 are present, both need to match type.
 
-```
+```pyrope
 cassert (a:u32=0, b:bool) does (a:u32, c:string="hello", b=false)
 cassert (a:u32=0, c:string="hello", b=false) case (a = 0, b:bool) // b is nil
 
@@ -253,7 +253,7 @@ statements or any conditional code.
 the `b` variable declaration type name. If their declaration had no type, the
 inferred type name is used.
 
-```
+```pyrope
 const a = 3
 const b = 200
 cassert(a is b)
@@ -272,7 +272,7 @@ cassert(e is f)
 
 Since it checks equivalence, when `a is b == b is a`.
 
-```
+```pyrope
 const X1 = (b:u32)
 const X2 = (b:u32)
 
@@ -303,7 +303,7 @@ difference from a tuple is that the enumerate values must be known at compile
 time.
 
 
-```
+```pyrope
 const Rgb = (
   mut c:u24,
   comb setter(ref self, c) { self.c = c }
@@ -382,7 +382,7 @@ Pyrope leverages LiveHD bitwidth pass to compute the maximum and minimum value
 of each variable. For each operation, the maximum and minimum are computed. For
 control-flow divergences, the worst possible path is considered.
 
-```
+```pyrope
 mut a = 3                  // a: current(max=3,min=3) constrain()
 mut c:int:[range=0..=10] = nil // c: current(max=0,min=0) constrain(max=10,min=0)
 if b {
@@ -408,7 +408,7 @@ Bitwidth uses narrowing to converge (see
 the input/output size, but narrowing allows it to work without typecasts.  To
 understand, the comments show the max/min bitwidth computations.
 
-```
+```pyrope
 if cmd.[valid] {
   (x, y) = cmd  // x.max=cmd.a.max; x.min = 0 (uint) ; ....
 } elif x > y {
@@ -431,7 +431,7 @@ The bitwidth pass may not converge to find a valid size even with narrowing.
 In this case, the programmer must insert a typecast or operation to constrain
 the bitwidth by typecasting. For example, this could work:
 
-```
+```pyrope
 reg x = 0
 reg y = 0
 if cmd.[valid] {
@@ -473,7 +473,7 @@ in combination with registers or memories, where alternative types share a
 single storage location.
 
 
-```
+```pyrope
 const e_type = enum(str:String = "hello", num=22)
 const v_type = enum(str:String, num:int) // No default value when used as a tagged union
 
@@ -487,7 +487,7 @@ The variable allows to explicitly or implicitly access the active case.
 Cases may not be solved at compile time, and the error will be a simulation
 error. A `comptime` directive can force a compile time-only check.
 
-```
+```pyrope
 const Vtype = enum(str:String, num:int, b:bool)
 
 const x1a:Vtype = "hello"                 // implicit case
@@ -505,7 +505,7 @@ const err3 = x2.num                       // error: comptime value is `str`
 
 As a reference, `enums` allow to compare for field but not update enum entries.
 
-```
+```pyrope
 mut ee = e_type
 ee.str = "new_string"       // error: enum is immutable
 
@@ -523,7 +523,7 @@ match ee {
 To convert between tuples, an explicit setter is needed unless the tuple fields
 names, order, and types match.
 
-```
+```pyrope
 const at = (c:string, d:u32)
 const bt = (c:string, d:u100)
 
@@ -556,7 +556,7 @@ mut d:dt = a   // OK, call initial to type cast
 
 Introspection is possible for tuples.
 
-```
+```pyrope
 const a = (b=1, c:u32=2)
 mut b = a
 b.c = 100
@@ -581,7 +581,7 @@ Function definitions allocate a tuple, which allows to introspect the
 function but not to change the functionality. Functions have two fields:
 `inputs` and `outputs`.
 
-```
+```pyrope
 comb fu(a, b=2) -> (c) { c = a + b }
 cassert(fu.[inp] equals ('a', 'b'))
 cassert(fu.[out] equals ('c'))
@@ -590,7 +590,7 @@ cassert(fu.[out] equals ('c'))
 This means that when ignoring named vs unnamed calls, overloading behaves like
 this:
 
-```
+```pyrope
 const x:u32 = fn(a1, a2)
 
 comb model_poly_call(fn, ...args) -> (out) {
@@ -611,7 +611,7 @@ Any runtime precondition is expressed by the caller (e.g., with an
 There are several uses for introspection, but for example, it is possible to build a
 function that returns a randomly mutated tuple.
 
-```
+```pyrope
 comb randomize::[debug](ref self) {
   const rnd = import("prp/rnd")
   for i in ref self {
@@ -654,7 +654,7 @@ declarations allow to assign an ID, and other files can access the register by
 Any call to a function or tuple outside requires a prior `import` statement.
 
 
-```
+```pyrope
 // file: src/my_fun.prp
 comb fun1(a, b) -> (r) { r = a + b }
 comb fun2(a) -> (r) {
@@ -668,7 +668,7 @@ const mytup = (
 )
 ```
 
-```
+```pyrope
 // file: src/user.prp
 a = import("my_fun/*comb*")
 a.fun1(a=1, b=2)        // OK
@@ -713,7 +713,7 @@ compile error is generated.
 use a different library version than xx/bb/cc if the library is provided by yy,
 or use a default one from the xx directory.
 
-```
+```pyrope
 const a = import("prj1/file1")
 const b = import("file1")       // import xxx_fun from file1 in the local project
 const c = import("file2")       // import the functions from local file2
@@ -725,7 +725,7 @@ all the imported functions/variables to the current scope. Pyrope does not
 allow that, but it is possible to use a mixin to add the imported functionality
 to a tuple.
 
-```
+```pyrope
 const b = import("prp/Number")
 mut a = import("fancy/Number_mixin")
 
@@ -747,7 +747,7 @@ hierarchy for matching register names. `regref` only can get a reference to a
 register, it can not be used to import functions or variables.
 
 
-```
+```pyrope
 mod do_increase() {
   reg counter:u32 = 0
 
@@ -786,7 +786,7 @@ this case, multiple instances of the same register can have different values.
 As an illustrative example, a UART can have a register and the controller can
 set a different value for each uart base register.
 
-```
+```pyrope
 // file remote.prp
 
 mod xxx(some, code) {
@@ -826,7 +826,7 @@ registers. During testing, the `peek`/`poke` is more flexible and it can
 overwrite an existing value. The peek/poke use the same reference as `import`
 or register reference.
 
-```
+```pyrope
 const bpred = ( // complex predictor
   comb taken() -> (r:bool) { r = self.some_table[som_var] >= 0 }
 )
@@ -852,7 +852,7 @@ the default lambda calls. This means that fields must be named unless single
 character names, or variable name matches argument name, or there is no type
 ambiguity.
 
-```
+```pyrope
 const Typ1 = (
   a:string = "none",
   b:u32 = 0
@@ -881,7 +881,7 @@ The setter method can use single character arguments for array index, but they m
 respect the declaration order.
 
 
-```
+```pyrope
 const Typ2 = (
   mut a:string = "none",
   mut b:u32 = 0,
@@ -899,7 +899,7 @@ cassert(x == y)
 Tuples can be multi-dimensional, and each dimension is indexed with its own
 `[...]` (e.g. `m[i][j]`, not `m[i,j]`).
 
-```
+```pyrope
 comb matrix8x8_set_xy(ref self, x:int:[min=0,max=7], y:int:[min=0, max=7], v:u16) {
   self.data[x][y] = v
 }
@@ -937,7 +937,7 @@ The default `getter`/`setter` allows for indexing each of the dimentions and ret
 a slice of the object. Since they can be overwritten, the explicit overload selects
 which to pick.
 
-```
+```pyrope
 const Matrix2x2 = (
   mut data:[2][2]u16 = 0,
   comb getter(ref self, x:int:[range=0..=2], y:int:[min=0, max=2]) {
@@ -956,7 +956,7 @@ The symmetric getter method is called whenever the tuple is read. Since each
 variable or tuple field is also a tuple, the getter/setter allow to intercept
 any variable/field. The same array rule applies to the getter.
 
-```
+```pyrope
 comb my_2_elem_set_xv(ref self, x:uint:[range=0..<2], v:string) { self.data[x] = v }
 comb my_2_elem_set_all(ref self, v:My_2_elem)            { self.data = v.data }
 comb my_2_elem_set_default(ref self)                     { self.data = ("", "") }
@@ -987,7 +987,7 @@ The getter/setter can also be used to intercept and/or modify the value
 set/returned.
 
 
-```
+```pyrope
 const some_obj = (
   mut a1:string,
   mut a2 = (
@@ -1013,7 +1013,7 @@ The getter method can be [overloaded](06-functions.md#Overloading) to
 customize by return type. Runtime conditions (such as "only for big values")
 are dispatched explicitly by the caller with an `if`/`elif` chain:
 
-```
+```pyrope
 comb showcase_get_string(self) -> (r:string) {
   r = format("this is a big {} number", self.v)
 }
@@ -1037,7 +1037,7 @@ cassert(r2 == "this is a big 100 number")
 Like all the lambdas, the getter method can also be overloaded on the return type.
 In this case, it allows building typecast per type.
 
-```
+```pyrope
 comb my_obj_get_string(self) -> (r:string) { r = string(self.val) }
 comb my_obj_get_bool(self)   -> (r:bool)   { r = self.val != 0 }
 comb my_obj_get_int(self)    -> (r:int)    { r = self.val }
@@ -1051,7 +1051,7 @@ const my_obj = (
 
 The setter/getter can also access attributes:
 
-```
+```pyrope
 mut obj1::[attr1] = (
   ,mut data:int = nil
   ,comb setter(ref self, v) {
@@ -1070,7 +1070,7 @@ types, calling the setter with no arguments triggers the no-arg setter
 overload below.
 
 
-```
+```pyrope
 const fint:int  = 0
 cassert(fint == 0)
 
@@ -1106,7 +1106,7 @@ cassert(y.v == "ucsc")
 
 Array index also use the setter or getter methods.
 
-```
+```pyrope
 pipe my_arr_set(ref self, idx:u4, val:u8) {
    self.vector[idx] = val
 }
@@ -1131,7 +1131,7 @@ assignment.
 
 If the getter/setter uses a string argument, this also allows to access tuple fields.
 
-```
+```pyrope
 const Point = (
   ,mut priv_x:int:[private] = 0
   ,mut priv_y:int:[private] = 0
@@ -1165,7 +1165,7 @@ comparators. When non-provided the `lt` (Less Than) is a compile error, and the
 `eq` (Equal) compares that all the tuple fields are equal.
 
 
-```
+```pyrope
 const t=(
   ,mut v:int = 0
   ,comb setter(ref self, a:int) { self.v = a }
@@ -1184,7 +1184,7 @@ The default tuple comparator (`a == b`) compares values, not types like `a does
 b`, but a compile error is created unless `a equals b` returns true. This means
 that a comparison by tuple position suffices even for named tuples.
 
-```
+```pyrope
 const t1=(
   ,long_name:string = "foo"
   ,b=33
@@ -1204,14 +1204,14 @@ const x = t1==t3           // error: t1 !equals t3
 ```
 
 The comparator `a == b` when `a` or `b` are tuples is equivalent to:
-```
+```pyrope
 cassert (a==b) == ((a in b) and (b in a))
 cassert(a equals b)
 ```
 
 With the `eq` overload, it is possible to compare named and unnamed tuples.
 
-```
+```pyrope
 const t1 = (
   ,mut long_name:string = "foo"
   ,mut b = 33
@@ -1260,7 +1260,7 @@ available at compile time. An example could be calling a C++ API to read a json
 file during the setup phase to decide configuration parameters.
 
 
-```
+```pyrope
 const cfg = __read_json()
 
 const ext = if cfg.foo.bar == 3 {
@@ -1278,7 +1278,7 @@ If no type is provided, a C++ call assumes a `pipe(...inp)->(...out)` type is
 can pass many inputs/outputs and has permission to mutate values. Any call to a
 method with two underscores `__` is either a basic gate or a C++ function.
 
-```
+```pyrope
 type T_my_cpp = comb(a, b) -> (e)
 const __my_typed_cpp:T_my_cpp = nil
 ```

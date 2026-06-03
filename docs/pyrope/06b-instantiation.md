@@ -15,7 +15,7 @@ Conditional statements like `if/else` and `match` translate to multiplexers
 
 A trivial `if/else` with all the options covered is a simple mux.
 
-```
+```pyrope
 mut res:s4 = nil
 
 if cond {
@@ -32,7 +32,7 @@ lec(res, res2)
 
 An expression `if/else` is also a mux.
 
-```
+```pyrope
 mut res = if cond { a } else { b }
 
 // RTL equivalent
@@ -43,7 +43,7 @@ lec(res, res2)
 
 The `when/unless` is also a mux.
 
-```
+```pyrope
 mut res = a
 res = b unless cond
 
@@ -57,7 +57,7 @@ Chaining `if`/`elif` creates a chain of muxes. If not all the inputs are
 covered, the value from before the `if` is used. If the variable did not exist,
 a compile error is generated.
 
-```
+```pyrope
 mut res = a
 if cond1 {
   res = b
@@ -77,7 +77,7 @@ lec(res, res2)
 `unique if`/`elif` is similar but avoids mux nesting using a one-hot encoded
 mux.
 
-```
+```pyrope
 mut res = a
 unique if cond1 {
   res = b
@@ -101,7 +101,7 @@ options is enabled, which allows further optimizations. From a Verilog designer
 point of view, the `match` is a "full parallel" and the `unique if` is a
 "parallel". Both are checked at verification and optimized at synthesis.
 
-```
+```pyrope
 mut res = a
 match x {
   == c1 { res = b }
@@ -137,7 +137,7 @@ or short-circuit (`and`/`or`) expressions.
 
 === "Short-circuit expression"
 
-    ```
+    ```pyrope
     mut lhs = v1 or v2
 
     // RTL equivalent
@@ -150,7 +150,7 @@ or short-circuit (`and`/`or`) expressions.
 
 === "Usual expression"
 
-    ```
+    ```pyrope
     mut lhs = v1 + v2
 
     // RTL equivalent
@@ -163,7 +163,7 @@ or short-circuit (`and`/`or`) expressions.
 
 === "Conditionals"
 
-    ```
+    ```pyrope
     lhs = v0
     if cond1 {
       lhs = v1
@@ -184,7 +184,7 @@ or short-circuit (`and`/`or`) expressions.
 
 === "Lambda call (inlined)"
 
-    ```
+    ```pyrope
     comb f(a, b) -> (r) { r = if a == 0 { 3 } else { b } }
 
     mut lhs = c
@@ -215,7 +215,7 @@ has the assigned variable name. If the instance is a `mut`, the variable name
 can be the SSA name.
 
 === "Lambda call"
-    ```
+    ```pyrope
     mod sub(a, b) -> (x) {
       const tmp = sum(a, b)      // instance tmp,sum
 
@@ -233,7 +233,7 @@ can be the SSA name.
     ```
 
 === "Instance"
-    ```
+    ```pyrope
     mod sub(a, b) -> (x) {
       const tmp = sum(a, b)      // instance tmp
 
@@ -279,7 +279,7 @@ the condition is false.
 
 === "Conditional mod call"
 
-    ```
+    ```pyrope
     mod case_1_counter(runtime) -> (res) {
 
       const r = (
@@ -302,7 +302,7 @@ the condition is false.
 
 === "Pyrope inline equivalent"
 
-    ```
+    ```pyrope
     mod case_1_counter(runtime) -> (res) {
 
       const r = (
@@ -412,7 +412,7 @@ to `conf` that can provide a runtime file with the values to start the
 simulation/synthesis.
 
 
-```
+```pyrope
 reg r:u16 = 3 // reset sets r to 3
 r = 2             // non-reset assignment
 
@@ -428,7 +428,7 @@ The assignment during declaration to a register is always the reset value. If
 the assignment is a method (a lambda referenced by name, **not** called —
 i.e., no parentheses), the method is invoked every cycle during reset.
 
-```
+```pyrope
 mod array_reset(ref self) {
   reg reset_iter:u10:[reset_pin=false] = 0sb? // no reset flop
 
@@ -447,7 +447,7 @@ inside the reset lambda can be either asynchronous reset or a register
 without reset signal.
 
 
-```
+```pyrope
 mod my_flop_reset(ref self) {
   reg reset_counter:u3:[sync=false] = 0sb? // asynchronous reset is posedge only
 
@@ -465,7 +465,7 @@ cycle Similarly a tuple can have a reset when assigned to a register.
 
 === "Mixed tuple reset with constants"
 
-    ```
+    ```pyrope
     const Mix_tup = (
       reg flag:bool = false,
       state: u2
@@ -484,7 +484,7 @@ cycle Similarly a tuple can have a reset when assigned to a register.
 
 === "Mixed tuple reset with method"
 
-    ```
+    ```pyrope
     const Mix_tup = (
       reg flag:bool = false,
       mut state:u2
@@ -508,7 +508,7 @@ cycle Similarly a tuple can have a reset when assigned to a register.
 
 A sample of asynchronous reset with different reset and clock signal
 
-```
+```pyrope
 reg my_asyn_other_reg:u8:[
   sync = false,
   clock = ref clk2,    // ref to connect, not read clk2 value
@@ -570,7 +570,7 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
 === "Pyrope equivalent"
 
 
-    ```
+    ```pyrope
     comb inner(z, y) -> (a, h) {
       a = y & z
       h = !(y & z)
@@ -585,7 +585,7 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
 
 === "Pyrope alternative I"
 
-    ```
+    ```pyrope
     const Inner_t = (
       comb setter(ref self, z, y) {
         self.a = y & z
@@ -607,7 +607,7 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
 
 === "Pyrope alternative II"
 
-    ```
+    ```pyrope
     const Inner_t = (
       comb setter(ref self, z, y) {
         self.a = y & z
@@ -633,7 +633,7 @@ are advantages to each approach but the code quality should be the same.
 
 ## Registers
 
-```
+```pyrope
 reg a:u4 = 3
 sat a = a + 1
 

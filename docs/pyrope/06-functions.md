@@ -54,14 +54,14 @@ Methods are `comb`/`pipe`/`mod` lambdas that have `self` as the first
 argument, which allows operating on tuples.
 
 === "Combinational (comb)"
-    ```
+    ```pyrope
     comb add(a, b) -> (result) {  // Same as const add = comb(a, b) -> (result)
       result = a + b
     }
     ```
 
 === "Pipeline (pipe)"
-    ```
+    ```pyrope
     pipe[3] multiply(a, b) -> (result) {          // fixed 3-cycle latency
       result = a * b
     }
@@ -76,7 +76,7 @@ argument, which allows operating on tuples.
     ```
 
 === "Module with pipeline orchestration (mod)"
-    ```
+    ```pyrope
     pipe mul(a, b) -> (c) { c = a * b }
     pipe add(a, b) -> (c) { c = a + b }
 
@@ -95,7 +95,7 @@ argument, which allows operating on tuples.
     ```
 
 === "Module with registered outputs (mod)"
-    ```
+    ```pyrope
     mod counter(enable) -> (reg count) {
       if enable { count += 1 }
     }
@@ -112,7 +112,7 @@ declaration form** is preferred — it matches the rest of Pyrope's grammar,
 where every declaration starts with a kind keyword (`const`/`mut`/`reg` for
 data, `comb`/`pipe`/`mod` for lambdas):
 
-```
+```pyrope
 comb get_five() -> (v) { v = 5 }              // kind-first form
 ```
 
@@ -126,7 +126,7 @@ functions, procedures, or modules. The only way for a file to access a
 lambda is to have access to a local variable with a definition or to
 "import" a variable from another file.
 
-```
+```pyrope
 const a_3 = { 3 }             // just scope, not a lambda. Scope is evaluated now
 comb a_lambda() -> (v) { v = 4 }   // kind-first form
 
@@ -179,7 +179,7 @@ using `if`/`elif` chains. Pyrope does not have a `where` clause on lambda
 declarations (an earlier design did); this keeps the call flow visible and
 locally readable.
 
-```
+```pyrope
 comb add1(...x) -> (r) { r = x[0] + x[1] + x[2] }   // var-args, single output
 comb add2(a, b, c) -> (r) { r = a + b + c }         // constrain inputs to a,b,c
 comb add3(a, b, c) -> (r:u32) { r = a + b + c }     // constrain result to u32
@@ -263,7 +263,7 @@ Pyrope's UFCS resembles Nim or D, but the naming rules above apply at the
 call site. Every argument inside the parentheses must follow the naming
 rules — UFCS is not a shortcut for skipping argument names.
 
-```
+```pyrope
 comb div(self, b) -> (r) { r = self / b }     // method: declares self
 comb div2(a, b)   -> (r) { r = a / b }        // free function: no self
 comb noarg()      -> (r) { r = 33 }           // explicit no args
@@ -286,7 +286,7 @@ When the lambda declares `self`, the leading dotted value may be any value
 (scalar, array, or tuple) — it is bound positionally to `self`. The
 remaining arguments still follow the naming rules.
 
-```
+```pyrope
 comb some_op(self, d=3) -> (r) { /* ... */ }
 
 (8).some_op(d=3)        // scalar bound to self
@@ -301,7 +301,7 @@ lambda defined with the same name a compile error is generated. Like with
 variables, Pyrope does not allow `lambda` call shadowing. Polymorphism is
 allowed but only explicit one as explained later.
 
-```
+```pyrope
 mut tup = (
   comb f1(self) -> (r) { r = 1 }
 )
@@ -330,7 +330,7 @@ be purely combinational. Use `mod` only when the method needs registers or
 cycle-level state.
 
 
-```
+```pyrope
 mut tup2 = (
   mut val:u8 = 0sb?,
   comb upd(ref self) { sat self.val += 1 },
@@ -347,7 +347,7 @@ Getter and setter methods are implicit read/write hooks, so they must be
 side effects, use an explicit `mod` or `pipe` method call instead of a
 getter/setter.
 
-```
+```pyrope
 no_arg_fun()     // parentheses always required
 arg_fun(1, 2)    // parenthesis required
 
@@ -389,7 +389,7 @@ No logical or arithmetic operation can be done with a `ref`. As a result, it is
 only useful for lambda input arguments.
 
 
-```
+```pyrope
 comb inc1(ref a) { a += 1 }
 
 const x = 3
@@ -438,7 +438,7 @@ by position: each LHS slot must either match a return field name exactly,
 or use the explicit `field = local` form to rename. This mirrors the
 call-site rule for named arguments.
 
-```
+```pyrope
 comb dox(a) -> (b, c) { b = a + 1; c = a + 2 }
 
 (b, c) = dox(a=3)        // OK — local names match return-field names
@@ -450,7 +450,7 @@ comb dox(a) -> (b, c) { b = a + 1; c = a + 2 }
 
 A single-field output tuple auto-unwraps when used in scalar context.
 
-```
+```pyrope
 comb ret1() -> (a:int) {
   a = 1
 }
@@ -484,7 +484,7 @@ assign to them by name in the body, and terminate normally or with a bare
 are not positional-argument shorthands. Higher-order calls take a fully
 explicit lambda:
 
-```
+```pyrope
 comb add(a, b) -> (r) { r = a + b }
 comb inc(a)    -> (r) { r = a + 1 }
 
@@ -501,7 +501,7 @@ They may update fields through `ref self`, but they cannot be `mod` or `pipe`;
 stateful or pipelined behavior should be exposed as an explicit method.
 
 === "Explicit call"
-    ```
+    ```pyrope
     mut p1 = (
       mut found_once:bool = false,
       mod call(ref self, a) -> (result) {
@@ -531,7 +531,7 @@ stateful or pipelined behavior should be exposed as an explicit method.
     ```
 
 === "With getter/setter"
-    ```
+    ```pyrope
     mut p1 = (
       mut found_once:bool = false,
       comb setter(ref self, a) {
@@ -575,7 +575,7 @@ wait until the method finishes execution. A method without the `ref` keyword is
 a pass by value call. Since all the inputs are immutable by default (`const`),
 any `self` updates should generate a compile error.
 
-```
+```pyrope
 const Nested_call = (
   mut x = 1,
   comb outter(ref self) { self.x = 100; self.inner(); self.x = 5 },
@@ -588,7 +588,7 @@ const Nested_call = (
 `self` can also be returned but this behaves like a normal copy by value
 variable return.
 
-```
+```pyrope
 mut a_1 = (
   mut x:u10,
   comb f1(ref self, x) -> (self) { // output named `self` mirrors the ref input
@@ -610,7 +610,7 @@ cassert(a_1.x == 10 and a_3.x == 20)
 
 Since UFCS does not allow shadowing, a wrapper must be built or a compile error is generated.
 
-```
+```pyrope
 mut counter = (
   ,mut val:i32 = 0
   ,comb inc(ref self, v) { self.var += v }
@@ -636,7 +636,7 @@ mul(counter, 2)            // error: `inc` (aliased as `mul`) declares self → 
 It is possible to add new methods after the type declaration. In some
 languages, this is called extension functions.
 
-```
+```pyrope
 const t1 = (mut a:u32)
 
 mut x:t1 = (a=3)
@@ -657,7 +657,7 @@ allow for more freedom and a potentially variable number of arguments generics, 
 it can be error-prone.
 
 === "unconstrained declaration"
-    ```
+    ```pyrope
     comb foo(self) { puts("comb.foo") }
     const a = (
       ,comb foo() -> (r) {
@@ -680,7 +680,7 @@ it can be error-prone.
 
 === "constrained declaration"
 
-    ```
+    ```pyrope
     comb foo(self:int) { puts("comb.foo") }
     const a = (
       ,comb foo() -> (r) {

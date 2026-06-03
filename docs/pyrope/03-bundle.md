@@ -6,7 +6,7 @@ by requiring all the entries to have the same type. Internally, there is
 not a difference between tuples and arrays, but it is possible to check
 that all the fields are the same (hence array) by using brackets instead of parenthesis.
 
-```
+```pyrope
 mut b = (f1=3,f2=4) // b is named and ordered
 mut c = (1,d=4)     // c is ordered and unnamed (some entries are not named)
 
@@ -19,7 +19,7 @@ assert (true,1) != [true,1]  // error: true is not the same type as 1
 ```
 
 To access fields in a tuple we use the dot `.` or `[]`
-```
+```pyrope
 mut a = (
   ,r1 = (b=1,c=2)
   ,r2 = (3,4)
@@ -39,7 +39,7 @@ cassert(a[0]['c'] == 2)
 There is introspection to check for an existing field with the `has` operator.
 Negate with `not (...)` (there is no dedicated `!has` operator).
 
-```
+```pyrope
 mut a = (foo = 3)
 cassert(a has 'foo')
 cassert(not (a has 'bar'))
@@ -49,7 +49,7 @@ cassert(not (a has 1))
 
 Tuple named fields can have a default type and or contents:
 
-```
+```pyrope
 mut val = 4
 mut x = (
   ,field1=1            // field1 with implicit type and 1 value
@@ -69,7 +69,7 @@ a string (named field), a range, or any expression that produces one of those
 `a[0,1]` or `a['x','y']` are not allowed: write one assignment per field
 instead. This keeps the bit/field layout local and avoids ordering ambiguity.
 
-```
+```pyrope
 type Person = (name:string, age:u32)
 mut a = (one:Person, two:Person)
 
@@ -89,7 +89,7 @@ and copies the current scope variable `foo` contents as the first entry. In many
 it is required to pass a sequence of strings or identifiers. A solution is to
 name all the fields or quote as strings:
 
-```
+```pyrope
 mut x=100
 
 mut tup1 = ('x',y=4)
@@ -105,7 +105,7 @@ without assigning a value. The problem is that the syntax becomes not so
 "string" in the enumerate (`enum(a,b=3)`) and attribute set/read forms
 (`foo::[attr]` at declaration, `foo.[attr]` to read).
 
-```
+```pyrope
 const aa = 3
 const a = enum(,aa, ,b=3)
 cassert(a==b)
@@ -130,7 +130,7 @@ tuple that has `2` as a unique entry. The second entry in the tuple is `4`".
 
 The tuple entries are separated by comma (`,`). Extra commas do not add meaning.
 
-```
+```pyrope
 mut a = (1,2)   // tuple of 2 entries, 1 and 2
 mut b = (1)     // tuple of 1 entry, 1
 mut c = 1       // tuple of 1 entry, 1
@@ -170,7 +170,7 @@ field of an outer `mut` tuple still pins that field as read-only.
 | `const` | `mut` / unmarked | **read-only** (outer wins) |
 | `const` | `const`          | read-only |
 
-```
+```pyrope
 mut c = (x=1, const b=2, mut d=3)
 c.x = 3   // OK     (mut tuple, default-mut field)
 c.b = 10  // error: 'c.b' is immutable (inner const)
@@ -192,7 +192,7 @@ without a name is *positional*; it can still carry a kind keyword
 (`const` / `mut`) as a prefix on the value to override the default
 mutability inherited from the enclosing tuple.
 
-```
+```pyrope
 mut b = 100
 mut a = (b:u8, b, b:u8 = nil, const c=4) // a[0] and a[1] are unnamed, a[2]==a.b
 a.b = 200
@@ -214,7 +214,7 @@ While the tuple entries can be either mutable or immutable, the field
 name/types are immutable. It is possible to construct new tuples with the `++`
 (concatenate) and `...` (in-place operator):
 
-```
+```pyrope
 mut a=(a=1,b=2)
 const b=(c=3)
 
@@ -240,7 +240,7 @@ concat tries to match by field name, if the field names do not match or have no
 name a new entry is created. The algorithm starts with tuple `a` and starts
 from tuple field 0 upwards.
 
-```
+```pyrope
 assert(((1,a=2,c=3) ++ (a=20,33,c=30,4)) == (1,a=(2,20),c=(3,30),33,4))
 ```
 
@@ -261,7 +261,7 @@ contents can be accessed without requiring the individual position or field
 entry name. This is quite useful for function return tuples with a single
 entry.
 
-```
+```pyrope
 const x = (first=(second=3))
 
 cassert(x.first.second == 3)
@@ -275,7 +275,7 @@ cassert(x[0]           == 3)
 
 Tuples can also use structural binding to unpack a tuple multiple fields into separate variables.
 
-```
+```pyrope
 const x = (f1=(f1a=1,f1b=3), f2=4)
 
 const (y,z) = x
@@ -290,7 +290,7 @@ Tuples are ordered, as such, it is possible to use them as arrays. Tuples and
 arrays share most behavior/operations, the key difference is that arrays are
 unnamed with the same type for all the entries.
 
-```
+```pyrope
 mut bund1 = (0,1,2,3,4) // ordered and can be used as an array
 
 mut array1 = [0,1,2,3,4]  // [] force array, so all the entries have same type
@@ -314,7 +314,7 @@ the index has unknowns.
 The Pyrope compile will trigger compile errors for out-of-bound access. It is not
 possible to create an array index that may perform an out of bounds access.
 
-```
+```pyrope
 mut array = (0,1,2)       // size 3, not 4
 const tmp = array[3]        // error: out of bounds access
 mut index = 2
@@ -346,7 +346,7 @@ introduced once, and only with a plain `=`. Repeating a field name is an
 error, and so is a compound assignment (`++=`, `+=`, ...) inside the literal —
 there is no prior value to update while the tuple is still being built.
 
-```
+```pyrope
 mut x = (
   ,ff = 1
   ,ff = 2   // error: 'ff' already declared in the tuple
@@ -364,7 +364,7 @@ is the case for overloading. Do it as a separate statement *after* the tuple
 is declared (the variable must be `mut`), using `++=` on the field path. This
 concatenates `2` into `ff`, so `y.ff` becomes the tuple `(1, 2)`:
 
-```
+```pyrope
 mut y = (
   ,ff = 1
   ,zz = 3
@@ -386,7 +386,7 @@ Everywhere else — function calls, selectors `[...]`, `for ... in`, `match`
 case patterns — tuples are always parenthesized. Bare-tuple sugar inside
 `in`, `[…]`, and call arguments has been removed.
 
-```
+```pyrope
 for a in (1,2,3) {
   x = a
 }
@@ -409,7 +409,7 @@ assignment. This is to mutate or declare multiple variables at once.  It is not
 allowed to avoid the parenthesis at the right-hand-side of the statement. The
 reason is that it is a bit confusing.
 
-```
+```pyrope
 mut a,b = (2,3)    // error: left-hand-side must be a tuple (a,b)
 mut (a,b) = 2,3    // error: right-hand-side must be a tuple (2,3)
 mut (a,b) = (2,3)
@@ -438,7 +438,7 @@ outputs are swapped in the declaration.
 * LHS order is irrelevant under named binding: `(b, c) = r` and
   `(c, b) = r` are the same.
 
-```
+```pyrope
 comb dox(a) -> (b, c) { b = a + 1; c = a + 2 }
 
 (b, c) = dox(a=3)        // local `b` ← dox.b, local `c` ← dox.c
@@ -452,7 +452,7 @@ When the RHS is an **unnamed** tuple (no field labels — e.g. a literal
 `(2, 3)` or `1..=2`), there are no names to match against, so destructuring
 falls back to positional binding by tuple index:
 
-```
+```pyrope
 mut (a, b) = (2, 3)      // a=2, b=3 (positional — RHS has no names)
 mut (b, a) = (2, 3)      // a=3, b=2 (still positional)
 ```
@@ -461,7 +461,7 @@ One thing to remember is that the `=` separates the statement in two parts
 (left and right), this is not the case with type or attributes that always
 apply to the immediatly declared variable or item.
 
-```
+```pyrope
 const c = 4
 cassert(c does u3) // type check on 'c' is a separate statement
 const (x, b) = (true, c)           // assign x=true, b=4
@@ -477,7 +477,7 @@ a significant difference in initialization. Enums require named tuples, but in
 most cases the named tupled should not have a set value. Enums automatically
 assigns values, tuples need explicit value initialization.
 
-```
+```pyrope
 const b = "foo"
 const c = 1
 const test1     = enum(a=c,b)    // OK
@@ -494,7 +494,7 @@ on the right-hand-side.
 If an external variable wants to be used as a field, there has to be an explicit
 expression with a string type or a named tuple.
 
-```
+```pyrope
 const a = "field"
 const c = (foo=4)
 const my_other_enum = enum(...a,b=3,...c)
@@ -519,7 +519,7 @@ traditional enumerate sequence.
     `state#[..]`.
 
 
-```
+```pyrope
 enum V3 = (
    ,a
    ,b
@@ -550,7 +550,7 @@ Enum can accept hierarchical tuples. Each enum level follows the same algorithm.
 Each entry tries to find a new bit. In the case of the hierarchy, the lower
 hierarchy level bits are kept.
 
-```
+```pyrope
 enum Animal = (
   ,bird  =(,eagle, ,parrot)
   ,mammal=(,rat  , ,human )
@@ -576,7 +576,7 @@ It is possible to use a sequence that is more consistent with traditional
 programming languages, but this only works with non-hierarchical enumerates
 when an integer type (`:int`, `:u32`, `:i4` ...) is used.
 
-```
+```pyrope
 enum V5 = (
    ,a
    ,b=5
@@ -595,7 +595,7 @@ allowed when an ordered numbering is requested.
 Enumerates of the same type can perform bitwise binary operations
 (and/or/xor) and the set operator `in` (negate with `not (...)`).
 
-```
+```pyrope
 const human_rat = Animal.mammal.rat | Animal.mammal.human  // union op
 
 assert(Animal.mammal      in human_rat)
@@ -609,7 +609,7 @@ assert(not (Animal.bird   in human_rat))
 To convert a string back and forth to an enumerate, explicit typecast is needed
 but possible.
 
-```
+```pyrope
 enum E3 = (
   ,l1=(
     ,l1a

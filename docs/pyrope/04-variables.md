@@ -55,7 +55,7 @@ Positional fields take no name slot, so `const _ = 3` is not valid (and
 bare `_` is reserved as a future placeholder, see
 [Identifiers](02-basics.md#identifiers)).
 
-```
+```pyrope
 const point = (mut x:u8 = 0, mut y:u8 = 0)
 
 const counter_iface = (
@@ -82,7 +82,7 @@ comptime dependencies of the lambda.
 
 === "Code Block scope"
 
-    ```
+    ```pyrope
     assert(a == 3) // error: undefined variable 'a'
     mut a = 3
     {
@@ -98,7 +98,7 @@ comptime dependencies of the lambda.
 
 === "Lambda scope"
 
-    ```
+    ```pyrope
     assert(a == 3) // error: undefined variable 'a'
     comptime const A = 3
     comptime const X = A + 1
@@ -121,7 +121,7 @@ comptime dependencies of the lambda.
 
 === "Tuple scope"
 
-    ```
+    ```pyrope
     mut base = 3
     const r1 = (
       ,mut a = base+1    // tuple fields must use a kind keyword
@@ -157,7 +157,7 @@ allowed to declare them as `mut` and redundant to declare them as `const`.
 
 Tuple scope is also useful for declaring function default values:
 
-```
+```pyrope
 comb example(a:int, b:int=a+5) -> (result:int) {
   result = a + b
 }
@@ -200,7 +200,7 @@ and precision checks described in the attribute section:
 * `i<num>`: an integer 2s complement number with a maximum value of $2^{\texttt{num}-1}-1$ and a minimum of $-2^{\texttt{num}}$.
 * `int(a..<b)`: integer basic type constrained to be between `a` and `b`.
 
-```
+```pyrope
 mut a:int         = nil // any value, no constrain
 mut b:unsigned    = nil // only positive values
 mut c:u13         = nil // only from 0 to 1<<13
@@ -227,7 +227,7 @@ integers, booleans do not support undefined value. A typecast from integer to
 boolean will raise an assertion when the integer has undefined bits (`?`) or
 `nil`.
 
-```
+```pyrope
 const b = true
 const c = 3
 
@@ -252,7 +252,7 @@ String input typecase is valid, but anything different than ("0", "1", "-1",
 
 Logical and arithmetic operations can not be mixed.
 
-```
+```pyrope
 const x = a and b
 const y = x + 1    // error: 'x' is a boolean, '1' is integer
 ```
@@ -285,7 +285,7 @@ number is to specify the distance from last.
 size in the tuple can be unknown.
 * `[first..]` is the same as `[first..=-1]`.
 
-```
+```pyrope
 const a = (1,2,3)
 cassert(a[0..] == (1,2,3))
 cassert(a[1..] == (2,3))
@@ -312,7 +312,7 @@ corresponds to a one-hot encoding.
 Range type cast from integers use the same one-hot encoding. It is not possible
 to type cast from tuple to range, but it is possible from range to tuple.
 
-```
+```pyrope
 const c = 1..=3
 cassert(int(c) == 0ub1110)
 cassert(range(0ub01_1100) == 2..=4)
@@ -326,7 +326,7 @@ negative numbers. The `tuple` typecast is not needed, but if placed the
 semantic is the same. The same `tuple` typecast is also optional when doing a
 comparison. Both ranges a `step` to change the step.
 
-```
+```pyrope
 cassert(int(0..=10 step  2) == 0ub101_0101_0101)
 cassert(tuple(0..=10 step  2) == ( 0,2,4,6,8,10))
 cassert(tuple(10..=0 step -2) == (10,8,6,4,2, 0))
@@ -342,7 +342,7 @@ Since the range is an integer, a decreasing range should have the same meaning
 that an increasing range (`1..=3 == 3..=1`) but to avoid mistakes/confusions,
 Pyrope generates a compile error in decreasing ranges.
 
-```
+```pyrope
 assert(5..=0) // error: 5 + 1 never reaches 0
 assert(5..=0 step -1 == (5,4,3,2,1,0))
 ```
@@ -354,7 +354,7 @@ The `step expr` can be added to indicate a step or step function. This is only
 possible when both begin and end of the range are fully specified.
 
 
-```
+```pyrope
 cassert((0..<30 step 10) == (0,10,20)) // ranges and tuples can combined
 cassert((1..=3) ++ 4 == (1,2,3,4))     // tuple and range ops become a tuple
 cassert(1..=3 == (1,2,3))
@@ -367,7 +367,7 @@ Strings are a basic type, but they can be typecasted to integers using the
 ASCII sequence. The string encoding assigns the lower bits to the first
 characters in the string, each character has 8 bits associated.
 
-```
+```pyrope
 const a = 'cad'          // c is 0x63, a is 0x61, and d is 0x64
 const b = 0x64_61_63
 cassert(a == string(b)) // typecast number to string
@@ -378,7 +378,7 @@ cassert(a#[..] == b) // typecast string to number
 Like ranges, strings can also be seen as a tuple, and when tuple operations are
 performed they are converted to a tuple.
 
-```
+```pyrope
 cassert("hello" == ('h','e','l','l','o'))
 cassert("h" ++ "ell" == ('h','e','l','l') == "hell")
 ```
@@ -397,7 +397,7 @@ Uppercase. **Complicated lambda types cannot be written inline in a
 `foo:Type` annotation — declare them ahead with `type` and reference them
 by name.**
 
-```
+```pyrope
 comb check_is_green(self) { self.color == "green" }
 
 type IsGreen = comb(self)
@@ -443,7 +443,7 @@ To check that an existing value matches a type, use the `does` or `is`
 operator inside `cassert`/`assert`. To convert a value to a type, call the
 type as a constructor — `u8(value)`.
 
-```
+```pyrope
 mut a = true                // infer a is a boolean
 
 cassert(a does bool) // type check on an existing variable
@@ -467,7 +467,7 @@ Both mutable and immutable variables are created every cycle. To have
 persistence across cycles the `reg` type must be used.
 
 
-```
+```pyrope
 reg counter:u32   = 10
 mut not_a_reg:u32 = 20
 ```
@@ -531,7 +531,7 @@ In the previous operations, `a` and `b` need to be integers. The exception is
 provided by a tuple on the right-hand side or amount. This is useful to create
 one-hot encodings.
 
-```
+```pyrope
 cassert(1<<(1,4,3) == 0ub01_1010)
 ```
 
@@ -560,7 +560,7 @@ The `a in b` checks if values of `a` are in `b`. Notice that both can be
 tuples. If `a` is a named tuple, the entries in `b` match by name, and then
 contents. If `a` is unnamed, it matches only contents by position.
 
-```
+```pyrope
 cassert((1,2) in (0,1,3,2,4))
 cassert((1,2) in (a=0,b=1,c=3,2,e=4))
 cassert(not ((a=2) in (1,2,3)))
@@ -573,7 +573,7 @@ cassert(not ((a=1) in (a=(1,2))))
 The `a in b` has to deal with undefined values (`nil`, `0sb?`). The LHS with an undefined
 will be true if the RHS has the same named entry either defined or undefined.
 
-```
+```pyrope
 cassert((x=nil,c=3) in (x=3,c=3))
 cassert((x=nil,c=3) in (x=nil,c=3,d=4))
 cassert(not ((c=3) in (c=nil,d=4)))
@@ -582,7 +582,7 @@ cassert(not ((c=3) in (c=nil,d=4)))
 * `a ++ b` concatenate two tuples. If field appears in both, concatenate field. The a field is
 defined in one tupe and undefined in the other, the undefined value is not concatenated.
 
-```
+```pyrope
 cassert ((a=1,c=3) ++ (a=1,b=2,c=nil)) == (a=(1,1), c=3, b=2)
 cassert ((1,2) ++ (a=2,nil,5)) == (1,2,a=2,5)
 cassert ((x=1) ++ (a=2,nil,5)) == (x=1,a=2,nil,5)
@@ -593,7 +593,7 @@ cassert ((x=1,b=2) ++ (x=0sb?,3)) == (x=1,b=2,3)
 * `(,...b)` in-place insert `b`. Behaves like `a ++ b` but it triggers a
   compile error if both have the same defined named field.
 
-```
+```pyrope
 cassert (1,b=2,...(3,c=3),6) == (1,b=2,3,c=3,6)
 cassert (1,b=2,...(nil,c=3),0sb?,6) == (1,b=2,nil,c=3,0sb?,6)
 ```
@@ -604,7 +604,7 @@ cassert (1,b=2,...(nil,c=3),0sb?,6) == (1,b=2,nil,c=3,0sb?,6)
 * `a has b` checks if `a` tuple has the `b` field where `b` is a string or
   integer (position).
 
-```
+```pyrope
 cassert((a=1,b=2) has "a")
 ```
 
@@ -622,7 +622,7 @@ It reverts to name and position matching when some of the required tuple entries
 are unnamed. Values are ignored by `does`; use `case` when the values should be
 matched too.
 
-```
+```pyrope
 cassert (b=100,a=333,e=40,5) does (a=1,b=3)
 cassert (a=100,300,b=333,e=40,5) does (a=1,3)
 cassert(not ((b=100,300,a=333,e=40,5) does (a=1,3)))
@@ -642,7 +642,7 @@ A `a case b` first checks `a does b`, then checks that every defined value in
 participate in the value check and act as wildcards. This can be used in any
 expression but it is quite useful for `match ... case` patterns.
 
-```
+```pyrope
 match (a=1,b=3) {
   case (a=1) { cassert(true) }
   else { cassert(false) }
@@ -657,7 +657,7 @@ match const t=(a=1,b=3); t {
 
 An `x = a case b` can be translated to:
 
-```
+```pyrope
 ___0 = a does b
 ___1 = b in a
 x = ___0 and ___1
@@ -711,7 +711,7 @@ is passed to the pop-count. The compiler could infer the size and compute, but
 it is considered non-intuitive for programmers.
 
 
-```
+```pyrope
 const x = 0ub1_0110   // positive
 const y = 0s1_0110   // negative
 cassert(x#[2]    == 1)
@@ -754,7 +754,7 @@ same as `#[2,1]`?). To build or transpose a value from non-contiguous bits,
 declare a destination and assign bits explicitly: each line states which bit
 range receives which value, and the compiler checks widths and coverage.
 
-```
+```pyrope
 mut v = 0ub10
 cassert(v#[0..=1] == v#[..] == v#[..=1] == 0ub10)
 
@@ -800,7 +800,7 @@ widely expected precedence.
 | 5          | logical     | and, or, implies |
 
 
-```
+```pyrope
 assert((x or !y) == (x or (!y)) == (x or not y))
 assert((3*5+5) == ((3*5) + 5) == 3*5 + 5)
 
@@ -844,7 +844,7 @@ assert(i == (a==3 and 3<=b and b == d))
 Comparators can be chained, but only when they follow the same type or the
 direction is the same.
 
-```
+```pyrope
 assert(a <= b <= c) // same as a<=b and b<=c
 assert(a <  b <= c) // same as a< b and b<=c
 assert(a == b <= c) // error: chained only allowed with same comparator
@@ -930,7 +930,7 @@ result the statments will evaluate every cycle independent of the reset/valid
 status.
 
 
-```
+```pyrope
 mut v1:u32 = nil                 // v1 is zero every cycle AND not valid
 assert(v1.[valid] == false)
 mut v2:u32 = 0                 // v2 is zero every cycle AND     valid
@@ -961,7 +961,7 @@ always_assert(counter.reset implies !counter.[valid])
 
 `valid` can be overwritten by the setter method:
 
-```
+```pyrope
 const custom = (
   ,mut data:i16 = nil
   ,comb setter(ref self, v) {
@@ -983,7 +983,7 @@ The contents of the tuple field do not affect the field valid bit. It is
 data-independent. Tuples also can have an optional type, which behaves like
 adding optional to each of the tuple fields.
 
-```
+```pyrope
 const complex = (
   ,reg v1:string = "foo"
   ,mut v2:string = nil
@@ -1040,7 +1040,7 @@ these two explicit values. Every initialization must supply a concrete
 expression — a literal (`0`, `false`, `""`, `0sb?`), `nil`, or a normal
 expression.
 
-```
+```pyrope
 mut a:int = 0
 cassert(a==0 and a.[valid] and a.[valid])
 
@@ -1059,7 +1059,7 @@ cassert(e.[valid] and e != 0) // any comparison against `?` is unknown
 The same rules apply when a tuple or a type is declared. Tuple fields must
 also use explicit initial values:
 
-```
+```pyrope
 const a = "foo"
 
 mut at1 = (
@@ -1080,7 +1080,7 @@ conditional paths assign a value, the valid will be true. If only one path
 assigns a value, the valid will be set only on that path, but the data may
 always have the path.
 
-```
+```pyrope
 mut x:int = nil
 mut y:int = 2
 mut z:int = nil
@@ -1106,7 +1106,7 @@ assert(!rand implies z == 6)
 For structured bindings where one of the return values is unused, name the
 variable and treat the name as the documentation:
 
-```
+```pyrope
 comb weird_pick_bits(b:u32) -> (x:u1, unused:u4) {
   (x=b#[2..<3], unused=b#[5])
 }

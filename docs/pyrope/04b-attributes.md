@@ -57,7 +57,7 @@ with `::[…]` at the declaration.
 Since attributes are always compile time, the read happens at elaboration
 time. To turn a read into a check, wrap it in `cassert` (or `assert`):
 
-```
+```pyrope
 cassert(y.[comptime]) // 'y' must be comptime
 cassert(y.[bar] == 3) // 'y.[bar]' must equal 3
 cassert(tmp.[bits] < 30)
@@ -68,7 +68,7 @@ value), compare against `nil`. Inside `.[...]` reads, comparisons against
 `nil` are exempt from "the attribute must be defined" — they return `true`
 or `false` rather than erroring at compile time:
 
-```
+```pyrope
 cassert(foo.[attr1] != nil) // attr1 was set on 'foo'
 cassert(xx.[attr2] == nil) // attr2 was never set on 'xx'
 cassert(foo.[attr1] == 2) // value check (errors at compile time if unset)
@@ -80,7 +80,7 @@ create a iterative process. It is up to the compiler to handle this, but the
 most logical is to trigger a compile error if there is no fast convergence.
 
 
-```
+```pyrope
 // comptime as prefix modifier
 comptime const foo:u32 = xx     // enforce that foo is comptime constant
 yyy = xx                        // yyy does not check comptime
@@ -99,7 +99,7 @@ Pyrope allows to assign the attribute to a variable or a function call. Not to
 statements because it is confusing if applied to the condition or all the
 sub-statements.
 
-```
+```pyrope
 comptime mut z = xx            // z is a comptime variable
 
 if cond.[comptime] {           // cond is checked to be compile time constant
@@ -123,7 +123,7 @@ to deal with the new attribute is needed to handle based on their specific
 semantic. To understand the potential Pyrope syntax, this is a hypothetical
 `poison` attribute that marks a tuple field.
 
-```
+```pyrope
 const bad = (a=3, b::[poison=true]=4)
 
 const b = bad.b
@@ -138,7 +138,7 @@ are passed by reference. This is not a value copy, but a pass by reference.
 This is needed because when connecting things like a reset, we want to connect
 to the reset wire, not the current reset value.
 
-```
+```pyrope
 reg counter:u32 = 0
 
 reg counter2::[clock_pin=clk1]=0
@@ -292,7 +292,7 @@ debug constructs.
 The integer type constructor allows to use a range to set max/min, but it is
 syntax sugar for direct attribute set.
 
-```
+```pyrope
 opt1:uint:[max=300] = 0
 opt2:int:[min=0,max=300] = 0  // same
 opt3::[min=0,max=300] = 0     // same
@@ -314,7 +314,7 @@ Every narrowing assignment must annotate locally; an unannotated narrowing
 assignment is a compile error. This forces the choice to be visible at
 every overflow-risking line.
 
-```
+```pyrope
 a:u32 = 100
 b:u10 = 0
 c:u5  = 0
@@ -347,7 +347,7 @@ modifier that can be applied to `const` or `mut` to indicate that the variable
 must be resolvable at compile/elaboration time. `comptime` alone is shorthand
 for `comptime const`.
 
-```
+```pyrope
 comptime const SIZE = 16
 comptime const a = 1        // same as above
 comptime mut counter = 0    // mutable at compile time (updated during elaboration)
@@ -360,14 +360,14 @@ cassert(b == 3)
 
 The `comptime` status can still be queried with `.[comptime]`:
 
-```
+```pyrope
 cassert(a.[comptime])
 ```
 
 To avoid too frequent comptime directives, Pyrope treats all the variables that
 start with uppercase as compile time constants.
 
-```
+```pyrope
 comptime const Xconst1 = 1    // obvious comptime
 comptime const Xvar2 = rand   // error: 'Xvar2' is not compile time constant
 ```
@@ -385,7 +385,7 @@ from non debug variables, but non-debug variables can not read from `debug`.
 This guarantees that `debug` variables, or statements, do not have any
 side-effects beyond debug statements.
 
-```
+```pyrope
 mut a = (b::[debug]=2, c = 3) // a.b is a debug variable
 const c::[debug] = 3
 ```
@@ -395,7 +395,7 @@ private variables in tuples can be accessed (read-only). Since `assert` marks
 all the results as debug, it allows to read any public/private variable/field.
 
 
-```
+```pyrope
 x:(_priv=3, zz=4) = nil
 
 const tmp = x._priv         // error:

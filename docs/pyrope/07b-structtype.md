@@ -24,7 +24,7 @@ type system satisfies `y does x` or an explicit type conversion is provided.
 The basic behavior of `does` is explained in (Type
 equivalance)[07-typesystem.md#Type_equivalence].
 
-```
+```pyrope
 const Animal = (
   mut legs:int = nil,
   mut name = "unnamed",
@@ -50,7 +50,7 @@ const Greyhound = Dog ++ ( // also extends Dog
 )
 ```
 
-```
+```pyrope
 mut a:Animal = nil
 mut b:Bird = nil
 mut d:Dog = nil
@@ -77,7 +77,7 @@ mutable, but they can never be passed by reference. This means that the typical
 issue of mutable containers can not exists.
 
 
-```
+```pyrope
 mut a_vec:[?]Animal = nil
 mut b_vec:[?]Bird = nil
 mut d_vec:[?]Dog = nil
@@ -111,7 +111,7 @@ exactly the same tuple fields have the same type. In Pyrope, the field name
 should match. Since every element is a type of one, read/writing a named tuple
 of one does not need the field, and hence it allows to create different types:
 
-```
+```pyrope
 const Age = (
   age:int = nil
 )
@@ -142,7 +142,7 @@ arguments or return types allowed. Pyrope follows a type constraint approach.
 The following `f` method has no constraints on the input arguments. It can pass
 anything, but constraints the return value to be an integer.
 
-```
+```pyrope
 comb f(a,b) -> (r:int) { r = xx(a) + xx(b) }
 ```
 
@@ -156,7 +156,7 @@ The constraints can be different per type, or use a more familiar generic syntax
 The `f1` example constraints `a` and `b` arguments to have a type that
 satisfies `(a does Some_type_class) and (b does Some_type_class)`.
 
-```
+```pyrope
 comb f1<T:Some_type_class>(a:T,b:T) -> (r:int) { r = xx(a) + xx(b) }
 ```
 
@@ -180,7 +180,7 @@ overloading check.
 
 
 
-```
+```pyrope
 comb fa_t(a:Animal) { }
 comb fd_t(d:Dog) { }
 
@@ -230,7 +230,7 @@ matches the position and names provided, and then checks the rest to the
 in-place with the relative order left.
 
 
-```
+```pyrope
 comb m(a:int, ...x:(_:string, c:int, d), y:int) {
   assert(a == 1)
   assert(x[0] == "here")
@@ -308,7 +308,7 @@ a new call capability.
 There is a priority of overloading in the tuple order. If the intention is to
 intercept, the lambda must be added at the head of the tuple entry.
 
-```
+```pyrope
 comb base_fun1() -> (r) { r = 1 }             // catch all
 comb base_fun2() -> (r) { r = 2 }             // catch all
 comb base_fun3() -> (r) { r = 3 }             // catch all
@@ -347,7 +347,7 @@ assert(t.fun3() == 8)    // ext.fun3 catches all ahead of ext.fun3
 
 A more traditional "overload" calling the is possible by calling the lambda directly:
 
-```
+```pyrope
 comb x_fun1() -> (r) { r = base.fun1() + 100 }
 const x = base ++ (
   const fun1 = x_fun1
@@ -382,7 +382,7 @@ which named lambda to invoke. This keeps control flow visible locally; the
 compiler does not hide the branch behind a declaration-time predicate.
 
 
-```
+```pyrope
 comb fun_list_ab(a, b)         -> (r) { r = a + b }
 comb fun_list_abc(a, b, c)     -> (r) { r = a + b + c }
 comb fun_list_abcd(a, b, c, d) -> (r) { r = a + b + c + d }
@@ -408,7 +408,7 @@ cassert(fun_list3(1, 2) == 200)
 
 For untyped named argument calls:
 
-```
+```pyrope
 comb f1_ab(a, b) -> (r) { r = a + b + 100 }
 comb f1_xy(x, y) -> (r) { r = x + y + 200 }
 const f1 = [f1_ab, f1_xy]
@@ -420,7 +420,7 @@ cassert(f1(1, 2) == 103) // first in list
 
 For typed calls:
 
-```
+```pyrope
 comb fo_is(a:int, b:string) -> (result:bool)   { result = true }
 comb fo_ii_b(a:int, b:int)  -> (result:bool)   { result = false }
 comb fo_ii_s(a:int, b:int)  -> (result:string) { result = "hello" }
@@ -440,7 +440,7 @@ cassert(c == "hello")
 For runtime-conditional dispatch, write the condition chain directly at the
 call site:
 
-```
+```pyrope
 comb f1_a40(a, b)     -> (r) { r = b + 100 }
 comb f1_x300(a, b)    -> (x) { x = b + 200 } // output x
 comb f1_a20(a, b)     -> (a) { a = b + 300 } // input a
@@ -475,7 +475,7 @@ test "check f1" {
 Add-hoc polymorphism overloads a function, and parametric polymorphism allows to
 parametrize types based on arguments.
 
-```
+```pyrope
 comb Param_type(a) -> (r) { r = (mut xx:a = nil) }
 
 const x:Param_type(string) = (xx="hello")
@@ -486,7 +486,7 @@ const x:Param_type(int)    = (xx=130)
 
 
 Subtype polymorphism: A subtype provides functionality/api for another super type.
-```
+```pyrope
 const Animal = (
   comb speak(self) { }
 )
@@ -499,7 +499,7 @@ const Bird = Animal ++ (
 ```
 
 Parametric polymorphism: Same function works for many types
-```
+```pyrope
 comb smallest(...a) -> (r) {
   r = a[0]
   for i in a[1..] {
@@ -509,14 +509,14 @@ comb smallest(...a) -> (r) {
 ```
 
 Ad-hoc polymorphism: capacity to overload the same lambda name with different types.
-```
+```pyrope
 comb speak_bird(a:Bird) { puts("pio pio") }
 comb speak_cat(a:Cat)   { puts("meaow") }
 const speak = [speak_bird, speak_cat]
 ```
 
 Coercion polymorphism: Capacity to cast a type to another
-```
+```pyrope
 const Type1 = (
   comb setter(ref self, a:int) { }
 )
@@ -533,7 +533,7 @@ access them. In several languages, there are different constructs to build them
 (E.g: an include inside a class in Ruby). Since Pyrope tuples are not
 immutable, new methods can be added like in mixin.
 
-```
+```pyrope
 const Say_mixin = (
   comb say(s) { puts(s) }
 )
@@ -581,7 +581,7 @@ There are also two ways to concatenate tuples in Pyrope. `t1 ++ t2` and
   fields are privatized and hence do not trigger overload failure.
 
 
-```
+```pyrope
 const Int1 = (
   mut counter:int:[private] = 0,
   comb add(ref self, v) { self.counter += v },
@@ -609,7 +609,7 @@ neither concatenate (`++`) or in-place insert (`...`) trigger a compile error.
 This is quite useful for defining interfaces because the default value for a
 function is `nil`.
 
-```
+```pyrope
 const Interface = (
   comb add(ref self, x),          // undefined method
   comb sub(ref self, x) { self.add(-x) }
@@ -661,7 +661,7 @@ The solution is to remove fields from the in-place concatenation and to
 explicitly create the new methods with some support method.
 
 
-```
+```pyrope
 comb exclude(o,...a) {
   const new_tup = ()
   for (key,idx,e) in zip(o.keys(),o.enumerate()) {
@@ -703,7 +703,7 @@ used to be carried on a `where` clause are now plain `cassert` / `assert`
 statements at the top of the body (compile-time where possible, runtime
 otherwise). The caller is responsible for meeting them.
 
-```
+```pyrope
 comb rotate(a) {
   cassert(a has 'x' and a has 'y')
   assert(a.y != 30)

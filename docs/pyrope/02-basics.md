@@ -4,7 +4,7 @@
 
 Comments begin with `//`, there are no multi-line comments
 
-```
+```pyrope
 // comment
 a = 3 // another comment
 ```
@@ -16,7 +16,7 @@ a = 3 // another comment
 Pyrope has unlimited precision signed integers. Any literal starting with a
 digit is a likely integer constant.
 
-```
+```pyrope
 cassert(0xF_a_0  == 4000) // Underscores have no meaning
 cassert(0b1100   == 12) // error: use 0ub1100 or 0sb1100
 cassert(0ub1100  == 12) // ub explicit unsigned binary
@@ -28,7 +28,7 @@ cassert(0111     == 111) // decimal (some languages use octal here)
 
 Since powers of two are very common, Pyrope decimal integers can use the `K`, `M`, `G`, and `T` modifiers.
 
-```
+```pyrope
 cassert(1K == 1024)
 cassert(1M == 1024*1024)
 cassert(1G == 1024*1024*1024)
@@ -39,7 +39,7 @@ Several hardware languages support unknown bits (`?`) or high-impedance (`z`). P
 aims at being compatible with synthesizable Verilog, as such `?` is also supported in
 the binary encoding.
 
-```
+```pyrope
 0ub?            // 0 or 1 in decimal (unsigned, `0ub` explicit prefix)
 0sb?            // 0 or -1 in decimal (signed)
 0ub?0           // 0 or 2 in decimal
@@ -79,7 +79,7 @@ literals (`0sb?` / `0ub?`) and `nil`:
   `nil` never exists in synthesized hardware — it is a compile-time and
   simulation-time safety mechanism.
 
-```
+```pyrope
 cassert (0sb? | 1) == 1    // OK: unknown OR 1 = 1
 cassert (0sb? + 1) == 0sb?? // unknown propagation
 nil | 1      // error: nil is invalid, not unknown
@@ -101,7 +101,7 @@ Pyrope accepts single line strings with a single quote (`'`) or double quote
 (`"`).  Single quote does not have escape character, double quote supports escape
 sequences.
 
-```
+```pyrope
 a = "hello \n newline"
 b = 'simpler here'
 ```
@@ -117,7 +117,7 @@ b = 'simpler here'
 Pyrope allows string interpolation only when double quote is used (`"bla {expression:format_style} bla"`).
 The format style is like C++23 std::format.
 
-```
+```pyrope
 const num       = 2
 const color     = "blue"
 const extension = "s"
@@ -135,7 +135,7 @@ cassert(text4 == "I have 3 x")
 
 Integers and strings can be converted back and forth:
 
-```
+```pyrope
 mut a:string = "127"
 mut b:int = a        // same as mut b = int(a)
 mut c:string = b     // same as mut c = string(b)
@@ -162,7 +162,7 @@ If the line starts with an alphanumeric (`[a-z0-9]` that excludes operators
 like `or`, `and`) value or an open parenthesis (`(`), the rest of the line
 belongs to a new statement.
 
-```
+```pyrope
 mut (a,b,c,d) = nil
 a = 1
   + 3           // 1st stmt
@@ -188,7 +188,7 @@ Verilog automatic translation, any sequence of characters between backticks
 (\`) can form a valid identifier. The identifier uses the same escape sequence
 as strings.
 
-```
+```pyrope
 `foo is . strange!\nidentifier` = 4
 `for` = 3
 cassert(`for`+1 == `foo is . strange!\nidentifier`)
@@ -223,7 +223,7 @@ has the same meaning as a newline. Sometimes it is possible to add
 semicolons to separate statements. Since newlines affect the meaning of the
 program, a semicolon can do too.
 
-```
+```pyrope
 a = 1 ; b = 2
 ```
 
@@ -233,7 +233,7 @@ Printing messages is useful for debugging. `puts` prints a message and the strin
 is formatted using the c++23 std::format. There is an implicit newline printed.
 The same without a newline can be achieved with print.
 
-```
+```pyrope
 const a = 1
 const msg = "Hello a is {a}"
 puts(msg)
@@ -246,7 +246,7 @@ statement behaves like `puts` and also prints the line of code and file name
 for easier tracing.
 
 
-```
+```pyrope
 a = 1
 
 puts("{}:{} a:{} tracing a", a.[file], a.[loc], a)
@@ -273,7 +273,7 @@ in a given cycle are shown together.
 This example will print "hello world" even though there are 2 puts/prints in
 different files.
 
-```
+```pyrope
 // src/file1.prp
 puts(priority=2, " world")
 
@@ -306,7 +306,7 @@ do anything — including orchestrating pipelined calls with explicit timing
 syntax.
 
 
-```
+```pyrope
 comb f(a, b) -> (r) { r = a + b }
 cassert(f(2, 3) == 5)
 ```
@@ -370,7 +370,7 @@ side-effects. In a way, expression code blocks can be seen as a type of
 `comb` lambda that is called immediately after definition.
 
 
-```
+```pyrope
 mut a = {mut d=3 ; d+1} + 100 // OK
 cassert(a == (3+1+100))
 cassert(a == {3+1+100}) // same, expression evaluated as 104 and returned
@@ -457,13 +457,13 @@ evaluation order for logical expressions.
 
 
 === "Incorrect code with side-effects"
-    ```
+    ```pyrope
     mut r3 = mcall1() +   mcall2()  // error:
     // error: only if mcall1/mcall2 can have side effects
     ```
 
 === "Fix with separate statements"
-    ```
+    ```pyrope
     mut r1 = fcall1()
     r1  = fcall2() unless r1
 
@@ -475,7 +475,7 @@ evaluation order for logical expressions.
     ```
 
 === "Fix with short-circuit"
-    ```
+    ```pyrope
     mut r1 = fcall1() or fcall2()
 
 
@@ -532,7 +532,7 @@ to provide hardware support.
 Each variable declaration (`mut` or `const`) must have an assigned value. The
 type default value is `?` (unknown/uninitialized).
 
-```
+```pyrope
 a  = 3        // error: no previous const or mut
 
 mut b = 3
@@ -558,7 +558,7 @@ When the variable is a tuple or a range style, the default initialization is
 `nil`. `0sb?` can not be applied to ranges or tuples value because it is
 restricted for integers. `nil` should be used in those cases.
 
-```
+```pyrope
 mut tup = nil
 
 assert(cond.[comptime]) // Tuples are compile time, it would fail otherwise
@@ -576,7 +576,7 @@ cassert(!cond implies tup.b==3)
 Variables with first character upper case are `comptime`. This means that the contents
 must be known/fixed at compilation time.
 
-```
+```pyrope
 assert(something.[comptime])
 comptime const A_xxx = something      // comptime
 assert(A_xxx.[comptime]) // also comptime

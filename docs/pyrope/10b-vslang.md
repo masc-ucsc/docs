@@ -63,7 +63,7 @@ is necessary to connect blocks. Following the control flow from the top only
 allows to connect forward. Some contructs like connecting a ring require a
 "backward edge". The `.[defer]` RHS read allows such constructs.
 
-```
+```pyrope
 mut a = 1
 mut b = 2
 
@@ -104,7 +104,7 @@ auto max_gap_count(std::vector<int> nums) {
 }
 ```
 
-```
+```pyrope
 comb max_gap_count(nums) -> (r) {
   const max  = import("std").max
   const sort = import("std").sort
@@ -149,7 +149,7 @@ func add<T>(a:T, b:T) -> T { a + b }  // error:
 func add<T:Numeric>(a:T, b:T) -> T { a + b }
 ```
 
-```
+```pyrope
 comb add(a, b)  -> (r) { r = a + b }                  // OK, no constrains
 comb add2<T:int>(a:T, b:T) -> (r:T) { r = a + b }     // constrain both to have same type
 ```
@@ -172,7 +172,7 @@ func print_share_info<T:Shape>(_ s:T) {
 ```
 
 In Pyrope:
-```
+```pyrope
 const Shape = (
   comb name(self) -> (result:string) { },        // undefined method
   comb area(self) -> (result:float) { },         // NOTE: Pyrope does not have float type
@@ -218,7 +218,7 @@ imp AnObject {
 
 A Rust style Pyrope equivalent:
 
-```
+```pyrope
 const AnObject = (
   v:i32 = nil
 )
@@ -235,7 +235,7 @@ comb f2(self:AnObject) -> (result:i32) {
 
 A more Pyrope style equivalent:
 
-```
+```pyrope
 const AnObject = (
   mut v:i32 = nil,
   comb f1(ref self) -> (res:i32) {
@@ -269,7 +269,7 @@ Pyrope requires commas to distinguish from multi-line statements, hence `a = (a,
 To initialize a multi-dimensional array, it follows other languages syntax, but
 in Pyrope both `()` and `[]` are allowed and have the same meaning.
 
-```
+```pyrope
 const x = ((1, 2), (3, 4))
 assert(x == ((1, 2), (3, 4)))
 assert(x[0][1] == 2)
@@ -294,7 +294,7 @@ func larger(a, b []string) []string {
 ```
 
 In Pyrope:
-```
+```pyrope
 import std as std
 
 comb larger(a:string, b:string) -> (result:string) {

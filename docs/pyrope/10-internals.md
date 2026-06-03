@@ -17,7 +17,7 @@ operations: `a in b`, `a does b`, and lambda call rules.
 * lambda call matches the arguments with the definition in a third different set of rules.
 
 
-```
+```pyrope
 cassert (a=1) in (1,a=1,3)
 cassert(not ((a=1) does (1,a=1,3)))
 cassert (1,a=1,3) does (a=1)
@@ -247,7 +247,7 @@ if the compiler optimized over assertions.
 
 === "Pyrope `match`"
 
-    ```
+    ```pyrope
     optimize(sel==1 or sel==2 or sel==4) // not needed. match sets it
     match sel {
       == 0ub001 { f = i0 }
@@ -259,7 +259,7 @@ if the compiler optimized over assertions.
 
 === "Generated Logic 1 bit f"
 
-    ```
+    ```pyrope
     f = (sel[0] & i0)
       | (sel[1] & i1)
       | (sel[2] & i2)
@@ -286,7 +286,7 @@ Optimize allows more freedom, without dangerous Verilog x-optimizations:
 
 === "Pyrope optimize"
 
-    ```
+    ```pyrope
     optimize(a != 0)
 
 
@@ -308,7 +308,7 @@ in Pyrope. Each unknown bit (`?`) can result in random 0/1 at simulation time, b
 not trigger optimizations. The `optimize` statement should be use for such behavior.
 
 
-```
+```pyrope
 assert(cond==3)    // Not cassert(or optimize, so no optimized)
 mut x1 = 0sb?
 
@@ -470,7 +470,7 @@ Pyrope does not allow shadowing in code blocks or lambda bodies. Tuple methods
 can still refer to their receiver through an explicit `self` argument, so
 method-local names do not need to shadow tuple fields.
 
-```
+```pyrope
 comb f1() -> (r) { r = 1 }
 
 const tup = (
@@ -498,7 +498,7 @@ reference as an explicit dependency of the lambda, so the dependency is still
 visible to elaboration and incremental compilation without a user-written
 capture list.
 
-```
+```pyrope
 comptime const W = 32
 const math = import("lib.math")// imports are comptime aliases
 
@@ -516,7 +516,7 @@ pipe do_arith(op:math.OpType, a:u32, b:u32) -> (result:u32) {
 
 Because runtime closures are not implicit, the following is an error:
 
-```
+```pyrope
 mut x = 3
 
 comb f() -> (result:int) {
@@ -526,7 +526,7 @@ comb f() -> (result:int) {
 
 Use an explicit input or tuple field instead:
 
-```
+```pyrope
 comb f(x:int) -> (result:int) {
   result = x
 }
@@ -541,7 +541,7 @@ Avoid the old compact form because it can make the boundary between the
 statement and the checked expression unclear:
 
 
-```
+```pyrope
 cassert(0 == (0)) // OK
 assert((0) == 0)  // OK
 ```
@@ -550,7 +550,7 @@ It is also easy to forget that parentheses can be omitted in simple expressions,
 but not when ranges or tuples are involved. Keep the verification condition
 inside the statement parentheses:
 
-```
+```pyrope
 assert(2 in 1,2)    // error: not allowed to drop tuple parentheses
 cassert(2 in (1,2)) // OK
 ```
@@ -566,7 +566,7 @@ explicit methods.
 
 
 
-```
+```pyrope
 const X_t = (
   const i1 = (
     mut i1_field:u32 = 1,
@@ -624,7 +624,7 @@ The compare respects Verilog semantics. This means that it is true if and only
 if all the possible values are true, which is quite counter-intuitive behavior
 for programmers not used to 4 value logic.
 
-```
+```pyrope
 cassert(!(0sb? == 0))
 cassert(!(0sb? != 0))
 cassert(!(0sb? == 0sb?))
@@ -634,7 +634,7 @@ cassert(!(0sb? != 0sb?))
 There is no way to know at run-time if a value is unknown, but a compile trick
 can work. The reason is that integers can be converted to strings in a C++ API
 
-```
+```pyrope
 mut x = 0sb10?
 const str = __to_string(x) // only works for compile time constants
 cassert(str == "0sb10?")
@@ -648,7 +648,7 @@ to largest. It is not legal to do a `5..<0` range, the solution is to use a
 `to` which creates a tuple not a range.
 
 
-```
+```pyrope
 const s:string="hell"
 for (idx,i) in s.enumerate() {
   const v = match idx {
@@ -722,7 +722,7 @@ like `#[3,4]` are not supported, because the ordering of a bit set is
 ambiguous and easy to misread. To pack or transpose bits, declare a destination
 of fixed width and assign each piece explicitly.
 
-```
+```pyrope
 const v = 0xF0
 
 cassert(v#[0] == 0)
@@ -741,7 +741,7 @@ errors. This replaces what other HDLs spell as `{a,b,c}` (SystemVerilog),
 `Cat(a,b,c)` (Chisel), or `concat(a,b,c)` (Spade), and makes the layout local
 and unambiguous.
 
-```
+```pyrope
 const a = 0ub1010   // 4 bits
 const b = 0ub01     // 2 bits
 const c = 0ub1      // 1 bit
@@ -755,7 +755,7 @@ cassert(r == 0ub1010_01_1)
 
 A pure bit reversal is a `for` loop with explicit indices:
 
-```
+```pyrope
 comb reverse(x:uint) -> (total:uint) {
   mut t:uint = nil
   for i in 0..<x.[bits] {
@@ -773,7 +773,7 @@ lambdas without arguments need to be explicitly called or just passed as
 reference.
 
 
-```
+```pyrope
 comb args(x) -> (r) { puts("args:{x}"); r = 1 }
 comb here()  -> (r) { puts("here");   r = 3 }
 
@@ -805,7 +805,7 @@ cassert(x4("xx") == 1)            // prints "args:xx"
 
 Since `if`, `for`, `match` are expressions, you can build some strange code:
 
-```
+```pyrope
 if if x == 3 { true }else{ false } {
   puts("x is 3")
 }
@@ -816,7 +816,7 @@ if if x == 3 { true }else{ false } {
 There is no `--` operator in Pyrope, but there is a `-` which can
 be followed by a negative number `-3`.
 
-```
+```pyrope
 const v = (3)--3
 assert(v == 6)
 ```

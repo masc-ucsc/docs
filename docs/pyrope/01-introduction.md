@@ -35,7 +35,7 @@ $ mkdir src
 Populate the Pyrope code
 
 `src/hello.prp`
-```
+```pyrope
 test "my first test" {
   puts("hello world")
 }

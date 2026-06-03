@@ -20,7 +20,7 @@ code modifies the register within the cycle, copy it into a local:
 `const counter_q = counter`.
 
 === "Structural flop style"
-    ```
+    ```pyrope
     mut counter_next:u8 = nil
 
     const counter_q = __flop(din=counter_next.[defer]  // RHS read of final update
@@ -34,7 +34,7 @@ code modifies the register within the cycle, copy it into a local:
     ```
 
 === "Pyrope style"
-    ```
+    ```pyrope
     reg counter:u8:[reset_pin=ref my_rst, clock_pin=ref my_clk, posclk=true] = 3
     const tmp1 = counter             // snapshot q before any updates this cycle
 
@@ -59,7 +59,7 @@ Registers declared with `reg` are preserved by default, meaning synthesis tools 
 
 If a register is intended to be a flexible pipeline stage rather than a fixed state-holding element, it can be marked with the `retime` attribute. This allows synthesis tools to perform optimizations like moving logic across the register, duplication, or elimination to improve performance.
 
-```
+```pyrope
 reg my_reg::[retime=true, clock=my_clk, init=0]
 ```
 
@@ -70,7 +70,7 @@ A `pipe` lambda is a Moore machine — outputs always go through flops. The
 number of pipeline stages is written as an argument to the `pipe` keyword,
 in the same `[N]` position used by `stage[N]`:
 
-```
+```pyrope
 pipe mul(a, b) -> (c)          { c = a * b }   // bare: caller picks at call site
 pipe[5]      mul(a, b) -> (c)  { c = a * b }   // fixed 5-cycle latency
 pipe[1..<4]  mul(a, b) -> (c)  { c = a * b }   // flexible range; caller/compiler picks
@@ -141,7 +141,7 @@ single `mod` can both orchestrate pipeline stages with explicit timing and
 maintain stateful elements like accumulators or counters.
 
 
-```
+```pyrope
 // Define primitive components with 'pipe'.
 pipe mul(a, b) -> (c) { c = a * b }   // bare; caller picks latency via stage
 pipe add(a, b) -> (c) { c = a + b }   // bare; caller picks latency via stage
@@ -176,7 +176,7 @@ one of those checks — for instance during exploration, or when the cycle
 budget is determined elsewhere and you don't want the local check to
 constrain it.
 
-```
+```pyrope
 mod example(in1, in2, in3) -> (out) {
     stage[3] res1 = mul(in1, in2)
 

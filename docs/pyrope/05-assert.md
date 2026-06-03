@@ -147,7 +147,7 @@ implementation bit.
     individually, and from which the correctness of the whole program easily
     follows."
 
-```
+```pyrope
 comb fun1(a, b) -> (r) { r = a | b }
 comb fun2(a, b) -> (r) { r = ~(~a | ~b) }
 lec(fun1, fun2)
@@ -157,7 +157,7 @@ In addition, there is the `lec_valid` command. It is similar to `lec` but it
 checks the optional or valid (`.[valid]`) from the output. It can take several
 cycles to show the same result.
 
-```
+```pyrope
 mod mul2(a, b) -> (reg out) {
   reg pipe1 = nil
 
@@ -234,7 +234,7 @@ To provide assert/optimize during reset, Pyrope provides a `always_assert`,
 `always_cassert`, `always_optimize`, `always_covercase`, and
 `always_cover`.
 
-```
+```pyrope
 reg memory:[3]u33 = (1, 2, 3) // may take cycles to load this contents
 
 assert(memory[0] == 1) // not checked during reset
@@ -250,7 +250,7 @@ easy interfaces to generate "compile time" (`.[crand]`) and "simulation time"
 random number (`.[rand]`) generation.
 
 
-```
+```pyrope
 mut x:u8 = nil
 
 for i in 1..=99 {
@@ -268,7 +268,7 @@ a compile error for string, range, and lambda types.
 
 When applied to a tuple, it randomly picks an entry from the tuple.
 
-```
+```pyrope
 mut a = (1, 2, 3, b=4)
 mut x = a.[rand]
 
@@ -284,7 +284,7 @@ that it can not have an impact on synthesis or a compile error is generated.
 Pyrope has the `test [message [,args]+] ( [stmts+] }`.
 
 === "Many parallel tests"
-    ```
+    ```pyrope
     comb add(a, b) -> (r) { r = a + b }
 
     for a in 0..=20 {
@@ -297,7 +297,7 @@ Pyrope has the `test [message [,args]+] ( [stmts+] }`.
     ```
 
 === "Single large test"
-    ```
+    ```pyrope
     comb add(a, b) -> (r) { r = a + b }
 
     test "checking add" {
@@ -314,7 +314,7 @@ The `test` code block also accepts the keyword `step` that advances one clock
 cycle, and the test continues from that given point. This is useful for when a
 lambda is instantiated and we want to check/update the inputs/outputs.
 
-```
+```pyrope
 // mod: output 'value' is combinational (reads register directly)
 mod counter_mod(update) -> (value) {
   reg count:u8 = 0
@@ -369,7 +369,7 @@ check that assertions fail. Assertion failures will be printed but the test
 will continue and fail only if the `assert.[failed]` is true. The `test` code
 block also accepts to read and/or clear failed attribute.
 
-```
+```pyrope
 test "assert should fail" {
 
  const n = assert.[failed]

@@ -270,7 +270,7 @@ them as `#if` / `#ifndef`, not as a runtime mux. They include or omit the
 statement during elaboration based on compile options, types, or other
 comptime values. They do not create a new scope.
 
-```
+```pyrope
 comptime const DEBUG = true
 
 assert(!enable) when    DEBUG    // included only when DEBUG is true
@@ -280,7 +280,7 @@ return          unless DEBUG    // omitted when DEBUG is true
 For *runtime* gating (a mux or enable on a signal), use an `if` block or
 an `if` expression on the RHS:
 
-```
+```pyrope
 if enable { count += 1 }         // runtime mux
 result = if cond { a } else { b }
 ```

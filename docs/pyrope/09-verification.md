@@ -306,7 +306,7 @@ plain `comb` lambda whose cycle parameters live in the `[...]` comptime
 parameter slot (see [Lambdas](06-functions.md#declaration)). Callers can
 override the comptime slot at the call site to pick a specific cycle or range:
 
-```
+```pyrope
 rose(x)           // single-cycle: true when x rises this cycle
 rose[1..=4](x)    // true if x rises at any cycle in 1..=4
 past(x)           // x one cycle ago (the compiler inserts one flop)
