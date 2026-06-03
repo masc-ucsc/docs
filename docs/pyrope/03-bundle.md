@@ -52,10 +52,10 @@ Tuple named fields can have a default type and or contents:
 ```
 mut val = 4
 mut x = (
-  ,field1=1           // field1 with implicit type and 1 value
-  ,field2:string = ?  // field2 with explicit type and "" default value
-  ,field3:int = 3     // field3 with explicit type and 3 value
-  ,val                // unnamed field with value `val` (4)
+  ,field1=1            // field1 with implicit type and 1 value
+  ,field2:string = nil // field2 with explicit type and "" default value
+  ,field3:int = 3      // field3 with explicit type and 3 value
+  ,val                 // unnamed field with value `val` (4)
 )
 cassert(x.field1 == 1 and x.field3 == 3)
 cassert(x[3] == 4)
@@ -180,7 +180,7 @@ const d = (x=1, const y=2, mut z=3)
 d.x = 2   // error: 'd' is immutable — inner `mut` is overridden
 d.z = 4   // error: 'd' is immutable — outer `const` wins over inner `mut z`
 
-mut e:d = ?
+mut e:d = nil
 assert(e.x==1 and e.y==2 and e.z==3)
 e.x = 30  // OK
 e.y = 30  // error: 'e.y' is immutable (inner const)
@@ -194,7 +194,7 @@ mutability inherited from the enclosing tuple.
 
 ```
 mut b = 100
-mut a = (b:u8, b, b:u8 = ?, const c=4) // a[0] and a[1] are unnamed, a[2]==a.b
+mut a = (b:u8, b, b:u8 = nil, const c=4) // a[0] and a[1] are unnamed, a[2]==a.b
 a.b = 200
 assert(a == (100, 100, 200, 4))
 
@@ -341,22 +341,35 @@ in Pyrope is 0, not unknown like Verilog.
 
 ### Concatenate fields
 
-Each tuple field must be unique. Nevertheless, it is practical to have
-fields that add more subfields. This is the case for overloading. To
-append or concatenate in a given field the `++=` operator can be assigned.
+Each tuple field must be unique. Inside a tuple literal a field may only be
+introduced once, and only with a plain `=`. Repeating a field name is an
+error, and so is a compound assignment (`++=`, `+=`, ...) inside the literal —
+there is no prior value to update while the tuple is still being built.
 
 ```
 mut x = (
   ,ff = 1
-  ,ff = 2 // error:
+  ,ff = 2   // error: 'ff' already declared in the tuple
 )
 
 mut y = (
   ,ff = 1
-  ,ff ++= 2
-  ,zz ++= 3
+  ,ff ++= 2 // error: compound assignment is not allowed inside a tuple literal
+  ,zz ++= 3 // error: compound assignment is not allowed inside a tuple literal
 )
-cassert(y == (ff=(1,2),zz=3))
+```
+
+It is still practical to append or concatenate into an existing field — this
+is the case for overloading. Do it as a separate statement *after* the tuple
+is declared (the variable must be `mut`), using `++=` on the field path. This
+concatenates `2` into `ff`, so `y.ff` becomes the tuple `(1, 2)`:
+
+```
+mut y = (
+  ,ff = 1
+  ,zz = 3
+)
+y.ff ++= 2   // OK: 'y' is mut, so the field can be concatenated afterwards
 ```
 
 

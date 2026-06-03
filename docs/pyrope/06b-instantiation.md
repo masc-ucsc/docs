@@ -16,7 +16,8 @@ Conditional statements like `if/else` and `match` translate to multiplexers
 A trivial `if/else` with all the options covered is a simple mux.
 
 ```
-mut res:s4 = ?
+mut res:s4 = nil
+
 if cond {
   res = a
 } else {
@@ -243,9 +244,9 @@ can be the SSA name.
 
      x = sub(a, b).x          // instance x
 
-     const x_0 = ?
-     const sub_arg_0 = ?
-     const sub_arg_1 = ?
+     const x_0 = nil
+     const sub_arg_0 = nil
+     const sub_arg_1 = nil
      if c {
        const tmp = 3
        sub_arg_0 = b
@@ -638,7 +639,7 @@ sat a = a + 1
 
 reg b = 4
 if cond {
-  reg c = ?           // weird as reg, but legal syntax
+  reg c = nil           // weird as reg, but legal syntax
   c = b + 1
   b = 5
 }

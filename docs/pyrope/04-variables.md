@@ -201,12 +201,12 @@ and precision checks described in the attribute section:
 * `int(a..<b)`: integer basic type constrained to be between `a` and `b`.
 
 ```
-mut a:int         = ? // any value, no constrain
-mut b:unsigned    = ? // only positive values
-mut c:u13         = ? // only from 0 to 1<<13
-mut d:int:[range=20..=30] = ? // only values from 20 to 30 (both included)
-mut d:int:[min=-5, max=5] = ? // only values from -5 to 6 (6 not included)
-mut e:int:[min=-1, max=0] = ? // 1 bit integer: -1 or 0
+mut a:int         = nil // any value, no constrain
+mut b:unsigned    = nil // only positive values
+mut c:u13         = nil // only from 0 to 1<<13
+mut d:int:[range=20..=30] = nil // only values from 20 to 30 (both included)
+mut d:int:[min=-5, max=5] = nil // only values from -5 to 6 (6 not included)
+mut e:int:[min=-1, max=0] = nil // 1 bit integer: -1 or 0
 ```
 
 Integers can have 3 value (`0`,`1`,`?`) expression or a `nil`. Section
@@ -931,7 +931,7 @@ status.
 
 
 ```
-mut v1:u32 = ?                 // v1 is zero every cycle AND not valid
+mut v1:u32 = nil                 // v1 is zero every cycle AND not valid
 assert(v1.[valid] == false)
 mut v2:u32 = 0                 // v2 is zero every cycle AND     valid
 assert(v2.[valid] == true)
@@ -994,10 +994,10 @@ const complex = (
   }
 )
 
-mut x1:complex = ?
+mut x1:complex = nil
 mut x2:complex:[valid=false] = 0  // toggle valid, and set zero
 mut x3:complex = 0
-x3.[valid] = false                  // set invalid
+x3.[valid] = false                // set invalid
 
 assert(x1.v1 == "" and x1.v2 == "")
 assert(not x2.[valid] and not x2.v1.[valid] and not v2.v2.[valid])

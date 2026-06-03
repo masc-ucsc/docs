@@ -437,7 +437,11 @@ These are the additional checks performed for type synthesis:
 No previous transformation could break the type checks. This means that the
 copy propagation, and final lgraph translation the type checks are respected.
 
-* All the entries on the comparator have the same type (`LHS equals RHS`)
+* Comparator operands share the same basic type (both `integer`, both
+  `string`, ...), but not necessarily the same `max/min`. Comparison is
+  value-based, so any two integers are comparable regardless of their ranges; a
+  comparison whose ranges cannot overlap folds to a constant. `integer` vs
+  `boolean` (or any other basic-type mismatch) is still an error.
 
 * Left side assignments respect the assigned type (`LHS does RHS`)
 
@@ -581,7 +585,7 @@ const X_t = (
 
 mut top = (
   comb setter(ref self) {
-    mut x:X_t = ?
+    mut x:X_t = nil
     cassert(x.i1.i1_field == 1)
     cassert(x.i1.i2_field == 2)
     cassert(x.i2.i1_field == 11)

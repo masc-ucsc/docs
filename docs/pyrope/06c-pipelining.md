@@ -21,7 +21,7 @@ code modifies the register within the cycle, copy it into a local:
 
 === "Structural flop style"
     ```
-    mut counter_next:u8 = ?
+    mut counter_next:u8 = nil
 
     const counter_q = __flop(din=counter_next.[defer]  // RHS read of final update
                        ,reset_pin=ref my_rst, clock_pin=ref my_clk

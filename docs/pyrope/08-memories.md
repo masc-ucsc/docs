@@ -57,13 +57,13 @@ initialization is zero.
 ```
 reg mem:[] = 0
 mem[3]   = something // async memory
-mut array:[] = ?
+mut array:[] = nil
 array[3] = something // array no cross cycles persistence
 ```
 
 ```
-mut index:u7 = ?
-mut index2:u6 = ?
+mut index:u7 = nil
+mut index2:u6 = nil
 
 array[index] = something
 some_result  = array[index2+3]
@@ -75,7 +75,7 @@ There are several constructs to declare arrays or async memories:
 
 ```
 reg mem1:[16]i8 = 3        // mem 16 entry init to 3 with type i8
-reg mem2:[16]i8 = ?        // mem 16 entry init to 0 with type i8
+reg mem2:[16]i8 = nil      // mem 16 entry init to 0 with type i8
 mut mem3:[] = 0sb?         // array infer size and type, 0sb? initialized
 mut mem4:[13] = 0          // array 13 entries size, initialized to zero
 reg mem5:[4]i3 = (1,2,3,4) // mem 4 entries 3 bits each, initialized
@@ -110,7 +110,7 @@ generate a reset value.
 === "Pyrope array syntax"
     ```
     mut mem1:[4][8]u5 = 0
-    comptime mut reset_value:[3][8]u5 = ? // only used during reset
+    comptime mut reset_value:[3][8]u5 = nil // only used during reset
     for i in 0..<3 {
       for j in 0..<8 {
         reset_value[i][j] = j
@@ -174,7 +174,7 @@ is a typical decode stage from an in-order CPU:
     ```
     mut rf:[32]i64 = 0sb?
 
-    reg a:(data1:i64, data2:i64) = ?
+    reg a:(data1:i64, data2:i64) = nil
 
     data_rs1 = a.data1
     data_rs2 = a.data2
@@ -267,14 +267,14 @@ enum X = (
   t3
 )
 
-mut x2:[X]u3 = ?
+mut x2:[X]u3 = nil
 x2[X.t1] = 0
 x2[X.t2] = 1
 x2[0]              // error: only enum index
 
-mut x3:[-8..<7]u3 = ?  // accept signed values
+mut x3:[-8..<7]u3 = nil  // accept signed values
 
-mut x4:[100..<132]u3 = ?
+mut x4:[100..<132]u3 = nil
 
 cassert(x4[100] == 0)
 assert(x4[3]) // error: out of bounds index
@@ -297,8 +297,8 @@ fail with unknowns.
 ```
 reg r_ver = 0sb?
 
-reg r = ?
-mut v = ?
+reg r = nil
+mut v = nil
 
 assert(v == 0 and r == 0)
 

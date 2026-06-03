@@ -22,7 +22,7 @@ cassert(p2.x == 11 and p2.y == 18)
 
 ### Optional types ("?")
 ```pyrope
-mut maybe_u8:u8 = ?         // default invalid
+mut maybe_u8:u8 = nil         // default invalid
 cassert(maybe_u8.[valid] == false)
 maybe_u8 = 5
 cassert(maybe_u8.[valid] == true)
@@ -213,8 +213,8 @@ puts("result:{eval(expr)} should be 5")
 
 ```pyrope
 enum ADT = (
-  Person:(eats:string) = ?,
-  Robot:(charges_with:string) = ?
+  Person:(eats:string) = nil,
+  Robot:(charges_with:string) = nil
 )
 
 comb nourish(x:ADT) {

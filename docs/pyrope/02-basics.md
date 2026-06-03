@@ -163,7 +163,7 @@ like `or`, `and`) value or an open parenthesis (`(`), the rest of the line
 belongs to a new statement.
 
 ```
-mut (a,b,c,d) = ?
+mut (a,b,c,d) = nil
 a = 1
   + 3           // 1st stmt
 (b,c) = (1,3)   // 2nd stmt

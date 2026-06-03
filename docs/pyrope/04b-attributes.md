@@ -396,7 +396,7 @@ all the results as debug, it allows to read any public/private variable/field.
 
 
 ```
-x:(_priv=3, zz=4) = ?
+x:(_priv=3, zz=4) = nil
 
 const tmp = x._priv         // error:
 const tmp::[debug] = x.priv // OK

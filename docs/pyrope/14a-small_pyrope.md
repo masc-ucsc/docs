@@ -115,7 +115,7 @@ cassert(range3 == (2,3,4))
 
 ### Arrays and Memories
 ```pyrope
-mut buffer:[16]u8 = ?           // Array (no persistence)
+mut buffer:[16]u8 = nil         // Array (no persistence)
 reg memory:[256]u32 = 0         // Memory (persistent)
 
 memory[addr] = data             // Write

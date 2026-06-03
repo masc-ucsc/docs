@@ -9,9 +9,9 @@ yay -S mermaid-cli
 To serve the document (open local browser to see edits at localhost:8000)
 
 ```
-mkdocs serve
+PYTHONPATH=. mkdocs serve
 ```
 
 ```
-mkdocs gh-deploy --force
+PYTHONPATH=. mkdocs gh-deploy --force
 ```

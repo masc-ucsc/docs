@@ -102,7 +102,7 @@ stderr, so the message is visible while the design is being built rather than
 during simulation. Each `cputs` output is prefixed with `prp:` on its own line
 so it can be grepped out of the surrounding compiler log:
 
-```
+```bash
 prp:<message>
 ```
 
@@ -159,7 +159,7 @@ cycles to show the same result.
 
 ```
 mod mul2(a, b) -> (reg out) {
-  reg pipe1 = ?
+  reg pipe1 = nil
 
   out = pipe1
 
@@ -251,7 +251,7 @@ random number (`.[rand]`) generation.
 
 
 ```
-mut x:u8 = ?
+mut x:u8 = nil
 
 for i in 1..=99 {
   cassert(0 <= x.[crand] <= 255)

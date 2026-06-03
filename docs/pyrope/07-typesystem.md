@@ -384,7 +384,7 @@ control-flow divergences, the worst possible path is considered.
 
 ```
 mut a = 3                  // a: current(max=3,min=3) constrain()
-mut c:int:[range=0..=10] = ? // c: current(max=0,min=0) constrain(max=10,min=0)
+mut c:int:[range=0..=10] = nil // c: current(max=0,min=0) constrain(max=10,min=0)
 if b {
   c = a + 1                // c: current(max=4,min=4) constrain(max=10,min=0)
 } else {
@@ -392,7 +392,7 @@ if b {
 }
                            // c: current(max=4,min=3) constrain(max=10,min=0)
 
-mut e::[sbits = 4] = ?     // e: current(max=0,min=0) constrain(max=7,min=-8)
+mut e::[sbits = 4] = nil   // e: current(max=0,min=0) constrain(max=7,min=-8)
 e = 2                      // e: current(max=2,min=2) constrain(max=7,min=-8)
 mut d = c                  // d: current(max=4,min=3) constrain()
 if d == 4 {
@@ -528,8 +528,8 @@ const at = (c:string, d:u32)
 const bt = (c:string, d:u100)
 
 const ct = (
-  d:u32 = ?,
-  c:string = ?
+  d:u32 = nil,
+  c:string = nil
 )
 // different order
 const dt = (
@@ -539,7 +539,7 @@ const dt = (
 )
 
 mut b:bt = (c="hello", d=10000)
-mut a:at = ?
+mut a:at = nil
 
 a = b          // OK c is string, and 10000 fits in u32
 
@@ -790,7 +790,7 @@ set a different value for each uart base register.
 // file remote.prp
 
 mod xxx(some, code) {
-  reg uart_addr:u32 = ?
+  reg uart_addr:u32 = nil
   assert(0x400 > uart_addr >= 0x300)
 }
 
@@ -864,7 +864,7 @@ const x:Typ1 = (a="foo", b=33)      // OK, same as before
 const v:Typ1 = Typ1(a="foo", b=33)  // OK, but redundant Typ1
 const y:Typ1 = ("foo", 33)          // OK, because no conflict by type
 
-mut z:Typ1 = ?                    // OK, default field values
+mut z:Typ1 = nil                    // OK, default field values
 cassert(z.a == "none" and z.b == 0)
 z = ("foo", 33)
 
@@ -919,7 +919,7 @@ const Matrix8x8 = (
   const setter = [matrix8x8_set_xy, matrix8x8_set_row, matrix8x8_init]
 )
 
-const m:Matrix8x8 = ?
+const m:Matrix8x8 = nil
 cassert(m.data[0][3] == 0)
 
 m[1][2] = 100
@@ -945,7 +945,7 @@ const Matrix2x2 = (
   }
 )
 
-const n:Matrix2x2 = ?
+const n:Matrix2x2 = nil
 n.data[0][1] = 2      // default setter
 
 cassert(n[0][1] == 3) // getter does + 1
@@ -969,8 +969,8 @@ const My_2_elem = (
   const getter = [my_2_elem_get_all, my_2_elem_get_i]
 )
 
-mut v:My_2_elem = ?
-mut x:My_2_elem = ?
+mut v:My_2_elem = nil
+mut x:My_2_elem = nil
 
 v = (x=0, "hello")
 v[1] = "world"
@@ -1089,7 +1089,7 @@ const Tup = (
   ,const setter = [tup_set_default, tup_set_v]
 )
 
-mut x:Tup = ?
+mut x:Tup = nil
 cassert(x.v == "empty33")
 
 x = "Padua"

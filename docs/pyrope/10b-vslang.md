@@ -220,7 +220,7 @@ A Rust style Pyrope equivalent:
 
 ```
 const AnObject = (
-  v:i32 = ?
+  v:i32 = nil
 )
 
 comb f1(ref self:AnObject) -> (result:i32) { // named output tuple

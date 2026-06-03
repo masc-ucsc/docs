@@ -49,16 +49,19 @@ markdown_extensions:
       alternate_style: true
   - pymdownx.superfences:
       custom_fences:
+        - name: pyrope
+          class: pyrope
+          format: !!python/name:pyrope_highlight.fence_pyrope
         - name: mermaid
           class: mermaid
           format: !!python/name:mermaid2.fence_mermaid
 
 extra_css:
   - stylesheets/table.css
+  - stylesheets/pyrope-highlight.css
 
 extra_javascript:
   - javascripts/config.js
   - https://polyfill.io/v3/polyfill.min.js?features=es6
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
   - https://unpkg.com/mermaid/dist/mermaid.min.js
-

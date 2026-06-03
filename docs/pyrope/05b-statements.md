@@ -21,7 +21,7 @@ a = unique if x1 == 1 {
     500
   }
 
-mut x = ?
+mut x = nil
 if a { x = 3 } else { x = 4 }
 ```
 
@@ -291,12 +291,12 @@ expressions are not supported (they make trailing tokens of every expression
 ambiguous to parse) — write the loop out instead.
 
 ```
-mut d:[] = ?
+mut d:[] = nil
 for i in 0..<5 {
   d ++= i
 }
 
-mut e:[] = ?
+mut e:[] = nil
 for i in 0..<5 {
   if i {
     e ++= i
@@ -343,7 +343,7 @@ declared output names is what the caller sees.
 
 
 ```
-mut total:[] = ?
+mut total:[] = nil
 for a in 1..=10 {
   if a == 2 { continue }
   total ++= a
@@ -357,7 +357,7 @@ if true {
 }
 
 mut a = 3
-mut total2:[] = ?
+mut total2:[] = nil
 while a>0 {
   total2 ++= a
   if a == 2 { break }    // exit if scope
@@ -367,7 +367,7 @@ while a>0 {
 }
 cassert(total2 == (3,2))
 
-mut total3:[] = ?
+mut total3:[] = nil
 for i in 1..=9 {
   if i<3 {
     total3 ++= i+10
@@ -473,7 +473,7 @@ reference reads the value before any update (the 'q' value), and `.[defer]`
 reads the value after updates.
 
 ```
-reg counter:u32 = ?
+reg counter:u32 = nil
 
 const counter_0  = counter         // current cycle (before updates)
 const counter_1  = past(counter)   // last cycle (one flop)

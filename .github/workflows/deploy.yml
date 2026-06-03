@@ -12,15 +12,31 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - uses: actions/checkout@v2
+        with:
+          repository: masc-ucsc/tree-sitter-pyrope
+          path: tree-sitter-pyrope
+
       - uses: actions/setup-python@v2
         with:
           python-version: 3.x
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
       - run: pip install mkdocs-material
 
       - run: pip install mkdocs-pymdownx-material-extras mkdocs-redirects mkdocs-minify-plugin mkdocs-mermaid2-plugin
 
+      - run: npm ci
+        working-directory: tree-sitter-pyrope
+
       - run: mkdocs build
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          PYROPE_TREE_SITTER_GRAMMAR: ${{ github.workspace }}/tree-sitter-pyrope
+          PYROPE_TREE_SITTER_CLI: ${{ github.workspace }}/tree-sitter-pyrope/node_modules/.bin/tree-sitter
 
       - run: find ./site -name "*.html" -exec sed -i -E 's#<a href="https:\/\/github.com\/masc-ucsc\/livehd\/edit\/master\/(.*)"#<a href="https://github.com/masc-ucsc/docs/edit/main/\1"#g' {} +
 

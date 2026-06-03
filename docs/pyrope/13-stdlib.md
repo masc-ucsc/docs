@@ -51,7 +51,7 @@ cassert(x.map(_ + 1) == (2,3,4))
 Library code:
 ```
 comb map<T>(f, ...x:[]T) -> (r:[]) {
-  r = ?
+  r = nil
   for e in x {
     r ++= f(e)
   }
@@ -70,7 +70,7 @@ Library code:
 
 ```
 comb filter<T>(f, ...x:[]T) -> (r:[]) {
-  r = ?
+  r = nil
   for e in x {
     if not f(e) {
       r ++= e

@@ -51,9 +51,9 @@ const Greyhound = Dog ++ ( // also extends Dog
 ```
 
 ```
-mut a:Animal = ?
-mut b:Bird = ?
-mut d:Dog = ?
+mut a:Animal = nil
+mut b:Bird = nil
+mut d:Dog = nil
 
 d = a // error: 'a does d' is false
 b = a // OK, explicit setter in Bird for Animal
@@ -78,9 +78,9 @@ issue of mutable containers can not exists.
 
 
 ```
-mut a_vec:[?]Animal = ?
-mut b_vec:[?]Bird = ?
-mut d_vec:[?]Dog = ?
+mut a_vec:[?]Animal = nil
+mut b_vec:[?]Bird = nil
+mut d_vec:[?]Dog = nil
 
 a_vec[0] = d:Dog    // OK
 a_vec[1] = b:Bird   // OK
@@ -113,10 +113,10 @@ of one does not need the field, and hence it allows to create different types:
 
 ```
 const Age = (
-  age:int = ?
+  age:int = nil
 )
 const Weight = (
-  weight:int = ?
+  weight:int = nil
 )
 
 cassert(not (Age does Weight))
@@ -192,8 +192,8 @@ comb call_dog(d:Dog) {    // OK
 }
 
 comb f_a(fa:fa_t) {
-  mut a:Animal = ?
-  mut d:Dog = ?
+  mut a:Animal = nil
+  mut d:Dog = nil
   fa(a)  // OK
   fa(d)  // OK, `d does Animal` is true
 }
@@ -201,8 +201,8 @@ f_a(call_animal) // OK
 f_a(call_dog)    // error: `fa_t does call_dog` is false
 
 comb f_d(fd:fd_t) {
-  mut a:Animal = ?
-  mut d:Dog = ?
+  mut a:Animal = nil
+  mut d:Dog = nil
   fd(a)  // error: `a does Dog` is false
   fd(d)  // OK
 }
@@ -627,9 +627,9 @@ const My_obj2 = (
   mut val1:u8 = 0,
   comb add(ref self, x) { self.val += x }
 )
-cassert(My_obj equals My_obj2) // same behavioir no defined overlap fiels
+cassert(My_obj equals My_obj2)  // same behavioir no defined overlap fiels
 
-const xx:My_obj = ?               // default initialization
+const xx:My_obj = nil           // default initialization
 
 cassert(xx.val1 == 0)
 xx.add(3)
