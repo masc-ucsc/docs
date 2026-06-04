@@ -169,12 +169,15 @@ cassert(clamp(42) == 42)
 
 ### Pipeline
 
-A pipeline is a Moore machine — outputs always go through flops. The latency
-is written as an argument to the `pipe` keyword (e.g., `pipe[3]`), and the
-tool may retime logic for performance, but the behavior is equivalent to a
-`comb` with N flops appended at the outputs. Pipelines can use `reg` for
-internal storage, but besides storage, they behave like a `comb` with
-pipelined outputs.
+A pipeline has a fixed-latency contract: every output at cycle `t` is a
+function of the inputs at cycle `t-N` (plus internal state), and there is
+never a combinational path from an input to an output. The latency is
+written as an argument to the `pipe` keyword (e.g., `pipe[3]`). The behavior
+is equivalent to a `comb` with N flops appended at the outputs, but the tool
+may place the flops anywhere (retiming) as long as the contract holds.
+Pipelines can use `reg` for feedback state (accumulators, counters); a pure
+feedforward `reg` acts as an explicit pipeline stage and counts toward the
+declared latency.
 
 
 ```pyrope

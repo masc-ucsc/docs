@@ -324,12 +324,12 @@ mod counter_mod(update) -> (value) {
   if update { wrap count = count + 1 }
 }
 
-// pipe: output 'value' goes through a flop (Moore machine)
+// pipe: 'value' lands 1 cycle after the inputs (no comb input-to-output path)
 // Same logic, but output is delayed by 1 cycle compared to mod version
 pipe[1] counter_pipe(update) -> (value) {
   reg count:u8 = 0
 
-  value = count              // registered output (goes through output flop)
+  value = count              // reads state q; the appended output flop lands it 1 cycle later
 
   if update { wrap count = count + 1 }
 }

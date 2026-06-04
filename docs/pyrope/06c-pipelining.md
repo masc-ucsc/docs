@@ -66,9 +66,9 @@ reg my_reg::[retime=true, clock=my_clk, init=0]
 
 ## Pipelined Lambdas (`pipe`)
 
-A `pipe` lambda is a Moore machine — outputs always go through flops. The
-number of pipeline stages is written as an argument to the `pipe` keyword,
-in the same `[N]` position used by `stage[N]`:
+A `pipe` lambda is a fixed-latency pipeline. The number of pipeline stages
+is written as an argument to the `pipe` keyword, in the same `[N]` position
+used by `stage[N]`:
 
 ```pyrope
 pipe mul(a, b) -> (c)          { c = a * b }   // bare: caller picks at call site
@@ -85,10 +85,246 @@ The three forms behave as follows:
 * **`pipe[A..<B] foo(...)`** — flexible range. The caller picks a `stage[M]`
   with `A <= M < B`, and the compiler/synthesizer places stages accordingly.
 
-The tool may retime logic across pipeline stages for performance, but the
-observable behavior is equivalent to a `comb` with `N` flops appended at the
-outputs. `pipe` can use `reg` for internal storage; besides storage, it
-behaves like a `comb` with pipelined outputs.
+### The `pipe` contract
+
+A `pipe` makes two promises — one behavioral, one structural:
+
+* **Latency (behavioral):** every output at cycle `t` is a function of the
+  inputs at cycle `t-N`, plus register state that summarizes strictly older
+  cycles: `out[t] = f(in[t-N], state)`. All outputs land at the same
+  latency `N >= 1`.
+
+* **No feedthrough (structural):** there is never a combinational path from
+  an input to an output — every input-to-output path crosses at least one
+  flop.
+
+The *reference model* for simulation, verification, and logic equivalence
+checking (LEC) is the body evaluated as combinational dataflow at input
+time, with `N` flops appended at each output. This is a statement about
+behavior, **not** about flop placement: the synthesis tool may place the
+actual flops anywhere that preserves the contract — distributed through the
+logic by retiming, at the inputs (an SRAM macro with registered inputs is a
+valid `pipe[1]`), or at the outputs. Pipeline flops inserted by the
+compiler are `retime=true`; state registers (next section) are preserved.
+
+!!! Observation
+    Because no input-to-output combinational path exists, any feedback loop
+    closed through a `pipe` is sequential by construction. A `mod` can
+    instantiate `pipe`s in feedback topologies without creating
+    combinational loops, and loop checking stays modular.
+
+### Registers inside a `pipe`: state vs stage
+
+A `pipe` body may declare `reg` variables. The compiler classifies every
+register into one of two roles from the dataflow graph alone — the role is
+never annotated:
+
+* **State register** — participates in feedback: its next value depends,
+  directly or transitively, on its own current value. Accumulators,
+  counters, valid bits, FSM state. A state register is *pinned* to a home
+  stage and adds no pipeline latency. Reading it returns the current state
+  (`q`), exactly like `reg` everywhere else in Pyrope.
+
+* **Stage register** — pure feedforward transport: its next value is a
+  function of inputs and earlier stages only. It is an explicit pipeline
+  stage and counts toward the declared latency `N`.
+
+Two rules fall out of the classification:
+
+* **An incomplete write is feedback.** `if en { tmp = a }` means `tmp`
+  holds its value when `en` is false — an implicit `tmp = tmp` on the
+  untaken path. Holding is self-dependence, so a conditionally written
+  register is always a state register. Equivalently: a stage register must
+  be written unconditionally.
+
+* **A `reg` output must be state.** `pipe[1] counter(en) -> (reg count)` is
+  the counter idiom: the state register itself is the output (its home
+  stage must be `N-1`, which is stage 0 in a `pipe[1]`). A *feedforward*
+  `reg` in the output list is rejected: outputs are already registered by
+  the contract, so it would either duplicate the output flop or silently
+  add one extra cycle to a single output.
+
+### Accepting and rejecting `pipe` bodies
+
+Legality of a `pipe` body is decided by one compiler pass, **stage
+inference**. Every value is tagged with a stage number `σ`: a value with
+stage `σ` computed at cycle `t` derives from the inputs of cycle `t-σ`.
+
+1. **Build the dataflow graph.** One node per operation. Each register `r`
+   contributes a sequential edge from its write side `r.d` (next value) to
+   its read side `r.q` (current value). Incomplete writes are completed
+   first with the implicit hold (`r.d = r.q` on untaken paths).
+
+2. **Classify registers (strongly connected components).** Run an SCC pass
+   (Tarjan) over the graph, sequential edges included:
+     * an SCC containing only combinational edges is a combinational loop —
+       rejected, as everywhere in Pyrope;
+     * a register whose `d -> q` edge lies inside an SCC is a **state**
+       register;
+     * every other register is a **stage** register.
+
+3. **Solve the stage constraints.** Propagate `σ` over the graph:
+     * input: `σ = 0`; constants and `comptime` values carry no stage
+       (they unify with any stage)
+     * combinational op: all operands must have **equal** `σ`; the result
+       inherits it
+     * stage register: `σ(q) = σ(d) + 1`
+     * state register: `σ(q) = σ(d)` — pinned at its home stage
+     * `past[n](x)`: `σ = σ(x) + n`
+     * plain output: `σ <= N`; the compiler appends the missing `N - σ`
+       flops at that output
+     * `reg` (state) output: home stage must equal `N - 1`; the register
+       `q` itself is the output, with no appended flop
+
+The rules in step 3 form a system of difference constraints solved with an
+offset (weighted) union-find in near-linear time; a conflict is reported at
+the operation that introduced it, naming both stages.
+
+!!! NOTE
+    The compiler pads **only at outputs**, never internally. Output padding
+    is always safe — outputs feed nothing else inside the pipe, so adding
+    flops there cannot change relative alignment. An internal stage
+    mismatch, in contrast, has two plausible meanings (delay the early
+    operand, or the writer made an off-by-one mistake), and silently
+    picking one is precisely the bug class `pipe` exists to eliminate. Use
+    `past[n](x)` or an explicit stage register to state which alignment was
+    intended.
+
+For `pipe[A..=B]` and bare `pipe`, the body fixes a *minimum* latency
+`max σ(output)`: the caller's `stage[M]` (or the latency the tool picks)
+must be at least that minimum, and output padding fills the difference.
+
+A body accepted by stage inference is retiming-equivalent to the canonical
+spelling of the same function — a combinational body with `N` appended
+output flops. Different legal spellings of the same `pipe` therefore pass
+LEC against each other by construction.
+
+The diagnostics name the offending nodes and stages:
+
+* `stage mismatch: 'tmp' is at stage 1, 'a' at stage 0` — cross-stage
+  operand mix
+* `output 'x' lands at stage 2, pipe declares 1` — latency exceeded
+* `feedforward register 'x' in output list` — stage register as output
+* `combinational loop through 'v'`
+
+#### Accepted examples
+
+=== "Comb body (canonical)"
+    ```pyrope
+    pipe[3] mul(a:u16, b:u16) -> (c:u32) {
+      c = a * b           // σ=0; the compiler appends the 3 stage flops
+    }
+    // c[t] == a[t-3] * b[t-3]
+    ```
+
+=== "State register"
+    ```pyrope
+    pipe[1] acc_mix(a:u32, b:u32) -> (x:u32) {
+      reg tmp:u32 = 0
+      wrap tmp += a + b   // reads its own q → state register, home stage 0
+      wrap x = tmp + a    // state q ⊕ input: both σ=0 — legal
+    }
+    // x[t] == tmp[t-1] + a[t-1]
+    ```
+
+=== "Explicit stage register"
+    ```pyrope
+    pipe[1] split(a:u32, b:u32) -> (x:u32, y:u32) {
+      reg tmp:u32 = 0
+      wrap tmp = a + b    // unconditional, feedforward → stage register
+      x = tmp             // σ=1 == N: the explicit reg is the pipeline flop
+      wrap y = tmp + 1    // σ=1 == N
+    }
+    // LEC-equivalent to:
+    // pipe[1] split(a:u32, b:u32) -> (x:u32, y:u32) {
+    //   wrap x = a + b ; wrap y = x + 1
+    // }
+    ```
+
+=== "State output (counter idiom)"
+    ```pyrope
+    pipe[1] counter(enable:bool) -> (reg count:u8) {
+      if enable { wrap count += 1 }  // conditional write → state; q is the output
+    }
+    // count[t] == count[t-1] + enable[t-1]
+    ```
+
+=== "State at an internal stage"
+    ```pyrope
+    pipe[2] mac(a:u16, b:u16) -> (acc:u32) {
+      reg prod:u32 = 0
+      wrap prod = a * b   // stage register: prod.q at σ=1
+      reg sum:u32 = 0
+      wrap sum += prod    // state register, home stage 1 (anchored by prod.q)
+      acc = sum           // σ=1; the compiler pads 1 flop → lands at N=2
+    }
+    ```
+
+#### Rejected examples
+
+=== "Cross-stage mix"
+    ```pyrope
+    pipe[1] bad_mix(a:u32, b:u32) -> (x:u32) {
+      reg tmp:u32 = 0
+      wrap tmp = a + b    // feedforward → stage register: tmp.q at σ=1
+      wrap x = tmp + a    // ERROR: 'tmp' is at stage 1, 'a' at stage 0
+    }
+    ```
+
+    Note the one-character distance to the accepted `acc_mix`: with `+=`,
+    `tmp` is state and mixing it with `a` is coherent (current state plus
+    current input). With `=`, `tmp` is a one-stage delay, and `tmp + a`
+    adds yesterday's `a + b` to today's `a` — almost always an off-by-one
+    bug. If the mix is intended, align it explicitly:
+
+    ```pyrope
+      wrap x = tmp + past[1](a)   // both at stage 1 — accepted
+    ```
+
+=== "Feedforward reg output"
+    ```pyrope
+    pipe bad_out(a:u32, b:u32) -> (reg x:u32, reg y:u32) {
+      wrap y = x + 1      // reads x.q at σ=1 → y would land at σ=2, x at σ=1
+      wrap x = a + b      // ERROR: feedforward register 'x' in output list
+    }
+    ```
+
+    The outputs are already registered by the `pipe` contract. The intended
+    function is spelled without output registers:
+
+    ```pyrope
+    pipe[1] good(a:u32, b:u32) -> (x:u32, y:u32) {
+      wrap x = a + b
+      wrap y = x + 1      // x is the stage-0 comb value; both land at cycle 1
+    }
+    ```
+
+=== "Latency exceeded"
+    ```pyrope
+    pipe[1] too_deep(a:u32) -> (x:u32) {
+      reg s1:u32 = 0
+      reg s2:u32 = 0
+      wrap s1 = a + 1     // stage register: σ=1
+      wrap s2 = s1 + 1    // stage register: σ=2
+      x = s2              // ERROR: output 'x' lands at stage 2, pipe declares 1
+    }
+    // legal as pipe[2] (or as bare pipe called with stage[M], M >= 2)
+    ```
+
+#### References
+
+The stage-inference pass combines three standard algorithms:
+
+* R. E. Tarjan, *Depth-First Search and Linear Graph Algorithms*, SIAM
+  Journal on Computing 1(2), 1972 — the SCC pass used to classify state vs
+  stage registers (step 2).
+* T. H. Cormen, C. E. Leiserson, R. L. Rivest, C. Stein, *Introduction to
+  Algorithms* — systems of difference constraints (single-source shortest
+  paths chapter); the `σ` constraint solving in step 3.
+* C. E. Leiserson, J. B. Saxe, *Retiming Synchronous Circuitry*,
+  Algorithmica 6(1), 1991 — stage inference accepts exactly the bodies that
+  are retiming-equivalent to the canonical comb-plus-output-flops form, and
+  the same framework licenses the tool-side freedom in flop placement.
 
 
 ## Multiply-Add Example
@@ -132,7 +368,7 @@ read a value at a different cycle, use `past[N](x)` or `next[N](x)`.
   window-quantified sampling.
 
 `stage[N]` is only valid inside `mod` blocks. It is not allowed in `comb`
-(pure combinational) or `pipe` (Moore pipeline). Inside a `mod`, register
+(pure combinational) or `pipe` (fixed-latency pipeline). Inside a `mod`, register
 state is read via bare variable references (current value) or `.[defer]`
 (end-of-cycle value), and prior-cycle values via `past[n](x)`.
 

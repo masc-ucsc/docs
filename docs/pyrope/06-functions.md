@@ -34,14 +34,19 @@ Pyrope divides the lambdas into three categories: `comb`, `pipe`, and `mod`.
   as both input and output, which is still purely combinational. `comb`
   resembles `pure functions` in normal programming languages.
 
-- `pipe` is a Moore machine — every output goes through at least one flop.
-  The latency is written as an argument to the keyword: `pipe[3] foo(...)`
-  is fixed 3-cycle, `pipe[1..=3] foo(...)` lets the caller pick within a
-  range, and bare `pipe foo(...)` leaves the latency fully flexible for the
-  caller to specify via `stage[N]` at the call site. The tool may retime
-  logic for performance, but the behavior is equivalent to a `comb` with N
-  flops appended at the outputs. `pipe` can use `reg` for internal storage;
-  besides storage, it behaves like a `comb` with pipelined outputs.
+- `pipe` is a fixed-latency pipeline: every output lands exactly `N` cycles
+  after the inputs it derives from (`out[t] = f(in[t-N], state)`), and there
+  is never a combinational path from an input to an output. The latency is
+  written as an argument to the keyword: `pipe[3] foo(...)` is fixed
+  3-cycle, `pipe[1..=3] foo(...)` lets the caller pick within a range, and
+  bare `pipe foo(...)` leaves the latency fully flexible for the caller to
+  specify via `stage[N]` at the call site. The reference behavior is a
+  `comb` with N flops appended at the outputs, but flop placement is free
+  (retiming, SRAM macros with registered inputs, ...) as long as the
+  contract holds. `pipe` can use `reg` for feedback state (accumulators,
+  counters); a pure feedforward `reg` is an explicit pipeline stage and
+  counts toward `N`. See [Pipelining](06c-pipelining.md) for the
+  accept/reject rules (stage inference).
 
 - `mod` has no constraints on registers or outputs. It can be combinational,
   Mealy, Moore, or a pipeline orchestrator. When a `mod` calls `pipe`

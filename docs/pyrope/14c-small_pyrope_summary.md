@@ -29,7 +29,7 @@ reg my_state = 0            // Register (persistent across cycles)
 ### 2. Function Types are Hardware Semantics
 ```pyrope
 comb add(a:u8, b:u8) -> (result:u8) { result = a + b } // Combinational logic
-pipe[1] counter() -> (reg count:u8) { count += 1 }     // Moore machine (1-cycle pipeline)
+pipe[1] counter() -> (reg count:u8) { count += 1 }     // 1-cycle pipeline (count is a state register)
 mod alu(in1, in2) -> (out) { /* explicit timing */ }  // Dataflow / orchestration with timing
 ```
 **LLM Pitfall**: `comb`/`pipe`/`mod` are NOT just function modifiers — they define **hardware implementation strategy**. `mod` is the only kind that can orchestrate pipelined calls (`stage[N]`, `@[N]`). A `comb` can never hold state — registers, `pipe`, or `mod` orchestration require the corresponding kind. The one exception is debug state marked `::[debug]`, which is not allowed to influence non-debug results. Small Pyrope does not support runtime function captures; pass runtime values as arguments. Visible comptime bindings are lexical.
@@ -106,7 +106,7 @@ mut out = ram.port[0][addr]::[rdport=0]     // Read port 0
 - `step` advances simulation by one clock cycle
 - Register updates happen at cycle boundaries
 - Combinational logic (`mut`) updates immediately
-- `pipe` is a Moore machine (outputs always registered), may use `reg` for internal storage
+- `pipe` has a fixed latency N: outputs land exactly N cycles after the inputs, never a combinational input-to-output path. A `reg` with feedback is state (no added latency); a feedforward `reg` is an explicit pipeline stage counting toward N
 - `mod` has no constraints on registers or outputs
 - `mod` has two pipeline-timing mechanisms: `stage[N]` (declaration modifier that pipelines the whole RHS over N cycles) and `foo@[N]` (pure timing type check, works on LHS and RHS uses)
 

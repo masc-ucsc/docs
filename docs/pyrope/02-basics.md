@@ -315,7 +315,7 @@ Pyrope naming for consistency:
 
 * `comb` is pure combinational logic (zero cycles). Can use `ref` to modify tuples (equivalent to implicit output).
 
-* `pipe[N]` is a fixed N-cycle pipeline (Moore machine — outputs always registered)
+* `pipe[N]` is a fixed N-cycle pipeline (every output lands exactly N cycles after its inputs; no combinational input-to-output path)
 
 * `pipe[A..=B]` is a flexible A-to-B cycle pipeline; the caller picks a concrete latency via `stage[N]`
 
