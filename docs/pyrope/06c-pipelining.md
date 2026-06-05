@@ -12,6 +12,9 @@ values are assigned with plain `=` (e.g., `counter = counter + 1`). The
 `.[defer]` construct is **RHS-only**: it reads the end-of-cycle value
 (after all in-cycle writes have accumulated), which is useful inside
 loops and for assertions. There is no `total.[defer] = ...` LHS form.
+`.[defer]` is a same-cycle *wiring* construct — no flop is involved and no
+cycle boundary is crossed (see
+[defer is wiring, not time](05b-statements.md#defer-is-wiring-not-time)).
 
 In our syntax, a bare reference to `total` reads the register's current
 state. `total.[defer]` on the RHS reads what the register *will* be at
@@ -171,6 +174,8 @@ stage `σ` computed at cycle `t` derives from the inputs of cycle `t-σ`.
      * stage register: `σ(q) = σ(d) + 1`
      * state register: `σ(q) = σ(d)` — pinned at its home stage
      * `past[n](x)`: `σ = σ(x) + n`
+     * `x.[defer]`: same-cycle wiring to the end-of-cycle value — never a
+       stage shift: `σ = σ(x.d)`
      * plain output: `σ <= N`; the compiler appends the missing `N - σ`
        flops at that output
      * `reg` (state) output: home stage must equal `N - 1`; the register

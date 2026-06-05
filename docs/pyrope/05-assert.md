@@ -398,9 +398,22 @@ The recommended mental model is:
 * `regref` traverses the instance hierarchy and references registers.
 * `sigref` traverses the instance hierarchy and references any signal.
 
-Like `regref`, `sigref` is read-only: it can not create a second writer or
-affect the valid bits, resets, or scheduling of the DUT. The single writer
-multiple reader semantics are preserved.
+The two references have different synthesizability rules:
+
+* `sigref` is **debug-only**: it is allowed only inside debug statements
+  (`assert`, `test`, `cover`, `puts`, monitors), never in synthesizable
+  code of any lambda kind. A synthesizable cross-hierarchy wire reference
+  would create combinational coupling invisible to the module interfaces
+  (hidden combinational loops); a register reference can not, because every
+  access crosses the flop boundary.
+* `regref` in a debug statement can read **any** register, `pub` or not.
+  In synthesizable code, `regref` can only attach to registers declared
+  `pub`, and then behaves like a local `reg` (see
+  [Register reference](07-typesystem.md#register-reference)).
+
+In debug statements both are read-only: they can not create a second writer
+or affect the valid bits, resets, or scheduling of the DUT. The single
+writer multiple reader semantics are preserved.
 
 When a partial path is given (no leading instance), `sigref` matches all
 instances that contain a signal with that name, returning a tuple of

@@ -595,6 +595,10 @@ reg counter:u8 = 100            // Reset value is 100
 ## Module System
 
 ### Import (Basic)
+
+Only `pub` declarations in the target file are importable (declarations
+are private by default: `pub comb add(...)`).
+
 ```pyrope
 // Import functions from other files
 const math_ops = import("math/basic")

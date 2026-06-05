@@ -443,6 +443,48 @@ variable — the value at the end of the current cycle. It is valid for any
 variable type (`mut`, `const`, `reg`) as it refers to the final value
 within the current cycle.
 
+### `defer` is wiring, not time
+
+`.[defer]` is a **wiring** construct, not a temporal one. The mental
+model: the read is cut-and-pasted to the end of the code block, and the
+resulting value is connected back to the expression where the `.[defer]`
+appears. It is the same cycle — zero flops, zero added latency. What it
+buys is escape from *program order*: a statement can use a value that is
+only produced by a later statement.
+
+The canonical use is connecting the output of a later call into an
+earlier call:
+
+```pyrope
+a_outs = mod_call1(b_outs.something.[defer], something_else)
+b_outs = mod_call2(a_outs, something_else)
+```
+
+`mod_call2` appears after `mod_call1` in program order, but its output
+field is wired back into `mod_call1`'s input. This looks like a loop and
+it is fine as long as no real combinational cycle exists (here: as long
+as `b_outs.something` does not combinationally depend on `mod_call2`'s
+first argument — the standard combinational-loop check validates it).
+
+Common misreadings, all wrong:
+
+* "`x.[defer]` is the value of `x` in the next cycle" — no. It is the
+  value at the end of *this* cycle. No flop is inserted and nothing
+  crosses a cycle boundary. (Numerically, for a `reg`, the end-of-cycle
+  value is what `q` will show next cycle — but the *read happens now*, as
+  a wire.)
+* "`defer` adds a pipeline stage" — no. In stage-inference terms it never
+  shifts `σ` (see [Pipelining](06c-pipelining.md)); it is not `past` and
+  not `stage[N]`.
+* "`defer` is memory forwarding" — no. The memory `fwd` attribute is about
+  when written *state* becomes visible to reads in later cycles; `defer`
+  never involves state visibility, it is a same-cycle wire to a later
+  statement.
+* "I can write through it" — no. `.[defer]` is RHS-only.
+
+To actually cross a cycle, use a `reg` (bare read of `q`), `past[n](x)`,
+or `stage[N]` — those are the temporal constructs.
+
 ### Defer reads
 
 When used to read a variable, `.[defer]` returns the last value written to the

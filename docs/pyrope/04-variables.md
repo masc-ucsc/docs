@@ -477,23 +477,36 @@ counterexample) is called only during reset. In non-register variables, the
 right-hand side is called every cycle. Most of the cases `reg` is mutable but
 it can be declared as immutable.
 
-## Public vs private
+## Visibility: private by default, `pub` to export
 
-All variables are public by default. To declare a variable private within the
-tuple or file the `private` attribute must be set.
+All declarations are **private by default**: they can not be accessed from
+other files or through the instantiation hierarchy. The `pub` prefix
+modifier (same declaration slot as `comptime`) exports a top-scope
+declaration:
 
-The private has different meaning depending on when it is applied:
+* `pub` on a top-scope lambda, type, or variable allows other files to
+  `import` it.
+* `pub` on a `reg` (including memories) additionally allows synthesizable
+  `regref` to attach to it from anywhere in the instantiation hierarchy.
+  See [Register reference](07-typesystem.md#register-reference) and
+  [Memories](08-memories.md#shared-memories-with-pub-reg-and-regref).
 
-* When applied to a tuple entry (`(field::[private] = 3)`), it means that the
-  entry can not be accessed outside the tuple.
+```pyrope
+pub comb get_five() -> (v) { v = 5 }  // importable by other files
+pub reg mem:[1024]u8 = nil            // synthesizable regref may attach
+reg internal:u8 = 0                   // private: this file/instance only
+```
 
-* When applied to a `pipestage` variable (`mut foo::[private] = 3`), it means that the
-  variable is not pipelined to the next type stage. Section
-  [pipestage](06c-pipelining.md) has more details.
+**Debug is exempt from visibility.** Debug statements (`assert`, `test`,
+`puts`, monitors) can observe any variable read-only through
+`sigref`/`regref`, `pub` or not. Visibility restricts *synthesizable*
+access only; nothing can be hidden from verification. There is no
+`private` attribute.
 
-* When is applied to a pyrope file upper scope variable (`reg top_reg:[private]
-  = 0`), it means that an `import` command or register reference can not access
-  it across files. Section [typesystem](07-typesystem.md) has more details.
+For tuple fields, a leading underscore (`_field`) marks the entry as
+private to the tuple: it can not be accessed outside the tuple methods,
+but debug statements can still read it (see
+[debug attribute](04b-attributes.md)).
 
 
 ## Operators

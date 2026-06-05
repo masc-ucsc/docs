@@ -221,6 +221,73 @@ Multi cycle memories are pipelined elements, and using them requires the `stage[
 declaration modifier and the same rules as pipeline flops apply (See [pipelining](06c-pipelining.md)).
 
 
+## Shared memories with `pub reg` and `regref`
+
+ASIC memories want to be *physically* grouped — BIST and repair logic is too
+expensive to replicate per memory, memory compiler instances carry setup
+pins, and power domains or floorplan regions constrain placement. But the
+*logical* owner of a memory usually sits deep in the module hierarchy, and
+threading its ports through many levels of instantiation is boilerplate
+that obscures the design.
+
+Pyrope reconciles the two hierarchies with `pub reg` and `regref` (see
+[Visibility](04-variables.md#visibility-private-by-default-pub-to-export)
+and [Register reference](07-typesystem.md#register-reference)): the
+physical owner declares the memory `pub`, and the logical owner attaches to
+it from anywhere in the instantiation hierarchy.
+
+```pyrope
+// file: mem_pool.prp — physical owner: placement, BIST, repair
+mod mem_pool(test_mode:bool) {
+  pub reg buf0:[1024]u8 = nil   // synthesizable regref may attach
+  pub reg buf1:[1024]u8 = nil
+
+  if test_mode {
+    // shared BIST/repair: march patterns over buf0/buf1 written once,
+    // muxed here — the one place that legally owns all pooled memories
+  }
+}
+
+// file: engine.prp — logical owner: the functional reads and writes
+mod engine(addr:u10, din:u8, we:bool) -> (dout:u8) {
+  mut buf:[1024]u8 = regref("mem_pool/buf0") // type checked at elaboration
+
+  dout = buf[addr]              // reads the committed 'q' state
+  if we { buf[addr] = din }     // this is the single functional writer
+}
+```
+
+The semantics follow from "an attached `regref` behaves like a local
+`reg`":
+
+* **Timing types are unchanged.** A memory is a state register for stage
+  inference ([pipelining](06c-pipelining.md)) whether it is local or
+  attached. Each attach site pins at its own stage; sites at different
+  pipeline stages are legal, and the compiler can report the write-to-read
+  visibility distance between them.
+* **Sequential by construction.** Remote reads return `q`; remote writes
+  drive `din`. Every cross-module connection crosses the flop boundary, so
+  an attached memory can never create a combinational path between distant
+  modules. For the same reason, **forwarding never crosses a `regref`**:
+  in-cycle forwarding (`fwd=true`) applies only to accesses local to the
+  owning module; remote readers always see the last committed state.
+* **One functional writer.** The single-writer-multiple-reader rule is
+  checked globally at elaboration across local and attached accesses.
+  BIST-style logic in the owner is the one sanctioned exception: an
+  owner-local write guarded by a test mode, with the obligation (assert)
+  that test and functional accesses are disjoint.
+* **`fwd=false` is value-level, not timing-level.** A read of an address
+  with a write in flight returns undefined data — simulation randomizes the
+  value so latent collisions fail loudly. Where collision freedom matters,
+  assert it (`assert(!we or raddr != waddr)`).
+
+In the generated netlist, every attach lowers to punched ports threaded
+through the hierarchy: downstream tools (LEC, PD, DFT) see ordinary module
+ports, never hierarchical references. The `pub` surface of a module is
+enumerable, like its ports — renaming or removing a `pub reg` is an
+interface change.
+
+
 ## Multidimensional arrays
 
 

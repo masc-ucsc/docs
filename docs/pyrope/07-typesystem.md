@@ -642,9 +642,11 @@ function, but they are only visible to the same directory/project Pyrope files.
 
 
 There are only two ways to access variables outside Pyrope file. The `import`
-statement allows referencing public lambdas from other files. The register
-declarations allow to assign an ID, and other files can access the register by
-"reference".
+statement allows referencing `pub` lambdas from other files. The `pub reg`
+declarations allow other files to access the register by "reference"
+(`regref`). Declarations without `pub` are private to the file — though
+debug statements can still observe them read-only (see
+[Visibility](04-variables.md#visibility-private-by-default-pub-to-export)).
 
 
 ### import
@@ -656,14 +658,14 @@ Any call to a function or tuple outside requires a prior `import` statement.
 
 ```pyrope
 // file: src/my_fun.prp
-comb fun1(a, b) -> (r) { r = a + b }
-comb fun2(a) -> (r) {
+pub comb fun1(a, b) -> (r) { r = a + b }
+pub comb fun2(a) -> (r) {
   comb inside() -> (r) { r = 3 }
   r = a
 }
-comb another(a) -> (r) { r = a }
+comb another(a) -> (r) { r = a }   // no pub: private to this file
 
-const mytup = (
+pub const mytup = (
   comb call3() { puts("call called") }
 )
 ```
@@ -672,7 +674,7 @@ const mytup = (
 // file: src/user.prp
 a = import("my_fun/*comb*")
 a.fun1(a=1, b=2)        // OK
-a.another(a=1, 2)       // error: 'another' is not an imported function
+a.another(a=1, 2)       // error: 'another' is not pub, not imported
 a.fun2.inside()         // error: `inside` is not in top scope variable
 
 const fun1 = import("my_fun/fun1")
@@ -684,7 +686,7 @@ x.call3()               // prints call called
 ```
 
 The `import` points to a file [setup code](06b-instantiation.md#setup-code)
-list of public variables or types. The setup code corresponds to the "top" scope
+list of `pub` variables or types. The setup code corresponds to the "top" scope
 in the imported file. The import statement can only be executed during the
 setup phase. The import allows for cyclic dependencies between files as long as
 there is no true cyclic dependency between variables. This means that "false"
@@ -746,10 +748,22 @@ While `import` looks through Pyrope files, `regref` looks through the instantiat
 hierarchy for matching register names. `regref` only can get a reference to a
 register, it can not be used to import functions or variables.
 
+Visibility follows the `pub` rule
+([Visibility](04-variables.md#visibility-private-by-default-pub-to-export)):
+
+* In **debug statements** (`assert`, `test`, `puts`, monitors), `regref`
+  can read any register, `pub` or not.
+* In **synthesizable code**, `regref` can only attach to registers declared
+  `pub reg`. The attached reference behaves exactly like a local `reg`:
+  bare reads return the `q` value, assignments drive the `din` input, and
+  stage inference classifies it like any state register (see
+  [Pipelining](06c-pipelining.md)). Because every access crosses the flop
+  boundary, a `regref` connection is sequential by construction — it can
+  never create a combinational path between distant modules.
 
 ```pyrope
 mod do_increase() {
-  reg counter:u32 = 0
+  reg counter:u32 = 0     // no pub needed: puts below is a debug statement
 
   wrap counter = counter + 1
 }
@@ -790,7 +804,7 @@ set a different value for each uart base register.
 // file remote.prp
 
 mod xxx(some, code) {
-  reg uart_addr:u32 = nil
+  pub reg uart_addr:u32 = nil  // pub: synthesizable regref may attach
   assert(0x400 > uart_addr >= 0x300)
 }
 
@@ -1133,19 +1147,19 @@ If the getter/setter uses a string argument, this also allows to access tuple fi
 
 ```pyrope
 const Point = (
-  ,mut priv_x:int:[private] = 0
-  ,mut priv_y:int:[private] = 0
+  ,mut _x:int = 0    // leading underscore: private to the tuple
+  ,mut _y:int = 0
 
   ,comb setter(ref self, x:int, y:int) {
-    self.priv_x = x
-    self.priv_y = y
+    self._x = x
+    self._y = y
   }
 
   ,comb getter(self, idx:string) {
     match idx {
-     == 'x' { self.priv_x }
-     == 'y' { self.priv_y }
-     else   { 0            }
+     == 'x' { self._x }
+     == 'y' { self._y }
+     else   { 0        }
     }
   }
 )

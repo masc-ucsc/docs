@@ -577,21 +577,22 @@ There are also two ways to concatenate tuples in Pyrope. `t1 ++ t2` and
 
 
 * `(...t1, ...t2)` inserts in-place, triggers a compile error if the same
-  public field appears in both tuples and it is defined in both. `private`
-  fields are privatized and hence do not trigger overload failure.
+  visible field appears in both tuples and it is defined in both. Private
+  fields (leading underscore) are privatized and hence do not trigger
+  overload failure.
 
 
 ```pyrope
 const Int1 = (
-  mut counter:int:[private] = 0,
-  comb add(ref self, v) { self.counter += v },
-  comb get(self) -> (result:int) { result = self.counter },
+  mut _counter:int = 0,
+  comb add(ref self, v) { self._counter += v },
+  comb get(self) -> (result:int) { result = self._counter },
   comb api_pending(ref self, x:int) -> (o:string) { }
 )
 
 const Int2 = (
-  mut counter:int:[private] = 0,
-  comb accumulate(ref self, v) { self.counter += v; self.counter },
+  mut _counter:int = 0,
+  comb accumulate(ref self, v) { self._counter += v; self._counter },
   comb api_pending(ref self, x:string) -> (o:string) { }
 )
 

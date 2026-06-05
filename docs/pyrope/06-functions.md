@@ -135,7 +135,7 @@ lambda is to have access to a local variable with a definition or to
 const a_3 = { 3 }             // just scope, not a lambda. Scope is evaluated now
 comb a_lambda() -> (v) { v = 4 }   // kind-first form
 
-comb get_five() -> (v) { v = 5 }   // public lambda that can be imported by other files
+pub comb get_five() -> (v) { v = 5 }   // pub: can be imported by other files
 
 const x = a_3()             // error: explicit call not possible in scope
 const x = a_lambda()        // OK, explicit call needed when no arguments

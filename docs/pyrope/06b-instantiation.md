@@ -387,13 +387,14 @@ The imported files are executed before the current file is executed. This is
 applied recursively but no loops are supported in import dependence chains.
 
 The "setup" code is the statements executed once for each imported file. Those
-statements can not be "imported" by other files. Only the resulting public
+statements can not be "imported" by other files. Only the resulting `pub`
 variables can be imported.
 
 
-During setup, each file can have a list of public variables. Those are
-variables that can be used by importing modules.  The "top variable" is
-selected for simulation/synthesis.
+During setup, each file can have a list of `pub` variables. Those are
+variables that can be used by importing modules (declarations without `pub`
+are private to the file). The "top variable" is selected for
+simulation/synthesis.
 
 
 It is important to point that `comptime` may be used during setup but also in

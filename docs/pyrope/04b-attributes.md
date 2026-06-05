@@ -193,7 +193,10 @@ There are a list of reserved attribute names for debug:
 
 ### Type attribute list
 
-* `private`: variable/field not visible to import/regref
+Visibility is not an attribute: declarations are private by default, and the
+`pub` declaration modifier exports them (see
+[Visibility](04-variables.md#visibility-private-by-default-pub-to-export)).
+
 * `comptime`: indicates that the variable should be compile time or a compile error is generated
 * `const`: indicates that only one assignment to the variable can be done per cycle
 * `mut`: multiple assignments to the variable can be done
@@ -232,10 +235,12 @@ Registers have the following attributes:
 * `negreset`: active low reset signal
 * `posclk`: true by default, selects a posedge or negnedge flop
 * `retime`: allow to retime across the register
-* `defer`: **RHS-only** read of the end-of-cycle value (the final value the
-  register will hold for the next cycle's 'q', after all in-cycle writes
-  have accumulated). There is no `reg.[defer] = rhs` write form — register
-  writes use plain `=`. See [Pipelining](06c-pipelining.md).
+* `defer`: **RHS-only** read of the end-of-cycle value (after all in-cycle
+  writes have accumulated). This is same-cycle *wiring*, not a temporal
+  construct — no flop is involved (see
+  [defer is wiring, not time](05b-statements.md#defer-is-wiring-not-time)).
+  There is no `reg.[defer] = rhs` write form — register writes use plain
+  `=`. See [Pipelining](06c-pipelining.md).
 
 Pipestage accept the same register attributes but also two more:
 
@@ -391,15 +396,16 @@ const c::[debug] = 3
 ```
 
 Assignments to debug variables also bypass protection access. This means that
-private variables in tuples can be accessed (read-only). Since `assert` marks
-all the results as debug, it allows to read any public/private variable/field.
+private tuple fields (leading underscore, like `_priv`) can be accessed
+(read-only). Since `assert` marks all the results as debug, it allows to read
+any variable/field regardless of `pub` or `_` privacy.
 
 
 ```pyrope
 x:(_priv=3, zz=4) = nil
 
-const tmp = x._priv         // error:
-const tmp::[debug] = x.priv // OK
+const tmp = x._priv          // error: '_priv' is private to the tuple
+const tmp::[debug] = x._priv // OK, debug bypasses privacy (read-only)
 
 assert(x._priv == 3) // OK, assert is a debug statement
 ```
