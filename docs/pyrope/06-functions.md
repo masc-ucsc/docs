@@ -21,14 +21,15 @@ which lambda to call.
     compiler versions. These are features that Pyrope enables.
 
 
-Pyrope divides the lambdas into three categories: `comb`, `pipe`, and `mod`.
+Pyrope divides lambdas into four categories: `comb`, `pipe`, `mod`, and
+`fluid`.
 
 - `comb` is pure combinational logic. The outputs are purely a function of
   the inputs — no registers, no state, no cycle-level side effects. A
-  `comb` may not declare a `reg` and may not call a `pipe` or `mod`. The
-  only state it can hold is debug state marked `::[debug]`, which is
-  forbidden from influencing non-debug outputs (the compiler enforces
-  this). Any external call inside a `comb` can only affect debug
+  `comb` may not declare a `reg` and may not call a `pipe`, `mod`, or
+  `fluid`. The only state it can hold is debug state marked `::[debug]`,
+  which is forbidden from influencing non-debug outputs (the compiler
+  enforces this). Any external call inside a `comb` can only affect debug
   statements (e.g., `puts`), not synthesizable code. `comb` can use `ref`
   arguments to modify tuples; `ref` is equivalent to having the argument
   as both input and output, which is still purely combinational. `comb`
@@ -55,7 +56,13 @@ Pyrope divides the lambdas into three categories: `comb`, `pipe`, and `mod`.
   constructs used to belong to the separate `flow` category, which has
   been merged into `mod`).
 
-Methods are `comb`/`pipe`/`mod` lambdas that have `self` as the first
+- `fluid` is a transactional block with valid/retry handshakes on its
+  inputs and outputs. Fluid availability is dynamic: a transaction advances
+  only when `.[fire]` is true (`.[valid] and !.[retry]`). A `fluid` call
+  must be bound with a `fluid` declaration, and fluid calls are allowed only
+  inside `mod` and `fluid` lambdas. See [Fluid Blocks](06d-fluid.md).
+
+Methods are `comb`/`pipe`/`mod`/`fluid` lambdas that have `self` as the first
 argument, which allows operating on tuples.
 
 === "Combinational (comb)"
@@ -110,12 +117,28 @@ argument, which allows operating on tuples.
     }
     ```
 
+=== "Fluid block"
+    ```pyrope
+    fluid fpu(req:FpuReq) -> (resp:FpuResp) {
+      req.[retry] = busy
+
+      if req.[fire] {
+        start_operation(req)
+      }
+
+      resp.[valid] = result_pending
+      if resp.[fire] {
+        result_pending = false
+      }
+    }
+    ```
+
 ## Declaration
 
 There are two interchangeable forms for declaring a lambda. The **kind-first
 declaration form** is preferred — it matches the rest of Pyrope's grammar,
 where every declaration starts with a kind keyword (`const`/`mut`/`reg` for
-data, `comb`/`pipe`/`mod` for lambdas):
+data, `comb`/`pipe`/`mod`/`fluid` for lambdas):
 
 ```pyrope
 comb get_five() -> (v) { v = 5 }              // kind-first form
@@ -243,7 +266,8 @@ let an argument be passed unnamed:
   parameter by type).
 
 * `self` is always bound positionally — by the value before the dot in a
-  UFCS call — and is never named at the call site.
+  UFCS call, or by the first positional actual in a direct call — and is
+  never named at the call site.
 
 There are several rules on how to handle arguments.
 
@@ -253,14 +277,15 @@ There are several rules on how to handle arguments.
   site unambiguously identifiable.
 
 * **Calls use Uniform Function Call Syntax (UFCS).** `x.f(args)` is
-  rewritten to `f(x, args)`. If the lambda declares `self`, `x` is bound
-  to `self`. Otherwise `x` must be a named tuple whose fields match the
-  lambda's parameters by name.
+  rewritten to `f(x, args)` with `x` bound positionally to `self`. The
+  UFCS form is valid ONLY when the lambda declares `self`: calling a
+  self-less lambda as `x.f(args)` is a compile error (use the direct
+  form).
 
-* **If a lambda declares `self`, it can ONLY be called via UFCS.** The
-  direct form `method(self=..., ...)` is rejected; the caller must write
-  `value.method(...)`. This avoids two equivalent spellings for the same
-  method call.
+* **If a lambda declares `self`, BOTH call forms are valid:** the UFCS
+  form `value.method(args)` and the direct form `method(value, args)`
+  — the receiver is simply the first positional actual. `self` binds
+  only positionally; the named spelling `method(self=...)` is rejected.
 
 ### Uniform Function Call Syntax (UFCS)
 
@@ -276,13 +301,13 @@ comb noarg()      -> (r) { r = 33 }           // explicit no args
 cassert(33 == noarg())               // () always required, even for no-arg calls
 
 const b1 = (8).div(b=2)              // OK: 8 → self, b named (4)
-const c1 = (a=8, b=2).div2()         // OK: named tuple matches a, b (4)
-const c2 = (b=2, a=8).div2()         // OK: field order does not matter (4)
+const b2 = div(8, b=2)               // OK: direct form, 8 → self (4)
 const d1 = div2(a=8, b=2)            // OK: direct call, all named (4)
 
-const t1 = (8).div2(b=2)             // error: div2 has no self; `8` is unnamed
+const c1 = (a=8, b=2).div2()         // error: div2 has no self → no UFCS
+const t1 = (8).div2(b=2)             // error: div2 has no self → no UFCS
 const t2 = 8.div(2)                  // error: `2` is not named
-const t3 = div(self=8, b=2)          // error: `div` declares self → UFCS only
+const t3 = div(self=8, b=2)          // error: `self` cannot be named
 
 assert(noarg)                        // error: `noarg()` needed for calls
 ```
@@ -297,8 +322,9 @@ comb some_op(self, d=3) -> (r) { /* ... */ }
 (8).some_op(d=3)        // scalar bound to self
 [8, 2, a].some_op(d=3)  // array bound to self
 (8, 2).some_op(d=2)     // unnamed tuple bound to self
+some_op(8, d=3)         // direct form: 8 bound to self
 
-some_op(self=8, d=3)    // error: declares self → UFCS only
+some_op(self=8, d=3)    // error: `self` cannot be passed by name
 ```
 
 The UFCS allows `lambdas` to call any tuple, but if the called tuple has a
@@ -315,12 +341,12 @@ comb f1(self) -> (r) { r = 2 } // error: f1 shadows tup.f1
 comb f1() -> (r) { r = 3 }     // OK, no self
 
 assert(f1() != 0)        // error: missing argument
-assert(f1(tup) != 0)     // error: free `f1` has no self; UFCS would be `tup.f1()` but that is shadowed
+assert(f1(tup) != 0)     // error: free `f1` takes no arguments
 assert(4.f1() != 0)      // error: f1 can be called for tup, so shadowed
 assert(tup.f1() != 0)    // error: f1 is shadowing
 
 comb xx(self:tup) -> (r) { r = self.f1() } // OK, explicit input restricts scope for f1
-cassert((tup).xx() == 1)                   // xx declares self → UFCS only
+cassert((tup).xx() == 1)                   // xx declares self → UFCS OK (xx(tup) works too)
 
 cassert((4:tup).f1() == 1)
 cassert((4).f1() == 3)    // UFCS call, scalar bound to self
@@ -334,6 +360,20 @@ having the argument as both input and output, `comb` can use `ref` and still
 be purely combinational. Use `mod` only when the method needs registers or
 cycle-level state.
 
+A typed `self` (`self:T` / `ref self:T`) constrains the receiver
+STRUCTURALLY: the call is valid when `receiver does T` — per-field name
+presence, matching scalar kinds, and integer ranges within the declared
+bounds; extra receiver fields are fine (see
+[Structural typing](07b-structtype.md)). It is never a typename
+comparison. Only NAMED self types are supported; an inline tuple type on
+`self` is a compile error. The `does`-check applies to `self` only — the
+other arguments keep the normal argument rules above.
+
+`ref self` additionally requires a `mut` value receiver: calling a
+ref-self method on a `const` or on a `type` binding is a compile error
+(same as passing a const to any `ref` parameter). A non-ref `self` method
+IS callable on a `type` binding — it reads the field defaults.
+
 
 ```pyrope
 mut tup2 = (
@@ -343,27 +383,25 @@ mut tup2 = (
 )
 ```
 
-A lambda call always uses parentheses (`foo()` or `foo(1, 2)`). The only
-exception is a variable with a getter method — reading the variable (without
-parens) implicitly invokes the getter.
+A lambda call always uses parentheses (`foo()` or `foo(1, 2)`). There is no
+exception: reading a variable or field never invokes a method implicitly.
 
-Getter and setter methods are implicit read/write hooks, so they must be
-`comb`. If an operation needs registers, pipeline latency, or cycle-level
-side effects, use an explicit `mod` or `pipe` method call instead of a
-getter/setter.
+The `init` method is an implicit construction hook, so it must be `comb`. If
+an operation needs registers, pipeline latency, or cycle-level side effects,
+use an explicit `mod` or `pipe` method call instead.
 
 ```pyrope
 no_arg_fun()     // parentheses always required
 arg_fun(1, 2)    // parenthesis required
 
-mut intercepted:(
+mut constructed:(
   mut field:u32,
-  comb getter(self) -> (r) { r = self.field + 1 },
-  comb setter(ref self, v) { self.field = v }
-) = 0
+  comb init(ref self, v) { self.field = v + 1 }
+) = 0            // construction calls init(ref constructed, 0)
 
-cassert(intercepted == 1) // will call getter method without explicit call
-cassert(intercepted.field == 0)
+cassert(constructed.field == 1)
+constructed.field = 7     // plain write, no hook
+cassert(constructed.field == 7)
 ```
 
 ## Pass by reference
@@ -429,8 +467,7 @@ are three rules that work together:
 
 2. **The body assigns to the declared output names.** The "last expression
    is an implicit return" sugar from earlier Pyrope drafts is gone — a bare
-   expression at the end of a body is a no-op unless it is the placeholder
-   lambda form described below.
+   expression at the end of a body is a no-op.
 
 3. **`return` is a terminator only.** The keyword ends the current lambda
    and never carries a value (`return X` is a syntax error). Whatever has
@@ -496,79 +533,46 @@ comb inc(a)    -> (r) { r = a + 1 }
 mymap.each(inc)   // OK: `each` has one non-self argument
 ```
 
-## Getter/setter
+## Init (constructor)
 
 
-Stateful behavior can be modeled as a tuple with fields and methods. The tuple
-fields hold the state, and the methods operate on it via `ref self`.
-Getter/setter methods are always combinational hooks around reads and writes.
-They may update fields through `ref self`, but they cannot be `mod` or `pipe`;
-stateful or pipelined behavior should be exposed as an explicit method.
+Stateful behavior is modeled as a tuple with fields and methods. The tuple
+fields hold the state, and the methods operate on it via `ref self`. The only
+implicit hook is `init`, the constructor: it runs once when a variable of the
+type is constructed, and it must be `comb`. After construction, reads and
+writes are always structural; stateful or pipelined behavior is exposed as an
+explicit `mod` or `pipe` method.
 
-=== "Explicit call"
-    ```pyrope
-    mut p1 = (
-      mut found_once:bool = false,
-      mod call(ref self, a) -> (result) {
-        self.found_once or= (a == 0)
-        result = a + 1
-      }
-    )
+```pyrope
+const Counter = (
+  mut found_once:bool = false,
+  comb init(ref self, start:bool) {   // constructor
+    self.found_once = start
+  },
+  mod call(ref self, a) -> (result) { // explicit stateful method
+    self.found_once or= (a == 0)
+    result = a + 1
+  }
+)
 
-    mut p2 = p1       // copy
-    mut p3 = ref p1   // reference
+mut p1:Counter = false   // init(ref p1, false)
+mut p2 = p1              // plain structural copy
 
-    test "testing p1" {
-      assert(p1.found_once == false)
-      assert(p2.found_once == false)
+test "testing p1" {
+  assert(p1.found_once == false)
+  assert(p2.found_once == false)
 
-      cassert(p1.call(3) == 4)
-      assert(p1.found_once == false)
+  cassert(p1.call(3) == 4)
+  assert(p1.found_once == false)
 
-      cassert(p1.call(0) == 1)
-      assert(p1.found_once == true)
+  cassert(p1.call(0) == 1)
+  assert(p1.found_once == true)
 
-      cassert(p1.call(50) == 51)
-      assert(p1.found_once == true)
-      assert(p2.found_once == false)
-      assert(p3.found_once == true)
-    }
-    ```
-
-=== "With getter/setter"
-    ```pyrope
-    mut p1 = (
-      mut found_once:bool = false,
-      comb setter(ref self, a) {
-        self.found_once or= (a == 0)
-        self._result = a + 1
-      },
-      mut _result = 0,
-      comb getter(self) -> (r) { r = self._result }
-    )
-
-    mut p2 = p1       // copy
-    mut p3 = ref p1   // reference
-
-    test "testing p1" {
-      assert(p1.found_once == false)
-      assert(p2.found_once == false)
-
-      p1 = 3                         // calls setter
-      cassert(p1 == 4)               // calls getter
-      assert(p1.found_once == false)
-
-      p1 = 0
-      cassert(p1 == 1)
-      assert(p1.found_once == true)
-
-      p1 = 50
-      cassert(p1 == 51)
-      assert(p1.found_once == true)
-      assert(p2.found_once == false)
-      assert(p3.found_once == true)
-    }
-    ```
+  cassert(p1.call(50) == 51)
+  assert(p1.found_once == true)
+  assert(p2.found_once == false)
+}
+```
 
 ## Methods
 
@@ -634,7 +638,7 @@ const mul = inc
 counter.mul(2)             // call the new mul method with UFCS
 assert(counter.val == 10)
 
-mul(counter, 2)            // error: `inc` (aliased as `mul`) declares self → UFCS only
+mul(counter, 2)            // OK: direct form, counter bound to self (val == 20)
 ```
 
 

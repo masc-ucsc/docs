@@ -232,7 +232,7 @@ mod alu(in1, in2) -> (out_pipelined, out_live) {
 }
 
 mod accum_alu(in1, in2) -> (out) {
-  reg total::[init=0]
+  reg total::[initial=0]
   stage[3] tmp = mul(in1, in2)
   const sum_aligned = add(total@[3], tmp@[3])  // both operands checked at cycle 3
   total = sum_aligned                          // register write
@@ -420,7 +420,7 @@ mut array_size = SIZE               // Uses compile-time value
 reg state::[reset_pin=ref my_reset] = 0  // Custom reset signal (ref = wire connection)
 reg clocked::[clock_pin=ref fast_clk] = 0 // Custom clock signal
 reg no_reset::[reset_pin=false] = 0      // Tied low (comptime value, no ref needed)
-reg async_reg::[async=true] = 0      // Asynchronous reset
+reg async_reg::[sync=false] = 0      // Asynchronous reset (sync is true by default)
 reg pipeline::[retime=true] = 0      // Allow synthesis retiming
 
 // Debug attributes
@@ -443,8 +443,8 @@ reg dual_port:[1024]u16:[
 
 // Memory with custom clocking
 reg async_mem:[64]u8:[
-  clock=(clk1, clk2),  // Different clocks per port
-  reset=mem_rst,       // Custom reset signal
+  clock_pin=(ref clk1, ref clk2),  // Different clocks per port
+  reset_pin=ref mem_rst,           // Custom reset signal
   posclk=false         // Negative edge triggered
 ] = 0
 ```

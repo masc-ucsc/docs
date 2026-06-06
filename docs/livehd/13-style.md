@@ -67,7 +67,7 @@ class Sweet_potato {
 ## Error handling and exceptions
 
 Use the Pass::error or Pass:warn for error and likely error (warn). Internally, error generates
-and exception capture by the main lgshell to move to the next task.
+an exception captured by the `lhd` driver to move to the next task.
 
 ```cpp
 Pass::error("inou_yaml: can only have a yaml_input or a graph_name, not both");
@@ -83,7 +83,7 @@ You can configure your text editor to do this automatically
 ## Include order
 
 First do C includes (try to avoid when possible), then an empty line with C++
-includes, then an empty line followed with lgraph related includes. E.g:
+includes, then an empty line followed with LiveHD related includes. E.g:
 
 ```
 #include <sys/types.h>
@@ -92,8 +92,8 @@ includes, then an empty line followed with lgraph related includes. E.g:
 #include <iostream>
 #include <set>
 
-#include "graph_library.hpp"
-#include "lgedgeiter.hpp"
+#include "cell.hpp"
+#include "node_util.hpp"
 ```
 
 ## Keep column widths short
@@ -221,10 +221,10 @@ foo = new Sweet_potato(3, 7)
 ```
 
 
-## Use fmt::print to print messages for debugging
+## Use std::print / std::format to print messages for debugging
 
 ```cpp
-fmt::print("This is a debug message, name = {}, id = {}\n",g->get_name(), idx);
+std::print("This is a debug message, name = {}, id = {}\n", node_name_of(node), idx);
 ```
 
 ## Use accessors consistently
@@ -291,60 +291,31 @@ std::vector<LGraph *> Inou_yaml::generate() {
 
 ## Decide how to use attributes
 
-Attributes are parameters or information that an be per Node, Node_pin or Edge. In LGraph, attributes are
-persistent. This means that they are kept across execution runs in the LGraph database (E.g: in lgdb).
+Attributes are parameters or information that can be per node or per pin.
+Persistent attributes are HHDS attribute tags: they are declared in
+`graph/attrs.hpp` (LGraph) or `lnast/lnast_attrs.hpp` (LNAST), registered at
+static-init, and serialized with the graph/tree. Any new persistent attribute
+must be a registered tag so it survives the `lg:`/`ln:` save/load round-trip.
 
-
-For persistent attributes, the structures to use are defined in core/annotate.hpp. Any new attribute
-must be added to "annotate.hpp" to preserve persistence and to make sure that they are cleared when needed.
-
-
-Many times it is important to have information per node, but that it is not persistent across runs. For example,
-when building a LGraph from Yosys, there is a need to remember pointers from yosys to LGraph. This by definition can not be persistent because pointers change across runs. For this case, there are several options.
-
-
-### The Non-Persistent Annotations
-
-
-If the data structure needs to keep most of the node/pins in the Lgraph, use the compact_class notation:
 ```cpp
-absl::flat_hash_map<SomeData, Node_pin::Compact_class> s2pin;
-absl::flat_hash_map<SomeData, Node::Compact_class>     s2node;
-
-SomeData d1;
-Lgraph *lg; // LGraph owning the node
-s2pin[d1]  = node.get_driver_pin().get_compact_class(); // Example of use getting a pint
-s2node[d1] = node.get_compact_class();
-auto name = s2pin[d1].get_node(lg).get_name();   // Pick previously set driver name
+pin.attr(livehd::attrs::bits).set(8);
+auto a = pin.attr(livehd::attrs::bits);
+if (a.has()) { use(a.get()); }
+node.attr(livehd::attrs::color).del();
 ```
 
-Another example:
+Many times it is important to have information per node that is not persistent
+across runs. For example, when building a LGraph from Yosys, there is a need
+to remember pointers from yosys to LGraph. This by definition can not be
+persistent because pointers change across runs. For this case, use a local map
+keyed on the node/pin class index:
 
 ```cpp
-absl::flat_hash_map<Node_pin::Compact, RTLIL::Wire *>  input_map;
+absl::flat_hash_map<hhds::Class_index, RTLIL::Wire *> input_map;
 
-input_map[pin.get_compact()] = wire;
+input_map[pin.get_class_index()] = wire;
 
-auto *wire = input_map[pin.get_compact()];
-
-for(const auto &[key, value]:input_map) {
-  Node_pin pin(lg, key); // Key is a ::Compact, not a Node_pin
-  auto name  = pin.get_name();
-  // ... Some use here
-}
-```
-
-If the data structure just holds a small subset of the graph, you can keep the
-metadata, and use Node/Node_pin directly. E.g:
-
-```cpp
-absl::flat_hash_map<SomeData, Node_pin> s2pin;
-absl::flat_hash_map<SomeData, Node>     s2node;
-
-SomeData d1;
-s2pin[d1]  = node.get_driver_pin(); // Example of use getting a pint
-s2node[d1] = node;
-auto name = s2pin[d1].get_name();   // Pick previously set driver name
+auto *wire = input_map[pin.get_class_index()];
 ```
 
 In this case, it is fine to use the full Node, Node_pin, or Edge. This has some

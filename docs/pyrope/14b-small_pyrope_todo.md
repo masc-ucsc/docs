@@ -504,8 +504,10 @@ const RegBox = (reg v:int,
 
 ```
 
-Special `getter`/`setter` hooks are different from ordinary methods like
-`get`/`set`: they are implicit read/write hooks and must be `comb`.
+The special `init` hook (the constructor) is different from ordinary methods
+like `get`/`set`: it is an implicit construction hook and must be `comb`.
+There is no read or write hook; after construction, reads and writes are
+always structural.
 
 ### Operator overloading
 ```pyrope

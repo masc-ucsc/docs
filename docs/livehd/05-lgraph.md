@@ -1,4 +1,4 @@
-# LGraph 
+# LGraph
 
 !!! Warning
     LiveHD is beta under active development and we keep improving the
@@ -6,246 +6,152 @@
 
 
 
-The LGraph is built directly through LNAST to LGraph translations. The LNAST
-builds a gated-SSA which is translated to LGraph. Understanding the LGraph is
-needed if you want to build a LiveHD pass.
+The LGraph is built directly through LNAST to LGraph translations
+(`upass/tolg`) or from the Yosys-based Verilog readers. Understanding the
+LGraph is needed if you want to build a LiveHD pass.
 
 
 LGraph is a graph or netlist where each vertex is called a node, and it has a
-cell type and a set of input/output pins.
+cell type and a set of input/output pins. Since the HHDS migration, a LGraph
+*is* an `hhds::Graph`: LiveHD layers on top of it the cell-type metadata
+(`Ntype_op` in `graph/cell.hpp` and `graph/cell.cpp`), the attribute tags
+(`graph/attrs.hpp`), and a set of free-function helpers
+(`graph/node_util.hpp`, namespace `livehd::graph_util`). A design (one graph
+per module) is stored/loaded as an `hhds::GraphLibrary` directory — the `lg:`
+kind of the [lhd](02-usage.md) command line.
 
 
 ## API
 
 A single LGraph represents a single netlist module. LGraph is composed of
-nodes, node pins, edges, cell types, and tables of attributes. An LGraph node
-is affiliated with a cell node type and each type defines different amounts of input
-and output node pins. For example, a node can have 3 input ports and 2 output
-pins. Each of the input/output pins can have many edges to other graph nodes.
-Every node pin has an affiliated node pid. In the code, every node_pin has a
-`Port_ID`.
+nodes (`hhds::Node_class`), node pins (`hhds::Pin_class`), edges, cell types,
+and attributes. An LGraph node is affiliated with a cell type and each type
+defines different amounts of input (sink) and output (driver) pins. Every pin
+has a `hhds::Port_id`; sink pins additionally have LiveHD names ("a", "din",
+"clock_pin", ...) translated through `Ntype`.
 
-
-A pair of driver pin and sink pin constitutes an edge.  The bitwidth of the
+A pair of driver pin and sink pin constitutes an edge. The bitwidth of the
 driver pin determines the edge bitwidth.
 
+HHDS reserves three singleton built-in nodes per graph: `INPUT_NODE`,
+`OUTPUT_NODE` (the graph I/O, declared through `hhds::GraphIO`), and
+`CONST_NODE` (all constants hang off it as pins). Passes that walk-and-delete
+must skip them (`graph_util::is_builtin_node`).
 
-### Node, Node_pin, and Edge Construction
+### Node, pin, and constant construction
 
-- create a node without associated type (edges can not be created until a type is associated)
+- create a node with a cell type:
 
 ```cpp
-new_node = lg->create_node()
-//note: type and/or bits still need to be assigned later
+#include "node_util.hpp"
+using namespace livehd::graph_util;
+
+auto node = create_typed_node(g, Ntype_op::Sum);          // type set
+auto node = create_typed_node(g, Ntype_op::Sum, bits);    // + port-0 driver bits
+auto node = create_node_on(origin_node, Ntype_op::Not);   // same graph as origin
 ```
 
-- create node with node type assigned
+- change/read the cell type of a node (the `Ntype_op` encoding bakes the HHDS
+  `is_loop_last` low bit, so it round-trips without shifts):
 
 ```cpp
-new_node = lg->create_node(Node_type_Op)
-//note: recommended way if you know the target node type
+set_type_op(node, Ntype_op::And);
+Ntype_op op = type_op_of(node);
 ```
 
-- create a constant node
+- create a constant. Constants are pins on the `CONST_NODE` singleton; small
+  integers in `[-16, 15]` are encoded directly in the port id, larger values
+  carry a serialized payload (the value type is `Dlop` from the hlop library —
+  unlimited precision):
 
 ```cpp
-new_node = lg->create_node_const(value)
-//note: recommended way to create a const node
+auto cpin  = create_const(g, value);     // create-or-find canonical const pin
+Const v    = hydrate_const(cpin);        // decode it back
 ```
 
-- setup default driver pin for pin_0 of a node
+- sink pins are looked up / created by their LiveHD name. For `Sub` nodes the
+  name comes from the sub-graph's `GraphIO`; for every other cell type it is
+  the `Ntype` convention (see the cell tables below, and
+  [cell.cpp](https://github.com/masc-ucsc/livehd/blob/main/graph/cell.cpp)
+  for the authoritative list):
 
 ```cpp
-driver_pin = new_node.setup_driver_pin();
-//note: every cell in LGraph has only one driver pin, pin0
-
+auto spin = setup_sink_by_name(node, "a");      // create-if-missing
+auto spin = find_sink_pin(node, "din");         // invalid pin when not connected
+auto dpin = get_driver_of_sink_name(node, "a"); // the (single) driver feeding it
+auto dpins = inp_drivers_of(node, "b");         // all drivers (multi-driver sinks)
 ```
 
-- setup default sink pin for pin_0 of a node
+- driver pins are created/fetched by port id. In general nodes have a single
+  output (port 0); only `IO`, `Sub`, and `Memory` have multiple driver pins:
 
 ```cpp
-sink_pin = new_node.setup_sink_pin()
-//note: when you know the node type only has one input pin
+auto dpin = node.create_driver_pin(0);   // find-or-create
+auto dpin = node.get_driver_pin(0);
 ```
 
-- setup sink pin for pin_x of a node, for more information, please refer to the
-  Cell type section. For quick reference of the sink pin names of each cell
-  type, please see
-  [cell.cpp](https://github.com/masc-ucsc/livehd/blob/master/lgraph/cell.cpp)
-```cpp
-sink_pin = new_node.setup_sink_pin("some_name")
-```
-
-- add an edge between driver_pin and sink_pin
+- iterate edges and get node/pin information:
 
 ```cpp
-driver_pin.connect(sink_pin);
-```
-
-- get the driver node of an edge
-
-```cpp
-driver_node = edge.driver.get_node()
-
-```
-
-- use node as the index/key for a container
-
-```cpp
-absl::flat_hash_map<Node::Compact, int> my_map;
-my_map[node1.get_compact()] = 77;
-my_map[node2.get_compact()] = 42;
-...
-```
-
-- use node_pin as the index/key for a container
-
-```cpp
-absl::flat_hash_map<Node_pin::Compact, int> my_map;
-my_map[node_pin1.get_compact()] = 14;
-my_map[node_pin2.get_compact()] = 58;
-...
-```
-
-- get the node_pin back from a Node_pin::Compact
-
-```cpp
-Node_pin dpin(lg, some_dpin.get_compact())
-```
-
-- get the node back from a Node::Compact
-
-```cpp
-Node node(lg, some_node.get_compact())
-```
-
-- create a LGraph input(output) with the name
-
-```cpp
-new_node_pin = lg->add_graph_input(std::string_view)
-```
-
-- debug information of a node
-
-```cpp
-node.debug_name()
-```
-
-- debug information of a node_pin
-
-```cpp
-node_pin.debug_name()
-```
-
-- iterate output edges and get node/pin information from it
-
-```cpp
-for (auto &out : node.out_edges()) {
-  auto  dpin       = out.driver;
-  auto  dpin_pid   = dpin.get_pid();
-  auto  dnode_name = dpin.get_node().debug_name();
-  auto  snode_name = out.sink.get_node().debug_name();
-  auto  spin_pid   = out.sink.get_pid();
-  auto  dpin_name  = dpin.has_name() ? dpin.get_name() : "";
-  auto  dbits      = dpin.get_bits();
-
-  fmt::print(" {}->{}[label=\"{}b :{} :{} :{}\"];\n"
-      , dnode_name, snode_name, dbits, dpin_pid, spin_pid, dpin_name);
+for (const auto &e : node.inp_edges()) {
+  auto dpin = e.driver;
+  auto spin = e.sink;
+  auto pid  = spin.get_port_id();
+  auto name = debug_name(dpin.get_master_node());
 }
+for (const auto &e : node.out_edges()) { /* ... */ }
 ```
 
-### Non-Hierarchical Traversal Iterators
-
-LGraph allows forward and backward traversals in the nodes (bidirectional
-graph). The reason is that some algorithms need a forward and some a backward
-traversal, being bidirectional would help. Whenever possible, the fast iterator
-should be used.
+- iterate all the nodes of a graph:
 
 ```cpp
-for (const auto &node:lg->fast())     {...} // unordered but very fast traversal
-
-for (const auto &node:lg->forward())  {...} // propagates forward from each input/constant
-
-for (const auto &node:lg->backward()) {...} // propagates backward from each output
+for (auto node : graph->fast_class()) { ... }   // unordered, fast
 ```
 
-The LGraph iterator such as `for(auto node: g->forward())` do not visit graph
-input and outputs.
-
-```
-// simple way using lambda
-lg->each_graph_input([&](const Node_pin &pin){
-
-  //your operation with graph_input node_pin;
-
-});
-```
-
-### Hierarchical Traversal Iterators
-
-LGraph supports hierarchical traversal. Each sub-module of a hierarchical
-design will be transformed into a new LGraph and represented as a sub-graph node
-in the parent module. If the hierarchical traversal is used, every time the
-iterator encounters a sub-graph node, it will load the sub-graph persistent
-tables to the memory and traverse the subgraph recursively, ignoring the
-sub-graph input/outputs. This cross-module traversal treats the hierarchical
-netlist just like a flattened design. In this way, all integrated third-party
-tools could automatically achieve global design optimization or analysis by
-leveraging the LGraph hierarchical traversal feature.
+- graph inputs/outputs are declared through `hhds::GraphIO`:
 
 ```cpp
-for (const auto &node:lg->forward(true)) {...}
+auto gio = graph->get_io();
+for (const auto &d : gio->get_input_pin_decls())  { /* d.name, d.bits, d.port_id */ }
+for (const auto &d : gio->get_output_pin_decls()) { /* ... */ }
+auto ipin = graph->get_input_pin("a");
+auto opin = graph->get_output_pin("out");
 ```
 
-### Edge Iterators
-
-To iterate over the input edges of node, simply call:
+- debug information of a node:
 
 ```cpp
-for (const auto &inp_edge : node.inp_edges()) {...}
+debug_name(node);             // "<cell>_<nid>[:name]"
+default_instance_name(node);  // user name, or "<cell>_<nid>"
+wire_name(pin);               // name cgen would give this driver pin
 ```
 
-And for output edges:
+- hierarchy: a `Sub` node instantiates another module graph. Its sink/driver
+  pins are resolved by the sub-module's `GraphIO` names
+  (`node.get_subnode_io()`).
 
-```cpp
-for (const auto &out_edge : node.out_edges()) {...}
-```
+## Attributes
 
-## Attribute Design
+Design attributes (bitwidth, names, placement, source location, ...) are no
+longer dense side tables; each one is an HHDS attribute tag declared in
+`graph/attrs.hpp` and accessed uniformly through `node.attr(tag)` /
+`pin.attr(tag)` with `set/get/has/del`:
 
-Design attribute stands for the characteristic given to a LGraph node or node
-pin. For instance, the characteristic of a node name and node physical
-placement. Despite a single LGraph stands for a particular module, it could be
-instantiated multiple times. In this case, same module could have different
-attribute at different hierarchy of the netlist. A good design of attribute
-structure should be able to represent both non-hierarchical and hierarchical
-characteristic.
+| Tag | On | Meaning |
+|-----|----|---------|
+| `hhds::attrs::name` | node | user-assigned node name |
+| `livehd::attrs::bits` | pin | driver-pin bit width (0/absent = unspecified) |
+| `livehd::attrs::pin_name` | pin | user-assigned pin/wire name |
+| `livehd::attrs::pin_signed` | pin | presence = signed; absence = unsigned |
+| `livehd::attrs::pin_offset` | pin | offset for `Get_mask`/`Set_mask`/`Sext` positional ops |
+| `livehd::attrs::pin_delay` | pin | wire delay |
+| `livehd::attrs::color` | node | pass diagnostic taint |
+| `livehd::attrs::place`, `livehd::attrs::loc`, `livehd::attrs::source` | node | placement / source line / source file |
+| `livehd::attrs::const_value`, `livehd::attrs::pin_const_value` | node / pin | serialized constant payload |
+| `livehd::attrs::lut` | node | LUT contents |
 
-### Non-Hierarchical Attribute
-
-Non-hierarchical LGraph attributes include pin name, node name and line of
-source code. Such properties should be the same across different LGraph
-instantia- tions. Two instantiations of the same LGraph module will have the
-exact same user-defined node name on every node. For example, instantiations of
-a subgraph-2 in both top and subgraph-1 would maintain the same non-hierarchical
-attribute table.
-
-```cpp
-node.set_name(std::string_view name);
-```
-
-### Hierarchical attribute
-
-LGraph also support hierarchical attribute. It is achieved by using a tree data
-structure to record the design hierarchy. In LGraph, every graph has a unique
-id (lg_id), every instantiation of a graph would form some nodes in the tree and
-every tree node is indexed by a unique hierarchical id (hid). We are able to
-identify a unique instantiation of a graph and generate its own hierarchical
-attribute table. An example of hierarchical attribute is wire-delay.
-
-```cpp
-node_pin.set_delay(float delay);
-```
+`graph/node_util.hpp` provides convenience wrappers (`bits_of`, `set_bits`,
+`is_unsign`, `set_pin_name`, `node_name_of`, `set_source`, `set_loc1`, ...).
 
 ## Cell type
 
@@ -269,7 +175,7 @@ typical HDL IR type like "concat" does not exist because the result is
 dependent on the inputs size. This has the advantage of simplifying the
 decisions of when to drop bits in a value. It also makes it easier to guarantee
 no loss of precision. Any drop of precision requires explicit handling with
-operations like and-gate with masks or Shifts. 
+operations like and-gate with masks or Shifts.
 
 
 The document also explains corner cases in relationship to Verilog and how to
@@ -278,33 +184,57 @@ precision. Each HDL may have different semantics, the Verilog is to showcase
 the specifics because it is a popular HDL.
 
 
-All the cell types are in `core/cell.hpp` and `core/cell.cpp`. The type
-enumerate is called `Ntype`. In general the nodes have a single output with the
-exception of complex nodes like subgraphs or memories. The inputs is a string in
-lower case or upper case. Upper case ('A') means that many edges (or output
-drivers) can connect to the same node input or sink pin, lower case ('a') means
-that only a driver can connect to the input or sink pin.
+All the cell types are in `graph/cell.hpp` and `graph/cell.cpp`. The type
+enumerate is called `Ntype_op`. In general the nodes have a single output
+(driver port 0) with the exception of complex nodes (`IO`, `Sub`, `Memory`).
+Some sink pins accept a single driver, others accept many edges — the
+per-cell tables below state it. The historic "to positive" cell
+(`Ntype_op::Tposs`) no longer exists; a `Get_mask` with mask `-1` plays that
+role (`get_mask(a,-1) == zext(a)`).
 
+The full list of cell types:
 
-Each cell type can be called directly with Pyrope using a low level RTL syntax.
+| Ntype_op | Sinks | Functionality |
+|----------|-------|---------------|
+| `Sum` | `a` (added, multi), `b` (subtracted, multi) | `Y = Σa − Σb` |
+| `Mult` | `a` (multi) | n-ary product |
+| `Div` | `a`, `b` | `Y = a / b` |
+| `And`, `Or`, `Xor` | `a` (multi) | n-ary bitwise op |
+| `Ror` | `a` (multi) | reduce OR (`Y = (a != 0)`) |
+| `Not` | `a` | bitwise not |
+| `Get_mask` | `a`, `mask` | extract the bits selected by mask |
+| `Set_mask` | `a`, `mask`, `value` | replace the bits selected by mask |
+| `Sext` | `a`, `b` | sign-extend from bit position `b` |
+| `LT`, `GT`, `EQ` | `a` (multi), `b` (multi; EQ has only `a`) | comparators |
+| `SHL` | `a`, `b` (multi) | shift left; multiple amounts OR (one-hot builder) |
+| `SRA` | `a`, `b` | arithmetic shift right |
+| `LUT` | `p0`...`pN` | look-up table (`livehd::attrs::lut`) |
+| `Mux` | `s`, `p1`...`pN` | multiplexer (`s==0 → p1`, `s==1 → p2`, ...) |
+| `Hotmux` | `s`, `p1`...`pN` | one-hot select mux |
+| `IO` | `p0`...`pN` | graph input or output |
+| `Memory` | see below | SRAM-like structures and arrays |
+| `Flop` | see below | flop with sync or async reset |
+| `Latch` | `din`, `enable`, `posclk` | latch |
+| `Fflop` | see below | fluid flop |
+| `Sub` | sub-module GraphIO names | sub module instance |
+| `Nconst` | — | constant (no sinks) |
+| `AttrSet` | `parent`, `value`, `field` | leftover attribute set (cleanup by bitwidth) |
+
+The encoding of `Ntype_op` reserves bit 0 of the underlying value as
+`is_loop_last`, matching the bit HHDS reserves on its node type. The
+pipeline-breaking cells (`IO`, `Memory`, `Flop`, `Latch`, `Fflop`, `Sub`) are
+*loop last* (odd values); `Nconst` and `IO` are *loop first*. Passes use this
+to break cyclic traversals at registers/IO without special-casing.
+
+Each cell type can be called directly with Pyrope using a low level RTL syntax
+(`__sum`, `__and`, ... matching the lower-case cell names in `cell.cpp`).
 This is useful for debugging not for general use as it can result in less
 efficient LNAST code.
 
-An example of a multi-driver sink pin is the `Sum` cell which can do `Y=3+20+a0+a3`
-where `A_{0} = 3`, `A_{1} = 20`, `A_{2} = a0`, and `A_{3} = a3`. Another way to
-represent in valid Pyrope RTL syntax is:
-
-```
-Y = __sum(A=(3,20,a0,a3))
-```
-
-An example if single driver sink pin is the `SRA` cell which can do `Y=20>>3`.
-It is lower case because only one driver pin can connect to 'a' and 'b'. Another way
-to represent a valid Pyrope RTL syntax is:
-
-```
-Y = __sra(a=20,b=3)
-```
+An example of a multi-driver sink pin is the `Sum` cell which can do
+`Y=3+20+a0+a3` with four drivers connected to sink `a`. An example of single
+driver sink pins is the `SRA` cell which can do `Y=20>>3` with one driver on
+`a` and one on `b`.
 
 The section includes description on how to compute the maximum (`max`) and
 minimum (`min`) allowed result range. This is used by the bitwidth inference
@@ -319,13 +249,15 @@ For any value (`a`), the number of bits required (`bits`) is `a.bits = log2(absm
 ### Sum
 
 Addition and substraction node is a single cell Ntype that performs
-2-complement additions and substractions with unlimited precision.
+2-complement additions and substractions with unlimited precision. Every
+driver connected to sink `a` is added; every driver connected to sink `b` is
+subtracted.
 
 ``` mermaid
 graph LR
     cell  --Y--> c(fa:fa-spinner)
-    a(fa:fa-spinner) --A--> cell[Sum]:::cell
-    b(fa:fa-spinner) --B--> cell
+    a(fa:fa-spinner) --a--> cell[Sum]:::cell
+    b(fa:fa-spinner) --b--> cell
     classDef cell stroke-width:3px
 ```
 
@@ -336,19 +268,19 @@ same length.
 
 - Value:
 ```
-%Y = A.reduce('+') - B.reduce('+')
+%Y = a.reduce('+') - b.reduce('+')
 ```
 - Max/min:
 ```
 %max = 0
 %min = 0
-for a in A {
-  %max += A.max
-  %min += A.min
+for x in a {
+  %max += x.max
+  %min += x.min
 }
-for b in B {
-  %max -= b.min
-  %min -= b.max
+for x in b {
+  %max -= x.min
+  %min -= x.max
 }
 ```
 
@@ -358,29 +290,29 @@ Backward propagation is possible when all the inputs but ONE are known. The
 algorithm can check and look for the inputs that have more precision than
 needed and reduce the max/min backwards.
 
-For example, if and all the inputs but one A are known (max/min has the max/min
-computed for all the inputs but the unknown one)
+For example, if and all the inputs but one in `a` are known (max/min has the
+max/min computed for all the inputs but the unknown one)
 
 ```
-A_{unknown}.max = Y.max - max 
-A_{unknown}.min = Y.min - min 
+a_{unknown}.max = Y.max - max
+a_{unknown}.min = Y.min - min
 ```
 
-If the unknow is in port `B`:
+If the unknown is in port `b`:
 
 ```
-B_{unknown}.max = min - T.min
-B_{unknown}.min = max - Y.max
+b_{unknown}.max = min - Y.min
+b_{unknown}.min = max - Y.max
 ```
 
 **Verilog Considerations**
 
 In Verilog, the addition is unsigned if any of the inputs is unsigned. If any
 input is unsigned. all the inputs will be "unsigned extended" to match the
-largest value. This is different from Sum_Op semantics were each input is
+largest value. This is different from `Sum` semantics were each input is
 signed or unsigned extended independent of the other inputs. To match the
 semantics, when mixing signed and unsigned, all the potentially negative inputs
-must be converted to unsign with the Ntype_op::Tposs.
+must be converted to unsigned with a `Get_mask(x,-1)`.
 
 ```verilog
 logic signed [3:0] a = -1
@@ -428,14 +360,16 @@ following examples only the 'g' and 'h' variables needed.
 
 ### Mult
 
-Multiply operator. There is no cell type that combines multiplication and
-division because unlike in `Sum`. The reason is that with integers the order of multiplication/division changes
-the result even with unlimited precision integers (`a*(b/c) != (a*b)/c`).
+Multiply operator. All the drivers connect to the single sink `a` (input order
+does not matter). There is no cell type that combines multiplication and
+division. The reason is that with integers the order of
+multiplication/division changes the result even with unlimited precision
+integers (`a*(b/c) != (a*b)/c`).
 
 ``` mermaid
 graph LR
     cell  --Y--> c(fa:fa-spinner)
-    a(fa:fa-spinner) --A--> cell[Mult]:::cell
+    a(fa:fa-spinner) --a--> cell[Mult]:::cell
     classDef cell stroke-width:3px
 ```
 
@@ -443,20 +377,20 @@ graph LR
 
 - Value:
 ```
-Y = A.reduce('*')
+Y = a.reduce('*')
 ```
 - Max/min:
 ```
 var tmax = 1
-vat tmin = 1
+var tmin = 1
 var sign  = 0
-for i in A {
-  tmax *= maxabs(A.max, A.min)
-  tmin *= minabs(A.max, A.min)
-  known = false                when min<0 and max>0
-  sign += 1                    when max<0
+for i in a {
+  tmax *= maxabs(i.max, i.min)
+  tmin *= minabs(i.max, i.min)
+  known = false                when i.min<0 and i.max>0
+  sign += 1                    when i.max<0
 }
-if know { // sign is know
+if known { // sign is known
   if sign & 1 { // negative
     %max = -tmin
     %min = -tmax
@@ -474,13 +408,13 @@ if know { // sign is know
 **Backward Propagation**
 
 If only one input is missing, it is possible to infer the max/min from the
-output and the other inputs. Like in the `sum` case, if all the inputs but one
+output and the other inputs. Like in the `Sum` case, if all the inputs but one
 and the output is known, it is possible to backward propagate to further
 constraint the unknown input.
 
 ```
-A_{unknown}.max = Y.max / A.min
-A_{unknown}.min = Y.min / A.max
+a_{unknown}.max = Y.max / a.min
+a_{unknown}.min = Y.min / a.max
 ```
 
 **Verilog Considerations**
@@ -509,8 +443,8 @@ LGraph that the output is to be treated as unsigned.
 ### Div
 
 Division operator. The division operation is quite similar to the inverse of
-the multiplication, but a key difference is that only one driver is allowed for
-each input ('a' vs 'A').
+the multiplication, but a key difference is that only one driver is allowed
+for each input.
 
 ``` mermaid
 graph LR
@@ -564,9 +498,9 @@ The same considerations as in the multiplication should be applied.
 
 ### Modulo (how to model)
 
-There is no mod cell (Ntype_op::Mod) in LGraph. The reason is that a modulo
-different from a power of 2 is very rare in hardware. If the language supports
-modulo operations, they must be translated to division/multiplication.
+There is no mod cell in LGraph. The reason is that a modulo different from a
+power of 2 is very rare in hardware. If the language supports modulo
+operations, they must be translated to division/multiplication.
 
 ```
 y = a mod b
@@ -597,7 +531,7 @@ Bitwise Not operator
 ``` mermaid
 graph LR
     cell  --Y--> c(fa:fa-spinner)
-    a(fa:fa-spinner) --a--> cell[Div]:::cell
+    a(fa:fa-spinner) --a--> cell[Not]:::cell
     classDef cell stroke-width:3px
 ```
 
@@ -620,37 +554,25 @@ a.max = max(~Y.max,~Y.min)
 a.min = min(~Y.max,~Y.min)
 ```
 
-*Verilog Considerations**
+**Verilog Considerations**
 
 Same semantics as verilog
 
 **Peephole Optimizations**
 
-No optimizations by itself, it has a single input. Other operations like Sum_Op can optimize when combined with Not_Op.
+No optimizations by itself, it has a single input. Other operations like `Sum`
+can optimize when combined with `Not`.
 
-### And
+### And, Or, Xor
 
-`And` is a typical AND gate with multiple inputs. All the inputs connect to pin
-'A' because input order does not matter. The result is always a signed number.
-
-```{.graph .center caption="Ntype_op::And LGraph Node."}
-digraph And {
-    rankdir=LR;
-    size="1,0.5"
-
-    node [shape = circle]; And;
-    node [shape = point ]; q0
-    node [shape = point ]; q
-
-    q0 -> And [ label ="A" ];
-    And  -> q [ label = "Y" ];
-}
-```
+`And` is a typical AND gate with multiple inputs. All the inputs connect to
+the single sink `a` because input order does not matter. The result is always
+a signed number. `Or` and `Xor` follow the same n-ary single-sink structure.
 
 #### Forward Propagation
 
-- $Y = \forall_{i=0}^{\infty} Y \& A_{i}$
-- $m = \forall_{i=0}^{\infty} min(m,A_{i}.bits)$
+- $Y = \forall_{i=0}^{\infty} Y \& a_{i}$
+- $m = \forall_{i=0}^{\infty} min(m,a_{i}.bits)$
 - $Y.max = (1\ll m)-1$
 - $Y.min = -Y.max-1$
 
@@ -663,10 +585,13 @@ propagation to indicate that those bits are useless.
 - $a.max = Y.max $
 - $a.min = -Y.max-1 $
 
-#### Other Considerations
+### Ror
 
-#### Peephole Optimizations
-
+Reduce OR: `Y = (a != 0) ? 1 : 0` over all the drivers connected to sink `a`.
+This is a bit different from the LNAST `red_or` (LNAST uses masks). There are
+no reduce-AND/reduce-XOR cells; they are built from other cells (e.g., reduce
+AND is an equality against `-1`, reduce XOR is a XOR chain or popcount
+parity).
 
 ### Comparators
 
@@ -675,21 +600,23 @@ LT, GT, EQ
 There are only 3 comparators. Other typically found like LE, GE, and NE can be
 created by simply negating one of the LGraph comparators. `GT = ~LE`, `LT = ~GE`, and `NE = ~EQ`.
 
+`LT`/`GT` allow multiple drivers on both `a` and `b`; the result is the AND of
+all the pairwise comparisons. `EQ` has a single multi-driver sink `a` and
+checks that all the drivers are equal.
+
 #### Forward Propagation
 
-- `Y = A LT B`
+- `Y = a LT b`
 
-- `Y = A0 LT B and A1 LT B`
+- `Y = a0 LT b and a1 LT b`
 
-- `Y = A0 LT B0 and A1 LT B0 and A0 LT B1 and A1 LT B1`
-
-#### Backward Propagation
-
-#### Peephole Optimizations
+- `Y = a0 LT b0 and a1 LT b0 and a0 LT b1 and a1 LT b1`
 
 #### Other Considerations
 
-Verilog treats all the inputs as unsigned if any of them is unsigned. LGraph treats all the inputs as signed all the time.
+Verilog treats all the inputs as unsigned if any of them is unsigned. LGraph
+treats all the inputs as signed all the time. The unsigned inputs need a
+`Get_mask(x,-1)` (to-positive) when translating:
 
 | size | A | B | Operation |
 |------|---|---|-----------|
@@ -698,215 +625,158 @@ Verilog treats all the inputs as unsigned if any of them is unsigned. LGraph tre
 | a==b | U | S | EQ(a,b) |
 | a==b | U | U | EQ(a,b) |
 | a< b | S | S | LT(a,b) |
-| a< b | S | U | LT(a,Tposs(b)) |
-| a< b | U | S | LT(Tposs(a),b) |
-| a< b | U | U | LT(Tposs(a),Tposs(b)) |
+| a< b | S | U | LT(a,get_mask(b,-1)) |
+| a< b | U | S | LT(get_mask(a,-1),b) |
+| a< b | U | U | LT(get_mask(a,-1),get_mask(b,-1)) |
 
 
-### SHL_op
+### SHL
 
 Shift Left performs the typical shift left when there is a single amount
-(`a<<amt`). The allow supports multiple left shift amounts. In this case the
-shift left is used to build one hot encoding mask. (`1<<(1,2) == (1<<1)|(1<<2)`)
+(`a<<b`). The cell supports multiple drivers on the `b` (amount) sink; in this
+case the results are OR-ed together, which is useful to build one hot encoding
+masks (`a<<(1,2) == (a<<1)|(a<<2)`).
 
-The result for when there are not amounts (`a<<()`) is `-1`. Notice that this
-is not ZERO but -1. The -1 means that all the bits are set. The reason is that
-when there are no offsets in the onehot encoding, the default functionality is
-to select all the bit masks, and hence -1.
+### SRA
 
-### SRA_op
-
-Logical or sign extension shift right.
+Arithmetic (sign preserving) shift right: `Y = a >>> b`.
 
 #### Verilog Considerations
 
 Verilog has 2 types of shift `>>` and `>>>`. The first is unsigned right shift,
-the 2nd is arithmetic right shift. LGraph only has arithmetic right shift
-(ShiftRigt_op). The verilog translation should make the value unsigned
-(`ShiftRigt(Join(0,a),b)`) before calling the shift operation. Conversely, for
-a `>>>` if the input is Verilog unsigned (`ShiftRigt(a,b)`)
+the 2nd is arithmetic right shift. LGraph only has arithmetic right shift. The
+verilog translation should make the value unsigned
+(`SRA(get_mask(a,-1),b)`) for a Verilog `>>`; for a `>>>` the input maps
+directly.
 
-### Mux_op
+### Mux
 
-#### Forward Propagation
+Multiplexer. Sink `s` is the selector; sinks `p1`...`pN` are the data inputs:
+`s==0` selects `p1`, `s==1` selects `p2`, and so on. With more than two data
+inputs the code generation emits a `case` statement over `s`.
 
-- $Y = P_{(1+P_{0}}$
-- $Y.max = (1\ll m)-1$
-- $Y.max = \forall_{i=0}^{\infty} P_{i}.max$
-- $Y.max = \forall_{i=0}^{\infty} P_{i}.min$
+### Hotmux
 
-#### Backward Propagation
+One-hot select multiplexer. Sink `s` is a one-hot encoded selector and
+`p1`...`pN` are the data inputs; bit `i` of `s` selects `p(i+1)`. A
+non-one-hot selector at runtime is an error. `Hotmux` avoids the
+binary-encode/decode pair that a `Mux` would need when the surrounding logic
+already produces one-hot signals.
 
-#### Peephole Optimizations
+### LUT
 
-#### Other Considerations
+Look-up table cell. The inputs connect to `p0`...`pN` and the table contents
+live in the `livehd::attrs::lut` attribute.
 
-### LUT_op
+### IO
 
-### And_op
+Graph input or output node. Every graph has the `INPUT_NODE` and `OUTPUT_NODE`
+singletons; the declared ports (name, bits, port id) live in the graph's
+`hhds::GraphIO` tables and are accessed with `graph->get_io()`,
+`graph->get_input_pin(name)`, and `graph->get_output_pin(name)`.
 
-reduce AND `a =u= -1` // unsigned equal
+### Nconst
 
-### Or_op
+Constant node. Most constants are pins on the `CONST_NODE` singleton (small
+integers `[-16,15]` are encoded in the port id; bigger values carry a
+serialized `Dlop` payload in `livehd::attrs::pin_const_value`). A regular
+`Nconst` node with a `livehd::attrs::const_value` attribute is the
+node-shaped legacy form; both are valid constant sources.
 
-reduce OR `a != 0`
+### Flop
 
-### Xor_op
+The single flop cell (it replaces the old SFlop/AFlop split — the `async` pin
+selects the reset style):
 
-reduce xor is a chain of XORs.
+| Sink | Meaning |
+|------|---------|
+| `async` | async (vs sync) reset select |
+| `initial` | reset value |
+| `clock_pin` | clock driver |
+| `din` | data in (Q is driver pin 0) |
+| `enable` | clock enable |
+| `negreset` | active-low reset when set |
+| `posclk` | posedge clock when set |
+| `reset_pin` | reset driver |
 
-### Const_op
+The optional pins (`async`, `negreset`, `initial`, `enable`, ...) may simply
+not be connected.
 
-### SFlop_op
+### Latch
 
-### AFlop_op
+| Sink | Meaning |
+|------|---------|
+| `din` | data in |
+| `enable` | latch enable |
+| `posclk` | polarity |
 
-### FFlop_op
+### Fflop (Fluid flop)
 
-### Latch_op
+Flop with elastic/fluid handshaking:
 
-### Get_mask_op
+| Sink | Meaning |
+|------|---------|
+| `valid` | valid in |
+| `initial` | reset value |
+| `clock_pin` | clock driver |
+| `din` | data in |
+| `stop` | stop (back-pressure) from the next cycle |
+| `reset_pin` | reset driver |
 
-Inputs - a, mask
-Get_mask (a, mask)
-Functionality - Output contains only those bits a[i], for which mask[i] = 1, other bits a[i] for which mask[i] = 0, are dropped.
-a & mask are interpreted as signed numbers and sign extended to the size of the other, if required.
-eg - Get_mask (0sb11000011, 0sb10101010) = 0sb1001 
-     Get_mask (0sb11110000, 0sb00001111) = 0sb0000
-     Get_mask (0sb0011, 0sb10) = 0sb001
-     Get_mask (0sb10, 0sb1010) = 0sb11
+### Memory
 
-### Set_mask_op
+Memory is the basic block to represent SRAM-like structures and arrays. Any
+large storage will benefit from using memory arrays instead of flops, which
+are slower to simulate. These memories are highly configurable.
 
-Inputs - a, value, mask
-Set_mask(a, mask, value)
-Functionality - Replaces all bits a[i] for which mask[i] = 1, with value[i] 
-Retains all bits a[i] for which mask[i] = 0.
-// Check - if a, value are signed, actually none of them should be extended and their signs should not matter, but a might need to retain it's sign
-eg - Set_mask (0b101 01 010, 0sb000 11 000, 0b001 10 011) = 0sb 101 10 010
+The sink pins (per `graph/cell.cpp`):
 
-### Sext_op  (Sign extend)
+| Sink | Kind | Meaning |
+|------|------|---------|
+| `addr` | runtime, per port | address |
+| `bits` | comptime, 1 | bits per entry |
+| `clock_pin` | runtime, 1 or per port | clock |
+| `din` | runtime, per port | write data |
+| `enable` | runtime, per port | read/write enable |
+| `fwd` | comptime, 1 | write forwarding (0/1) |
+| `posclk` | comptime, 1 | clock polarity |
+| `type` | comptime, 1 | 0: async, 1: sync, 2: array |
+| `wensize` | comptime, 1 | number of write-enable bits |
+| `size` | comptime, 1 | number of entries |
+| `rdport` | comptime, per port | 1: read port, 0: write port |
 
-Inputs - a, b
-Sext (a, b)
-Selects only bits a[b:0] dropping all remaining MSBs.
-The selected a[b:0] is interpretded as a signed value, a's sign does not matter,b conyains the MSB index and hence is always unsigned/ positive
-eg Sext (0b10101010, 4) = 0sb01010 = 0xA = +10
-Sext (0b10101010, 5) = 0sb101010 = 0x2A = -22
+Multi-ported memories use port-id wrapping: the per-port pins repeat every 11
+port ids (`pid % 11` selects the field, `pid / 11` the port). E.g., sink name
+`"11addr"` is the `addr` of port 1. If a single driver is connected for a
+shared field (like `clock_pin`), the same value is used across all the ports.
 
+The read data for read port N comes out on driver pin `n_wr_ports + N`.
 
+- `fwd` (forwarding) means writes forward their value to same-cycle reads —
+  effectively zero cycles read latency when enabled. This is more than just a
+  latency setting: with `fwd` enabled the write latency does not matter to
+  observe the results, which requires costly forwarding logic.
+- `type == 2` (array) generates an unclocked register array with forwarding
+  semantics (writes visible to subsequent reads in the same cycle); `type` 0/1
+  instantiate the `cgen_memory_*` wrapper modules.
 
-### Memory_op
+The memory usually has power of two sizes. If the size is not a power of 2,
+the address is rounded up. Writes to the invalid addresses will generated
+random memory updates. Reads should read random data.
 
-Memory is the basic block to represent SRAM-like structures. Any large storage will benefit from using memory arrays instead of flops, which are slower to simulate. These memories are highly configurable.
+### Sub
 
-```{.graph .center caption="Memory LGraph Node."}
-digraph Memory {
-    rankdir=LR;
-    size="2,1"
+Sub module instance. The sink and driver pins are resolved by name against the
+sub-module's `GraphIO` declarations (`node.get_subnode_io()`), not the
+`Ntype` tables. The module hierarchy is managed by the graph library
+(`hhds::GraphLibrary`, the `lg:` directory of `lhd`).
 
-    node [shape = circle]; Memory;
-    node [shape = point ]; q0
-    node [shape = point ]; q1
-    node [shape = point ]; q2
-    node [shape = point ]; q3
-    node [shape = point ]; q4
-    node [shape = point ]; q5
-    node [shape = point ]; q6
-    node [shape = point ]; q7
-    node [shape = point ]; q8
-    node [shape = point ]; q9
-    node [shape = point ]; q10
-    node [shape = point ]; q
+### AttrSet
 
-    q0 -> Memory [ label ="a (addr)" ];
-    q1 -> Memory [ label ="b (bits)" ];
-    q2 -> Memory [ label ="c (clock)" ];
-    q3 -> Memory [ label ="d (data in)" ];
-    q4 -> Memory [ label ="e (enable)" ];
-    q5 -> Memory [ label ="f (fwd)" ];
-    q6 -> Memory [ label ="l (latency)" ];
-    q7 -> Memory [ label ="m (wmask)" ];
-    q8 -> Memory [ label ="p (posedge)" ];
-    q9 -> Memory [ label ="s (size)" ];
-    q10 -> Memory [ label ="w (wmode)" ];
-    Memory  -> q [ label ="Q (data out)" ];
-}
-```
-
-- `s` (`size`) is for the array size in number of entries
-- `b` (`bits`) is the number of bits per entry
-- `f` (`fwd`) points to a 0/1 constant driver pin to indicate if writes forward value (`0b0` for write-only ports). Effectively, it means zero cycles read latency when enabled. `fwd` is more than just setting `latency=0`. Even with latency zero, the write delay affects until the result is visible. With `fwd` enabled, the write latency does not matter to observe the results. This requires a costly forwarding logic.
-- `c`,`d`,`e`,`q`... are the memory configuration, data, address ports
-
-Ports (`a`,`c`...`p`,`w`) are arrays/vectors to support multiported memories. If a single instance
-exists in a port, the same is used across all the ports. E.g: if clock (`c`) is populated:
-
-```
-mem1.c = clk1 // clk for all the memory ports
-
-mem2.c[0] = clk1 // clock for memory port 0
-mem2.c[1] = clk2 // clock for memory port 1
-mem2.c[2] = clk2 // clock for memory port 2
-```
-
-Each memory port (rd, wr, or rd/wr) has the following ports:
-
-- `a` (`addr`) points to the driver pin for the address. The address bits should match the array size (`ceil(log2(s))`)
-- `c` (`clock`) points to the clock driver pin
-- `d` (`data_in`) points to the write data driver pin (read result is in `q` port).
-- `e` (`enable`) points to the driver pin for read/write enable.
-- `l` (`latency`) points to an integer constant driver pin (2 bits always). For writes `latency from 1 to 3`, for reads `latency from 0 to 3`
-- `w` (`wmask`) Points to the write mask (1 == write, 0==no write). The mask bust be a big as the number of bits per entry (`b`). The `wmask` pin can be disconnected which means no write mask (a write will write all the bits).
-- `p` (`posedge`) points to a 1/0 constant driver pin
-- `m` (`mode`) points to the driver pin or switching between read (0) and write mode (1) (single bit)
-- `Q` (`data_out`) is a driver pin with the data read from the memory
-
-All the entries but the `wmask` must be populated. If the `wmask` is not set, a
-full write size is expected. Read-only ports do not have `data` and `wmask`
-fields if the write use the low ports (0,1...). By placing the read-only ports
-to the high numbers, we can avoid populating the wmask (`m`) and data out (`q`)
-ports. If the read ports use low port numbers those fields must be populated to
-allow the correct matching between write port (`a[n]`) and write result
-(`q[n]`).
-
-All the ports must be populated with the correct size. This is important
-because some modules access the field by bit position.
-If it is not used, it will point to a zero constant with the correct number of bits.
-The exception to this is `wmask` which, if `b` indicates 8 bits per entry,
-will be equivalent to `0xFF`. Setting wmask to `0b1` will mean a 1 bit zero,
-and the memory will be incorrectly operated.
-
-The memory usually has power of two sizes. If the size is not a power of 2, the
-address is rounded up. Writes to the invalid addresses will generated random
-memory updates. Reads should read random data.
-
-#### Forward Propagation
-
-#### Backward Propagation
-
-#### Other Considerations
-
-#### Peephole Optimizations
-
-### SubGraph_op
-
-And_Op: bitwise AND with 2 outputs single bit reduction (RED) or bitwise
-Y = VAL&..&VAL ; RED= &Y
-
-#### Forward Propagation
-
-- $Y = \left\{\begin{matrix} VAL>>OFF & SZ==0 \\ (VAL>>OFF) \& (1<<SZ)-1) & otherwise \end{matrix}\right.$
-- $Y.max = \left\{\begin{matrix} VAL.max>>OFF & SZ==0 \\ (VAL.max>>OFF) \& (1<<SZ)-1) & otherwise \end{matrix}\right.$
-- $Y.min = 0$
-- $Y.sign = 0$
-
-#### Backward Propagation
-
-The sign can not be backward propagated because Pick_Op removes the sign no matter the input sign.
-
-
-#### To be continued ...
+High-level attribute-set construct (`parent`, `field`, `value` sinks) kept
+only for the bitwidth pass leftover-cleanup; it is dropped at code generation.
+The old tuple-related cells (`TupAdd`, `TupGet`) and `AttrGet` no longer
+exist — tuples are fully resolved at the LNAST level before reaching LGraph.
 
 ## Optimization
 

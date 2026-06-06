@@ -1,16 +1,17 @@
 
 # Bazel build
 
-Bazel is a relatively new build system open sourced by google. The main difference
+Bazel is a build system open sourced by google. The main difference
 with traditional Makefiles is that it checks to make sure that dependences are not
 lost and the builds are reproducible and hermetic. This document explains how
-to use Bazel in the LGraph project.
+to use Bazel in the LiveHD project. External dependences are managed with
+bzlmod (`MODULE.bazel`).
 
 Build targets are referred to using the syntax `//<relative path to BUILD file>:<executable>`, where
 `//` is the path of the root livehd directory.
 
-To build the LiveHD shell and supporting libraries, the target would be `//main:all`.
-To build every target in LiveHD (helpful for checking if changes cause compilation failures), the target would be `//:...`.  For more details on target syntax, see [this](https://docs.bazel.build/versions/master/guide.html#target-patterns) page.
+To build the `lhd` driver and supporting libraries, the target would be `//lhd:lhd`.
+To build every target in LiveHD (helpful for checking if changes cause compilation failures), the target would be `//...`.  For more details on target syntax, see [this](https://docs.bazel.build/versions/master/guide.html#target-patterns) page.
 
 
 ## Release vs fastbuild (default) vs debug
@@ -37,6 +38,11 @@ or use thread sanitizer to detect data races
 $ bazel build -c dbg --config tsan //...
 ```
 
+or use undefined behavior sanitizer
+```
+$ bazel build -c dbg --config ubsan //...
+```
+
  - Release build: most optimization, no debug symbols, assertions turned off
 ```
 $ bazel build -c opt <target>
@@ -52,7 +58,7 @@ $ bazel build --config=bench <target>
 The bazel '-s' option prints the command executed. The sandbox may still be deleted.
 
 ```
-$ bazel build -s //main:all
+$ bazel build -s //lhd:lhd
 ```
 
 ## Keep all the files in bazel run for debugging
@@ -99,7 +105,7 @@ $ bazel query <target>
 ```
 $ bazel query "deps(<target>)"
 ```
-## List all the passes that use core (those should be listed at main/BUILD deps)
+## List all the passes that use core (those should be listed at lhd/BUILD deps)
 ```
 $ bazel query "rdeps(//pass/..., //core:all)" | grep pass_
 ```
@@ -132,17 +138,13 @@ $ bazel query 'attr(tags, long1, tests(<target>))'
 First run the tests to see the failing one. Then run with debug options
 the failing test. E.g:
 ```
-$ bazel run -c dbg //eprp:all
-```
-Increase logging level if wanted
-```
-$ LGRAPH_LOG=info bazel run -c dbg //eprp:all
+$ bazel test -c dbg //lnast:all
 ```
 To run with gdb
 ```
-$ bazel build -c dbg //eprp:eprp_test
-$ gdb bazel-bin/eprp/eprp_test
-(gdb) b Eprp::run
+$ bazel build -c dbg //lnast:lnast_test
+$ gdb bazel-bin/lnast/lnast_test
+(gdb) b Lnast::dump
 (gdb) r
 ```
 (lldb is also supported.)
@@ -151,5 +153,6 @@ $ gdb bazel-bin/eprp/eprp_test
 
 In the cc_binary of the relevant BUILD file, add `linkopts = ['-static']`
 
-Notice that the lgshell still needs the directory inside
-`bazel-bin/main/lgshell.runfiles when using inou.yosys.\*`
+Notice that lhd still needs the directory inside
+`bazel-bin/lhd/lhd.runfiles` when using the Yosys-based Verilog readers (the
+`//inou/yosys:scripts` data dependency).

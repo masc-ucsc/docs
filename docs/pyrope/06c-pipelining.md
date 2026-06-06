@@ -63,7 +63,7 @@ Registers declared with `reg` are preserved by default, meaning synthesis tools 
 If a register is intended to be a flexible pipeline stage rather than a fixed state-holding element, it can be marked with the `retime` attribute. This allows synthesis tools to perform optimizations like moving logic across the register, duplication, or elimination to improve performance.
 
 ```pyrope
-reg my_reg::[retime=true, clock=my_clk, init=0]
+reg my_reg::[retime=true, clock_pin=ref my_clk, initial=0]
 ```
 
 
@@ -109,6 +109,10 @@ actual flops anywhere that preserves the contract — distributed through the
 logic by retiming, at the inputs (an SRAM macro with registered inputs is a
 valid `pipe[1]`), or at the outputs. Pipeline flops inserted by the
 compiler are `retime=true`; state registers (next section) are preserved.
+Compiler-inserted flops also inherit the `.[valid]` of the value they
+transport: on cycles where the value is invalid the flop need not be
+clocked, enabling automatic clock gating as bubbles travel through the
+pipeline (see [Fluid blocks](06d-fluid.md#relation-to-optional-valid)).
 
 !!! Observation
     Because no input-to-output combinational path exists, any feedback loop
@@ -195,9 +199,22 @@ the operation that introduced it, naming both stages.
     `past[n](x)` or an explicit stage register to state which alignment was
     intended.
 
-For `pipe[A..=B]` and bare `pipe`, the body fixes a *minimum* latency
-`max σ(output)`: the caller's `stage[M]` (or the latency the tool picks)
-must be at least that minimum, and output padding fills the difference.
+For `pipe[A..=B]`, the body must support the **entire** declared range:
+its intrinsic depth `max σ(output)` must be `<= A`, or the declaration
+is rejected — the declaration is an interface, and a caller may rely on
+any latency in `[A, B]` without knowing the body. For bare `pipe`, the
+body fixes a *minimum* latency `max σ(output)`: the caller's `stage[M]`
+(or the latency the tool picks) must be at least that minimum. In both
+cases output padding fills the difference.
+
+!!! NOTE
+    For a range (`pipe[A..=B]`) or a bare `pipe`, the **tool** owns the
+    depth choice within the legal range. Synthesis may pick any value to
+    meet timing, and simulation may re-roll the choice per seed: a caller
+    that bakes in an unwarranted latency assumption then fails fast under
+    randomized legal latencies instead of working by accident at one
+    depth. Code that respects the `stage[N]`/`@[N]` checks is unaffected
+    by the choice.
 
 A body accepted by stage inference is retiming-equivalent to the canonical
 spelling of the same function — a combinational body with `N` appended

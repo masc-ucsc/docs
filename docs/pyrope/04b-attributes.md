@@ -35,7 +35,7 @@ parser) can never confuse them.
   `const`, `comb`, `pipe`, `mod` — and on tuple fields at the point they
   are introduced. The set binds the attribute to all uses of the variable.
   If no value is given, the attribute is set to `true`. E.g:
-  `mut foo:uint:[max=300] = 4`, `reg counter::[clock_pin=clk1] = 0`,
+  `mut foo:uint:[max=300] = 4`, `reg counter::[clock_pin=ref clk1] = 0`,
   `const c::[debug] = 3`, `mut x2:complex:[valid=false] = 0`.
 
 * **Read** (`var.[attr]`): allowed everywhere a normal expression is
@@ -141,8 +141,8 @@ to the reset wire, not the current reset value.
 ```pyrope
 reg counter:u32 = 0
 
-reg counter2::[clock_pin=clk1]=0
-reg counter3::[reset_pin=rst2]=0
+reg counter2::[clock_pin=ref clk1]=0
+reg counter3::[reset_pin=ref rst2]=0
 
 ```
 
@@ -230,8 +230,8 @@ Registers have the following attributes:
 * `valid`, `retry`: for elastic pipelines
 * `sync`: true by default, when false selects an asynchronous reset (posedge only)
 * `initial`: reset value when reset is high
-* `clock`: connected to `clock` by default
-* `reset`: connected to `reset` by default
+* `clock_pin`: connected to `clock` by default
+* `reset_pin`: connected to `reset` by default
 * `negreset`: active low reset signal
 * `posclk`: true by default, selects a posedge or negnedge flop
 * `retime`: allow to retime across the register
@@ -369,11 +369,11 @@ The `comptime` status can still be queried with `.[comptime]`:
 cassert(a.[comptime])
 ```
 
-To avoid too frequent comptime directives, Pyrope treats all the variables that
-start with uppercase as compile time constants.
+Casing carries no `comptime` meaning: an uppercase name is not implicitly
+compile time. The `comptime` keyword must be written explicitly.
 
 ```pyrope
-comptime const Xconst1 = 1    // obvious comptime
+comptime const Xconst1 = 1    // comptime because of the keyword, not the casing
 comptime const Xvar2 = rand   // error: 'Xvar2' is not compile time constant
 ```
 

@@ -4,26 +4,19 @@ This is a high level description of how to build LiveHD.
 
 ## Requirements
 
-Although LiveHD should run on most common Linux distributions, it is heavily tested on both Arch and Kali (Debian based).
+Although LiveHD should run on most common Linux distributions, it is heavily tested on both Arch and Kali (Debian based). It also builds on macOS (13.3+).
 
 The following programs are assumed to be present when building LiveHD:
 
-- GCC 12+ or Clang 12+ (C++20 support is required)
-- Bazel
+- A C++23 capable compiler (recent GCC or Clang)
+- Bazel (use bazelisk, see below)
 - python3
-- You need bison version 3.6 or newer installed
-```
-bison --version
-```
-In OSX, you can not use the default system flex includes (missmatch in types). In OSX, install bison/flex with brew and set in path. E.g inside `~/.bashrc`
-```
-export PATH="/opt/homebrew/opt/bison/bin:$PATH"
-export PATH="/opt/homebrew/opt/flex/bin:$PATH"
-```
+
+Most library dependences (abseil, boost, flex/bison, googletest, mimalloc,
+rapidjson, ...) are fetched and built by Bazel itself through bzlmod
+(`MODULE.bazel`), so they do not need to be installed on the system.
 
 It is also assumed that bash is used to compile LiveHD.
-
-gcc and clang offers better warnings and execution speed dependent of the benchmark.
 
 If you're unsure if your copy of gcc or clang is new enough, you can check the version by typing
 
@@ -45,7 +38,7 @@ clang++ --version
 git clone https://github.com/masc-ucsc/livehd
 ```
 
-**Install Bazel**isk
+**Install Bazelisk**
 
 Bazelisk is a wrapper around bazel that allows you to use a specific version.
 
@@ -60,7 +53,7 @@ You can also install it directly if you have administrative permissions:
 
 macos:
 ```sh
-brew install bazelisk.
+brew install bazelisk
 ```
 
 Linux:
@@ -80,14 +73,22 @@ pacaur -S bazelisk  # or yay or paru installers
 
 **Build LiveHD**
 
-LiveHD has several build options, detailed below. All three should result in a working executable, but may differ in speed or output.
+LiveHD has several build options, detailed below. All should result in a working executable, but may differ in speed or output.
 
-A binary will be created in `livehd/bazel-bin/main/lgshell`.
+The user-facing binary is the `lhd` command line driver, created in
+`livehd/bazel-bin/lhd/lhd`.
 
 ```sh
-bazel build       //main:all # fast build, no debug symbols, slow execution (default)
-bazel build -copt //main:all # fastest execution speed, no debug symbols, no assertions
-bazel build -cdbg //main:all # moderate execution speed, debug symbols
+bazel build        //lhd:lhd # fast build, no debug symbols, slow execution (default)
+bazel build -c opt //lhd:lhd # fastest execution speed, no debug symbols, no assertions
+bazel build -c dbg //lhd:lhd # moderate execution speed, debug symbols
+```
+
+To build every target in LiveHD (helpful for checking if changes cause
+compilation failures):
+
+```sh
+bazel build //...
 ```
 
 ## Potential issues
@@ -95,21 +96,14 @@ bazel build -cdbg //main:all # moderate execution speed, debug symbols
 If you have multiple gcc versions, you may need to specify the latest. E.g:
 
 ```sh
-CXX=g++-8 CC=gcc-8 bazel build //main:all -c opt # fast execution for benchmarking
-CXX=g++-8 CC=gcc-8 bazel build //main:all -c dbg # debugging/development
+CXX=g++-13 CC=gcc-13 bazel build //lhd:lhd -c opt # fast execution for benchmarking
+CXX=g++-13 CC=gcc-13 bazel build //lhd:lhd -c dbg # debugging/development
 ```
 
-If you want to run clang specific version:
+If you want to run a specific clang version:
 
 ```sh
-CXX=clang++-10 CC=clang-10 bazel build //main:all -c dbg # debugging/development
-```
-
-Make sure that the openJDK installed is compatible with bazel and has the certificates to use tools. E.g in debian:
-
-```sh
-dpkg-reconfigure openjdk-11-jdk
-/var/lib/dpkg/ca-certificates-java.postinst configure
+CXX=clang++-18 CC=clang-18 bazel build //lhd:lhd -c dbg # debugging/development
 ```
 
 If you fail to build for the first time, you may need to clear the cache under your home directory before rebuilding:

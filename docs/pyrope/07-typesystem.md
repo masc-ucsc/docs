@@ -126,7 +126,7 @@ const At:int:[range=33..<inf] = nil    // number bigger than 32
 const Bt = (
   mut c:string = nil,
   mut d = 100,
-  comb setter(ref self, ...args) { self.c = args }
+  comb init(ref self, ...args) { self.c = args }
 )
 
 mut a:At = 40
@@ -306,7 +306,7 @@ time.
 ```pyrope
 const Rgb = (
   mut c:u24,
-  comb setter(ref self, c) { self.c = c }
+  comb init(ref self, c) { self.c = c }
 )
 
 const Color = enum(
@@ -520,7 +520,7 @@ match ee {
 ## Typecasting
 
 
-To convert between tuples, an explicit setter is needed unless the tuple fields
+To convert between tuples, an explicit `init` is needed unless the tuple fields
 names, order, and types match.
 
 ```pyrope
@@ -535,7 +535,7 @@ const ct = (
 const dt = (
   mut d:u32 = nil,
   mut c:string = nil,
-  comb setter(ref self, x:at) { self.d = x.d; self.c = x.c }
+  comb init(ref self, x:at) { self.d = x.d; self.c = x.c }
 )
 
 mut b:bt = (c="hello", d=10000)
@@ -545,7 +545,7 @@ a = b          // OK c is string, and 10000 fits in u32
 
 mut c:ct = a   // OK even different order because all names match
 
-mut d:dt = a   // OK, call initial to type cast
+mut d:dt = a   // OK, calls init to typecast at construction
 ```
 
 * To string: The `format` allows to convert any type/tuple to a string.
@@ -842,7 +842,7 @@ or register reference.
 
 ```pyrope
 const bpred = ( // complex predictor
-  comb taken() -> (r:bool) { r = self.some_table[som_var] >= 0 }
+  comb taken(self) -> (r:bool) { r = self.some_table[som_var] >= 0 }
 )
 
 test "mocking taken branches" {
@@ -858,7 +858,7 @@ There is no operator overload in Pyrope. `+` always adds Numbers, `++` always
 concatenates a tuple or a String, `and` is always for boolean types,...
 
 
-## Getter/Setter method
+## Init method (constructor)
 
 Pyrope tuples can use the same syntax as a lambda call or a direct assignment.
 Both the assignment and the lambda call follow the same rules for ambiguity as
@@ -885,28 +885,33 @@ z = ("foo", 33)
 cassert(v == w == x == y == z)
 ```
 
-Pyrope allows a setter method to intercept assignments or construction. The same
-setter method is called in all the previous cases. Setter and getter methods are
-implicit read/write hooks and must be declared as `comb`. If an operation needs
-register state, pipeline latency, or other cycle-level side effects, make it an
-explicit `mod` or `pipe` method instead of a setter/getter.
+Pyrope allows an `init` method to intercept construction. The same `init`
+method is called in all the previous construction forms: a typed declaration
+(`mut x:T = value`), a `nil` declaration (`mut x:T = nil`), and an explicit
+call (`T(value)`). `init` is an implicit construction hook and must be
+declared as `comb`. If an operation needs register state, pipeline latency, or
+other cycle-level side effects, make it an explicit `mod` or `pipe` method
+instead.
 
-The setter method can use single character arguments for array index, but they must
-respect the declaration order.
+`init` runs only at construction. Once the variable exists, assignments and
+field writes are plain structural writes — no hook is invoked, and reads
+always return the structural value.
 
 
 ```pyrope
 const Typ2 = (
   mut a:string = "none",
   mut b:u32 = 0,
-  comb setter(ref self, a, b) { self.a = a; self.b = b }
+  comb init(ref self, a, b) { self.a = a; self.b = b }
 )
 
-mut x:Typ2 = (a="x", b=0)
-mut y:Typ2 = (a="x", b=0)
+mut x:Typ2 = (a="x", b=0)     // init(ref x, "x", 0)
+mut y:Typ2 = ("hello", 44)    // init(ref y, "hello", 44)
+mut z = Typ2("hello", 44)     // same init, explicit call form
+cassert(y == z)
 
-x["hello"] = 44
-y = ("hello", 44)
+x.a = "hello"                 // plain field write, init is NOT called
+x.b = 44
 cassert(x == y)
 ```
 
@@ -918,87 +923,67 @@ comb matrix8x8_set_xy(ref self, x:int:[min=0,max=7], y:int:[min=0, max=7], v:u16
   self.data[x][y] = v
 }
 comb matrix8x8_set_row(ref self, x:int:[min=0, max=7], v:u16) {
-  for ent in ref data[x] {
+  for ent in ref self.data[x] {
     ent = v
-  }
-}
-comb matrix8x8_init(ref self) {       // default initialization
-  for ent in ref data {
-    ent = 0
   }
 }
 
 const Matrix8x8 = (
   mut data:[8][8]u16 = 0,
-  const setter = [matrix8x8_set_xy, matrix8x8_set_row, matrix8x8_init]
+  comb init(ref self) {       // default construction
+    for ent in ref self.data {
+      ent = 0
+    }
+  },
+  const set_xy  = matrix8x8_set_xy,
+  const set_row = matrix8x8_set_row
 )
 
-const m:Matrix8x8 = nil
+mut m:Matrix8x8 = nil          // init runs
 cassert(m.data[0][3] == 0)
 
-m[1][2] = 100
+m.set_xy(1, 2, 100)            // explicit method call
 cassert(m.data[1][2] == 100)
-m[1] = 3
+m.set_row(1, 3)
 cassert(m.data[1][2] == 3)
-m[4][5] = 33
+m.data[4][5] = 33              // plain structural indexed write
 cassert(m.data[4][5] == 33)
-
-m[1] = 40
-cassert(m[1] == (3, 40, 3, 3, 3, 3, 3, 3))
 ```
 
-The default `getter`/`setter` allows for indexing each of the dimentions and returns
-a slice of the object. Since they can be overwritten, the explicit overload selects
-which to pick.
+There is no read hook: indexing or reading a tuple field always returns the
+structural value (`m.data[1]` is the row slice, `m.data[1][2]` the element).
+After construction, indexed writes are also structural; custom write behavior
+is an explicit method like `set_xy` above.
+
+The `init` method can be [overloaded](06-functions.md#Overloading) to select
+between construction forms.
 
 ```pyrope
-const Matrix2x2 = (
-  mut data:[2][2]u16 = 0,
-  comb getter(ref self, x:int:[range=0..=2], y:int:[min=0, max=2]) {
-    self.data[x][y] + 1
-  }
-)
-
-const n:Matrix2x2 = nil
-n.data[0][1] = 2      // default setter
-
-cassert(n[0][1] == 3) // getter does + 1
-cassert(n[0] == (0, 3)) // error: no getter for comb(ref self, x)
-```
-
-The symmetric getter method is called whenever the tuple is read. Since each
-variable or tuple field is also a tuple, the getter/setter allow to intercept
-any variable/field. The same array rule applies to the getter.
-
-```pyrope
-comb my_2_elem_set_xv(ref self, x:uint:[range=0..<2], v:string) { self.data[x] = v }
-comb my_2_elem_set_all(ref self, v:My_2_elem)            { self.data = v.data }
-comb my_2_elem_set_default(ref self)                     { self.data = ("", "") }
-comb my_2_elem_get_all(self) -> (r)             { r = self.data }
-comb my_2_elem_get_i(self, i:uint) -> (r)        { r = self.data[i] }
+comb my_2_elem_init_xv(ref self, x:uint:[range=0..<2], v:string) { self.data[x] = v }
+comb my_2_elem_init_copy(ref self, v:My_2_elem)          { self.data = v.data }
+comb my_2_elem_init_default(ref self)                    { self.data = ("", "") }
 
 const My_2_elem = (
   mut data:[2]string = ("", ""),
-  const setter = [my_2_elem_set_xv, my_2_elem_set_all, my_2_elem_set_default],
-  const getter = [my_2_elem_get_all, my_2_elem_get_i]
+  const init = [my_2_elem_init_xv, my_2_elem_init_copy, my_2_elem_init_default]
 )
 
-mut v:My_2_elem = nil
-mut x:My_2_elem = nil
+mut v:My_2_elem = nil          // init_default
+mut x:My_2_elem = (1, "hello") // init_xv: data[1] = "hello"
+mut w:My_2_elem = x            // init_copy
 
-v = (x=0, "hello")
-v[1] = "world"
+v.data[0] = "world"            // plain structural write
 
-cassert(v[0] == "hello")
-cassert(v == ("hello", "world")) // not
+cassert(v.data == ("world", ""))
+cassert(w.data[1] == "hello")
 
-const z = v
-cassert(not (z equals v)) // v has v.data, z does not
+const z = w                    // plain structural copy, no hook involved
+cassert(z equals w)
 ```
 
 
-The getter/setter can also be used to intercept and/or modify the value
-set/returned.
+A nested tuple field can have its own `init`; computed views of hidden fields
+are explicit `comb` methods.
 
 
 ```pyrope
@@ -1006,10 +991,10 @@ const some_obj = (
   mut a1:string,
   mut a2 = (
     mut _val:u32 = nil,                        // hidden field
-    comb getter(self) -> (r) { r = self._val + 100 },
-    comb setter(ref self, x) { self._val = x + 1 }
+    comb init(ref self, x) { self._val = x + 1 },
+    comb val(self) -> (r) { r = self._val + 100 }
   ),
-  comb setter(ref self, a, b) {                // setter
+  comb init(ref self, a, b) {                  // constructor
     self.a1 = a
     self.a2._val = b
   }
@@ -1018,57 +1003,36 @@ const some_obj = (
 mut x:some_obj = ("hello", 3)
 
 assert(x.a1 == "hello")
-assert(x.a2 == 103)
-x.a2 = 5
+assert(x.a2.val() == 103)  // explicit method call; reads are never intercepted
 ```
 
 
-The getter method can be [overloaded](06-functions.md#Overloading) to
-customize by return type. Runtime conditions (such as "only for big values")
-are dispatched explicitly by the caller with an `if`/`elif` chain:
+Since there is no read hook, typecast-style views are also explicit methods,
+dispatched by name at the call site:
 
 ```pyrope
-comb showcase_get_string(self) -> (r:string) {
-  r = format("this is a big {} number", self.v)
-}
-comb showcase_get_int(self) -> (r:int) {
-  r = self.v
-}
-const showcase = (
-  ,mut v:int = nil
-  ,const getter = [showcase_get_string, showcase_get_int]
-)
-
-mut s:showcase = nil
-s.v = 3
-const r1:int    = s // OK
-
-s.v = 100
-const r2:string = if s.v > 10 { s.showcase_get_string() } else { "" }
-cassert(r2 == "this is a big 100 number")
-```
-
-Like all the lambdas, the getter method can also be overloaded on the return type.
-In this case, it allows building typecast per type.
-
-```pyrope
-comb my_obj_get_string(self) -> (r:string) { r = string(self.val) }
-comb my_obj_get_bool(self)   -> (r:bool)   { r = self.val != 0 }
-comb my_obj_get_int(self)    -> (r:int)    { r = self.val }
+comb my_obj_to_string(self) -> (r:string) { r = string(self.val) }
+comb my_obj_to_bool(self)   -> (r:bool)   { r = self.val != 0 }
 const my_obj = (
   ,mut val:u32 = 0
-  ,const getter = [my_obj_get_string, my_obj_get_bool, my_obj_get_int]
+  ,const to_string = my_obj_to_string
+  ,const to_bool   = my_obj_to_bool
 )
+
+mut s:my_obj = nil
+s.val = 100
+const r1:string = s.to_string()
+const r2:bool   = s.to_bool()
 ```
 
-### Attribute setter/getter value
+### Attribute access in init
 
-The setter/getter can also access attributes:
+The `init` method can also access attributes:
 
 ```pyrope
 mut obj1::[attr1] = (
   ,mut data:int = nil
-  ,comb setter(ref self, v) {
+  ,comb init(ref self, v) {
     if v.[attr2] {
       self.data.[attr3] = 33
     }
@@ -1077,11 +1041,11 @@ mut obj1::[attr1] = (
 )
 ```
 
-### Default setter value
+### Default init value
 
 All variable declarations need an explicit assigned value. For complex tuple
-types, calling the setter with no arguments triggers the no-arg setter
-overload below.
+types, constructing with no arguments (`nil` or `T()`) triggers the no-arg
+`init` overload below.
 
 
 ```pyrope
@@ -1091,72 +1055,49 @@ cassert(fint == 0)
 mut fbool:bool = false
 cassert(!fbool)
 
-comb tup_set_default(ref self) { // no-argument overload
+comb tup_init_default(ref self) { // no-argument overload
   cassert(self.v == "")
   self.v = "empty33"
 }
-comb tup_set_v(ref self, v) {
+comb tup_init_v(ref self, v) {
   self.v = v
 }
 const Tup = (
   ,mut v:string = ""    // default to empty
-  ,const setter = [tup_set_default, tup_set_v]
+  ,const init = [tup_init_default, tup_init_v]
 )
 
 mut x:Tup = nil
 cassert(x.v == "empty33")
 
-x = "Padua"
-cassert(x.v == "Padua")
+mut x2:Tup = "Padua"
+cassert(x2.v == "Padua")
 
 mut y = Tup()
 cassert(y.v == "empty33")
 
-y = "ucsc"
-cassert(y.v == "ucsc")
+mut y2 = Tup("ucsc")
+cassert(y2.v == "ucsc")
 ```
 
-### Array/Tuple getter/setter
+### Array/Tuple access
 
-Array index also use the setter or getter methods.
-
-```pyrope
-pipe my_arr_set(ref self, idx:u4, val:u8) {
-   self.vector[idx] = val
-}
-pipe my_arr_set_default(ref self) {
-   // default constructor declaration
-}
-
-mut my_arr = (
-  ,mut vector:[16]u8 = 0
-  ,comb getter(self, idx:u4) { self.vector[idx] }
-  ,const setter = [my_arr_set, my_arr_set_default]
-)
-
-my_arr[3] = 300           // calls setter
-cassert(my_add[3] == 300) // calls getter
-```
-
-Unlike languages like C++, the setter is only called if there is a new value
-assigned. This means that the index must always be in the left-hand-side of an
-assignment.
-
-
-If the getter/setter uses a string argument, this also allows to access tuple fields.
+Array indexing reads and writes the underlying field directly. Custom indexed
+access is an explicit method; hidden fields (leading underscore) keep the
+representation private.
 
 ```pyrope
 const Point = (
   ,mut _x:int = 0    // leading underscore: private to the tuple
   ,mut _y:int = 0
 
-  ,comb setter(ref self, x:int, y:int) {
+  ,comb init(ref self, x:int, y:int) {
     self._x = x
     self._y = y
   }
 
-  ,comb getter(self, idx:string) {
-    match idx {
+  ,comb get(self, idx:string) -> (r:int) {
+    r = match idx {
      == 'x' { self._x }
      == 'y' { self._y }
      else   { 0        }
@@ -1166,8 +1107,8 @@ const Point = (
 
 const p:Point = (1,2)
 
-cassert(p['x'] == 1 and p['y'] == 2)
-cassert(p.x == 1 and p.y == 2) // error:
+cassert(p.get('x') == 1 and p.get('y') == 2)
+cassert(p._x == 1) // error: _x is private outside the tuple
 ```
 
 ## Compare method
@@ -1182,13 +1123,13 @@ comparators. When non-provided the `lt` (Less Than) is a compile error, and the
 ```pyrope
 const t=(
   ,mut v:int = 0
-  ,comb setter(ref self, a:int) { self.v = a }
+  ,comb init(ref self, a:int) { self.v = a }
   ,comb lt(self,other)->(r:bool){ r = self.v  < other.v }
   ,comb eq(self,other)->(r:bool){ r = self.v == other.v }
 )
 
-mut m1:t = 10
-mut m2:t = 4
+mut m1:t = 4
+mut m2:t = 10
 assert(m1 < m2 and !(m1==m2))
 assert(m1 <= m2 and m1 != m2 and m2 > m1 and m2 >= m1)
 ```

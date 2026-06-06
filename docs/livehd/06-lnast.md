@@ -11,89 +11,81 @@ representation with a graph structure.  Each node in LGraph has a LNAST
 equivalent node, but LNAST is more high level and several nodes in LNAST may
 not have a one-to-one mapping to LGraph.
 
+Since the HHDS migration, a LNAST rides on `hhds::Tree`: the node type
+(`Lnast_ntype`) is stored directly in the tree slot, names and source
+locations are per-node attributes, and many LNAST units (one per elaborated
+function/module) ride one `hhds::Forest`. The `hhds::Forest::save` directory
+is the `ln:` kind of the [lhd](02-usage.md) command line, and
+`Lnast::dump`/`Lnast::read` provide a round-trippable text form (the
+`lnast-dump:` emit kind).
 
-Each Lnast_node should has a specific node type and contain the following information from source code tokens
+The authoritative list of node types is
+[`lnast/lnast_nodes.def`](https://github.com/masc-ucsc/livehd/blob/main/lnast/lnast_nodes.def)
+(an X-macro file included by `lnast/lnast_ntype.hpp`).
 
-(a) line number
-(b) pos_start, pos_end
-(c) string_view (optional)
+## Constructing nodes
 
-## Function Overloadings of Node Data Construction
-Every node construction method has four function overloadings.
-For example, to construct a Lnast_node with a type of reference,
-we could use one of the following functions:
-
-```cpp
-// C++
-auto node_ref = Lnast_node::create_ref("foo");
-auto node_ref = Lnast_node::create_ref("foo", line_num);
-auto node_ref = Lnast_node::create_ref("foo", line_num, pos1, pos2);
-auto node_ref = Lnast_node::create_ref(token);
-```
-
-In case (1), you only knows the variable name is "foo".
-In case (2), you know the variable name and the corresponding line number.
-In case (3), you know the variable name, the line number, and the charactrer position.
-In case (4), you are building LNAST from your HDL AST and you already have the Token.
-The toke should have line number, positions, and string_view information.
-
-
-## Another Example
-If you don't care the string_view to be stored in the lnast node, just leave it empty for set "foo" for it.
-This is true for many of the operator node, for example, to build a node with type of assign.
+Structural nodes are inserted with an explicit type. A detached `Lnast_node`
+value is only used for `ref`/`const` leaves that must be carried around before
+their insertion point is known:
 
 ```cpp
 // C++
-auto node_assign = Lnast_node::create_assign();
-auto node_assign = Lnast_node::create_assign(line_num);
-auto node_assign = Lnast_node::create_assign(line_num, pos1, pos2);
-auto node_assign = Lnast_node::create_assign(token); // The token is not necessary to have a string_view
+auto stmts_idx = lnast->add_child(parent_idx, Lnast_ntype::create_stmts());
+auto store_idx = lnast->add_child(stmts_idx,  Lnast_ntype::create_store());
+lnast->add_child(store_idx, Lnast_node::create_ref("foo"));
+lnast->add_child(store_idx, Lnast_node::create_const("0x1234"));
+lnast->add_child(store_idx, Lnast_node::create_const(42));      // int64_t overload
 ```
+
+Source position is a separate per-node payload, set/read independently of the
+name/type:
+
+```cpp
+lnast->set_loc(nid, Lnast::Loc{pos1, pos2, line, tok});
+auto loc = lnast->get_loc(nid);
+lnast->set_fname(nid, "foo.prp");
+```
+
+Navigation and iteration go through the `Lnast` forwarders
+(`get_parent`, `get_first_child`, `children(parent)`,
+`depth_preorder(start)`, ...) which operate on `Lnast_nid`
+(= `hhds::Tree::Node_class`).
 
 ## LNAST Node Types
+
 |                 |                 |                 |                 |                 |
 |:---------------:|:---------------:|:---------------:|:---------------:|:---------------:|
-| [`top`](#top)                      | [`stmts`](#stmts)                  | [`if`](#if)                        | [`uif`](#uif)                      | [`while`](#while)                  |
-| [`func_call`](#func_call)          | [`func_def`](#func_def)            | [`assign`](#assign)                | [`dp_assign`](#dp_assign)          | [`delay_assign`](#delay_assign)    |
-| [`break`](#break)                  | [`continue`](#continue)            | [`return`](#return)                | [`bit_and`](#bit_and)              | [`bit_or`](#bit_or)                |
-| [`bit_not`](#bit_not)              | [`bit_xor`](#bit_xor)              | [`red_or`](#red_or)                | [`red_and`](#red_and)              | [`red_xor`](#red_xor)              |
-| [`popcount`](#popcount)            | [`log_and`](#log_and)              | [`log_or`](#log_or)                | [`log_not`](#log_not)              | [`plus`](#plus)                    |
-| [`minus`](#minus)                  | [`mult`](#mult)                    | [`div`](#div)                      | [`mod`](#mod)                      | [`shl`](#shl)                      |
-| [`sra`](#sra)                      | [`sext`](#sext)                    | [`set_mask`](#set_mask)            | [`get_mask`](#get_mask)            | [`mask_and`](#mask_and)            |
-| [`mask_popcount`](#mask_popcount)  | [`mask_xor`](#mask_xor)            | [`is`](#is)                        | [`has`](#has)                      | [`in`](#in)                        |
-| [`does`](#does)                    | [`ne`](#ne)                        | [`eq`](#eq)                        | [`lt`](#lt)                        | [`le`](#le)                        |
-| [`gt`](#gt)                        | [`ge`](#ge)                        | [`ref`](#ref)                      | [`const`](#const)                  | [`range`](#range)                  |
-| [`tuple_concat`](#tuple_concat)    | [`tuple_add`](#tuple_add)          | [`tuple_get`](#tuple_get)          | [`tuple_set`](#tuple_set)          | [`enum_add`](#enum_add)            |
-| [`attr_set`](#attr_set)            | [`attr_get`](#attr_get)            | [`assert`](#assert)                | [`err_flag`](#err_flag)            | [`phi`](#phi)                      |
-| [`hot_phi`](#hot_phi)              | [`type_def`](#type_def)            | [`type_spec`](#type_spec)          | [types](#types)                    |                                    |
+| [`top`](#scope)                    | [`stmts`](#scope)                  | [`if`](#if)                        | [`for`](#for)                      | [`while`](#while)                  |
+| [`func_call`](#func_call)          | [`func_def`](#func_def)            | [`io`](#func_def)                  | [`func_does`](#pseudo-functions)   | [`func_equals`](#pseudo-functions) |
+| [`func_in`](#pseudo-functions)     | [`func_has`](#pseudo-functions)    | [`func_case`](#pseudo-functions)   | [`func_break`](#pseudo-functions)  | [`func_continue`](#pseudo-functions) |
+| [`func_return`](#pseudo-functions) | [`declare`](#declare)              | [`store`](#store)                  | [`dp_assign`](#dp_assign)          | [`delay_assign`](#delay_assign)    |
+| [`bit_and`](#n-ary-expressions)    | [`bit_or`](#n-ary-expressions)     | [`bit_not`](#unary-expressions)    | [`bit_xor`](#n-ary-expressions)    | [`red_or`](#unary-expressions)     |
+| [`red_and`](#unary-expressions)    | [`red_xor`](#unary-expressions)    | [`popcount`](#unary-expressions)   | [`log_and`](#n-ary-expressions)    | [`log_or`](#n-ary-expressions)     |
+| [`log_not`](#unary-expressions)    | [`plus`](#n-ary-expressions)       | [`minus`](#n-ary-expressions)      | [`mult`](#n-ary-expressions)       | [`div`](#n-ary-expressions)        |
+| [`mod`](#binary-expressions)       | [`shl`](#binary-expressions)       | [`sra`](#binary-expressions)       | [`sext`](#bit-manipulation)        | [`set_mask`](#bit-manipulation)    |
+| [`get_mask`](#bit-manipulation)    | [`is`](#binary-expressions)        | [`ne`](#binary-expressions)        | [`eq`](#binary-expressions)        | [`lt`](#binary-expressions)        |
+| [`le`](#binary-expressions)        | [`gt`](#binary-expressions)        | [`ge`](#binary-expressions)        | [`ref`](#ref)                      | [`const`](#const)                  |
+| [`range`](#range)                  | [`tuple_concat`](#tuple_concat)    | [`tuple_add`](#tuple_add)          | [`tuple_get`](#tuple_get)          | [`attr_set`](#attr_set)            |
+| [`attr_get`](#attr_get)            | [`cassert`](#cassert)              | [`type_spec`](#type_spec)          | [types](#types)                    |                                    |
 
-`for`, `loop`, `match`, `mut`, `cassert` from earlier drafts have been dropped —
-see [Pyrope → LNAST Lowerings](#pyrope--lnast-lowerings). `invalid` is no
-longer a node; `nil` and `0sb?`-style unknown literals are plain `const`
-strings.
+Notable deletions relative to older drafts of this document: `assign` and
+`tuple_set` were replaced by the single [`store`](#store) write node;
+`type_def` and the `attr_set(type)+type_spec` declaration triple were replaced
+by [`declare`](#declare); `uif`, `enum_add`, `err_flag`, `phi`, `hot_phi`, and
+the `mask_and`/`mask_popcount`/`mask_xor` ops are gone; `break`, `continue`,
+`return`, `has`, `in`, `does`, `case`, and `equals` are now the
+[pseudo-function](#pseudo-functions) nodes; `assert` became
+[`cassert`](#cassert). `nil` and `0sb?`-style unknown literals are plain
+`const` strings.
 
 ### Scope
-#### `top`
-Every LNAST has a `top` node as the root. A `top` node has one or more child
-nodes, which can only be `stmts`.
 
-```
-<top> --| <stmts>
-        | <stmts>
-        | <stmts>
-        |  ...
-```
+#### `top`
+Every LNAST has a `top` node as the root, holding the statement sequences.
 
 #### `stmts`
 A `stmts` node represents a sequence of statements.
-
-```
-<stmts> --| <const>     : scope name
-          | <assign>
-          | <plus>
-          | <func_def>
-          | ...
-```
 
 ### Statements
 
@@ -109,80 +101,33 @@ expression.
        | <stmts>     : else branch
 ```
 
-#### `uif`
-Unique `if`. Similar to `if`, but add additional assertions to check if at most one condition
-is true.
-
-```
-<uif> --| <ref/const> : if condition variable
-        | <stmts>     : if branch
-        | <ref/const> : elif condition variable  \  N times
-        | <stmts>     : elif branch              /
-        | <stmts>     : else branch
-```
+#### `for`
+Loop over the elements of an iterable.
 
 #### `while`
-A `while` node represents a `while`-loop guarded by a boolean condition. The
-loop body is exited with `break`; surface constructs `for` and `loop` lower to
-`while` (see [Pyrope → LNAST Lowerings](#pyrope--lnast-lowerings)).
+A `while` node represents a loop guarded by a boolean condition.
 
 ```
 <while> --| <ref/const> : loop condition
           | <stmts>     : loop body
 ```
 
-#### `break` / `continue`
-Leaf control-flow nodes inside a `while` body. `break` exits the enclosing
-loop; `continue` restarts the next iteration. Both have no children.
+#### Pseudo-functions
 
-```
-<break>
-<continue>
-```
-
-#### `return`
-Exits the enclosing `func_def`. Optionally carries a single ref naming the
-value to return (the producer assigns any expression to a tmp first).
-
-```
-<return>                    // bare early exit
-<return> --| <ref>          : return value (optional)
-```
+`func_does`, `func_equals`, `func_in`, `func_has`, `func_case`, `func_break`,
+`func_continue`, and `func_return` are pseudo-functions emitted by the Pyrope
+producer (`inou/prp`) for keywords that share the `func_call` shape but want a
+distinct dispatch tag instead of a `const(name)` first child. `has`/`in`/
+`does` are folded by the constant-propagation upass; `case`/`break`/
+`continue`/`return` are emitted verbatim.
 
 #### `func_def`
-A `func_def` node represents a functional block. In addition to inputs/outputs
-and body, it carries a `kind` (one of `"comb"`, `"pipe"`, `"mod"`) and an
-optional generic / attribute child tuple. Pipeline depth for `pipe[N]` is
-emitted separately as `attr_set <func> "pipe_depth" N` at the declaration
-site.
-
-Pyrope has no capture list (the slot has been removed); comptime values
-referenced from the lambda body are picked up as implicit comptime
-dependencies rather than via an explicit capture tuple.
-
-```
-<func_def> --| <ref>       : function name (or tmp ref for anon lambdas)
-             | <const>     : kind ("comb" | "pipe" | "mod")
-             | <tuple_add> : generics (0 children when absent)
-             | <tuple_add> : input arguments
-             | <tuple_add> : output arguments
-             | <stmts>     : function body
-```
-
-Each input/output argument is encoded as an `assign` child of the inputs /
-outputs `tuple_add`:
-
-```
-<assign> --| <ref>             : argument name
-           | <ref/const>       : default value (const "nil" when no default,
-                                 const "ref" for `ref a` mod with no default)
-           | <type-subtree>    : optional, the `:Type` annotation when present
-```
-
-The type subtree is one of the [type nodes](#types) (`prim_type_uint`,
-`prim_type_boolean`, …). A composite tuple type `(zz1:T, zz2:U, …)` lowers
-to a `tuple_add` whose children are recursive `assign` arg nodes — i.e. the
-same shape used by the inputs/outputs tuples themselves.
+A `func_def` node represents a functional block (a Pyrope `comb`/`pipe`/`mod`
+lambda). The signature parameters live under an `io` subtree, and each
+input/output signature parameter is a [`store`](#store) node. After the SSA
+upass runs, the declared I/O is also summarized in the `Lnast::io_meta()`
+side-channel (name, bits, sign, `ref` write-back flag), which is what the
+`upass/tolg` lowering reads to build the LGraph I/O.
 
 #### `func_call`
 A `func_call` node represents an instantiation of a functional block.
@@ -193,38 +138,52 @@ A `func_call` node represents an instantiation of a functional block.
               | <ref/const> : input arguments
 ```
 
-#### `assign`
-An `assign` node represents a variable assignment. Note that the Rvalue can only
-be a `const` or `ref`.
+#### `declare`
+The declaration statement node. It replaces the old statement-level
+`attr_set(type)` + `attr_set(comptime)` + `type_spec` declaration triple:
 
 ```
-<assign> --| <ref>       : Lvalue
-           | <ref/const> : Rvalue
+<declare> --| <ref>       : variable
+            | <type-node> : type_decl (prim_type_*/comp_type_*, a ref to a
+            |               named type, or prim_type_none when no `:type`)
+            | <const>     : qualifier — space-joined tokens, storage first
+            |               (e.g. "mut", "const", "mut comptime", "mut wrap")
+            | <...>       : optional init value (absent for bare `var x:u8`)
+```
+
+A `type Foo = ...` statement is a `declare` with type mode (there is no
+separate `type_def` node).
+
+#### `store`
+The single write/bind node. Statement scalar writes (the old `assign`),
+field-path writes (the old `tuple_set`), tuple-literal field payloads
+(`(x=v)`), `func_def`/`io` signature params, and typed binds `name=value:type`
+are all `store`, disambiguated by parent context:
+
+```
+<store> --| <ref>        : variable
+          | <ref/const>  : level-0 selection   \  0..N path levels
+          | ...                                /  (0 levels == scalar write)
+          | <ref/const>  : value
 ```
 
 #### `dp_assign`
-the "lhs := rhs" assignment (dp_assign) is like the "=" assignment but there is no check
-for overflow. If the rhs has more bits than the lhs, the upper bits will be
+The "lhs := rhs" assignment is like the `store` assignment but there is no
+check for overflow: if the rhs has more bits than the lhs, the upper bits are
 dropped.
 
-```
-<dp_assign> --| <ref>       : Lvalue
-              | <ref/const> : Rvalue
-```
-
 #### `delay_assign`
-Deferred / past-cycle read, and the lowering target for Pyrope's `await[N] dst
-= rhs` form. `dst` is always a fresh compiler temporary. `offset` is a
-comptime constant integer: positive = future / next-cycle (for a `reg`, D pin;
-for a wire, the settled end-of-block value), `0` = the flop `Q` pin (only
-valid when `src` is a `reg`), negative = past cycle. `src` names the declared
-variable (pre-SSA) or an arbitrary rhs ref when lowering `await[N]`.
+Deferred / past-cycle read.
 
 ```
-<delay_assign> --| <ref>       : dst (fresh tmp)
-                 | <const/ref> : offset (comptime int)
-                 | <ref>       : src (declared variable or rhs)
+<delay_assign> --| <ref>   : dst (fresh tmp)
+                 | <ref>   : src (declared variable, pre-SSA name)
+                 | <const> : offset (comptime int)
 ```
+
+`offset` is a comptime constant integer: positive = future / next-cycle (for a
+`reg`, the D pin; for a wire, the settled end-of-block value), `0` = the flop
+`Q` pin (only valid when `src` is a `reg`), negative = past cycle.
 
 ### Primitives
 #### `const`
@@ -234,6 +193,9 @@ Constant value.
 <const> "0x1234"
 ```
 
+`nil` and every `0sb?`-style unknown literal (`0sb?`, `0ub010?11??00`, ...)
+are plain `const` nodes carrying the literal text.
+
 #### `ref`
 Variable.
 
@@ -241,10 +203,8 @@ Variable.
 <ref> "variable_name"
 ```
 
-### `range`
-Range. The optional third child is the step (defaults to 1). Pyrope's
-`..=`, `..<`, `..+`, and `step` forms all lower to this single node — see
-[Ranges](#ranges).
+#### `range`
+Range. The optional third child is the step (defaults to 1).
 
 ```
 <range> --| <ref> or <const> : from-value
@@ -298,18 +258,9 @@ Greater than.
 #### `ge`
 Greater than or equal to.
 #### `is`
-Nominal type check. True iff R-1 and R-2 share the same `typename`
-attribute.
-#### `has`
-True iff R-1 (a tuple / range / enum) contains the field or label R-2.
-#### `in`
-True iff R-1 is a member of R-2, where R-2 is a tuple, range, or enum.
-Behavior varies by R-2's type: range ⇒ bounds check, tuple ⇒ membership,
-enum ⇒ active-variant check.
-#### `does`
-Structural subtype check. True iff the tuple structure of R-1 is a subset of
-R-2 (every field in R-1 exists with the same type in R-2). `a equals b` and
-`a case b` are producer-level desugars over `does`.
+Nominal type check. True iff R-1 and R-2 share the same `typename` attribute.
+(The structural checks `has`/`in`/`does`/`equals`/`case` are
+[pseudo-functions](#pseudo-functions), not comparison nodes.)
 
 ### N-ary Expressions
 
@@ -335,29 +286,24 @@ Logical or (boolean arguments).
 #### `plus`
 Summation of R-1 to R-N.
 #### `minus`
-R-1 minus summation of R-2 to R-N. A unary `-x` is always lowered to the
-canonical 3-child form `<minus> dst 0 x` so every `minus` node walked by a
-consumer has the same shape as a binary subtraction.
+R-1 minus summation of R-2 to R-N.
 #### `mult`
 Product of R-1 to R-N.
 #### `div`
 R-1 divided by product of R-2 to R-N
 
 ### Bit Manipulation
-Same N-ary shape as above. Number of Rvalues is specific to each op.
+Same shape as above. Number of Rvalues is specific to each op.
 
 #### `sext`
 Sign-extend R-1 to the bit-width specified by R-2.
 #### `set_mask`
-Write R-2 into the bits of R-1 selected by the mask R-3 (`set_mask(a, mask, value)`).
+Write the value into the bits of R-1 selected by the mask
+(`set_mask(a, mask, value)`).
 #### `get_mask`
 Extract the bits of R-1 selected by the mask R-2 (`get_mask(a, mask)`).
-#### `mask_and`
-Bitwise AND with a constant mask pattern.
-#### `mask_popcount`
-Count the set bits under a constant mask.
-#### `mask_xor`
-Bitwise XOR with a constant mask pattern.
+`get_mask(x, mask)` both ANDs and shifts the selected bits down to bit 0, so
+`get_mask(a, 0xF0) == (a & 0xF0) >> 4`.
 
 ### Tuples
 #### `tuple_concat`
@@ -373,22 +319,11 @@ Bitwise XOR with a constant mask pattern.
 ```
 <tuple_add> --| <ref> : Lvalue
               | <ref/const>
-              | <assign> --| <ref>       \ Field 0
-                           | <ref/const> /
-              | <assign> --| <ref>       \ Field 1
-                           | <ref/const> /
-              |  ...
-              | <assign> --| <ref>       \ Field N
-                           | <ref/const> /
-```
-
-#### `tuple_set`
-```
-<tuple_set> --| <ref>        : Lvalue
-              | <ref/<const> : 1st-level selection   \
-              | ...                                   1..N selections
-              | <ref/<const> : Nth-level selection   /
-              | <ref/<const> : Rvalue
+              | <store> --| <ref>       \ Field 0
+                          | <ref/const> /
+              | ...
+              | <store> --| <ref>       \ Field N
+                          | <ref/const> /
 ```
 
 #### `tuple_get`
@@ -400,20 +335,9 @@ Bitwise XOR with a constant mask pattern.
               | <ref/const> : Nth-level selection   /
 ```
 
-#### `enum_add`
-Same shape as `tuple_add`, but the resulting value is an enum bundle (one-hot
-encoding for plain enums, tagged for `variant`). The producer emits `enum_add`
-for `enum Name = (...)` / `variant Name = (...)` declarations and tags the
-result via `attr_set` (`"type" "const"`, `"kind" "enum" | "variant"`).
-
-```
-<enum_add> --| <ref> : Lvalue (the enum bundle)
-             | <assign> --| <ref>       \ Variant 0
-                          | <ref/const> /
-             | ...
-             | <assign> --| <ref>       \ Variant N
-                          | <ref/const> /
-```
+Statement-level field *writes* are [`store`](#store) nodes (a `store` with ≥3
+children walks the path; with ≤2 it is a scalar write). There is no
+`tuple_set` node.
 
 ### Attributes
 
@@ -424,10 +348,7 @@ direction, storage class, reset pin). They are accessed through the
 
 #### `attr_set`
 Writes `value` into attribute `root.p1.p2...pN` on the declared variable
-referenced by `root`. For example, register declaration is modeled as
-`attr_set <ref X> <const "type"> <const "reg">`. The `type` attribute is the
-canonical storage-class slot — its values are `"const"`, `"mut"`, `"reg"`, or
-`"comptime"`.
+referenced by `root`.
 
 ```
 <attr_set> --| <ref>       : root (declaration being decorated)
@@ -450,40 +371,10 @@ Reads the attribute `root.p1.p2...pN` into `dst`.
 
 ### Checks and Types
 
-#### `assert`
-Runtime assertion. Its single child is the condition; the assertion fires
-(simulation error / hardware cover miss) if the condition evaluates to zero.
-Pyrope's `cassert c` is sugar for `assert c::[comptime]` — the condition must
-also be comptime-resolvable.
-
-```
-<assert> --| <ref/const> : condition
-```
-
-#### `err_flag`
-Internal marker inserted during SSA to sentinel "undefined" in phi tables.
-Never emitted by producers directly.
-
-#### `phi`
-Internal SSA phi-node.
-
-```
-<phi> --| <ref>       : Lvalue
-        | <ref/const> : condition
-        | <ref>       : true branch dpin
-        | <ref>       : false branch dpin
-```
-
-#### `hot_phi`
-Same shape as `phi`; used for branches marked "likely".
-
-#### `type_def`
-Binds a name to a type expression.
-
-```
-<type_def> --| <ref>  : type name
-             | <type> : type expression
-```
+#### `cassert`
+Compiler-internal assertion. Its single condition child must hold; it is used
+to materialize checks the producer or the upasses synthesize (e.g., the
+non-overlap guard of a tuple concat).
 
 #### `type_spec`
 Annotates a variable with a type (checked at compile time).
@@ -495,435 +386,57 @@ Annotates a variable with a type (checked at compile time).
 
 ### Types
 
-Type nodes describe the shape of a value at compile time. They appear as
-the child of a `type_def` / `type_spec`, inside `comp_type_*` composite types,
-or as a `func_def` signature element.
+Type nodes describe the shape of a value at compile time. They appear as the
+type child of a [`declare`](#declare) / [`type_spec`](#type_spec) or inside
+`comp_type_*` composite types. A *named* type in a type position is a plain
+`ref` (there is no `expr_type` node).
 
-| Node                 | Meaning                                                                 |
-|----------------------|-------------------------------------------------------------------------|
-| `none_type`          | No type (void).                                                         |
-| `prim_type_uint`     | Unsigned integer. Optional single child sets the bit-width.             |
-| `prim_type_sint`     | Signed integer. Optional single child sets the bit-width.               |
-| `prim_type_range`    | Integer range.                                                          |
-| `prim_type_string`   | String literal type.                                                    |
-| `prim_type_boolean`  | Boolean.                                                                |
-| `prim_type_type`     | The type of types.                                                      |
-| `prim_type_ref`      | Reference type.                                                         |
-| `comp_type_tuple`    | Tuple of other types. Children are the component type nodes.            |
-| `comp_type_array`    | `array(elem_type, size)`.                                               |
-| `comp_type_mixin`    | Mixin / intersection of types.                                          |
-| `comp_type_lambda`   | `lambda(arg_type, ret_type)`.                                           |
-| `comp_type_enum`     | Enum type.                                                              |
-| `comp_type_variant`  | Tagged-union / variant type. Parallel to `comp_type_enum`.              |
-| `comp_type_timing`   | `@[N]` timing type — used by `cassert x does @[N]` checks.              |
-| `prim_type_variadic` | Variadic function argument marker (e.g., `comb f(...args)`).            |
-| `expr_type`          | `expr(ref)` — type "same as this value".                                 |
-| `unknown_type`       | Type to be inferred.                                                    |
+| Node                 | Meaning                                                                  |
+|----------------------|--------------------------------------------------------------------------|
+| `prim_type_none`     | The single "no / inferred / unresolved type" sentinel.                   |
+| `prim_type_int`      | The canonical integer type — `prim_type_int([max],[min])` with two OPTIONAL const children (absent ⇒ unbounded). Sign and bits are DERIVED from the range, never stored. (The legacy width-based `prim_type_uint`/`prim_type_sint` were deleted; `uN`/`sN` sugar lowers to this.) |
+| `prim_type_range`    | Integer range.                                                           |
+| `prim_type_string`   | String literal type.                                                     |
+| `prim_type_bool`     | Boolean.                                                                 |
+| `comp_type_tuple`    | Tuple of other types. Children are the component type nodes.             |
+| `comp_type_array`    | `array(elem_type, size)`.                                                |
+| `comp_type_lambda`   | `lambda(arg_type, ret_type)`.                                            |
 
 # Module Input, Output, and Register Declaration
-In LNAST, all input/output/register are defined in the node type reference
-with differenct prefix of string_view, "$" stands for input, "%" stands for
-output, and "#" stands for register.
-## Input
-```coffescript
-// Pyrope
-foo = $a
-```
 
-```verilog
-// Verilog
-input a;
-```
+In the tree, input/output/register references carry a prefix in the `ref`
+name: `$` stands for input, `%` stands for output, and `#` stands for
+register.
 
-```cpp
-// C++
-auto node_input = Lnast_node::create_ref("$a", line_num, pos1, pos2);
-```
+After the SSA upass runs (`ssa:1`), the declared I/O of each unit is also
+available in the `Lnast::io_meta()` side-channel (`Lnast_io_entry`: name
+without the prefix, bits, sign, `ref` write-back flag, scalar kind), and the
+bitwidth upass fills `Lnast::bw_meta()` with the per-name `[min,max]` ranges.
+The `upass/tolg` LNAST→LGraph lowering reads both side-channels rather than
+re-walking the tree.
 
-
-## Output
-```coffescript
-// Pyrope
-%out
-```
-
-```verilog
-// Verilog
-output out;
-```
-
-```cpp
-// C++
-auto node_output = Lnast_node::create_ref("%out", line_num, pos1, pos2);
-```
-
-## Register
-A register is declared by a sticky `attr_set <ref X> <const "type"> <const
-"reg">` statement. Uses of the register in subsequent code reference the
-variable by its `#`-prefixed name (`#reg_foo` below). `const`, `mut`, and
-`comptime` declarations emit the same `attr_set ... "type" "const" | "mut" |
-"comptime"` pattern.
-
-```coffescript
-// Pyrope
-reg reg_foo
-#reg_foo = 0
-```
-
-```verilog
-// Verilog
-reg reg_foo;
-```
-
-```cpp
-// C++ — declaration
-auto stmts_idx    = lnast->add_child(top, Lnast_node::create_stmts());
-auto attr_set_idx = lnast->add_child(stmts_idx, Lnast_node::create_attr_set());
-lnast->add_child(attr_set_idx, Lnast_node::create_ref("#reg_foo", line_num, pos1, pos2));
-lnast->add_child(attr_set_idx, Lnast_node::create_const("type"));
-lnast->add_child(attr_set_idx, Lnast_node::create_const("reg"));
-
-// C++ — subsequent reference
-auto node_reg = Lnast_node::create_ref("#reg_foo", line_num, pos1, pos2);
-```
-
-# Compiler Temporaries and SSA
+# Compiler Temporaries
 
 Compiler-generated temporary variables use the canonical `___<n>` prefix
-(three underscores followed by a decimal counter). The `Lnast::is_tmp`
-helper is the single predicate for this check. Producers should allocate
-tmps via their own counter (e.g., `Lnast_create::create_lnast_tmp`);
-don't hand-construct a `___<n>` string at a call site.
-
-```cpp
-auto tmp_name = lnast_create_obj.create_lnast_tmp();  // e.g., "___5"
-auto tmp_ref  = Lnast_node::create_ref(tmp_name);
-```
-
-After SSA, non-tmp refs carry a subscript in the first-class `Lnast_node::subs`
-field. `Lnast::get_sname(nid)` renders the SSA name as `name|<subs>` (pipe
-separator); `Lnast::dump` uses the same `name|<subs>` form and omits the
-subscript entirely when `subs == 0`. Tmp variables are never SSA-renamed
-because they are single-assignment by construction.
-
-# Pyrope → LNAST Lowerings
-
-The LNAST node set is intentionally small. Many Pyrope surface forms are
-expanded by the producer (`inou/prp`) into the primitives defined above.
-This section enumerates the canonical lowerings; consumers should never see
-the surface forms directly.
-
-Examples in this section use an **S-expression** shorthand for the LNAST
-tree: `(op dst child1 child2 ...)`. Multiline forms wrap and indent; every
-open paren closes on the same line or on its own matching line. This is a
-documentation convenience — LNAST itself is a node tree, not text.
-
-## Control flow
-
-### `match` → chain of `uif`
-
-`match` is syntax sugar; the producer lowers it into a `uif` chain, combining
-the subject with each arm's operator to form a boolean condition. When the
-source has no `else` arm, the producer synthesises `else { assert false }`.
-Init statements (`match mut x = 2; z + x { ... }`) hoist into an outer
-`stmts` scope.
-
-```pyrope
-// Pyrope
-match state {
-  == 0 { n = 1 }
-  in 4..<6 { n = 2 }
-  else { n = 0 }
-}
-```
-
-```
-(eq    ___c0 (ref state) (const 0))
-(range ___r  (const 4) (const 4))          ; ..< → (to - 1)
-(in    ___c1 (ref state) ___r)
-(uif
-  ___c0
-  (stmts (assign (ref n) (const 1)))
-  ___c1
-  (stmts (assign (ref n) (const 2)))
-  (stmts (assign (ref n) (const 0))))
-```
-
-### `loop`, `for`, `for`-comprehension → `while`
-
-`loop { body }` lowers to `while const(true) { body }`. Every `for i in xs
-{ body }` (including `(index, key, value)` destructuring, `enumerate(...)`,
-`key(...)`, and `ref xs` mutation) is expanded by the producer into an
-explicit `while` with a tmp counter, `tuple_get` / `attr_get` for element /
-index / key, a `break` on size match, and a `tuple_set` back into the
-iterable when `ref` is used. List-comprehensions `[e*2 for e in xs if c]`
-desugar to: an empty tmp tuple, the same expanded `while`, a conditional
-`tuple_concat` of the body value each iteration, and final `assign` to the
-lvalue.
-
-### `if` / `while` / `match` with init-stmts
-
-An init-stmts prefix (`if mut x = 3; x < 3 { ... }`) hoists into an enclosing
-`stmts` scope. No new child on the control-flow node.
-
-```
-(stmts
-  (attr_set (ref x) (const "type") (const "mut"))
-  (assign   (ref x) (const 3))
-  (lt       ___c (ref x) (const 3))
-  (if ___c (stmts ...)))
-```
-
-### `when` / `unless` statement gates
-
-`stmt when cond`  →  `(if cond (stmts <stmt>))`
-`stmt unless cond` → `(if (log_not t cond) (stmts <stmt>))`
-
-When the gated statement is a declaration, the declaration is hoisted outside
-the `if`, initialised to `nil`, and only the assignment goes inside the gate.
-
-### `break` / `continue` / `return`
-
-Emitted as the dedicated leaf / single-child nodes described above. `return
-expr` assigns `expr` to a tmp first, then `(return ___t)`.
-
-## Operators
-
-### Compound assignment
-
-`a OP= b` always desugars:
-
-```
-(OP ___t (ref a) (ref b))
-(assign (ref a) ___t)
-```
-
-Covers `+=`, `-=`, `*=`, `/=`, `|=`, `&=`, `^=`, `<<=`, `>>=`, `++=`, `or=`,
-`and=`. `++=` uses `tuple_concat` with an additional `assert` over `has` to
-guard non-overlap.
-
-### Negated operators
-
-Every negated Pyrope operator is `op + log_not` (or `bit_not` for the `!&`
-/ `!^` / `!|` bitwise cousins):
-
-| Surface            | Lowering                                                       |
-|--------------------|----------------------------------------------------------------|
-| `a !and b`         | `(log_and t a b) (log_not dst t)`                              |
-| `a !or b`          | `(log_or  t a b) (log_not dst t)`                              |
-| `a !implies b`     | `(log_not t a) (log_or u t b) (log_not dst u)`                 |
-| `a !& b`           | `(bit_and t a b) (bit_not dst t)`                              |
-| `a !^ b`           | `(bit_xor t a b) (bit_not dst t)`                              |
-| `a !\| b`          | `(bit_or  t a b) (bit_not dst t)`                              |
-| `a !has b`         | `(has t a b) (log_not dst t)`                                  |
-| `a !in b`          | `(in  t a b) (log_not dst t)`                                  |
-| `a !is b`          | `(is  t a b) (log_not dst t)`                                  |
-| `a !does b`        | `(does t a b) (log_not dst t)`                                 |
-| `a !case b`        | `<case-desugar into t>; (log_not dst t)`                       |
-| `a !equals b`      | `<equals-desugar into t>; (log_not dst t)`                     |
-
-### Short-circuit boolean
-
-`a and_then b` lowers to `(log_and dst a b)` **unless** `b` contains a
-function call, in which case the producer emits the guarded form:
-
-```
-(log_and ___a (ref a) (const false))          ; seed with false
-(if (ref a)
-  (stmts (assign ___a (ref b))))              ; b only evaluated when a is true
-(assign (ref dst) ___a)
-```
-
-`or_else` mirrors this with `log_or` and an inverted guard.
-
-### `implies`
-
-`a implies b` → `(log_not t a) (log_or dst t b)`.
-
-### `|>` (pipe-concat) — removed
-
-The `|>` operator is slated for removal from the grammar and has no LNAST
-lowering.
-
-### `equals`, `case`
-
-Both are producer-level desugars over `does`:
-
-```
-; a equals b
-(does t1 (ref a) (ref b))
-(does t2 (ref b) (ref a))
-(log_and dst t1 t2)
-
-; a case b
-(does t (ref b) (ref a))
-(assert t)
-(in dst (ref b) (ref a))
-```
-
-## Ranges
-
-```
-a..=b   →  (range dst a b)
-a..<b   →  (minus ___t b (const 1)) (range dst a ___t)
-a..+b   →  (plus  ___t a b) (minus ___t2 ___t (const 1)) (range dst a ___t2)
-```
-
-The `step` keyword (`a..<b step c`) populates the optional third child of
-`range`.
-
-```
-<range> --| <ref/const> : from
-          | <ref/const> : to
-          | <ref/const> : step (optional, default 1)
-```
-
-## Bit selection
-
-All modifier forms lower via `get_mask`:
-
-| Surface           | Lowering                                                   |
-|-------------------|------------------------------------------------------------|
-| `a#[range]`       | `<build mask>; (get_mask dst a mask)`                      |
-| `a#[i,j,k]`       | mask = `(1<<i) \| (1<<j) \| (1<<k)`; `(get_mask dst a mask)` |
-| `a#sext[range]`   | `(get_mask t a mask) (sext dst t <high_bit>)`              |
-| `a#zext[range]`   | `(get_mask dst a mask)` (no extension node)                |
-| `a#\|[range]`     | `(get_mask t a mask) (red_or  dst t)`                      |
-| `a#&[range]`      | `(get_mask t a mask) (red_and dst t)`                      |
-| `a#^[range]`      | `(get_mask t a mask) (red_xor dst t)`                      |
-| `a#+[range]`      | `(get_mask t a mask) (popcount dst t)`                     |
-
-Write form `a#[range] = v`  →  `<build mask>; (set_mask (ref a) (ref a) mask v)`.
-
-`get_mask(x, mask)` both ANDs and shifts the selected bits down to bit 0, so
-`get_mask(a, 0xF0) == (a & 0xF0) >> 4`.
-
-## Tuples
-
-### Tuple spread `(...a, ...b)`
-
-Lowers to `tuple_concat` with an added `assert` that the new entries don't
-overlap existing fields. Plain `(x, y, z)` tuple literals use `tuple_add`
-(no cassert needed). Mixed forms split per element.
-
-### Register / memory access attributes
-
-Declaration attrs (`latency`, `rdport`, `wrport`, `fwd`, ...) are `attr_set`
-on the ram variable. Per-access attributes like `ram[addr]:[rdport=0]`
-attach to the access tmp:
-
-```
-(attr_set  xx (const "rdport") (const 0))
-(tuple_get xx (ref ram) (ref addr))
-```
-
-## Functions and calls
-
-### `comb` / `pipe[N]` / `mod`
-
-The `func_def` kind child is `"comb"`, `"pipe"`, or `"mod"`. `pipe[N]`
-depth is emitted alongside as `(attr_set <func> (const "pipe_depth") (const N))`
-at the declaration site (not a func_def child).
-
-### Generics, `requires` / `ensures`, `where`
-
-Generics (`<T>`) become a child tuple of `func_def`. Captures (`[a, b]`)
-were removed from Pyrope — there is no capture-list slot on `func_def`.
-`where cond` on a `func_def` is deprecated and should be removed from the
-grammar. `requires` / `ensures` are plain `func_call`s to stdlib builtins
-inside the body (see [Built-in Functions](#built-in-functions)).
-
-### `test`, `spawn`, `impl`, `import`
-
-```
-; test "name" { body }
-(func_def ___f (const "comb") (tuple) (tuple) (tuple) (stmts <body>))
-(attr_set ___f (const "test") (const true))
-(func_call _ ___f (tuple))
-
-; spawn name = { body }
-(func_def ___s (const "comb") (tuple) (tuple) (tuple) (tuple) (stmts <body>))
-(attr_set ___s (const "spawn") (const true))
-(func_call _ ___s (tuple))
-
-; import X as Y
-(func_call (ref Y) (const "import") (tuple (const "X")))
-
-; impl Trait for T ( comb m(...) { body } )
-(func_def ___tmp (const "comb") ... (stmts <body>))
-(does    ___ok ___tmp (ref Trait))
-(assert  ___ok)
-(tuple_set (ref T) (const "m") ___tmp)
-```
-
-### `type Name = T`
-
-`type` statements are aliases: `(tuple_add Name T)` (or `(assign Name T)`
-for a scalar binding) followed by `(attr_set Name (const "type") (const true))`
-to mark the variable as a type binding.
-
-## Timing
-
-| Surface                 | Lowering                                              |
-|-------------------------|-------------------------------------------------------|
-| `a@[N]`                 | `(delay_assign tmp (const N) (ref a))`                |
-| `a@[-1]`                | `(delay_assign tmp (const -1) (ref a))`               |
-| `a@[]`                  | `(delay_assign tmp (const 1) (ref a))`                |
-| `a::[defer]`            | `(delay_assign tmp (const 1) (ref a))`                |
-| `await[N] dst = rhs`    | `(delay_assign (ref dst) (const N) (ref rhs))`        |
-| `x:@[N]`                | `(does t x @[N]) (assert t::[comptime])`              |
-
-`@[N]` is an LNAST timing type (`comp_type_timing`); it is never a flop
-insertion request on its own — only `await[N]` and `::[defer]` actually
-insert delay.
-
-## Constants and unknown values
-
-`nil` and every `0sb?`-style literal (`0sb?`, `0ub010?11??00`, `0sb1?1`, ...)
-are plain `const` nodes carrying the literal text. They are never special
-LNAST nodes.
-
-```
-(const "nil")
-(const "0sb1?1")
-```
-
-## Typecasts
-
-`(expr):T:[attrs]` (expression-level typecast) lowers by: producer creates a
-tmp, emits `(type_spec tmp <type>)` as a compile-time check, and one
-`(attr_set tmp (const "key") (const value))` per attribute.
-
-# Built-in Functions
-
-Pyrope relies on a small stdlib of functions that the producer lowers to
-plain `func_call` nodes. Consumers recognise them by name — they are not
-LNAST primitives, but every backend should handle them (or skip / strip them
-in non-simulation builds).
-
-| Function             | Surface form                      | Purpose                                                                  |
-|----------------------|-----------------------------------|--------------------------------------------------------------------------|
-| `assert`             | `assert cond`                     | Runtime assertion (LNAST primitive — *not* a `func_call`; see [`assert`](#assert)). |
-| `always_assert`      | `always assert cond`              | Runtime assertion checked every cycle, not gated by surrounding control flow. |
-| `assume`             | `assume cond`                     | Formal verification axiom — solver treats `cond` as guaranteed true.    |
-| `cover`              | `cover cond`                      | Coverage point — tooling records whether `cond` was ever observed true.  |
-| `optimize`           | `optimize cond`                   | Optimisation hint — `cond` is guaranteed to hold; synth may exploit it.  |
-| `peek`               | `peek(path.to.signal)`            | Probe an internal signal from a test-bench context.                      |
-| `poke`               | `poke(path.to.reg, value)`        | Force an internal register/signal from a test-bench context.             |
-| `puts`               | `puts arg1, arg2, ...`            | Simulation print with trailing newline. Strings must be comptime.        |
-| `print`              | `print arg1, arg2, ...`           | Simulation print without trailing newline.                               |
-| `cputs`              | `cputs(msg)`                      | Compile-time print. Operand must fold to a comptime string (otherwise compile error). Verifier upass emits `prp:<msg>` on stderr during elaboration. |
-| `format`             | `format(fmt, args...)`            | Compile-time `fmt::format`-style string formatter. Returns a string.     |
-| `import`             | `import X as Y`                   | Module import. `Y` receives the imported module value.                   |
-| `requires`           | `requires cond` in `func_def`     | Function precondition. Checked at every call site.                       |
-| `ensures`            | `ensures cond` in `func_def`      | Function postcondition. Checked on return.                               |
-| `step`               | `step` (inside `test { ... }`)    | Advance simulation by one cycle.                                         |
-| `test`               | `test "name" { body }`            | Sugar: `func_def` + `attr_set "test" true` + `func_call` (see [Lowerings](#test-spawn-impl-import)). |
-| `spawn`              | `spawn name = { body }`           | Sugar: `func_def` + `attr_set "spawn" true` + `func_call` (see [Lowerings](#test-spawn-impl-import)). |
-
-**String interpolation** (`"value={x}"`) is desugared at the producer into a
-`format("value={}", x)` call — a regular `func_call` to `format`.
-
-**Naming convention:** all built-ins emit as `func_call` with a `(ref
-<name>)` function reference (e.g., `(ref puts)`). The producer never mangles
-these names; consumers can predicate on the exact string to recognise them.
+(three underscores followed by a counter). `Lnast::is_tmp(name)` is the single
+predicate for this check; producers should allocate tmps via their own counter
+rather than hand-constructing `___<n>` strings at call sites. Tmp variables
+are single-assignment by construction.
+
+# Printing, dumping, and reading
+
+* `lnast->print()` — pretty box-drawing tree for humans (not round-trippable).
+* `lnast->dump()` / `Lnast::read()` — structured text that round-trips
+  (per-node loc/fname ride along). `lhd --emit-dir lnast-dump:DIR/` writes one
+  `<unit>.lnast` per unit in this form.
+* `lnast->export_into(forest)` / `Lnast::adopt(forest, name)` — the binary
+  `hhds::Forest` interchange used by the `ln:` directories.
+
+# Pyrope → LNAST
+
+The LNAST node set is intentionally small: most Pyrope surface forms
+(`match`, `for`-comprehensions, compound assignments, negated operators,
+bit-selection sugar, string interpolation, ...) are expanded by the producer
+(`inou/prp`, prp2lnast) into the primitives above before any consumer sees
+them. The [Pyrope documentation](../pyrope/00-intro.md) describes the surface
+language; `inou/prp` is the authoritative reference for the exact lowerings.

@@ -4,31 +4,46 @@
 This document provides some minimal suggestion on how to build a new LiveHD pass.
 
 
-Most LiveHD passes reside inside `inou` or `pass`. The only difference is that
-`inou` focuses on translation from some external tool to/from LiveHD while
-`pass` works on transformations from LiveHD to LiveHD.
+LiveHD passes reside in three directories, by level and direction:
+
+* `inou/`: translation from/to some external format (Pyrope, slang/Verilog,
+  Yosys, Verilog code generation).
+* `upass/`: LNAST-level (tree) passes — SSA, type system, constant
+  propagation, and the terminal LNAST→LGraph lowering (`upass/tolg`).
+* `pass/`: LGraph-level (graph) transformations — `pass/cprop`,
+  `pass/bitwidth`, ... — plus the shared pass infrastructure in
+  `pass/common`.
+
+## How passes are registered and run
+
+There is no interactive shell: passes register themselves statically through
+`Pass_plugin` (see `pass/common/pass.hpp`), which adds an
+[EPRP](https://github.com/masc-ucsc/livehd/tree/main/core) method with its
+labels (arguments). The `lhd` driver initializes the registry at startup and
+drives the registered methods programmatically — a [recipe](02-usage.md)
+(`O0`/`O1`/`O2`) names the ordered pass chain, and `--set pass.flag=value` /
+`--config lhd.toml` provide the per-pass flags.
 
 ## Create a pass
 
-Check the `pass/sample` directory for how to create a trivial pass.
+Check an existing small pass (e.g. `pass/lnastfmt` or `pass/prp_writer`) for
+the structure. The typical is to have these files:
 
-* Create pass/XXX directory
-
-The typical is to have these files:
-
-* pass/XXX/pass_XXX.[cpp|hpp]: C++ and Header file to interface with lgshell
-* pass/XXX/XXX.[cpp|hpp]: C++ file to perform the pass over a Lgraph or LNAST API
-* pass/XXX/BUILD: the [Bazel](10-bazel.md) build configuration file
-* pass/XXX/tests/XXX_test.cpp: A google test checking the pass
+* `pass/XXX/pass_XXX.[cpp|hpp]`: C++ and Header file to interface with the
+  pass registry (the `Pass_plugin` + EPRP method setup)
+* `pass/XXX/XXX.[cpp|hpp]`: C++ file to perform the pass over a LGraph or LNAST API
+* `pass/XXX/BUILD`: the [Bazel](10-bazel.md) build configuration file
+* `pass/XXX/tests/XXX_test.cpp`: A google test checking the pass
 
 
-Finally, add the new pass to `main/BUILD`
+Finally, add the new pass to the `lhd` binary dependencies in `lhd/BUILD`
+(`lhd_lib` deps) so the registry links it in.
 
 
 ## Pass Parameters and Common variables
 
- One of the main goals is to have a uniform set of passes in lgshell. lgshell should use this common
-variable names when possible
+One of the main goals is to have a uniform set of passes. Passes should use
+these common EPRP label names when possible:
 
 ```bash
     name:foo        lgraph name
@@ -36,6 +51,11 @@ variable names when possible
     files:foo,var   comma separated list of files used for INPUT
     odir:.          output directory to generate files like verilog/pyrope...
 ```
+
+The `Pass` base class provides `get_files`/`get_path`/`get_odir` accessors,
+and `Pass::error`/`Pass::warn`/`Pass::info` for diagnostics. `Pass::error`
+throws an exception that the `lhd` driver catches and classifies (the
+`error.class` of the [result JSON](02-usage.md)).
 
 ## Some hints/comments useful for developers
 
@@ -62,16 +82,16 @@ export LGBENCH_PERF=1
 For most tests, you can debug with
 
 ```sh
-gdb ./bazel-bin/main/lgshell
+gdb --args ./bazel-bin/lhd/lhd compile foo.prp --emit verilog:foo.v
 ```
 
 or
 
 ```sh
-lldb ./bazel-bin/main/lgshell
+lldb -- ./bazel-bin/lhd/lhd compile foo.prp --emit verilog:foo.v
 ```
 
-Note that breakpoint locations may not resolve until lgshell is started and the relevant LGraph libraries are loaded.
+Note that breakpoint locations may not resolve until lhd is started and the relevant LiveHD libraries are loaded.
 
 ### Address Sanitizer
 
@@ -88,6 +108,8 @@ To debug with concurrent data race.
 ```sh
 bazel build -c dbg --config tsan //...
 ```
+
+(`--config ubsan` for undefined behavior is also available.)
 
 ### Debugging a broken Docker image
 

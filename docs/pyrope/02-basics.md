@@ -325,7 +325,7 @@ Pyrope naming for consistency:
 
 * `stage` is a reserved declaration modifier used inside `mod` blocks. `async`/`await` are reserved for future use.
 
-* `comb`, `pipe`, or `mod` that uses a `self` parameter is also called a method
+* `comb`, `pipe`, or `mod` that declares `self` as its FIRST parameter is also called a method; methods may be called via UFCS (`obj.method(...)`) or directly (`method(obj, ...)`)
 
 
 ## Evaluation order
@@ -573,8 +573,8 @@ cassert(cond implies tup.b==2)
 cassert(!cond implies tup.b==3)
 ```
 
-Variables with first character upper case are `comptime`. This means that the contents
-must be known/fixed at compilation time.
+Casing does not affect `comptime`: a binding is compile-time only when the
+declaration is prefixed with the `comptime` keyword.
 
 ```pyrope
 assert(something.[comptime])

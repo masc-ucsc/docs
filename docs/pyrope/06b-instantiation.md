@@ -588,14 +588,14 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
 
     ```pyrope
     const Inner_t = (
-      comb setter(ref self, z, y) {
+      comb init(ref self, z, y) {
         self.a = y & z
         self.h = !(y & z)
       }
     )
 
     const Top2_t = (
-      comb setter(ref self, a, b) {
+      comb init(ref self, a, b) {
         const foo:Inner_t = (y=a, z=b)
 
         self.c = foo.a
@@ -610,7 +610,7 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
 
     ```pyrope
     const Inner_t = (
-      comb setter(ref self, z, y) {
+      comb init(ref self, z, y) {
         self.a = y & z
         self.h = !(y & z)
       }
@@ -618,7 +618,7 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
 
     const Top2_t = (
       mut foo:Inner_t = nil,
-      comb setter(ref self, a, b) {
+      comb init(ref self, a, b) {
         (self.c, self.d) = self.foo(y=a, z=b)
       }
     )
@@ -646,13 +646,13 @@ if cond {
 }
 
 // RTL equivalent
-a_qpin = __flop(reset=ref reset, clk=ref clk, initial=3, din=a.[defer]) // defer to get final value
+a_qpin = __flop(reset_pin=ref reset, clock_pin=ref clk, initial=3, din=a.[defer]) // defer to get final value
 tmp    = __sum(A=(a_qpin, 1))
 a      = __mux(tmp[4], tmp#[0..=3], 0xF)    // saturate, not wrap
 
-b_qpin = __flop(reset=ref reset, clk=ref clk, initial=4, din=b.[defer])
+b_qpin = __flop(reset_pin=ref reset, clock_pin=ref clk, initial=4, din=b.[defer])
 b      = __mux(cond, b_qpin, 5)
 
-c_cond_qpin = __flop(reset=ref reset, clk=ref clk, initial=0, din=c_cond.[defer])
+c_cond_qpin = __flop(reset_pin=ref reset, clock_pin=ref clk, initial=0, din=c_cond.[defer])
 c_cond      = __sum(A=(b, 1))
 ```

@@ -32,16 +32,16 @@ const Animal = (
 )
 
 const Dog = Animal ++ (
-  comb setter(ref self) { self.legs = 4 },
+  comb init(ref self) { self.legs = 4 },
   comb bark() { puts("bark bark") }
 )
 
-comb bird_setter_default(ref self)           { self.legs = 2 }
-comb bird_setter_animal(ref self, a:Animal)  { self.legs = 2; name = "bird animal" }
+comb bird_init_default(ref self)           { self.legs = 2 }
+comb bird_init_animal(ref self, a:Animal)  { self.legs = 2; name = "bird animal" }
 
 const Bird = Animal ++ (
   mut seeds_eaten:int = nil,
-  const setter = [bird_setter_default, bird_setter_animal],
+  const init = [bird_init_default, bird_init_animal],
   comb eat_seeds(ref self, n) { self.seeds_eaten += n }
 )
 
@@ -55,8 +55,10 @@ mut a:Animal = nil
 mut b:Bird = nil
 mut d:Dog = nil
 
-d = a // error: 'a does d' is false
-b = a // OK, explicit setter in Bird for Animal
+d = a       // error: 'a does d' is false
+b = Bird(a) // OK, explicit conversion calls the Bird init for Animal
+
+mut b2:Bird = a // OK, same conversion init at construction
 
 a = d // OK, 'd does a' is true
 a = b // OK, 'Bird does Animal' is true
@@ -70,7 +72,41 @@ fail if the right-hand side can not be proven to fit in the left-hand side.
 Otherwise, an explicit `wrap` or `sat` statement-level prefix must be used.
 
 
-### Arrays
+### Typed `self` in methods
+
+A method with a typed receiver (`self:T` / `ref self:T`) checks
+**`receiver does T`** at every call site — a structural check, never a
+typename comparison and never strict equivalence:
+
+* every field of `T` must exist on the receiver with the same name
+  (recursively for tuple fields), and the scalar kinds
+  (integer/bool/string/tuple) must match;
+* an integer field's declared range on the receiver must be a SUBSET of
+  the range declared in `T` (`u8` receiver field satisfies a `u32`
+  declared field, not the other way around — no precision can be lost
+  through the method's view of the receiver);
+* extra receiver fields are fine (a superset receiver passes).
+
+```pyrope
+type t1 = (a:u32=nil, b:string="")
+type t2 = (b:string="")
+type t3 = (a:u32=nil, b:string="", c:bool=false)
+
+comb set(ref self:t1) { self.b = "set" }
+
+mut x2:t2 = nil
+mut x3:t3 = nil
+
+x3.set()  // OK:    t3 does t1 (extra field c is fine)
+x2.set()  // error: t2 lacks field `a` → `x2 does t1` is false
+```
+
+The error names the first failing field (e.g. ``missing field `a` `` or
+``field `a` range exceeds declared``). The `does`-check applies to `self`
+only; the remaining arguments follow the normal
+[argument rules](06-functions.md). Note that unlike the assignment check
+above (where `u32 does u16` holds as a type-structure check), the `self`
+range check is directional: receiver range ⊆ declared range.
 
 The same rules of assignments exists for arrays. In Pyrope, arrays can be
 mutable, but they can never be passed by reference. This means that the typical
@@ -286,6 +322,12 @@ an invariance or bivariance.
 Pyrope uses the typical check in modern languages where the function arguments
 are contravariant and the return type is covariant. In Pyrope, the return type
 is checked in the covariant and contravariant checks.
+
+The contravariant rule is about LAMBDA REFERENCES passed as arguments; it
+does NOT apply to `self`. A typed `self:T` is checked directly at each
+call site as `receiver does T` (covariant, like any other `does` check —
+see "Typed `self` in methods" above): a superset receiver passes, a
+receiver missing a field of `T` fails.
 
 
 
@@ -518,7 +560,7 @@ const speak = [speak_bird, speak_cat]
 Coercion polymorphism: Capacity to cast a type to another
 ```pyrope
 const Type1 = (
-  comb setter(ref self, a:int) { }
+  comb init(ref self, a:int) { }
 )
 const a:Type1 = 33
 ```
@@ -545,7 +587,7 @@ const Say_hi_mixin = (
 
 const User = (
   mut name:string = "",
-  comb setter(ref self, n:string) { self.name = n }
+  comb init(ref self, n:string) { self.name = n }
 )
 
 const Mixing_all = Say_mixin ++ Say_hi_mixin ++ User
@@ -652,7 +694,7 @@ technique is to use the in-place operator. It checks that there is no defined ov
 between both tuples.
 
 
-An issue with in-place operator is when more than one tuple has the `setter`
+An issue with in-place operator is when more than one tuple has the `init`
 method. If the tuples are concatenated with `...` and error is triggered, if
 the tuples are concatenated with `++` it does not check if methods overlap.
 Neither is the expected solution for a mixin.
@@ -679,14 +721,14 @@ const Shape = (
   comb area(self) -> (result:i32) { },           // undefined
   comb increase_size(ref self, x:i12) { },       // undefined
 
-  comb setter(ref self, name) { self.name = name }, // implemented
+  comb init(ref self, name) { self.name = name }, // implemented
   comb say_name(self) { puts("name:{}", name) }
 )
 
 const Circle = (
-  ...exclude(Shape, 'setter'),
+  ...exclude(Shape, 'init'),
 
-  comb setter(ref self) { Circle.setter(this, "circle") },
+  comb init(ref self) { Shape.init(ref self, "circle") },
   comb increase_size(ref self, x:i12) { self.rad *= x },
   mut rad:i32 = 0,
   comb area(self) -> (result:i32) {

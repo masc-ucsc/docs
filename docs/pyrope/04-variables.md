@@ -196,14 +196,14 @@ and precision checks described in the attribute section:
 
 * `int`: an unlimited precision integer number.
 * `unsigned`: An integer basic type constrained to be a natural number.
-* `u<num>`: An integer basic type constrained to be a natural number with a maximum value of $2^{\texttt{num}}$. E.g: `u10` can go from zero to 1024.
-* `i<num>`: an integer 2s complement number with a maximum value of $2^{\texttt{num}-1}-1$ and a minimum of $-2^{\texttt{num}}$.
+* `u<num>`: An integer basic type constrained to be a natural number with a maximum value of $2^{\texttt{num}}-1$. E.g: `u10` can go from zero to 1023.
+* `i<num>`: an integer 2s complement number with a maximum value of $2^{\texttt{num}-1}-1$ and a minimum of $-2^{\texttt{num}-1}$.
 * `int(a..<b)`: integer basic type constrained to be between `a` and `b`.
 
 ```pyrope
 mut a:int         = nil // any value, no constrain
 mut b:unsigned    = nil // only positive values
-mut c:u13         = nil // only from 0 to 1<<13
+mut c:u13         = nil // only from 0 to (1<<13)-1
 mut d:int:[range=20..=30] = nil // only values from 20 to 30 (both included)
 mut d:int:[min=-5, max=5] = nil // only values from -5 to 6 (6 not included)
 mut e:int:[min=-1, max=0] = nil // 1 bit integer: -1 or 0
@@ -324,13 +324,12 @@ cassert (1,2,3) == tuple(1..=3)
 In most cases, the range can be used in contructs like `for` for positive and
 negative numbers. The `tuple` typecast is not needed, but if placed the
 semantic is the same. The same `tuple` typecast is also optional when doing a
-comparison. Both ranges a `step` to change the step.
+comparison. Both ranges a `step` to change the step. The `step` amount must be
+a positive integer.
 
 ```pyrope
 cassert(int(0..=10 step  2) == 0ub101_0101_0101)
 cassert(tuple(0..=10 step  2) == ( 0,2,4,6,8,10))
-cassert(tuple(10..=0 step -2) == (10,8,6,4,2, 0))
-cassert((10..=0 step -2) == (10,8,6,4,2, 0))
 
 cassert(-1..=2 == (-1,0,1,2))
 const x = -1..=2
@@ -340,11 +339,14 @@ cassert((0..=10 step 2) == (0,2,4,6,8,10))
 
 Since the range is an integer, a decreasing range should have the same meaning
 that an increasing range (`1..=3 == 3..=1`) but to avoid mistakes/confusions,
-Pyrope generates a compile error in decreasing ranges.
+Pyrope generates a compile error in decreasing ranges. Only ascending ranges
+are allowed — there is no descending form, and a negative or zero `step` is
+also a compile error.
 
 ```pyrope
-assert(5..=0) // error: 5 + 1 never reaches 0
-assert(5..=0 step -1 == (5,4,3,2,1,0))
+assert(5..=0)          // error: 5 never reaches 0
+assert(5..=0 step -1)  // error: descending ranges are not allowed
+assert(0..=10 step -1) // error: range step must be a positive integer
 ```
 
 A closed range can be converted to a single integer or a tuple. A range
@@ -398,9 +400,9 @@ Uppercase. **Complicated lambda types cannot be written inline in a
 by name.**
 
 ```pyrope
-comb check_is_green(self) { self.color == "green" }
+comb check_is_green(self) -> (r:bool) { r = self.color == "green" }
 
-type IsGreen = comb(self)
+type IsGreen = comb(self) -> (r:bool)
 
 mut bund1 = (mut color:string = "", mut value:s33 = nil)
 x:bund1        = nil    // OK, declare x of type bund1 with default values
@@ -972,24 +974,25 @@ reg counter:u32 = 0
 always_assert(counter.reset implies !counter.[valid])
 ```
 
-`valid` can be overwritten by the setter method:
+`valid` can be overwritten by the `init` constructor:
 
 ```pyrope
 const custom = (
   ,mut data:i16 = nil
-  ,comb setter(ref self, v) {
+  ,comb init(ref self, v) {
     self.data = v
     self.[valid] = v != 33
   }
 )
 
-mut x:custom = nil
-
-cassert(x.[valid])
-x.data = 33
+mut x:custom = 33      // init runs at construction
 cassert(not x.[valid])
-x.data = 100
-cassert(x.[valid])
+
+mut y:custom = 100
+cassert(y.[valid])
+
+y = custom(33)         // explicit construction also calls init
+cassert(not y.[valid])
 ```
 
 The contents of the tuple field do not affect the field valid bit. It is
@@ -1001,7 +1004,7 @@ const complex = (
   ,reg v1:string = "foo"
   ,mut v2:string = nil
 
-  ,comb setter(ref self, v) {
+  ,comb init(ref self, v) {
      self.v1 = v
      self.v2 = v
   }
@@ -1023,7 +1026,7 @@ x2.v2 = "hello" // direct access still OK
 
 assert(not x2.[valid] and x2.v1 == "" and x2.v2 == "hello")
 
-x2 = "world"
+x2 = complex("world") // explicit construction calls init
 
 assert(x2.[valid] and x2.v1 == "world")
 ```

@@ -559,44 +559,47 @@ cassert(2 in (1,2)) // OK
 
 
 The evaluation order is always the same program order starting from the top
-module. Remember that the setter method is the constructor called even when
-there is no initial value set. Setter and getter methods are implicit hooks
-and must be `comb`; stateful or pipelined behavior must be modeled with
-explicit methods.
+module. Remember that the `init` method is the constructor, called even when
+there is no initial value set (`nil`). The `init` constructor is an implicit
+hook and must be `comb`; stateful or pipelined behavior must be modeled with
+explicit methods. After construction, reads and writes are structural.
 
 
 
 ```pyrope
+const I1_t = (
+  mut i1_field:u32 = 1,
+  mut i2_field:u32 = 2,
+  comb init(ref self, a) {
+     self.i1_field = a
+  }
+)
+const I2_t = (
+  mut i1_field:i32 = 11,
+  comb init(ref self, a) {
+     self.i1_field = a
+  }
+)
+
 const X_t = (
-  const i1 = (
-    mut i1_field:u32 = 1,
-    mut i2_field:u32 = 2,
-    comb setter(ref self, a) {
-       self.i1_field = a
-    }
-  ),
-  const i2 = (
-    mut i1_field:i32 = 11,
-    comb setter(ref self, a) {
-       self.i1_field = a
-    }
-  )
+  mut i1:I1_t = nil,
+  mut i2:I2_t = nil
 )
 
 mut top = (
-  comb setter(ref self) {
-    mut x:X_t = nil
+  comb init(ref self) {
+    mut x:X_t = nil   // fields keep defaults; i1 then i2 in program order
     cassert(x.i1.i1_field == 1)
     cassert(x.i1.i2_field == 2)
     cassert(x.i2.i1_field == 11)
 
-    x.i1 = 400
+    x.i1 = I1_t(400)  // explicit construction calls init
 
     cassert(x.i1.i1_field == 400)
     cassert(x.i1.i2_field == 2)
     cassert(x.i2.i1_field == 11)
 
-    x.i2 = 1000
+    x.i2 = I2_t(1000)
 
     cassert(x.i1.i1_field == 400)
     cassert(x.i1.i2_field == 2)
@@ -606,7 +609,7 @@ mut top = (
 ```
 
 
-If a lambda in the hierarchy does not have a setter/constructor, the program order
+If a lambda in the hierarchy does not have an `init`/constructor, the program order
 follows tuple scope in tuple ordered assignment.
 
 
@@ -683,16 +686,16 @@ for (idx,i) in r.enumerate() {
   cassert(v == i)
 }
 
-const r2=4..=2 step -1
-cassert(r2 == (4,3,2))
+const r2=2..=6 step 2
+cassert(r2 == (2,4,6))
 for (idx,i) in r2.enumerate() {
   const v = match idx {
-   == 0 { 4 }
-   == 1 { 3 }
-   == 2 { 2 }
+   == 0 { 2 }
+   == 1 { 4 }
+   == 2 { 6 }
    else { 0 }
   }
-  cassert(v == r2[i])
+  cassert(v == i)
 }
 
 for i in 2..<5 {
@@ -730,7 +733,6 @@ cassert(v#[4] == 1)       // unsigned output
 cassert(v#sext[4] == -1)  // signed output
 
 cassert(v#[3..=4] == 0ub11)
-cassert(v#[4..=3 step -1] == 0ub11)
 cassert(v#sext[3..=4] == 0sb11 == -1)
 ```
 
