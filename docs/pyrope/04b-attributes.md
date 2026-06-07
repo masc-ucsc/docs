@@ -273,6 +273,39 @@ Lambda attributes allow [Introspection](07-typesystem.md#Introspection) which re
 
 * `inputs`: returns the input tuple from the lambda
 * `outputs`: returns the output tuple from the lambda
+* `lg`: pins the name of the generated lgraph (and hence the netlist/Verilog
+  module name). Only allowed on `pub` lambdas. See
+  [lg: explicit lgraph name](#lg-explicit-lgraph-name).
+
+#### lg: explicit lgraph name
+
+By default, the lgraph generated for a lambda gets a compiler-mangled name
+derived from the file and the declaration name. The `lg` attribute replaces
+that with an explicit name — useful to fix the top-level module name or to
+link against an external netlist that expects a specific module:
+
+```pyrope
+pub comb my_log::[lg="foo_mod"](a, b) -> (r) { r = a + b }
+```
+
+`lg` renames only the generated artifact, not the language-level name
+(like Rust's `#[export_name]` pins a linker symbol): other files still
+write `import("file/my_log")`. Rules:
+
+* The value must be a comptime string. It may be any string accepted as an
+  lgraph name, including characters that are not legal Pyrope identifiers.
+* Only allowed on `pub` declarations of lambda kinds that generate an
+  lgraph (`comb`, `pipe`, `mod`, `fluid`). `lg` on a private declaration
+  or on a non-lambda (`const`, `reg`) is a compile error.
+* Non-sticky: it names this declaration only, and does not propagate
+  through assignments or aliases.
+* An explicit name escapes the file-based namespacing, so two lgraphs
+  resolving to the same `lg` name anywhere in the project is a compile
+  error.
+
+Unlike the [synthesis hints](#synthesis-attribute-list), `lg` is not
+ignorable: every compiler flow must honor it (like bitwidth, `comptime`,
+and `debug`), since other flows may link against the pinned name.
 
 
 ## Debug and verification attribute list

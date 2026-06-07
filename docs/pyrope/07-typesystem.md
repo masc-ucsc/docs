@@ -692,6 +692,12 @@ setup phase. The import allows for cyclic dependencies between files as long as
 there is no true cyclic dependency between variables. This means that "false"
 cyclic dependencies are allowed but not true ones.
 
+`import` always uses the declared `pub` name. The `lg` attribute
+([explicit lgraph name](04b-attributes.md#lg-explicit-lgraph-name)) renames
+only the generated lgraph, never the import key:
+`pub comb my_log::[lg="foo_mod"](...)` is still imported as
+`import("my_fun/my_log")`.
+
 
 The import behaves like cut and pasting the imported code. It is not a
 reference to the file, but rather a cut and paste of functionality. This means
@@ -803,7 +809,7 @@ set a different value for each uart base register.
 ```pyrope
 // file remote.prp
 
-mod xxx(some, code) {
+mod xxx(some:u32, code:u32) {
   pub reg uart_addr:u32 = nil  // pub: synthesizable regref may attach
   assert(0x400 > uart_addr >= 0x300)
 }

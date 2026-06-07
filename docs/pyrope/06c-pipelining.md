@@ -74,9 +74,9 @@ is written as an argument to the `pipe` keyword, in the same `[N]` position
 used by `stage[N]`:
 
 ```pyrope
-pipe mul(a, b) -> (c)          { c = a * b }   // bare: caller picks at call site
-pipe[5]      mul(a, b) -> (c)  { c = a * b }   // fixed 5-cycle latency
-pipe[1..<4]  mul(a, b) -> (c)  { c = a * b }   // flexible range; caller/compiler picks
+pipe mul(a:u16, b:u16) -> (c:u32)         { c = a * b } // bare: caller picks at call site
+pipe[5]     mul(a:u16, b:u16) -> (c:u32)  { c = a * b } // fixed 5-cycle latency
+pipe[1..<4] mul(a:u16, b:u16) -> (c:u32)  { c = a * b } // flexible range; caller/compiler picks
 ```
 
 The three forms behave as follows:
@@ -356,8 +356,18 @@ Let's re-examine the example of integrating a 3-cycle multiplier with a 1-cycle 
 Our syntax solves this with **explicit timing annotations**, making such errors impossible to ignore.
 
 
-`mod` blocks allow arbitrary mixing of variable clock cycles. They have two
-complementary timing mechanisms for strong compile-time checking:
+`mod` blocks allow arbitrary mixing of variable clock cycles. Where `pipe`
+declares one uniform latency for all outputs (`N >= 1`, no feedthrough),
+a `mod` declares a **landing cycle per output** at its interface, and any
+cycle from 0 up is legal — `mod f(a:u8) -> (x:u8@[2], y:u8@[0])` has one
+output two cycles after the inputs and one combinational feedthrough.
+Registered outputs declare the cycle their q lands at
+(`reg count:u8@[0]`). The opt-out `@[]` keeps the timing slot but sets min
+and/or max to `nil` (unconstrained) — the form foreign Verilog modules,
+which carry no markings, ingest as. Omitting `@[...]` on a `mod` output
+entirely is a compile error: the interface is the timing contract callers
+rely on. Inside the body, `mod` blocks have two complementary timing
+mechanisms for strong compile-time checking:
 
 * **`stage[N]`** on a declaration: a declaration modifier (in the same slot as
   `const`, `mut`, `reg`) that pipelines the whole RHS over `N` cycles. It is
@@ -390,9 +400,13 @@ read a value at a different cycle, use `past[N](x)` or `next[N](x)`.
   window-quantified sampling.
 
 `stage[N]` is only valid inside `mod` blocks. It is not allowed in `comb`
-(pure combinational) or `pipe` (fixed-latency pipeline). Inside a `mod`, register
-state is read via bare variable references (current value) or `.[defer]`
-(end-of-cycle value), and prior-cycle values via `past[n](x)`.
+(pure combinational) or `pipe` (fixed-latency pipeline). `@[N]`, being a
+pure check that never changes the hardware, is legal inside both `mod`
+and `pipe` bodies (in a `pipe` it asserts the value's inferred stage σ);
+it is rejected in `comb`, where every value is by definition at cycle 0.
+Inside a `mod`, register state is read via bare variable references
+(current value) or `.[defer]` (end-of-cycle value), and prior-cycle
+values via `past[n](x)`.
 
 `mod` blocks naturally use `reg` for persistent state across cycles. A
 single `mod` can both orchestrate pipeline stages with explicit timing and
@@ -401,11 +415,11 @@ maintain stateful elements like accumulators or counters.
 
 ```pyrope
 // Define primitive components with 'pipe'.
-pipe mul(a, b) -> (c) { c = a * b }   // bare; caller picks latency via stage
-pipe add(a, b) -> (c) { c = a + b }   // bare; caller picks latency via stage
+pipe mul(a:u16, b:u16) -> (c:u32) { c = a * b }   // bare; caller picks latency via stage
+pipe add(a:u32, b:u32) -> (c:u32) { wrap c = a + b } // bare; caller picks latency via stage
 
 // Define the composite mod that orchestrates the primitives.
-mod multiply_add(in1, in2) -> (out) {
+mod multiply_add(in1:u16, in2:u16) -> (out:u32@[4]) {
     // Stage 1: run mul over 3 cycles. tmp lands at cycle 3.
     stage[3] tmp = mul(in1, in2)
 
@@ -432,10 +446,13 @@ The two mechanisms catch different classes of bugs:
 Use the empty forms (`stage[]`, `x@[]`) when you deliberately want to skip
 one of those checks — for instance during exploration, or when the cycle
 budget is determined elsewhere and you don't want the local check to
-constrain it.
+constrain it. On a `mod` output declaration, `@[]` keeps the timing slot
+with min and/or max set to `nil` — the contract exists but is
+unconstrained, which is also how imported Verilog modules (no markings)
+present their outputs.
 
 ```pyrope
-mod example(in1, in2, in3) -> (out) {
+mod example(in1:u16, in2:u16, in3:u32) -> (out:u33@[5]) {
     stage[3] res1 = mul(in1, in2)
 
     // in3 arrives at cycle 0; we need it at cycle 3 to mix with res1.
@@ -443,6 +460,8 @@ mod example(in1, in2, in3) -> (out) {
     stage[3] in3_d = in3
 
     stage[2] res2a@[5] = res1@[3] + in3_d@[3]
+
+    out = res2a          // res2a is at cycle 5; out lands at the declared @[5]
 
     // error: res1 is at cycle 3, not 2
     // stage[2] bad@[5] = res1@[2] + in3_d@[3]

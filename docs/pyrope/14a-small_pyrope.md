@@ -141,9 +141,12 @@ mut out2 = ram.port[1][addr4]::[rdport=1] // Read port 1
 
 ## Lambda Types: `comb`, `pipe`, `mod`
 Small Pyrope functions do not support runtime capture variables and do not
-include the `mod` orchestration features (`stage[N]` and `@[N]`). Visible
-comptime bindings, such as imports and `comptime const` declarations, are
-available lexically. Pass runtime values explicitly as arguments.
+include the `mod` *body* orchestration features (the `stage[N]` declaration
+modifier and the `@[N]` body cycle check). The interface `@[N]` landing-cycle
+declaration on every `mod` output is still mandatory, exactly as in full
+Pyrope — omitting it is a compile error. Visible comptime bindings, such as
+imports and `comptime const` declarations, are available lexically. Pass
+runtime values explicitly as arguments.
 
 ### Combinational or Pure Functions (`comb`)
 
@@ -185,7 +188,7 @@ pipe[1] counter(enable:bool) -> (reg count:u8) {
     if enable { count += 1 }
 }
 
-mod fifo(push:bool, pop:bool, data_in:u18) -> (data_out:u18, full:bool, empty:bool) {
+mod fifo(push:bool, pop:bool, data_in:u18) -> (data_out:u18@[0], full:bool@[0], empty:bool@[0]) {
     reg buffer:[16]u18 = 0sb?
     reg head:u4 = 0
     reg tail:u4 = 0
@@ -221,21 +224,20 @@ two complementary timing mechanisms inside `mod` blocks:
   never inserts flops; a mismatch is a compile error.
 
 ```pyrope
-pipe mul(a, b) -> (c) { c = a * b }
-pipe add(a, b) -> (c) { c = a + b }
+pipe mul(a:u16, b:u16) -> (c:u32) { c = a * b }
+pipe add(a:u32, b:u32) -> (c:u32) { wrap c = a + b }
 
-mod alu(in1, in2) -> (out_pipelined, out_live) {
+mod alu(in1:u16, in2:u16) -> (out_pipelined:u32@[4], out_live:u32@[4]) {
   stage[3] tmp              = mul(in1, in2)
   stage[3] in2_d            = in2
   stage[1] out_pipelined@[4] = add(tmp@[3], in2_d@[3])
   stage[1] out_live@[4]      = add(tmp@[3], in2_d@[3])
 }
 
-mod accum_alu(in1, in2) -> (out) {
-  reg total::[initial=0]
+mod accum_alu(in1:u16, in2:u16) -> (out:u32@[3]) {
+  reg total:u32 = 0
   stage[3] tmp = mul(in1, in2)
-  const sum_aligned = add(total@[3], tmp@[3])  // both operands checked at cycle 3
-  total = sum_aligned                          // register write
+  wrap total = total@[3] + tmp@[3]             // both operands checked at cycle 3
   out = total                                  // bare name reads current 'q'
 }
 ```

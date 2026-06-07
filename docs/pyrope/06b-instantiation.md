@@ -208,39 +208,44 @@ or short-circuit (`and`/`or`) expressions.
 
 ## Lambda calls
 
-Lambda calls are either inlined or become a specific instance (module). When
-the instance is located in a conditional path, the instance is moved to the
-main scope toggling the inputs valid attribute `.[valid] = false`. The instance
-has the assigned variable name. If the instance is a `mut`, the variable name
-can be the SSA name.
+A `pipe` or `mod` call always lowers to a module instance; a `comb` call is
+inlined by default, but a fully-typed `comb` may also be kept as its own
+instance (the compiler decides). When the instance is located in a conditional
+path, the instance is moved to the main scope toggling the inputs valid
+attribute `.[valid] = false`. The instance has the assigned variable name. If
+the instance is a `mut`, the variable name can be the SSA name.
 
 === "Lambda call"
     ```pyrope
-    mod sub(a, b) -> (x) {
+    mod sum(a:u32, b:u32) -> (x:u32@[0]) { wrap x = a + b }
+
+    mod sub(a:u32, b:u32) -> (x:u32@[0]) {
       const tmp = sum(a, b)      // instance tmp,sum
 
       x = sum(tmp, 3)          // instance x,sum
     }
 
-    mod top(a, b, c) -> (x) {
+    mod top(a:u32, b:u32, c:bool) -> (x:u32@[0]) {
 
      x = sub(a, b).x
      if c {
        const tmp = 3
-       x += sub(b, tmp).x
+       wrap x += sub(b, tmp).x
      }
     }
     ```
 
 === "Instance"
     ```pyrope
-    mod sub(a, b) -> (x) {
+    mod sum(a:u32, b:u32) -> (x:u32@[0]) { wrap x = a + b }
+
+    mod sub(a:u32, b:u32) -> (x:u32@[0]) {
       const tmp = sum(a, b)      // instance tmp
 
       x = sum(tmp, 3)          // instance x
     }
 
-    mod top(a, b, c) -> (x) {
+    mod top(a:u32, b:u32, c:bool) -> (x:u32@[0]) {
 
      x = sub(a, b).x          // instance x
 
@@ -251,7 +256,7 @@ can be the SSA name.
        const tmp = 3
        sub_arg_0 = b
        sub_arg_1 = tmp
-       x += x_0.[defer]   // defer read (instance after conditional code)
+       wrap x += x_0.[defer]   // defer read (instance after conditional code)
      }
      x_0 = sub(sub_arg_0, sub_arg_1).x   // instance x_0 (SSA)
     }
@@ -280,7 +285,7 @@ the condition is false.
 === "Conditional mod call"
 
     ```pyrope
-    mod case_1_counter(runtime) -> (res) {
+    mod case_1_counter(runtime:u8) -> (res:u16@[0]) {
 
       const r = (
         reg total:u16 = 0,          // r is reg, everything is reg
@@ -303,7 +308,7 @@ the condition is false.
 === "Pyrope inline equivalent"
 
     ```pyrope
-    mod case_1_counter(runtime) -> (res) {
+    mod case_1_counter(runtime:u8) -> (res:u16@[0]) {
 
       const r = (
         reg total:u16 = 0,
@@ -627,9 +632,10 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
     ```
 
 
-The top-level module `top2` must be a module, but as the alternative Pyrope
-syntax shows, the inner modules may be in tuples or direct module calls. The
-are advantages to each approach but the code quality should be the same.
+The top-level `top2` can be any lambda kind (here a `comb`), but as the
+alternative Pyrope syntax shows, the inner modules may be in tuples or direct
+module calls. The are advantages to each approach but the code quality should
+be the same.
 
 
 ## Registers

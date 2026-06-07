@@ -58,7 +58,7 @@ Populate the Pyrope code
 
     src/gcd.prp:
     ```pyrope linenums="1"
-    mod gcd(a:u32, b:u32) -> (reg result:u32) {
+    mod gcd(a:u32, b:u32) -> (reg result:u32@[0]) {
       reg x = a
       reg y = b
 

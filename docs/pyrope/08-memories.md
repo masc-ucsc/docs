@@ -249,10 +249,10 @@ mod mem_pool(test_mode:bool) {
 }
 
 // file: engine.prp — logical owner: the functional reads and writes
-mod engine(addr:u10, din:u8, we:bool) -> (dout:u8) {
+mod engine(addr:u10, din:u8, we:bool) -> (dout:u8@[0]) {
   mut buf:[1024]u8 = regref("mem_pool/buf0") // type checked at elaboration
 
-  dout = buf[addr]              // reads the committed 'q' state
+  dout = buf[addr]              // reads the committed 'q' state -> @[0]
   if we { buf[addr] = din }     // this is the single functional writer
 }
 ```

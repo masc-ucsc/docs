@@ -321,7 +321,7 @@ Pyrope naming for consistency:
 
 * Bare `pipe` leaves the latency fully flexible; the caller picks it via `stage[N]` at the call site
 
-* `mod` has no constraints on registers or outputs (can be Mealy or Moore), operates cycle by cycle, and is also the kind used to orchestrate pipelined calls — `stage[N]` and `@[N]` are the timing constructs available inside `mod`.
+* `mod` has no constraints on registers or output structure (can be Mealy or Moore), operates cycle by cycle, and is also the kind used to orchestrate pipelined calls — `stage[N]` and `@[N]` are the timing constructs available inside `mod`. Unlike `pipe`, each `mod` output declares its own landing cycle `@[N]` (`N` from `0` to `n`) at the interface (`mod f(a:u8) -> (x:u8@[2], y:u8@[0])`); a cycle-0 output is a combinational feedthrough, legal in `mod` but forbidden in `pipe`. Both `pipe` and `mod` interfaces must be fully typed (every input and output carries an explicit type).
 
 * `stage` is a reserved declaration modifier used inside `mod` blocks. `async`/`await` are reserved for future use.
 

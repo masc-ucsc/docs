@@ -158,12 +158,12 @@ checks the optional or valid (`.[valid]`) from the output. It can take several
 cycles to show the same result.
 
 ```pyrope
-mod mul2(a, b) -> (reg out) {
-  reg pipe1 = nil
+mod mul2(a:u16, b:u16) -> (reg out:u32@[2]) {
+  reg pipe1:u32 = nil
 
-  out = pipe1
+  out = pipe1                // out.q lands at cycle 2 (two cascaded regs)
 
-  pipe1 = a * b
+  pipe1 = a * b              // pipe1.q lands at cycle 1
 }
 
 comb mul0(a, b) -> (out) { out = a * b }
@@ -316,17 +316,17 @@ lambda is instantiated and we want to check/update the inputs/outputs.
 
 ```pyrope
 // mod: output 'value' is combinational (reads register directly)
-mod counter_mod(update) -> (value) {
+mod counter_mod(update:bool) -> (value:u8@[0]) {
   reg count:u8 = 0
 
-  value = count              // combinational output (no extra flop)
+  value = count              // combinational output (no extra flop) -> @[0]
 
   if update { wrap count = count + 1 }
 }
 
 // pipe: 'value' lands 1 cycle after the inputs (no comb input-to-output path)
 // Same logic, but output is delayed by 1 cycle compared to mod version
-pipe[1] counter_pipe(update) -> (value) {
+pipe[1] counter_pipe(update:bool) -> (value:u8) {
   reg count:u8 = 0
 
   value = count              // reads state q; the appended output flop lands it 1 cycle later
@@ -575,11 +575,11 @@ synthesizable design.
 
 ```pyrope
 // file fifo.prp
-mod fifo(clk, rst, push, pop, din) -> (full, empty, dout) {
+mod fifo(clk:bool, rst:bool, push:bool, pop:bool, din:u8) -> (full:bool@[0], empty:bool@[0], dout:u8@[]) {
   reg count:u3 = 0
 
-  full  = count == 4
-  empty = count == 0
+  full  = count == 4         // combinational read of count.q -> @[0]
+  empty = count == 0         // combinational read of count.q -> @[0]
 
   if push and !full  { count += 1 }
   if pop  and !empty { count -= 1 }

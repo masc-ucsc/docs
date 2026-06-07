@@ -425,18 +425,20 @@ constructs:
   (after all in-cycle writes have accumulated). There is no
   `variable.[defer] = ...` write form — writes use plain `=`.
 
-* For pipeline timing inside `mod` blocks, use `stage[N]` (declaration
-  modifier that pipelines the whole RHS over `N` cycles) and `foo@[N]`
-  (pure timing type check).
+* For pipeline timing, use `stage[N]` (declaration modifier that pipelines
+  the whole RHS over `N` cycles; `mod`-only) and `foo@[N]` (pure timing type
+  check, legal in both `mod` and `pipe` bodies — it asserts the inferred
+  stage and never inserts flops).
 
 * For debug-only future sampling (inside `assert`, `cover`, `test`, …), use
   the temporal library — `next(x, N)`, `eventually[R](x)`, `rose[R](x)`,
   etc.
 
-`foo@[N]` is a pure cycle-alignment type check, never a flop insertion.
-`foo@[3]` checks that `foo` is 3 pipeline stages ahead of the lambda inputs.
-To actually delay a value, use `stage[N] lhs = rhs`. To read past or future
-cycles, use `past[N](x)` or `next[N](x)`.
+`foo@[N]` is a pure cycle-alignment type check, never a flop insertion, and
+is legal inside both `mod` and `pipe` bodies. `foo@[3]` checks that `foo` is
+3 pipeline stages ahead of the lambda inputs. To actually delay a value, use
+`stage[N] lhs = rhs` (a `mod`-only construct). To read past or future cycles,
+use `past[N](x)` or `next[N](x)`.
 
 The `.[defer]` attribute provides RHS-only deferred read access to a
 variable — the value at the end of the current cycle. It is valid for any

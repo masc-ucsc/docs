@@ -497,7 +497,14 @@ declaration:
 pub comb get_five() -> (v) { v = 5 }  // importable by other files
 pub reg mem:[1024]u8 = nil            // synthesizable regref may attach
 reg internal:u8 = 0                   // private: this file/instance only
+
+pub comb my_log::[lg="foo_mod"](a) -> (r) { r = a } // lgraph named foo_mod
 ```
+
+A `pub` lambda may pin the name of its generated lgraph (the netlist/Verilog
+module name) with the `lg` attribute. This renames only the generated
+artifact — `import` still uses the declared name (`my_log` above). See
+[lg: explicit lgraph name](04b-attributes.md#lg-explicit-lgraph-name).
 
 **Debug is exempt from visibility.** Debug statements (`assert`, `test`,
 `puts`, monitors) can observe any variable read-only through

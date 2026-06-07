@@ -49,18 +49,39 @@ Pyrope divides lambdas into four categories: `comb`, `pipe`, `mod`, and
   counts toward `N`. See [Pipelining](06c-pipelining.md) for the
   accept/reject rules (stage inference).
 
-- `mod` has no constraints on registers or outputs. It can be combinational,
-  Mealy, Moore, or a pipeline orchestrator. When a `mod` calls `pipe`
-  lambdas and needs to align their outputs with other signals, it uses the
-  `stage[N]` declaration modifier and the `@[N]` cycle type check (these
-  constructs used to belong to the separate `flow` category, which has
-  been merged into `mod`).
+- `mod` has no constraints on registers or output structure. It can be
+  combinational, Mealy, Moore, or a pipeline orchestrator. Unlike `pipe`,
+  where every output lands at the same declared latency, **each `mod`
+  output declares its own landing cycle at the interface** with `@[N]`
+  (`N >= 0`): `mod f(a:u8) -> (x:u8@[2], y:u8@[0])`. A cycle-0 output is a
+  combinational feedthrough — legal in `mod`, forbidden in `pipe`. A
+  registered output is declared `reg name:T@[H]`: the register's q value
+  is the output (no appended flop), and `H` declares the cycle it lands
+  at — the home stage for a state register, `σ(din)+1` for a feedforward
+  stage register. The empty form `@[]` is an explicit opt-out: the output
+  still carries a timing slot, but with min and/or max set to `nil`
+  (unconstrained) — this is also how foreign Verilog modules, which carry
+  no markings, ingest. A `mod` output with no `@[...]` declaration at all
+  is a compile error. When a `mod` calls `pipe` lambdas and needs to align
+  their outputs with other signals, it uses the `stage[N]` declaration
+  modifier and the `@[N]` cycle type check (these constructs used to
+  belong to the separate `flow` category, which has been merged into
+  `mod`).
 
 - `fluid` is a transactional block with valid/retry handshakes on its
   inputs and outputs. Fluid availability is dynamic: a transaction advances
   only when `.[fire]` is true (`.[valid] and !.[retry]`). A `fluid` call
   must be bound with a `fluid` declaration, and fluid calls are allowed only
   inside `mod` and `fluid` lambdas. See [Fluid Blocks](06d-fluid.md).
+
+`pipe` and `mod` lambdas are module boundaries: **every input and output
+must carry an explicit type** (a compile error otherwise) — their
+interfaces are never type-inferred from call sites, and each `pipe`/`mod`
+always becomes its own module, so a `pipe`/`mod` call lowers to a module
+instance. A `comb` may stay untyped, in which case it is always inlined;
+a fully-typed `comb` may either inline or be kept as its own module
+instance (the compiler decides). `self`/`ref self` methods derive `self`'s
+type from the enclosing tuple.
 
 Methods are `comb`/`pipe`/`mod`/`fluid` lambdas that have `self` as the first
 argument, which allows operating on tuples.
@@ -74,46 +95,46 @@ argument, which allows operating on tuples.
 
 === "Pipeline (pipe)"
     ```pyrope
-    pipe[3] multiply(a, b) -> (result) {          // fixed 3-cycle latency
+    pipe[3] multiply(a:u16, b:u16) -> (result:u32) { // fixed 3-cycle latency
       result = a * b
     }
 
-    pipe[1..=3] add_pipe(a, b) -> (result) {      // caller picks 1-3 cycles
-      result = a + b
+    pipe[1..=3] add_pipe(a:u32, b:u32) -> (result:u32) { // caller picks 1-3 cycles
+      wrap result = a + b
     }
 
-    pipe flexible_mul(a, b) -> (result) {         // bare: caller picks via stage[N]
+    pipe flexible_mul(a:u16, b:u16) -> (result:u32) { // bare: caller picks via stage[N]
       result = a * b
     }
     ```
 
 === "Module with pipeline orchestration (mod)"
     ```pyrope
-    pipe mul(a, b) -> (c) { c = a * b }
-    pipe add(a, b) -> (c) { c = a + b }
+    pipe mul(a:u16, b:u16) -> (c:u32) { c = a * b }
+    pipe add(a:u32, b:u32) -> (c:u32) { wrap c = a + b }
 
-    mod multiply_add(in1, in2) -> (out) {
+    mod multiply_add(in1:u16, in2:u16) -> (out:u32@[4]) {
       stage[3] tmp     = mul(in1, in2)         // mul picks 3 stages
       stage[3] in1_d   = in1                   // delay in1 by 3
       stage[1] out@[4] = add(tmp@[3], in1_d@[3]) // adder takes 1 stage; out@[4] typechecks
     }
 
-    mod accum(in1, in2) -> (out) {
-      reg total = 0                             // mod can use reg
+    mod accum(in1:u16, in2:u16) -> (out:u32@[3]) {
+      reg total:u32 = 0                  // mod can use reg (state, home stage 3)
       stage[3] tmp = mul(in1, in2)
-      total = add(total, tmp@[3])
-      out = total
+      wrap total = total + tmp@[3]       // state q + stage-3 value: coherent
+      out = total                        // q read; out lands at cycle 3
     }
     ```
 
 === "Module with registered outputs (mod)"
     ```pyrope
-    mod counter(enable) -> (reg count) {
-      if enable { count += 1 }
+    mod counter(enable:bool) -> (reg count:u8@[0]) {
+      if enable { wrap count += 1 }      // conditional write -> state reg, home 0
     }
 
-    mod add_reg(a, b) -> (reg result) {
-      result = a + b
+    mod add_reg(a:u8, b:u8) -> (reg result:u9@[1]) {
+      result = a + b                     // unconditional write -> stage reg; q at 1
     }
     ```
 
@@ -549,7 +570,7 @@ const Counter = (
   comb init(ref self, start:bool) {   // constructor
     self.found_once = start
   },
-  mod call(ref self, a) -> (result) { // explicit stateful method
+  mod call(ref self, a:u8) -> (result:u9@[0]) { // explicit stateful method
     self.found_once or= (a == 0)
     result = a + 1
   }
