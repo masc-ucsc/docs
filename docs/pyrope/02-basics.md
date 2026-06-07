@@ -308,7 +308,7 @@ syntax.
 
 ```pyrope
 comb f(a, b) -> (r) { r = a + b }
-cassert(f(2, 3) == 5)
+cassert(f(a=2, b=3) == 5)
 ```
 
 Pyrope naming for consistency:
@@ -373,7 +373,7 @@ side-effects. In a way, expression code blocks can be seen as a type of
 ```pyrope
 mut a = {mut d=3 ; d+1} + 100 // OK
 cassert(a == (3+1+100))
-cassert(a == {3+1+100}) // same, expression evaluated as 104 and returned
+cassert(a == {3+1+100}) // same, expression block evaluates to 104
 ```
 
 

@@ -74,8 +74,8 @@ In the previous example, the compiler infers that the tuple at most has 127 entr
 There are several constructs to declare arrays or async memories:
 
 ```pyrope
-reg mem1:[16]i8 = 3        // mem 16 entry init to 3 with type i8
-reg mem2:[16]i8 = nil      // mem 16 entry init to 0 with type i8
+reg mem1:[16]i8 = 3        // mem 16 entry init/reset to 3 with type i8
+reg mem2:[16]i8 = nil      // mem 16 entry, NO reset (uninitialized, type i8)
 mut mem3:[] = 0sb?         // array infer size and type, 0sb? initialized
 mut mem4:[13] = 0          // array 13 entries size, initialized to zero
 reg mem5:[4]i3 = (1,2,3,4) // mem 4 entries 3 bits each, initialized

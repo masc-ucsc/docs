@@ -88,7 +88,7 @@ comptime dependencies of the lambda.
     {
       assert(a == 3)
       a = 33             // OK. assign 33
-      a:int = 33         // OK, assign 33 and check that 'a' has type int
+      a = int(33)        // OK, explicit conversion/check on the RHS
       const b = 4
       const a = 3333       // error: variable shadowing
       mut a = 33         // error: variable shadowing
@@ -114,7 +114,7 @@ comptime dependencies of the lambda.
     assert(b == 3) // error: undefined variable 'b'
 
     mut a = 3
-    comb f2() {
+    comb f2() -> () {
       // assert a == 3   // error: runtime outer variable not visible
     }
     ```
@@ -162,8 +162,8 @@ comb example(a:int, b:int=a+5) -> (result:int) {
   result = a + b
 }
 cassert(example(a=3) == (3+3+5))
-cassert(example(6,7) == (6+7))
-cassert(example(6) == (6+6+5))
+cassert(example(a=6,b=7) == (6+7))
+cassert(example(a=6) == (6+6+5))
 assert(example(b=3) !=0) // error: undefined `a` argument
 ```
 
@@ -190,23 +190,24 @@ Integers have unlimited precision and they are always signed. Unlike most other
 languages, there is only one type for integer (unlimited), but the type system
 allows to add constraints to be checked when assigning the variable contents.
 Notice that the type is the same (`u32` is the same type as `i3`, they just have
-different constraints). As a result, `u32 does u16` and `u16 does u32` are both
-true as type-structure checks; assignment still performs the additional range
-and precision checks described in the attribute section:
+different constraints). The `does` operator compares the range envelope: `a does
+b` is true when `a`'s range is a superset of `b`'s (`a.max >= b.max and a.min <=
+b.min`). So `u32 does u16` is true (u32's range covers u16's) but `u16 does u32`
+is false. Assignment still performs the additional range and precision checks
+described in the attribute section:
 
 * `int`: an unlimited precision integer number.
 * `unsigned`: An integer basic type constrained to be a natural number.
 * `u<num>`: An integer basic type constrained to be a natural number with a maximum value of $2^{\texttt{num}}-1$. E.g: `u10` can go from zero to 1023.
 * `i<num>`: an integer 2s complement number with a maximum value of $2^{\texttt{num}-1}-1$ and a minimum of $-2^{\texttt{num}-1}$.
-* `int(a..<b)`: integer basic type constrained to be between `a` and `b`.
 
 ```pyrope
 mut a:int         = nil // any value, no constrain
 mut b:unsigned    = nil // only positive values
 mut c:u13         = nil // only from 0 to (1<<13)-1
-mut d:int:[range=20..=30] = nil // only values from 20 to 30 (both included)
-mut d:int:[min=-5, max=5] = nil // only values from -5 to 6 (6 not included)
-mut e:int:[min=-1, max=0] = nil // 1 bit integer: -1 or 0
+mut d:int(min=20, max=30) = nil // only values from 20 to 30 (both included)
+mut d:int(min=-5, max=5) = nil // only values from -5 to 6 (6 not included)
+mut e:int(min=-1, max=0) = nil // 1 bit integer: -1 or 0
 ```
 
 Integers can have 3 value (`0`,`1`,`?`) expression or a `nil`. Section
@@ -648,9 +649,9 @@ matched too.
 cassert (b=100,a=333,e=40,5) does (a=1,b=3)
 cassert (a=100,300,b=333,e=40,5) does (a=1,3)
 cassert(not ((b=100,300,a=333,e=40,5) does (a=1,3)))
-cassert(u32 does u16)
-cassert(u16 does u32)
-cassert(not (u32 does string))
+cassert(u32 does u16)          // u32's range is a superset of u16's
+cassert(not (u16 does u32))    // u16's range is NOT a superset of u32's
+cassert(not (u32 does string)) // different basic type → false
 cassert (100,30) does 30
 cassert(not (30 does (30,200)))
 cassert(not ((a=3) does (30,a=200)))
@@ -1139,6 +1140,6 @@ comb fcall_returns_2_values() -> (xx, yy) {
   yy = 7
 }
 
-const (a, b_unused) = fcall_returns_2_values()
+const (a = fcall_returns_2_values.xx, b_unused = fcall_returns_2_values.yy) = fcall_returns_2_values()
 cassert(a == 3)
 ```

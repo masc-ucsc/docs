@@ -29,14 +29,15 @@ There are two operations that can be done with attributes: **set** and
 **read**. The two operations have distinct syntax so the reader (and the
 parser) can never confuse them.
 
-* **Set** (`var::[attr]` when no explicit type; `var:Type:[attr]` when a
-  type is given — the colon between the type and the attribute block is
-  not doubled): only allowed at *declaration* sites — `mut`, `reg`,
-  `const`, `comb`, `pipe`, `mod` — and on tuple fields at the point they
-  are introduced. The set binds the attribute to all uses of the variable.
-  If no value is given, the attribute is set to `true`. E.g:
-  `mut foo:uint:[max=300] = 4`, `reg counter::[clock_pin=ref clk1] = 0`,
-  `const c::[debug] = 3`, `mut x2:complex:[valid=false] = 0`.
+* **Set** (`var::[attr]`): only allowed at *declaration* sites — `mut`,
+  `reg`, `const`, `comb`, `pipe`, `mod` — and on tuple fields at the point
+  they are introduced. The set binds the attribute to all uses of the
+  variable. If no value is given, the attribute is set to `true`. E.g:
+  `reg counter::[clock_pin=ref clk1] = 0`, `const c::[debug] = 3`.
+  Integer range/width attributes such as `max`, `min`, `bits`, `ubits`,
+  `sbits`, and `sign` are read-only metadata. Constrain them indirectly
+  through the declared type, e.g. `mut foo:int(max=300, min=0) = 4` or
+  `mut bar:u14 = 0`, never with `foo:int:[max=300]`.
 
 * **Read** (`var.[attr]`): allowed everywhere a normal expression is
   allowed. Returns the attribute's current value (any type — usually
@@ -247,6 +248,16 @@ Pipestage accept the same register attributes but also two more:
 * `lat`: latency for the pipestage
 * `num`: maximum number of units allowed
 
+A register with a non-nil initializer needs a reset input. Whether that
+reset is synchronous or asynchronous is **target-dependent**, so it is an
+elaboration flag rather than a per-register default: `upass.reset_style`
+(`sync` | `async`, default `sync` — FPGA-typical) selects how every
+implicit-reset flop wires its reset. A per-register `sync` attribute (above)
+overrides the flag for that register. The implicit reset binds to an existing
+`reset`/`rst`/`reset_n`/`rst_n` input before minting a new `reset` input (the
+same bind-before-mint rule as the implicit clock); `reg foo = nil` declares a
+register with **no** reset.
+
 ### Memories attribute list
 
 Memories are arrays with persistence like registers. As such, some of the attributes
@@ -327,14 +338,12 @@ See [Verification](09-verification.md) for the full temporal library and
 debug constructs.
 
 
-The integer type constructor allows to use a range to set max/min, but it is
-syntax sugar for direct attribute set.
+Integer type constructors set the constrained bounds. The resulting `max`,
+`min`, `ubits`, and `sbits` attributes can be read, but not written directly.
 
 ```pyrope
-opt1:uint:[max=300] = 0
-opt2:int:[min=0,max=300] = 0  // same
-opt3::[min=0,max=300] = 0     // same
-opt4:int:[range=0..=300] = 0  // same
+mut opt1:uint(max=300) = 0
+mut opt2:int(min=0,max=300) = 0  // same
 
 cassert(opt1.[ubits] == 0) // opt1 initialized to 0, so 0 bits
 opt1 = 200

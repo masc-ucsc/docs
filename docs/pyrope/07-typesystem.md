@@ -101,8 +101,9 @@ const t1 = (a:int=1, b:string)
 const t2 = (a:int=100, b:string)
 mut v1 = (a=33, b="hello")
 
-comb f1() {
-  (a=33, b="hello")
+comb f1() -> (a:int, b:string) {
+  a = 33
+  b = "hello"
 }
 
 cassert(t1 equals t2)
@@ -122,7 +123,7 @@ Since the `puts` command understands types, it can be used on any variable, and
 it is able to print/dump the results.
 
 ```pyrope
-const At:int:[range=33..<inf] = nil    // number bigger than 32
+const At:int(min=33) = nil    // number bigger than 32
 const Bt = (
   mut c:string = nil,
   mut d = 100,
@@ -176,8 +177,8 @@ These are the detailed rules for the `a does b` operator depending on the `a` an
 * The lambdas have a more complicated set of rules explained later.
 
 ```pyrope
-cassert (a:int:[max=33, min=0] does (a:int:[max=20, min=5]))
-cassert(not ((a:int:[range=0..=33] does (a:int:[max=50, min=5]))))
+cassert (a:int(max=33, min=0) does (a:int(max=20, min=5)))
+cassert(not ((a:int(max=33, min=0) does (a:int(max=50, min=5)))))
 
 cassert (a:string, b:int) does (a:"hello", b:33)
 cassert(not (((b:int, a:string) does (a:"hello", b:33)))) // order matters in tuples
@@ -337,14 +338,16 @@ The programmer can not specify the exact number of bits because the compiler has
 the option to optimize the design.
 
 
-In fact, internally Pyrope only tracks the `max` and `min` value. When the
-`sbits/ubits` is used, it is converted to a `max/min` range. Pyrope code can
-set or access the bitwidth attributes for each integer variable.
+In fact, internally Pyrope only tracks the `max` and `min` value. When a
+width-constrained type such as `u14` or `s4` is used, it is converted to a
+`max/min` range. Pyrope code can read bitwidth attributes for each integer
+variable, but these attributes are read-only; constrain them through the
+declared type, not through an attribute write.
 
 * `max`: the maximum number
 * `min`: the minimum number
-* `sbits`: the number of bits to represent the value
-* `ubits`: the number of bits. The variable must be always positive or a compile error.
+* `sbits`: the number of signed bits needed to represent the current value
+* `ubits`: the number of unsigned bits needed to represent the current value
 
 
 Internally, Pyrope has 2 sets of `max/min`. The constrained and the current.
@@ -384,7 +387,7 @@ control-flow divergences, the worst possible path is considered.
 
 ```pyrope
 mut a = 3                  // a: current(max=3,min=3) constrain()
-mut c:int:[range=0..=10] = nil // c: current(max=0,min=0) constrain(max=10,min=0)
+mut c:int(min=0,max=10) = nil // c: current(max=0,min=0) constrain(max=10,min=0)
 if b {
   c = a + 1                // c: current(max=4,min=4) constrain(max=10,min=0)
 } else {
@@ -392,7 +395,7 @@ if b {
 }
                            // c: current(max=4,min=3) constrain(max=10,min=0)
 
-mut e::[sbits = 4] = nil   // e: current(max=0,min=0) constrain(max=7,min=-8)
+mut e:s4 = nil             // e: current(max=0,min=0) constrain(max=7,min=-8)
 e = 2                      // e: current(max=2,min=2) constrain(max=7,min=-8)
 mut d = c                  // d: current(max=4,min=3) constrain()
 if d == 4 {
@@ -666,7 +669,7 @@ pub comb fun2(a) -> (r) {
 comb another(a) -> (r) { r = a }   // no pub: private to this file
 
 pub const mytup = (
-  comb call3() { puts("call called") }
+  comb call3(self) -> () { puts("call called") }
 )
 ```
 
@@ -768,13 +771,13 @@ Visibility follows the `pub` rule
   never create a combinational path between distant modules.
 
 ```pyrope
-mod do_increase() {
+mod do_increase() -> () {
   reg counter:u32 = 0     // no pub needed: puts below is a debug statement
 
   wrap counter = counter + 1
 }
 
-mod do_debug() {
+mod do_debug() -> () {
   const cntr = regref("do_increase/counter")
 
   puts("The counter value is {}", cntr)
@@ -809,13 +812,13 @@ set a different value for each uart base register.
 ```pyrope
 // file remote.prp
 
-mod xxx(some:u32, code:u32) {
+mod xxx(some:u32, code:u32) -> () {
   pub reg uart_addr:u32 = nil  // pub: synthesizable regref may attach
   assert(0x400 > uart_addr >= 0x300)
 }
 
 // file local.prp
-mod setup_xx() {
+mod setup_xx() -> () {
   mut xx = regref("uart_addr") // match xxx.uart_addr if xxx is in hierarchy
   mut index = 0
   for val in ref xx {          // ref does not allow enumerate
@@ -925,10 +928,10 @@ Tuples can be multi-dimensional, and each dimension is indexed with its own
 `[...]` (e.g. `m[i][j]`, not `m[i,j]`).
 
 ```pyrope
-comb matrix8x8_set_xy(ref self, x:int:[min=0,max=7], y:int:[min=0, max=7], v:u16) {
+comb matrix8x8_set_xy(ref self, x:int(min=0,max=7), y:int(min=0, max=7), v:u16) {
   self.data[x][y] = v
 }
-comb matrix8x8_set_row(ref self, x:int:[min=0, max=7], v:u16) {
+comb matrix8x8_set_row(ref self, x:int(min=0, max=7), v:u16) {
   for ent in ref self.data[x] {
     ent = v
   }
@@ -948,9 +951,9 @@ const Matrix8x8 = (
 mut m:Matrix8x8 = nil          // init runs
 cassert(m.data[0][3] == 0)
 
-m.set_xy(1, 2, 100)            // explicit method call
+m.set_xy(x=1, y=2, v=100)      // explicit method call
 cassert(m.data[1][2] == 100)
-m.set_row(1, 3)
+m.set_row(x=1, v=3)
 cassert(m.data[1][2] == 3)
 m.data[4][5] = 33              // plain structural indexed write
 cassert(m.data[4][5] == 33)
@@ -965,7 +968,7 @@ The `init` method can be [overloaded](06-functions.md#Overloading) to select
 between construction forms.
 
 ```pyrope
-comb my_2_elem_init_xv(ref self, x:uint:[range=0..<2], v:string) { self.data[x] = v }
+comb my_2_elem_init_xv(ref self, x:uint(min=0,max=1), v:string) { self.data[x] = v }
 comb my_2_elem_init_copy(ref self, v:My_2_elem)          { self.data = v.data }
 comb my_2_elem_init_default(ref self)                    { self.data = ("", "") }
 

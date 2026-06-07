@@ -28,12 +28,12 @@ equivalance)[07-typesystem.md#Type_equivalence].
 const Animal = (
   mut legs:int = nil,
   mut name = "unnamed",
-  comb say_name() { puts(name) }
+  comb say_name(self) -> () { puts(name) }
 )
 
 const Dog = Animal ++ (
   comb init(ref self) { self.legs = 4 },
-  comb bark() { puts("bark bark") }
+  comb bark(self) -> () { puts("bark bark") }
 )
 
 comb bird_init_default(ref self)           { self.legs = 2 }
@@ -46,7 +46,7 @@ const Bird = Animal ++ (
 )
 
 const Greyhound = Dog ++ ( // also extends Dog
-  comb race() { puts("running fast") }
+  comb race(self) -> () { puts("running fast") }
 )
 ```
 
@@ -66,10 +66,12 @@ a = b // OK, 'Bird does Animal' is true
 
 When the `x` in `x = y` is an `integer` basic type, there is an additional
 check to guarantee that no precision is lost. Integer widths such as `u16` and
-`u32` are constraints on the same basic `int` type, so `u32 does u16` and
-`u16 does u32` are both true as type-structure checks, but `x = y` may still
-fail if the right-hand side can not be proven to fit in the left-hand side.
-Otherwise, an explicit `wrap` or `sat` statement-level prefix must be used.
+`u32` are constraints on the same basic `int` type. The `does` operator uses
+the range-superset rule (`a does b` ⇔ `a.max >= b.max and a.min <= b.min`), so
+`u32 does u16` is true but `u16 does u32` is false. The `x = y` assignment is a
+separate check: it may still fail if the right-hand side can not be proven to
+fit in the left-hand side. Otherwise, an explicit `wrap` or `sat`
+statement-level prefix must be used.
 
 
 ### Typed `self` in methods
@@ -104,9 +106,10 @@ x2.set()  // error: t2 lacks field `a` → `x2 does t1` is false
 The error names the first failing field (e.g. ``missing field `a` `` or
 ``field `a` range exceeds declared``). The `does`-check applies to `self`
 only; the remaining arguments follow the normal
-[argument rules](06-functions.md). Note that unlike the assignment check
-above (where `u32 does u16` holds as a type-structure check), the `self`
-range check is directional: receiver range ⊆ declared range.
+[argument rules](06-functions.md). Note that the `self` dispatch check uses the
+subset direction — receiver range ⊆ declared range (a receiver field may be
+narrower than the declared field) — which is the opposite of the `does`
+operator's superset rule (`a does b` ⇔ a's range ⊇ b's).
 
 The same rules of assignments exists for arrays. In Pyrope, arrays can be
 mutable, but they can never be passed by reference. This means that the typical
@@ -217,17 +220,17 @@ overloading check.
 
 
 ```pyrope
-comb fa_t(a:Animal) { }
-comb fd_t(d:Dog) { }
+comb fa_t(a:Animal) -> () { }
+comb fd_t(d:Dog) -> () { }
 
-comb call_animal(a:Animal) {
+comb call_animal(a:Animal) -> () {
    puts(a.name) // OK
 }
-comb call_dog(d:Dog) {    // OK
+comb call_dog(d:Dog) -> () {    // OK
    d.bark()    // OK
 }
 
-comb f_a(fa:fa_t) {
+comb f_a(fa:fa_t) -> () {
   mut a:Animal = nil
   mut d:Dog = nil
   fa(a)  // OK
@@ -236,7 +239,7 @@ comb f_a(fa:fa_t) {
 f_a(call_animal) // OK
 f_a(call_dog)    // error: `fa_t does call_dog` is false
 
-comb f_d(fd:fd_t) {
+comb f_d(fd:fd_t) -> () {
   mut a:Animal = nil
   mut d:Dog = nil
   fd(a)  // error: `a does Dog` is false
@@ -433,19 +436,19 @@ const fun_list = [fun_list_ab, fun_list_abc, fun_list_abcd]
 
 assert(fun_list.[size] == 3) // 3 lambda entries in fun_list
 
-assert(fun_list(1,2) == 3)
-assert(fun_list(1,2,4) == 7)
-assert(fun_list(1,2,4,5) == 12)
-assert(fun_list(1,2,4,5,6) == 18) // error: no function with 5 args
+assert(fun_list(a=1,b=2) == 3)
+assert(fun_list(a=1,b=2,c=4) == 7)
+assert(fun_list(a=1,b=2,c=4,d=5) == 12)
+assert(fun_list(a=1,b=2,c=4,d=5,e=6) == 18) // error: no function with 5 args
 
 
 comb fun_list_ab100(a, b) -> (r) { r = 100 }
 const fun_list2 = [fun_list_ab, fun_list_abc, fun_list_abcd, fun_list_ab100]
-assert(fun_list2(1, 2) == 3) // first match wins
+assert(fun_list2(a=1, b=2) == 3) // first match wins
 
 comb fun_list_ab200(a, b) -> (r) { r = 200 }
 const fun_list3 = [fun_list_ab200, fun_list_ab, fun_list_abc, fun_list_abcd]
-cassert(fun_list3(1, 2) == 200)
+cassert(fun_list3(a=1, b=2) == 200)
 ```
 
 For untyped named argument calls:
@@ -457,7 +460,7 @@ const f1 = [f1_ab, f1_xy]
 
 cassert(f1(a=1, b=2) == 103)
 cassert(f1(x=1, y=2) == 203)
-cassert(f1(1, 2) == 103) // first in list
+const bad = f1(1, 2) // error: untyped positional arguments are ambiguous
 ```
 
 For typed calls:
@@ -468,10 +471,10 @@ comb fo_ii_b(a:int, b:int)  -> (result:bool)   { result = false }
 comb fo_ii_s(a:int, b:int)  -> (result:string) { result = "hello" }
 const fo = [fo_is, fo_ii_b, fo_ii_s]
 
-const a = fo(3, "hello")
+const a = fo(3, "hello")        // type of each argument is unambiguous
 cassert(a == true)
 
-const b = fo(3, 300)        // first in list return bool
+const b:bool = fo(3, 300)   // return context selects bool overload
 cassert(b == false)
 
 const c:int = fo(3, 300)    // error: no lambda fulfills constrains
@@ -552,8 +555,8 @@ comb smallest(...a) -> (r) {
 
 Ad-hoc polymorphism: capacity to overload the same lambda name with different types.
 ```pyrope
-comb speak_bird(a:Bird) { puts("pio pio") }
-comb speak_cat(a:Cat)   { puts("meaow") }
+comb speak_bird(a:Bird) -> () { puts("pio pio") }
+comb speak_cat(a:Cat)   -> () { puts("meaow") }
 const speak = [speak_bird, speak_cat]
 ```
 
@@ -705,15 +708,14 @@ explicitly create the new methods with some support method.
 
 
 ```pyrope
-comb exclude(o,...a) {
-  const new_tup = ()
+comb exclude(o,...a) -> (new_tup) {
+  new_tup = ()
   for (key,idx,e) in zip(o.keys(),o.enumerate()) {
     // create single tupe and append to preserve key and position order
     const sing_tup = ()
     sing_tup[key] = e
     new_tup ++= sing_tup unless key in o
   }
-  new_tup
 }
 
 const Shape = (
@@ -747,13 +749,12 @@ statements at the top of the body (compile-time where possible, runtime
 otherwise). The caller is responsible for meeting them.
 
 ```pyrope
-comb rotate(a) {
+comb rotate(a) -> (r) {
   cassert(a has 'x' and a has 'y')
   assert(a.y != 30)
-  mut r = a
+  r = a
   r.x = a.y
   r.y = a.x
-  r
 }
 ```
 

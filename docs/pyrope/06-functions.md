@@ -114,14 +114,14 @@ argument, which allows operating on tuples.
     pipe add(a:u32, b:u32) -> (c:u32) { wrap c = a + b }
 
     mod multiply_add(in1:u16, in2:u16) -> (out:u32@[4]) {
-      stage[3] tmp     = mul(in1, in2)         // mul picks 3 stages
+      stage[3] tmp     = mul(a=in1, b=in2)     // mul picks 3 stages
       stage[3] in1_d   = in1                   // delay in1 by 3
-      stage[1] out@[4] = add(tmp@[3], in1_d@[3]) // adder takes 1 stage; out@[4] typechecks
+      stage[1] out@[4] = add(a=tmp@[3], b=in1_d@[3]) // adder takes 1 stage; out@[4] typechecks
     }
 
     mod accum(in1:u16, in2:u16) -> (out:u32@[3]) {
       reg total:u32 = 0                  // mod can use reg (state, home stage 3)
-      stage[3] tmp = mul(in1, in2)
+      stage[3] tmp = mul(a=in1, b=in2)
       wrap total = total + tmp@[3]       // state q + stage-3 value: coherent
       out = total                        // q read; out lands at cycle 3
     }
@@ -218,10 +218,19 @@ The lambda definition has the following fields:
 + `INPUT` has a list of inputs allowed with optional types. `()` indicates no
   inputs. `(...args)` allow to accept a variable number of arguments.
 
-+ `OUTPUT` has a list of outputs allowed with optional types. `()` or an
-  omitted `-> (...)` indicates no outputs. Outputs are **always declared by
++ `OUTPUT` has a list of outputs allowed with optional types. `-> ()`
+  indicates no outputs. The `-> (...)` clause is **mandatory**; omitting it
+  is a compile error. The only exemption is a `self` method (first input
+  parameter named `self`, with or without `ref`): it acts through the
+  receiver — setters, constructors, or debug-only prints/asserts — and may
+  omit the clause. Outputs are **always declared by
   name** — there are no anonymous/positional return lists. The body assigns
-  to those names.
+  to those names. An output may have the same Pyrope name as an input:
+  `comb f(x) -> (x) { x = x + 1 }` is legal. In the lambda body, reads before
+  the output assignment use the input value and the assignment binds the output
+  field. This is a source-level name match, not a bidirectional hardware port:
+  LNAST can represent the shared source name, but LGraph/Verilog generation
+  emits distinct input and output signal names.
 
 Dispatch between alternative lambdas is always explicit at the call site
 using `if`/`elif` chains. Pyrope does not have a `where` clause on lambda
@@ -282,9 +291,10 @@ let an argument be passed unnamed:
   (`fcall(a)` matches a parameter named `a`).
 
 * The argument types make the mapping unambiguous with no implicit
-  conversion required (e.g. parameters `(a:bool, b:int, c:string)` can be
-  filled positionally because each call-site value matches exactly one
-  parameter by type).
+  conversion required. This applies when each unnamed call-site value
+  matches exactly one parameter by type; if two parameters have the same
+  type, or an untyped parameter could accept the value, the call must name
+  the argument.
 
 * `self` is always bound positionally — by the value before the dot in a
   UFCS call, or by the first positional actual in a direct call — and is
@@ -292,8 +302,8 @@ let an argument be passed unnamed:
 
 There are several rules on how to handle arguments.
 
-* **Every lambda call requires parentheses.** `foo()`, `foo(1,2)`, and
-  `x.bar(y)` are the only forms. There is no "drop parens after newline"
+* **Every lambda call requires parentheses.** `foo()`, `foo(a=1,b=2)`, and
+  `x.bar(y=y)` are the only forms. There is no "drop parens after newline"
   or "drop parens after a pipeline operator" sugar. This keeps every call
   site unambiguously identifiable.
 
@@ -404,7 +414,7 @@ mut tup2 = (
 )
 ```
 
-A lambda call always uses parentheses (`foo()` or `foo(1, 2)`). There is no
+A lambda call always uses parentheses (`foo()` or `foo(a=1, b=2)`). There is no
 exception: reading a variable or field never invokes a method implicitly.
 
 The `init` method is an implicit construction hook, so it must be `comb`. If
@@ -413,7 +423,7 @@ use an explicit `mod` or `pipe` method call instead.
 
 ```pyrope
 no_arg_fun()     // parentheses always required
-arg_fun(1, 2)    // parenthesis required
+arg_fun(a=1, b=2) // parenthesis required; multi-argument calls name arguments
 
 mut constructed:(
   mut field:u32,
@@ -454,7 +464,7 @@ only useful for lambda input arguments.
 
 
 ```pyrope
-comb inc1(ref a) { a += 1 }
+comb inc1(ref a) -> () { a += 1 }
 
 const x = 3
 inc1(ref x)       // error: `x` is immutable but modified inside inc1
@@ -463,9 +473,9 @@ mut y = 3
 inc1(ref y)
 cassert(y == 4)
 
-comb banner() { puts("hello") }
+comb banner() -> () { puts("hello") }
 type T_noarg = comb() -> ()
-comb execute_method(fn:T_noarg) {  // explicit type for fn (declared ahead)
+comb execute_method(fn:T_noarg) -> () {  // explicit type for fn (declared ahead)
   fn() // prints hello when banner passed as argument
 }
 
@@ -483,12 +493,15 @@ Everything in Pyrope is a tuple, including the result of a lambda call. There
 are three rules that work together:
 
 1. **Outputs are always declared by name in `-> ( ... )`.** There is no
-   anonymous/positional output list. A lambda with no outputs simply omits
-   the `-> (...)` clause (or writes `-> ()`).
+   anonymous/positional output list. A lambda with no outputs writes `-> ()`;
+   omitting the clause is a compile error, except in a `self` method (first
+   input parameter named `self`, with or without `ref`), which acts through
+   the receiver and may omit it.
 
-2. **The body assigns to the declared output names.** The "last expression
-   is an implicit return" sugar from earlier Pyrope drafts is gone — a bare
-   expression at the end of a body is a no-op.
+2. **The body assigns to the declared output names.** A bare expression at
+   the end of a lambda body does not assign an output and has no special
+   return meaning. Binding the call result of a `-> ()` lambda
+   (`const a = top()`) is a compile error — there is no value to bind.
 
 3. **`return` is a terminator only.** The keyword ends the current lambda
    and never carries a value (`return X` is a syntax error). Whatever has
@@ -498,16 +511,17 @@ are three rules that work together:
 Callers always see a named tuple. They can read fields by name
 (`r.a`, `r.b`) or destructure on the LHS. Destructuring is **by name**, not
 by position: each LHS slot must either match a return field name exactly,
-or use the explicit `field = local` form to rename. This mirrors the
-call-site rule for named arguments.
+or use the explicit `local = source.path` form to rename or select nested
+fields. This mirrors the call-site rule for named arguments.
 
 ```pyrope
 comb dox(a) -> (b, c) { b = a + 1; c = a + 2 }
+comb deep(a) -> (payload, code) { payload = (inner = (value = a + 1)); code = a + 10 }
 
 (b, c) = dox(a=3)        // OK — local names match return-field names
 (c, b) = dox(a=3)        // OK — order doesn't matter, bind by name
-(b=x, c=y) = dox(a=3)    // OK — rename: dox.b → x, dox.c → y
-(c=y, b=x) = dox(a=3)    // OK — order doesn't matter under named binding
+(x=dox.b, y=dox.c) = dox(a=3)  // OK — rename: dox.b → x, dox.c → y
+(v=deep.payload.inner.value) = deep(a=3) // OK — select a nested return field
 (y, x) = dox(a=3)        // error: `y` is not a field of dox's return
 ```
 
@@ -527,6 +541,10 @@ comb early(x) -> (r) {
   r = 0
   return when x == 0       // bail out; r already assigned
   r = 100 / x
+}
+
+comb next_value(x) -> (x) {
+  x = x + 1                // same source name; generated input/output nets differ
 }
 
 const a1 = ret1()
@@ -583,7 +601,7 @@ test "testing p1" {
   assert(p1.found_once == false)
   assert(p2.found_once == false)
 
-  cassert(p1.call(3) == 4)
+  cassert(p1.call(3) == 4)   // typed argument: `a:u8` is unambiguous
   assert(p1.found_once == false)
 
   cassert(p1.call(0) == 1)
@@ -626,15 +644,15 @@ mut a_1 = (
   }
 )
 
-a_1.f1(3)
-mut a_2 = a_1.f1(4)  // a_2 is updated, not a_1
+a_1.f1(x=3)
+mut a_2 = a_1.f1(x=4)  // a_2 is updated, not a_1
 cassert(a_1.x == 3 and a_2.x == 4)
 
 // Same behavior as in a function with UFCS
 comb set_x(ref self, x) { self.x = x }
 
-a_1.set_x(10)
-mut a_3 = a_1.set_x(20)
+a_1.set_x(x=10)
+mut a_3 = a_1.set_x(x=20)
 cassert(a_1.x == 10 and a_3.x == 20)
 ```
 
@@ -647,19 +665,19 @@ mut counter = (
 )
 
 assert(counter.val == 0)
-counter.inc(3)
+counter.inc(v=3)
 assert(counter.val == 3)
 
 comb inc(ref self, v) { self.var *= v } // NOT INC but multiply
-counter.inc(2)             // error: multiple inc options
-assert(44.inc(2) == 8)
+counter.inc(v=2)           // error: multiple inc options
+assert(44.inc(v=2) == 8)
 
 counter.val = 5
 const mul = inc
-counter.mul(2)             // call the new mul method with UFCS
+counter.mul(v=2)           // call the new mul method with UFCS
 assert(counter.val == 10)
 
-mul(counter, 2)            // OK: direct form, counter bound to self (val == 20)
+mul(counter, v=2)          // OK: direct form, counter bound to self (val == 20)
 ```
 
 
@@ -691,7 +709,7 @@ it can be error-prone.
     comb foo(self) { puts("comb.foo") }
     const a = (
       ,comb foo() -> (r) {
-         comb bar() { puts("bar") }
+         comb bar() -> () { puts("bar") }
          puts("mem.foo")
          r = (bar=bar)
       }
@@ -714,7 +732,7 @@ it can be error-prone.
     comb foo(self:int) { puts("comb.foo") }
     const a = (
       ,comb foo() -> (r) {
-         comb bar() { puts("bar") }
+         comb bar() -> () { puts("bar") }
          puts("mem.foo")
          r = (bar=bar)
       }

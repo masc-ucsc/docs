@@ -377,7 +377,7 @@ mechanisms for strong compile-time checking:
 * **`foo@[N]`** on a variable use: a pure **type check** asserting that `foo`
   lands at cycle `N`. It never inserts flops; a mismatch is a compile error.
   Works identically on LHS declarations (`lhs@[N] = ...`) and on RHS uses
-  (`... = add(a@[3], b@[3])`).
+  (`... = add(a=a@[3], b=b@[3])`).
 
 `foo@[N]` never inserts flops — it is *only* an alignment assertion. To
 trigger delay flop insertion use an explicit `stage[N]` declaration. To
@@ -421,7 +421,7 @@ pipe add(a:u32, b:u32) -> (c:u32) { wrap c = a + b } // bare; caller picks laten
 // Define the composite mod that orchestrates the primitives.
 mod multiply_add(in1:u16, in2:u16) -> (out:u32@[4]) {
     // Stage 1: run mul over 3 cycles. tmp lands at cycle 3.
-    stage[3] tmp = mul(in1, in2)
+    stage[3] tmp = mul(a=in1, b=in2)
 
     // Stage 2: to add 'in1' to the result we must align it with 'tmp'.
     // Insert 3 flops of pure delay.
@@ -429,7 +429,7 @@ mod multiply_add(in1:u16, in2:u16) -> (out:u32@[4]) {
 
     // Stage 3: both inputs to 'add' are aligned at cycle 3.
     // The adder takes 1 cycle, so the final output is at cycle 4.
-    stage[1] out@[4] = add(tmp@[3], in1_d@[3])
+    stage[1] out@[4] = add(a=tmp@[3], b=in1_d@[3])
 }
 ```
 
@@ -453,7 +453,7 @@ present their outputs.
 
 ```pyrope
 mod example(in1:u16, in2:u16, in3:u32) -> (out:u33@[5]) {
-    stage[3] res1 = mul(in1, in2)
+    stage[3] res1 = mul(a=in1, b=in2)
 
     // in3 arrives at cycle 0; we need it at cycle 3 to mix with res1.
     // Introduce an explicit stage binding — no implicit alignment.

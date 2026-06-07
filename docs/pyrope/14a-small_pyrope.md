@@ -164,7 +164,7 @@ comb clamp(x:i16) -> (result:u8) {
     result = x                            // normal path
 }
 
-cassert(add(3, 4) == 7)
+cassert(add(a=3, b=4) == 7)
 cassert(clamp(-10) == 0)
 cassert(clamp(500) == 255)
 cassert(clamp(42) == 42)
@@ -218,7 +218,7 @@ explicit timing control, and can hold `reg` state across cycles. There are
 two complementary timing mechanisms inside `mod` blocks:
 
 * `stage[N]` as a declaration modifier: pipelines the whole RHS over N
-  cycles (e.g., `stage[3] tmp = mul(a, b)`). It is the only *action* that
+  cycles (e.g., `stage[3] tmp = mul(a=a, b=b)`). It is the only *action* that
   inserts or chooses pipeline stages.
 * `foo@[N]` on a variable (LHS or RHS): a pure timing *type check*. It
   never inserts flops; a mismatch is a compile error.
@@ -228,15 +228,15 @@ pipe mul(a:u16, b:u16) -> (c:u32) { c = a * b }
 pipe add(a:u32, b:u32) -> (c:u32) { wrap c = a + b }
 
 mod alu(in1:u16, in2:u16) -> (out_pipelined:u32@[4], out_live:u32@[4]) {
-  stage[3] tmp              = mul(in1, in2)
+  stage[3] tmp              = mul(a=in1, b=in2)
   stage[3] in2_d            = in2
-  stage[1] out_pipelined@[4] = add(tmp@[3], in2_d@[3])
-  stage[1] out_live@[4]      = add(tmp@[3], in2_d@[3])
+  stage[1] out_pipelined@[4] = add(a=tmp@[3], b=in2_d@[3])
+  stage[1] out_live@[4]      = add(a=tmp@[3], b=in2_d@[3])
 }
 
 mod accum_alu(in1:u16, in2:u16) -> (out:u32@[3]) {
   reg total:u32 = 0
-  stage[3] tmp = mul(in1, in2)
+  stage[3] tmp = mul(a=in1, b=in2)
   wrap total = total@[3] + tmp@[3]             // both operands checked at cycle 3
   out = total                                  // bare name reads current 'q'
 }
@@ -252,9 +252,9 @@ checks on RHS values use separate `cassert` statements.
 cassert(b does u8)                                        // RHS type check
 cassert(c.[xxx_should_be_set])                            // RHS attribute check
 // Destructure by return-field name (LHS local names must match field
-// names of `some_mod_call`'s return tuple, or use `field = local` to
+// names of `some_mod_call`'s return tuple, or use `local = call.field` to
 // rename).
-const (out=tmp:u32, status=tmp2:u3:[something=true]) = some_mod_call(a, b@[3], c@[2])
+const (tmp = some_mod_call.out, tmp2 = some_mod_call.status) = some_mod_call(a=a, b=b@[3], c=c@[2])
 ```
 
 
@@ -401,7 +401,7 @@ Attributes are **immutable after declaration**. To change attributes, create a n
 
 ```pyrope
 // Bitwidth constraints
-mut data:u32:[max=1000, min=0] = 0
+mut data:int(min=0, max=1000) = 0
 
 // Overflow behavior — always written as a statement-level prefix
 // (not an attribute). Every narrowing assignment must annotate its
@@ -604,11 +604,11 @@ are private by default: `pub comb add(...)`).
 ```pyrope
 // Import functions from other files
 const math_ops = import("math/basic")
-const result = math_ops.add(a, b)
+const result = math_ops.add(a=a, b=b)
 
 // Import specific function
 const multiply = import("math/basic/multiply")
-const product = multiply(x, y)
+const product = multiply(x=x, y=y)
 
 // Import from local file
 const utils = import("utils")

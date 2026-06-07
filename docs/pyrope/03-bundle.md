@@ -18,22 +18,25 @@ cassert(c[0] == 1 and c.d == 4)
 assert (true,1) != [true,1]  // error: true is not the same type as 1
 ```
 
-To access fields in a tuple we use the dot `.` or `[]`
+Named fields are accessed by name with `.` or `['name']`. Integer `[]`
+selection is only for unnamed positional entries; it never aliases a named
+field.
 ```pyrope
 mut a = (
   ,r1 = (b=1,c=2)
-  ,r2 = (3,4)
+  ,(3,4)
 )
-// tuple position is from left to right like most languages
-cassert(a.r1 == (1,2) and a.r2 == (3,4))
-cassert(a[0] == (1,2) and a[1] == (3,4))
+cassert(a.r1 == (1,2))
+cassert(a[0] == (3,4))  // first unnamed entry
 
 // different ways to access the same field
 cassert(a.r1.c    == 2)
 cassert(a['r1'].c == 2)
 cassert(a.r1[1]   == 2)
-cassert(a[0][1]   == 2)
-cassert(a[0]['c'] == 2)
+cassert(a[0][1]   == 4)
+
+const named = (b = 1, c = 2)
+const bad = named[0] // error: named entries are name-access only
 ```
 
 There is introspection to check for an existing field with the `has` operator.
@@ -144,9 +147,9 @@ A tuple with a single entry element is called a scalar.
 
 Tuples are used in many places:
 
-* The arguments for a call function are a tuple. E.g: `fcall(1,2)`
+* The arguments for a function call are a tuple. E.g: `fcall(a=1,b=2)`
 * The return of a function call is always a tuple. E.g: `foo = fcall()`
-* The index for a selector `[...]` is a single expression (integer, string, range, or conditional). Multi-entry tuple indices are not allowed.
+* The index for a selector `[...]` is a single expression (integer, string, range, or conditional). Integer indices select unnamed positional entries only; named fields use strings or dot syntax. Multi-entry tuple indices are not allowed.
 * The complex type declaration are a tuple. E.g: `const Xtype = (f=1,b:string)`
 
 
@@ -432,19 +435,21 @@ outputs are swapped in the declaration.
 
 * A bare LHS name like `b` matches the RHS field whose name is also `b`.
   If no such field exists, it is a compile error.
-* An explicit `name = local` slot binds RHS field `name` to local `local`.
-  Use this when you want a different local name from the field name, or
-  just want to be explicit.
+* An explicit `local = source.path` slot binds the selected RHS field path to
+  local `local`. Use this when you want a different local name from the field
+  name, when selecting a nested field, or when a RHS tuple contains multiple
+  lambda-call results and the lambda name disambiguates the source.
 * LHS order is irrelevant under named binding: `(b, c) = r` and
   `(c, b) = r` are the same.
 
 ```pyrope
 comb dox(a) -> (b, c) { b = a + 1; c = a + 2 }
+comb deep(a) -> (payload, code) { payload = (inner = (value = a + 1)); code = a + 10 }
 
 (b, c) = dox(a=3)        // local `b` ← dox.b, local `c` ← dox.c
 (c, b) = dox(a=3)        // same: order doesn't matter
-(b=x, c=y) = dox(a=3)    // rename: dox.b → x, dox.c → y
-(c=y, b=x) = dox(a=3)    // same as above
+(x=dox.b, y=dox.c) = dox(a=3)  // rename: dox.b → x, dox.c → y
+(v=deep.payload.inner.value) = deep(a=3) // nested field selection
 (y, x) = dox(a=3)        // error: `y` is not a field of dox's return
 ```
 

@@ -290,7 +290,7 @@ Pyrope has the `test [message [,args]+] ( [stmts+] }`.
     for a in 0..=20 {
       for b in 0..=20 {
         test "checking add({},{})", a, b {
-           cassert(a + b == add(a, b))
+           cassert(a + b == add(a=a, b=b))
         }
       }
     }
@@ -303,7 +303,7 @@ Pyrope has the `test [message [,args]+] ( [stmts+] }`.
     test "checking add" {
       for a in 0..=20 {
         for b in 0..=20 {
-           cassert(a + b == add(a, b))
+           cassert(a + b == add(a=a, b=b))
         }
       }
     }
@@ -501,7 +501,7 @@ regular lambda can encapsulate the checks. The caller passes `sigref` and
 `regref` values as arguments.
 
 ```pyrope
-comb fifo_checks(push, pop, full, empty) {
+comb fifo_checks(push, pop, full, empty) -> () {
   assert(!(push and full),  "enqueue while full")
   assert(!(pop and empty),  "dequeue while empty")
   cover(push)
