@@ -152,6 +152,22 @@ Tuples are used in many places:
 * The index for a selector `[...]` is a single expression (integer, string, range, or conditional). Integer indices select unnamed positional entries only; named fields use strings or dot syntax. Multi-entry tuple indices are not allowed.
 * The complex type declaration are a tuple. E.g: `const Xtype = (f=1,b:string)`
 
+### Dotted Field Expansion
+
+Tuple literals may spell nested named fields in expanded dotted form. This is
+the same flattening idea used by [function-call argument expansion](06-functions.md#argument-naming):
+`a.b=1` and `a.c=2` construct the nested field `a=(b=1,c=2)`.
+
+```pyrope
+const compact  = (a=(b=1,c=2), 7, 3, d=3)
+const expanded = (a.b=1, a.c=2, d=3, 7, 3)
+cassert(compact == expanded)
+```
+
+The expanded form is legal but usually less readable than the compact tuple
+form. It is useful when matching flattened hardware interfaces, because the
+generated LGraph/Verilog port structure follows the expanded field paths.
+Unnamed entries keep their normal positional order among the other entries.
 
 ## Tuple mutability
 

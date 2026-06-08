@@ -177,16 +177,18 @@ These are the detailed rules for the `a does b` operator depending on the `a` an
 * The lambdas have a more complicated set of rules explained later.
 
 ```pyrope
-cassert (a:int(max=33, min=0) does (a:int(max=20, min=5)))
-cassert(not ((a:int(max=33, min=0) does (a:int(max=50, min=5)))))
+const a:int(max=33, min=0) = nil
+const b:int(max=20, min=5) = nil
+cassert(a does b)
+cassert(not (b does a))
 
-cassert (a:string, b:int) does (a:"hello", b:33)
-cassert(not (((b:int, a:string) does (a:"hello", b:33)))) // order matters in tuples
+cassert(    (a:string=nil, b:int=nil) does (a="hello", b=33))
+cassert(not (b:string=nil, a:int=nil) does (a="hello", b=33))
 
 type T_complex = comb(x, xxx2) -> (y, z)
 type T_simple  = comb(x)       -> (y, z)
-cassert(_:T_complex does _:T_simple)
-cassert(not (_:T_simple does _:T_complex))
+cassert(T_complex does T_simple)
+cassert(not (T_simple does T_complex))
 ```
 
 For named tuples, this code shows some of the corner cases:

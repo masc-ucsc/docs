@@ -74,14 +74,23 @@ Pyrope divides lambdas into four categories: `comb`, `pipe`, `mod`, and
   must be bound with a `fluid` declaration, and fluid calls are allowed only
   inside `mod` and `fluid` lambdas. See [Fluid Blocks](06d-fluid.md).
 
-`pipe` and `mod` lambdas are module boundaries: **every input and output
-must carry an explicit type** (a compile error otherwise) — their
-interfaces are never type-inferred from call sites, and each `pipe`/`mod`
-always becomes its own module, so a `pipe`/`mod` call lowers to a module
-instance. A `comb` may stay untyped, in which case it is always inlined;
-a fully-typed `comb` may either inline or be kept as its own module
-instance (the compiler decides). `self`/`ref self` methods derive `self`'s
-type from the enclosing tuple.
+`pipe` and `mod` lambdas are module boundaries, and each becomes its own
+module, so a `pipe`/`mod` call lowers to a module instance. A fully-typed
+`pipe`/`mod` lowers to one module directly. A **not-fully-typed** one — an
+untyped non-`self` input, a `(...args)` var-arg, or an unbound generic `<T>`
+— is a **deferred template**: it produces no module at definition time and is
+**specialized per call site** into a concrete module named by the actual
+types (`mod foo(a)` called with a `u8` actual mints `foo__u8`; a `u16` actual
+mints `foo__u16`; identical signatures share one module, each call still its
+own instance). Specialization keys on each actual's **declared** type, so an
+**untyped actual** feeding such a boundary is a compile error at the call site
+(annotate it, e.g. `x:u8`) — a hardware port needs an explicit width. A `comb`
+may stay untyped, in which case it is always **inlined** (var-args gather into
+the param and `args[i]`/`args.NAME` resolve at the call site); a fully-typed
+`comb` may either inline or be kept as its own module instance (the compiler
+decides). `self`/`ref self` methods derive `self`'s type from the enclosing
+tuple. A template that is exported (`pub`) or selected as a synthesis top but
+never specialized in its own unit simply yields no module — it is not an error.
 
 Methods are `comb`/`pipe`/`mod`/`fluid` lambdas that have `self` as the first
 argument, which allows operating on tuples.
@@ -216,7 +225,12 @@ The lambda definition has the following fields:
   that the lambda receives.
 
 + `INPUT` has a list of inputs allowed with optional types. `()` indicates no
-  inputs. `(...args)` allow to accept a variable number of arguments.
+  inputs. `(...args)` allow to accept a variable number of arguments. A
+  `...args` var-arg is the trailing parameter; it gathers every actual not
+  consumed by a fixed leading parameter into one tuple — positional leftovers
+  become positional entries (read as `args[i]`), named leftovers become named
+  fields (read as `args.NAME`). Var-args are supported on a `comb` (which
+  inlines); a `pipe`/`mod`/`fluid` hardware boundary needs a fixed port list.
 
 + `OUTPUT` has a list of outputs allowed with optional types. `-> ()`
   indicates no outputs. The `-> (...)` clause is **mandatory**; omitting it
@@ -299,6 +313,21 @@ let an argument be passed unnamed:
 * `self` is always bound positionally — by the value before the dot in a
   UFCS call, or by the first positional actual in a direct call — and is
   never named at the call site.
+
+Structured tuple parameters can be supplied either as one tuple value or as
+expanded dotted fields. The expanded form is legal but usually noisier; it is
+useful when mapping to generated LGraph/Verilog ports, because those interfaces
+are flattened into separate signals. This uses the same path expansion as
+[tuple literals](03-bundle.md#dotted-field-expansion).
+
+```pyrope
+comb pick(ar:(x:u3, y:s4), cond:bool) -> (res:s5) {
+  res = if cond { ar.x + 1 } else { ar.y - 1 }
+}
+
+const a = pick(ar=(x=1, y=10), cond=true)  // compact tuple argument
+const b = pick(ar.x=1, ar.y=10, cond=true) // expanded fields, same binding
+```
 
 There are several rules on how to handle arguments.
 

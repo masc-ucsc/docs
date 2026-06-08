@@ -222,11 +222,10 @@ Pryope number or an assertion is raised.
 ### Boolean
 
 A boolean is either `true` or `false`. Booleans can not mix with integers in
-expressions unless there is an explicit typecast (`int(false)==0` and
-`int(true)==-1`) or the integer is a 1 bit signed integer (0 and -1). Unlike
-integers, booleans do not support undefined value. A typecast from integer to
-boolean will raise an assertion when the integer has undefined bits (`?`) or
-`nil`.
+expressions unless there is an explicit typecast (`int(false)==0`,
+`int(true)==1`, `boolean(0)==false`, and `boolean(1)==true`). Unlike integers,
+booleans do not support undefined value. A typecast from integer to boolean
+will raise an assertion when the integer has undefined bits (`?`) or `nil`.
 
 ```pyrope
 const b = true
@@ -239,11 +238,11 @@ mut d = b or false   // OK
 mut e = c or false   // error: 'c' is not a boolean
 
 const e = 0xfeed
-if e#[3] {           // OK, bit extraction for single bit returns a boolean
+if boolean(e#[3]) {  // OK, explicit conversion from unsigned bit to boolean
   call(x)
 }
 
-cassert(0 == (int(true)  + 1)) // explicity typecast
+cassert(2 == (int(true)  + 1)) // explicity typecast
 cassert(1 == (int(false) + 1)) // explicity typecast
 cassert(boolean(33) or false) // explicity typecast
 ```
@@ -299,9 +298,9 @@ cassert(b#[1..]        == 0ub0110_100)
 cassert(b#[1..=-1]     == 0ub0110_100)
 cassert(b#[1..=-2]     == 0ub0110_100) // unsigned result from bit selector
 cassert(b#sext[1..=-2] == 0sb110_100)
-cassert(b#[1..=-3]     == 0sb10_100)
+cassert(b#[1..=-3]     == 0ub10_100)
 cassert(b#[1..<-3]     == 0ub0_100)
-cassert(b#[0]          == false)
+cassert(b#[0]          == 1)
 ```
 
 
@@ -709,10 +708,12 @@ The reduce operators and bit selection share a common syntax
   `#[1,4,6]` are not allowed; use one bit-range assignment per group of bits.
 
 
-The or/and/xor reduce have a single bit signed result (not boolean). This means
-that the result can be 0 (`0sb0`) or -1 (`0sb1`). pop-count and `zext` have
-always positive results. `sext` is a sign-extended, so it can be positive or
-negative.
+The or/and/xor reduce have an unsigned integer result with `min=0` and `max=1`
+(not boolean). This means that the result can be `0` or `1`. Since booleans and
+integers do not mix, compare a reduction against integer values, or cast
+explicitly when comparing with a boolean (`boolean(x#|[..]) == flag` or
+`x#|[..] == int(flag)`). pop-count and `zext` have always positive results.
+`sext` is sign-extended, so it can be positive or negative.
 
 If no operator is provided, a `zext` is used by default. The bit selection without
 operator can also be used on the left-hand side to update a set of bits.
@@ -741,8 +742,9 @@ cassert(x#[2]    == 1)
 cassert(x#[0..=2] == 0ub110)
 cassert(y#[100]       == 1   and x#[100]       == 0) // out-of-range follows sign
 cassert(y#sext[0..=2] == 0sb110 and x#sext[0..=2] == 0ub110)
-cassert(x#|[..] == -1)
+cassert(x#|[..] == 1)
 cassert(x#&[0..=1] == 0)
+cassert(boolean(x#|[..]) == true)
 cassert(x#+[0..=5] == x#+[0..<100] == 3)
 assert(y#+[0..=5]) // error: 'y' can be negative
 cassert(y#[..]#+[..] == 3)
@@ -760,7 +762,7 @@ z#[0] = 0ub11 // error: '0ub11` overflows the maximum allowed value of `z#[0]`
     numbers. This means that an and-reduce over any positive number is always going
     to be zero because the most significant bit is zero, E.g: `0xFF#&[..] == 0`. In
     some cases, a close-range will be needed if the intention is to ignore the sign.
-    E.g: `0xFF#&[0..<8] == -1`.
+    E.g: `0xFF#&[0..<8] == 1`.
 
 
 

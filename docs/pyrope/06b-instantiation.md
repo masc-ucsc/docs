@@ -493,16 +493,15 @@ cycle Similarly a tuple can have a reset when assigned to a register.
     ```pyrope
     const Mix_tup = (
       reg flag:bool = false,
-      mut state:u2
+      mut state:u2,
+      comb init(ref self) {
+        mod flag_reset(ref self) { self = false }
+        self.flag  = flag_reset          // reset code (pass by name, no ())
+        self.state = 2                   // every cycle code
+      }
     )
 
-    mod mix_tup_init(ref self) {
-      mod flag_reset(ref self) { self = false }
-      self.flag  = flag_reset            // reset code (pass by name, no ())
-      self.state = 2                     // every cycle code
-    }
-
-    mut x:Mix_tup = mix_tup_init
+    mut x:Mix_tup = nil                  // init runs at construction
 
     assert(x.flag implies x.state == 2)
 

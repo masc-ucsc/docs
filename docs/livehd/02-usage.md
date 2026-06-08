@@ -229,6 +229,42 @@ recipe steps, and on failure an `error` block:
 echoed commands, no raw pass logs. Per-step raw logs land under
 `--workdir/logs/`.
 
+### Diagnostics
+
+Errors and warnings are also emitted as a finer JSONL stream — **one line per
+diagnostic** — alongside the step result. Point it at a file with
+`--emit diagnostics:PATH`; with no path `lhd` renders clang-style text to
+stderr. The machine stream is the source of truth; the human text is a rendering
+of it. Diagnostics are designed to be triaged by a coding agent as much as read
+by a human, which drives the schema below.
+
+Each record is one JSON object:
+
+| field | meaning |
+|---|---|
+| `severity` | `error` (compilation cannot proceed), `warning` (proceeds, likely issue), or `note` (a secondary location) |
+| `code` | stable, greppable id (kebab-case, e.g. `range-fit`) — survives message rewording, so tooling branches on it instead of the prose |
+| `category` | what kind of fix is needed (below) |
+| `pass` | originating stage (e.g. `inou.prp`, `upass.attributes`) |
+| `message` | one human-readable line, without the location |
+| `span` | source location, or `null` when unknown |
+| `hint` | one actionable suggestion (optional) |
+
+`category` says *who is wrong*:
+
+| category | meaning |
+|---|---|
+| `syntax` / `name` / `type` / `bitwidth` | the source — fix the Pyrope/Verilog |
+| `unsupported` | valid input LiveHD cannot lower yet — rewrite around it, do not "fix" the source |
+| `internal` | a LiveHD bug — reduce to a repro, do not change the source |
+
+A run collects every diagnostic (not just the first), so all problems surface in
+one compile; duplicates of the same diagnostic within a step are reported once.
+The step result's `error` block summarizes the fatal diagnostic and points back
+at the diagnostics file with per-severity counts. The renderer prints a
+clang/rust-style block with a caret line when a span is available and degrades to
+a single line — never a fabricated location — when it is not.
+
 ## Pyrope language server
 
 `lhd lsp` serves the Pyrope LSP (JSON-RPC over stdio) for `.prp` files:

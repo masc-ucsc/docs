@@ -657,7 +657,7 @@ operations.
       ref t2
       ref ___t2
 
-    reduce_and       // reduce_and(x) == (sext(x) == -1)
+    reduce_and       // reduce_and(x) returns unsigned 0 or 1
       ref ___t3
       ref ___t
     let

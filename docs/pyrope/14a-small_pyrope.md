@@ -485,9 +485,9 @@ mut bits = value#[3..=6]        // Extract bits 3-6
 value#[3] = 0                   // Set 3rd bit to 0
 
 // Reduction operators
-mut or_reduce = value#|[..]     // OR-reduce all bits
-mut and_reduce = value#&[..]    // AND-reduce all bits
-mut xor_reduce = value#^[..]    // XOR-reduce (parity)
+mut or_reduce = value#|[..]     // OR-reduce all bits, unsigned 0 or 1
+mut and_reduce = value#&[..]    // AND-reduce all bits, unsigned 0 or 1
+mut xor_reduce = value#^[..]    // XOR-reduce parity, unsigned 0 or 1
 mut pop_count = value#+[..]     // Population count
 
 // Sign/zero extension
@@ -515,7 +515,7 @@ cassert(value  == 0ub1010_0100) // bit 3 was cleared above
 cassert(sparse  == 0ub100)     // bit 7 of value is 1, bit 3 is 0, bit 0 is 0
 cassert(rparse  == 0ub001)     // bits placed in reverse order
 cassert(pop_count == 3)
-cassert(or_reduce  == -1)       // any bit set
+cassert(or_reduce  == 1)        // any bit set
 cassert(and_reduce ==  0)       // sign bit (MSB) is 0
 ```
 
