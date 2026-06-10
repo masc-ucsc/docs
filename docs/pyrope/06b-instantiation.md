@@ -392,12 +392,13 @@ The imported files are executed before the current file is executed. This is
 applied recursively but no loops are supported in import dependence chains.
 
 The "setup" code is the statements executed once for each imported file. Those
-statements can not be "imported" by other files. Only the resulting `pub`
-variables can be imported.
+statements can not be "imported" by other files. Only resulting `pub` lambdas,
+types, and constants can be imported. Registers are not imported; use `regref`
+to reference instantiated registers across scopes.
 
 
-During setup, each file can have a list of `pub` variables. Those are
-variables that can be used by importing modules (declarations without `pub`
+During setup, each file can have a list of `pub` declarations. Those are
+declarations that can be used by importing modules (declarations without `pub`
 are private to the file). The "top variable" is selected for
 simulation/synthesis.
 
@@ -516,8 +517,8 @@ A sample of asynchronous reset with different reset and clock signal
 ```pyrope
 reg my_asyn_other_reg:u8:[
   sync = false,
-  clock = ref clk2,    // ref to connect, not read clk2 value
-  reset = ref reset33  // ref to connect, not read current reset33 value
+  clock_pin = ref clk2,    // ref to connect, not read clk2 value
+  reset_pin = ref reset33  // ref to connect, not read current reset33 value
 ] = 33 // initialized to 33 at reset
 
 

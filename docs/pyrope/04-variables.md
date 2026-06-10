@@ -482,20 +482,20 @@ it can be declared as immutable.
 ## Visibility: private by default, `pub` to export
 
 All declarations are **private by default**: they can not be accessed from
-other files or through the instantiation hierarchy. The `pub` prefix
-modifier (same declaration slot as `comptime`) exports a top-scope
-declaration:
+other files by `import`. The `pub` prefix modifier (same declaration slot as
+`comptime`) exports a top-scope declaration for import:
 
-* `pub` on a top-scope lambda, type, or variable allows other files to
+* `pub` on a top-scope lambda, type, or constant allows other files to
   `import` it.
-* `pub` on a `reg` (including memories) additionally allows synthesizable
-  `regref` to attach to it from anywhere in the instantiation hierarchy.
-  See [Register reference](07-typesystem.md#register-reference) and
-  [Memories](08-memories.md#shared-memories-with-pub-reg-and-regref).
+* `pub mut` and `pub reg` are compile errors. Registers, including memories,
+  are not imported or exported as values. Cross-scope register access uses
+  `regref`, which resolves an instantiated register by hierarchy path or
+  name. See [Register reference](07-typesystem.md#register-reference) and
+  [Memories](08-memories.md#shared-memories-with-regref).
 
 ```pyrope
 pub comb get_five() -> (v) { v = 5 }  // importable by other files
-pub reg mem:[1024]u8 = nil            // synthesizable regref may attach
+pub const default_depth = 1024         // importable constant
 reg internal:u8 = 0                   // private: this file/instance only
 
 pub comb my_log::[lg="foo_mod"](a) -> (r) { r = a } // lgraph named foo_mod
@@ -508,8 +508,8 @@ artifact — `import` still uses the declared name (`my_log` above). See
 
 **Debug is exempt from visibility.** Debug statements (`assert`, `test`,
 `puts`, monitors) can observe any variable read-only through
-`sigref`/`regref`, `pub` or not. Visibility restricts *synthesizable*
-access only; nothing can be hidden from verification. There is no
+`sigref`/`regref`. Visibility restricts `import` only; nothing can be hidden
+from verification. There is no
 `private` attribute.
 
 For tuple fields, a leading underscore (`_field`) marks the entry as

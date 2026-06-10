@@ -230,7 +230,7 @@ Registers have the following attributes:
 
 * `valid`, `retry`: for elastic pipelines
 * `sync`: true by default, when false selects an asynchronous reset (posedge only)
-* `initial`: reset value when reset is high
+* `init`: reset value when reset is high
 * `clock_pin`: connected to `clock` by default
 * `reset_pin`: connected to `reset` by default
 * `negreset`: active low reset signal

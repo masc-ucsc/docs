@@ -315,13 +315,13 @@ Pyrope naming for consistency:
 
 * `comb` is pure combinational logic (zero cycles). Can use `ref` to modify tuples (equivalent to implicit output).
 
-* `pipe[N]` is a fixed N-cycle pipeline (every output lands exactly N cycles after its inputs; no combinational input-to-output path)
+* `pipe[N]` is a fixed N-cycle pipeline with `N > 0` (every output lands exactly N cycles after its inputs; no combinational input-to-output path). A zero-cycle block is `comb`, not `pipe[0]`.
 
-* `pipe[A..=B]` is a flexible A-to-B cycle pipeline; the caller picks a concrete latency via `stage[N]`
+* `pipe[A..=B]` is a flexible A-to-B cycle pipeline, with positive cycle counts; the caller picks a concrete latency via `stage[N]`
 
-* Bare `pipe` leaves the latency fully flexible; the caller picks it via `stage[N]` at the call site
+* Bare `pipe` leaves the latency fully flexible; the caller picks a positive latency via `stage[N]` at the call site
 
-* `mod` has no constraints on registers or output structure (can be Mealy or Moore), operates cycle by cycle, and is also the kind used to orchestrate pipelined calls — `stage[N]` and `@[N]` are the timing constructs available inside `mod`. Unlike `pipe`, each `mod` output declares its own landing cycle `@[N]` (`N` from `0` to `n`) at the interface (`mod f(a:u8) -> (x:u8@[2], y:u8@[0])`); a cycle-0 output is a combinational feedthrough, legal in `mod` but forbidden in `pipe`. Both `pipe` and `mod` interfaces must be fully typed (every input and output carries an explicit type).
+* `mod` has no constraints on registers or output structure (can be Mealy or Moore), operates cycle by cycle, and is also the kind used to orchestrate pipelined calls — `stage[N]` and `@[N]` are the timing constructs available inside `mod`. Unlike `pipe`, each `mod` output declares its own landing cycle `@[N]` (`N` from `0` to `n`) at the interface (`mod f(a:u8) -> (x:u8@[2], y:u8@[0])`); a cycle-0 output is a combinational feedthrough, legal in `mod` but forbidden in `pipe`. To generate an LGraph module (for Verilog or simulation), the concrete `comb`/`pipe`/`mod` interface must be fully typed and have a fixed port list. This can be written directly in the declaration, or deferred until a call binds untyped parameters, generics, and varargs to concrete declared actuals. An untyped `comb` can stay inline and never generate its own LGraph.
 
 * `stage` is a reserved declaration modifier used inside `mod` blocks. `async`/`await` are reserved for future use.
 

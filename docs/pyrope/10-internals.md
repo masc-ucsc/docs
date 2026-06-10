@@ -22,8 +22,8 @@ cassert (a=1) in (1,a=1,3)
 cassert(not ((a=1) does (1,a=1,3)))
 cassert (1,a=1,3) does (a=1)
 
-comb f(a) { puts("{a}") }
-comb g(long, short) { puts("{long}") }
+comb f(a) -> () { puts("{a}") }
+comb g(long, short) -> () { puts("{long}") }
 
 f(a=1)             // OK
 f(1)               // OK

@@ -122,7 +122,7 @@ No separate capture-list syntax is needed.
 test thread until a boolean variable becomes true:
 
 ```pyrope
-mod waitfor(ref cond: bool, timeout: u32 = 0) {  }
+mod waitfor(ref cond: bool, timeout: u32 = 0) -> () {  }
 ```
 
 The first argument must be passed by `ref`, and it must be a plain variable

@@ -63,15 +63,16 @@ Registers declared with `reg` are preserved by default, meaning synthesis tools 
 If a register is intended to be a flexible pipeline stage rather than a fixed state-holding element, it can be marked with the `retime` attribute. This allows synthesis tools to perform optimizations like moving logic across the register, duplication, or elimination to improve performance.
 
 ```pyrope
-reg my_reg::[retime=true, clock_pin=ref my_clk, initial=0]
+reg my_reg::[retime=true, clock_pin=ref my_clk, init=0]
 ```
 
 
 ## Pipelined Lambdas (`pipe`)
 
-A `pipe` lambda is a fixed-latency pipeline. The number of pipeline stages
-is written as an argument to the `pipe` keyword, in the same `[N]` position
-used by `stage[N]`:
+A `pipe` lambda is a fixed-latency pipeline with at least one stage. The
+number of pipeline stages is written as an argument to the `pipe` keyword, in
+the same `[N]` position used by `stage[N]`; `N` must be positive. A zero-cycle
+block is `comb`, not `pipe[0]`.
 
 ```pyrope
 pipe mul(a:u16, b:u16) -> (c:u32)         { c = a * b } // bare: caller picks at call site
@@ -82,11 +83,14 @@ pipe[1..<4] mul(a:u16, b:u16) -> (c:u32)  { c = a * b } // flexible range; calle
 The three forms behave as follows:
 
 * **Bare `pipe foo(...)`** — latency is unspecified at declaration. The caller
-  must pick a concrete number of cycles at the call site using `stage[N]`.
+  must pick a concrete positive number of cycles at the call site using
+  `stage[N]`.
 * **`pipe[N] foo(...)`** — fixed latency. Every call produces its result
-  exactly `N` cycles later, and the caller's `stage[M]` must satisfy `M == N`.
+  exactly `N` cycles later (`N > 0`), and the caller's `stage[M]` must satisfy
+  `M == N`.
 * **`pipe[A..<B] foo(...)`** — flexible range. The caller picks a `stage[M]`
-  with `A <= M < B`, and the compiler/synthesizer places stages accordingly.
+  with `A <= M < B` and `M > 0`, and the compiler/synthesizer places stages
+  accordingly.
 
 ### The `pipe` contract
 
@@ -373,6 +377,7 @@ mechanisms for strong compile-time checking:
   `const`, `mut`, `reg`) that pipelines the whole RHS over `N` cycles. It is
   the *action* that inserts or chooses pipeline stages.
   `stage[N] lhs = rhs` reads as "`lhs` is `rhs` delivered `N` cycles later".
+  `N` must be positive; use a plain assignment for same-cycle delivery.
 
 * **`foo@[N]`** on a variable use: a pure **type check** asserting that `foo`
   lands at cycle `N`. It never inserts flops; a mismatch is a compile error.
@@ -391,8 +396,10 @@ read a value at a different cycle, use `past[N](x)` or `next[N](x)`.
 * `counter.[defer]` is **RHS-only** — it reads the end-of-cycle value.
 * `stage[N]` picks how many pipeline stages the RHS `pipe` call inserts
   (`mod` only). A `pipe` may accept a single fixed count or a range; the
-  caller picks within it with `stage[N]`. `stage[A..=B]` accepts any count
-  in the range, and `stage[]` lets the toolchain pick a default.
+  caller picks within it with `stage[N]`. `N` must be positive; `stage[0]` is
+  a compile error and should be written as a plain assignment. `stage[A..=B]`
+  accepts any positive count in the range, and `stage[]` lets the toolchain
+  pick a default.
 * `@[N]` is a pure cycle-count typecheck — it asserts that the value is
   produced at (LHS) or read at (RHS) absolute cycle `N`, counted from the
   enclosing `mod`/`pipe` inputs. `@[]` opts out of that check.

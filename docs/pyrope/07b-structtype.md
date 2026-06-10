@@ -580,12 +580,12 @@ immutable, new methods can be added like in mixin.
 
 ```pyrope
 const Say_mixin = (
-  comb say(s) { puts(s) }
+  comb say(s) -> () { puts(s) }
 )
 
 const Say_hi_mixin = (
-  comb say_hi() { self.say("hi {}", self.name) },
-  comb say_bye() { self.say("bye {}", self.name) }
+  comb say_hi() -> () { self.say("hi {}", self.name) },
+  comb say_bye() -> () { self.say("bye {}", self.name) }
 )
 
 const User = (

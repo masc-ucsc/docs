@@ -30,9 +30,7 @@ cassert(a.r1 == (1,2))
 cassert(a[0] == (3,4))  // first unnamed entry
 
 // different ways to access the same field
-cassert(a.r1.c    == 2)
-cassert(a['r1'].c == 2)
-cassert(a.r1[1]   == 2)
+cassert(a.r1.c == 2 == a['r1'].c)
 cassert(a[0][1]   == 4)
 
 const named = (b = 1, c = 2)

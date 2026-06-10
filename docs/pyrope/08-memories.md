@@ -221,7 +221,7 @@ Multi cycle memories are pipelined elements, and using them requires the `stage[
 declaration modifier and the same rules as pipeline flops apply (See [pipelining](06c-pipelining.md)).
 
 
-## Shared memories with `pub reg` and `regref`
+## Shared memories with `regref`
 
 ASIC memories want to be *physically* grouped — BIST and repair logic is too
 expensive to replicate per memory, memory compiler instances carry setup
@@ -230,17 +230,18 @@ pins, and power domains or floorplan regions constrain placement. But the
 threading its ports through many levels of instantiation is boilerplate
 that obscures the design.
 
-Pyrope reconciles the two hierarchies with `pub reg` and `regref` (see
+Pyrope reconciles the two hierarchies with `regref` (see
 [Visibility](04-variables.md#visibility-private-by-default-pub-to-export)
 and [Register reference](07-typesystem.md#register-reference)): the
-physical owner declares the memory `pub`, and the logical owner attaches to
-it from anywhere in the instantiation hierarchy.
+physical owner declares the memory, and the logical owner attaches to it by
+hierarchy path or name from elsewhere in the instantiated design. The memory is
+not imported and must not be declared `pub reg`.
 
 ```pyrope
 // file: mem_pool.prp — physical owner: placement, BIST, repair
-mod mem_pool(test_mode:bool) {
-  pub reg buf0:[1024]u8 = nil   // synthesizable regref may attach
-  pub reg buf1:[1024]u8 = nil
+mod mem_pool(test_mode:bool) -> () {
+  reg buf0:[1024]u8 = nil
+  reg buf1:[1024]u8 = nil
 
   if test_mode {
     // shared BIST/repair: march patterns over buf0/buf1 written once,
@@ -283,9 +284,9 @@ The semantics follow from "an attached `regref` behaves like a local
 
 In the generated netlist, every attach lowers to punched ports threaded
 through the hierarchy: downstream tools (LEC, PD, DFT) see ordinary module
-ports, never hierarchical references. The `pub` surface of a module is
-enumerable, like its ports — renaming or removing a `pub reg` is an
-interface change.
+ports, never hierarchical references. A `regref` path is therefore part of the
+elaborated hardware contract: renaming, removing, or moving the referenced
+register can break downstream attach sites.
 
 
 ## Multidimensional arrays

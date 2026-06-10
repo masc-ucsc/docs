@@ -74,23 +74,31 @@ Pyrope divides lambdas into four categories: `comb`, `pipe`, `mod`, and
   must be bound with a `fluid` declaration, and fluid calls are allowed only
   inside `mod` and `fluid` lambdas. See [Fluid Blocks](06d-fluid.md).
 
-`pipe` and `mod` lambdas are module boundaries, and each becomes its own
-module, so a `pipe`/`mod` call lowers to a module instance. A fully-typed
-`pipe`/`mod` lowers to one module directly. A **not-fully-typed** one — an
-untyped non-`self` input, a `(...args)` var-arg, or an unbound generic `<T>`
-— is a **deferred template**: it produces no module at definition time and is
-**specialized per call site** into a concrete module named by the actual
-types (`mod foo(a)` called with a `u8` actual mints `foo__u8`; a `u16` actual
-mints `foo__u16`; identical signatures share one module, each call still its
-own instance). Specialization keys on each actual's **declared** type, so an
-**untyped actual** feeding such a boundary is a compile error at the call site
-(annotate it, e.g. `x:u8`) — a hardware port needs an explicit width. A `comb`
-may stay untyped, in which case it is always **inlined** (var-args gather into
-the param and `args[i]`/`args.NAME` resolve at the call site); a fully-typed
-`comb` may either inline or be kept as its own module instance (the compiler
-decides). `self`/`ref self` methods derive `self`'s type from the enclosing
-tuple. A template that is exported (`pub`) or selected as a synthesis top but
-never specialized in its own unit simply yields no module — it is not an error.
+Generating an LGraph module (for Verilog or simulation) requires a concrete
+fully typed interface and a fixed, fully named/ordered port list. A declaration
+can provide that directly, or it can be **not fully typed** — an untyped
+non-`self` input, a `(...args)` var-arg, or an unbound generic `<T>` — and defer
+module generation until a call site binds the missing shape. `self`/`ref self`
+methods derive `self`'s type from the enclosing tuple.
+
+`pipe` and `mod` lambdas are module boundaries, and a concrete `pipe`/`mod`
+call lowers to a module instance. A fully typed `pipe`/`mod` lowers to one
+module directly. A not-fully-typed `pipe`/`mod` is a **deferred template**: it
+produces no module at definition time and is **specialized per call site** into
+a concrete module named by the actual types (`mod foo(a)` called with a `u8`
+actual mints `foo__u8`; a `u16` actual mints `foo__u16`; identical signatures
+share one module, each call still its own instance). Specialization keys on
+each actual's **declared** type, so an **untyped actual** feeding such a
+boundary is a compile error at the call site (annotate it, e.g. `x:u8`) — a
+hardware port needs an explicit width.
+
+A `comb` may stay not fully typed, in which case it is always **inlined** and no
+separate LGraph is generated. If a `comb` is fully typed, the compiler may
+inline it or keep it as its own module instance. Var-args gather into the param
+and `args[i]`/`args.NAME` resolve at the call site; for a generated module, the
+specialized call must provide the final fixed port order and names. A template
+that is exported (`pub`) or selected as a synthesis top but never specialized in
+its own unit simply yields no module — it is not an error.
 
 Methods are `comb`/`pipe`/`mod`/`fluid` lambdas that have `self` as the first
 argument, which allows operating on tuples.
@@ -181,8 +189,8 @@ single pattern. Lambdas are always immutable.
 
 Only anonymous lambdas are supported — there is no global scope for
 functions, procedures, or modules. The only way for a file to access a
-lambda is to have access to a local variable with a definition or to
-"import" a variable from another file.
+lambda is to have access to a local binding with a definition or to
+`import` a `pub` lambda from another file.
 
 ```pyrope
 const a_3 = { 3 }             // just scope, not a lambda. Scope is evaluated now
@@ -229,8 +237,10 @@ The lambda definition has the following fields:
   `...args` var-arg is the trailing parameter; it gathers every actual not
   consumed by a fixed leading parameter into one tuple — positional leftovers
   become positional entries (read as `args[i]`), named leftovers become named
-  fields (read as `args.NAME`). Var-args are supported on a `comb` (which
-  inlines); a `pipe`/`mod`/`fluid` hardware boundary needs a fixed port list.
+  fields (read as `args.NAME`). Var-args are supported on a `comb` (which can
+  inline without generating a module). A `pipe`/`mod`/`fluid` hardware boundary
+  can be written with varargs as a deferred template, but each generated module
+  instance needs a concrete call that resolves them into a fixed port list.
 
 + `OUTPUT` has a list of outputs allowed with optional types. `-> ()`
   indicates no outputs. The `-> (...)` clause is **mandatory**; omitting it
@@ -278,7 +288,7 @@ mut y = (
   comb inc1(ref self) { self.val = u32(self.val + 1) } // no outputs; mutates via ref
 )
 
-comb my_log::[debug](...inp) {       // no outputs; side-effecting print
+comb my_log::[debug](...inp) -> () { // no outputs; side-effecting print
   print("logging:")
   for i in inp {
     print(" {}", i)
@@ -538,20 +548,21 @@ are three rules that work together:
    sees. Use `return when cond` / `return unless cond` for early exits.
 
 Callers always see a named tuple. They can read fields by name
-(`r.a`, `r.b`) or destructure on the LHS. Destructuring is **by name**, not
-by position: each LHS slot must either match a return field name exactly,
-or use the explicit `local = source.path` form to rename or select nested
-fields. This mirrors the call-site rule for named arguments.
+(`r.a`, `r.b`) or destructure on the LHS. Destructuring follows the
+[named-tuple destructuring](03-bundle.md#named-tuple-destructuring) rules:
+bare LHS names bind by output field name, not by position. Use that section
+for rename and nested-field examples.
 
 ```pyrope
-comb dox(a) -> (b, c) { b = a + 1; c = a + 2 }
-comb deep(a) -> (payload, code) { payload = (inner = (value = a + 1)); code = a + 10 }
+comb parts(x) -> (next, doubled) {
+  next = x + 1
+  doubled = x + x
+}
 
-(b, c) = dox(a=3)        // OK — local names match return-field names
-(c, b) = dox(a=3)        // OK — order doesn't matter, bind by name
-(x=dox.b, y=dox.c) = dox(a=3)  // OK — rename: dox.b → x, dox.c → y
-(v=deep.payload.inner.value) = deep(a=3) // OK — select a nested return field
-(y, x) = dox(a=3)        // error: `y` is not a field of dox's return
+const r = parts(x=3)
+cassert(r.next == 4 and r.doubled == 6)
+
+const (doubled, next) = parts(x=3) // OK: output names bind regardless of order
 ```
 
 A single-field output tuple auto-unwraps when used in scalar context.

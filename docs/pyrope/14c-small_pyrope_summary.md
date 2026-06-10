@@ -106,9 +106,9 @@ mut out = ram.port[0][addr]::[rdport=0]     // Read port 0
 - `step` advances simulation by one clock cycle
 - Register updates happen at cycle boundaries
 - Combinational logic (`mut`) updates immediately
-- `pipe` has a fixed latency N: outputs land exactly N cycles after the inputs, never a combinational input-to-output path. A `reg` with feedback is state (no added latency); a feedforward `reg` is an explicit pipeline stage counting toward N
+- `pipe` has a fixed positive latency N: outputs land exactly N cycles after the inputs, never a combinational input-to-output path. Use `comb` for zero-cycle behavior. A `reg` with feedback is state (no added latency); a feedforward `reg` is an explicit pipeline stage counting toward N
 - `mod` has no constraints on register use or output structure, but every output must declare its landing cycle at the interface with `@[N]` (omitting it is a compile error)
-- `mod` has two pipeline-timing mechanisms: `stage[N]` (declaration modifier that pipelines the whole RHS over N cycles) and `foo@[N]` (pure timing type check, works on LHS and RHS uses)
+- `mod` has two pipeline-timing mechanisms: `stage[N]` (declaration modifier that pipelines the whole RHS over positive N cycles; use plain assignment for same-cycle delivery) and `foo@[N]` (pure timing type check, works on LHS and RHS uses, including `@[0]`)
 
 ### No Runtime Loops
 ```pyrope

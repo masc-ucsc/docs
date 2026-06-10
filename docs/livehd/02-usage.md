@@ -134,6 +134,45 @@ arguments are comptime string literals, so the list is exact):
 $ lhd scan f1.prp f2.prp     # imports reported in the result's "scan" member
 ```
 
+## Linking libraries (Pyrope + a Verilog black box)
+
+A design can mix leaves from different frontends. `import("lg:NAME")` pulls a
+*compiled* LGraph (from a previous Pyrope or Verilog/yosys run) into a Pyrope
+module as a black box — instantiated by name, body resolved at link time. The
+`elaborate` command then **assembles** several `lg:`/`ln:` inputs, starting from
+`--top`, into one new `lg:` library you can synthesize.
+
+The lg: name is the full graph name: a Verilog module keeps its name (`inv`), a
+Pyrope unit is `file.entity` (`adder.adder`).
+
+Cut-and-paste from the LiveHD root (writes Verilog to `./tmp`); this is exactly
+the flow exercised by `lhd/tests/lhd_usage_merge_test.sh`:
+
+```sh
+$ bazel build //lhd:lhd
+
+# 1. a Verilog leaf -> lg: (through yosys)
+$ ./bazel-bin/lhd/lhd elaborate lhd/tests/merge_demo/inv.v --top inv --emit-dir lg:tmp/inv_lg/
+
+# 2. a Pyrope leaf -> lg:
+$ ./bazel-bin/lhd/lhd elaborate lhd/tests/merge_demo/adder.prp --emit-dir lg:tmp/adder_lg/
+
+# 3. a top Pyrope that imports BOTH (a yosys black box + a Pyrope module) -> ln:
+#    (elaborated only; the lg: imports stay unresolved until the link step)
+$ ./bazel-bin/lhd/lhd elaborate lhd/tests/merge_demo/top.prp --emit-dir ln:tmp/top_ln/
+
+# 4. LINK: merge the two lg: libraries and lower the top against them -> a new lg:
+$ ./bazel-bin/lhd/lhd elaborate --top top lg:tmp/inv_lg/ lg:tmp/adder_lg/ ln:tmp/top_ln/ --emit-dir lg:tmp/merged_lg/
+
+# 5. synthesize the assembled library -> Verilog
+$ ./bazel-bin/lhd/lhd synth lg:tmp/merged_lg/ --emit verilog:tmp/top.v
+```
+
+`tmp/top.v` holds three modules — `inv`, `adder.adder`, and `top.top` — with
+`top` instantiating the other two (`y = (-x) + 1`). Because gids are a
+deterministic hash of the graph name, a name shared across libraries keeps the
+same gid, so the merge is conflict-free.
+
 ## Recipes
 
 A recipe is the named pass chain between the frontend and the terminal

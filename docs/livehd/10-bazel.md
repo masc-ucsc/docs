@@ -156,3 +156,55 @@ In the cc_binary of the relevant BUILD file, add `linkopts = ['-static']`
 Notice that lhd still needs the directory inside
 `bazel-bin/lhd/lhd.runfiles` when using the Yosys-based Verilog readers (the
 `//inou/yosys:scripts` data dependency).
+
+## Tracing and profiling
+
+LiveHD is instrumented with [Perfetto](https://perfetto.dev) track events.
+
+Build with profiling on:
+
+```sh
+bazel build --define=profiling=1 -c opt //...
+```
+
+Run the operations you want to trace; a `livehd.trace` file is written to the
+current working directory. Open [ui.perfetto.dev](https://ui.perfetto.dev) and
+drag the trace file in to view it.
+
+### Adding trace events
+
+Include `perf_tracing.hpp`, then:
+
+```cpp
+#include "perf_tracing.hpp"
+
+{ TRACE_EVENT(category, event); ... }          // RAII (function/scope timing)
+
+TRACE_EVENT_BEGIN(category, event); ...        // events that don't nest by scope
+TRACE_EVENT_END(category);
+```
+
+For a runtime-computed event name:
+
+```cpp
+TRACE_EVENT(category, nullptr, [&name](perfetto::EventContext ctx) {
+  ctx.event()->set_name(name);
+});
+```
+
+New categories are declared in `core/perf_tracing.hpp` via
+`PERFETTO_DEFINE_CATEGORIES`:
+
+```cpp
+perfetto::Category(category).SetDescription(description)
+```
+
+### System-wide mode
+
+Follow Perfetto's
+[Linux tracing quickstart](https://perfetto.dev/docs/quickstart/linux-tracing#building-from-source),
+add `data_sources {config {name: "track_event"}}` to
+`test/configs/scheduling.cfg`, and run
+`tools/tmux -c test/configs/scheduling.cfg -C out/linux -n` (the tmux window
+prints the command that launches the tracing session). The trace file `trace`
+lands in a temporary directory.

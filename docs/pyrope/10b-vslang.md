@@ -182,7 +182,7 @@ const Shape = (
 const Rectangle:(...Shape, ...OtherAPI) = (...some_code_here)
 const Circle:Shape = (...some_code_here)
 
-comb print_share_info(s:Shape) { puts("Shape: {s.name()}") }
+comb print_share_info(s:Shape) -> () { puts("Shape: {s.name()}") }
 ```
 
 

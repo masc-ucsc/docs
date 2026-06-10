@@ -78,7 +78,7 @@ mut a = 3
 // assert b == 4       // error: 'b' not visible outside block
 
 // Functions have their own runtime scope; visible comptime bindings are lexical
-comb example() {
+comb example() -> () {
     mut local = 5       // Function-local variable
     local + 1
 }
@@ -218,8 +218,9 @@ explicit timing control, and can hold `reg` state across cycles. There are
 two complementary timing mechanisms inside `mod` blocks:
 
 * `stage[N]` as a declaration modifier: pipelines the whole RHS over N
-  cycles (e.g., `stage[3] tmp = mul(a=a, b=b)`). It is the only *action* that
-  inserts or chooses pipeline stages.
+  positive cycles (e.g., `stage[3] tmp = mul(a=a, b=b)`). It is the only
+  *action* that inserts or chooses pipeline stages. Use a plain assignment for
+  same-cycle delivery; `stage[0]` is a compile error.
 * `foo@[N]` on a variable (LHS or RHS): a pure timing *type check*. It
   never inserts flops; a mismatch is a compile error.
 
@@ -251,9 +252,7 @@ checks on RHS values use separate `cassert` statements.
 ```pyrope
 cassert(b does u8)                                        // RHS type check
 cassert(c.[xxx_should_be_set])                            // RHS attribute check
-// Destructure by return-field name (LHS local names must match field
-// names of `some_mod_call`'s return tuple, or use `local = call.field` to
-// rename).
+// Destructure by return-field name; use `local = call.field` to rename.
 const (tmp = some_mod_call.out, tmp2 = some_mod_call.status) = some_mod_call(a=a, b=b@[3], c=c@[2])
 ```
 

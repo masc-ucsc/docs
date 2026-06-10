@@ -646,11 +646,13 @@ restricted by code block `{ ... }` and/or the file. Each Pyrope file is a
 function, but they are only visible to the same directory/project Pyrope files.
 
 
-There are only two ways to access variables outside Pyrope file. The `import`
-statement allows referencing `pub` lambdas from other files. The `pub reg`
-declarations allow other files to access the register by "reference"
-(`regref`). Declarations without `pub` are private to the file — though
-debug statements can still observe them read-only (see
+There are two separate mechanisms for accessing declarations outside a Pyrope
+file. The `import` statement copies `pub` top-scope lambdas, types, and
+constants from other files. Registers are never imported; `pub reg` is a
+compile error. To reference an instantiated register outside the local scope,
+use `regref`, which resolves through the instantiation hierarchy instead of
+through the file import namespace. Debug statements can still observe registers
+read-only (see
 [Visibility](04-variables.md#visibility-private-by-default-pub-to-export)).
 
 
@@ -691,9 +693,10 @@ x.call3()               // prints call called
 ```
 
 The `import` points to a file [setup code](06b-instantiation.md#setup-code)
-list of `pub` variables or types. The setup code corresponds to the "top" scope
-in the imported file. The import statement can only be executed during the
-setup phase. The import allows for cyclic dependencies between files as long as
+list of `pub` lambdas, types, and constants. The setup code corresponds to the
+"top" scope in the imported file. Registers are intentionally excluded from
+imports; use `regref` for register instances. The import statement can only be
+executed during the setup phase. The import allows for cyclic dependencies between files as long as
 there is no true cyclic dependency between variables. This means that "false"
 cyclic dependencies are allowed but not true ones.
 
@@ -706,14 +709,14 @@ only the generated lgraph, never the import key:
 
 The import behaves like cut and pasting the imported code. It is not a
 reference to the file, but rather a cut and paste of functionality. This means
-that when importing a variable, it creates a copy. If two files import the same
-variable, they are not referencing the same variable, but each has a separate
-copy.
+that when importing a constant or lambda, it creates a copy. If two files import
+the same declaration, they are not referencing the same declaration, but each
+has a separate copy.
 
 
-The import is delayed until the imported variable is used in the local file.
+The import is delayed until the imported declaration is used in the local file.
 There is no order guarantee between imported files, just that the code needed
-to compute the used imported variables is executed before.
+to compute the used imported declarations is executed before.
 
 
 The import statement is a filename or path without the file extension.
@@ -734,9 +737,9 @@ const d = import("prj2/file3")  // import the functions from project prj2 and fi
 ```
 
 Many languages have a "using" or "import" or "include" command that includes
-all the imported functions/variables to the current scope. Pyrope does not
-allow that, but it is possible to use a mixin to add the imported functionality
-to a tuple.
+all the imported functions/constants to the current scope. Pyrope does not allow
+that, but it is possible to use a mixin to add the imported functionality to a
+tuple.
 
 ```pyrope
 const b = import("prp/Number")
@@ -750,24 +753,25 @@ mut x:Number = 3
 ### Register reference
 
 
-While import "copies" the contents, `regref` or Register reference allows to
-reference (not copy) an existing register in the call hierarchy.
+While import "copies" file-scope declarations, `regref` or Register reference
+allows code to reference (not copy) an existing register in the call hierarchy.
 
 
-The syntax of `regref` is similar to `import` but the semantics are very different.
-While `import` looks through Pyrope files, `regref` looks through the instantiation
-hierarchy for matching register names. `regref` only can get a reference to a
-register, it can not be used to import functions or variables.
+The syntax of `regref` is similar to `import` but the semantics are very
+different. While `import` looks through Pyrope files, `regref` looks through
+the instantiation hierarchy for matching register names or paths. `regref`
+only gets a reference to a register; it can not import functions, constants,
+types, or ordinary variables.
 
-Visibility follows the `pub` rule
+`regref` is independent of `pub`
 ([Visibility](04-variables.md#visibility-private-by-default-pub-to-export)):
 
 * In **debug statements** (`assert`, `test`, `puts`, monitors), `regref`
-  can read any register, `pub` or not.
-* In **synthesizable code**, `regref` can only attach to registers declared
-  `pub reg`. The attached reference behaves exactly like a local `reg`:
-  bare reads return the `q` value, assignments drive the `din` input, and
-  stage inference classifies it like any state register (see
+  can read any register.
+* In **synthesizable code**, `regref` can attach to an instantiated register
+  outside the local scope. The attached reference behaves exactly like a
+  local `reg`: bare reads return the `q` value, assignments drive the `din`
+  input, and stage inference classifies it like any state register (see
   [Pipelining](06c-pipelining.md)). Because every access crosses the flop
   boundary, a `regref` connection is sequential by construction — it can
   never create a combinational path between distant modules.
@@ -815,7 +819,7 @@ set a different value for each uart base register.
 // file remote.prp
 
 mod xxx(some:u32, code:u32) -> () {
-  pub reg uart_addr:u32 = nil  // pub: synthesizable regref may attach
+  reg uart_addr:u32 = nil
   assert(0x400 > uart_addr >= 0x300)
 }
 
@@ -872,10 +876,9 @@ concatenates a tuple or a String, `and` is always for boolean types,...
 ## Init method (constructor)
 
 Pyrope tuples can use the same syntax as a lambda call or a direct assignment.
-Both the assignment and the lambda call follow the same rules for ambiguity as
-the default lambda calls. This means that fields must be named unless single
-character names, or variable name matches argument name, or there is no type
-ambiguity.
+Both forms follow the same ambiguity rules as lambda calls; see
+[Argument naming](06-functions.md#argument-naming). In practice, name fields
+when positional binding would be unclear.
 
 ```pyrope
 const Typ1 = (
