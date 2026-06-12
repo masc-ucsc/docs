@@ -466,6 +466,17 @@ it is fine as long as no real combinational cycle exists (here: as long
 as `b_outs.something` does not combinationally depend on `mod_call2`'s
 first argument — the standard combinational-loop check validates it).
 
+The same works within a *single* call: an output can feed the call's own
+input when the callee has no combinational path between them. Given an
+`add_sub` where `add = a + b` and `sub = c - d` (so `add` does not depend
+on `c`):
+
+```pyrope
+mut tmp = add_sub(a=a, b=b, c=tmp.add.[defer], d=3)
+out = tmp.sub                          // out = a + b - 3
+// c=tmp.sub.[defer] would be a true comb cycle (sub depends on c): error
+```
+
 Common misreadings, all wrong:
 
 * "`x.[defer]` is the value of `x` in the next cycle" — no. It is the

@@ -715,6 +715,14 @@ The import string is either a file (`import("file")`, which brings all the
 hierarchy uses slashes: `import("proj/dir/file.pub_name")`. There are no glob
 patterns.
 
+An `lg:` prefix imports an already-compiled **lgraph** instead of a source
+unit — e.g. a Verilog module compiled earlier, or a previously built Pyrope
+lambda:
+
+```pyrope
+const add_sub = import("lg:add_sub")  // the compiled module, not its source
+```
+
 The `import` points to a file [setup code](06b-instantiation.md#setup-code)
 list of `pub` lambdas, types, and constants. The setup code corresponds to the
 "top" scope in the imported file. Registers are intentionally excluded from
