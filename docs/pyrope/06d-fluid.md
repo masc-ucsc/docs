@@ -26,17 +26,17 @@ default:
 
 ```pyrope
 type FpuReq = (
-  state: u10,
-  round: u2,
-  op:    u7,
-  src1:  u64,
-  src2:  u64,
+  const state: u10 = nil,
+  const round: u2  = nil,
+  const op:    u7  = nil,
+  const src1:  u64 = nil,
+  const src2:  u64 = nil,
 )
 
 type FpuResp = (
-  state:  u10,
-  result: u64,
-  icc:    u3,
+  const state:  u10 = nil,
+  const result: u64 = nil,
+  const icc:    u3  = nil,
 )
 
 fluid fpu(req:FpuReq) -> (resp:FpuResp) {
@@ -200,8 +200,8 @@ adding or changing a few fields along the way. Prefer a tuple payload and
 return an updated token:
 
 ```pyrope
-type FetchTok = (pc:u64, inst:u32)
-type DecodeTok = (...FetchTok, src1:u64, src2:u64)
+type FetchTok = (const pc:u64 = nil, const inst:u32 = nil)
+type DecodeTok = (...FetchTok, const src1:u64 = nil, const src2:u64 = nil)
 
 fluid decode(tok:FetchTok) -> (out:DecodeTok) {
   tok.[retry] = tok.[valid] and hazard(tok.inst)

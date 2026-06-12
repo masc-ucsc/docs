@@ -195,30 +195,36 @@ such that memories can be created directly.
 ```pyrope
 // A 2rd+1wr memory (RF type)
 
-mem.addr    = (raddr0, raddr1, wraddr)
-mem.bits    = 4
-mem.size    = 16
-mem.clock   = my_clock
-mem.din     = (0, 0, din0)
-mem.enable  = (1, 1, we0)
+mut mem = (
+  const addr      = (raddr0, raddr1, wraddr),
+  const bits      = 4,
+  const size      = 16,
+  const din       = (0, 0, din0),
+  const enable    = (1, 1, we0),
+  const fwd       = false,
+  const type      = 1,         // 0: async, 1: sync, 2: array
+  const wensize   = 1,         // we bit (no write mask)
+  const rdport    = (1, 1, 0), // 1: read port, 0: write port
+)
 
-mem.fwd     = false
-mem.latency = (1, 1, 1)
-mem.wensize = 1 // we bit (no write mask)
-mem.rdport  = (-1,1,0) // 0 WR, !=0 -> RD
-
-stage[1..<inf] res = __memory(mem)
+mut res = __memory(mem)
 
 q0 = res[0]
 q1 = res[1]
-
 ```
 
 The previous code directly instantiates a memory and passes the configuration.
-
-
-Multi cycle memories are pipelined elements, and using them requires the `stage[1..<inf]`
-declaration modifier and the same rules as pipeline flops apply (See [pipelining](06c-pipelining.md)).
+The configuration vocabulary is the LiveHD `Memory` cell sink pins **verbatim**
+(`addr`/`bits`/`clock_pin`/`din`/`enable`/`fwd`/`posclk`/`type`/`wensize`/
+`size`/`rdport`/`init`): there is no `latency` field — `type` selects async
+(0, combinational read of the current address), sync (1, one-cycle read) or
+array (2, unclocked); the optional `clock_pin` defaults to the module clock,
+and `init` provides comptime initial contents (a tuple literal or a packed
+constant, entry 0 in the low `bits`). The config must be built as a single
+tuple literal, and `res[N]` returns the data of the N-th read port (in
+`rdport` order). From a timing point of view a memory is treated like a
+register: reads return committed state at `@[0]`; for a sync memory the extra
+cycle is the time the write takes to commit.
 
 
 ## Shared memories with `regref`
@@ -390,6 +396,8 @@ always_assert(arr[0] == 0 and arr[7] == 7) // may FAIL during reset
 reg mem:[] = (0,1,2,3,4,5,6,7)
 
 always_assert(mem[7] == 7) // may FAIL during reset
-always_assert(mem[7] == 7) unless mem.reset // OK
+if not mem.reset {
+  always_assert(mem[7] == 7) // OK
+}
 assert(mem[7] == 7) // OK, not checked during reset
 ```

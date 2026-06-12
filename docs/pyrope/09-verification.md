@@ -285,7 +285,7 @@ test "random legal opcodes" {
   for i in 0..<100 {
     while true {
       opcode = opcode.[rand]
-      break when opcode <= 10
+      if opcode <= 10 { break }
     }
 
     poke("top/opcode", opcode)
@@ -370,7 +370,9 @@ assert(rose(req) implies eventually[1..=32](ack))
 assert(sel implies always[1..=10](grant))
 
 // past values
-assert(counter == past(counter) + 1) when enable
+if enable {
+  assert(counter == past(counter) + 1)
+}
 assert(x == past[3](x)) // same value three cycles ago
 ```
 

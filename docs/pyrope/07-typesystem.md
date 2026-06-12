@@ -97,9 +97,9 @@ constraints from the type system. Pyrope type system constructs to handle types:
   logical equivalence, just type equivalence.
 
 ```pyrope
-const t1 = (a:int=1, b:string)
-const t2 = (a:int=100, b:string)
-mut v1 = (a=33, b="hello")
+const t1 = (const a:int=1, const b:string = "")
+const t2 = (const a:int=100, const b:string = "")
+mut v1 = (const a=33, const b="hello")
 
 comb f1() -> (a:int, b:string) {
   a = 33
@@ -109,8 +109,8 @@ comb f1() -> (a:int, b:string) {
 cassert(t1 equals t2)
 cassert(t1 equals v1)
 cassert(f1() equals t1)
-cassert(not (_:f1 equals t1))
-cassert(_:t1 equals t2)
+cassert(not (f1 equals t1))
+cassert(t1 equals t2)
 ```
 
 
@@ -172,7 +172,7 @@ These are the detailed rules for the `a does b` operator depending on the `a` an
 
 * `a does b` is false if the explicit array size of `a` is smaller than the
   explicit array size of `b`. If the size check is true, the array entry type
-  is checked. `_:[]x does _:[]y` is false when `_:x does _:y` is false.
+  is checked. `:[]x does :[]y` is false when `:x does :y` is false.
 
 * The lambdas have a more complicated set of rules explained later.
 
@@ -182,8 +182,8 @@ const b:int(max=20, min=5) = nil
 cassert(a does b)
 cassert(not (b does a))
 
-cassert(    (a:string=nil, b:int=nil) does (a="hello", b=33))
-cassert(not (b:string=nil, a:int=nil) does (a="hello", b=33))
+cassert(    (const a:string=nil, const b:int=nil) does (const a="hello", const b=33))
+cassert(not (const b:string=nil, const a:int=nil) does (const a="hello", const b=33))
 
 type T_complex = comb(x, xxx2) -> (y, z)
 type T_simple  = comb(x)       -> (y, z)
@@ -194,8 +194,8 @@ cassert(not (T_simple does T_complex))
 For named tuples, this code shows some of the corner cases:
 
 ```pyrope
-const t1 = (a:string, b:int)
-const t2 = (b:int, a:string)
+const t1 = (const a:string = "", const b:int = nil)
+const t2 = (const b:int = nil, const a:string = "")
 
 mut a:t1 = ("hello", 3)     // OK
 mut a1:t1 = (3, "hello")     // error: positions do not match
@@ -235,12 +235,12 @@ The previous explanation of `a does b` and `a case b` ignored types. When types
 are present, both need to match type.
 
 ```pyrope
-cassert (a:u32=0, b:bool) does (a:u32, c:string="hello", b=false)
-cassert (a:u32=0, c:string="hello", b=false) case (a = 0, b:bool) // b is nil
+cassert((const a:u32=0, const b:bool=false) does (const a:u32=0, const c:string="hello", const b=false))
+cassert((const a:u32=0, const c:string="hello", const b=false) case (a = 0, b:bool=nil)) // b is nil
 
-cassert(not ((a:u32=0, c:string="hello", b=false) case (a:u32 = 1, b:bool=nil)))
-cassert(not ((a:u32=0, c:string="hello", b=false) case (a:bool=nil, b:bool=nil)))
-cassert(not ((a:u32=0, c:string="hello", b=false) case (a = 0, b = true)))
+cassert(not ((const a:u32=0, const c:string="hello", const b=false) case (a:u32 = 1, b:bool=nil)))
+cassert(not ((const a:u32=0, const c:string="hello", const b=false) case (a:bool=nil, b:bool=nil)))
+cassert(not ((const a:u32=0, const c:string="hello", const b=false) case (a = 0, b = true)))
 ```
 
 ## Nominal type check
@@ -268,20 +268,20 @@ cassert(a.[typename] == "int" and c.[typename] == "u32")
 const d:u32 = nil
 cassert(c is d)
 
-const e = (a:u32=1)
-const f:(a:u32) = 33
+const e = (const a:u32=1)
+const f:(const a:u32) = 33
 cassert(e is f)
 ```
 
 Since it checks equivalence, when `a is b == b is a`.
 
 ```pyrope
-const X1 = (b:u32)
-const X2 = (b:u32)
+const X1 = (const b:u32 = 0)
+const X2 = (const b:u32 = 0)
 
 const t1:X1 = (b=3)
 const t2:X2 = (b=3)
-cassert(not ((b=3) is X2))  // same as (b=3) !is X2
+cassert(not ((const b=3) is X2))  // same as (const b=3) !is X2
 cassert(t1 equals t2)
 cassert(not (t1 is t2))
 
@@ -529,12 +529,12 @@ To convert between tuples, an explicit `init` is needed unless the tuple fields
 names, order, and types match.
 
 ```pyrope
-const at = (c:string, d:u32)
-const bt = (c:string, d:u100)
+const at = (const c:string = nil, const d:u32 = nil)
+const bt = (const c:string = nil, const d:u100 = nil)
 
 const ct = (
-  d:u32 = nil,
-  c:string = nil
+  const d:u32 = nil,
+  const c:string = nil
 )
 // different order
 const dt = (
@@ -562,7 +562,7 @@ mut d:dt = a   // OK, calls init to typecast at construction
 Introspection is possible for tuples.
 
 ```pyrope
-const a = (b=1, c:u32=2)
+const a = (const b=1, const c:u32=2)
 mut b = a
 b.c = 100
 
@@ -600,8 +600,8 @@ const x:u32 = fn(a1, a2)
 
 comb model_poly_call(fn, ...args) -> (out) {
   for f in fn {
-     continue unless f.[inp] does args
-     continue unless f.[out] does out
+     if not (f.[inp] does args) { continue }
+     if not (f.[out] does out) { continue }
      out = f(args)
      return
   }
@@ -620,16 +620,16 @@ function that returns a randomly mutated tuple.
 comb randomize::[debug](ref self) {
   const rnd = import("prp/rnd")
   for i in ref self {
-    if i equals _:int {
+    if i equals int {
       i = rnd.between(i.[max], i.[min])
-    } elif i equals _:bool {
+    } elif i equals bool {
       i = rnd.boolean()
     }
   }
   self
 }
 
-const x = (a=1, b=true, c="hello")
+const x = (const a=1, const b=true, const c="hello")
 const y = x.randomize()
 
 assert(x.a == 1 and x.b == true and x.c == "hello")
@@ -882,8 +882,8 @@ when positional binding would be unclear.
 
 ```pyrope
 const Typ1 = (
-  a:string = "none",
-  b:u32 = 0
+  const a:string = "none",
+  const b:u32 = 0
 )
 
 const w = Typ1(a="foo", b=33)       // OK

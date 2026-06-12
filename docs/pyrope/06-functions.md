@@ -374,7 +374,7 @@ const b1 = (8).div(b=2)              // OK: 8 → self, b named (4)
 const b2 = div(8, b=2)               // OK: direct form, 8 → self (4)
 const d1 = div2(a=8, b=2)            // OK: direct call, all named (4)
 
-const c1 = (a=8, b=2).div2()         // error: div2 has no self → no UFCS
+const c1 = (const a=8, const b=2).div2() // error: div2 has no self → no UFCS
 const t1 = (8).div2(b=2)             // error: div2 has no self → no UFCS
 const t2 = 8.div(2)                  // error: `2` is not named
 const t3 = div(self=8, b=2)          // error: `self` cannot be named
@@ -418,7 +418,8 @@ assert(tup.f1() != 0)    // error: f1 is shadowing
 comb xx(self:tup) -> (r) { r = self.f1() } // OK, explicit input restricts scope for f1
 cassert((tup).xx() == 1)                   // xx declares self → UFCS OK (xx(tup) works too)
 
-cassert((4:tup).f1() == 1)
+const t4:tup = 4
+cassert(t4.f1() == 1)     // typed as tup → tup.f1 is called
 cassert((4).f1() == 3)    // UFCS call, scalar bound to self
 cassert(tup.f1() == 1)
 ```
@@ -545,7 +546,7 @@ are three rules that work together:
 3. **`return` is a terminator only.** The keyword ends the current lambda
    and never carries a value (`return X` is a syntax error). Whatever has
    been assigned to the declared output names so far is what the caller
-   sees. Use `return when cond` / `return unless cond` for early exits.
+   sees. Use `if cond { return }` for conditional early exits.
 
 Callers always see a named tuple. They can read fields by name
 (`r.a`, `r.b`) or destructure on the LHS. Destructuring follows the
@@ -579,7 +580,7 @@ comb ret3() -> (a, b) {
 
 comb early(x) -> (r) {
   r = 0
-  return when x == 0       // bail out; r already assigned
+  if x == 0 { return }     // bail out; r already assigned
   r = 100 / x
 }
 
@@ -751,7 +752,7 @@ it can be error-prone.
       ,comb foo() -> (r) {
          comb bar() -> () { puts("bar") }
          puts("mem.foo")
-         r = (bar=bar)
+         r = (const bar=bar)
       }
     )
     const b = 3
@@ -774,7 +775,7 @@ it can be error-prone.
       ,comb foo() -> (r) {
          comb bar() -> () { puts("bar") }
          puts("mem.foo")
-         r = (bar=bar)
+         r = (const bar=bar)
       }
     )
     const b = 3

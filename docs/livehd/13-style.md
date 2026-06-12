@@ -66,13 +66,29 @@ class Sweet_potato {
 
 ## Error handling and exceptions
 
-Use the Pass::error or Pass:warn for error and likely error (warn). Internally, error generates
-an exception captured by the `lhd` driver to move to the next task.
+Report errors and warnings through `livehd::diag` (core/diag.hpp). Every
+diagnostic carries a stable kebab-case `code`, a `category` from the pinned
+vocabulary (see `diag::kCategories`), and — whenever a node is in hand — a
+resolved source span, so both the human channel (caret excerpts) and the
+machine channel (diag.jsonl) stay useful. `.fatal()` emits and then throws,
+which the `lhd` driver catches to move to the next task; `.emit()` reports and
+continues (warnings).
 
 ```cpp
-Pass::error("inou_yaml: can only have a yaml_input or a graph_name, not both");
-Pass::warn("inou_yaml.to_lg: output:{} input:{} graph:{}", output, input, graph_name);
+livehd::diag::err("inou.yaml", "bad-option", "io")
+    .msg("can only have a yaml_input or a graph_name, not both")
+    .fatal();
+livehd::diag::warn("inou.yaml", "write-failed", "io")
+    .at(ln->span_of(nid))
+    .msg("output:{} input:{} graph:{}", output, input, graph_name)
+    .emit();
 ```
+
+Passes that report repeatedly define a small located helper instead (see
+`upass/tolg` `error_at`/`warn_at` or `prp2lnast::report_error`): it resolves
+the span/notes once and takes a `diag::Id{code, category}` first argument.
+`Pass::info` remains for debug-build progress logging only — it is not a
+diagnostic and never lands in diag.jsonl.
 
 ## No tabs, indentation is 2 spaces
 

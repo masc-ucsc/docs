@@ -13,32 +13,27 @@ Pyrope supports a syntax close to Verilog for assertions. The language is
 designed to have 3 levels of assertion checking: compilation time,
 simulation runtime, and formal verification time.
 
-There are 5 main verification statements:
+There are 2 main assertion statements:
 
 * `assert` and `cassert` are used to specify conditions that should hold true.
   `cassert` is required to hold true at compile time and `assert` can be
   checked either at compile or runtime if too slow to check. If the condition
   doesn't hold, an error is raised.
 
-* `optimize` is exactly like `assert`, but it also allows the tool to simplify
+* `assume` is exactly like `assert`, but it also allows the tool to simplify
   code based on the given conditions. This can lead to more efficient code
   generation. While unproven `assert` can be enabled/disabled during
-  simulation, `optimize` can not be disabled because it can lead to incorrect
-  simulation state.
-
-* `requires` is statement that can be placed in lambdas. The clause specifies
-  pre conditions to be true when the lambda is called. `requires` allows for code
-  optimizations like `optimize` statement.
-
-* `ensures` is a statement similar to `requires` but the clause specifies a
-  post condition. `ensures` allows code optimizations like `optimize` statement.
+  simulation, `assume` can not be disabled because it can lead to incorrect
+  simulation state. An `assume` on lambda inputs acts like a precondition, an
+  `assume` on lambda outputs acts like a postcondition, and an `assume` mixing
+  inputs and outputs acts as a general optimization constraint.
 
 Use the parenthesized form for verification conditions: `assert(expr)`,
-`cassert(expr)`, `optimize(expr)`, `requires(expr)`, `ensures(expr)`, and
-`cover(expr)`. This is the canonical style for new code and examples because it
+`cassert(expr)`, `assume(expr)`, and `cover(expr)`. This is the canonical style
+for new code and examples because it
 keeps the checked expression visually grouped and avoids newline/precedence
-ambiguity. A trailing message or gate still belongs to the statement:
-`assert(expr, "message") when enable`.
+ambiguity. A trailing message still belongs to the statement:
+`assert(expr, "message")`.
 
 
 Hardware setups always have an extensive CI/verification setup. This means that
@@ -46,8 +41,8 @@ run-time assertion failures are OK, better compile time to reduce design time,
 but OK at simulation time. This means that in things like type check, if it may
 be OK but not possible to prove, the compiler can decide to insert an assert
 instead of forcing a code structure change. To enforce that an assertion is
-checked only at compile time a `cassert` must be used. `assert`, `requires`,
-`ensures` can be checked at runtime if not possible to check at compile time.
+checked only at compile time a `cassert` must be used. `assert` and `assume`
+can be checked at runtime if not possible to check at compile time.
 
 
 ```pyrope
@@ -55,20 +50,19 @@ a = 3
 assert(a == 3)         // checked at runtime (or compile time)
 cassert(a == 3)        // checked at compile time
 
-optimize(b > 3)        // may optimize and perform a runtime check
+assume(b > 3)          // may optimize and perform a runtime check
 
 comb max_not_zero(a, b) -> (result) {
-  requires(a > 0)
-  requires(b > 0)
-  ensures(result == a or result == b)
+  assume(a > 0)
+  assume(b > 0)
+  assume(result == a or result == b)
 
   result = if a > b { a } else { b }
 }
 ```
 
-A whole statement is conditionally executed using the `when`/`unless` gate expression.
-This is useful to gate verification statements (`assert`, `optimize`)
-that can have spurious error messages under some conditions.
+Use an `if` block to conditionally execute verification statements (`assert`,
+`assume`) that can have spurious error messages under some conditions.
 
 
 ```pyrope
@@ -77,17 +71,20 @@ if cond {
   a = 3
 }
 assert(cond implies a == 3, "the branch was taken, so it must be 3??")
-assert(a == 3, "the same error") when   cond
-assert(a == 0, "the same error") unless cond
+if cond {
+  assert(a == 3, "the same error")
+} else {
+  assert(a == 0, "the same error")
+}
 ```
 
 
-The recommendation is to write as many `assert` and `optimize` as possible. If
-something can not happen, writing the `optimize` has the advantage of allowing
+The recommendation is to write as many `assert` and `assume` as possible. If
+something can not happen, writing the `assume` has the advantage of allowing
 the synthesis tool to generate more efficient code.
 
 
-The `optimize` will allow code optimizations, the `cassert` should also result
+The `assume` will allow code optimizations, the `cassert` should also result
 in code optimizations. The reason why `assert` does not trigger optimizations
 is because they can be enabled/disabled at simulation time.
 
@@ -140,8 +137,8 @@ implementation bit.
 
 
 !!! NOTE
-    The recommendation is to use `optimize` and `assert` frequently, but
-    clearly to check preconditions and postconditions of methods. The 1949
+    The recommendation is to use `assume` and `assert` frequently, including
+    to check preconditions and postconditions of methods. The 1949
     Turing quote of how to write assertions and programs is still valid "the
     programmer should make a number of definite assertions which can be checked
     individually, and from which the correctness of the whole program easily
@@ -222,7 +219,7 @@ In hardware is common to have an undefined state during the reset period. To
 avoid unnecessary assertion failures, if any of the inputs depends on a
 register directly or indirectly, the assertion is not checked when the reset is
 high for the given registers. In Pyrope, the registers and memory contents
-outputs are "invalid" (`.[valid]` attribute). `assert` and `optimize` will not
+outputs are "invalid" (`.[valid]` attribute). `assert` and `assume` will not
 check when any of the signals are invalid. This is useful to avoid unnecessary
 assert checks during reset or when the lambda is called with invalid data.
 
@@ -230,8 +227,8 @@ assert checks during reset or when the lambda is called with invalid data.
 Adding the `always` modifier before the assert/coverage keywords guarantees
 that the check is performed every cycle independent of the valid attribute.
 
-To provide assert/optimize during reset, Pyrope provides a `always_assert`,
-`always_cassert`, `always_optimize`, `always_covercase`, and
+To provide assert/assume during reset, Pyrope provides a `always_assert`,
+`always_cassert`, `always_assume`, `always_covercase`, and
 `always_cover`.
 
 ```pyrope
@@ -240,7 +237,9 @@ reg memory:[3]u33 = (1, 2, 3) // may take cycles to load this contents
 assert(memory[0] == 1) // not checked during reset
 
 always_assert(memory[1] == 2) // may fail during reset
-always_assert(memory[1] == 2) unless memory.reset  // should not fail
+if not memory.reset {
+  always_assert(memory[1] == 2) // should not fail
+}
 ```
 
 ## Random
@@ -269,11 +268,13 @@ a compile error for string, range, and lambda types.
 When applied to a tuple, it randomly picks an entry from the tuple.
 
 ```pyrope
-mut a = (1, 2, 3, b=4)
+mut a = (1, 2, 3, const b=4)
 mut x = a.[rand]
 
 cassert(x == 1 or x == 2 or x == 3 or x == 4)
-cassert(x.b == 4) when x == 4
+if x == 4 {
+  cassert(x.b == 4)
+}
 ```
 
 The simulation random number is considered a `.[debug]` statement, this means
@@ -488,8 +489,8 @@ test "req ack protocol" {
   const ack = sigref("top/core0/ack")
   reg pending = false
 
-  pending = true  when req
-  pending = false when ack
+  if req { pending = true }
+  if ack { pending = false }
 
   assert(!ack or pending, "ack without earlier req")
 }

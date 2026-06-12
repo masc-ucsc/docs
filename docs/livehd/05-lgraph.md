@@ -663,6 +663,17 @@ non-one-hot selector at runtime is an error. `Hotmux` avoids the
 binary-encode/decode pair that a `Mux` would need when the surrounding logic
 already produces one-hot signals.
 
+A Pyrope `unique if` (and `match`, which is a unique-if chain by definition)
+lowers to one `Hotmux` per merged variable: the selector packs one bit per
+arm condition plus a top "none of the conditions" bit for the else /
+fall-through slot, so it is one-hot by construction exactly when the
+uniqueness assume holds. The code generation emits a `case` over the one-hot
+constants (`1`, `2`, `4`, ...) with an `'hx` default modelling the
+non-one-hot runtime error. `pass.cprop` folds a constant one-hot selector to
+the selected arm (and collapses all-identical arms); `pass.bitwidth` gives
+the selector the unsigned N-bit envelope and unions the data arms into the
+output like `Mux`.
+
 ### LUT
 
 Look-up table cell. The inputs connect to `p0`...`pN` and the table contents
@@ -744,10 +755,11 @@ The sink pins (per `graph/cell.cpp`):
 | `wensize` | comptime, 1 | number of write-enable bits |
 | `size` | comptime, 1 | number of entries |
 | `rdport` | comptime, per port | 1: read port, 0: write port |
+| `init` | comptime, 1 | contents (entry 0 in the low `bits`, row-major); NOT restored by reset |
 
-Multi-ported memories use port-id wrapping: the per-port pins repeat every 11
-port ids (`pid % 11` selects the field, `pid / 11` the port). E.g., sink name
-`"11addr"` is the `addr` of port 1. If a single driver is connected for a
+Multi-ported memories use port-id wrapping: the per-port pins repeat every 12
+port ids (`pid % 12` selects the field, `pid / 12` the port). E.g., sink name
+`"12addr"` is the `addr` of port 1. If a single driver is connected for a
 shared field (like `clock_pin`), the same value is used across all the ports.
 
 The read data for read port N comes out on driver pin `n_wr_ports + N`.
@@ -758,7 +770,12 @@ The read data for read port N comes out on driver pin `n_wr_ports + N`.
   observe the results, which requires costly forwarding logic.
 - `type == 2` (array) generates an unclocked register array with forwarding
   semantics (writes visible to subsequent reads in the same cycle); `type` 0/1
-  instantiate the `cgen_memory_*` wrapper modules.
+  instantiate the `cgen_memory_*` wrapper modules. `type == 0` (async) reads
+  are combinational on the CURRENT address.
+- `init` is the per-cycle default for a `type == 2` array (a `mut`/`const`
+  array's initializer / a ROM's contents) and the power-on contents otherwise;
+  it is never restored by reset. Code generation currently rejects `init` on
+  the clocked types 0/1 (no $readmemh-style seam into the wrappers yet).
 
 The memory usually has power of two sizes. If the size is not a power of 2,
 the address is rounded up. Writes to the invalid addresses will generated

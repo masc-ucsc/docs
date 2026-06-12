@@ -144,9 +144,10 @@ Two rules fall out of the classification:
 
 * **An incomplete write is feedback.** `if en { tmp = a }` means `tmp`
   holds its value when `en` is false — an implicit `tmp = tmp` on the
-  untaken path. Holding is self-dependence, so a conditionally written
-  register is always a state register. Equivalently: a stage register must
-  be written unconditionally.
+  untaken path. Holding is self-dependence, so an incompletely written
+  register is always a state register. A conditional assignment that writes
+  every control path can still be feedforward. Equivalently: a stage
+  register must be written on every path.
 
 * **A `reg` output must be state.** `pipe[1] counter(en) -> (reg count)` is
   the counter idiom: the state register itself is the output (its home
@@ -248,6 +249,7 @@ The diagnostics name the offending nodes and stages:
     pipe[1] acc_mix(a:u32, b:u32) -> (x:u32) {
       reg tmp:u32 = 0
       wrap tmp += a + b   // reads its own q → state register, home stage 0
+      // Equivalent: wrap tmp = tmp + a + b
       wrap x = tmp + a    // state q ⊕ input: both σ=0 — legal
     }
     // x[t] == tmp[t-1] + a[t-1]
@@ -270,7 +272,7 @@ The diagnostics name the offending nodes and stages:
 === "State output (counter idiom)"
     ```pyrope
     pipe[1] counter(enable:bool) -> (reg count:u8) {
-      if enable { wrap count += 1 }  // conditional write → state; q is the output
+      if enable { wrap count += 1 }  // incomplete conditional write → state; q is the output
     }
     // count[t] == count[t-1] + enable[t-1]
     ```
@@ -297,11 +299,13 @@ The diagnostics name the offending nodes and stages:
     }
     ```
 
-    Note the one-character distance to the accepted `acc_mix`: with `+=`,
-    `tmp` is state and mixing it with `a` is coherent (current state plus
-    current input). With `=`, `tmp` is a one-stage delay, and `tmp + a`
-    adds yesterday's `a + b` to today's `a` — almost always an off-by-one
-    bug. If the mix is intended, align it explicitly:
+    The important distinction is not compound assignment versus plain
+    assignment; it is whether the register's next value reads its own `q`.
+    `tmp += a + b` and `tmp = tmp + a + b` are both feedback and therefore
+    both make `tmp` state. The rejected version above is different because
+    `tmp = a + b` is pure feedforward: `tmp` becomes a one-stage delay, and
+    `tmp + a` adds yesterday's `a + b` to today's `a` — almost always an
+    off-by-one bug. If the mix is intended, align it explicitly:
 
     ```pyrope
       wrap x = tmp + past[1](a)   // both at stage 1 — accepted

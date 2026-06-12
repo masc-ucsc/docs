@@ -125,7 +125,7 @@ semantic. To understand the potential Pyrope syntax, this is a hypothetical
 `poison` attribute that marks a tuple field.
 
 ```pyrope
-const bad = (a=3, b::[poison=true]=4)
+const bad = (const a=3, const b::[poison=true]=4)
 
 const b = bad.b
 
@@ -433,7 +433,7 @@ This guarantees that `debug` variables, or statements, do not have any
 side-effects beyond debug statements.
 
 ```pyrope
-mut a = (b::[debug]=2, c = 3) // a.b is a debug variable
+mut a = (const b::[debug]=2, const c = 3) // a.b is a debug variable
 const c::[debug] = 3
 ```
 

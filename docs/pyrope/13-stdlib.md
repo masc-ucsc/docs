@@ -44,8 +44,9 @@ Sample use:
 
 ```pyrope
 const x = (1,2,3)
+comb inc(a) -> (r) { r = a + 1 }
 
-cassert(x.map(_ + 1) == (2,3,4))
+cassert(x.map(inc) == (2,3,4))
 ```
 
 Library code:
@@ -63,7 +64,9 @@ comb map<T>(f, ...x:[]T) -> (r:[]) {
 Sample use:
 
 ```pyrope
-cassert (1,2,3).filter(_ != 2) == (1,3)
+comb not_two(a) -> (r) { r = a != 2 }
+
+cassert((1,2,3).filter(not_two) == (1,3))
 ```
 
 Library code:

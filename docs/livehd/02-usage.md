@@ -45,8 +45,8 @@ is inferred from the file extension (`.prp` vs `.v`/`.sv`).
 | `lhd check` | logic equivalence check (LEC) between two designs |
 | `lhd scan FILES.prp...` | report each Pyrope file's `import` strings (dependency discovery) |
 | `lhd lsp` | Pyrope language server over stdio (JSON-RPC) |
-| `lhd list steps\|recipes\|emit-kinds\|error-classes` | discovery (JSON output) |
-| `lhd describe <command\|recipe:NAME\|emit-kind>` | self-documentation (JSON output) |
+| `lhd list steps\|recipes\|emit-kinds\|error-classes\|options [REGEX]` | discovery (JSON when piped; `options` prints human text on a terminal) |
+| `lhd describe <command\|recipe:NAME\|emit-kind\|pass.flag>` | self-documentation (JSON output; `pass.flag` shows one option's full help) |
 | `lhd version` / `lhd help [command]` | meta |
 
 Shared arguments honored by the execution commands:
@@ -61,6 +61,7 @@ Shared arguments honored by the execution commands:
 | `--workdir DIR` | scratch + ephemeral lgdb; never a global cache |
 | `-j`/`--jobs N` | intra-action parallelism |
 | `-q`/`--quiet`, `--verbose` | stderr verbosity; never pollutes the stdout protocol |
+| `--diag-fmt auto\|jsonl\|pretty` | rendering of the stdout result envelope and the stderr diagnostics; `auto` (default) = `pretty` on a terminal, `jsonl` when piped/captured (agents, CI) |
 
 ## Typed inputs and outputs (kinds)
 
@@ -134,6 +135,21 @@ arguments are comptime string literals, so the list is exact):
 $ lhd scan f1.prp f2.prp     # imports reported in the result's "scan" member
 ```
 
+## Source maps
+
+Verilog source maps emitted by codegen are ECMA-426 compliant. Enable them with
+`cgen.srcmap=1`; the generated `.v` and source-map sidecar can be loaded by
+standard source-map tools.
+
+```sh
+# Generate Verilog with source maps.
+$ lhd compile inou/prp/tests/equiv/mod_varargs_csa.prp --emit-dir verilog:tmp --set cgen.srcmap=1
+
+# Visualize the mapping.
+# Open https://evanw.github.io/source-map-visualization/
+# Upload the tmp/mod_varargs_csa.blk_add__u8.v* files.
+```
+
 ## Linking libraries (Pyrope + a Verilog black box)
 
 A design can mix leaves from different frontends. `import("lg:NAME")` pulls a
@@ -185,11 +201,15 @@ A recipe is the named pass chain between the frontend and the terminal
 | `O2` | `pass.cprop`, `pass.bitwidth` | cprop + bitwidth inference |
 
 `--set pass.flag=value` overrides one knob without forking the recipe, e.g.
-`--set cprop.verbose=true`. Introspect with:
+`--set cgen.srcmap=1`. A typo'd pass or flag is a usage error (never a silent
+no-op). Introspect with:
 
 ```sh
 $ lhd list recipes
 $ lhd describe recipe:O2
+$ lhd list options             # every --set/--config pass.flag, with defaults
+$ lhd list options 'cgen\..*'  # regex-filtered
+$ lhd describe upass.toln      # one option, full help text
 ```
 
 The result records the *expanded* recipe (the passes+flags that actually ran),
@@ -272,10 +292,12 @@ echoed commands, no raw pass logs. Per-step raw logs land under
 
 Errors and warnings are also emitted as a finer JSONL stream — **one line per
 diagnostic** — alongside the step result. Point it at a file with
-`--emit diagnostics:PATH`; with no path `lhd` renders clang-style text to
-stderr. The machine stream is the source of truth; the human text is a rendering
-of it. Diagnostics are designed to be triaged by a coding agent as much as read
-by a human, which drives the schema below.
+`--emit diagnostics:PATH`. The stderr rendering follows `--diag-fmt`:
+clang-style text in `pretty` mode (the default on a terminal), the same JSONL
+records in `jsonl` mode (the default when stdout is piped/captured). The
+machine stream is the source of truth; the human text is a rendering of it.
+Diagnostics are designed to be triaged by a coding agent as much as read by a
+human, which drives the schema below.
 
 Each record is one JSON object:
 

@@ -86,17 +86,17 @@ comb example() -> () {
 
 ### Tuples (Core Data Structure)
 ```pyrope
-mut point = (x=10, y=20)        // Named tuple
+mut point = (mut x=10, mut y=20) // Named tuple
 mut array = (1, 2, 3, 4)        // Indexed tuple
-mut mixed = (x=1, 2, y=3)       // Mixed named/indexed
+mut mixed = (mut x=1, 2, mut y=3) // Mixed named/indexed
 
 // Access
 cassert(point.x == 10)
 cassert(array[2] == 3)          // Array-style access
 
 // Concatenation (++ is always tuple concatenation — strings, lambdas, tuples)
-mut combined = point ++ (z=30)  // (x=10, y=20, z=30)
-cassert(combined == (x=10, y=20, z=30))
+mut combined = point ++ (mut z=30)  // (x=10, y=20, z=30)
+cassert(combined == (const x=10, const y=20, const z=30))
 ```
 
 ### Ranges
@@ -268,21 +268,18 @@ if condition {
 }
 ```
 
-Pyrope also has `when`/`unless` trailing modifiers for single-statement
-**compile-time** conditionals. The condition must be `comptime`: think of
-them as `#if` / `#ifndef`, not as a runtime mux. They include or omit the
-statement during elaboration based on compile options, types, or other
-comptime values. They do not create a new scope.
+Use `if`/`else` blocks and `if` expressions for conditional behavior.
+Runtime conditions synthesize muxes or enables. Comptime conditions are
+folded during elaboration, but declarations inside an `if` block still
+follow normal block scope.
 
 ```pyrope
 comptime const DEBUG = true
 
-assert(!enable) when    DEBUG    // included only when DEBUG is true
-return          unless DEBUG    // omitted when DEBUG is true
+if DEBUG {
+  assert(!enable)
+}
 ```
-
-For *runtime* gating (a mux or enable on a signal), use an `if` block or
-an `if` expression on the RHS:
 
 ```pyrope
 if enable { count += 1 }         // runtime mux

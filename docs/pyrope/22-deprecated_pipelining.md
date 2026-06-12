@@ -24,7 +24,7 @@ the flop `q` pin.
 
 === "Structural flop style"
     ```
-    var counter_next:u8:[wrap] = _
+    var counter_next:u8:[wrap] = nil
 
     let counter_q = __flop(din=counter_next::[defer] // defer to get last update
                        ,reset_pin=my_rst, clock_pin=my_clk
@@ -129,15 +129,15 @@ the conceptual problems of integrating them:
 === "Explicit Stages"
     ```
     add1 = mod(a,b) {     // 1 cycle add
-      reg r  = _
+      reg r  = 0
       let rr = r           // get flop value
       r = a+b
       return rr
     }
     let mul3 = mod(a,b) { // 3 cycle multiply
-      reg reg1 = _
-      reg reg2 = _
-      reg reg3 = _
+      reg reg1 = 0
+      reg reg2 = 0
+      reg reg3 = 0
       reg3 = reg2
       reg2 = reg1
       reg1 = a * b
@@ -287,7 +287,9 @@ let quick_log2 = fun(a) {
 
 let div=proc(a,b,id)->(res,id) {
   loop #>free_div_units[4] {
-    return (a >> quick_log2(b), id) when b#+[..] == 1
+    if b#+[..] == 1 {
+      return (a >> quick_log2(b), id)
+    }
     #>my_fsm[lat=5,num=1] {
       res = (a/b, id)
     }

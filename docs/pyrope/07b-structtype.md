@@ -90,9 +90,9 @@ typename comparison and never strict equivalence:
 * extra receiver fields are fine (a superset receiver passes).
 
 ```pyrope
-type t1 = (a:u32=nil, b:string="")
-type t2 = (b:string="")
-type t3 = (a:u32=nil, b:string="", c:bool=false)
+type t1 = (mut a:u32=nil, mut b:string="")
+type t2 = (mut b:string="")
+type t3 = (mut a:u32=nil, mut b:string="", mut c:bool=false)
 
 comb set(ref self:t1) { self.b = "set" }
 
@@ -117,30 +117,30 @@ issue of mutable containers can not exists.
 
 
 ```pyrope
-mut a_vec:[?]Animal = nil
-mut b_vec:[?]Bird = nil
-mut d_vec:[?]Dog = nil
+mut a_vec:[5]Animal = nil
+mut b_vec:[5]Bird = nil
+mut d_vec:[5]Dog = nil
 
-a_vec[0] = d:Dog    // OK
-a_vec[1] = b:Bird   // OK
+a_vec[0] = d    // OK, d is a Dog
+a_vec[1] = b    // OK, b is a Bird
 
-d_vec[0] = d:Dog        // OK  'd does d'
-d_vec[0] = g:Greyhound  // OK  'g does d'
-d_vec[0] = b:Bird       // error:
-d_vec[0] = a:Animal     // error:
+d_vec[0] = d    // OK  'd does d'
+d_vec[0] = g    // OK  'g does d' (g is a Greyhound)
+d_vec[0] = b    // error: a Bird does not 'does' a Dog
+d_vec[0] = a    // error: an Animal does not 'does' a Dog
 
-b_vec[0] = d:Dog        // OK, explicit conversion
-b_vec[0] = g:Greyhound  // OK, explicit conversion
-b_vec[0] = b:Bird       // OK, 'b does b'
-b_vec[0] = a:Animal     // OK, explicit conversion
+b_vec[0] = Bird(d)  // OK, explicit conversion at construction
+b_vec[0] = Bird(g)  // OK, explicit conversion at construction
+b_vec[0] = b        // OK, 'b does b'
+b_vec[0] = Bird(a)  // OK, explicit conversion at construction
 
-comb do_animal_vec(a_vec:[?]Animal) -> (r:[?]Animal) {
+comb do_animal_vec(a_vec:[]Animal) -> (r:[]Animal) {
   r = a_vec
-  r[0] = d:Dog  // OK `d does r[0]`
+  r[0] = d  // OK `d does r[0]`
 }
 
-mut x = do_animal_vec(b_vec:[?]Bird) // OK
-cassert(x does _:[?]Animal) // not :[?]Bird
+mut x = do_animal_vec(b_vec) // OK, b_vec is a :[]Bird
+// not legal cassert(x does :[]Animal) // not :[]Bird
 ```
 
 ### Basic types
@@ -253,7 +253,8 @@ f_d(call_dog)    // OK
 In tuple comparisons, `does` and `==`, the tuple field position is not used
 when both tuples are fully named. If tuple field is unnamed, both existing
 names and positions should match in the comparison.  For fully named tuples,
-when all the fields have names,  `(a=1,b=2) does (b=2,a=1)` is true.
+when all the fields have names,
+`(const a=1, const b=2) does (const b=2, const a=1)` is true.
 
 
 The same rule also applies to lambda calls. If all the arguments are named, the
@@ -270,7 +271,7 @@ in-place with the relative order left.
 
 
 ```pyrope
-comb m(a:int, ...x:(_:string, c:int, d), y:int) {
+comb m(a:int, ...x:(s:string, c:int, d), y:int) {
   assert(a == 1)
   assert(x[0] == "here")
   assert(x[1] == 2 == x.c)
@@ -297,7 +298,7 @@ check could be summarized as `x` is a superset of `y`. `x` has all the
 functionality of `y` and maybe more. In a more formal compiler nomenclature `x does
 y` applied to tuples is called a covariant relationship. It is covariant
 because adding the same extra fields to both `x` and `y` keeps the semantics
-(`((foo=3,...x) does (foo=3,...y)) == x does y`). This allows to extend the
+(`((const foo=3,...x) does (const foo=3,...y)) == x does y`). This allows to extend the
 tuple semantics and the relationship is preserved.
 
 
@@ -312,9 +313,9 @@ The opposite is not the case.
 
 Given a lambda passed as argument (`comb(x:comb(c:c_t)->(d:d_t))->(y)`), the
 check when passing the lambda as argument to `x` a function like
-`comb(w:w_t)->(z:z_t)`. In this case, the `comb(:w_t)->(_:z_t) does
-comb(:c_t)->(_:d_t)` is a contravariant test for inputs and covariant for
-outputs. This makes it equivalent to `(_:c_t does _:w_t) and (_:z_t does _:d_t)`.
+`comb(w:w_t)->(z:z_t)`. In this case, the `comb(w:w_t)->(z:z_t) does
+comb(w:c_t)->(d:d_t)` is a contravariant test for inputs and covariant for
+outputs. This makes it equivalent to `(c_t does w_t) and (z_t does d_t)`.
 
 
 If the same type is used as input and output is an equivalence check (`((a does
@@ -405,7 +406,7 @@ all the variables are tuples of size one too, the following rules apply to any
 lambda call:
 
 
-* Given a lambda call `f(a:a_t)->(_:r_t)` with defined call and return types.
+* Given a lambda call `f(a:a_t)->(r:r_t)` with defined call and return types.
   Iterate and pick all the lambda definitions `f(x)->(y)` that satisfy `x does
   a_t and y does r_t` using the previously explained lambda checks.
 
@@ -548,7 +549,9 @@ Parametric polymorphism: Same function works for many types
 comb smallest(...a) -> (r) {
   r = a[0]
   for i in a[1..] {
-    r = i when i < r
+    if i < r {
+      r = i
+    }
   }
 }
 ```
@@ -599,10 +602,12 @@ mut a:Mixing_all = "Julius Caesar"
 a.say_hi()
 ```
 
-Mixin is very expressive by allowing redefining methods. If two tuples have the
-same field a tuple, the concatenated operator (`++`) will create an entry with
-two or more sub-entries. This is likely an error with basic types but useful to
-handle explicit method overload.
+Mixin is very expressive by allowing related method sets to be composed. If two
+tuples have the same field and both values are tuples, the concatenated
+operator (`++`) recursively merges their subfields. If the same final field is
+defined on both sides, concat is allowed only when one side is `nil` or
+constant propagation proves both sides have the same value; otherwise it is a
+compile error.
 
 
 In a way, the concatenate just adds methods from two tuples to create a new
@@ -616,9 +621,9 @@ to a method, it behaves like a `final` keyword in most languages.
 There are also two ways to concatenate tuples in Pyrope. `t1 ++ t2` and
 `(...t1, ...t2)`:
 
-* `t1 ++ t2` concatenates each field in both tuples. A compile error is
-  generated if `t1` field is a `const` with a defined value, and `t2` has also
-  the same defined field.
+* `t1 ++ t2` concatenates each field in both tuples. Matching tuple-valued
+  fields are merged recursively. A compile error is generated when both sides
+  define the same final field with different non-`nil` values.
 
 
 * `(...t1, ...t2)` inserts in-place, triggers a compile error if the same
@@ -649,11 +654,9 @@ const Combined = (...Int1, ...Int2,
 )
 ```
 
-It is also important to notice that when one of the tuples as an entry, it can
-have an undefined value (`nil` or `0sb?`).  If the entry value is undefined,
-neither concatenate (`++`) or in-place insert (`...`) trigger a compile error.
-This is quite useful for defining interfaces because the default value for a
-function is `nil`.
+It is also important to notice that when one of the tuples has an entry, it can
+have an undefined value (`nil` or `0sb?`). Undefined entries are useful for
+declaring interfaces because the default value for a function is `nil`.
 
 ```pyrope
 const Interface = (
@@ -698,9 +701,8 @@ between both tuples.
 
 
 An issue with in-place operator is when more than one tuple has the `init`
-method. If the tuples are concatenated with `...` and error is triggered, if
-the tuples are concatenated with `++` it does not check if methods overlap.
-Neither is the expected solution for a mixin.
+method. Concatenating those tuples with either `...` or `++` triggers an
+overlap error. Neither is the expected solution for a mixin.
 
 
 The solution is to remove fields from the in-place concatenation and to
@@ -714,7 +716,9 @@ comb exclude(o,...a) -> (new_tup) {
     // create single tupe and append to preserve key and position order
     const sing_tup = ()
     sing_tup[key] = e
-    new_tup ++= sing_tup unless key in o
+    if not (key in o) {
+      new_tup ++= sing_tup
+    }
   }
 }
 

@@ -70,9 +70,9 @@ carry type information on its `ref` sub-nodes. Attributes are never sub-nodes of
 
 === "Pyrope"
     ```pyrope
-    const a:u2:[foo] = b:u1
+    const a:u2:[foo] = b
 
-    x:u2:[foo] = y:u1
+    x:u2:[foo] = y
     ```
 
 === "LNAST"
@@ -82,8 +82,6 @@ carry type information on its `ref` sub-nodes. Attributes are never sub-nodes of
         prim_type_uint
           const 2
       ref b
-        prim_type_uint
-          const 2
     attr_set
       ref a
       const foo
@@ -94,8 +92,6 @@ carry type information on its `ref` sub-nodes. Attributes are never sub-nodes of
         prim_type_uint
           const 2
       ref y
-        prim_type_uint
-          const 2
     attr_set
       ref x
       const foo
@@ -104,7 +100,10 @@ carry type information on its `ref` sub-nodes. Attributes are never sub-nodes of
 
 ## Tuples
 
-Tuples are "ordered" sequences that can be named. There are LNAST tuple
+Tuples are sequences of fields that can be named. Unnamed (positional)
+fields are ordered; named fields are unordered and accessed by name only
+(tools may canonicalize named fields alphabetically, but that is a
+convention, not a requirement). There are LNAST tuple
 specific nodes (`tup_add`, `tup_set`, `tup_get`, `tup_concat`) but in many
 cases the direct LNAST operations can handle tuples directly.
 
@@ -113,16 +112,13 @@ cases the direct LNAST operations can handle tuples directly.
 * `tup_get` gets the contents of a tuple entry
 * `tup_concat` concatenates two or more tuples
 
-To indicate the tuple position, identifiers can have `:pos:name`. For example
-`x.:3:foo = 2` is legal. It is the same as `x[3] = 2` or `x.foo=2` and check
-that entry `3` has label `foo`. This allows to create more compact LNAST.
 Direct access in operations like `plus` behave like a `tup_set` or `tup_get`.
 
 
 === "Tuple in Pyrope"
     ```pyrope
     x = 3
-    a = (b=2, x=x+1, y=b+1)
+    a = (mut b=2, mut x=x+1, mut y=b+1)
     ```
 
 === "LNAST direct"
@@ -214,7 +210,7 @@ construction. `attr_get` and `attr_set` follow the same syntax as
     x = tup[1].foo[xx]
     tup[4].foo[yy] = y
 
-    z = (foo=(bar=1))
+    z = (mut foo=(mut bar=1))
     ```
 
 === "LNAST"
@@ -247,11 +243,12 @@ construction. `attr_get` and `attr_set` follow the same syntax as
     ```
 
 
-Tuples can have a `let` in declaration to indicate that the field is immutable.
+Tuples can use `const` in a field declaration to indicate that the field is
+immutable.
 
 === "Tuple in Pyrope"
     ```pyrope
-    mut a = (b=2, const x=1+1)
+    mut a = (mut b=2, const x=1+1)
     ```
 
 === "LNAST direct"
@@ -273,26 +270,12 @@ Tuples can have a `let` in declaration to indicate that the field is immutable.
         ref     ___t2
     ```
 
-=== "LNAST Optimized"
-    ```lnast
-    var
-      ref    a.:0:b
-      const  2
-    plus
-      ref    ___2
-      const  1
-      const  1
-    let
-      ref    a.:1:x
-      ref    ___2
-    ```
-
 Tuple concatenation does not use `plus` but the `tup_concat` operator.
 
 === "Tuple in Pyrope"
     ```pyrope
     mut a = (2, 1+1)
-    const x = a ++ (c=3) ++ 1
+    const x = a ++ (const c=3) ++ 1
     ```
 
 === "LNAST direct"
@@ -311,32 +294,6 @@ Tuple concatenation does not use `plus` but the `tup_concat` operator.
     var
       ref    a
       ref    ___33
-    tup_add
-      ref    ___3
-      const  c
-      const  3
-    tup_concat
-      ref    ___4
-      ref    a
-      ref    ___3
-      const  1
-    let
-      ref    x
-      ref    ___4
-    ```
-
-=== "LNAST optimized"
-    ```lnast
-    var
-      ref    a.:0:
-      const  2
-    plus
-      ref    ___2
-      const  1
-      const  1
-    var
-      ref    a.:1:
-      ref    ___2
     tup_add
       ref    ___3
       const  c
@@ -906,8 +863,10 @@ tup_concat
   ref b
 ```
 
-The inplace concatenate is equivalent but it has a check (`cassert`) to detect overlap. After the concatenation,
-the fields in `a` and `b` should be found in the result `x` or there was an overlap.
+The inplace concatenate is equivalent. Tuple concat recursively merges matching
+tuple-valued fields. A duplicate final field is accepted when one side is `nil`
+or constant propagation proves both sides have the same value; otherwise it is
+an overlap and triggers a compile error.
 
 `x=(a,...b)` translates to:
 ```lnast
@@ -1169,7 +1128,7 @@ that the condition is a one-hot encoding.
                 ref x
     ```
 
-The `unique if` is similar, but all the conditions include and `optimize`
+The `unique if` is similar, but all the conditions include an `assume`
 directive to be checked. This means that the conditions must be checked even if
 the `else` is not reached. This is fine because neither the statements nor the
 condition checks are allowed to have side-effects.
@@ -1198,7 +1157,7 @@ the `elif` conditions.
     const tmp1 = a<3
     const tmp2 = a>40
     const tmp3 = 1<<(tmp1,tmp2)
-    optimize(tmp3#+[..]<=1) // at most one bit set
+    assume(tmp3#+[..]<=1) // at most one bit set
 
     if tmp1 {
       y = 10
@@ -1231,7 +1190,7 @@ the `elif` conditions.
       const 1
     fcall
       ref nil
-      ref optimize
+      ref assume
       ref ___5
     if
       ref ___1
@@ -1303,7 +1262,7 @@ false }` is created.
       const 1
     fcall
       ref nil
-      ref optimize
+      ref assume
       ref ___5
 
     if
@@ -1341,7 +1300,7 @@ false }` is created.
       const 1
     fcall
       ref nil
-      ref optimize
+      ref assume
       ref ___9
     if
       ref ___6
@@ -1451,7 +1410,7 @@ statements.
         const 1
       fcall
         ref nil
-        ref optimize
+        ref assume
         ref ___z
       if
         ref ___t1
@@ -1484,7 +1443,7 @@ is only `loop` construct.
     ```pyrope
     loop {
       i += 1
-      break when i==3
+      if i==3 { break }
     }
     ```
 

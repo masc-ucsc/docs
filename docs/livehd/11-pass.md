@@ -52,10 +52,14 @@ these common EPRP label names when possible:
     odir:.          output directory to generate files like verilog/pyrope...
 ```
 
-The `Pass` base class provides `get_files`/`get_path`/`get_odir` accessors,
-and `Pass::error`/`Pass::warn`/`Pass::info` for diagnostics. `Pass::error`
-throws an exception that the `lhd` driver catches and classifies (the
-`error.class` of the [result JSON](02-usage.md)).
+The `Pass` base class provides `get_files`/`get_path`/`get_odir` accessors
+and `Pass::info` (debug-build progress logging). Errors and warnings go
+through `livehd::diag` — `diag::err(pass, code, category)…​.fatal()` /
+`diag::warn(…)….emit()` — so every record carries a stable code, a pinned
+category, and (when available) a resolved source span. `.fatal()` throws an
+exception that the `lhd` driver catches and classifies (the `error.class` of
+the [result JSON](02-usage.md)). See the "Error handling" section of
+[13-style](13-style.md).
 
 ## Some hints/comments useful for developers
 

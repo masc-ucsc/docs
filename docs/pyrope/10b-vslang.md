@@ -117,7 +117,9 @@ comb max_gap_count(nums) -> (r) {
   comb count(a, b) -> (r) {
     r = 0
     for i in a {
-      r += 1 when i == b
+      if i == b {
+        r += 1
+      }
     }
   }
 

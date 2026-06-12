@@ -465,10 +465,14 @@ evaluation order for logical expressions.
 === "Fix with separate statements"
     ```pyrope
     mut r1 = fcall1()
-    r1  = fcall2() unless r1
+    if not r1 {
+      r1 = fcall2()
+    }
 
     mut r2 = fcall1()
-    r2  = fcall2() when r2
+    if r2 {
+      r2 = fcall2()
+    }
 
     mut r3 = fcall1()
     r3 += fcall2()
@@ -563,9 +567,9 @@ mut tup = nil
 
 assert(cond.[comptime]) // Tuples are compile time, it would fail otherwise
 if cond == true {
-  tup = (a=1,b=2)
+  tup = (const a=1, const b=2)
 }else{
-  tup = (a=1,b:u4=3,c=3)
+  tup = (const a=1, const b:u4=3, const c=3)
 }
 
 cassert(tup.a == 1)

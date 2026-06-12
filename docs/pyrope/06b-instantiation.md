@@ -41,11 +41,13 @@ mut res2 = __mux(cond, b, a)
 lec(res, res2)
 ```
 
-The `when/unless` is also a mux.
+An explicit conditional assignment is also a mux.
 
 ```pyrope
 mut res = a
-res = b unless cond
+if not cond {
+  res = b
+}
 
 // RTL equivalent
 mut res2 = __mux(cond, b, a)
@@ -91,7 +93,7 @@ sel#[0] = cond2
 sel#[1] = cond1
 sel#[2] = !cond1 and !cond2
 mut res2 = __hotmux(sel, a, b, c)
-optimize(!(cond1 and cond2)) // one hot check
+assume(!(cond1 and cond2)) // one hot check
 
 lec(res, res2)
 ```
@@ -120,9 +122,9 @@ sel#[0] = cond1
 sel#[1] = cond2
 sel#[2] = !cond1 and !cond2
 mut res2 = __hotmux(sel, b, c, d)
-optimize ( cond1 and !cond2 and !cond3)
-      or (!cond1 and  cond2 and !cond3)
-      or (!cond1 and !cond2 and  cond3)    // one hot check (no else allowed)
+assume ( cond1 and !cond2 and !cond3)
+    or (!cond1 and  cond2 and !cond3)
+    or (!cond1 and !cond2 and  cond3)    // one hot check (no else allowed)
 
 lec(res, res2)
 ```
@@ -475,7 +477,7 @@ cycle Similarly a tuple can have a reset when assigned to a register.
     ```pyrope
     const Mix_tup = (
       reg flag:bool = false,
-      state: u2
+      mut state:u2 = nil
     )
 
     mut x:Mix_tup = (false, 1)  // false used at reset, 1 used every cycle
@@ -494,7 +496,7 @@ cycle Similarly a tuple can have a reset when assigned to a register.
     ```pyrope
     const Mix_tup = (
       reg flag:bool = false,
-      mut state:u2,
+      mut state:u2 = nil,
       comb init(ref self) {
         mod flag_reset(ref self) { self = false }
         self.flag  = flag_reset          // reset code (pass by name, no ())

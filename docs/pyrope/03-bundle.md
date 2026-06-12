@@ -1,14 +1,17 @@
 # Tuples
 
-Tuples are a basic construct in Pyrope. Tuples are defined as an "ordered"
-sequence fields that can be named. Arrays/memories are a subcategory of tuples
+Tuples are a basic construct in Pyrope. Tuples are sequences of fields that
+can be named. Unnamed (positional) fields are ordered; named fields are not —
+they are accessed by name only, and their relative order carries no meaning
+(tools canonicalize named fields alphabetically, but that is a convention,
+not a requirement). Arrays/memories are a subcategory of tuples
 by requiring all the entries to have the same type. Internally, there is
 not a difference between tuples and arrays, but it is possible to check
 that all the fields are the same (hence array) by using brackets instead of parenthesis.
 
 ```pyrope
-mut b = (f1=3,f2=4) // b is named and ordered
-mut c = (1,d=4)     // c is ordered and unnamed (some entries are not named)
+mut b = (const f1=3, const f2=4) // b is named (field order has no meaning)
+mut c = (1, const d=4)           // c mixes an unnamed (ordered) entry and a named one
 
 mut d = (1,2,3,4)     // array or tuple
 cassert(d == [1,2,3,4]) // the [] also check that all the fields have same type
@@ -23,7 +26,7 @@ selection is only for unnamed positional entries; it never aliases a named
 field.
 ```pyrope
 mut a = (
-  ,r1 = (b=1,c=2)
+  ,const r1 = (const b=1, const c=2)
   ,(3,4)
 )
 cassert(a.r1 == (1,2))
@@ -33,7 +36,7 @@ cassert(a[0] == (3,4))  // first unnamed entry
 cassert(a.r1.c == 2 == a['r1'].c)
 cassert(a[0][1]   == 4)
 
-const named = (b = 1, c = 2)
+const named = (const b = 1, const c = 2)
 const bad = named[0] // error: named entries are name-access only
 ```
 
@@ -41,7 +44,7 @@ There is introspection to check for an existing field with the `has` operator.
 Negate with `not (...)` (there is no dedicated `!has` operator).
 
 ```pyrope
-mut a = (foo = 3)
+mut a = (const foo = 3)
 cassert(a has 'foo')
 cassert(not (a has 'bar'))
 cassert(a has 0)
@@ -53,9 +56,9 @@ Tuple named fields can have a default type and or contents:
 ```pyrope
 mut val = 4
 mut x = (
-  ,field1=1            // field1 with implicit type and 1 value
-  ,field2:string = nil // field2 with explicit type and "" default value
-  ,field3:int = 3      // field3 with explicit type and 3 value
+  ,const field1=1            // field1 with implicit type and 1 value
+  ,const field2:string = nil // field2 with explicit type and invalid default value
+  ,const field3:int = 3      // field3 with explicit type and 3 value
   ,val                 // unnamed field with value `val` (4)
 )
 cassert(x.field1 == 1 and x.field3 == 3)
@@ -71,8 +74,11 @@ a string (named field), a range, or any expression that produces one of those
 instead. This keeps the bit/field layout local and avoids ordering ambiguity.
 
 ```pyrope
-type Person = (name:string, age:u32)
-mut a = (one:Person, two:Person)
+type Person = (const name:string = "", mut age:u32 = 0)
+mut a = (
+  ,mut one:Person = (name="one", age=0)
+  ,mut two:Person = (name="two", age=0)
+)
 
 a[0].age = 10
 a[1].age = 20
@@ -93,8 +99,8 @@ name all the fields or quote as strings:
 ```pyrope
 mut x=100
 
-mut tup1 = ('x',y=4)
-mut tup2 = (x,y=4)
+mut tup1 = ('x', const y=4)
+mut tup2 = (x, const y=4)
 
 cassert(tup1[0] == 'x')
 cassert(tup2[0] == 100)
@@ -148,17 +154,18 @@ Tuples are used in many places:
 * The arguments for a function call are a tuple. E.g: `fcall(a=1,b=2)`
 * The return of a function call is always a tuple. E.g: `foo = fcall()`
 * The index for a selector `[...]` is a single expression (integer, string, range, or conditional). Integer indices select unnamed positional entries only; named fields use strings or dot syntax. Multi-entry tuple indices are not allowed.
-* The complex type declaration are a tuple. E.g: `const Xtype = (f=1,b:string)`
+* Complex type declarations are tuples. E.g: `type Xtype = (const f=1, const b:string = "")`
 
 ### Dotted Field Expansion
 
 Tuple literals may spell nested named fields in expanded dotted form. This is
 the same flattening idea used by [function-call argument expansion](06-functions.md#argument-naming):
-`a.b=1` and `a.c=2` construct the nested field `a=(b=1,c=2)`.
+`const a.b=1` and `const a.c=2` construct the nested field
+`a=(const b=1,const c=2)`.
 
 ```pyrope
-const compact  = (a=(b=1,c=2), 7, 3, d=3)
-const expanded = (a.b=1, a.c=2, d=3, 7, 3)
+const compact  = (const a=(const b=1, const c=2), 7, 3, const d=3)
+const expanded = (const a.b=1, const a.c=2, const d=3, 7, 3)
 cassert(compact == expanded)
 ```
 
@@ -170,8 +177,10 @@ Unnamed entries keep their normal positional order among the other entries.
 ## Tuple mutability
 
 The tuple entries can be mutable/immutable and named/unnamed. Tuple entries
-follow the variable mutability rules with the exception that `=` can be
-used to declare a mutable field. `(a=3)` is equivalent to `(mut a=3)`.
+follow the variable mutability rules. A named tuple field is a declaration, so
+it must use a kind keyword: `(mut a=3)` or `(const a=3)`. Bare `(a=3)` is valid
+as a function-call argument and as the value for an explicitly typed
+construction, but not as a standalone tuple field declaration.
 
 **The enclosing binding wins.** A field's effective mutability is the
 **intersection** of the outer binding's mutability and the field's own
@@ -182,18 +191,18 @@ field of an outer `mut` tuple still pins that field as read-only.
 
 | Outer | Inner field | Effective |
 |-------|-------------|-----------|
-| `mut`   | `mut` / unmarked | writable |
+| `mut`   | `mut`            | writable |
 | `mut`   | `const`          | read-only |
-| `const` | `mut` / unmarked | **read-only** (outer wins) |
+| `const` | `mut`            | **read-only** (outer wins) |
 | `const` | `const`          | read-only |
 
 ```pyrope
-mut c = (x=1, const b=2, mut d=3)
+mut c = (mut x=1, const b=2, mut d=3)
 c.x = 3   // OK     (mut tuple, default-mut field)
 c.b = 10  // error: 'c.b' is immutable (inner const)
 c.d = 30  // OK     (mut tuple, mut field)
 
-const d = (x=1, const y=2, mut z=3)
+const d = (mut x=1, const y=2, mut z=3)
 d.x = 2   // error: 'd' is immutable — inner `mut` is overridden
 d.z = 4   // error: 'd' is immutable — outer `const` wins over inner `mut z`
 
@@ -204,18 +213,18 @@ e.y = 30  // error: 'e.y' is immutable (inner const)
 e.z = 30  // OK     (outer mut + inner mut)
 ```
 
-Tuples are always ordered, but they can have unnamed entries. A field
+Unnamed tuple entries are ordered (positional). A field
 without a name is *positional*; it can still carry a kind keyword
 (`const` / `mut`) as a prefix on the value to override the default
 mutability inherited from the enclosing tuple.
 
 ```pyrope
 mut b = 100
-mut a = (b:u8, b, b:u8 = nil, const c=4) // a[0] and a[1] are unnamed, a[2]==a.b
+mut a = (b, b, mut b:u8 = nil, const c=4) // a[0] and a[1] are unnamed, a[2]==a.b
 a.b = 200
-assert(a == (100, 100, 200, 4))
+assert(a == (100, 100, const b=200, const c=4))
 
-mut f = (b=3, const e=5)
+mut f = (mut b=3, const e=5)
 f.b = 4                 // OK
 f.e = 10                // error: `f.e` is immutable
 
@@ -232,33 +241,39 @@ name/types are immutable. It is possible to construct new tuples with the `++`
 (concatenate) and `...` (in-place operator):
 
 ```pyrope
-mut a=(a=1,b=2)
-const b=(c=3)
+mut a=(mut a=1, mut b=2)
+const b=(const c=3)
 
 const ccat1 = a ++ b
-assert(ccat1 == (a=1,b=2,c=3))
+assert(ccat1 == (const a=1, const b=2, const c=3))
 assert(ccat1 == (1,2,3))
 
-mut ccat2 = a ++ (b=20) ++ b
-assert(ccat2 == (a=1,b=(2,20),c=3))
-assert(ccat2 == (1,(2,20),3))
+mut ccat2 = a ++ (const d=20) ++ b
+assert(ccat2 == (const a=1, const b=2, const d=20, const c=3))
+assert(ccat2 == (1,2,20,3))
 
 mut join1 = (...a,...b)
-assert(join1 == (a=1,b=2,c=3))
+assert(join1 == (const a=1, const b=2, const c=3))
 assert(join1 == (1,2,3))
 
-mut join2 = (...a,...(b=20)) // error: 'b' already exists
+mut join2 = (...a,...(const b=20)) // error: 'b' already exists
 ```
 
 
-The `a ++ b` concatenates two tuples. If the same field exists in both tuples,
-the resulting field will have a tuple with the entries of `a` and `b`.  The
-concat tries to match by field name, if the field names do not match or have no
-name a new entry is created. The algorithm starts with tuple `a` and starts
-from tuple field 0 upwards.
+The `a ++ b` concatenates two tuples. Concat matches by field name: if field
+names do not match, or entries have no name, a new entry is created. If the same
+field exists in both tuples and both values are tuples, concat recursively
+merges their subfields. If the same final field exists on both sides, concat is
+allowed only when one side is `nil` or constant propagation proves both sides
+have the same value; otherwise it is a compile error instead of accumulating
+the two values.
 
 ```pyrope
-assert(((1,a=2,c=3) ++ (a=20,33,c=30,4)) == (1,a=(2,20),c=(3,30),33,4))
+assert(((1,const cfg=(lo=2),const c=3) ++ (const cfg=(hi=20),33,const d=30,4)) == (1,const cfg=(lo=2,hi=20),const c=3,33,const d=30,4))
+
+assert((const a=2,const b=nil) ++ (const a=2,const b=10) == (const a=2,const b=10))
+
+const bad = (const a=2) ++ (const a=20) // error: 'a' already exists
 ```
 
 The `...` also concatenates, but it is an "inline concatenate". The difference
@@ -279,7 +294,7 @@ entry name. This is quite useful for function return tuples with a single
 entry.
 
 ```pyrope
-const x = (first=(second=3))
+const x = (const first=(const second=3))
 
 cassert(x.first.second == 3)
 cassert(x.first        == 3)
@@ -293,12 +308,12 @@ cassert(x[0]           == 3)
 Tuples can also use structural binding to unpack a tuple multiple fields into separate variables.
 
 ```pyrope
-const x = (f1=(f1a=1,f1b=3), f2=4)
+const x = (const f1=(const f1a=1, const f1b=3), const f2=4)
 
 const (y,z) = x
 cassert(y == (1,3) and z == 4)
 cassert(y.f1a == 1 and y.f1b == 3)
-cassert(y == (f1a=1,f1b=3))
+cassert(y == (const f1a=1, const f1b=3))
 ```
 
 ## Tuples vs arrays
@@ -458,7 +473,7 @@ outputs are swapped in the declaration.
 
 ```pyrope
 comb dox(a) -> (b, c) { b = a + 1; c = a + 2 }
-comb deep(a) -> (payload, code) { payload = (inner = (value = a + 1)); code = a + 10 }
+comb deep(a) -> (payload, code) { payload = (const inner = (const value = a + 1)); code = a + 10 }
 
 (b, c) = dox(a=3)        // local `b` ← dox.b, local `c` ← dox.c
 (c, b) = dox(a=3)        // same: order doesn't matter
@@ -515,7 +530,7 @@ expression with a string type or a named tuple.
 
 ```pyrope
 const a = "field"
-const c = (foo=4)
+const c = (const foo=4)
 const my_other_enum = enum(...a,b=3,...c)
 cassert(my_other_enum.field != my_other_enum.b)
 cassert(my_other_enum.b   == 3)

@@ -8,7 +8,7 @@ Pyrope uses a typical `if`, `elif`, `else` sequence found in most languages.
 Before the if starts, there is an optional keyword `unique` that enforces that
 a single condition is true in the if/elif chain. This is useful for synthesis
 which allows a parallel mux. The `unique` is a cleaner way to write an
-`optimize` statement.
+`assume` statement.
 
 The `if` sequence can be used in expressions too.
 
@@ -25,14 +25,14 @@ mut x = nil
 if a { x = 3 } else { x = 4 }
 ```
 
-The equivalent code with an explicit `optimize`, but unlike the `optimize`, the
+The equivalent code with an explicit `assume`, but unlike the `assume`, the
 `unique` will guarantee to generate the `hotmux` statement. EDA tools can also
 optimize `unique if` to tri-state buffers when the conditions are mutually
 exclusive, providing the same behavior as a hardware bus without needing a
 separate `bus` construct.
 
 ```pyrope
-optimize(!(x1==1 and x2==2))
+assume(!(x1==1 and x2==2))
 a = if x1 == 1 {
     300
   }elif x2 == 2 {
@@ -63,7 +63,7 @@ if mut x1=x+1; x1 == tmp {
 The `match` statement is similar to a chain of unique if/elif, like the
 `unique if/elif` sequence. The `match` statement is a replacement for the
 common "unique parallel case" Verilog directive, and behaves like also
-having an `optimize` statement, which allows for more efficient code
+having an `assume` statement, which allows for more efficient code
 generation than a sequence of `if/else`.
 
 Every `match` **must end with an `else` arm** — omitting it is a parse
@@ -99,7 +99,7 @@ mut hot = match x {
   }
 
 // Equivalent
-optimize (x==0sb001 or x==0sb010 or x==0sb100)
+assume(x==0sb001 or x==0sb010 or x==0sb100)
 mut hot2 = __hotmux(x, a, b, c)
 
 assert(hot==hot2)
@@ -135,36 +135,30 @@ for x in 1..=5 {
 ```
 
 
-## Gate statements (`when`/`unless`)
+## Conditional statements
 
-A simple statement can be conditionally **included or omitted at
-elaboration** by appending `when cond` or `unless cond` at the end. These
-are compile-time gates — think `#if` / `#ifndef`. The condition must be
-`comptime`; a runtime condition is a compile error. The statement stays
-in the current scope (no new scope is created), which makes them ideal
-for conditional declarations, conditional assertions, and conditionally
-omitted statements driven by compile options.
+Conditional behavior is expressed with `if`/`else` blocks, `if` expressions,
+or `match` chains. Runtime conditions synthesize muxes or enables. Comptime
+conditions are folded during elaboration, but declarations inside an `if`
+block still follow normal block scope.
 
 ```pyrope
 comptime const DEBUG = true
 mut a = 3
 
-a += 1 when false              // omitted: statement does not exist
+if false {
+  a += 1
+}
 cassert(a == 3)
-assert(a == 1000) when DEBUG   // included only when DEBUG is true
 
-reg my = 3 when some_comptime  // register exists only when some_comptime is true
+if DEBUG {
+  assert(a == 3)
+}
 
-return unless DEBUG            // omitted when DEBUG is true
+if not DEBUG {
+  return
+}
 ```
-
-Gating `if`/`match` statements does not make much sense. As a result,
-`when`/`unless` can only be applied to assignments, function calls,
-declarations, and code-block control statements (`return`, `break`,
-`continue`).
-
-For **runtime** gating (a mux or enable on a signal) use an `if` block
-or an `if` expression:
 
 ```pyrope
 mut x = c                      // always declared
@@ -211,7 +205,7 @@ mut yy = 0
   mut z=0
   {
     z = 10
-    mut x=_           // error: 'x' is a shadow variable
+    mut x=2           // error: 'x' is a shadow variable
   }
   cassert(z == 10)
   yy = x
@@ -267,11 +261,11 @@ for (index,i) in bund.enumerate() {
 ```
 
 ```pyrope
-const b = (a=1,b=3,c=5,7,11)
+const b = (const a=1, const b=3, const c=5, 7, 11)
 cassert(b.keys() == ('a', 'b', 'c', '', ''))
 cassert(b.enumerate() == ((0,1), (1,3), (2,5), (3,7), (4,11)))
 const xx= zip(b.keys(), b.enumerate())
-cassert(xx == (('a',0,a=1), ('b',1,b=3), ('c',2,c=5), ('',3,7), ('',4,11)))
+cassert(xx == (('a', 0, const a=1), ('b', 1, const b=3), ('c', 2, const c=5), ('', 3, 7), ('', 4, 11)))
 
 for (key,index,i) in zip(keys(b),b.enumerate()) {
   cassert(i==1  implies (index==0 and key == 'a'))
@@ -281,8 +275,8 @@ for (key,index,i) in zip(keys(b),b.enumerate()) {
   cassert(i==11 implies (index==4 and key == '' ))
 }
 
-const c = ((1,a=3), b=4, c=(x=1,y=6))
-cassert(c.enumerate() == ((0,(1,a=3)), (1,b=4), (2,c=(x=1,y=6))))
+const c = ((1, const a=3), const b=4, const c=(const x=1, const y=6))
+cassert(c.enumerate() == ((0, (1, const a=3)), (1, const b=4), (2, const c=(const x=1, const y=6))))
 ```
 
 To build a tuple/array from a loop, use an explicit `for` over a `mut`
@@ -331,8 +325,8 @@ declared output names is what the caller sees.
 * `return` is for early exits — it terminates the current lambda before
   reaching the end of the body. It takes no arguments; `return X` is a
   syntax error. To return early with a specific value, assign the output
-  first: `r = X; return`. The condition forms `return when cond` /
-  `return unless cond` are gated terminators, not value-carrying returns.
+  first: `r = X; return`. For conditional early exits, put the terminator
+  inside an `if` block: `if cond { return }`.
 
 * `break` terminates the closest inner loop (`for`/`while`/`loop`). If none is
   found, a compile error is generated.

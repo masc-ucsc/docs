@@ -18,9 +18,9 @@ operations: `a in b`, `a does b`, and lambda call rules.
 
 
 ```pyrope
-cassert (a=1) in (1,a=1,3)
-cassert(not ((a=1) does (1,a=1,3)))
-cassert (1,a=1,3) does (a=1)
+cassert((const a=1) in (1, const a=1, 3))
+cassert(not ((const a=1) does (1, const a=1, 3)))
+cassert((1, const a=1, 3) does (const a=1))
 
 comb f(a) -> () { puts("{a}") }
 comb g(long, short) -> () { puts("{long}") }
@@ -219,13 +219,13 @@ The semantics on the generated simulator are similar to CHISEL, any unknowns
 are randomly translated to 0 or 1 at initialization.
 
 
-## Optimize directive
+## Assume directive
 
 
-The `optimize` directive is like an `assert` but it also allows compiler
+The `assume` directive is like an `assert` but it also allows compiler
 optimizations. In a way, it is a safer version of Verilog `?`. Unlike other
-languages like C++23, Pyrope `optimize` verifies at simulation time that the
-`optimize` is correct. This means that the `optimize` is checked like an
+languages like C++23, Pyrope `assume` verifies at simulation time that the
+`assume` is correct. This means that the `assume` is checked like an
 `assert` but it allows the compiler to optimize based on the condition.
 `asserts` do not trigger optimizations because their check can be disabled at
 simulation time, and hence create mismatches between simulation and synthesis
@@ -248,7 +248,7 @@ if the compiler optimized over assertions.
 === "Pyrope `match`"
 
     ```pyrope
-    optimize(sel==1 or sel==2 or sel==4) // not needed. match sets it
+    assume(sel==1 or sel==2 or sel==4) // not needed. match sets it
     match sel {
       == 0ub001 { f = i0 }
       == 0ub010 { f = i2 }
@@ -266,7 +266,7 @@ if the compiler optimized over assertions.
     ```
 
 
-Optimize allows more freedom, without dangerous Verilog x-optimizations:
+Assume allows more freedom, without dangerous Verilog x-optimizations:
 
 === "Bad Verilog x-optimization"
     ```verilog
@@ -284,10 +284,10 @@ Optimize allows more freedom, without dangerous Verilog x-optimizations:
     res = array[b]
     ```
 
-=== "Pyrope optimize"
+=== "Pyrope assume"
 
     ```pyrope
-    optimize(a != 0)
+    assume(a != 0)
 
 
     if (1 + a) != 1 { // always false
@@ -296,7 +296,7 @@ Optimize allows more freedom, without dangerous Verilog x-optimizations:
       out = 3
     }
 
-    optimize(b != 3)
+    assume(b != 3)
     // array = (1,2,3,4,5,6,7,8)
     res = array[b]
     ```
@@ -305,11 +305,11 @@ Optimize allows more freedom, without dangerous Verilog x-optimizations:
 
 In Verilog, unknowns can trigger synthesis optimizations. This is not the case
 in Pyrope. Each unknown bit (`?`) can result in random 0/1 at simulation time, but it will
-not trigger optimizations. The `optimize` statement should be use for such behavior.
+not trigger optimizations. The `assume` statement should be used for such behavior.
 
 
 ```pyrope
-assert(cond==3)    // Not cassert(or optimize, so no optimized)
+assert(cond==3)    // Not cassert or assume, so not optimized
 mut x1 = 0sb?
 
 if cond == 3 {
@@ -319,7 +319,7 @@ assert(x1==1) // still not optimized (cassert(fails))
 assert(!x1 and x1.[comptime])
 
 mut x2 = 0sb?
-optimize(cond==3)
+assume(cond==3)
 if cond == 3 {
   x2 = 1
 }
@@ -384,7 +384,7 @@ depending on the LNAST node:
   by input constants and types. If no call matches a valid type trigger a
   compile error
 
-+ Delete unreachable statements (`if false { delete his }`, `delete this when false`, ...)
++ Delete unreachable statements (`if false { delete this }`, ...)
 
 + Compute these steps that may be needed in future steps:
 
@@ -779,7 +779,7 @@ reference.
 comb args(x) -> (r) { puts("args:{x}"); r = 1 }
 comb here()  -> (r) { puts("here");   r = 3 }
 
-type NullaryInt = comb() -> (_:int)
+type NullaryInt = comb() -> (r:int)
 comb call_now(f:NullaryInt)   -> (r:int)        { r = f() }
 comb call_defer(f:NullaryInt) -> (g:NullaryInt) { g = f }
 

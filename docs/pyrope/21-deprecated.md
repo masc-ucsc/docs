@@ -53,9 +53,9 @@ let telescope_unit = fun(a:u32,b:u32,start:bool) -> (res:u32) {
     res = result_flop
   }
 
-  reg int_done = _
-  reg int_flop = _
-  reg int_b = _
+  reg int_done = false
+  reg int_flop = 0
+  reg int_b = 0
 
   if int_done {  // pending work (2 cycle op, can not telescope)
     result_flop = int_flop-int_b
@@ -110,7 +110,7 @@ efficient.
 
 ```pyrope_old
 // implicit start/end (starts when called)
-let telescope_unit3 = fun(a:u32,b:u32) -> (_:u32) {
+let telescope_unit3 = fun(a:u32,b:u32) -> (res:u32) {
 
   {
     let tmp = a+1
@@ -138,11 +138,13 @@ The code sample for explicitly managed step function usage:
 The code sample for implicitly managed step function usage:
 
 ```future
- async res3 =@[1,2] telescope_unit3(a,b) when start
+ if start {
+   async res3 =@[1,2] telescope_unit3(a,b)
 
- await res3 {
-   // a and b could have the correct results due to the async/await
-   puts "{}-{}+1 is {}", a, b, res3.res
+   await res3 {
+     // a and b could have the correct results due to the async/await
+     puts "{}-{}+1 is {}", a, b, res3.res
+   }
  }
 ```
 

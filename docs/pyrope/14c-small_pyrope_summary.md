@@ -45,9 +45,9 @@ value#[3] = 0                   // Set bit 3 (NOT array assignment)
 
 ### 4. Tuple-Centric Everything
 ```pyrope
-mut point = (x=10, y=20)        // Named tuple (like struct)
+mut point = (mut x=10, mut y=20) // Named tuple (like struct)
 mut array = (1, 2, 3, 4)        // Indexed tuple (like array)
-mut mixed = (x=1, 2, y=3)       // Mixed named/indexed
+mut mixed = (mut x=1, 2, mut y=3) // Mixed named/indexed
 
 // Access patterns
 cassert(point.x == 10)          // Named access
@@ -199,10 +199,9 @@ match value {                  // Pattern matching — `else` arm is mandatory
 **LLM Pitfall**: `match` *must* end with `else { ... }`. A `match` without
 `else` is a parse error.
 
-`when` / `unless` postfix gates are **compile-time only** — they include
-or omit a statement based on `comptime` conditions (think `#if`, not a
-runtime mux). For runtime gating, use `if` blocks or a ternary `if`
-expression on the RHS.
+Use `if` blocks, `if` expressions, or `match` chains for conditional behavior.
+Comptime conditions are folded during elaboration; runtime conditions synthesize
+muxes or enables.
 
 ### Testing
 ```pyrope

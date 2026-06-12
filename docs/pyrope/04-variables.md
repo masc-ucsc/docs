@@ -14,9 +14,10 @@ variable/field is visible from declaration until the end of scope.
 
 
 Pyrope uses `mut` or `const` to declare a variable, but all the declarations must
-have a value. `_` is used to specify the default value (`false` for boolean,
-`0` for integer, `""` for string, undefined lambda for lambda, and `0..=0` for
-range).
+have a value. Use a concrete expression for initialization. Use `nil` only when
+the variable intentionally has no meaningful value yet; reading `nil` is invalid
+until the variable is assigned a real value. The bare `_` default value syntax
+has been removed.
 
 
 Every declaration starts with one of six **kind keywords**:
@@ -46,6 +47,9 @@ Lambda declarations:
 This rule applies uniformly, including inside **tuple literals**: any
 **named** field must start with one of these kind keywords. Bare
 `field = value` inside a data-tuple literal is a compile error.
+Bare named values are still valid at call sites (`foo(a=3, b=4)`) and when an
+explicit type on the destination provides the field declarations
+(`const p:Point = (x=1, y=2)`).
 
 A **positional** (unnamed) field is just a value expression and inherits
 its mutability from the enclosing tuple. To override that mutability on a
@@ -62,7 +66,7 @@ const counter_iface = (
   ,mut value:u8 = 0
   ,comb read(self) -> (v:u8)      { v = self.value }
   ,comb inc(ref self)             { wrap self.value += 1 }
-  ,mod tick(ref self, enable:bool) { self.value += 1 when enable }
+  ,mod tick(ref self, enable:bool) { if enable { self.value += 1 } }
 )
 
 mut y = (1, const 3)              // 2nd field positional and immutable
@@ -130,7 +134,7 @@ comptime dependencies of the lambda.
     r1.a = 33            // error: 'r1' is immutable variable
 
     mut r2 = (mut a=100, const c=(mut next=a+1, const e=next+30))
-    assert(r2 == (a=100,c=(next=101, e=131))) // checks values not mutability
+    assert(r2 == (const a=100, const c=(const next=101, const e=131))) // checks values not mutability
     r2.a = 33            // OK
     r2.c.next = 33       // error: 'r2.c' is immutable variable
 
@@ -584,40 +588,40 @@ contents. If `a` is unnamed, it matches only contents by position.
 
 ```pyrope
 cassert((1,2) in (0,1,3,2,4))
-cassert((1,2) in (a=0,b=1,c=3,2,e=4))
-cassert(not ((a=2) in (1,2,3)))
-cassert((a=2) in (1,a=2,c=3))
-cassert((a=1,2) in (3,2,4,a=1))
-cassert(not ((a=1,2) in (1,2,4,a=4)))
-cassert(not ((a=1) in (a=(1,2))))
+cassert((1,2) in (const a=0, const b=1, const c=3, 2, const e=4))
+cassert(not ((const a=2) in (1,2,3)))
+cassert((const a=2) in (1, const a=2, const c=3))
+cassert((const a=1, 2) in (3, 2, 4, const a=1))
+cassert(not ((const a=1, 2) in (1, 2, 4, const a=4)))
+cassert(not ((const a=1) in (const a=(1,2))))
 ```
 
 The `a in b` has to deal with undefined values (`nil`, `0sb?`). The LHS with an undefined
 will be true if the RHS has the same named entry either defined or undefined.
 
 ```pyrope
-cassert((x=nil,c=3) in (x=3,c=3))
-cassert((x=nil,c=3) in (x=nil,c=3,d=4))
-cassert(not ((c=3) in (c=nil,d=4)))
+cassert((const x=nil, const c=3) in (const x=3, const c=3))
+cassert((const x=nil, const c=3) in (const x=nil, const c=3, const d=4))
+cassert(not ((const c=3) in (const c=nil, const d=4)))
 ```
 
 * `a ++ b` concatenate two tuples. If field appears in both, concatenate field. The a field is
 defined in one tupe and undefined in the other, the undefined value is not concatenated.
 
 ```pyrope
-cassert ((a=1,c=3) ++ (a=1,b=2,c=nil)) == (a=(1,1), c=3, b=2)
-cassert ((1,2) ++ (a=2,nil,5)) == (1,2,a=2,5)
-cassert ((x=1) ++ (a=2,nil,5)) == (x=1,a=2,nil,5)
+cassert(((const a=1, const c=3) ++ (const a=1, const b=2, const c=nil)) == (const a=(1,1), const c=3, const b=2))
+cassert(((1,2) ++ (const a=2, nil, 5)) == (1, 2, const a=2, nil, 5))
+cassert(((const x=1) ++ (const a=2, nil, 5)) == (const x=1, const a=2, nil, 5))
 
-cassert ((x=1,b=2) ++ (x=0sb?,3)) == (x=1,b=2,3)
+cassert(((const x=1, const b=2) ++ (const x=0sb?, 3)) == (const x=1, const b=2, 3))
 ```
 
 * `(,...b)` in-place insert `b`. Behaves like `a ++ b` but it triggers a
   compile error if both have the same defined named field.
 
 ```pyrope
-cassert (1,b=2,...(3,c=3),6) == (1,b=2,3,c=3,6)
-cassert (1,b=2,...(nil,c=3),0sb?,6) == (1,b=2,nil,c=3,0sb?,6)
+cassert((1, const b=2, ...(3, const c=3), 6) == (1, const b=2, 3, const c=3, 6))
+cassert((1, const b=2, ...(nil, const c=3), 0sb?, 6) == (1, const b=2, nil, const c=3, 0sb?, 6))
 ```
 
 
@@ -627,7 +631,7 @@ cassert (1,b=2,...(nil,c=3),0sb?,6) == (1,b=2,nil,c=3,0sb?,6)
   integer (position).
 
 ```pyrope
-cassert((a=1,b=2) has "a")
+cassert((const a=1, const b=2) has "a")
 ```
 
 * `a does b` is true when `a` has all the tuple structure required by `b`
@@ -645,18 +649,18 @@ are unnamed. Values are ignored by `does`; use `case` when the values should be
 matched too.
 
 ```pyrope
-cassert (b=100,a=333,e=40,5) does (a=1,b=3)
-cassert (a=100,300,b=333,e=40,5) does (a=1,3)
-cassert(not ((b=100,300,a=333,e=40,5) does (a=1,3)))
+cassert((const b=100, const a=333, const e=40, 5) does (const a=1, const b=3))
+cassert((const a=100, 300, const b=333, const e=40, 5) does (const a=1, 3))
+cassert(not ((const b=100, 300, const a=333, const e=40, 5) does (const a=1, 3)))
 cassert(u32 does u16)          // u32's range is a superset of u16's
 cassert(not (u16 does u32))    // u16's range is NOT a superset of u32's
 cassert(not (u32 does string)) // different basic type → false
-cassert (100,30) does 30
+cassert((100,30) does 30)
 cassert(not (30 does (30,200)))
-cassert(not ((a=3) does (30,a=200)))
-cassert(not ((a=3) does (a=30,200)))
-cassert(not ((3) does (30,a=200)))
-cassert(not ((3) does (a=30,200)))
+cassert(not ((const a=3) does (30, const a=200)))
+cassert(not ((const a=3) does (const a=30, 200)))
+cassert(not ((3) does (30, const a=200)))
+cassert(not ((3) does (const a=30, 200)))
 ```
 
 A `a case b` first checks `a does b`, then checks that every defined value in
@@ -665,14 +669,14 @@ participate in the value check and act as wildcards. This can be used in any
 expression but it is quite useful for `match ... case` patterns.
 
 ```pyrope
-match (a=1,b=3) {
+match (const a=1, const b=3) {
   case (a=1) { cassert(true) }
   else { cassert(false) }
 }
 
-match const t=(a=1,b=3); t {
-  case (a=1  ,c=4) { cassert(false) }
-  case (b=nil,a=1) { cassert(t.b==3 and t.a==1) }
+match const t=(const a=1, const b=3); t {
+  case (a=1, c=4) { cassert(false) }
+  case (b=nil, a=1) { cassert(t.b==3 and t.a==1) }
   else { cassert(false) }
 }
 ```
@@ -905,8 +909,8 @@ explicitly: `if tup.f1.[valid] and tup.f2.[valid] { tup.f1 + tup.f2 } else { 0sb
 The optional or valid attached to each variable and tuple field is implicitly
 computed as follows:
 
-* Non-register variables are initialized with valid unless `_` is used in the
-  initialization which explicitly clears the valid attribute.
+* Non-register variables are initialized with valid unless `nil` is used in the
+  initialization, which explicitly clears the valid attribute.
 
 * Registers set the valid after reset, but if the reset clears the valid, there
   is not guaranteed on attribute `[valid]` during reset. If the register does
@@ -1056,7 +1060,7 @@ each cycle. There are exactly two ways to produce an undefined value:
   an assertion error at simulation and a compile error at elaboration
   wherever the compiler can prove the read. Use `nil` when there is no
   meaningful value yet.
-* **`0sb?`** (and related bit-literal forms like `0ub101.[valid]`, `0ub??10`) —
+* **`0sb?`** (and related bit-literal forms like `0ub101?`, `0ub??10`) —
   unknown bits, behaving like Verilog `x`. The variable is still *valid*
   from the optional standpoint; only the bits are unknown. Use this for
   don't-care states or deliberately unobserved bits.

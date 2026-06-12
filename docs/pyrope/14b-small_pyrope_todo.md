@@ -9,10 +9,10 @@ This document lists features not included in Small Pyrope with small code exampl
 mut point = (mut x=10, mut y=20,
   // Method with explicit self
   comb move(self, dx:int, dy:int) -> (out) {
-    out = (x=self.x + dx, y=self.y + dy)
+    out = (const x=self.x + dx, const y=self.y + dy)
   }
   ,comb move2(self, dx:int, dy:int) -> (out:int) { // another method
-    out = (x=self.x + dx, y=self.y + dy)
+    out = (const x=self.x + dx, const y=self.y + dy)
   }
 )
 const p2 = point.move(1, -2)
@@ -29,7 +29,7 @@ cassert(maybe_u8.[valid] == true)
 if maybe_u8.[valid] {               // test valid (sugar for maybe_u8.[valid] == true)
   cassert(maybe_u8 == 5)
 }
-mut pkt = (data:u16, valid:bool)
+mut pkt = (mut data:u16 = nil, mut valid:bool = nil)
 if pkt.data.[valid] { // sugar for pkt.data.[valid] == true
   puts("data=", pkt.data)
 }
@@ -38,9 +38,9 @@ if pkt.data.[valid] { // sugar for pkt.data.[valid] == true
 
 ### Type operators (does, equals, case, is)
 ```pyrope
-type Eq = ( comb eq(self, other) -> (_:bool) )
-type Point = (x:int, y:int)
-impl Eq for Point ( comb eq(self, o:Point) -> (_:bool) { self.x == o.x and self.y == o.y } )
+type Eq = ( comb eq(self, other) -> (bool) )
+type Point = (const x:int = nil, const y:int = nil)
+impl Eq for Point ( comb eq(self, o:Point) -> (bool) { self.x == o.x and self.y == o.y } )
 
 const p:Point = (x=1, y=2)
 cassert(p does Eq)
@@ -48,9 +48,9 @@ cassert (Point does p)
 cassert (Point does (x:int, y:int))
 
 // NOTE: No `trait` keyword; use `type` for interfaces and `impl` blocks for attachment.
-type Eq = (comb eq(self, other) -> (_:bool))
-type Point = (x:int, y:int)
-impl Eq for Point ( comb eq(self, o:Point) -> (_:bool) { self.x == o.x and self.y == o.y } )
+type Eq = (comb eq(self, other) -> (bool))
+type Point = (const x:int = nil, const y:int = nil)
+impl Eq for Point ( comb eq(self, o:Point) -> (bool) { self.x == o.x and self.y == o.y } )
 
 const p:Point = (x=1, y=2)
 const x:Point = (x=3, y=2)
@@ -72,23 +72,23 @@ Some case/does/equals assertion:
 * `a case b` same as `(a does b)` plus value matching for every defined value
   in `b`. Values in `b` that are undefined (`nil`, `0sb?`) act as wildcards.
 * `a is b` is a nominal type check. Equivalent to `a.[typename] == b.[typename]`
-cassert((a=1,b=2) has "a")
+cassert((const a=1, const b=2) has "a")
 
-cassert((b=100,a=333,e=40,5) does (a=1,b=3))
-cassert((a=100,300,b=333,e=40,5) does (a=1,3))
-cassert(not ((b=100,300,a=333,e=40,5) does (a=1,3)))
+cassert((const b=100, const a=333, const e=40, 5) does (const a=1, const b=3))
+cassert((const a=100, 300, const b=333, const e=40, 5) does (const a=1, 3))
+cassert(not ((const b=100, 300, const a=333, const e=40, 5) does (const a=1, 3)))
 cassert(u32 does u16)
 cassert(not (u16 does u32))
 cassert(not (u32 does string))
 cassert((100,30) does 30)
 cassert(not (30 does (30,200)))
-cassert(not ((a=3) does (30,a=200)))
-cassert(not ((a=3) does (a=30,200)))
-cassert(not ((3) does (30,a=200)))
-cassert(not ((3) does (a=30,200)))
+cassert(not ((const a=3) does (30, const a=200)))
+cassert(not ((const a=3) does (const a=30, 200)))
+cassert(not ((3) does (30, const a=200)))
+cassert(not ((3) does (const a=30, 200)))
 
-mut t1 = (a:int=1, b:string)
-const t2 = (a:int=100, b:string)
+mut t1 = (mut a:int=1, const b:string="")
+const t2 = (const a:int=100, const b:string="")
 cassert(t1 equals t2)
 cassert(t1 != t2)
 t1.a=100
@@ -96,7 +96,7 @@ cassert(t1 == t2)
 
 ### Advanced pattern matching
 ```pyrope
-const v = (tag="sum", a=1, b=2)
+const v = (const tag="sum", const a=1, const b=2)
 const r = match v {
   case (tag="sum", a, b) { v.a + v.b }
   case (tag="val", x)     { v.x }
@@ -157,7 +157,7 @@ puts(cfg)
 ```pyrope
 // NOTE: The following snippet is not valid Pyrope
 type Option[T] = Some(T) | None  // error: or invalid syntax
-const a:Option(_:u8) = Some(3)
+const a:Option(u8) = Some(3)
 const b:Option[u8] = None          // error: as None is not a valid type/variable either
 match a { Some(v): v+1, None: 0 } // error: wrong match syntax
 ```
@@ -193,7 +193,7 @@ enum Expr = (
     ,,, // extra commas are OK (no meaning)
     ,number:Int=?
     ,,, // extra commas are OK (no meaning)
-    ,add:(_:Expr, _:Expr)=?
+    ,add:(Expr, Expr)=?
     ,,, // extra commas are OK (no meaning)
 )
 
@@ -226,7 +226,7 @@ comb nourish(x:ADT) {
 }
 
 test "my main" {
-  const cases = (_:Person="pizza", _:Robot="electricity")
+  const cases = (Person="pizza", Robot="electricity")
   cases.each(nourish)
 }
 ```
@@ -280,13 +280,13 @@ const q:(x:int, ...r) = (x=1,z=10)  // OK
 ### Advanced assertions
 ```pyrope
 comb div(a:int, b:int) -> (q:int) {
-  requires(b != 0)
-  ensures(a == q*b + (a % b)) // Note: % is compile-time only
+  assume(b != 0)
+  assume(a == q*b + (a % b)) // Note: % is compile-time only
   q = a / b
 }
 
 const a = some_call(z)
-optimize(a < 1000) // a should never be over 1000, optimize accordingly
+assume(a < 1000) // a should never be over 1000; allow optimization
 ```
 
 ### Coverage directives and testing
@@ -467,28 +467,28 @@ comb x8(a:int,b:int3) -> (x:int) { 3 }
 
 The tuple concat/in-place example with checks:
 ```pyrope
-mut a=(a=1,b=2)
-const b=(c=3)
+mut a=(mut a=1, mut b=2)
+const b=(const c=3)
 
 const ccat1 = a ++ b
-assert(ccat1 == (a=1,b=2,c=3))
+assert(ccat1 == (const a=1, const b=2, const c=3))
 assert(ccat1 == (1,2,3))
 
-mut ccat2 = a ++ (b=20) ++ b
-assert(ccat2 == (a=1,b=(2,20),c=3))
-assert(ccat2 == (1,(2,20),3))
+mut ccat2 = a ++ (const d=20) ++ b
+assert(ccat2 == (const a=1, const b=2, const d=20, const c=3))
+assert(ccat2 == (1,2,20,3))
 
 mut join1 = (...a,...b)
-assert(join1 == (a=1,b=2,c=3))
+assert(join1 == (const a=1, const b=2, const c=3))
 assert(join1 == (1,2,3))
 
-mut join2 = (...a,...(b=20)) // error: 'b' already exists
+mut join2 = (...a,...(const b=20)) // error: 'b' already exists
 ```
 
 ### Tuple methods
 ```pyrope
 type RegBox = (reg v:int,
-  comb get(self) -> (_:int) { self.v },
+  comb get(self) -> (int) { self.v },
   pipe set(self, x:int) { self.v = x }  // explicit pipe method: updates a register
 )
 
@@ -511,12 +511,12 @@ always structural.
 
 ### Operator overloading
 ```pyrope
-type Vec2 = (x:int, y:int)
+type Vec2 = (const x:int = nil, const y:int = nil)
 type addition<T> = comb(a:T, b:T) -> T
 impl addition for Vec2 (
-  comb add(a:Vec2, b:Vec2) -> Vec2 { (x=a.x+b.x, y=a.y+b.y) }
+  comb add(a:Vec2, b:Vec2) -> Vec2 { (const x=a.x+b.x, const y=a.y+b.y) }
 )
-const lhs = (x=1,y=2)
+const lhs = (const x=1, const y=2)
 const v = lhs.add(x=3,y=4)
 // NOTE: Overloading via interface type + `impl`; example adjusted.
 ```
@@ -524,10 +524,10 @@ const v = lhs.add(x=3,y=4)
 ### Introspection
 ```pyrope
 assert(type_of(1) == int) // error: use attributes, not `type_of`
-const flds = fields_of((x=1, y=2))    // error: use `has`/pattern-matching
+const flds = fields_of((const x=1, const y=2))    // error: use `has`/pattern-matching
 // NOTE: Prefer attributes and operators (`has`/`does`/`equals`). Examples:
 cassert(1.[typename] == int.[typename])
-cassert ((x=1,y=2) has "x")
+cassert ((const x=1, const y=2) has "x")
 
 ```
 
