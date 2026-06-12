@@ -44,10 +44,10 @@ There is introspection to check for an existing field with the `has` operator.
 Negate with `not (...)` (there is no dedicated `!has` operator).
 
 ```pyrope
-mut a = (const foo = 3)
+mut a = (const foo = 3, 10)
 cassert(a has 'foo')
 cassert(not (a has 'bar'))
-cassert(a has 0)
+cassert(a has 0)        // one unnamed entry, at position 0
 cassert(not (a has 1))
 ```
 
@@ -62,7 +62,7 @@ mut x = (
   ,val                 // unnamed field with value `val` (4)
 )
 cassert(x.field1 == 1 and x.field3 == 3)
-cassert(x[3] == 4)
+cassert(x[0] == 4)   // `val` is the first (and only) unnamed entry
 ```
 
 ## Selector expressions
@@ -80,11 +80,11 @@ mut a = (
   ,mut two:Person = (name="two", age=0)
 )
 
-a[0].age = 10
-a[1].age = 20
+a['one'].age = 10
+a['two'].age = 20
 cassert(a.one.age == 10 and a.two.age == 20)
 
-const pick = if cond { 0 } else { 1 }
+const pick = if cond { 'one' } else { 'two' }
 a[pick].age = 7   // conditional expression as index is fine
 ```
 
@@ -220,7 +220,7 @@ mutability inherited from the enclosing tuple.
 
 ```pyrope
 mut b = 100
-mut a = (b, b, mut b:u8 = nil, const c=4) // a[0] and a[1] are unnamed, a[2]==a.b
+mut a = (b, b, mut b:u8 = nil, const c=4) // a[0] and a[1] are unnamed; b and c are name-access only
 a.b = 200
 assert(a == (100, 100, const b=200, const c=4))
 
@@ -540,9 +540,9 @@ cassert(my_other_enum.foo != my_other_enum.b)
 
 The enum default values are NOT like typical non-hardware languages. The enum
 auto-created values use a one-hot encoding. The first entry has the first bit
-set, the 2nd the 2nd bit set. If an entry has a value, the next entry uses
-the next free bit. If any field is set, then the enumerate behaves like a
-traditional enumerate sequence.
+set, the 2nd the 2nd bit set. If any entry is given an explicit value (or the
+enum has an integer type), the whole enumerate switches to a traditional
+sequential numbering.
 
 !!! WARNING
 
@@ -654,4 +654,43 @@ enum E3 = (
 cassert(string(E3.l1.l1a) == "E3.l1.l1a")
 cassert(string(E3.l1) == "E3.l1")
 cassert(E3("l1.l2") == E3.l1.l2)
+```
+
+### Payload enumerates (tagged unions)
+
+Enum cases can carry a typed payload, which makes the enum a tagged union.
+Only the active case can be read; reading any other case is a compile error.
+
+```pyrope
+type Vtype = enum(str:string, num:int, b:bool)
+
+mut vv:Vtype = (num=0x65)
+cassert(vv.num == 0x65)
+const xx = vv.str                // error: active case is `num`
+
+const x1a:Vtype = "hello"        // implicit case selection by payload type
+const x1b:Vtype = (str="hello")  // explicit case
+cassert(x1a.str == "hello" and x1a == "hello")
+const err = x1a.num              // error: active case is `str`
+```
+
+Payloads can be tuples, including references to the enum itself, which allows
+algebraic data types. A `match` with `does` arms selects on the active case:
+
+```pyrope
+enum Expr = (
+  ,number:int = nil
+  ,add:(Expr, Expr) = nil
+)
+
+comb eval(e:Expr) -> (r:int) {
+  r = match e {
+    does Expr.number { e.number }
+    does Expr.add    { eval(e.add[0]) + eval(e.add[1]) }
+    else             { 0 }
+  }
+}
+
+const expr = Expr.add(Expr.number(2), Expr.number(3))
+cassert(eval(expr) == 5)
 ```

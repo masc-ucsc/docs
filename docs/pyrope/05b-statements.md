@@ -256,7 +256,7 @@ for i in 0..<100 {
 
 mut bund = (1,2,3,4)
 for (index,i) in bund.enumerate() {
-  assert(bund[j] == i)
+  assert(bund[index] == i)
 }
 ```
 
@@ -396,6 +396,10 @@ loop {
 
 ## Cycle access and defer
 
+!!! WARNING "TBD"
+    `.[defer]` is not yet implemented in LiveHD (see
+    [Implementation status](15-tbd.md)).
+
 Cycle-based access to values is expressed through a small set of
 constructs:
 
@@ -525,7 +529,7 @@ if counter < 100 {
   counter = 0
 }
 
-if counter == 10 {
+if deferred == 10 {              // bare 'counter' reads q (9 here), so test the defer value
   assert(deferred   == 10)
   assert(counter.[defer] == 10) // same as deferred, end-of-cycle value
   assert(counter_0  ==  9)

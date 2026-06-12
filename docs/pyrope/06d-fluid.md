@@ -1,5 +1,10 @@
 # Fluid Blocks
 
+!!! WARNING "TBD"
+    `fluid` lambdas and the valid/retry/fire elastic machinery are not yet
+    implemented in LiveHD (the syntax parses, but nothing lowers). See
+    [Implementation status](15-tbd.md).
+
 ## Motivation
 
 `comb`, `pipe`, and `mod` describe static dataflow and static cycle

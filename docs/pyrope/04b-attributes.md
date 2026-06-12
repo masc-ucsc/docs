@@ -18,6 +18,9 @@ Internally, types are also propagated as attributes, but basic types can only be
 
 Pyrope does not specify all the attributes, the compiler flow specifies them.
 There are some built-in required attributes like checking the number of bits.
+For example, a synthesis flow may define placement/timing/power attributes
+(`reg r::[left_of=other, max_delay=2, low_power=true, donttouch=true] = 0`);
+these are tool-defined, not part of the language.
 
 Reading attributes should not affect a logical equivalence check. Setting
 attributes can have a side-effect because it can change bits used for an
@@ -34,8 +37,8 @@ parser) can never confuse them.
   they are introduced. The set binds the attribute to all uses of the
   variable. If no value is given, the attribute is set to `true`. E.g:
   `reg counter::[clock_pin=ref clk1] = 0`, `const c::[debug] = 3`.
-  Integer range/width attributes such as `max`, `min`, `bits`, `ubits`,
-  `sbits`, and `sign` are read-only metadata. Constrain them indirectly
+  Integer range/width attributes such as `max`, `min`, `bits`,
+  and `signed` are read-only metadata. Constrain them indirectly
   through the declared type, e.g. `mut foo:int(max=300, min=0) = 4` or
   `mut bar:u14 = 0`, never with `foo:int:[max=300]`.
 
@@ -52,8 +55,9 @@ appear on the LHS to drive the underlying wire (`self.[valid] = v != 33`).
 `defer` is **RHS-only** — there is no `reg.[defer] = rhs` write form;
 register writes use plain `=`, and `reg.[defer]` on the RHS reads the
 end-of-cycle value. Compile-time-only attributes (`max`, `bits`,
-`comptime`, `debug`, `file`, …) are read-only at use sites; bind them
-with `::[…]` at the declaration.
+`comptime`, `debug`, `file`, …) are read-only at use sites. Integer range
+metadata (`max`/`min`/`bits`/`signed`) comes from the declared type; the
+others are bound with `::[…]` at the declaration.
 
 Since attributes are always compile time, the read happens at elaboration
 time. To turn a read into a check, wrap it in `cassert` (or `assert`):
@@ -210,15 +214,27 @@ Visibility is not an attribute: declarations are private by default, and the
 
 To set constraints on integer, the compiler has a set of bitwidth related
 attributes. Only `max` and `min` exist internally as attributes to control bit
-size, the others (`ubits`/`sbits`/`bits`) are "syntax sugar" and translated
-from `max`/`min`.
+size; `bits` and `signed` are "syntax sugar" translated from `max`/`min`. There
+are no `ubits`/`sbits` attributes: use `bits`, and check the sign with
+`min >= 0`.
 
-* `max`: the maximum value allowed
-* `min`: the minimum value allowed
-* `ubits`: Maximum number of bits to represent the unsigned value. The number must be positive or zero
-* `sbits`: Maximum number of bits, and the number can be negative
-* `bits`: read-only; returns the number of bits currently required to
-  represent the variable's value (`var.[bits]` in assertions)
+* `max`: the declared maximum value allowed
+* `min`: the declared minimum value allowed
+* `bits`: read-only; the number of bits needed to represent the declared
+  `max`/`min` range (`var.[bits]` in assertions)
+* `signed`: read-only; true when the declared range includes negative values
+  (`min < 0`)
+
+Separately from the declared range, the bitwidth pass computes the *actual*
+range of each variable at each point: `mut x:u8 = 30` has `max == 255` and
+`min == 0`, but the actual range is just `30`. The actual range is usually
+narrower than the declared one; if it ever exceeds it, that is a compile
+error (use `wrap`/`sat` on the assignment to fix it). The actual range is
+readable as `bw_max`/`bw_min`, but **only inside debug statements**
+(`cassert`/`assert`) — each elaboration may compute a different (legal)
+range, so non-debug code must not make decisions based on it (see
+[Type system](07-typesystem.md)). TBD: the compiler tracks `bw_max`/`bw_min`
+internally, but the attribute read is not implemented yet.
 
 Overflow handling (`wrap`/`sat`) is **not** an attribute. It is a
 statement-level prefix on the assignment — see the
@@ -230,13 +246,13 @@ Registers have the following attributes:
 
 * `valid`, `retry`: for elastic pipelines
 * `sync`: true by default, when false selects an asynchronous reset (posedge only)
-* `init`: reset value when reset is high
+* `initial`: reset value when reset is high
 * `clock_pin`: connected to `clock` by default
 * `reset_pin`: connected to `reset` by default
 * `negreset`: active low reset signal
 * `posclk`: true by default, selects a posedge or negnedge flop
 * `retime`: allow to retime across the register
-* `defer`: **RHS-only** read of the end-of-cycle value (after all in-cycle
+* `defer` (TBD: not yet implemented): **RHS-only** read of the end-of-cycle value (after all in-cycle
   writes have accumulated). This is same-cycle *wiring*, not a temporal
   construct — no flop is involved (see
   [defer is wiring, not time](05b-statements.md#defer-is-wiring-not-time)).
@@ -266,17 +282,18 @@ are similar to registers, but unlike registers they can have multiple clocks.
 * `addr`: Tuple of address ports for the memory.
 * `bits`: The number of bits for each memory entry
 * `size`: The number of entries. Total size in bits is $size x bits$.
-* `clock`: Optional clock pin, `clock` by default. A tuple is possible to specify the clock for each address port.
+* `clock_pin`: Optional clock pin, `clock` by default. A tuple is possible to specify the clock for each address port.
 * `din`: Tuple for memory data in port. The read ports must be hardwired to `0`.
 * `enable`: Tuple for each memory port. Write or read enable (read ports can have enable too).
 * `fwd`: Forwarding guaranteed (true/false). If fwd is false, there is no guarantee, it can have fwd or not.
-* `latency`: Number of cycles (`0` or `1`) when the read is performed
+* `type`: Memory type: `0` async (combinational read of the current address), `1` sync (one-cycle read), `2` array (unclocked)
 * `wensize`: Write enable size allows to have a write mask. The default value
   is 1, a wensize of 2 means that there are 2 bits in the `enable` for each
   port. a wensize 2 with 2 ports has a total of 2+2+2 enable bits. Bit 0 of the
   enable controls the lower bits of the memory entry selected.
 * `rdport`: Indicates which of the ports are read and which are written ports.
 * `posclk`: Positive edge clock memory for all the memory clocks. The default is `true` but it can be set to `false`.
+* `init`: comptime initial contents (a tuple literal or a packed constant, entry 0 in the low `bits`)
 
 ### Lambda attribute list
 
@@ -290,6 +307,10 @@ Lambda attributes allow [Introspection](07-typesystem.md#Introspection) which re
 
 #### lg: explicit lgraph name
 
+!!! WARNING "TBD"
+    Not yet implemented in LiveHD (see
+    [Implementation status](15-tbd.md)).
+
 By default, the lgraph generated for a lambda gets a compiler-mangled name
 derived from the file and the declaration name. The `lg` attribute replaces
 that with an explicit name — useful to fix the top-level module name or to
@@ -301,7 +322,7 @@ pub comb my_log::[lg="foo_mod"](a, b) -> (r) { r = a + b }
 
 `lg` renames only the generated artifact, not the language-level name
 (like Rust's `#[export_name]` pins a linker symbol): other files still
-write `import("file/my_log")`. Rules:
+write `import("file.my_log")`. Rules:
 
 * The value must be a comptime string. It may be any string accepted as an
   lgraph name, including characters that are not legal Pyrope identifiers.
@@ -338,16 +359,20 @@ See [Verification](09-verification.md) for the full temporal library and
 debug constructs.
 
 
-Integer type constructors set the constrained bounds. The resulting `max`,
-`min`, `ubits`, and `sbits` attributes can be read, but not written directly.
+Integer type constructors set the constrained bounds. The `max`, `min`, and
+`bits` attributes can be read but not written; a read returns the **declared**
+constraint. The actual range computed by the bitwidth pass is readable as
+`bw_max`/`bw_min`, but only inside debug statements (see
+[Type system](07-typesystem.md)).
 
 ```pyrope
-mut opt1:uint(max=300) = 0
+mut opt1:unsigned(max=300) = 0
 mut opt2:int(min=0,max=300) = 0  // same
 
-cassert(opt1.[ubits] == 0) // opt1 initialized to 0, so 0 bits
+cassert(opt1.[max] == 300 and opt1.[min] == 0)
+cassert(opt1.[bits] == 9)     // 9 bits to represent 0..300
 opt1 = 200
-cassert(opt1.[ubits] == 8) // last assignment needs 9 sbits or 8 ubits
+cassert(opt1.[bw_max] == 200) // actual range: debug-only read
 ```
 
 ## wrap and sat modifier

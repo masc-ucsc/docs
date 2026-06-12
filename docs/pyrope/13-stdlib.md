@@ -1,6 +1,10 @@
 # Pyrope Standard Library
 
-This is a list of functionality that `import prp` should produce.
+!!! WARNING "TBD"
+    The standard library is not implemented yet; this chapter is the
+    wish-list for it. See [Implementation status](15-tbd.md).
+
+This is a list of functionality that `import("prp")` should produce.
 
 ## Basic operations
 
@@ -104,6 +108,43 @@ comb reduce<T>(op, ...x:[]T) -> (res:T) {
     res = op(res, i)
   }
 }
+```
+
+## Strings
+
+String helpers follow the C++23 `string_view` naming where possible:
+
+```pyrope
+const s = "hello"
+cassert(s.len() == 5)
+cassert(s.find("ll") == 2)
+cassert(s.substr(1,3) == "ell")
+```
+
+## File I/O
+
+File access comes from imported (C++) methods; there is no special grammar.
+It is setup/debug functionality, not synthesizable:
+
+```pyrope
+const cfg = read_file("config.txt")
+puts(cfg)
+```
+
+## Data structures
+
+```pyrope
+const q = prp.queue.make[int](depth=16)
+q.push(1)
+assert(not q.empty())
+const v = q.pop()
+```
+
+## Math and utilities
+
+```pyrope
+assert(prp.math.gcd(12, 18) == 6)
+const s = prp.str.join(("a","b"), ",")
 ```
 
 ### TODO

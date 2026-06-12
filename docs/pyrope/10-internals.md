@@ -412,8 +412,9 @@ These are the additional checks performed for type synthesis:
   If the `equals`/`does` was in a `if` condition, the control is decided at
   compile time.
 
-+ If the node reads bitwidth, replace the node with the computer Bitwidth value
-  (max, min, ubits, and/or sbits)
++ If the node reads bitwidth, replace the node with the corresponding value
+  (`max`/`min`/`bits` from the declared constraint; debug-only
+  `bw_max`/`bw_min` from the computed bitwidth)
 
     - Compute the max/min for the output[s] using the bitwidth algorithm.
       Update the symbol table with the range. This is only needed because some
@@ -758,8 +759,8 @@ cassert(r == 0ub1010_01_1)
 A pure bit reversal is a `for` loop with explicit indices:
 
 ```pyrope
-comb reverse(x:uint) -> (total:uint) {
-  mut t:uint = nil
+comb reverse(x:unsigned) -> (total:unsigned) {
+  mut t:unsigned = nil
   for i in 0..<x.[bits] {
     t#[i] = x#[x.[bits]-1-i]
   }

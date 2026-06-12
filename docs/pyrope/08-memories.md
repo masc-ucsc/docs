@@ -91,6 +91,10 @@ x3 = array[first..+size]  // from first to first+size, first+size. not included
 
 Since tuples are multi-dimensional, arrays or async memories are multi-dimensional too.
 
+!!! WARNING "TBD"
+    Multi-dimensional memories and memory initialization contents are not
+    yet implemented in LiveHD (see [Implementation status](15-tbd.md)).
+
 ```pyrope
 mut a:[][] = 0
 a[3][4] = 1
@@ -225,6 +229,14 @@ tuple literal, and `res[N]` returns the data of the N-th read port (in
 `rdport` order). From a timing point of view a memory is treated like a
 register: reads return committed state at `@[0]`; for a sync memory the extra
 cycle is the time the write takes to commit.
+
+A memory can also be bound to a specific memory-compiler macro with the
+`macro` attribute (TBD: not yet implemented); the toolchain maps the access
+ports onto the macro:
+
+```pyrope
+reg ram:[1024]u32:[macro="sram_32kx32"] = 0
+```
 
 
 ## Shared memories with `regref`

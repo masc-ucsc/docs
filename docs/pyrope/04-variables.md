@@ -38,6 +38,11 @@ parameter list and a body. Data declarations:
 * `mut variable [:type] [:[attribute list]] = expression`
 * `reg variable [:type] [:[attribute list]] = reset_expression`
 
+When the type is omitted but attributes are given, the type colon remains:
+`reg counter::[retime=true] = 0` but `reg counter:u8:[retime=true] = 0`.
+Bare attributes are always `::[...]` — a single `:[...]` after the variable
+name would parse as an array type (`:[16]u8`).
+
 Lambda declarations:
 
 * `comb name[comptime_params][args] [-> outputs] { body }`
@@ -201,7 +206,9 @@ is false. Assignment still performs the additional range and precision checks
 described in the attribute section:
 
 * `int`: an unlimited precision integer number.
-* `unsigned`: An integer basic type constrained to be a natural number.
+* `unsigned`: the same as `int(min=0)` — a de-facto unsigned integer. There is
+  nothing special beyond the constraint, but it usually allows nicer Verilog
+  generation (`logic` vs `signed logic`).
 * `u<num>`: An integer basic type constrained to be a natural number with a maximum value of $2^{\texttt{num}}-1$. E.g: `u10` can go from zero to 1023.
 * `i<num>`: an integer 2s complement number with a maximum value of $2^{\texttt{num}-1}-1$ and a minimum of $-2^{\texttt{num}-1}$.
 
@@ -210,8 +217,8 @@ mut a:int         = nil // any value, no constrain
 mut b:unsigned    = nil // only positive values
 mut c:u13         = nil // only from 0 to (1<<13)-1
 mut d:int(min=20, max=30) = nil // only values from 20 to 30 (both included)
-mut d:int(min=-5, max=5) = nil // only values from -5 to 6 (6 not included)
-mut e:int(min=-1, max=0) = nil // 1 bit integer: -1 or 0
+mut e:int(min=-5, max=5) = nil // only values from -5 to 5 (both included)
+mut f:int(min=-1, max=0) = nil // 1 bit integer: -1 or 0
 ```
 
 Integers can have 3 value (`0`,`1`,`?`) expression or a `nil`. Section
@@ -278,8 +285,8 @@ are 3 ways to specify a closed range:
 
 * `first..=last`: Range from first to the last element, both included
 * `first..<last`: Range from first to last, but the last element is not included
-* `first..+size`: Range from first to `first+size`. Since there is `size`
-  elements, it is equivalent to write `first..<(first+last)`.
+* `first..+size`: Range from first to `first+size`. Since there are `size`
+  elements, it is equivalent to write `first..<(first+size)`.
 
 When used inside selectors (`[range]`) the ranges can be open (no first/last specified)
 or use negative numbers. Ranges only work with positive numbers, a negative
@@ -408,20 +415,20 @@ comb check_is_green(self) -> (r:bool) { r = self.color == "green" }
 
 type IsGreen = comb(self) -> (r:bool)
 
-mut bund1 = (mut color:string = "", mut value:s33 = nil)
+mut bund1 = (mut color:string = "", mut value:i33 = nil)
 x:bund1        = nil    // OK, declare x of type bund1 with default values
 bund1.color    = "red"  // OK
 bund1.is_green = check_is_green
 x.color        = "blue" // OK
 
-type Typ = (mut color:string = "", mut value:s33 = nil, mut is_green:IsGreen = nil)
+type Typ = (mut color:string = "", mut value:i33 = nil, mut is_green:IsGreen = nil)
 y:Typ        = nil      // OK
 Typ.color    = "red"    // error:
 
 Typ.is_green = check_is_green
 y.color      = "red"    // OK
 
-type Bund3 = (mut color:string = "", mut value:s33 = nil)
+type Bund3 = (mut color:string = "", mut value:i33 = nil)
 z:Bund3        = nil                // OK
 Bund3.color    = "red"              // error:
 Bund3.is_green = check_is_green     // error: (const can not add fields)
@@ -704,7 +711,7 @@ The reduce operators and bit selection share a common syntax
     * `^`: xor-reduce or parity check.
     * `+`: pop-count.
     * `sext`: Sign extends selected bits.
-    * `zext`: Zero sign extends selected bits (default option)
+    * `zext`: Zero extends selected bits (default option)
 
 + `sel` is a single expression: an integer (one bit), a close-range like
   `1..=4`, or an open range like `3..`. Internally, the open range is converted

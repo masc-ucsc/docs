@@ -68,7 +68,7 @@ Pyrope divides lambdas into four categories: `comb`, `pipe`, `mod`, and
   belong to the separate `flow` category, which has been merged into
   `mod`).
 
-- `fluid` is a transactional block with valid/retry handshakes on its
+- `fluid` (TBD: not yet implemented) is a transactional block with valid/retry handshakes on its
   inputs and outputs. Fluid availability is dynamic: a transaction advances
   only when `.[fire]` is true (`.[valid] and !.[retry]`). A `fluid` call
   must be bound with a `fluid` declaration, and fluid calls are allowed only
@@ -265,12 +265,15 @@ locally readable.
 comb add1(...x) -> (r) { r = x[0] + x[1] + x[2] }   // var-args, single output
 comb add2(a, b, c) -> (r) { r = a + b + c }         // constrain inputs to a,b,c
 comb add3(a, b, c) -> (r:u32) { r = a + b + c }     // constrain result to u32
-comb add4(a:u32, b:s3, c) -> (r) { r = a + b + c }  // constrain some input types
+comb add4(a:u32, b:i3, c) -> (r) { r = a + b + c }  // constrain some input types
 comb add5(a, b:a, c:a) -> (r) { r = a + b + c }     // constrain inputs to same type
 comb add6<T>(a:T, b:T, c:T) -> (r) { r = a + b + c} // generic, single output
 
 // To overload, declare each lambda separately and gather them:
 const add = [add1, add2, add3, add4, add5, add6]
+// TBD: call dispatch over a gathered overload set is not yet implemented
+// in LiveHD (only `init` overload sets resolve); generic `<T>`
+// specialization is TBD too. See 15-tbd.md.
 
 const x = 2
 comb addx1(a) -> (r) { r = x + a }    // error: x is runtime, not visible in lambda
@@ -331,7 +334,7 @@ are flattened into separate signals. This uses the same path expansion as
 [tuple literals](03-bundle.md#dotted-field-expansion).
 
 ```pyrope
-comb pick(ar:(x:u3, y:s4), cond:bool) -> (res:s5) {
+comb pick(ar:(x:u3, y:i4), cond:bool) -> (res:i5) {
   res = if cond { ar.x + 1 } else { ar.y - 1 }
 }
 
@@ -690,7 +693,7 @@ mut a_2 = a_1.f1(x=4)  // a_2 is updated, not a_1
 cassert(a_1.x == 3 and a_2.x == 4)
 
 // Same behavior as in a function with UFCS
-comb set_x(ref self, x) { self.x = x }
+comb set_x(ref self, x) -> (self) { self.x = x }
 
 a_1.set_x(x=10)
 mut a_3 = a_1.set_x(x=20)
@@ -702,21 +705,24 @@ Since UFCS does not allow shadowing, a wrapper must be built or a compile error 
 ```pyrope
 mut counter = (
   ,mut val:i32 = 0
-  ,comb inc(ref self, v) { self.var += v }
+  ,comb inc(ref self, v) { self.val += v }
 )
 
-assert(counter.val == 0)
+cassert(counter.val == 0)
 counter.inc(v=3)
-assert(counter.val == 3)
+cassert(counter.val == 3)
 
-comb inc(ref self, v) { self.var *= v } // NOT INC but multiply
+comb inc(ref self, v) { self.val *= v } // NOT INC but multiply
 counter.inc(v=2)           // error: multiple inc options
-assert(44.inc(v=2) == 8)
+
+mut n = (mut val:i32 = 4)
+n.inc(v=2)                 // unambiguous: only the global inc matches
+cassert(n.val == 8)
 
 counter.val = 5
 const mul = inc
 counter.mul(v=2)           // call the new mul method with UFCS
-assert(counter.val == 10)
+cassert(counter.val == 10)
 
 mul(counter, v=2)          // OK: direct form, counter bound to self (val == 20)
 ```

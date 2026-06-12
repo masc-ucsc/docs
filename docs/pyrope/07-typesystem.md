@@ -341,46 +341,64 @@ the option to optimize the design.
 
 
 In fact, internally Pyrope only tracks the `max` and `min` value. When a
-width-constrained type such as `u14` or `s4` is used, it is converted to a
+width-constrained type such as `u14` or `i4` is used, it is converted to a
 `max/min` range. Pyrope code can read bitwidth attributes for each integer
 variable, but these attributes are read-only; constrain them through the
 declared type, not through an attribute write.
 
-* `max`: the maximum number
-* `min`: the minimum number
-* `sbits`: the number of signed bits needed to represent the current value
-* `ubits`: the number of unsigned bits needed to represent the current value
+* `max`: the declared maximum value
+* `min`: the declared minimum value
+* `bits`: the number of bits needed to represent the declared `max`/`min`
+  range (sugar over `max`/`min` — see [Attributes](04b-attributes.md)).
+  There are no `ubits`/`sbits` attributes: use `bits`, and check the sign
+  with `signed` (true when `min < 0`).
+* `bw_max`/`bw_min`: the *actual* range computed by the bitwidth pass —
+  readable only inside debug statements (`cassert`/`assert`)
 
 
 Internally, Pyrope has 2 sets of `max/min`. The constrained and the current.
 The constrained is set during type declaration. The current is computed based
 on the possible max/min value given the current path/values. The current should
-never exceed the constrained or a compile error is generated. Similarly, the
+never exceed the constrained or a compile error is generated (use `wrap`/`sat`
+on the assignment to fix it). Similarly, the
 current should be bound to a given size or a compile error is generated.
 
 
-The constrained does not need to be specifed. In this case, the hardware will
+The constraint does not need to be specified. In this case, the hardware will
 use whatever current value is found. This allows to write code that adjust to
 the needed number of integer bits.
 
-When the attributes are read, it reads the current. it does not read the constrained.
+When `max`/`min`/`bits` are read, they return the declared constraint. The
+current range is readable as `bw_max`/`bw_min`, but **only inside debug
+statements**: each elaboration may compute a different (legal) current range,
+so non-debug code must not make decisions based on it.
 
 ```pyrope
-mut val:u8 = 0   // designer constraints a to be between 0 and 255
-cassert(val.[sbits] == 0)
+mut val:u8 = 0   // designer constrains val to be between 0 and 255
+cassert(val.[max] == 255 and val.[min] == 0 and val.[bits] == 8)
 
-val = 3          // val has 3 bits (0sb011 all the numbers are signed)
+val = 3          // declared attributes unchanged: max=255, min=0
+cassert(val.[bw_max] == 3) // current range: debug-only read
 
 val = 300        // error: '300' overflows the maximum allowed value of 'val'
-
-val = 1          // max=1,min=1 sbits=2, ubits=1
-cassert(val.[ubits] == 1 and val.[min] == 1 and val.[max] == 1 and val.[sbits] == 2)
 
 wrap val = 0x1F0 // Drop bits from 0x1F0 to fit in constrained type
 cassert(val == 240 == 0xF0)
 
 val = u8(0x1F0)    // same
 cassert(val == 0xF0)
+```
+
+Branching on `bw_max`/`bw_min` outside a debug statement is a compile error
+because the result would not converge — the next elaboration can compute a
+different range and silently change the circuit:
+
+```pyrope
+if x.[bw_max] != 30 { // error: 'bw_max' is debug-only
+  x = 30
+} else {
+  x = 40
+}
 ```
 
 Pyrope leverages LiveHD bitwidth pass to compute the maximum and minimum value
@@ -397,7 +415,7 @@ if b {
 }
                            // c: current(max=4,min=3) constrain(max=10,min=0)
 
-mut e:s4 = nil             // e: current(max=0,min=0) constrain(max=7,min=-8)
+mut e:i4 = nil             // e: current(max=0,min=0) constrain(max=7,min=-8)
 e = 2                      // e: current(max=2,min=2) constrain(max=7,min=-8)
 mut d = c                  // d: current(max=4,min=3) constrain()
 if d == 4 {
@@ -415,7 +433,7 @@ understand, the comments show the max/min bitwidth computations.
 
 ```pyrope
 if cmd.[valid] {
-  (x, y) = cmd  // x.max=cmd.a.max; x.min = 0 (uint) ; ....
+  (x, y) = cmd  // x.max=cmd.a.max; x.min = 0 (unsigned) ; ....
 } elif x > y {
                 // narrowing: x.min = y.min + 1 = 1
                 // narrowing: y.max = x.min - 1
@@ -679,18 +697,23 @@ pub const mytup = (
 
 ```pyrope
 // file: src/user.prp
-a = import("my_fun/*comb*")
+a = import("my_fun")    // all the pub entries of the file
 a.fun1(a=1, b=2)        // OK
 a.another(a=1, 2)       // error: 'another' is not pub, not imported
 a.fun2.inside()         // error: `inside` is not in top scope variable
 
-const fun1 = import("my_fun/fun1")
+const fun1 = import("my_fun.fun1")  // a single pub entry
 lec(fun1, a.fun1)
 
-x = import("my_fun/mytup")
+x = import("my_fun.mytup")
 
 x.call3()               // prints call called
 ```
+
+The import string is either a file (`import("file")`, which brings all the
+`pub` entries) or a single pub entry (`import("file.pub_name")`). Directory
+hierarchy uses slashes: `import("proj/dir/file.pub_name")`. There are no glob
+patterns.
 
 The `import` points to a file [setup code](06b-instantiation.md#setup-code)
 list of `pub` lambdas, types, and constants. The setup code corresponds to the
@@ -701,10 +724,24 @@ there is no true cyclic dependency between variables. This means that "false"
 cyclic dependencies are allowed but not true ones.
 
 `import` always uses the declared `pub` name. The `lg` attribute
-([explicit lgraph name](04b-attributes.md#lg-explicit-lgraph-name)) renames
-only the generated lgraph, never the import key:
+([explicit lgraph name](04b-attributes.md#lg-explicit-lgraph-name), TBD)
+renames only the generated lgraph, never the import key:
 `pub comb my_log::[lg="foo_mod"](...)` is still imported as
-`import("my_fun/my_log")`.
+`import("my_fun.my_log")`.
+
+There is no wildcard namespace import and no version pinning syntax; aliasing
+is plain assignment:
+
+```pyrope
+import math::*       // error: wildcard import not allowed
+import std@1.2 as s  // error: version pinning not supported
+
+const math = import("some/hierarchy/math")  // alias by assignment
+```
+
+To select among library versions, point the import path at the desired
+version. Different parts of a project may import different versions of the
+same library this way.
 
 
 The import behaves like cut and pasting the imported code. It is not a
@@ -973,7 +1010,7 @@ The `init` method can be [overloaded](06-functions.md#Overloading) to select
 between construction forms.
 
 ```pyrope
-comb my_2_elem_init_xv(ref self, x:uint(min=0,max=1), v:string) { self.data[x] = v }
+comb my_2_elem_init_xv(ref self, x:unsigned(min=0,max=1), v:string) { self.data[x] = v }
 comb my_2_elem_init_copy(ref self, v:My_2_elem)          { self.data = v.data }
 comb my_2_elem_init_default(ref self)                    { self.data = ("", "") }
 

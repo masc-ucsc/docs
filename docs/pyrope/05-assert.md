@@ -147,7 +147,7 @@ implementation bit.
 ```pyrope
 comb fun1(a, b) -> (r) { r = a | b }
 comb fun2(a, b) -> (r) { r = ~(~a | ~b) }
-lec(fun1, fun2)
+lec(fun1, fun2)  // TBD: in-language lec() is not yet implemented
 ```
 
 In addition, there is the `lec_valid` command. It is similar to `lec` but it
@@ -182,7 +182,7 @@ System Verilog `coverpoint` and `covergroup` but the meaning is not the same.
   sometime during the verification or the tool can prove that it is true at
   compile time.
 
-* `covercase grp, cond [,message]` is very similar to cover but it has a `grp`
+* `covercase grp, cond [,message]` (TBD: not yet implemented) is very similar to cover but it has a `grp`
   group. There can be one or more covers for a given group. The extra check is
   that one of the `cond` in the cover case must be true each time.
 

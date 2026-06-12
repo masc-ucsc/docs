@@ -1,5 +1,13 @@
 # Extended Verification
 
+!!! WARNING "TBD"
+    Most of this chapter is not yet implemented in LiveHD: the temporal
+    library (`past`/`next`/`rose`/`fell`/`stable`/`changed`/`eventually`/
+    `always`, `.[rising]`/`.[falling]`) and the testbench extras
+    (`peek`/`poke`, `waitfor`, `force`/`release`, `sigref`,
+    `spawn`/`join`/`cancel`). Plain `test "..." { ... step ... }` blocks DO
+    work. See [Implementation status](15-tbd.md).
+
 This chapter extends [Verification](05-assert.md) for interactive testbench
 work. The target is the cocotb style of "drive, wait, sample, and run helper
 coroutines", but with as little new syntax as possible.

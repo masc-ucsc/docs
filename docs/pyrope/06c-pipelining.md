@@ -63,7 +63,7 @@ Registers declared with `reg` are preserved by default, meaning synthesis tools 
 If a register is intended to be a flexible pipeline stage rather than a fixed state-holding element, it can be marked with the `retime` attribute. This allows synthesis tools to perform optimizations like moving logic across the register, duplication, or elimination to improve performance.
 
 ```pyrope
-reg my_reg::[retime=true, clock_pin=ref my_clk, init=0]
+reg my_reg::[retime=true, clock_pin=ref my_clk, initial=0]
 ```
 
 
@@ -90,7 +90,8 @@ The three forms behave as follows:
   `M == N`.
 * **`pipe[A..<B] foo(...)`** — flexible range. The caller picks a `stage[M]`
   with `A <= M < B` and `M > 0`, and the compiler/synthesizer places stages
-  accordingly.
+  accordingly. Any range spelling is accepted (`pipe[A..=B]`, `pipe[A..+N]`);
+  the `[...]` argument is just a range.
 
 ### The `pipe` contract
 
