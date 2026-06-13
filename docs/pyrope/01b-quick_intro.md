@@ -96,8 +96,9 @@ mod mac(in1:u16, in2:u16) -> (out:u32@[4]) {
 * UFCS `x.f(args)` works only when `f` declares `self` first; `ref self`
   needs a `mut` receiver. `ref` is written at declaration **and** call.
 * `init` is the only implicit hook (the constructor, a `comb`); there are no
-  getter/setter hooks. Overload by gathering: `const add = [add1, add2]`
-  (TBD: dispatch not yet implemented).
+  getter/setter hooks. Overload by gathering: `const add = [add1, add2]` — a
+  call dispatches to the first gathered lambda that can accept it (same argument
+  rules as a direct call), resolved at compile time.
 
 Details: [Lambdas](06-functions.md), [Pipelining](06c-pipelining.md),
 [Fluid](06d-fluid.md), [Instantiation](06b-instantiation.md).

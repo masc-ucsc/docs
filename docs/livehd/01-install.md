@@ -8,7 +8,7 @@ Although LiveHD should run on most common Linux distributions, it is heavily tes
 
 The following programs are assumed to be present when building LiveHD:
 
-- A C++23 capable compiler (recent GCC or Clang)
+- A C++23 capable compiler (GCC 16+ or Clang 20+ recommended)
 - Bazel (use bazelisk, see below)
 - python3
 
@@ -93,17 +93,24 @@ bazel build //...
 
 ## Potential issues
 
-If you have multiple gcc versions, you may need to specify the latest. E.g:
+LiveHD uses newer C++23 features. If your system GCC is older than GCC 16,
+you may need to build with Clang 20 or newer instead:
 
 ```sh
-CXX=g++-13 CC=gcc-13 bazel build //lhd:lhd -c opt # fast execution for benchmarking
-CXX=g++-13 CC=gcc-13 bazel build //lhd:lhd -c dbg # debugging/development
+CXX=clang++ CC=clang bazel build -c opt //...
 ```
 
-If you want to run a specific clang version:
+If you have multiple GCC versions, you can specify GCC 16 explicitly:
 
 ```sh
-CXX=clang++-18 CC=clang-18 bazel build //lhd:lhd -c dbg # debugging/development
+CXX=g++-16 CC=gcc-16 bazel build //lhd:lhd -c opt # fast execution for benchmarking
+CXX=g++-16 CC=gcc-16 bazel build //lhd:lhd -c dbg # debugging/development
+```
+
+If you want to run a specific Clang version:
+
+```sh
+CXX=clang++-20 CC=clang-20 bazel build //lhd:lhd -c dbg # debugging/development
 ```
 
 If you fail to build for the first time, you may need to clear the cache under your home directory before rebuilding:

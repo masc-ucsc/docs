@@ -15,13 +15,11 @@ repo under `todo/pyrope/`.
 | `.[defer]` end-of-cycle reads | [Statements](05b-statements.md#cycle-access-and-defer), [Attributes](04b-attributes.md) | `2f-defer` | attribute name recognized only |
 | Temporal library: `past[n]`, `next[n]`, `rose`, `fell`, `stable`, `changed`, `eventually`, `always`, `.[rising]`/`.[falling]` | [Extended Verification](09-verification.md) | `2f-temporal` | |
 | Testbench extras: `peek`/`poke`, `waitfor`, `force`/`release`, `sigref`, `spawn`/`join`/`cancel` | [Extended Verification](09-verification.md) | `2f-testbench` | plain `test`/`step` blocks work |
-| Overload-gathering call dispatch (`const add = [add1, add2]; add(x)`) | [Lambdas](06-functions.md) | `2f-overload` | `init` overload sets already resolve |
-| Generic `<T>` per-call-site specialization | [Lambdas](06-functions.md) | `2f-generics` | untyped-parameter templates work; explicit `<T>` body substitution pending |
 | Standard library (`import("prp")`) | [Standard Library](13-stdlib.md) | `2f-stdlib` | wish-list chapter |
-| Multi-dimensional memories, memory initialization contents | [Memories](08-memories.md) | `2f-mem_multidim` | |
+| `comptime`-computed / inferred-type memory init (`reg mem2 = reset_value`) | [Memories](08-memories.md) | `2f-mem_comptime_init` | multi-dim memories + literal/scalar init contents are implemented |
 | `macro=` memory-compiler binding | [Memories](08-memories.md) | `2f-macro` | |
 | `lg` attribute (explicit lgraph/module name) | [Attributes](04b-attributes.md#lg-explicit-lgraph-name) | `2f-lg` | |
-| `.[bw_max]`/`.[bw_min]` debug attribute reads | [Attributes](04b-attributes.md), [Type system](07-typesystem.md) | `2f-bw_maxmin` | the pass tracks the values internally; the read is not wired |
+| Inline-concatenate / spread `...` (`(...a, ...b)` literals and `foo(a=1, ...rest)` call-argument spread) | [Tuples](03-bundle.md#tuple-mutability), [Variables](04-variables.md#tupleset-operators), [Struct types](07b-structtype.md) | `2f-inline_concat` | `++` concatenate works; var-arg gather `(...args)` works |
 | `covercase`, in-language `lec()` (and `requires`/`ensures` pre/post) | [Assertions](05-assert.md) | `2f-verif_extras` | `assert`/`cassert`/`cover` work |
 
 Notes:

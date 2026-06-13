@@ -233,8 +233,7 @@ error (use `wrap`/`sat` on the assignment to fix it). The actual range is
 readable as `bw_max`/`bw_min`, but **only inside debug statements**
 (`cassert`/`assert`) — each elaboration may compute a different (legal)
 range, so non-debug code must not make decisions based on it (see
-[Type system](07-typesystem.md)). TBD: the compiler tracks `bw_max`/`bw_min`
-internally, but the attribute read is not implemented yet.
+[Type system](07-typesystem.md)).
 
 Overflow handling (`wrap`/`sat`) is **not** an attribute. It is a
 statement-level prefix on the assignment — see the

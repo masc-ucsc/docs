@@ -214,7 +214,10 @@ The lambda definition has the following fields:
 ```
 
 + `GENERIC` is an optional comma separated list of names between `<` and `>` to
-  use as generic types in the lambda.
+  use as generic types in the lambda. The call site binds them explicitly
+  (`f<int,string>(…)`, one type per name in declaration order) or by
+  inference from the actuals' declared types (see "Overloading/generics"
+  below).
 
 + `COMPTIME` has the optional list of explicit comptime parameters for the
   lambda. Each entry is a typed declaration (e.g., `n:int`) or a typed
@@ -271,9 +274,13 @@ comb add6<T>(a:T, b:T, c:T) -> (r) { r = a + b + c} // generic, single output
 
 // To overload, declare each lambda separately and gather them:
 const add = [add1, add2, add3, add4, add5, add6]
-// TBD: call dispatch over a gathered overload set is not yet implemented
-// in LiveHD (only `init` overload sets resolve); generic `<T>`
-// specialization is TBD too. See 15-tbd.md.
+// A call through the set dispatches to the FIRST gathered lambda whose
+// signature can accept the call (tuple order is the tie-break — no ambiguity
+// error). "Can accept" uses the SAME argument rules as a direct call (so
+// same-kind positional args must still be named); if no candidate matches it
+// is a compile error. Dispatch is resolved at compile time, so the selected
+// lambda's body is what lowers — there is no runtime mux of the alternatives.
+const s = add(a=1, b=2, c=3)   // a 3-arg call → the first 3-arg-compatible add
 
 const x = 2
 comb addx1(a) -> (r) { r = x + a }    // error: x is runtime, not visible in lambda
@@ -299,11 +306,24 @@ comb my_log::[debug](...inp) -> () { // no outputs; side-effecting print
   puts()
 }
 
-comb f<X>(a:X, b:X) -> (r) { r = a + b }   // enforces a and b with same type
-cassert(f(u22(33), u22(100)) == 133)
+comb f<X>(a:X, b:X) -> (r) { r = a + b }    // enforces a and b with same type
+cassert(f(a=u22(33), b=u22(100)) == 133)    // X = u22 (inferred; args named per
+                                            // the argument-naming rules below)
+cassert(f<u8>(a=1, b=2) == 3)               // X = u8 (explicit call-site binding)
 
 my_log(a, false, x + 1)
 ```
+
+A generic binds **per call site** — a pure type-macro expansion, with the
+normal typing rules applying after substitution (no implicit coercion). The
+call may bind explicitly with `f<type, …>(…)` (one type per generic name, in
+declaration order, all-or-nothing), or leave the binding to inference: each
+generic unifies over the **declared** types of the actuals at its `:T`
+positions (a `u8` actual and a `u16` actual for one `T` is a compile error —
+`fcall-generic-mismatch`), while bare literals contribute only their kind, so
+`f(a=1, b=2)` infers `X = int`. On a `pipe`/`mod` boundary each distinct
+binding mints its own module, exactly like the untyped-parameter deferred
+templates above (`madd<T>` called with `u8` actuals mints `madd__u8_u8`).
 
 ## Argument naming
 

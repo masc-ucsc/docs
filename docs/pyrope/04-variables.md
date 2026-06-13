@@ -612,19 +612,26 @@ cassert((const x=nil, const c=3) in (const x=nil, const c=3, const d=4))
 cassert(not ((const c=3) in (const c=nil, const d=4)))
 ```
 
-* `a ++ b` concatenate two tuples. If field appears in both, concatenate field. The a field is
-defined in one tupe and undefined in the other, the undefined value is not concatenated.
+* `a ++ b` concatenate two tuples. A field present on only one side is copied
+  in. When the same field appears on both sides it is a compile error, unless
+  one side is `nil`/`0sb?` (the defined value wins) or both sides hold the same
+  value (matching tuple-valued fields merge recursively).
 
 ```pyrope
-cassert(((const a=1, const c=3) ++ (const a=1, const b=2, const c=nil)) == (const a=(1,1), const c=3, const b=2))
+cassert(((const a=1, const c=3) ++ (const a=1, const b=2, const c=nil)) == (const a=1, const c=3, const b=2))
 cassert(((1,2) ++ (const a=2, nil, 5)) == (1, 2, const a=2, nil, 5))
 cassert(((const x=1) ++ (const a=2, nil, 5)) == (const x=1, const a=2, nil, 5))
 
 cassert(((const x=1, const b=2) ++ (const x=0sb?, 3)) == (const x=1, const b=2, 3))
+
+const bad = (const a=1) ++ (const a=2)  // error: 'a' defined with different values on both sides
 ```
 
-* `(,...b)` in-place insert `b`. Behaves like `a ++ b` but it triggers a
-  compile error if both have the same defined named field.
+* `(,...b)` in-place insert `b` (TBD: not yet implemented). It splices `b`'s
+  fields at that position instead of appending. The duplicate-field rule is the
+  **same** as `++` (a field defined with different values on both sides is a
+  compile error); the only differences are the in-place position and that `...`
+  can also add to function-call arguments.
 
 ```pyrope
 cassert((1, const b=2, ...(3, const c=3), 6) == (1, const b=2, 3, const c=3, 6))

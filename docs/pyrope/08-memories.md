@@ -90,10 +90,9 @@ x3 = array[first..+size]  // from first to first+size, first+size. not included
 ```
 
 Since tuples are multi-dimensional, arrays or async memories are multi-dimensional too.
-
-!!! WARNING "TBD"
-    Multi-dimensional memories and memory initialization contents are not
-    yet implemented in LiveHD (see [Implementation status](15-tbd.md)).
+A multi-dimensional memory lowers to one flat memory with **row-major**
+addressing (`b[i][j]` on a `[4][8]` array reads flat address `i*8 + j`), and
+every access must supply one index per dimension.
 
 ```pyrope
 mut a:[][] = 0
@@ -102,14 +101,24 @@ a[3][4] = 1
 mut b:[4][8]u8 = 13
 
 cassert(b[2][7] == 13)
-assert(b[2][10]) // error: '10' is out of bound access for 'b[2]'
+assert(b[2][10]) // error: `b[2][10]` does not exist (out of bounds)
 ```
 
 It is possible to initialize the async memory with an array. The initialization
-of async memories happens whenever `reset` is set on the system. A key difference
+of async memories happens whenever `reset` is set on the system: when the
+module declares (or binds) a `reset` input, the memory re-loads its per-entry
+init contents while `reset` is held (one restore write port per entry; reads
+during reset return the committed contents). Without a reset input the
+contents are power-on-only (the wrapper's `INIT` parameter). A key difference
 between arrays (no clock) and memories is that arrays initialization value must
 be `comptime` while `memories` and `reg` can have a sequence of statements to
 generate a reset value.
+
+!!! WARNING "TBD"
+    The init contents must today be a tuple **literal** (or a scalar
+    broadcast). A `comptime`-computed initializer variable and the
+    inferred-type form (`reg mem2 = reset_value` below) are not lowered yet
+    (see [Implementation status](15-tbd.md)).
 
 === "Pyrope array syntax"
     ```pyrope

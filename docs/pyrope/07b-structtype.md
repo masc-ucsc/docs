@@ -626,9 +626,9 @@ There are also two ways to concatenate tuples in Pyrope. `t1 ++ t2` and
   define the same final field with different non-`nil` values.
 
 
-* `(...t1, ...t2)` inserts in-place, triggers a compile error if the same
-  visible field appears in both tuples and it is defined in both. Private
-  fields (leading underscore) are privatized and hence do not trigger
+* `(...t1, ...t2)` inserts in-place (TBD: not yet implemented). Like `++`, it
+  triggers a compile error if the same visible field is defined in both tuples.
+  Private fields (leading underscore) are privatized and hence do not trigger
   overload failure.
 
 

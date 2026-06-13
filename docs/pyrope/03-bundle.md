@@ -276,9 +276,23 @@ assert((const a=2,const b=nil) ++ (const a=2,const b=10) == (const a=2,const b=1
 const bad = (const a=2) ++ (const a=20) // error: 'a' already exists
 ```
 
-The `...` also concatenates, but it is an "inline concatenate". The difference
-is where the fields are concatenated and that it triggers a compile error if
-the same entry already exists.
+The `...` also concatenates, but it is an "inline concatenate": it splices the
+fields at that position inside the surrounding tuple literal (or argument list)
+instead of appending. The duplicate-field rule is identical to `++` — a field
+defined with different values on both sides is a compile error either way. The
+only differences are *where* the fields land and that the inline form can add
+to the arguments of a function call:
+
+```pyrope
+comb foo(a, b, c) -> (r) { r = a + b + c }
+
+const rest = (b=2, c=3)
+cassert(foo(a=1, ...rest) == 6)   // same as foo(a=1, b=2, c=3)
+```
+
+!!! WARNING "TBD"
+    The inline-concatenate / spread `...` operator is not yet implemented in
+    LiveHD (see [implementation status](15-tbd.md)); `++` works today.
 
 
 
