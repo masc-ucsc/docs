@@ -108,7 +108,7 @@ assert(hot==hot2)
 Like the `if` statement, a sequence of statements and declarations are possible in the match statement.
 
 ```pyrope
-match const one=1 ; one ++ (2) {
+match const one=1 ; (one, 2) {
   == (1,2) { puts("one:{}", one) }      // should always hit
   else     { cassert(false) }
 }
@@ -255,45 +255,51 @@ for i in 0..<100 {
 }
 
 mut bund = (1,2,3,4)
-for (index,i) in bund.enumerate() {
+for (index, i) in bund {  // a pair binding IS the enumerate: index (position) first, value second
   assert(bund[index] == i)
 }
 ```
 
+The loop binding controls what is exposed, with the index/position first (as in
+most languages):
+
+* `for value in t` — just the element value.
+* `for (index, value) in t` — `index` is the (const) position, `value` the element.
+* `for (index, value, key) in t` — `key` is the field name (empty `''` for a
+  positional slot).
+
+The `value` is a copy; iterate over `ref t` (e.g. `for (index, value) in ref t`)
+to write the element back into the tuple.
+
 ```pyrope
 const b = (const a=1, const b=3, const c=5, 7, 11)
 cassert(b.keys() == ('a', 'b', 'c', '', ''))
-cassert(b.enumerate() == ((0,1), (1,3), (2,5), (3,7), (4,11)))
-const xx= zip(b.keys(), b.enumerate())
-cassert(xx == (('a', 0, const a=1), ('b', 1, const b=3), ('c', 2, const c=5), ('', 3, 7), ('', 4, 11)))
 
-for (key,index,i) in zip(keys(b),b.enumerate()) {
+for (index, i, key) in b {
   cassert(i==1  implies (index==0 and key == 'a'))
   cassert(i==3  implies (index==1 and key == 'b'))
   cassert(i==5  implies (index==2 and key == 'c'))
   cassert(i==7  implies (index==3 and key == '' ))
   cassert(i==11 implies (index==4 and key == '' ))
 }
-
-const c = ((1, const a=3), const b=4, const c=(const x=1, const y=6))
-cassert(c.enumerate() == ((0, (1, const a=3)), (1, const b=4), (2, const c=(const x=1, const y=6))))
 ```
 
 To build a tuple/array from a loop, use an explicit `for` over a `mut`
-accumulator and `++=` each element. Trailing-`for` comprehensions on
-expressions are not supported (they make trailing tokens of every expression
-ambiguous to parse) — write the loop out instead.
+accumulator and rebuild it with `...` each iteration (`d = (...d, i)`).
+Trailing-`for` comprehensions on expressions are not supported (they make
+trailing tokens of every expression ambiguous to parse) — write the loop out
+instead.
 
 ```pyrope
 mut d:[] = nil
 for i in 0..<5 {
-  d ++= i
+  d = (...d, i)
 }
 
 mut e:[] = nil
 for i in 0..<5 {
   if i {
-    e ++= i
+    e = (...e, i)
   }
 }
 cassert ((0,1,2,3,4) == d)
@@ -340,7 +346,7 @@ declared output names is what the caller sees.
 mut total:[] = nil
 for a in 1..=10 {
   if a == 2 { continue }
-  total ++= a
+  total = (...total, a)
   if a == 3 { break }    // exit for scope
 }
 cassert(total == (1,3))
@@ -353,7 +359,7 @@ if true {
 mut a = 3
 mut total2:[] = nil
 while a>0 {
-  total2 ++= a
+  total2 = (...total2, a)
   if a == 2 { break }    // exit if scope
   a = a - 1
   continue
@@ -364,7 +370,7 @@ cassert(total2 == (3,2))
 mut total3:[] = nil
 for i in 1..=9 {
   if i<3 {
-    total3 ++= i+10
+    total3 = (...total3, i+10)
   }
 }
 cassert(total3 == (11, 12))

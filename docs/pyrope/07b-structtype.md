@@ -31,7 +31,7 @@ const Animal = (
   comb say_name(self) -> () { puts(name) }
 )
 
-const Dog = Animal ++ (
+const Dog = (...Animal,
   comb init(ref self) { self.legs = 4 },
   comb bark(self) -> () { puts("bark bark") }
 )
@@ -39,13 +39,13 @@ const Dog = Animal ++ (
 comb bird_init_default(ref self)           { self.legs = 2 }
 comb bird_init_animal(ref self, a:Animal)  { self.legs = 2; name = "bird animal" }
 
-const Bird = Animal ++ (
+const Bird = (...Animal,
   mut seeds_eaten:int = nil,
   const init = [bird_init_default, bird_init_animal],
   comb eat_seeds(ref self, n) { self.seeds_eaten += n }
 )
 
-const Greyhound = Dog ++ ( // also extends Dog
+const Greyhound = (...Dog, // also extends Dog
   comb race(self) -> () { puts("running fast") }
 )
 ```
@@ -77,8 +77,8 @@ statement-level prefix must be used.
 ### Typed `self` in methods
 
 A method with a typed receiver (`self:T` / `ref self:T`) checks
-**`receiver does T`** at every call site — a structural check, never a
-typename comparison and never strict equivalence:
+**`receiver does T`** at every call site — a structural check, never
+strict equivalence:
 
 * every field of `T` must exist on the receiver with the same name
   (recursively for tuple fields), and the scalar kinds
@@ -347,7 +347,7 @@ By overloading, this section refers to typical ad-hoc polymorphism where the sam
 lambda name can have different functionality for different types.
 
 
-For Pyrope overloading, lambdas are typically added at the end `++=` of the tuple.
+For Pyrope overloading, lambdas are typically spliced at the end (`(...set, new_fun)`) of the tuple.
 This means that it is NOT overwriting an existing functionality, but providing
 a new call capability.
 
@@ -370,7 +370,7 @@ comb ext_fun2_noarg()  -> (r) { r = 6 }
 comb ext_fun3_ab(a, b) -> (r) { r = 7 }
 comb ext_fun3_noarg()  -> (r) { r = 8 }
 
-const ext = base ++ (
+const ext = (...base,
   const fun1 = ext_fun1,                                        // overwrite
   const fun2 = [ext_fun2_ab, ext_fun2_noarg, base_fun2],        // append
   const fun3 = [ext_fun3_ab, ext_fun3_noarg, base_fun3]         // prepend
@@ -395,7 +395,7 @@ A more traditional "overload" calling the is possible by calling the lambda dire
 
 ```pyrope
 comb x_fun1() -> (r) { r = base.fun1() + 100 }
-const x = base ++ (
+const x = (...base,
   const fun1 = x_fun1
 )
 ```
@@ -536,10 +536,10 @@ Subtype polymorphism: A subtype provides functionality/api for another super typ
 const Animal = (
   comb speak(self) { }
 )
-const Cat = Animal ++ (
+const Cat = (...Animal,
   comb speak(self) { puts("meaow") }
 )
-const Bird = Animal ++ (
+const Bird = (...Animal,
   comb speak(self) { puts("pio pio") }
 )
 ```
@@ -596,21 +596,21 @@ const User = (
   comb init(ref self, n:string) { self.name = n }
 )
 
-const Mixing_all = Say_mixin ++ Say_hi_mixin ++ User
+const Mixing_all = (...Say_mixin, ...Say_hi_mixin, ...User)
 
 mut a:Mixing_all = "Julius Caesar"
 a.say_hi()
 ```
 
 Mixin is very expressive by allowing related method sets to be composed. If two
-tuples have the same field and both values are tuples, the concatenated
-operator (`++`) recursively merges their subfields. If the same final field is
-defined on both sides, concat is allowed only when one side is `nil` or
-constant propagation proves both sides have the same value; otherwise it is a
-compile error.
+tuples have the same field and both values are tuples, the splice operator
+(`...`) recursively merges their subfields. If the same final field is defined
+on both sides, the merge is allowed only when one side is `nil` or constant
+propagation proves both sides have the same value; otherwise it is a compile
+error.
 
 
-In a way, the concatenate just adds methods from two tuples to create a new
+In a way, the splice just adds methods from two tuples to create a new
 tuple. In programming languages with object-oriented programming (OOP), there
 are many keywords (`virtual`, `final`, `override`, `static`...) to constrain
 how methods can be updated/changed. In Pyrope, the `const` and `mut` keywords can
@@ -618,18 +618,11 @@ be added to any tuple field. The `const` makes the entry immutable when applied
 to a method, it behaves like a `final` keyword in most languages.
 
 
-There are also two ways to concatenate tuples in Pyrope. `t1 ++ t2` and
-`(...t1, ...t2)`:
-
-* `t1 ++ t2` concatenates each field in both tuples. Matching tuple-valued
-  fields are merged recursively. A compile error is generated when both sides
-  define the same final field with different non-`nil` values.
-
-
-* `(...t1, ...t2)` inserts in-place (TBD: not yet implemented). Like `++`, it
-  triggers a compile error if the same visible field is defined in both tuples.
-  Private fields (leading underscore) are privatized and hence do not trigger
-  overload failure.
+Tuples are concatenated with the `...` splice, `(...t1, ...t2)`: it inserts
+each tuple's fields into the new literal. Matching tuple-valued fields are
+merged recursively, and a compile error is generated when both sides define the
+same final field with different non-`nil` values. Private fields (leading
+underscore) are privatized and hence do not trigger an overload failure.
 
 
 ```pyrope
@@ -668,15 +661,16 @@ Interface.add(3)                // error: undefined method
 
 const My_obj = (
   mut val1:u8 = 0,
-  comb add(ref self, x) { self.val += x }
-) ++ Interface                  // OK, but not recommended
+  comb add(ref self, x) { self.val += x },
+  ...Interface                  // splice can come last
+)
 
 const My_obj2 = (
-  ...Interface,                 // recommended
+  ...Interface,                 // ... or first
   mut val1:u8 = 0,
   comb add(ref self, x) { self.val += x }
 )
-cassert(My_obj equals My_obj2)  // same behavioir no defined overlap fiels
+cassert(My_obj equals My_obj2)  // same behavior, no defined overlap fields
 
 const xx:My_obj = nil           // default initialization
 
@@ -695,29 +689,28 @@ time, but an error happens ONLY if the method is used anywhere in the
 instantiated project.
 
 
-To build tuples that implement the functionality of other tuples, the recommended
-technique is to use the in-place operator. It checks that there is no defined overlap
-between both tuples.
+To build tuples that implement the functionality of other tuples, use the `...`
+splice operator. It checks that there is no defined overlap between both tuples.
 
 
-An issue with in-place operator is when more than one tuple has the `init`
-method. Concatenating those tuples with either `...` or `++` triggers an
-overlap error. Neither is the expected solution for a mixin.
+An issue with the splice operator is when more than one tuple has the `init`
+method. Concatenating those tuples with `...` triggers an overlap error, which
+is not the expected solution for a mixin.
 
 
-The solution is to remove fields from the in-place concatenation and to
-explicitly create the new methods with some support method.
+The solution is to remove fields from the splice and to explicitly create the
+new methods with some support method.
 
 
 ```pyrope
 comb exclude(o,...a) -> (new_tup) {
   new_tup = ()
-  for (key,idx,e) in zip(o.keys(),o.enumerate()) {
+  for (idx, e, key) in o {  // (index, value, key) — key is the field name
     // create single tupe and append to preserve key and position order
     const sing_tup = ()
     sing_tup[key] = e
     if not (key in o) {
-      new_tup ++= sing_tup
+      new_tup = (...new_tup, ...sing_tup)
     }
   }
 }

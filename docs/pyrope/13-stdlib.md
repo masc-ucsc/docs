@@ -58,7 +58,7 @@ Library code:
 comb map<T>(f, ...x:[]T) -> (r:[]) {
   r = nil
   for e in x {
-    r ++= f(e)
+    r = (...r, f(e))
   }
 }
 ```
@@ -80,7 +80,7 @@ comb filter<T>(f, ...x:[]T) -> (r:[]) {
   r = nil
   for e in x {
     if not f(e) {
-      r ++= e
+      r = (...r, e)
     }
   }
 }

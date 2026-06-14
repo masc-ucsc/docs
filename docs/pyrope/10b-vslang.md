@@ -111,7 +111,7 @@ comb max_gap_count(nums) -> (r) {
   comb adjacent_transform(a, num, f) -> (res) {
     res = ()
     for i in 0..<a.length step num {
-      res ++= f(a[i..+num])
+      res = (...res, f(a[i..+num]))
     }
   }
   comb count(a, b) -> (r) {

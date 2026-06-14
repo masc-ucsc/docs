@@ -654,7 +654,7 @@ to largest. It is not legal to do a `5..<0` range, the solution is to use a
 
 ```pyrope
 const s:string="hell"
-for (idx,i) in s.enumerate() {
+for (idx,i) in s {
   const v = match idx {
    == 0 { "h" }
    == 1 { "e" }
@@ -666,7 +666,7 @@ for (idx,i) in s.enumerate() {
 }
 
 const t = (1,2,3)
-for (idx,i) in t.enumerate() {
+for (idx,i) in t {
   const v = match idx {
    == 0 { 1 }
    == 1 { 2 }
@@ -677,7 +677,7 @@ for (idx,i) in t.enumerate() {
 }
 
 const r=2..<5
-for (idx,i) in r.enumerate() {
+for (idx,i) in r {
   const v = match idx {
    == 0 { 2 }
    == 1 { 3 }
@@ -689,7 +689,7 @@ for (idx,i) in r.enumerate() {
 
 const r2=2..=6 step 2
 cassert(r2 == (2,4,6))
-for (idx,i) in r2.enumerate() {
+for (idx,i) in r2 {
   const v = match idx {
    == 0 { 2 }
    == 1 { 4 }
@@ -712,7 +712,7 @@ for i in 2..<5 {
   cassert(v == ri)
 }
 
-for (idx,i) in enumerate(123) {
+for (idx,i) in (123,) {  // a scalar 1-tuple enumerates to a single (0, value)
   cassert(i == 123 and idx==0)
 }
 ```

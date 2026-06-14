@@ -205,8 +205,7 @@ Visibility is not an attribute: declarations are private by default, and the
 * `comptime`: indicates that the variable should be compile time or a compile error is generated
 * `const`: indicates that only one assignment to the variable can be done per cycle
 * `mut`: multiple assignments to the variable can be done
-* `type`: Either `integer` or `string` or `boolean` or `range` or complex tuple typename.
-* `typename`: type name at variable declaration
+* `type`: Either `integer` or `string` or `boolean` or `range` or complex tuple.
 * `size`: Number of unnamed entries in tuple or array (0 if no unnamed entries)
 * `fields`: string list (tuple) with tuple named fields
 

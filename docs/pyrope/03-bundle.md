@@ -237,62 +237,56 @@ y[1] = 101              // error: `y[1]` is immutable
 
 
 While the tuple entries can be either mutable or immutable, the field
-name/types are immutable. It is possible to construct new tuples with the `++`
-(concatenate) and `...` (in-place operator):
+name/types are immutable. New tuples are built with the `...` splice operator,
+which inserts a tuple's fields into the surrounding tuple literal:
 
 ```pyrope
 mut a=(mut a=1, mut b=2)
 const b=(const c=3)
 
-const ccat1 = a ++ b
+const ccat1 = (...a, ...b)
 assert(ccat1 == (const a=1, const b=2, const c=3))
 assert(ccat1 == (1,2,3))
 
-mut ccat2 = a ++ (const d=20) ++ b
+mut ccat2 = (...a, const d=20, ...b)
 assert(ccat2 == (const a=1, const b=2, const d=20, const c=3))
 assert(ccat2 == (1,2,20,3))
 
-mut join1 = (...a,...b)
-assert(join1 == (const a=1, const b=2, const c=3))
-assert(join1 == (1,2,3))
-
-mut join2 = (...a,...(const b=20)) // error: 'b' already exists
+mut join2 = (...a, ...(const b=20)) // error: 'b' already exists
 ```
 
 
-The `a ++ b` concatenates two tuples. Concat matches by field name: if field
-names do not match, or entries have no name, a new entry is created. If the same
-field exists in both tuples and both values are tuples, concat recursively
-merges their subfields. If the same final field exists on both sides, concat is
-allowed only when one side is `nil` or constant propagation proves both sides
-have the same value; otherwise it is a compile error instead of accumulating
-the two values.
+A `...` splice concatenates by field name: if field names do not match, or
+entries have no name, a new entry is created. If the same field exists in both
+tuples and both values are tuples, the splice recursively merges their
+subfields. If the same final field exists on both sides, the merge is allowed
+only when one side is `nil` or constant propagation proves both sides have the
+same value; otherwise it is a compile error instead of accumulating the two
+values.
 
 ```pyrope
-assert(((1,const cfg=(lo=2),const c=3) ++ (const cfg=(hi=20),33,const d=30,4)) == (1,const cfg=(lo=2,hi=20),const c=3,33,const d=30,4))
+assert((...(1,const cfg=(lo=2),const c=3), ...(const cfg=(hi=20),33,const d=30,4)) == (1,const cfg=(lo=2,hi=20),const c=3,33,const d=30,4))
 
-assert((const a=2,const b=nil) ++ (const a=2,const b=10) == (const a=2,const b=10))
+assert((...(const a=2,const b=nil), ...(const a=2,const b=10)) == (const a=2,const b=10))
 
-const bad = (const a=2) ++ (const a=20) // error: 'a' already exists
+const bad = (...(const a=2), ...(const a=20)) // error: 'a' already exists
 ```
 
-The `...` also concatenates, but it is an "inline concatenate": it splices the
-fields at that position inside the surrounding tuple literal (or argument list)
-instead of appending. The duplicate-field rule is identical to `++` — a field
-defined with different values on both sides is a compile error either way. The
-only differences are *where* the fields land and that the inline form can add
-to the arguments of a function call:
+Because `...` splices fields at its position, it can also insert in the middle
+of a literal and add arguments to a function call:
 
 ```pyrope
 comb foo(a, b, c) -> (r) { r = a + b + c }
 
-const rest = (b=2, c=3)
+const rest = (const b=2, mut c=3)
 cassert(foo(a=1, ...rest) == 6)   // same as foo(a=1, b=2, c=3)
 ```
 
 !!! WARNING "TBD"
-    The inline-concatenate / spread `...` operator is not yet implemented in
-    LiveHD (see [implementation status](15-tbd.md)); `++` works today.
+    LiveHD implements tuple concatenation today, but the full `...` splice
+    surface — mid-literal insertion and the call-argument spread
+    `foo(a=1, ...rest)` — is not wired yet (see
+    [implementation status](15-tbd.md)).
 
 
 
@@ -389,7 +383,7 @@ in Pyrope is 0, not unknown like Verilog.
 
 Each tuple field must be unique. Inside a tuple literal a field may only be
 introduced once, and only with a plain `=`. Repeating a field name is an
-error, and so is a compound assignment (`++=`, `+=`, ...) inside the literal —
+error, and so is a compound assignment (`+=`, `-=`, ...) inside the literal —
 there is no prior value to update while the tuple is still being built.
 
 ```pyrope
@@ -400,23 +394,36 @@ mut x = (
 
 mut y = (
   ,ff = 1
-  ,ff ++= 2 // error: compound assignment is not allowed inside a tuple literal
-  ,zz ++= 3 // error: compound assignment is not allowed inside a tuple literal
+  ,ff += 2  // error: compound assignment is not allowed inside a tuple literal
+  ,zz += 3  // error: compound assignment is not allowed inside a tuple literal
 )
 ```
 
-It is still practical to append or concatenate into an existing field — this
-is the case for overloading. Do it as a separate statement *after* the tuple
-is declared (the variable must be `mut`), using `++=` on the field path. This
-concatenates `2` into `ff`, so `y.ff` becomes the tuple `(1, 2)`:
+To extend a tuple — adding fields or growing an overload set — splice the
+original into a new tuple with `...`:
 
 ```pyrope
-mut y = (
-  ,ff = 1
-  ,zz = 3
-)
-y.ff ++= 2   // OK: 'y' is mut, so the field can be concatenated afterwards
+const y  = (const ff=1, const zz=3)
+const y2 = (...y, const qq=2)    // y2 == (ff=1, zz=3, qq=2)
+
+const ops  = [add1, add2]
+const ops2 = (...ops, add3)      // extend the overload set into a new binding
 ```
+
+A `mut` variable that is *already* a tuple may also self-assign — the base
+type does not change, only the arity grows. This is the array-comprehension
+idiom:
+
+```pyrope
+mut acc:[] = nil
+for i in 0..<3 { acc = (...acc, i) }
+cassert(acc == (0,1,2))
+```
+
+Self-splicing a non-tuple value is the one case that fails: `mut s = 5; s =
+(...s, 1)` would redefine `s`'s base type from a scalar to a tuple, a compile
+error. Use a fresh binding (`mut xx = (...s, 1)`) when the source is not
+already a tuple.
 
 
 
@@ -440,7 +447,7 @@ y = match z {
   in (1,2) { 4 }
   else { 5 }
 }
-y2 = match mut one=1 ; one ++ z {  // same as: y2 = match (1,z) {
+y2 = match mut one=1 ; (one, ...z) {  // same as: y2 = match (1,z) {
   == (1,2) { 4 }
   else     { 0 }
 }
@@ -667,7 +674,7 @@ enum E3 = (
   )
 cassert(string(E3.l1.l1a) == "E3.l1.l1a")
 cassert(string(E3.l1) == "E3.l1")
-cassert(E3("l1.l2") == E3.l1.l2)
+cassert(E3("l1.l1b") == E3.l1.l1b)
 ```
 
 ### Payload enumerates (tagged unions)

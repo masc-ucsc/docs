@@ -19,7 +19,7 @@ repo under `todo/pyrope/`.
 | `comptime`-computed / inferred-type memory init (`reg mem2 = reset_value`) | [Memories](08-memories.md) | `2f-mem_comptime_init` | multi-dim memories + literal/scalar init contents are implemented |
 | `macro=` memory-compiler binding | [Memories](08-memories.md) | `2f-macro` | |
 | `lg` attribute (explicit lgraph/module name) | [Attributes](04b-attributes.md#lg-explicit-lgraph-name) | `2f-lg` | |
-| Inline-concatenate / spread `...` (`(...a, ...b)` literals and `foo(a=1, ...rest)` call-argument spread) | [Tuples](03-bundle.md#tuple-mutability), [Variables](04-variables.md#tupleset-operators), [Struct types](07b-structtype.md) | `2f-inline_concat` | `++` concatenate works; var-arg gather `(...args)` works |
+| `...` splice surface: mid-literal insertion (`(1, ...mid, 6)`) and call-argument spread (`foo(a=1, ...rest)`) | [Tuples](03-bundle.md#tuple-mutability), [Variables](04-variables.md#tupleset-operators), [Struct types](07b-structtype.md) | `2f-splice` | the merge form `(...a, ...b)` and var-arg gather `(...args)` work |
 | `covercase`, in-language `lec()` (and `requires`/`ensures` pre/post) | [Assertions](05-assert.md) | `2f-verif_extras` | `assert`/`cassert`/`cover` work |
 
 Notes:

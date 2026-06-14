@@ -362,6 +362,40 @@ const a = pick(ar=(x=1, y=10), cond=true)  // compact tuple argument
 const b = pick(ar.x=1, ar.y=10, cond=true) // expanded fields, same binding
 ```
 
+### Binding return values
+
+Outputs are always named, and **binding the result of a call mirrors the
+argument-naming rules above** — the same name-match / non-ambiguous / type
+exceptions, just in the other direction. There is no positional return list and
+no binding by order.
+
+* **One output.** The output name is dropped and the result binds directly to
+  the destination. If that single output is a tuple, the destination *is* that
+  tuple:
+
+  ```pyrope
+  comb pair(a:int, b:int) -> (p:(first:int, second:int)) { p = (first=a, second=b) }
+
+  const inner = pair(a=100, b=50)   // single output `p` maps to `inner`
+  cassert(inner.first == 100)       // `inner` IS the tuple (no `inner.p` level)
+  ```
+
+* **Several outputs.** Destructure into names that **match the output names**
+  (the same exceptions apply: a lone output is unambiguous, a matching variable
+  name binds, or a unique type decides). Binding several outputs to one
+  variable is a compile error, and there is **no mapping by position**:
+
+  ```pyrope
+  comb two(a:int, b:int) -> (p1:int, p2:int) { p1 = a; p2 = b }
+
+  const (p1, p2) = two(a=100, b=50)        // OK: names match the outputs
+  cassert(p1==100 and p2==50)
+
+  const inner   = two(a=100, b=50)         // ERROR: two outputs, one variable
+  const (x, y)  = two(a=100, b=50)         // ERROR: x/y do not match p1/p2 (no by-order)
+  const (x=two.p1, y=two.p2) = two(a=100, b=50)  // OK: explicit remap `var = callee.output`
+  ```
+
 There are several rules on how to handle arguments.
 
 * **Every lambda call requires parentheses.** `foo()`, `foo(a=1,b=2)`, and
@@ -451,22 +485,25 @@ The keyword `self` is used to indicate that the function is accessing a tuple.
 `self` is required to be the first argument. If the method modifies the tuple
 contents, a `ref self` must be passed as input. Since `ref` is equivalent to
 having the argument as both input and output, `comb` can use `ref` and still
-be purely combinational. Use `mod` only when the method needs registers or
-cycle-level state.
+be purely combinational. `ref self` is a special receiver form: `foo.f1(...)`
+expands locally against `foo`, so the receiver is not a Verilog module port.
+For non-`self` parameters, `ref` is legal only on `comb`; a `mod` or `pipe`
+boundary is a real hardware boundary and cannot expose ordinary pass-by-ref
+ports.
 
 A typed `self` (`self:T` / `ref self:T`) constrains the receiver
 STRUCTURALLY: the call is valid when `receiver does T` — per-field name
 presence, matching scalar kinds, and integer ranges within the declared
 bounds; extra receiver fields are fine (see
-[Structural typing](07b-structtype.md)). It is never a typename
-comparison. Only NAMED self types are supported; an inline tuple type on
+[Structural typing](07b-structtype.md)). Only NAMED self types are
+supported; an inline tuple type on
 `self` is a compile error. The `does`-check applies to `self` only — the
 other arguments keep the normal argument rules above.
 
 `ref self` additionally requires a `mut` value receiver: calling a
 ref-self method on a `const` or on a `type` binding is a compile error
-(same as passing a const to any `ref` parameter). A non-ref `self` method
-IS callable on a `type` binding — it reads the field defaults.
+(same as passing a const to any `ref` parameter). A non-ref `self` method IS
+callable on a `type` binding — it reads the field defaults.
 
 
 ```pyrope
@@ -639,12 +676,13 @@ mymap.each(inc)   // OK: `each` has one non-self argument
 ## Init (constructor)
 
 
-Stateful behavior is modeled as a tuple with fields and methods. The tuple
-fields hold the state, and the methods operate on it via `ref self`. The only
-implicit hook is `init`, the constructor: it runs once when a variable of the
-type is constructed, and it must be `comb`. After construction, reads and
-writes are always structural; stateful or pipelined behavior is exposed as an
-explicit `mod` or `pipe` method.
+Object-like behavior is modeled as a tuple with fields and methods. Methods can
+mutate the tuple through `ref self`, which expands locally at a UFCS call such
+as `foo.f1(...)`. The only implicit hook is `init`, the constructor: it runs
+once when a variable of the type is constructed, and it must be `comb`. After
+construction, reads and writes are always structural; stateful or pipelined
+behavior is exposed as an explicit `mod` or `pipe` method. Ordinary non-`self`
+`ref` parameters remain `comb`-only.
 
 ```pyrope
 const Counter = (
@@ -652,7 +690,7 @@ const Counter = (
   comb init(ref self, start:bool) {   // constructor
     self.found_once = start
   },
-  mod call(ref self, a:u8) -> (result:u9@[0]) { // explicit stateful method
+  mod call(ref self, a:u8) -> (result:u9@[0]) { // receiver is locally expanded
     self.found_once or= (a == 0)
     result = a + 1
   }
@@ -685,7 +723,9 @@ self` argument behaves like a pass by reference in non-hardware languages. This
 means that the tuple fields are updated as the method executes, it does not
 wait until the method finishes execution. A method without the `ref` keyword is
 a pass by value call. Since all the inputs are immutable by default (`const`),
-any `self` updates should generate a compile error.
+any `self` updates should generate a compile error. Ordinary non-`self` `ref`
+parameters are legal only on `comb`; `ref self` is the method receiver
+exception and expands locally at the call site.
 
 ```pyrope
 const Nested_call = (

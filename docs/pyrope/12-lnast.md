@@ -275,7 +275,7 @@ Tuple concatenation does not use `plus` but the `tup_concat` operator.
 === "Tuple in Pyrope"
     ```pyrope
     mut a = (2, 1+1)
-    const x = a ++ (const c=3) ++ 1
+    const x = (...a, const c=3, 1)
     ```
 
 === "LNAST direct"
@@ -854,7 +854,8 @@ dependent on the input type.
       ref c
     ```
 
-There are two tuple concatenate operator  `a ++ b` and `(a,...b)`. `x=a++b` translates to:
+The tuple concatenate operator is the `...` splice. `x = (...a, ...b)`
+translates to:
 
 ```lnast
 tup_concat
@@ -863,12 +864,12 @@ tup_concat
   ref b
 ```
 
-The inplace concatenate is equivalent. Tuple concat recursively merges matching
-tuple-valued fields. A duplicate final field is accepted when one side is `nil`
-or constant propagation proves both sides have the same value; otherwise it is
-an overlap and triggers a compile error.
+Tuple concat recursively merges matching tuple-valued fields. A duplicate final
+field is accepted when one side is `nil` or constant propagation proves both
+sides have the same value; otherwise it is an overlap and triggers a compile
+error.
 
-`x=(a,...b)` translates to:
+`x = (a, ...b)` translates to:
 ```lnast
 tup_concat
   ref x
@@ -1003,22 +1004,6 @@ in
   ref b
   ref a
 land
-  ref x
-  ref ___0
-  ref ___1
-```
-
-To perform a nominal type check, the attributes can be accessed directly. `x = a is b` translates to:
-```lnast
-attr_get
-  ref ___0
-  ref a
-  const typename
-attr_get
-  ref ___1
-  ref b
-  const typename
-eq
   ref x
   ref ___0
   ref ___1
@@ -1497,7 +1482,7 @@ The `for` construct is also a loop, but it can have element, index, and key in t
 
 === "Pyrope for"
     ```pyrope
-    for (index,key,value) in enumerate(key(tup)) {
+    for (index,value,key) in tup {
       mycall(value,index,key)
     }
     ```

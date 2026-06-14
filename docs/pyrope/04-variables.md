@@ -234,7 +234,7 @@ Pryope number or an assertion is raised.
 
 A boolean is either `true` or `false`. Booleans can not mix with integers in
 expressions unless there is an explicit typecast (`int(false)==0`,
-`int(true)==1`, `boolean(0)==false`, and `boolean(1)==true`). Unlike integers,
+`int(true)==-1`, `boolean(0)==false`, and `boolean(1)==true`). Unlike integers,
 booleans do not support undefined value. A typecast from integer to boolean
 will raise an assertion when the integer has undefined bits (`?`) or `nil`.
 
@@ -253,7 +253,7 @@ if boolean(e#[3]) {  // OK, explicit conversion from unsigned bit to boolean
   call(x)
 }
 
-cassert(2 == (int(true)  + 1)) // explicity typecast
+cassert(0 == (int(true)  + 1)) // explicity typecast; true is signed all-ones
 cassert(1 == (int(false) + 1)) // explicity typecast
 cassert(boolean(33) or false) // explicity typecast
 ```
@@ -288,13 +288,10 @@ are 3 ways to specify a closed range:
 * `first..+size`: Range from first to `first+size`. Since there are `size`
   elements, it is equivalent to write `first..<(first+size)`.
 
-When used inside selectors (`[range]`) the ranges can be open (no first/last specified)
-or use negative numbers. Ranges only work with positive numbers, a negative
-number is to specify the distance from last.
-
-* `[first..<-val]` is the same as `[first..<(last-val+1)]`. The advantage is that the `last` or
-size in the tuple can be unknown.
-* `[first..]` is the same as `[first..=-1]`.
+When used inside selectors (`[range]`) ranges can be open (no first/last
+specified). Negative selector indices are compile errors; there is no
+distance-from-end indexing. Use an open range such as `[first..]` to select
+through the end.
 
 ```pyrope
 const a = (1,2,3)
@@ -306,12 +303,9 @@ cassert(a[1..<10] == (2,3))
 
 const b = 0ub0110_1001
 cassert(b#[1..]        == 0ub0110_100)
-cassert(b#[1..=-1]     == 0ub0110_100)
-cassert(b#[1..=-2]     == 0ub0110_100) // unsigned result from bit selector
-cassert(b#sext[1..=-2] == 0sb110_100)
-cassert(b#[1..=-3]     == 0ub10_100)
-cassert(b#[1..<-3]     == 0ub0_100)
 cassert(b#[0]          == 1)
+const bad = b#[-1]     // error: negative selector index
+const bad2 = b#[1..=-1] // error: decreasing/negative-end selector range
 ```
 
 
@@ -369,23 +363,24 @@ possible when both begin and end of the range are fully specified.
 
 ```pyrope
 cassert((0..<30 step 10) == (0,10,20)) // ranges and tuples can combined
-cassert((1..=3) ++ 4 == (1,2,3,4))     // tuple and range ops become a tuple
+cassert((...(1..=3), 4) == (1,2,3,4))   // tuple and range ops become a tuple
 cassert(1..=3 == (1,2,3))
 cassert((1..=3)#[..] == 0ub1110)        // convert range to integer with #[..]
 ```
 
 ### String
 
-Strings are a basic type, but they can be typecasted to integers using the
-ASCII sequence. The string encoding assigns the lower bits to the first
-characters in the string, each character has 8 bits associated.
+Strings are a basic type. They can be typecasted to integers using the ASCII
+sequence: the string encoding assigns the lower bits to the first characters
+in the string, and each character has 8 bits associated. Casting an integer to
+`string` produces decimal text, not an ASCII-byte decode.
 
 ```pyrope
 const a = 'cad'          // c is 0x63, a is 0x61, and d is 0x64
 const b = 0x64_61_63
-cassert(a == string(b)) // typecast number to string
 cassert(int(a) == b) // typecast string to number
 cassert(a#[..] == b) // typecast string to number
+cassert(string(b) == "6578531") // integer to string is decimal text
 ```
 
 Like ranges, strings can also be seen as a tuple, and when tuple operations are
@@ -393,7 +388,7 @@ performed they are converted to a tuple.
 
 ```pyrope
 cassert("hello" == ('h','e','l','l','o'))
-cassert("h" ++ "ell" == ('h','e','l','l') == "hell")
+cassert((..."h", ..."ell") == ('h','e','l','l') == "hell")
 ```
 
 
@@ -437,12 +432,6 @@ z.color        = "blue"             // OK
 assert(x equals Typ) // same type structure
 assert(z equals Typ) // same type structure
 assert(x equals z) // same type structure
-
-assert(y is Typ)
-assert(Typ is Typ)
-assert(not (z is Bund3))
-assert(not (z is Typ))
-assert(not (z is bund1))
 ```
 
 ## Type checks
@@ -452,8 +441,8 @@ A `:Type` annotation is **only** valid at a declaration site (`mut`, `reg`,
 tuple field declarations). Once the variable is declared, the type is set
 for its whole existence.
 
-To check that an existing value matches a type, use the `does` or `is`
-operator inside `cassert`/`assert`. To convert a value to a type, call the
+To check that an existing value matches a type, use the `does` operator
+inside `cassert`/`assert`. To convert a value to a type, call the
 type as a constructor — `u8(value)`.
 
 ```pyrope
@@ -612,28 +601,24 @@ cassert((const x=nil, const c=3) in (const x=nil, const c=3, const d=4))
 cassert(not ((const c=3) in (const c=nil, const d=4)))
 ```
 
-* `a ++ b` concatenate two tuples. A field present on only one side is copied
-  in. When the same field appears on both sides it is a compile error, unless
-  one side is `nil`/`0sb?` (the defined value wins) or both sides hold the same
-  value (matching tuple-valued fields merge recursively).
+* `(...a, ...b)` concatenate two tuples (splice). A field present on only one
+  side is copied in. When the same field appears on both sides it is a compile
+  error, unless one side is `nil`/`0sb?` (the defined value wins) or both sides
+  hold the same value (matching tuple-valued fields merge recursively). The
+  splice inserts each tuple's fields at its position, so it can also insert in
+  the middle of a literal and add arguments to a function call
+  (`foo(a=1, ...rest)`).
 
 ```pyrope
-cassert(((const a=1, const c=3) ++ (const a=1, const b=2, const c=nil)) == (const a=1, const c=3, const b=2))
-cassert(((1,2) ++ (const a=2, nil, 5)) == (1, 2, const a=2, nil, 5))
-cassert(((const x=1) ++ (const a=2, nil, 5)) == (const x=1, const a=2, nil, 5))
+cassert((...(const a=1, const c=3), ...(const a=1, const b=2, const c=nil)) == (const a=1, const c=3, const b=2))
+cassert((...(1,2), ...(const a=2, nil, 5)) == (1, 2, const a=2, nil, 5))
+cassert((...(const x=1), ...(const a=2, nil, 5)) == (const x=1, const a=2, nil, 5))
 
-cassert(((const x=1, const b=2) ++ (const x=0sb?, 3)) == (const x=1, const b=2, 3))
+cassert((...(const x=1, const b=2), ...(const x=0sb?, 3)) == (const x=1, const b=2, 3))
 
-const bad = (const a=1) ++ (const a=2)  // error: 'a' defined with different values on both sides
-```
+const bad = (...(const a=1), ...(const a=2))  // error: 'a' defined with different values on both sides
 
-* `(,...b)` in-place insert `b` (TBD: not yet implemented). It splices `b`'s
-  fields at that position instead of appending. The duplicate-field rule is the
-  **same** as `++` (a field defined with different values on both sides is a
-  compile error); the only differences are the in-place position and that `...`
-  can also add to function-call arguments.
-
-```pyrope
+// the splice can also insert in the middle of a literal:
 cassert((1, const b=2, ...(3, const c=3), 6) == (1, const b=2, 3, const c=3, 6))
 cassert((1, const b=2, ...(nil, const c=3), 0sb?, 6) == (1, const b=2, nil, const c=3, 0sb?, 6))
 ```
@@ -652,7 +637,6 @@ cassert((const a=1, const b=2) has "a")
 * `a equals b` same as `(a does b) and (b does a)`
 * `a case b` same as `(a does b)` plus value matching for every defined value
   in `b`. Values in `b` that are undefined (`nil`, `0sb?`) act as wildcards.
-* `a is b` is a nominal type check. Equivalent to `a.[typename] == b.[typename]`
 
 Negate any type operator with `not (...)`, e.g. `not (a does b)`,
 `not (a equals b)`, `not (a case b)`.
@@ -828,7 +812,7 @@ Pyrope has very shallow precedence, unlike most other languages the
 programmer should explicitly indicate the precedence. The exception is for
 widely expected precedence.
 
-* Unary operators (not,!,~,?) bind stronger than binary operators (+,++,-,*...)
+* Unary operators (not,!,~,?) bind stronger than binary operators (+,-,*...)
 * Comparators can be chained (a<=c<=d) same as (a<=c and c<=d)
 * mult/div precedence is only against +,- operators.
 * Parenthesis can be avoided when a expression left-to-right has the same
@@ -838,7 +822,7 @@ widely expected precedence.
 |:-----------:|:-----------:|-------------:|
 | 1          | unary       | not ! ~ ? |
 | 2          | mult/div    | *, /         |
-| 3          | other binary | ..,^, &, -,+, ++, <<, >>, in, does, has, case, equals, to |
+| 3          | other binary | ..,^, &, -,+, <<, >>, in, does, has, case, equals, to |
 | 4          | comparators |    <, <=, ==, !=, >=, > |
 | 5          | logical     | and, or, implies |
 

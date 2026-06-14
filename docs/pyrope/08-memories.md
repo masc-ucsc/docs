@@ -338,7 +338,7 @@ multi-dimensional arrays.
 comb flatten(...arr) -> (res) {
   res = ()
   for i in arr {
-    res ++= i
+    res = (...res, i)
   }
 }
 

@@ -89,7 +89,7 @@ constraints from the type system. Pyrope type system constructs to handle types:
 * `a:b` binds variable `a` to type `b`. It is **only** allowed at
   declaration sites (`mut`/`reg`/`const`/`comb`/`pipe`/`mod`, lambda
   parameters and return types, and tuple field declarations). To check
-  that an existing value has type `b`, use `a does b` or `a is b`. To
+  that an existing value has type `b`, use `a does b`. To
   convert a value to type `b`, call the type as a constructor: `b(a)`.
 
 * `a equals b`: Checks that `a does b` and `b does a`. Effectively checking
@@ -243,61 +243,6 @@ cassert(not ((const a:u32=0, const c:string="hello", const b=false) case (a:bool
 cassert(not ((const a:u32=0, const c:string="hello", const b=false) case (a = 0, b = true)))
 ```
 
-## Nominal type check
-
-
-Pyrope has structural type checking, but there is a keyword `is` that allows to
-check that the type name matches `a is b` returns true if the type of `a` has
-the same name as the type of `b`. The `a is b` is a boolean expression like `a
-does b`, not a `a:b` type check. This means that it can be used in `where`
-statements or any conditional code.
-
-`a is b` is equivalent to check the `a` variable declaration type name against
-the `b` variable declaration type name. If their declaration had no type, the
-inferred type name is used.
-
-```pyrope
-const a = 3
-const b = 200
-cassert(a is b)
-
-const c:u32 = 10
-cassert(not (a is c))
-cassert(a.[typename] == "int" and c.[typename] == "u32")
-
-const d:u32 = nil
-cassert(c is d)
-
-const e = (const a:u32=1)
-const f:(const a:u32) = 33
-cassert(e is f)
-```
-
-Since it checks equivalence, when `a is b == b is a`.
-
-```pyrope
-const X1 = (const b:u32 = 0)
-const X2 = (const b:u32 = 0)
-
-const t1:X1 = (b=3)
-const t2:X2 = (b=3)
-cassert(not ((const b=3) is X2))  // same as (const b=3) !is X2
-cassert(t1 equals t2)
-cassert(not (t1 is t2))
-
-const t4:X1 = (b=5)
-
-cassert(t4 equals t1)
-cassert(t4 is t1)
-cassert(not (t4 is t2))
-
-comb f2_x1(x:X1) -> (r) { r = x.b + 1 }
-comb f2_other(x) -> (r) { r = 0 }
-
-// Dispatch explicitly at the call site:
-const result = if x is X1 { f2_x1(x) } else { f2_other(x) }
-```
-
 ## Enums with types
 
 Enumerates (enums) create a number for each entry in a set of identifiers.
@@ -394,7 +339,7 @@ because the result would not converge — the next elaboration can compute a
 different range and silently change the circuit:
 
 ```pyrope
-if x.[bw_max] != 30 { // error: 'bw_max' is debug-only
+if x.[bw_max] != 30 { // compiler error 'bw_max' is debug-only
   x = 30
 } else {
   x = 40
@@ -790,7 +735,7 @@ tuple.
 const b = import("prp/Number")
 mut a = import("fancy/Number_mixin")
 
-const Number = b ++ a // patch the default Number class
+const Number = (...b, ...a) // patch the default Number class
 
 mut x:Number = 3
 ```
@@ -914,8 +859,8 @@ test "mocking taken branches" {
 
 ## Operator overloading
 
-There is no operator overload in Pyrope. `+` always adds Numbers, `++` always
-concatenates a tuple or a String, `and` is always for boolean types,...
+There is no operator overload in Pyrope. `+` always adds Numbers, `...` always
+splices/concatenates a tuple or a String, `and` is always for boolean types,...
 
 
 ## Init method (constructor)

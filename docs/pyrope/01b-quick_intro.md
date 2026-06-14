@@ -63,7 +63,7 @@ cassert(t[0] == 1)       // integer indices select positional entries ONLY
 ```
 
 Named fields are unordered and name-access only — `t[0]` never aliases a
-named field. `a ++ b` concatenates. A selector `[...]` takes one expression
+named field. `(...a, ...b)` concatenates (splice). A selector `[...]` takes one expression
 (integer, string, range, or conditional).
 
 Details: [Tuples](03-bundle.md), [Type system](07-typesystem.md).
@@ -131,7 +131,7 @@ match state {              // exactly one arm runs; `else` is MANDATORY
   else          { state = State.Idle }
 }
 
-for i in 0..<N { acc ++= f(i) }   // loops fully unroll: bounds must be comptime
+for i in 0..<N { acc += f(i) }   // loops fully unroll: bounds must be comptime
 ```
 
 * `unique if` asserts mutually exclusive conditions (one-hot mux; replaces

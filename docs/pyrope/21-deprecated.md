@@ -160,7 +160,6 @@ Using the set operations:
 ```future
 enum Order = (One, Two, Three)
 enum Order2 = (...Order, Four)
-enum Order2 = Order ++ Four       // error: on overlap?
 enum Order3 = Order except Three  // new "remove" tuple op
 ```
 

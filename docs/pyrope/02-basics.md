@@ -123,8 +123,7 @@ const color     = "blue"
 const extension = "s"
 
 const txt1 = "I have {num:d} {color} potato{extension}"
-const txt2 = string("I have {:d} {} potato{}", num, color, extension)
-cassert(txt1 == txt2 == "I have 2 blue potatos")
+cassert(txt1 == "I have 2 blue potatos")
 
 const txt3 = 'I have {num}'     // single quote does not do interpolation
 cassert(txt3 == "I have \{num\}") // \{ escapes the interpolation
