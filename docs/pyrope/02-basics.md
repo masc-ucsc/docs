@@ -80,9 +80,9 @@ literals (`0sb?` / `0ub?`) and `nil`:
   simulation-time safety mechanism.
 
 ```pyrope
-cassert (0sb? | 1) == 1    // OK: unknown OR 1 = 1
-cassert (0sb? + 1) == 0sb?? // unknown propagation
-nil | 1      // error: nil is invalid, not unknown
+cassert((0sb? | 1) == 1)   // OK: unknown OR 1 = 1
+cassert((0sb? + 1) == 0sb??)// unknown propagation
+cassert((nil | 1)==nil)     // error: nil is invalid, not unknown
 ```
 
 Notice that `nil` is a state in the integer basic type, it is not a new type by

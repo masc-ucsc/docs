@@ -114,11 +114,10 @@ between arrays (no clock) and memories is that arrays initialization value must
 be `comptime` while `memories` and `reg` can have a sequence of statements to
 generate a reset value.
 
-!!! WARNING "TBD"
-    The init contents must today be a tuple **literal** (or a scalar
-    broadcast). A `comptime`-computed initializer variable and the
-    inferred-type form (`reg mem2 = reset_value` below) are not lowered yet
-    (see [Implementation status](15-tbd.md)).
+The init contents may be a tuple **literal**, a scalar broadcast, a
+`comptime`-computed initializer variable (filled by a loop), or the
+inferred-type form (`reg mem2 = reset_value` below — the array type and element
+envelope are inferred from the initializer).
 
 === "Pyrope array syntax"
     ```pyrope

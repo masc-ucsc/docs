@@ -95,12 +95,12 @@ $ lhd synth lg:foo_lgs/ --recipe O1 --emit verilog:foo.gen.v
 ```
 
 The Verilog frontend has three readers, selected with
-`--reader yosys-verilog|yosys-slang|slang` (default `yosys-slang`):
+`--reader slang|yosys-slang|yosys-verilog` (default `slang`):
 
+* `slang` — the direct `inou.slang` SV→LNAST front-end (the default); the
+  design becomes LNAST and joins the Pyrope flow.
 * `yosys-verilog` — Yosys' native Verilog frontend, into LGraphs.
 * `yosys-slang` — Yosys with the slang.so plugin (SystemVerilog), into LGraphs.
-* `slang` — the direct `inou.slang` SV→LNAST front-end; the design becomes
-  LNAST units and the rest of the flow is the Pyrope one.
 
 Because Verilog `` `include `` + `+incdir` can read files that are not on the
 command line, the Verilog frontend supports `--depfile PATH` to write a
@@ -167,8 +167,9 @@ the flow exercised by `lhd/tests/lhd_usage_merge_test.sh`:
 ```sh
 $ bazel build //lhd:lhd
 
-# 1. a Verilog leaf -> lg: (through yosys)
-$ ./bazel-bin/lhd/lhd elaborate lhd/tests/merge_demo/inv.v --top inv --emit-dir lg:tmp/inv_lg/
+# 1. a Verilog leaf -> lg: (through yosys; the default reader is now slang, so
+#    request the yosys frontend explicitly for this black-box leaf)
+$ ./bazel-bin/lhd/lhd elaborate lhd/tests/merge_demo/inv.v --top inv --reader yosys-verilog --emit-dir lg:tmp/inv_lg/
 
 # 2. a Pyrope leaf -> lg:
 $ ./bazel-bin/lhd/lhd elaborate lhd/tests/merge_demo/adder.prp --emit-dir lg:tmp/adder_lg/

@@ -70,7 +70,7 @@ optimize.
     mut dest:u32 = 0
     mut foo:u16 = 0
     mut v:u8   = 0
-    cassert (dest does u32) and (foo does u16) and (v does u8)
+    cassert((dest does u32) and (foo does u16) and (v does u8))
     dest = foo + v
     ```
 
@@ -330,9 +330,20 @@ val = 300        // error: '300' overflows the maximum allowed value of 'val'
 wrap val = 0x1F0 // Drop bits from 0x1F0 to fit in constrained type
 cassert(val == 240 == 0xF0)
 
-val = u8(0x1F0)    // same
-cassert(val == 0xF0)
+val = u8(0x1F0)  // error: 0x1F0 overflows u8 — a sized cast is CHECKED, not
+                 // truncating; use `wrap`/`sat` to drop bits
+val = u8(200)    // OK: 200 fits u8, casts through unchanged
+cassert(val == 200)
 ```
+
+A sized cast `uN(x)`/`sN(x)` is a *checked* conversion, not a wrap: it succeeds
+only when `x` provably fits the target range, and is a compile error otherwise
+(use a `wrap`/`sat` prefix to drop bits on purpose). Casting a `boolean`
+interprets its single bit under the target's signedness — `int(true) == -1` /
+`s8(true) == -1` (1-bit signed), but `uint(true) == 1` / `u8(true) == 1`
+(unsigned magnitude bit). The reverse, `boolean(x)`/`bool(x)` on an integer, is
+`x != 0` (so `boolean(33)` is true); an undefined (`?`) or `nil` operand is a
+compile error.
 
 Branching on `bw_max`/`bw_min` outside a debug statement is a compile error
 because the result would not converge — the next elaboration can compute a
@@ -1164,7 +1175,7 @@ const x = t1==t3           // error: t1 !equals t3
 
 The comparator `a == b` when `a` or `b` are tuples is equivalent to:
 ```pyrope
-cassert (a==b) == ((a in b) and (b in a))
+cassert((a==b) == ((a in b) and (b in a)))
 cassert(a equals b)
 ```
 

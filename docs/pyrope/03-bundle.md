@@ -282,14 +282,6 @@ const rest = (const b=2, mut c=3)
 cassert(foo(a=1, ...rest) == 6)   // same as foo(a=1, b=2, c=3)
 ```
 
-!!! WARNING "TBD"
-    LiveHD implements tuple concatenation today, but the full `...` splice
-    surface — mid-literal insertion and the call-argument spread
-    `foo(a=1, ...rest)` — is not wired yet (see
-    [implementation status](15-tbd.md)).
-
-
-
 ## Field access
 
 Since everything is a tuple, any variable can do `variable[0][0][0]` because it

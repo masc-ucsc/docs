@@ -126,6 +126,15 @@ Use `cputs` for elaboration-time diagnostics (which branch of a `comptime
 if` was taken, which generic parameter was selected, etc.); use `puts` for
 messages that should appear in the simulator at run time.
 
+## Illegal operations
+
+The compiler never aborts on bad user input — every illegal operation is a
+clean compile error. An illegal or undefined low-level operation yields `nil`
+(e.g. division/modulo by zero, or arithmetic on a `nil`/uninitialized operand),
+and a `nil` produced by an arithmetic operation, or a `nil` used as an `if` /
+`while` condition, is reported as a compile error rather than silently folding
+to a degenerate value.
+
 ## LEC
 
 The `lec` command is a formal verification step that checks that all the

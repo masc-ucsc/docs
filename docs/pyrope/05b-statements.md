@@ -302,7 +302,7 @@ for i in 0..<5 {
     e = (...e, i)
   }
 }
-cassert ((0,1,2,3,4) == d)
+cassert((0,1,2,3,4) == d)
 cassert(e == (1,2,3,4))
 ```
 
@@ -401,10 +401,6 @@ loop {
 ```
 
 ## Cycle access and defer
-
-!!! WARNING "TBD"
-    `.[defer]` is not yet implemented in LiveHD (see
-    [Implementation status](15-tbd.md)).
 
 Cycle-based access to values is expressed through a small set of
 constructs:

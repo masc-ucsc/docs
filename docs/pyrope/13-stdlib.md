@@ -91,7 +91,7 @@ comb filter<T>(f, ...x:[]T) -> (r:[]) {
 Sample use:
 
 ```pyrope
-cassert (1,2,3).reduce(prp.plus) == 6
+cassert((1,2,3).reduce(prp.plus) == 6)
 ```
 
 Library code:

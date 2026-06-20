@@ -250,7 +250,7 @@ Registers have the following attributes:
 * `negreset`: active low reset signal
 * `posclk`: true by default, selects a posedge or negnedge flop
 * `retime`: allow to retime across the register
-* `defer` (TBD: not yet implemented): **RHS-only** read of the end-of-cycle value (after all in-cycle
+* `defer`: **RHS-only** read of the end-of-cycle value (after all in-cycle
   writes have accumulated). This is same-cycle *wiring*, not a temporal
   construct — no flop is involved (see
   [defer is wiring, not time](05b-statements.md#defer-is-wiring-not-time)).
@@ -304,10 +304,6 @@ Lambda attributes allow [Introspection](07-typesystem.md#Introspection) which re
   [lg: explicit lgraph name](#lg-explicit-lgraph-name).
 
 #### lg: explicit lgraph name
-
-!!! WARNING "TBD"
-    Not yet implemented in LiveHD (see
-    [Implementation status](15-tbd.md)).
 
 By default, the lgraph generated for a lambda gets a compiler-mangled name
 derived from the file and the declaration name. The `lg` attribute replaces

@@ -323,7 +323,7 @@ cassert(int(c) == 0ub1110)
 cassert(range(0ub01_1100) == 2..=4)
 
 assert(range(1,2,3)) // error: typecast not allowed
-cassert (1,2,3) == tuple(1..=3)
+cassert((1,2,3) == tuple(1..=3))
 ```
 
 In most cases, the range can be used in contructs like `for` for positive and
