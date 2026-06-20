@@ -44,38 +44,24 @@ corresponds to a reset phase. Each register declaration assignment has reset
 code only executed during reset.
 
 
-### Defer
+### Backward edges with `wire`
 
-Some programming languages like Zig or Odin have a defer statement. In
-non-HDLs, a defer means that the statements inside the defer are executed when
-the "scope" finishes. Usually, the defer statements are executed before the
-function return.
-
-
-Pyrope defers the statements not to the end of the scope but to the end of the
-clock cycle. The defer delays the "write" until the end of the clock cycle, the
-defer does not defer the reads, just the write or update. To read the value
-from the end of the cycle the attribute `variable.[defer]` must be used.
-
-
-These are constructs not existing in software but needed in hardware because it
-is necessary to connect blocks. Following the control flow from the top only
-allows to connect forward. Some contructs like connecting a ring require a
-"backward edge". The `.[defer]` RHS read allows such constructs.
+Unlike software, hardware needs to connect blocks that form rings. Following
+the control flow from the top only allows connecting *forward*; constructs
+like connecting a ring require a "backward edge". Pyrope expresses this with a
+`wire`: a single-driver combinational net that may be **read before its
+driver appears textually**.
 
 ```pyrope
-mut a = 1
-mut b = 2
-
-cassert(a==1 and b==2)
-b = a.[defer]         // read the end-of-cycle value of 'a' (= 1)
-cassert(a==1 and b==1)
-
-cassert(b.[defer] == 1) // read defer
+wire a = nil
+b = ring(a)           // reads 'a' before its driver appears
+a = compute(b)        // the single driver of 'a' (the backward edge)
 ```
 
-`.[defer]` is RHS-only — a backward edge is expressed by reading another
-variable's end-of-cycle value, not by writing into one.
+The net is the same cycle — no flop, no latency. A real combinational cycle
+(a wire that combinationally feeds itself) is still rejected; a ring is legal
+only when a `reg` breaks it. See
+[Wire](04-variables.md#wire-single-driver-combinational-nets).
 
 
 ### Pipelining

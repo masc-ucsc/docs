@@ -8,25 +8,22 @@ In hardware, registers (built from flip-flops) are essential for storing informa
 While it's possible to instantiate low-level flops, the recommended, programmer-friendly method is to declare a **register** using the `reg` keyword. This makes statefulness explicit and prevents common bugs. The compiler guarantees that a `reg` is a state-holding element.
 
 A register's value at the start of a cycle is its **current state**. New
-values are assigned with plain `=` (e.g., `counter = counter + 1`). The
-`.[defer]` construct is **RHS-only**: it reads the end-of-cycle value
-(after all in-cycle writes have accumulated), which is useful inside
-loops and for assertions. There is no `total.[defer] = ...` LHS form.
-`.[defer]` is a same-cycle *wiring* construct — no flop is involved and no
-cycle boundary is crossed (see
-[defer is wiring, not time](05b-statements.md#defer-is-wiring-not-time)).
+values are assigned with plain `=` (e.g., `counter = counter + 1`). To use a
+register's next-state value in the same cycle (e.g. to feed a consumer or
+close a loop), name that value as a `wire` (single-driver combinational net)
+and read the wire in both places — see
+[Wire](04-variables.md#wire-single-driver-combinational-nets).
 
 In our syntax, a bare reference to `total` reads the register's current
-state. `total.[defer]` on the RHS reads what the register *will* be at
-end of cycle. If you need to snapshot the current value before later
-code modifies the register within the cycle, copy it into a local:
+state. If you need to snapshot the current value before later code modifies
+the register within the cycle, copy it into a local:
 `const counter_q = counter`.
 
 === "Structural flop style"
     ```pyrope
-    mut counter_next:u8 = nil
+    wire counter_next:u8 = nil
 
-    const counter_q = __flop(din=counter_next.[defer]  // RHS read of final update
+    const counter_q = __flop(din=counter_next         // single-driver net, driven below
                        ,reset_pin=ref my_rst, clock_pin=ref my_clk
                        ,enable=my_enable            // enable control
                        ,posclk=true
@@ -41,9 +38,11 @@ code modifies the register within the cycle, copy it into a local:
     reg counter:u8:[reset_pin=ref my_rst, clock_pin=ref my_clk, posclk=true] = 3
     const tmp1 = counter             // snapshot q before any updates this cycle
 
+    wire counter_next = nil
     if my_enable {
-      wrap counter = counter + 1
-      assert(tmp1 != counter.[defer]) // compare against the in-cycle accumulated value
+      wrap counter_next = counter + 1
+      counter = counter_next
+      assert(tmp1 != counter_next)    // compare against the next-state net
     }
     ```
 
@@ -184,8 +183,8 @@ stage `σ` computed at cycle `t` derives from the inputs of cycle `t-σ`.
      * stage register: `σ(q) = σ(d) + 1`
      * state register: `σ(q) = σ(d)` — pinned at its home stage
      * `past[n](x)`: `σ = σ(x) + n`
-     * `x.[defer]`: same-cycle wiring to the end-of-cycle value — never a
-       stage shift: `σ = σ(x.d)`
+     * `wire` net: a combinational net carries the stage of its driver —
+       never a stage shift
      * plain output: `σ <= N`; the compiler appends the missing `N - σ`
        flops at that output
      * `reg` (state) output: home stage must equal `N - 1`; the register
@@ -398,7 +397,9 @@ read a value at a different cycle, use `past[N](x)` or `next[N](x)`.
   in-cycle updates.
 * `past[n](counter)` reads the value `n` cycles ago. The compiler inserts
   the flops (see [Temporal library](09-verification.md#temporal-library)).
-* `counter.[defer]` is **RHS-only** — it reads the end-of-cycle value.
+* To read a register's next-state value in the same cycle, name it as a
+  `wire` and read that net (see
+  [Wire](04-variables.md#wire-single-driver-combinational-nets)).
 * `stage[N]` picks how many pipeline stages the RHS `pipe` call inserts
   (`mod` only). A `pipe` may accept a single fixed count or a range; the
   caller picks within it with `stage[N]`. `N` must be positive; `stage[0]` is
@@ -417,8 +418,8 @@ pure check that never changes the hardware, is legal inside both `mod`
 and `pipe` bodies (in a `pipe` it asserts the value's inferred stage σ);
 it is rejected in `comb`, where every value is by definition at cycle 0.
 Inside a `mod`, register state is read via bare variable references
-(current value) or `.[defer]` (end-of-cycle value), and prior-cycle
-values via `past[n](x)`.
+(current value); the next-state value is exposed by naming it as a `wire`,
+and prior-cycle values via `past[n](x)`.
 
 `mod` blocks naturally use `reg` for persistent state across cycles. A
 single `mod` can both orchestrate pipeline stages with explicit timing and

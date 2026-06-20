@@ -66,10 +66,26 @@ common "unique parallel case" Verilog directive, and behaves like also
 having an `assume` statement, which allows for more efficient code
 generation than a sequence of `if/else`.
 
-Every `match` **must end with an `else` arm** — omitting it is a parse
-error. This guarantees there is always exactly one matching branch,
-removes the silent "no-case-matched" failure mode, and gives a single
-place to put a catch-all (`cassert(false`, a default value, etc.).)
+A `match` declares its arms mutually exclusive *and* exhaustive (it behaves
+like an `assume`/unique-parallel-case), so there is always exactly one matching
+branch. The `else` arm is **optional**: when the arms already cover the whole
+key space — e.g. every value of a bounded `uN`/`sN` selector — it can be left
+out. An omitted `else` behaves like an unreachable `else { assert(false) }`:
+in hardware it lowers to a *don't-care* (the Hotmux "none-of" slot is never
+selected), and at compile time a constant selector that somehow matches no arm
+leaves the result undefined (`nil`), exactly as for an `if`/`elif` chain with
+no `else`. Add an explicit `else` only when you need a real catch-all value or
+a `cassert(false)`.
+
+```pyrope
+// `sel:u2` lists all four values — no `else` needed.
+res = match sel {
+  == 0 { a }
+  == 1 { b }
+  == 2 { c }
+  == 3 { d }
+}
+```
 
 In addition to functionality, the syntax is different to avoid redundancy.
 `match` joins the match expression with the beginning of the matching
@@ -400,7 +416,7 @@ loop {
 } // do{ ... }while(a<10)
 ```
 
-## Cycle access and defer
+## Cycle access
 
 Cycle-based access to values is expressed through a small set of
 constructs:
@@ -421,9 +437,10 @@ constructs:
   call. `past(x)` is shorthand for `past[1](x)`. See the
   [Temporal library](09-verification.md#temporal-library).
 
-* `variable.[defer]` is **RHS-only**: it reads the end-of-cycle value
-  (after all in-cycle writes have accumulated). There is no
-  `variable.[defer] = ...` write form — writes use plain `=`.
+* To escape *program order* within a cycle — read a value that is only
+  produced by a later statement, e.g. to close a ring — declare it as a
+  `wire` (single-driver combinational net) and read it before its driver
+  appears. See [Wire](04-variables.md#wire-single-driver-combinational-nets).
 
 * For pipeline timing, use `stage[N]` (declaration modifier that pipelines
   the whole RHS over `N` cycles; `mod`-only) and `foo@[N]` (pure timing type
@@ -440,147 +457,25 @@ is legal inside both `mod` and `pipe` bodies. `foo@[3]` checks that `foo` is
 `stage[N] lhs = rhs` (a `mod`-only construct). To read past or future cycles,
 use `past[N](x)` or `next[N](x)`.
 
-The `.[defer]` attribute provides RHS-only deferred read access to a
-variable — the value at the end of the current cycle. It is valid for any
-variable type (`mut`, `const`, `reg`) as it refers to the final value
-within the current cycle.
-
-### `defer` is wiring, not time
-
-`.[defer]` is a **wiring** construct, not a temporal one. The mental
-model: the read is cut-and-pasted to the end of the code block, and the
-resulting value is connected back to the expression where the `.[defer]`
-appears. It is the same cycle — zero flops, zero added latency. What it
-buys is escape from *program order*: a statement can use a value that is
-only produced by a later statement.
-
-The canonical use is connecting the output of a later call into an
-earlier call:
+To feed a register's next-state into both the register and a same-cycle
+consumer, name the value as a `wire` and read it in both places:
 
 ```pyrope
-a_outs = mod_call1(b_outs.something.[defer], something_else)
-b_outs = mod_call2(a_outs, something_else)
+wire nx = nil          // forward-declared net for the next-state value
+nx = counter + 1       // its single driver
+reg counter:u32 = 0
+counter = nx           // registered write
+const also = nx + 1    // same-cycle consumer reads the same net
 ```
 
-`mod_call2` appears after `mod_call1` in program order, but its output
-field is wired back into `mod_call1`'s input. This looks like a loop and
-it is fine as long as no real combinational cycle exists (here: as long
-as `b_outs.something` does not combinationally depend on `mod_call2`'s
-first argument — the standard combinational-loop check validates it).
-
-The same works within a *single* call: an output can feed the call's own
-input when the callee has no combinational path between them. Given an
-`add_sub` where `add = a + b` and `sub = c - d` (so `add` does not depend
-on `c`):
+To connect `ring` calls in a loop, forward-declare the back edge as a `wire`:
 
 ```pyrope
-mut tmp = add_sub(a=a, b=b, c=tmp.add.[defer], d=3)
-out = tmp.sub                          // out = a + b - 3
-// c=tmp.sub.[defer] would be a true comb cycle (sub depends on c): error
-```
-
-Common misreadings, all wrong:
-
-* "`x.[defer]` is the value of `x` in the next cycle" — no. It is the
-  value at the end of *this* cycle. No flop is inserted and nothing
-  crosses a cycle boundary. (Numerically, for a `reg`, the end-of-cycle
-  value is what `q` will show next cycle — but the *read happens now*, as
-  a wire.)
-* "`defer` adds a pipeline stage" — no. In stage-inference terms it never
-  shifts `σ` (see [Pipelining](06c-pipelining.md)); it is not `past` and
-  not `stage[N]`.
-* "`defer` is memory forwarding" — no. The memory `fwd` attribute is about
-  when written *state* becomes visible to reads in later cycles; `defer`
-  never involves state visibility, it is a same-cycle wire to a later
-  statement.
-* "I can write through it" — no. `.[defer]` is RHS-only.
-
-To actually cross a cycle, use a `reg` (bare read of `q`), `past[n](x)`,
-or `stage[N]` — those are the temporal constructs.
-
-### Defer reads
-
-When used to read a variable, `.[defer]` returns the last value written to the
-variable at the end of the current cycle. This is needed if we need to have any
-loop in connecting blocks or for delaying assertion checks to the end of the
-cycle like post condition checks.
-
-```pyrope
-mut c = 10
-assert(b.[defer] == 33) // behaves like a postcondition
-b = c.[defer]
-assert(b == 33)
-c += 20
-c += 3
-```
-
-To connect the `ring` function calls in a loop.
-```pyrope
-f1 = ring(a, f4.[defer])
+wire f4 = nil
+f1 = ring(a, f4)       // reads f4 before its driver appears
 f2 = ring(b, f1)
 f3 = ring(c, f2)
-f4 = ring(d, f3)
-```
-
-If the intention is to read the result after being a flop, there is no need to
-use the `defer`, a normal register access could do it. A bare `reg`
-reference reads the value before any update (the 'q' value), and `.[defer]`
-reads the value after updates.
-
-```pyrope
-reg counter:u32 = nil
-
-const counter_0  = counter         // current cycle (before updates)
-const counter_1  = past(counter)   // last cycle (one flop)
-const counter_2  = past[2](counter) // last last cycle (two flops)
-
-mut deferred = counter.[defer]  // defer read: final value at end of cycle
-
-if counter < 100 {
-  counter += 1
-}else{
-  counter = 0
-}
-
-if deferred == 10 {              // bare 'counter' reads q (9 here), so test the defer value
-  assert(deferred   == 10)
-  assert(counter.[defer] == 10) // same as deferred, end-of-cycle value
-  assert(counter_0  ==  9)
-  assert(counter_1  ==  8)
-  assert(counter_2  ==  7)
-}
-```
-
-### `.[defer]` is RHS-only
-
-`.[defer]` is read-only on the right-hand side. There is **no
-`a.[defer] = ...` write form** — register writes always use plain `=`
-(or `+=`, `&=`, …). Within a cycle, multiple writes to the same register
-are accumulated in program order, and `.[defer]` reads the final
-end-of-cycle value.
-
-```pyrope
-reg a:u8 = 1
-if a == 1 {
-  a = 200                       // register write
-  assert(a == 1)                // bare 'a' still reads the current 'q' value
-  assert(a.[defer] == 200)      // .[defer] sees the in-cycle write
-} else {
-  a = 2
-  assert(a.[defer] == 2)
-}
-```
-
-The same RHS-only `.[defer]` form is also useful for `mut` variables when
-you want the in-cycle final value:
-
-```pyrope
-mut a = 1
-mut x = 100
-x = a.[defer]                   // RHS read of the eventual final value
-a = 200
-
-cassert(x == 200)
+f4 = ring(d, f3)       // the single driver of f4
 ```
 
 ## Testing (`test`)

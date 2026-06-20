@@ -50,11 +50,8 @@ parser) can never confuse them.
 
 A small subset of attributes correspond to a *runtime* hardware signal
 rather than to compile-time metadata — for example `valid` (the per-cycle
-optional bit) and `defer` (the end-of-cycle register port). `valid` may
-appear on the LHS to drive the underlying wire (`self.[valid] = v != 33`).
-`defer` is **RHS-only** — there is no `reg.[defer] = rhs` write form;
-register writes use plain `=`, and `reg.[defer]` on the RHS reads the
-end-of-cycle value. Compile-time-only attributes (`max`, `bits`,
+optional bit). `valid` may appear on the LHS to drive the underlying wire
+(`self.[valid] = v != 33`). Compile-time-only attributes (`max`, `bits`,
 `comptime`, `debug`, `file`, …) are read-only at use sites. Integer range
 metadata (`max`/`min`/`bits`/`signed`) comes from the declared type; the
 others are bound with `::[…]` at the declaration.
@@ -250,12 +247,6 @@ Registers have the following attributes:
 * `negreset`: active low reset signal
 * `posclk`: true by default, selects a posedge or negnedge flop
 * `retime`: allow to retime across the register
-* `defer`: **RHS-only** read of the end-of-cycle value (after all in-cycle
-  writes have accumulated). This is same-cycle *wiring*, not a temporal
-  construct — no flop is involved (see
-  [defer is wiring, not time](05b-statements.md#defer-is-wiring-not-time)).
-  There is no `reg.[defer] = rhs` write form — register writes use plain
-  `=`. See [Pipelining](06c-pipelining.md).
 
 Pipestage accept the same register attributes but also two more:
 

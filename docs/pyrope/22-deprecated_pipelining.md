@@ -18,8 +18,14 @@ not provide guarantees that the register will not be split into multiple
 registers.
 
 
-The explicit connection likely requires constructs like `::[defer]` to connect
-the flop `q` pin.
+> **Deprecated/removed.** The `::[defer]` / `.[defer]` end-of-cycle read
+> shown below has been **removed and replaced by `wire`** (a single-driver
+> combinational net read before its driver). See
+> [Wire](04-variables.md#wire-single-driver-combinational-nets). The snippet
+> is kept only as a historical record.
+
+The explicit connection used constructs like `::[defer]` to connect the flop
+`q` pin (now expressed by forward-declaring `counter_next` as a `wire`).
 
 
 === "Structural flop style"

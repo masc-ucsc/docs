@@ -258,7 +258,7 @@ the instance is a `mut`, the variable name can be the SSA name.
        const tmp = 3
        sub_arg_0 = b
        sub_arg_1 = tmp
-       wrap x += x_0.[defer]   // defer read (instance after conditional code)
+       wrap x += x_0           // x_0 is a wire driven below; readable before its driver
      }
      x_0 = sub(sub_arg_0, sub_arg_1).x   // instance x_0 (SSA)
     }
@@ -654,13 +654,19 @@ if cond {
 }
 
 // RTL equivalent
-a_qpin = __flop(reset_pin=ref reset, clock_pin=ref clk, initial=3, din=a.[defer]) // defer to get final value
+wire a_next = nil                                  // final in-cycle value of 'a'
+a_next = ...                                       // (driver elaborated from the writes to 'a')
+a_qpin = __flop(reset_pin=ref reset, clock_pin=ref clk, initial=3, din=a_next)
 tmp    = __sum(A=(a_qpin, 1))
 a      = __mux(tmp[4], tmp#[0..=3], 0xF)    // saturate, not wrap
 
-b_qpin = __flop(reset_pin=ref reset, clock_pin=ref clk, initial=4, din=b.[defer])
+wire b_next = nil
+b_next = ...
+b_qpin = __flop(reset_pin=ref reset, clock_pin=ref clk, initial=4, din=b_next)
 b      = __mux(cond, b_qpin, 5)
 
-c_cond_qpin = __flop(reset_pin=ref reset, clock_pin=ref clk, initial=0, din=c_cond.[defer])
+wire c_cond_next = nil
+c_cond_next = ...
+c_cond_qpin = __flop(reset_pin=ref reset, clock_pin=ref clk, initial=0, din=c_cond_next)
 c_cond      = __sum(A=(b, 1))
 ```

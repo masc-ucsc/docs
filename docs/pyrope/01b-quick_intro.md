@@ -8,14 +8,15 @@ each topic in depth. If you read nothing else, read this and the
 
 ## Declarations and storage kinds
 
-Every declaration starts with a kind keyword — data: `const` / `mut` / `reg`;
-lambda: `comb` / `pipe` / `mod` / `fluid` — and every data declaration needs
-`= value`:
+Every declaration starts with a kind keyword — data: `const` / `mut` / `wire`
+/ `reg`; lambda: `comb` / `pipe` / `mod` / `fluid` — and every data
+declaration needs `= value`:
 
 ```pyrope
 comptime const SIZE = 16    // compile-time constant (explicit `comptime`)
 const my_constant = 42      // immutable after assignment (NOT compile-time)
 mut my_wire = 0             // combinational: no persistence across cycles
+wire my_net = nil           // single-driver comb net; readable before its driver
 reg my_state = 0            // register: persists across cycles; '= 0' is the RESET value
 ```
 
@@ -25,7 +26,11 @@ reg my_state = 0            // register: persists across cycles; '= 0' is the RE
 * `nil` means "no value yet" — reading it is a compile error; `reg x = nil`
   declares a register with no reset. Unknown bits (Verilog `x`) are written
   `0sb?` / `0ub10??01`. There is no bare `?` and no `_` default.
-* No variable shadowing, anywhere. `;` is the same as a newline.
+* No variable shadowing, anywhere. `;` is the same as a newline.* `wire` is one **combinational net with exactly one driver**; unlike `mut`
+  it may be *read before* its driver appears textually (Verilog net /
+  continuous-assign model). `wire x = nil` forward-declares an undriven net.
+  A second unconditional driver, a never-driven net, or a self-feeding
+  combinational loop are compile errors.
 
 Details: [Variables and types](04-variables.md).
 
@@ -109,7 +114,6 @@ Details: [Lambdas](06-functions.md), [Pipelining](06c-pipelining.md),
 reg counter:u8 = 0            // '= 0' is the reset value (nil ⇒ no reset)
 const q   = counter           // a bare name reads the current q value
 counter += 1                  // write with plain =/+=; lands at the cycle boundary
-const eoc = counter.[defer]   // RHS-ONLY end-of-cycle read (wiring, not a flop) (TBD)
 const old = past[2](counter)  // value 2 cycles ago (inserts flops) (TBD)
 ```
 
@@ -189,8 +193,9 @@ operators.
 |---------|--------|
 | `module m(...)` | `mod m(...) -> (out:T@[N])` (or `pipe[N]`/`comb`) |
 | `reg [7:0] x` + reset | `reg x:u8 = 0` |
-| `wire [7:0] x` / blocking `=` | `mut x:u8 = 0` |
-| `x <= y` (non-blocking) | `x = y` on a `reg` (defers automatically) |
+| `reg [7:0] x` / procedural blocking `=` | `mut x:u8 = 0` |
+| `wire [7:0] x` / continuous `assign` | `wire x:u8 = ...` (single-driver net) |
+| `x <= y` (non-blocking) | `x = y` on a `reg` (registered write) |
 | `parameter N = 8` | `comptime const N = 8` |
 | `always @(posedge clk)` / `@(*)` | implicit — `reg` vs `mut` |
 | `case ... endcase` | `match x { == v {...} else {...} }` |
@@ -209,7 +214,8 @@ More: [Hardware design](00-hwdesign.md), [vs other languages](10b-vslang.md).
    none; only `self` methods may omit it).
 3. `match` without a final `else` arm is a parse error.
 4. `const` is not comptime; write `comptime` explicitly.
-5. `.[defer]` is RHS-only; there is no deferred-write form.
+5. A `wire` has exactly one driver; read-before-driver is allowed but a
+   second unconditional driver is a compile error.
 6. `@[N]` never inserts flops; `stage[N]` does (`mod`-only). A `pipe` call
    needs `stage[N]` at the call site.
 7. No bool/int mixing: `if 5 {}` is a type error — write `if 5 != 0 {}`.

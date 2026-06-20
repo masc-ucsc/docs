@@ -20,22 +20,24 @@ until the variable is assigned a real value. The bare `_` default value syntax
 has been removed.
 
 
-Every declaration starts with one of six **kind keywords**:
+Every declaration starts with one of seven **kind keywords**:
 
 | Kind    | Category | Implicit mutability |
 |---------|----------|---------------------|
 | `const` | data     | immutable           |
 | `mut`   | data     | mutable             |
+| `wire`  | data     | single-driver combinational net (read before driver allowed) |
 | `reg`   | data     | mutable, persists across cycles |
 | `comb`  | lambda   | immutable (always)  |
 | `pipe`  | lambda   | immutable (always)  |
 | `mod`   | lambda   | immutable (always)  |
 
-The three data kinds take `= expression`; the three lambda kinds take a
+The four data kinds take `= expression`; the three lambda kinds take a
 parameter list and a body. Data declarations:
 
 * `const variable [:type] [:[attribute list]] = expression`
 * `mut variable [:type] [:[attribute list]] = expression`
+* `wire variable [:type] [:[attribute list]] = expression`
 * `reg variable [:type] [:[attribute list]] = reset_expression`
 
 When the type is omitted but attributes are given, the type colon remains:
@@ -478,6 +480,49 @@ In `reg`, the right-hand side of the initialization (`10` in the
 counterexample) is called only during reset. In non-register variables, the
 right-hand side is called every cycle. Most of the cases `reg` is mutable but
 it can be declared as immutable.
+## Wire: single-driver combinational nets
+
+A `wire` declares one **combinational** net with exactly **one driver**,
+modeled on the Verilog continuous-assign / net. Unlike `mut` (whose value is
+the last write in *program order*, and where a read-before-write is an error),
+a `wire` may be **read before its driver appears textually**: every read
+observes the single resolved driver, independent of statement position.
+
+```pyrope
+wire x = nil           // forward declaration: an as-yet-undriven net
+...                    // reads of 'x' here are legal
+x = some_expr          // the one driver (may appear later in program order)
+
+wire y:u8 = a + b      // declare and drive in one statement
+pub wire z = a & b     // composes with prefix modifiers, like the other kinds
+```
+
+Rules:
+
+* **Exactly one driver.** The driver may be a mux — an `if`/`match`
+  *expression*, or mutually-exclusive conditional assignments. A second
+  *unconditional* assignment is a compile error.
+* `wire x = nil` forward-declares an undriven net; a `wire` still `nil` at the
+  end of elaboration (never driven), or driven on some paths but not others
+  (incompletely driven), is a compile error.
+* `wire` removes *textual* ordering only, not cyclic dataflow. A `wire`
+  combinationally driven by a function of itself is a real combinational loop
+  and is rejected (the standard combinational-cycle / SCC check). A ring is
+  legal only when a `reg` breaks it.
+
+Primary uses are closing module-interconnect rings without ordering
+gymnastics, and routing a computed reset/flush into a register `reset_pin`
+(`reg r:u2:[reset_pin = my_wire] = 0`).
+
+```pyrope
+// close a ring without reordering the calls:
+wire f4 = nil
+f1 = ring(a, f4)       // reads f4 before its driver appears
+f2 = ring(b, f1)
+f3 = ring(c, f2)
+f4 = ring(d, f3)       // the single driver of f4
+```
+
 
 ## Visibility: private by default, `pub` to export
 

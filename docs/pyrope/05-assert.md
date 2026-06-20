@@ -111,7 +111,7 @@ Rules:
   the upass folds at compile time when its operands are comptime-known.
 * Any deviation — extra arguments, non-string operand, or an operand that
   cannot be folded to a known value at compile time — is a compile error, not
-  a deferred runtime print.
+  a runtime print emitted at simulation.
 
 ```pyrope
 a = 7
@@ -347,7 +347,8 @@ pipe[1] counter_pipe(update:bool) -> (value:u8) {
 test "counter_mod through several cycles" {
 
   mut inp = true
-  mut x = counter_mod(inp.[defer])   // inp contents at the end of each cycle
+  wire inp_w = inp                   // single-driver net feeding the call
+  mut x = counter_mod(inp_w)
 
   assert(x == 0) // x.value == 0
   assert(inp == true)
@@ -537,9 +538,8 @@ For combinational signals, `sigref` observes the same value visible at the
 instance boundary in that cycle.
 
 For registers, `sigref` and `regref` read the current `q` value. A test may
-use `.[defer]` or the temporal library (`next(x, N)`, `eventually[R](x)`,
-`rose[R](x)`, …) inside debug contexts using the same timing rules as
-ordinary assertions.
+use the temporal library (`next(x, N)`, `eventually[R](x)`, `rose[R](x)`, …)
+inside debug contexts using the same timing rules as ordinary assertions.
 
 Tests acting as monitors follow the same invalid/reset rules as `assert`:
 
