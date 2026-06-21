@@ -203,6 +203,41 @@ Variable.
 <ref> "variable_name"
 ```
 
+##### Backtick-quoted identifiers
+
+A `ref` name is normally a *plain* identifier: letters, digits and `_`, not
+starting with a digit. To carry a name with **any other character**, LiveHD
+(the dlop string-id convention) wraps it in **backticks** — everything between
+the backticks is the literal identifier:
+
+```
+<ref> "`a[0]`"            // a name literally called  a[0]
+<ref> "`foo space*bar`"   // any character is allowed inside
+<ref> "`ar.x`"            // a tuple-flattened leaf (see below)
+```
+
+A literal backtick inside the id is escaped as `` \` ``. This is the LiveHD
+analogue of a Verilog *escaped identifier* (`` \a[0] ``) — same intent, different
+syntax: Verilog opens with `\` and ends at whitespace, LiveHD delimits with a
+matched pair of backticks (so the name can itself contain spaces). The backtick
+form is what `prp2lnast` emits and what the Verilog front-ends (`slang`,
+`yosys`) map an escaped id to, so it survives the bundle/`upass` passes without a
+`.` being mis-read as a tuple-field access.
+
+**The `.` separator is special — it is the tuple expansion/flattening
+separator.** A tuple `ar:(x, y)` flattens to the leaves `ar.x` and `ar.y`
+(always `.`, never `_`). Because `.` already has a meaning to the bundle name
+path, a *flat* signal whose name happens to contain a `.` rides backtick-quoted
+(`` `ar.x` ``); a genuine flattened-tuple leaf is the bare dotted name `ar.x`.
+Both denote the same final signal and are emitted identically.
+
+**On code generation** the quoting/escaping is chosen per target:
+
+- **Verilog**: `` `ar.x` `` → `` \ar.x `` (a Verilog escaped id, no backticks).
+- **Pyrope**: emit the bare name when it is legal unquoted — e.g. when the only
+  special character is `.` (`ar.x` reads nicely); fall back to the backtick form
+  (`` `foo space*bar` ``) only when the name genuinely needs it.
+
 #### `range`
 Range. The optional third child is the step (defaults to 1).
 
