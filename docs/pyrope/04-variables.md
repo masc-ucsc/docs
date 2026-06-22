@@ -490,7 +490,7 @@ observes the single resolved driver, independent of statement position.
 
 ```pyrope
 wire x = nil           // forward declaration: an as-yet-undriven net
-...                    // reads of 'x' here are legal
+                       // reads of 'x' here are legal
 x = some_expr          // the one driver (may appear later in program order)
 
 wire y:u8 = a + b      // declare and drive in one statement

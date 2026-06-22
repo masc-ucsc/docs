@@ -655,18 +655,18 @@ if cond {
 
 // RTL equivalent
 wire a_next = nil                                  // final in-cycle value of 'a'
-a_next = ...                                       // (driver elaborated from the writes to 'a')
+// a_next = ...                                       // (driver elaborated from the writes to 'a')
 a_qpin = __flop(reset_pin=ref reset, clock_pin=ref clk, initial=3, din=a_next)
 tmp    = __sum(A=(a_qpin, 1))
 a      = __mux(tmp[4], tmp#[0..=3], 0xF)    // saturate, not wrap
 
 wire b_next = nil
-b_next = ...
+// b_next = ...
 b_qpin = __flop(reset_pin=ref reset, clock_pin=ref clk, initial=4, din=b_next)
 b      = __mux(cond, b_qpin, 5)
 
 wire c_cond_next = nil
-c_cond_next = ...
+// c_cond_next = ...
 c_cond_qpin = __flop(reset_pin=ref reset, clock_pin=ref clk, initial=0, din=c_cond_next)
 c_cond      = __sum(A=(b, 1))
 ```
