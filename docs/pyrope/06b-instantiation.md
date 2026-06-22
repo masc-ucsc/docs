@@ -16,7 +16,7 @@ Conditional statements like `if/else` and `match` translate to multiplexers
 A trivial `if/else` with all the options covered is a simple mux.
 
 ```pyrope
-mut res:i4 = nil
+mut res:s4 = nil
 
 if cond {
   res = a
@@ -25,7 +25,7 @@ if cond {
 }
 
 // RTL equivalent (mux of 4 bits in a,b,res2)
-mut res2:i4 = __mux(cond, b, a)
+mut res2:s4 = __mux(cond, b, a)
 
 lec(res, res2)
 ```

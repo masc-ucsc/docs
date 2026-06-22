@@ -74,11 +74,11 @@ In the previous example, the compiler infers that the tuple at most has 127 entr
 There are several constructs to declare arrays or async memories:
 
 ```pyrope
-reg mem1:[16]i8 = 3        // mem 16 entry init/reset to 3 with type i8
-reg mem2:[16]i8 = nil      // mem 16 entry, NO reset (uninitialized, type i8)
+reg mem1:[16]s8 = 3        // mem 16 entry init/reset to 3 with type s8
+reg mem2:[16]s8 = nil      // mem 16 entry, NO reset (uninitialized, type s8)
 mut mem3:[] = 0sb?         // array infer size and type, 0sb? initialized
 mut mem4:[13] = 0          // array 13 entries size, initialized to zero
-reg mem5:[4]i3 = (1,2,3,4) // mem 4 entries 3 bits each, initialized
+reg mem5:[4]s3 = (1,2,3,4) // mem 4 entries 3 bits each, initialized
 ```
 
 Pyrope allows slicing of tuples and hence arrays.
@@ -172,7 +172,7 @@ is a typical decode stage from an in-order CPU:
 
 === "Flop the inputs"
     ```pyrope
-    reg rf:[32]i64 = 0sb?   // random initialized
+    reg rf:[32]s64 = 0sb?   // random initialized
 
     reg a:(addr1:u5, addr2:u5) = (0,0)
 
@@ -184,9 +184,9 @@ is a typical decode stage from an in-order CPU:
 
 === "Flop the outputs"
     ```pyrope
-    mut rf:[32]i64 = 0sb?
+    mut rf:[32]s64 = 0sb?
 
-    reg a:(data1:i64, data2:i64) = nil
+    reg a:(data1:s64, data2:s64) = nil
 
     data_rs1 = a.data1
     data_rs2 = a.data2

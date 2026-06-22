@@ -16,7 +16,6 @@ repo under `todo/pyrope/`.
 | Testbench extras: `peek`/`poke`, `waitfor`, `force`/`release`, `sigref`, `spawn`/`join`/`cancel` | [Extended Verification](09-verification.md) | `2f-testbench` | plain `test`/`step` blocks work |
 | Standard library (`import("prp")`) | [Standard Library](13-stdlib.md) | `2f-stdlib` | wish-list chapter |
 | `macro=` memory-compiler binding | [Memories](08-memories.md) | `2f-macro` | |
-| `lg` attribute (explicit lgraph/module name) | [Attributes](04b-attributes.md#lg-explicit-lgraph-name) | `2f-lg` | |
 | `covercase`, in-language `lec()` (and `requires`/`ensures` pre/post) | [Assertions](05-assert.md) | `2f-verif_extras` | `assert`/`cassert`/`cover` work |
 
 Notes:

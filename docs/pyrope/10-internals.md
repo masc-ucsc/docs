@@ -520,7 +520,7 @@ Because runtime closures are not implicit, the following is an error:
 ```pyrope
 mut x = 3
 
-comb f() -> (result:int) {
+comb f() -> (result:signed) {
   result = x       // error: runtime outer variable is not visible in lambda
 }
 ```
@@ -528,7 +528,7 @@ comb f() -> (result:int) {
 Use an explicit input or tuple field instead:
 
 ```pyrope
-comb f(x:int) -> (result:int) {
+comb f(x:signed) -> (result:signed) {
   result = x
 }
 ```
@@ -576,7 +576,7 @@ const I1_t = (
   }
 )
 const I2_t = (
-  mut i1_field:i32 = 11,
+  mut i1_field:s32 = 11,
   comb init(ref self, a) {
      self.i1_field = a
   }
@@ -780,8 +780,8 @@ reference.
 comb args(x) -> (r) { puts("args:{x}"); r = 1 }
 comb here()  -> (r) { puts("here");   r = 3 }
 
-type NullaryInt = comb() -> (r:int)
-comb call_now(f:NullaryInt)   -> (r:int)        { r = f() }
+type NullaryInt = comb() -> (r:signed)
+comb call_now(f:NullaryInt)   -> (r:signed)     { r = f() }
 comb call_defer(f:NullaryInt) -> (g:NullaryInt) { g = f }
 
 const x0 = call_now(here)          // prints "here"

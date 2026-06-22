@@ -97,11 +97,11 @@ constraints from the type system. Pyrope type system constructs to handle types:
   logical equivalence, just type equivalence.
 
 ```pyrope
-const t1 = (const a:int=1, const b:string = "")
-const t2 = (const a:int=100, const b:string = "")
+const t1 = (const a:signed=1, const b:string = "")
+const t2 = (const a:signed=100, const b:string = "")
 mut v1 = (const a=33, const b="hello")
 
-comb f1() -> (a:int, b:string) {
+comb f1() -> (a:signed, b:string) {
   a = 33
   b = "hello"
 }
@@ -123,7 +123,7 @@ Since the `puts` command understands types, it can be used on any variable, and
 it is able to print/dump the results.
 
 ```pyrope
-const At:int(min=33) = nil    // number bigger than 32
+const At:signed(min=33) = nil    // number bigger than 32
 const Bt = (
   mut c:string = nil,
   mut d = 100,
@@ -177,13 +177,13 @@ These are the detailed rules for the `a does b` operator depending on the `a` an
 * The lambdas have a more complicated set of rules explained later.
 
 ```pyrope
-const a:int(max=33, min=0) = nil
-const b:int(max=20, min=5) = nil
+const a:signed(max=33, min=0) = nil
+const b:signed(max=20, min=5) = nil
 cassert(a does b)
 cassert(not (b does a))
 
-cassert(    (const a:string=nil, const b:int=nil) does (const a="hello", const b=33))
-cassert(not (const b:string=nil, const a:int=nil) does (const a="hello", const b=33))
+cassert(    (const a:string=nil, const b:signed=nil) does (const a="hello", const b=33))
+cassert(not (const b:string=nil, const a:signed=nil) does (const a="hello", const b=33))
 
 type T_complex = comb(x, xxx2) -> (y, z)
 type T_simple  = comb(x)       -> (y, z)
@@ -194,8 +194,8 @@ cassert(not (T_simple does T_complex))
 For named tuples, this code shows some of the corner cases:
 
 ```pyrope
-const t1 = (const a:string = "", const b:int = nil)
-const t2 = (const b:int = nil, const a:string = "")
+const t1 = (const a:string = "", const b:signed = nil)
+const t2 = (const b:signed = nil, const a:string = "")
 
 mut a:t1 = ("hello", 3)     // OK
 mut a1:t1 = (3, "hello")     // error: positions do not match
@@ -286,7 +286,7 @@ the option to optimize the design.
 
 
 In fact, internally Pyrope only tracks the `max` and `min` value. When a
-width-constrained type such as `u14` or `i4` is used, it is converted to a
+width-constrained type such as `u14` or `s4` is used, it is converted to a
 `max/min` range. Pyrope code can read bitwidth attributes for each integer
 variable, but these attributes are read-only; constrain them through the
 declared type, not through an attribute write.
@@ -330,20 +330,23 @@ val = 300        // error: '300' overflows the maximum allowed value of 'val'
 wrap val = 0x1F0 // Drop bits from 0x1F0 to fit in constrained type
 cassert(val == 240 == 0xF0)
 
-val = u8(0x1F0)  // error: 0x1F0 overflows u8 — a sized cast is CHECKED, not
-                 // truncating; use `wrap`/`sat` to drop bits
-val = u8(200)    // OK: 200 fits u8, casts through unchanged
+val = u8(0x1F0)  // error: 0x1F0 needs 9 bits — a sized cast can widen but
+                 // never drops bits; use `wrap`/`sat` to drop bits
+val = u8(200)    // OK: 200 fits u8, reinterprets through unchanged
 cassert(val == 200)
 ```
 
-A sized cast `uN(x)`/`sN(x)` is a *checked* conversion, not a wrap: it succeeds
-only when `x` provably fits the target range, and is a compile error otherwise
-(use a `wrap`/`sat` prefix to drop bits on purpose). Casting a `boolean`
-interprets its single bit under the target's signedness — `int(true) == -1` /
-`s8(true) == -1` (1-bit signed), but `uint(true) == 1` / `u8(true) == 1`
-(unsigned magnitude bit). The reverse, `boolean(x)`/`bool(x)` on an integer, is
-`x != 0` (so `boolean(33)` is true); an undefined (`?`) or `nil` operand is a
-compile error.
+A sign cast `signed(x)`/`unsigned(x)`/`sN(x)`/`uN(x)` *reinterprets* `x`'s bits
+under the target signedness. The unsized `signed(x)`/`unsigned(x)` keep the bit
+width unchanged (so `x` must be fully sized and `signed(unsigned(x)) == x`); the
+sized `sN(x)`/`uN(x)` may widen but never drop bits — a target with fewer bits
+than `x` is a compile error (use a `wrap`/`sat` prefix to drop bits on purpose),
+e.g. `u30(s22(x))` is fine but `s22(u30(x))` is a compile error. Casting a
+`boolean` interprets its single bit under the target's signedness —
+`signed(true) == -1` / `s8(true) == -1` (1-bit signed), but
+`unsigned(true) == 1` / `u8(true) == 1` (unsigned magnitude bit). The reverse,
+`boolean(x)`/`bool(x)` on an integer, is `x != 0` (so `boolean(33)` is true); an
+undefined (`?`) or `nil` operand is a compile error.
 
 Branching on `bw_max`/`bw_min` outside a debug statement is a compile error
 because the result would not converge — the next elaboration can compute a
@@ -363,7 +366,7 @@ control-flow divergences, the worst possible path is considered.
 
 ```pyrope
 mut a = 3                  // a: current(max=3,min=3) constrain()
-mut c:int(min=0,max=10) = nil // c: current(max=0,min=0) constrain(max=10,min=0)
+mut c:signed(min=0,max=10) = nil // c: current(max=0,min=0) constrain(max=10,min=0)
 if b {
   c = a + 1                // c: current(max=4,min=4) constrain(max=10,min=0)
 } else {
@@ -371,7 +374,7 @@ if b {
 }
                            // c: current(max=4,min=3) constrain(max=10,min=0)
 
-mut e:i4 = nil             // e: current(max=0,min=0) constrain(max=7,min=-8)
+mut e:s4 = nil             // e: current(max=0,min=0) constrain(max=7,min=-8)
 e = 2                      // e: current(max=2,min=2) constrain(max=7,min=-8)
 mut d = c                  // d: current(max=4,min=3) constrain()
 if d == 4 {
@@ -454,7 +457,7 @@ single storage location.
 
 ```pyrope
 const e_type = enum(str:String = "hello", num=22)
-const v_type = enum(str:String, num:int) // No default value when used as a tagged union
+const v_type = enum(str:String, num:signed) // No default value when used as a tagged union
 
 mut vv:v_type = (num=0x65)
 cassert(vv.num == 0x65)
@@ -467,7 +470,7 @@ Cases may not be solved at compile time, and the error will be a simulation
 error. A `comptime` directive can force a compile time-only check.
 
 ```pyrope
-const Vtype = enum(str:String, num:int, b:bool)
+const Vtype = enum(str:String, num:signed, b:bool)
 
 const x1a:Vtype = "hello"                 // implicit case
 const x1b:Vtype = (str="hello")           // explicit case
@@ -594,7 +597,7 @@ function that returns a randomly mutated tuple.
 comb randomize::[debug](ref self) {
   const rnd = import("prp/rnd")
   for i in ref self {
-    if i equals int {
+    if i equals signed {
       i = rnd.between(i.[max], i.[min])
     } elif i equals bool {
       i = rnd.boolean()
@@ -688,7 +691,7 @@ there is no true cyclic dependency between variables. This means that "false"
 cyclic dependencies are allowed but not true ones.
 
 `import` always uses the declared `pub` name. The `lg` attribute
-([explicit lgraph name](04b-attributes.md#lg-explicit-lgraph-name), TBD)
+([explicit lgraph name](04b-attributes.md#lg-explicit-lgraph-name))
 renames only the generated lgraph, never the import key:
 `pub comb my_log::[lg="foo_mod"](...)` is still imported as
 `import("my_fun.my_log")`.
@@ -934,10 +937,10 @@ Tuples can be multi-dimensional, and each dimension is indexed with its own
 `[...]` (e.g. `m[i][j]`, not `m[i,j]`).
 
 ```pyrope
-comb matrix8x8_set_xy(ref self, x:int(min=0,max=7), y:int(min=0, max=7), v:u16) {
+comb matrix8x8_set_xy(ref self, x:signed(min=0,max=7), y:signed(min=0, max=7), v:u16) {
   self.data[x][y] = v
 }
-comb matrix8x8_set_row(ref self, x:int(min=0, max=7), v:u16) {
+comb matrix8x8_set_row(ref self, x:signed(min=0, max=7), v:u16) {
   for ent in ref self.data[x] {
     ent = v
   }
@@ -1046,7 +1049,7 @@ The `init` method can also access attributes:
 
 ```pyrope
 mut obj1::[attr1] = (
-  ,mut data:int = nil
+  ,mut data:signed = nil
   ,comb init(ref self, v) {
     if v.[attr2] {
       self.data.[attr3] = 33
@@ -1064,7 +1067,7 @@ types, constructing with no arguments (`nil` or `T()`) triggers the no-arg
 
 
 ```pyrope
-const fint:int  = 0
+const fint:signed  = 0
 cassert(fint == 0)
 
 mut fbool:bool = false
@@ -1103,15 +1106,15 @@ representation private.
 
 ```pyrope
 const Point = (
-  ,mut _x:int = 0    // leading underscore: private to the tuple
-  ,mut _y:int = 0
+  ,mut _x:signed = 0    // leading underscore: private to the tuple
+  ,mut _y:signed = 0
 
-  ,comb init(ref self, x:int, y:int) {
+  ,comb init(ref self, x:signed, y:signed) {
     self._x = x
     self._y = y
   }
 
-  ,comb get(self, idx:string) -> (r:int) {
+  ,comb get(self, idx:string) -> (r:signed) {
     r = match idx {
      == 'x' { self._x }
      == 'y' { self._y }
@@ -1137,8 +1140,8 @@ comparators. When non-provided the `lt` (Less Than) is a compile error, and the
 
 ```pyrope
 const t=(
-  ,mut v:int = 0
-  ,comb init(ref self, a:int) { self.v = a }
+  ,mut v:signed = 0
+  ,comb init(ref self, a:signed) { self.v = a }
   ,comb lt(self,other)->(r:bool){ r = self.v  < other.v }
   ,comb eq(self,other)->(r:bool){ r = self.v == other.v }
 )

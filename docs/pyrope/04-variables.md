@@ -99,7 +99,7 @@ comptime dependencies of the lambda.
     {
       assert(a == 3)
       a = 33             // OK. assign 33
-      a = int(33)        // OK, explicit conversion/check on the RHS
+      a = signed(33)        // OK, explicit conversion/check on the RHS
       const b = 4
       const a = 3333       // error: variable shadowing
       mut a = 33         // error: variable shadowing
@@ -169,7 +169,7 @@ allowed to declare them as `mut` and redundant to declare them as `const`.
 Tuple scope is also useful for declaring function default values:
 
 ```pyrope
-comb example(a:int, b:int=a+5) -> (result:int) {
+comb example(a:signed, b:signed=a+5) -> (result:signed) {
   result = a + b
 }
 cassert(example(a=3) == (3+3+5))
@@ -185,7 +185,7 @@ Pyrope has 7 basic types:
 * `boolean`: either `true` or `false`
 * `enum`: enumerated values, optionally with a per-case payload (the equivalent of a tagged union)
 * `comb`: A function or pure combinational logic
-* `int`: which is signed integer of unlimited precision
+* `signed`: a signed integer of unlimited precision
 * `mod`: A module with state/clock or side-effects
 * `range`: A one hot encoding of values `1..=3 == 0ub1110`
 * `string`: which is a sequence of characters
@@ -195,32 +195,32 @@ All the types except functions can be converted back and forth to an
 integer.
 
 
-### Integer or `int`
+### Integer or `signed`
 
 Integers have unlimited precision and they are always signed. Unlike most other
 languages, there is only one type for integer (unlimited), but the type system
 allows to add constraints to be checked when assigning the variable contents.
-Notice that the type is the same (`u32` is the same type as `i3`, they just have
+Notice that the type is the same (`u32` is the same type as `s3`, they just have
 different constraints). The `does` operator compares the range envelope: `a does
 b` is true when `a`'s range is a superset of `b`'s (`a.max >= b.max and a.min <=
 b.min`). So `u32 does u16` is true (u32's range covers u16's) but `u16 does u32`
 is false. Assignment still performs the additional range and precision checks
 described in the attribute section:
 
-* `int`: an unlimited precision integer number.
-* `unsigned`: the same as `int(min=0)` — a de-facto unsigned integer. There is
+* `signed`: an unlimited precision integer number.
+* `unsigned`: the same as `signed(min=0)` — a de-facto unsigned integer. There is
   nothing special beyond the constraint, but it usually allows nicer Verilog
   generation (`logic` vs `signed logic`).
 * `u<num>`: An integer basic type constrained to be a natural number with a maximum value of $2^{\texttt{num}}-1$. E.g: `u10` can go from zero to 1023.
-* `i<num>`: an integer 2s complement number with a maximum value of $2^{\texttt{num}-1}-1$ and a minimum of $-2^{\texttt{num}-1}$.
+* `s<num>`: a signed (2s complement) number with a maximum value of $2^{\texttt{num}-1}-1$ and a minimum of $-2^{\texttt{num}-1}$.
 
 ```pyrope
-mut a:int         = nil // any value, no constrain
+mut a:signed         = nil // any value, no constrain
 mut b:unsigned    = nil // only positive values
 mut c:u13         = nil // only from 0 to (1<<13)-1
-mut d:int(min=20, max=30) = nil // only values from 20 to 30 (both included)
-mut e:int(min=-5, max=5) = nil // only values from -5 to 5 (both included)
-mut f:int(min=-1, max=0) = nil // 1 bit integer: -1 or 0
+mut d:signed(min=20, max=30) = nil // only values from 20 to 30 (both included)
+mut e:signed(min=-5, max=5) = nil // only values from -5 to 5 (both included)
+mut f:signed(min=-1, max=0) = nil // 1 bit integer: -1 or 0
 ```
 
 Integers can have 3 value (`0`,`1`,`?`) expression or a `nil`. Section
@@ -235,8 +235,8 @@ Pryope number or an assertion is raised.
 ### Boolean
 
 A boolean is either `true` or `false`. Booleans can not mix with integers in
-expressions unless there is an explicit typecast (`int(false)==0`,
-`int(true)==-1`, `boolean(0)==false`, and `boolean(1)==true`). Unlike integers,
+expressions unless there is an explicit typecast (`signed(false)==0`,
+`signed(true)==-1`, `boolean(0)==false`, and `boolean(1)==true`). Unlike integers,
 booleans do not support undefined value. A typecast from integer to boolean
 will raise an assertion when the integer has undefined bits (`?`) or `nil`.
 
@@ -255,8 +255,8 @@ if boolean(e#[3]) {  // OK, explicit conversion from unsigned bit to boolean
   call(x)
 }
 
-cassert(0 == (int(true)  + 1)) // explicity typecast; true is signed all-ones
-cassert(1 == (int(false) + 1)) // explicity typecast
+cassert(0 == (signed(true)  + 1)) // explicity typecast; true is signed all-ones
+cassert(1 == (signed(false) + 1)) // explicity typecast
 cassert(boolean(33) or false) // explicity typecast
 ```
 
@@ -321,7 +321,7 @@ to type cast from tuple to range, but it is possible from range to tuple.
 
 ```pyrope
 const c = 1..=3
-cassert(int(c) == 0ub1110)
+cassert(signed(c) == 0ub1110)
 cassert(range(0ub01_1100) == 2..=4)
 
 assert(range(1,2,3)) // error: typecast not allowed
@@ -335,7 +335,7 @@ comparison. Both ranges a `step` to change the step. The `step` amount must be
 a positive integer.
 
 ```pyrope
-cassert(int(0..=10 step  2) == 0ub101_0101_0101)
+cassert(signed(0..=10 step  2) == 0ub101_0101_0101)
 cassert(tuple(0..=10 step  2) == ( 0,2,4,6,8,10))
 
 cassert(-1..=2 == (-1,0,1,2))
@@ -380,7 +380,7 @@ in the string, and each character has 8 bits associated. Casting an integer to
 ```pyrope
 const a = 'cad'          // c is 0x63, a is 0x61, and d is 0x64
 const b = 0x64_61_63
-cassert(int(a) == b) // typecast string to number
+cassert(signed(a) == b) // typecast string to number
 cassert(a#[..] == b) // typecast string to number
 cassert(string(b) == "6578531") // integer to string is decimal text
 ```
@@ -412,20 +412,20 @@ comb check_is_green(self) -> (r:bool) { r = self.color == "green" }
 
 type IsGreen = comb(self) -> (r:bool)
 
-mut bund1 = (mut color:string = "", mut value:i33 = nil)
+mut bund1 = (mut color:string = "", mut value:s33 = nil)
 x:bund1        = nil    // OK, declare x of type bund1 with default values
 bund1.color    = "red"  // OK
 bund1.is_green = check_is_green
 x.color        = "blue" // OK
 
-type Typ = (mut color:string = "", mut value:i33 = nil, mut is_green:IsGreen = nil)
+type Typ = (mut color:string = "", mut value:s33 = nil, mut is_green:IsGreen = nil)
 y:Typ        = nil      // OK
 Typ.color    = "red"    // error:
 
 Typ.is_green = check_is_green
 y.color      = "red"    // OK
 
-type Bund3 = (mut color:string = "", mut value:i33 = nil)
+type Bund3 = (mut color:string = "", mut value:s33 = nil)
 z:Bund3        = nil                // OK
 Bund3.color    = "red"              // error:
 Bund3.is_green = check_is_green     // error: (const can not add fields)
@@ -583,6 +583,7 @@ All the operators work over signed integers.
 * `a - b` substraction
 * `a * b` multiplication
 * `a / b` division
+* `a % b` modulo (hardware only for a power-of-two/`3`/larger-than-`a` divisor; see [basics](02-basics.md))
 * `a & b` bitwise and
 * `a | b` bitwise or
 * `a ^ b` bitwise xor
@@ -759,7 +760,7 @@ The or/and/xor reduce have an unsigned integer result with `min=0` and `max=1`
 (not boolean). This means that the result can be `0` or `1`. Since booleans and
 integers do not mix, compare a reduction against integer values, or cast
 explicitly when comparing with a boolean (`boolean(x#|[..]) == flag` or
-`x#|[..] == int(flag)`). pop-count and `zext` have always positive results.
+`x#|[..] == signed(flag)`). pop-count and `zext` have always positive results.
 `sext` is sign-extended, so it can be positive or negative.
 
 If no operator is provided, a `zext` is used by default. The bit selection without
@@ -1035,7 +1036,7 @@ always_assert(counter.reset implies !counter.[valid])
 
 ```pyrope
 const custom = (
-  ,mut data:i16 = nil
+  ,mut data:s16 = nil
   ,comb init(ref self, v) {
     self.data = v
     self.[valid] = v != 33
@@ -1114,10 +1115,10 @@ expression — a literal (`0`, `false`, `""`, `0sb?`), `nil`, or a normal
 expression.
 
 ```pyrope
-mut a:int = 0
+mut a:signed = 0
 cassert(a==0 and a.[valid] and a.[valid])
 
-mut b:int = nil
+mut b:signed = nil
 cassert(b==nil and b.[valid] == false and not b.[valid])
 b = 0
 cassert(b==0 and b.[valid] and b.[valid])
@@ -1125,7 +1126,7 @@ cassert(b==0 and b.[valid] and b.[valid])
 mut d:[] = ()              // empty tuple literal
 cassert(d != nil and d.[valid])
 
-mut e:int = 0sb?           // valid but with unknown bits
+mut e:signed = 0sb?           // valid but with unknown bits
 cassert(e.[valid] and e != 0) // any comparison against `?` is unknown
 ```
 
@@ -1154,9 +1155,9 @@ assigns a value, the valid will be set only on that path, but the data may
 always have the path.
 
 ```pyrope
-mut x:int = nil
-mut y:int = 2
-mut z:int = nil
+mut x:signed = nil
+mut y:signed = 2
+mut z:signed = nil
 if rand {
   x = 3
   y = 4

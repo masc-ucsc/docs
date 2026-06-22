@@ -26,7 +26,7 @@ equivalance)[07-typesystem.md#Type_equivalence].
 
 ```pyrope
 const Animal = (
-  mut legs:int = nil,
+  mut legs:signed = nil,
   mut name = "unnamed",
   comb say_name(self) -> () { puts(name) }
 )
@@ -40,7 +40,7 @@ comb bird_init_default(ref self)           { self.legs = 2 }
 comb bird_init_animal(ref self, a:Animal)  { self.legs = 2; name = "bird animal" }
 
 const Bird = (...Animal,
-  mut seeds_eaten:int = nil,
+  mut seeds_eaten:signed = nil,
   const init = [bird_init_default, bird_init_animal],
   comb eat_seeds(ref self, n) { self.seeds_eaten += n }
 )
@@ -64,9 +64,10 @@ a = d // OK, 'd does a' is true
 a = b // OK, 'Bird does Animal' is true
 ```
 
-When the `x` in `x = y` is an `integer` basic type, there is an additional
-check to guarantee that no precision is lost. Integer widths such as `u16` and
-`u32` are constraints on the same basic `int` type. The `does` operator uses
+When the `x` in `x = y` is an integer basic type, there is an additional
+check to guarantee that no precision is lost. There is a single integer type
+(`signed`, of unlimited precision); widths such as `u16` and `u32` are just
+range constraints on that one type. The `does` operator uses
 the range-superset rule (`a does b` ⇔ `a.max >= b.max and a.min <= b.min`), so
 `u32 does u16` is true but `u16 does u32` is false. The `x = y` assignment is a
 separate check: it may still fail if the right-hand side can not be proven to
@@ -152,10 +153,10 @@ of one does not need the field, and hence it allows to create different types:
 
 ```pyrope
 const Age = (
-  age:int = nil
+  age:signed = nil
 )
 const Weight = (
-  weight:int = nil
+  weight:signed = nil
 )
 
 cassert(not (Age does Weight))
@@ -182,7 +183,7 @@ The following `f` method has no constraints on the input arguments. It can pass
 anything, but constraints the return value to be an integer.
 
 ```pyrope
-comb f(a,b) -> (r:int) { r = xx(a) + xx(b) }
+comb f(a,b) -> (r:signed) { r = xx(a) + xx(b) }
 ```
 
 The type can be inferred for arguments and return values. If the lambda
@@ -196,7 +197,7 @@ The `f1` example constraints `a` and `b` arguments to have a type that
 satisfies `(a does Some_type_class) and (b does Some_type_class)`.
 
 ```pyrope
-comb f1<T:Some_type_class>(a:T,b:T) -> (r:int) { r = xx(a) + xx(b) }
+comb f1<T:Some_type_class>(a:T,b:T) -> (r:signed) { r = xx(a) + xx(b) }
 ```
 
 
@@ -271,12 +272,12 @@ in-place with the relative order left.
 
 
 ```pyrope
-comb m(a:int, ...x:(s:string, c:int, d), y:int) {
+comb m(a:signed, ...x:(s:string, c:signed, d), y:signed) {
   assert(a == 1)
   assert(x[0] == "here")
   assert(x[1] == 2 == x.c)
   assert(y == 3)
-  if d does int { // inferred type
+  if d does signed { // inferred type
     assert(d == 33)
   }else{
     assert(d == "x")
@@ -288,7 +289,7 @@ m(a=1,"here",2,"x",3)       // OK
 m(a=1,"here",c=2,"x",3)     // OK
 m(a=1,"here",c=2,33,y=3)    // OK
 
-m("1","here",2,33,3)       // error: a:int
+m("1","here",2,33,3)       // error: a:signed
 m("1","here",2,3)          // error: x has 3 fields
 ```
 
@@ -467,9 +468,9 @@ const bad = f1(1, 2) // error: untyped positional arguments are ambiguous
 For typed calls:
 
 ```pyrope
-comb fo_is(a:int, b:string) -> (result:bool)   { result = true }
-comb fo_ii_b(a:int, b:int)  -> (result:bool)   { result = false }
-comb fo_ii_s(a:int, b:int)  -> (result:string) { result = "hello" }
+comb fo_is(a:signed, b:string) -> (result:bool)   { result = true }
+comb fo_ii_b(a:signed, b:signed)  -> (result:bool)   { result = false }
+comb fo_ii_s(a:signed, b:signed)  -> (result:string) { result = "hello" }
 const fo = [fo_is, fo_ii_b, fo_ii_s]
 
 const a = fo(3, "hello")        // type of each argument is unambiguous
@@ -478,7 +479,7 @@ cassert(a == true)
 const b:bool = fo(3, 300)   // return context selects bool overload
 cassert(b == false)
 
-const c:int = fo(3, 300)    // error: no lambda fulfills constrains
+const c:signed = fo(3, 300)    // error: no lambda fulfills constrains
 const c:string = fo(3, 300)
 cassert(c == "hello")
 ```
@@ -525,7 +526,7 @@ parametrize types based on arguments.
 comb Param_type(a) -> (r) { r = (mut xx:a = nil) }
 
 const x:Param_type(string) = (xx="hello")
-const x:Param_type(int)    = (xx=130)
+const x:Param_type(signed)    = (xx=130)
 ```
 
 ### Summary polymorphism
@@ -566,7 +567,7 @@ const speak = [speak_bird, speak_cat]
 Coercion polymorphism: Capacity to cast a type to another
 ```pyrope
 const Type1 = (
-  comb init(ref self, a:int) { }
+  comb init(ref self, a:signed) { }
 )
 const a:Type1 = 33
 ```
@@ -627,20 +628,20 @@ underscore) are privatized and hence do not trigger an overload failure.
 
 ```pyrope
 const Int1 = (
-  mut _counter:int = 0,
+  mut _counter:signed = 0,
   comb add(ref self, v) { self._counter += v },
-  comb get(self) -> (result:int) { result = self._counter },
-  comb api_pending(ref self, x:int) -> (o:string) { }
+  comb get(self) -> (result:signed) { result = self._counter },
+  comb api_pending(ref self, x:signed) -> (o:string) { }
 )
 
 const Int2 = (
-  mut _counter:int = 0,
+  mut _counter:signed = 0,
   comb accumulate(ref self, v) { self._counter += v; self._counter },
   comb api_pending(ref self, x:string) -> (o:string) { }
 )
 
 const Combined = (...Int1, ...Int2,
-  comb api_pending(ref self, x:int) -> (o:string) {
+  comb api_pending(ref self, x:signed) -> (o:string) {
     self.add(x)
     o = string(self.accumulate(self.get()))
   }
@@ -717,8 +718,8 @@ comb exclude(o,...a) -> (new_tup) {
 
 const Shape = (
   mut name:string = "",
-  comb area(self) -> (result:i32) { },           // undefined
-  comb increase_size(ref self, x:i12) { },       // undefined
+  comb area(self) -> (result:s32) { },           // undefined
+  comb increase_size(ref self, x:s12) { },       // undefined
 
   comb init(ref self, name) { self.name = name }, // implemented
   comb say_name(self) { puts("name:{}", name) }
@@ -728,9 +729,9 @@ const Circle = (
   ...exclude(Shape, 'init'),
 
   comb init(ref self) { Shape.init(ref self, "circle") },
-  comb increase_size(ref self, x:i12) { self.rad *= x },
-  mut rad:i32 = 0,
-  comb area(self) -> (result:i32) {
+  comb increase_size(ref self, x:s12) { self.rad *= x },
+  mut rad:s32 = 0,
+  comb area(self) -> (result:s32) {
      const pi = import("math").pi
      result = pi * self.rad * self.rad
   }

@@ -37,16 +37,16 @@ Details: [Variables and types](04-variables.md).
 ## One integer type
 
 Integers are unlimited-precision and signed; everything else is a range
-constraint on that one type. `u8` is the same as `int(min=0, max=255)`,
-`i4` is `int(min=-8, max=7)`, and `unsigned` is `int(min=0)`:
+constraint on that one type. `u8` is the same as `signed(min=0, max=255)`,
+`s4` is `signed(min=-8, max=7)`, and `unsigned` is `signed(min=0)`:
 
 ```pyrope
 mut a:u8 = 100
-mut b:int(min=0, max=300) = 0
+mut b:signed(min=0, max=300) = 0
 wrap a = a + 200       // narrowing must be annotated: wrap drops bits, sat saturates
 ```
 
-* Booleans and integers never mix: `if x != 0 {}`, casts `int(true)`,
+* Booleans and integers never mix: `if x != 0 {}`, casts `signed(true)`,
   `boolean(v#[3])`. `and`/`or`/`not`/`implies` are boolean-only; `& | ^ ~`
   are bitwise integer ops.
 * Precedence is shallow — parenthesize: `3 & (4*4)`, never `3 & 4*4`.

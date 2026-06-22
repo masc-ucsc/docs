@@ -331,8 +331,8 @@ scheduling or new language construct.
 
 | Builtin | Signature | Meaning |
 |---------|-----------|---------|
-| `past[n:int=1](x)` | past value | value of `x` `n` cycles ago; compiler inserts `n` flops |
-| `next[n:int=1](x)` | debug future peek | value of `x` `n` cycles ahead |
+| `past[n:signed=1](x)` | past value | value of `x` `n` cycles ago; compiler inserts `n` flops |
+| `next[n:signed=1](x)` | debug future peek | value of `x` `n` cycles ahead |
 | `rose[w:range=1..=1](x)` | rising edge within window | `x` becomes true at some cycle in `w` |
 | `fell[w:range=1..=1](x)` | falling edge within window | `x` becomes false at some cycle in `w` |
 | `stable[w:range=1..=1](x)` | held constant | `x` has the same value across `w` |

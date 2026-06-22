@@ -39,8 +39,8 @@ parser) can never confuse them.
   `reg counter::[clock_pin=ref clk1] = 0`, `const c::[debug] = 3`.
   Integer range/width attributes such as `max`, `min`, `bits`,
   and `signed` are read-only metadata. Constrain them indirectly
-  through the declared type, e.g. `mut foo:int(max=300, min=0) = 4` or
-  `mut bar:u14 = 0`, never with `foo:int:[max=300]`.
+  through the declared type, e.g. `mut foo:signed(max=300, min=0) = 4` or
+  `mut bar:u14 = 0`, never with `foo:signed:[max=300]`.
 
 * **Read** (`var.[attr]`): allowed everywhere a normal expression is
   allowed. Returns the attribute's current value (any type — usually
@@ -352,7 +352,7 @@ constraint. The actual range computed by the bitwidth pass is readable as
 
 ```pyrope
 mut opt1:unsigned(max=300) = 0
-mut opt2:int(min=0,max=300) = 0  // same
+mut opt2:signed(min=0,max=300) = 0  // same
 
 cassert(opt1.[max] == 300 and opt1.[min] == 0)
 cassert(opt1.[bits] == 9)     // 9 bits to represent 0..300

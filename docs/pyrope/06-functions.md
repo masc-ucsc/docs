@@ -215,13 +215,13 @@ The lambda definition has the following fields:
 
 + `GENERIC` is an optional comma separated list of names between `<` and `>` to
   use as generic types in the lambda. The call site binds them explicitly
-  (`f<int,string>(…)`, one type per name in declaration order) or by
+  (`f<signed,string>(…)`, one type per name in declaration order) or by
   inference from the actuals' declared types (see "Overloading/generics"
   below).
 
 + `COMPTIME` has the optional list of explicit comptime parameters for the
-  lambda. Each entry is a typed declaration (e.g., `n:int`) or a typed
-  declaration with a default (e.g., `n:int=1`). Defaults may refer to visible
+  lambda. Each entry is a typed declaration (e.g., `n:signed`) or a typed
+  declaration with a default (e.g., `n:signed=1`). Defaults may refer to visible
   comptime bindings from the enclosing scope. Callers can override any
   comptime parameter at the call site using the same `[...]` slot
   (`foo[N](args)`).
@@ -268,7 +268,7 @@ locally readable.
 comb add1(...x) -> (r) { r = x[0] + x[1] + x[2] }   // var-args, single output
 comb add2(a, b, c) -> (r) { r = a + b + c }         // constrain inputs to a,b,c
 comb add3(a, b, c) -> (r:u32) { r = a + b + c }     // constrain result to u32
-comb add4(a:u32, b:i3, c) -> (r) { r = a + b + c }  // constrain some input types
+comb add4(a:u32, b:s3, c) -> (r) { r = a + b + c }  // constrain some input types
 comb add5(a, b:a, c:a) -> (r) { r = a + b + c }     // constrain inputs to same type
 comb add6<T>(a:T, b:T, c:T) -> (r) { r = a + b + c} // generic, single output
 
@@ -321,7 +321,7 @@ declaration order, all-or-nothing), or leave the binding to inference: each
 generic unifies over the **declared** types of the actuals at its `:T`
 positions (a `u8` actual and a `u16` actual for one `T` is a compile error —
 `fcall-generic-mismatch`), while bare literals contribute only their kind, so
-`f(a=1, b=2)` infers `X = int`. On a `pipe`/`mod` boundary each distinct
+`f(a=1, b=2)` infers `X = signed`. On a `pipe`/`mod` boundary each distinct
 binding mints its own module, exactly like the untyped-parameter deferred
 templates above (`madd<T>` called with `u8` actuals mints `madd__u8_u8`).
 
@@ -354,7 +354,7 @@ are flattened into separate signals. This uses the same path expansion as
 [tuple literals](03-bundle.md#dotted-field-expansion).
 
 ```pyrope
-comb pick(ar:(x:u3, y:i4), cond:bool) -> (res:i5) {
+comb pick(ar:(x:u3, y:s4), cond:bool) -> (res:s5) {
   res = if cond { ar.x + 1 } else { ar.y - 1 }
 }
 
@@ -374,7 +374,7 @@ no binding by order.
   tuple:
 
   ```pyrope
-  comb pair(a:int, b:int) -> (p:(first:int, second:int)) { p = (first=a, second=b) }
+  comb pair(a:signed, b:signed) -> (p:(first:signed, second:signed)) { p = (first=a, second=b) }
 
   const inner = pair(a=100, b=50)   // single output `p` maps to `inner`
   cassert(inner.first == 100)       // `inner` IS the tuple (no `inner.p` level)
@@ -386,7 +386,7 @@ no binding by order.
   variable is a compile error, and there is **no mapping by position**:
 
   ```pyrope
-  comb two(a:int, b:int) -> (p1:int, p2:int) { p1 = a; p2 = b }
+  comb two(a:signed, b:signed) -> (p1:signed, p2:signed) { p1 = a; p2 = b }
 
   const (p1, p2) = two(a=100, b=50)        // OK: names match the outputs
   cassert(p1==100 and p2==50)
@@ -629,7 +629,7 @@ const (doubled, next) = parts(x=3) // OK: output names bind regardless of order
 A single-field output tuple auto-unwraps when used in scalar context.
 
 ```pyrope
-comb ret1() -> (a:int) {
+comb ret1() -> (a:signed) {
   a = 1
 }
 
@@ -764,7 +764,7 @@ Since UFCS does not allow shadowing, a wrapper must be built or a compile error 
 
 ```pyrope
 mut counter = (
-  ,mut val:i32 = 0
+  ,mut val:s32 = 0
   ,comb inc(ref self, v) { self.val += v }
 )
 
@@ -775,7 +775,7 @@ cassert(counter.val == 3)
 comb inc(ref self, v) { self.val *= v } // NOT INC but multiply
 counter.inc(v=2)           // error: multiple inc options
 
-mut n = (mut val:i32 = 4)
+mut n = (mut val:s32 = 4)
 n.inc(v=2)                 // unambiguous: only the global inc matches
 cassert(n.val == 8)
 
@@ -836,7 +836,7 @@ it can be error-prone.
 === "constrained declaration"
 
     ```pyrope
-    comb foo(self:int) { puts("comb.foo") }
+    comb foo(self:signed) { puts("comb.foo") }
     const a = (
       ,comb foo() -> (r) {
          comb bar() -> () { puts("bar") }

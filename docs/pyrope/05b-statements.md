@@ -432,7 +432,7 @@ constructs:
   }
   ```
 
-* `past[n:int=1](variable)` reads the value `n` cycles ago. The compiler
+* `past[n:signed=1](variable)` reads the value `n` cycles ago. The compiler
   inserts `n` flops automatically — the hardware cost is explicit in the
   call. `past(x)` is shorthand for `past[1](x)`. See the
   [Temporal library](09-verification.md#temporal-library).

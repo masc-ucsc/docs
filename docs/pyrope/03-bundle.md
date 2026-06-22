@@ -58,7 +58,7 @@ mut val = 4
 mut x = (
   ,const field1=1            // field1 with implicit type and 1 value
   ,const field2:string = nil // field2 with explicit type and invalid default value
-  ,const field3:int = 3      // field3 with explicit type and 3 value
+  ,const field3:signed = 3   // field3 with explicit type and 3 value
   ,val                 // unnamed field with value `val` (4)
 )
 cassert(x.field1 == 1 and x.field3 == 3)
@@ -607,12 +607,12 @@ cassert(Animal.bird.eagle != Animal.mammal)
 cassert(Animal.bird != Animal.mammal.human)
 cassert(Animal.bird == Animal.bird.parrot)
 
-cassert(int(Animal.bird        ) == 0ub000001)
-cassert(int(Animal.bird.eagle  ) == 0ub000011)
-cassert(int(Animal.bird.parrot ) == 0ub000101)
-cassert(int(Animal.mammal      ) == 0ub001000)
-cassert(int(Animal.mammal.rat  ) == 0ub011000)
-cassert(int(Animal.mammal.human) == 0ub101000)
+cassert(signed(Animal.bird        ) == 0ub000001)
+cassert(signed(Animal.bird.eagle  ) == 0ub000011)
+cassert(signed(Animal.bird.parrot ) == 0ub000101)
+cassert(signed(Animal.mammal      ) == 0ub001000)
+cassert(signed(Animal.mammal.rat  ) == 0ub011000)
+cassert(signed(Animal.mammal.human) == 0ub101000)
 ```
 
 In general, for each leaf enum, the number of bits is equivalent to the number
@@ -621,7 +621,7 @@ of entries in the leaf tuple.
 
 It is possible to use a sequence that is more consistent with traditional
 programming languages, but this only works with non-hierarchical enumerates
-when an integer type (`:int`, `:u32`, `:i4` ...) is used.
+when an integer type (`:signed`, `:u32`, `:s4` ...) is used.
 
 ```pyrope
 enum V5 = (
@@ -629,9 +629,9 @@ enum V5 = (
    ,b=5
    ,c
 )
-cassert(int(V5.a) == 0)
-cassert(int(V5.b) == 5)
-cassert(int(V5.c) == 6)
+cassert(signed(V5.a) == 0)
+cassert(signed(V5.b) == 5)
+cassert(signed(V5.c) == 6)
 ```
 
 The same syntax is used for enums to different objects. The hierarchy is not
@@ -675,7 +675,7 @@ Enum cases can carry a typed payload, which makes the enum a tagged union.
 Only the active case can be read; reading any other case is a compile error.
 
 ```pyrope
-type Vtype = enum(str:string, num:int, b:bool)
+type Vtype = enum(str:string, num:signed, b:bool)
 
 mut vv:Vtype = (num=0x65)
 cassert(vv.num == 0x65)
@@ -692,11 +692,11 @@ algebraic data types. A `match` with `does` arms selects on the active case:
 
 ```pyrope
 enum Expr = (
-  ,number:int = nil
+  ,number:signed = nil
   ,add:(Expr, Expr) = nil
 )
 
-comb eval(e:Expr) -> (r:int) {
+comb eval(e:Expr) -> (r:signed) {
   r = match e {
     does Expr.number { e.number }
     does Expr.add    { eval(e.add[0]) + eval(e.add[1]) }

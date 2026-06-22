@@ -136,7 +136,7 @@ Integers and strings can be converted back and forth:
 
 ```pyrope
 mut a:string = "127"
-mut b:int = a        // same as mut b = int(a)
+mut b:signed = a        // same as mut b = signed(a)
 mut c:string = b     // same as mut c = string(b)
 cassert(a == c)
 cassert(b == 0x7F)
@@ -525,9 +525,21 @@ their semantics vary. A more detailed explanation is available at [LiveHD cell
 type section](/livehd/05-lgraph/#cell-type).
 
 
-Pyrope does not have a "mod" operator. The semantics for "mod" with signed
-integers are different in languages like Python and C. It is a complex operator
-to provide hardware support.
+Pyrope has a modulo operator `a % b`, but only the cases that lower cheaply to
+shift/mask are accepted as hardware; a general modulo is not. The semantics are
+*truncated* (the remainder's sign follows the dividend, like Verilog `%`),
+because the signed semantics for "mod" differ across languages like Python and
+C, and a full divider is expensive. The lowered cases are:
+
+* `b` a compile-time power of two, with a non-negative `a` → `a & (b-1)`.
+* `b` provably larger than `a` (`a`'s value range fits in `[0, |b|)`) → `a`
+  (no remainder is possible).
+* `b == 3` (compile time), with a non-negative `a` → a base-4 digit-sum
+  reduction (since `4 ≡ 1 (mod 3)`).
+
+Any other `% b` (a runtime divisor, a possibly-negative dividend, or a divisor
+that is none of the above) is a compile error. A fully compile-time `a % b`
+still folds to a constant.
 
 ## Initialization
 

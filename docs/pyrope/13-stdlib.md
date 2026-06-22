@@ -18,7 +18,7 @@ cassert(prp.plus(1,2,3) == 6)
 
 Library code:
 ```pyrope
-comb plus(...a:int) -> (r:int) {
+comb plus(...a:signed) -> (r:signed) {
   r = 0
   for e in a {
     r += e
@@ -134,7 +134,7 @@ puts(cfg)
 ## Data structures
 
 ```pyrope
-const q = prp.queue.make[int](depth=16)
+const q = prp.queue.make[signed](depth=16)
 q.push(1)
 assert(not q.empty())
 const v = q.pop()

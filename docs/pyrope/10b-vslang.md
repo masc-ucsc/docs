@@ -139,7 +139,7 @@ func add<T:Numeric>(a:T, b:T) -> T { a + b }
 
 ```pyrope
 comb add(a, b)  -> (r) { r = a + b }                  // OK, no constrains
-comb add2<T:int>(a:T, b:T) -> (r:T) { r = a + b }     // constrain both to have same type
+comb add2<T:signed>(a:T, b:T) -> (r:T) { r = a + b }     // constrain both to have same type
 ```
 
 When a protocol defines an interface, in Swift:
@@ -208,15 +208,15 @@ A Rust style Pyrope equivalent:
 
 ```pyrope
 const AnObject = (
-  v:i32 = nil
+  v:s32 = nil
 )
 
-comb f1(ref self:AnObject) -> (result:i32) { // named output tuple
+comb f1(ref self:AnObject) -> (result:s32) { // named output tuple
   const res = self.v
   self.v += 1
   result = res
 }
-comb f2(self:AnObject) -> (result:i32) {
+comb f2(self:AnObject) -> (result:s32) {
   result = self.v
 }
 ```
@@ -225,12 +225,12 @@ A more Pyrope style equivalent:
 
 ```pyrope
 const AnObject = (
-  mut v:i32 = nil,
-  comb f1(ref self) -> (res:i32) {
+  mut v:s32 = nil,
+  comb f1(ref self) -> (res:s32) {
     res = self.v
     self.v += 1
   },
-  comb f2(self) -> (result:i32) { result = self.v }
+  comb f2(self) -> (result:s32) { result = self.v }
 )
 ```
 
