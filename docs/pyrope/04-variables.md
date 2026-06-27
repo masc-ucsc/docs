@@ -669,6 +669,24 @@ cassert((1, const b=2, ...(3, const c=3), 6) == (1, const b=2, 3, const c=3, 6))
 cassert((1, const b=2, ...(nil, const c=3), 0sb?, 6) == (1, const b=2, nil, const c=3, 0sb?, 6))
 ```
 
+* `a ++ b` is the tuple-concat operator, a shorthand for the two-tuple splice
+  `(...a, ...b)` with the exact same semantics (field-name merge, same
+  same-field/`nil` rules). It is a priority-3 ("other binary") associative
+  operator, so `a ++ b ++ c` chains left-to-right. The `++=` compound-assign
+  form appends in place (`acc ++= b` is `acc = acc ++ b`).
+
+```pyrope
+const a = (1, const foo=2)
+const b = (3, const bar=4)
+cassert((a ++ b) == (...a, ...b))
+cassert((a ++ b) == (1, 3, foo=2, bar=4))
+cassert(((1,2) ++ (3,4) ++ (5,6)) == (1, 2, 3, 4, 5, 6))
+
+mut acc = (0,)
+acc ++= a            // acc = acc ++ a
+cassert(acc == (0, 1, foo=2))
+```
+
 
 ### Type operators
 
@@ -868,7 +886,7 @@ widely expected precedence.
 |:-----------:|:-----------:|-------------:|
 | 1          | unary       | not ! ~ ? |
 | 2          | mult/div    | *, /         |
-| 3          | other binary | ..,^, &, -,+, <<, >>, in, does, has, case, equals, to |
+| 3          | other binary | ..,^, &, -,+, ++, <<, >>, in, does, has, case, equals, to |
 | 4          | comparators |    <, <=, ==, !=, >=, > |
 | 5          | logical     | and, or, implies |
 

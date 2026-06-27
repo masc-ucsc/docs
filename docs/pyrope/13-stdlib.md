@@ -123,12 +123,18 @@ cassert(s.substr(1,3) == "ell")
 
 ## File I/O
 
-File access comes from imported (C++) methods; there is no special grammar.
-It is setup/debug functionality, not synthesizable:
+File access comes from a [`cpp`](07-typesystem.md#external-c-calls-via-cpp)
+import; there is no special grammar. It is debug-only simulation functionality
+(used inside `test` blocks), not synthesizable:
 
 ```pyrope
-const cfg = read_file("config.txt")
-puts(cfg)
+type Fs = ( read_file: comb(path:string) -> (data:string) )
+const fs:Fs = cpp("file_io")
+
+test vectors.load {
+  const cfg = fs.read_file("config.txt")
+  puts(cfg)
+}
 ```
 
 ## Data structures

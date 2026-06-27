@@ -175,7 +175,7 @@ mod fsm(start:bool, fin:bool) -> (busy:bool@[0]) {
   }
 }
 
-test "fsm starts" {
+test fsm.start {
   const f = fsm(start=true, fin=false)
   assert(not f.busy)     // q value: still Idle this cycle
   step
@@ -203,7 +203,7 @@ operators.
 | `{a, b}` concat | per-range LHS bit assigns into a typed destination |
 | `4'b10x?` | `0ub10??` |
 | tri-state / one-hot mux | `unique if` |
-| testbench `initial` | `test "name" { ... step ... }` |
+| testbench `initial` | `test name { ... step ... }` |
 
 More: [Hardware design](00-hwdesign.md), [vs other languages](10b-vslang.md).
 

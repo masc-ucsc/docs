@@ -416,6 +416,10 @@ loop {
 } // do{ ... }while(a<10)
 ```
 
+`for`, `while`, and `loop` are compile-time only and fully unrolled. For a
+runtime, cycle-driven loop inside a `test` (run for `N` cycles or forever), use
+[`tick`](#running-cycles-tick).
+
 ## Cycle access
 
 Cycle-based access to values is expressed through a small set of
@@ -480,21 +484,77 @@ f4 = ring(d, f3)       // the single driver of f4
 
 ## Testing (`test`)
 
-The test statement requires a text identifier to notify when the test fails.
-The `test` is similar to a `puts` statement followed by a scope (`test <str>
-[,args] { stmts+ }`). The statements inside the code block can not have any
-effect outside.
-
+A `test` block is a debug-only simulation entry point. It is named by a
+**dotted identifier** (a selector path), not a string, so individual tests and
+whole groups can be selected from the command line:
 
 ```pyrope
-test "my test {}", 1 {
-  assert(true)
+test add.basic {
+  assert(add(2, 3) == 5)
 }
 ```
 
-Each `test` can run in parallel, to increase the throughput, putting the
-randomization outside the test statement increases the number of tests:
+```bash
+lhd sim add.prp            # run every test in add.prp
+lhd sim add.prp add        # run every test under the `add.` group (prefix match)
+lhd sim add.prp add.basic  # run one test
+```
 
+`lhd sim <file.prp> [test.name]` takes the source file as the first positional
+and an optional dotted test selector as the second. With no selector every test
+in the file runs.
+
+The leading segments form the group and the final segment is the leaf. A
+fully-qualified test name must be unique (a selector maps to one definition).
+There is no `test "string"` form: a human-readable message is just a `puts(...)`
+(or an `assert` message) inside the body. A `test` body still behaves like a
+`puts` followed by a scope, and its statements can not have any effect outside.
+
+### Runtime parameters
+
+A `test` may declare runtime parameters in a `(...)` list, exactly like a lambda
+but **without** a `-> (...)` return (a test never returns a value). The
+parameters are ordinary values usable inside the body — to drive a DUT input,
+size a `tick` loop, or seed a `cpp` model — so a single test becomes a small
+parametrized experiment:
+
+```pyrope
+test add.checked(lhs:i32=3, rhs:i32) {
+  assert(add(lhs, rhs) == lhs + rhs)   // lhs and rhs are the DUT inputs
+}
+```
+
+Each parameter is either **optional** or **required**:
+
+* `lhs:i32=3` has a default, so it is optional: the runner uses `3` unless it is
+  overridden.
+* `rhs:i32` has **no** default, so it is required: the runner MUST supply a
+  value. `rhs:i32=nil` means exactly the same thing — an explicit `nil` default
+  and an omitted default both say "the runner must set this". A `nil` that
+  reaches the body is a runner error, never a silent `0`.
+
+Values are passed with `--arg name=value` (repeatable). Supplying a required
+argument is mandatory; running without it is an error, not a default-to-zero:
+
+```bash
+lhd sim add.prp add.checked --arg rhs=7               # lhs=3 (default), rhs=7
+lhd sim add.prp add.checked --arg lhs=10 --arg rhs=-4 # both overridden
+lhd sim add.prp add.checked                           # error: required `rhs` not set
+```
+
+A required parameter is the hook for *external setup*: the value can come from
+the command line as above, or from a harness that fills it in (a fuzzer, a
+constrained-random or directed-test generator, a CI matrix). The test declares
+*what* it needs; the runner decides *how* the value is produced.
+
+Runtime parameters are debug-only simulation values (they drive the DUT,
+`poke`/`step`, or feed a `cpp` model); they never reach synthesizable logic. A
+value that must size hardware is a `comptime` parameter and belongs in the
+`[...]` slot (planned; see [Implementation status](15-tbd.md)), not in `(...)`.
+
+Many tests can run in parallel to increase throughput. A comptime `for` loop
+multiplies the number of tests; each unrolled instance shares the leaf name and
+the runner disambiguates them by index:
 
 === "Parallel tests"
     ```pyrope
@@ -504,7 +564,7 @@ randomization outside the test statement increases the number of tests:
       const a = (-30..<100).rand
       const b = (-30..<100).rand
 
-      test "test {}+{}",a,b {
+      test add.sweep {
         assert(add(a,b) == (a+b))
       }
     }
@@ -514,8 +574,8 @@ randomization outside the test statement increases the number of tests:
     ```pyrope
     comb add(a,b) -> (r) { r = a + b }
 
-    test "test 10 additions" {
-      for i in 0..<10 { // 10 tests
+    test add.batch {
+      for i in 0..<10 { // 10 checks
         const a = (-30..<100).rand
         const b = (-30..<100).rand
 
@@ -529,20 +589,128 @@ randomization outside the test statement increases the number of tests:
 `test` code blocks are allowed to use special statements not available outside
 testing blocks:
 
-* `step [ncycles]` advances the simulation for several cycles. The local variables
-will preserve the value, the inputs may change value.
+* `step [ncycles]` advances the simulation for several cycles. The local
+  variables preserve their value; the inputs may change value. `step` is the
+  explicit yield point of a test.
 
-* `waitfor condition` is a syntax sugar to wait for a condition to be true.
+* `waitfor(ref cond [,timeout=N])` waits until a condition becomes true (see
+  [Verification](09-verification.md)).
 
 
 ```pyrope
-test "wait 1 cycle" {
+test wait.one {
   const a = 1 + input
   puts("printed every cycle input={}", a)
   step(1)
-  puts("also every cycle a={}",a)  // printed on cycle later
+  puts("also every cycle a={}", a)  // printed one cycle later
 }
 ```
+
+### Running cycles (`tick`)
+
+`for`, `while`, and `loop` all unroll at compile time, so they can not express
+"run for a runtime number of cycles". That is what `tick` does — a
+**non-unrolling**, cycle-driven loop usable only inside `test`:
+
+```pyrope
+tick N { stmts }   // run N simulation cycles, one clock per iteration
+```
+
+Each `tick` iteration is **one cycle**. The design under test (DUT) is *called
+inside* the loop, once per iteration: the call drives this cycle's inputs,
+advances one clock, and returns this cycle's outputs. There is no separate
+`step` — the per-cycle DUT call **is** the cycle, so adding a `step` inside a
+`tick` would advance a second clock. Capture the returned output into a `mut`
+declared before the loop and check it with an `assert` at the end of simulation.
+This is the form the `lhd sim` runner executes today:
+
+```pyrope
+mod counter(enable:bool) -> (value:u8@[0]) {
+  reg count:u8 = 0
+
+  value = count                     // combinational read of count.q -> @[0]
+
+  if enable { wrap count += 1 }
+}
+
+test counter.held_high {
+  mut v_final = nil
+  tick 20 {                         // 20 cycles, one clock per iteration
+    const v = counter(enable=true)  // this cycle's input -> this cycle's output
+    v_final = v
+  }
+  assert(v_final == 20, "after 20 enabled cycles the count must be 20")
+}
+```
+
+Test-local `mut`s persist across iterations, so a golden value updated in
+lockstep inside the same loop mirrors the design's next-state and makes the
+final `assert` self-checking:
+
+```pyrope
+test counter.gated {
+  mut en       = false
+  mut expected = 0
+  mut v_final  = nil
+  tick 20 {
+    en = not en                       // this cycle's enable
+    if en { expected = expected + 1 } // golden mirror of count
+    const v = counter(enable=en)
+    v_final = v
+  }
+  assert(v_final == expected, "gated counter disagrees with golden model")
+  assert(v_final == 10)               // enable was high on 10 of the 20 cycles
+}
+```
+
+A [runtime parameter](#runtime-parameters) can drive the simulation itself.
+Because `tick` takes a runtime count (unlike the unrolling `for`), the cycle
+bound can be a test argument set from outside — the value comes from `--arg`, or
+from the runner when it is omitted:
+
+```pyrope
+test counter.run_for(cycles:u8=20) {
+  mut v_final = nil
+  tick cycles {                       // a runtime argument sets the loop length
+    const v = counter(enable=true)
+    v_final = v
+  }
+  assert(v_final == cycles, "after {} enabled cycles the count must be {}", cycles, cycles)
+}
+```
+
+```bash
+lhd sim counter.prp counter.run_for                 # cycles=20 (default)
+lhd sim counter.prp counter.run_for --arg cycles=50 # run 50 cycles instead
+```
+
+The `N` bound doubles as a watchdog: a `break` stops the loop early once a
+runtime condition holds, while `N` guarantees the test can never spin forever.
+
+```pyrope
+test runner.until_done {
+  mut start      = true            // one-cycle start pulse
+  mut done_final = false
+  tick 100 {                       // watchdog bound: never spin forever
+    const o = runner(start=start, len=5)
+    start = false                  // deassert after the first cycle
+    done_final = o.done
+    if o.done { break }
+  }
+  assert(done_final, "runner never reached Done within 100 cycles")
+}
+```
+
+Like `step` and `poke`, `tick` is a statement-level construct, not a reserved
+identifier: it is recognized only at the start of a statement (`tick`, a cycle
+count, then a `{ ... }` block). A variable or method named `tick` (such as a
+`mod tick(ref self, ...)` clock method) is unaffected.
+
+An unbounded `tick { }` (no count: run until a `break`, `cancel`, or timeout)
+belongs to the concurrent-thread testbench layer of
+[Verification](09-verification.md), where explicit `step`/`waitfor` yields drive
+several stimulus and monitor threads. That layer, like `poke`/`sigref`, is not
+yet accepted by the simulation runner, which requires the `N` bound.
 
 
 The `waitfor` command is equivalent to a `while` with a `step`.
@@ -552,7 +720,7 @@ The `waitfor` command is equivalent to a `while` with a `step`.
     ```pyrope
     total = 3
 
-    waitfor(a_cond)  // wait until a_cond is true
+    waitfor(ref a_cond)  // wait until a_cond is true
 
     assert(total == 3 and a_cond)
     ```
@@ -562,7 +730,8 @@ The `waitfor` command is equivalent to a `while` with a `step`.
     ```pyrope
     total = 3
 
-    while !a_cond {
+    tick {               // runtime cycle loop, not an unrolled while
+      if a_cond { break }
       step
     }
 

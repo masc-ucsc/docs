@@ -864,7 +864,7 @@ const bpred = ( // complex predictor
   comb taken(self) -> (r:bool) { r = self.some_table[som_var] >= 0 }
 )
 
-test "mocking taken branches" {
+test mock.branches {
   poke("bpred_file/taken", true)
 
   mut l = core.fetch.predict(0xFFF)
@@ -1226,35 +1226,85 @@ For integer operations, the Pyrope should result to the following equivalent Lgr
 * `a >= b` is `__lt(b,a) | __eq(a,b)` (without `ge`) or `__ge(a,b)`
 
 
-## Non-Pyrope (C++) calls
+## External (C++) calls via `cpp`
 
-Calling C++ or external code is still fully synthesizable if the code is
-available at compile time. An example could be calling a C++ API to read a json
-file during the setup phase to decide configuration parameters.
-
-
-```pyrope
-const cfg = __read_json()
-
-const ext = if cfg.foo.bar == 3 {
-   foo
-}else{
-   bar
-}
-```
-
-
-Non-Pyrope calls use the same Pyrope lambda definition.
-
-
-If no type is provided, a C++ call assumes a `pipe(...inp)->(...out)` type is
-can pass many inputs/outputs and has permission to mutate values. Any call to a
-method with two underscores `__` is either a basic gate or a C++ function.
+External code is reached through `cpp`, a reserved keyword that behaves like
+[`import`](10-internals.md) (a comptime alias) but resolves to a C++ build
+target instead of a Pyrope file:
 
 ```pyrope
-type T_my_cpp = comb(a, b) -> (e)
-const __my_typed_cpp:T_my_cpp = nil
+const gold = cpp("gcd_model")   // build edge: compile and link the `gcd_model` C++ unit
 ```
 
-Type defining non-Pyrope code is good to catch errors and also because declaring
-`comb` allows to handle several cases of circular dependencies not possible with `mod` [import section](10-internals.md)
+The string is a logical build-target name — the build config maps it to the
+actual source or library; it is not a filesystem path. Because `cpp` is a
+keyword, the toolchain extracts the exact set of C++ dependencies with a simple
+static scan, with no Pyrope evaluation.
+
+`cpp` is the *only* way to reach external C++. The `__name` convention is now
+reserved for compiler intrinsics and basic gates (`__eq`, `__lt`, ...); it no
+longer doubles as a foreign-call escape hatch.
+
+### The typed interface is the source of truth
+
+A `cpp` unit carries no Pyrope signatures, so the interface is declared on the
+Pyrope side. That one declaration drives both the bit-accurate widths and the
+generated C++ header — the boundary is a generated contract, never matched by
+hand on both sides:
+
+```pyrope
+type GcdModel = (
+  call_method1: comb(a:u8, b:u3) -> (foo:u8, bar:u33),
+)
+
+const gold:GcdModel = cpp("gcd_model")
+```
+
+Each method is an ordinary typed lambda (`comb` is the common case — a pure
+function of its inputs). Width and signedness live in the Pyrope types; the C++
+side sees only `Slop<N>` — the simulation value type, fixed-width with every bit
+concrete (its width is `N`; the sign is applied by the generated glue per the
+declared type). Tuples flatten to scalar `Slop<N>` arguments using the same
+port-flattening as a module boundary.
+
+### Generated C++ contract
+
+From the type above, the toolchain emits the prototype to implement. Inputs are
+`const Slop<N>&`; a single output returns a bare `Slop<N>` and a multi-output
+tuple returns a small struct. One object instance is created per binding, so a
+model may keep internal state across calls within a run:
+
+```c++
+struct gcd_model {
+  struct call_method1_out { Slop<8> foo; Slop<33> bar; };
+  call_method1_out call_method1(const Slop<8>& a, const Slop<3>& b);
+};
+```
+
+```pyrope
+const arg1:u8 = 2
+const (foo, bar) = gold.call_method1(a=arg1, b=3)
+```
+
+### Simulation only (debug)
+
+A `cpp` call runs in simulation. It is called from a `test` block — which itself
+generates the simulation to run — and executes per cycle as a golden model,
+scoreboard, or reference checker. It is debug-only and elided from synthesis: it
+cannot drive a synthesizable signal, so the synthesized netlist carries no C++
+dependency. See [External C++ models](09-verification.md#external-c-models).
+
+`cpp` is therefore a simulation-only build dependency — needed when building the
+simulator, never for synthesis. Typing the interface also catches argument and
+width mismatches early.
+
+!!! NOTE
+    Calling C++ at compile time (elaboration-time configuration, e.g. reading a
+    json file to pick parameters) is not exposed today. The natural extension is
+    to attach `comptime` to the import — `comptime cpp("...")` — so its calls
+    fold during elaboration and may feed synthesizable logic. Such a call would
+    interface through `Dlop`, not `Slop<N>`: comptime values are
+    arbitrary-precision and may carry unknown bits, so they lack the fixed-width,
+    every-bit-concrete guarantees `Slop<N>` relies on (`Dlop` is the dynamic,
+    three-valued equivalent). The compiler's `pass`/`cprop` already evaluates C++
+    through `Dlop` internally; only the surface API is unsettled.

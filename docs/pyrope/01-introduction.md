@@ -36,18 +36,18 @@ Populate the Pyrope code
 
 `src/hello.prp`
 ```pyrope
-test "my first test" {
+test hello.world {
   puts("hello world")
 }
 ```
 
 Run
 ```bash
-$prp test
+$ lhd sim src/hello.prp
 ```
 
-All the pyrope files reside in the `src` directory. The `prp` builder calls LiveHD to
-elaborate the pyrope files and run all the tests.
+All the pyrope files reside in the `src` directory. The `lhd sim` command calls LiveHD to
+elaborate the pyrope files and run all the tests in the given file.
 
 
 ## Trivial GCD
@@ -74,14 +74,18 @@ Populate the Pyrope code
       }
     }
 
+    type GcdModel = ( gcd: comb(v1:u32, v2:u32) -> (r:u32) )
+    const gold:GcdModel = cpp("my_cpp_gcd")
+
     for a in 1..=100 {
       for b in 1..=100 {
-        test "check.gcd({},{})",a,b {
+        test gcd.check {
           const z = gcd(a, b)
 
-          waitfor(z.[valid])
+          mut z_valid = z.[valid]
+          waitfor(ref z_valid)
 
-          assert(z == __my_cpp_gcd(v1=a, v2=b))
+          assert(z == gold.gcd(v1=a, v2=b))
         }
       }
     }
@@ -89,22 +93,20 @@ Populate the Pyrope code
 
     src/my_cpp_gcd.cpp
     ```c++ linenums="25"
-    void my_gcd_cpp(const Lbundle &inp, Lbundle &out) {
-      assert(inp.has_const("v1") && inp.has_const("v2"));
-
-      auto x = inp.get_const("v1");
-      auto y = inp.get_const("v2");
-
-      while (y > 0) {
-        if (x > y) {
-          x -= y
-        }else{
-          y -= x
+    struct my_cpp_gcd {
+      Slop<32> gcd(const Slop<32>& v1, const Slop<32>& v2) {
+        auto x = v1;
+        auto y = v2;
+        while (y.is_known_true()) {            // y != 0
+          if (x.gt_op(y).is_known_true()) {    // x > y
+            x = x.sub_op(y);
+          } else {
+            y = y.sub_op(x);
+          }
         }
+        return x;                              // single output → bare Slop<32>
       }
-
-      out.add_const(x);
-    }
+    };
     ```
 
 === "CHISEL"
@@ -177,7 +179,7 @@ Populate the Pyrope code
 
 Run
 ```bash
-$prp test check.gcd
+$ lhd sim gcd.prp gcd.check
 ```
 
 The `gcd.prp` includes the top-level module (`gcd`) and the unit test.

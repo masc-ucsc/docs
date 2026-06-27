@@ -3,10 +3,15 @@
 !!! WARNING "TBD"
     Most of this chapter is not yet implemented in LiveHD: the temporal
     library (`past`/`next`/`rose`/`fell`/`stable`/`changed`/`eventually`/
-    `always`, `.[rising]`/`.[falling]`) and the testbench extras
-    (`peek`/`poke`, `waitfor`, `force`/`release`, `sigref`,
-    `spawn`/`join`/`cancel`). Plain `test "..." { ... step ... }` blocks DO
-    work. See [Implementation status](15-tbd.md).
+    `always`, `.[rising]`/`.[falling]`) and the cocotb-style testbench extras
+    (`peek`/`poke`, `step`, `waitfor`, `force`/`release`, `sigref`,
+    `spawn`/`join`/`cancel`, and the unbounded `tick { }` thread loop). What
+    *does* run today (`lhd sim`) is the synchronous simulation form: a
+    `test name { ... }` block that calls the DUT inside a bounded `tick N { ... }`
+    cycle loop and checks the result with `assert` — see
+    [Running cycles](05b-statements.md#running-cycles-tick). Dotted test names
+    and runtime `(...)` test parameters are the near-term `test` syntax. See
+    [Implementation status](15-tbd.md).
 
 This chapter extends [Verification](05-assert.md) for interactive testbench
 work. The target is the cocotb style of "drive, wait, sample, and run helper
@@ -31,16 +36,21 @@ language does not need a separate `Timer(..., units=...)` API.
 
 | cocotb | Pyrope |
 |--------|--------|
+| `@cocotb.test()` coroutine | `test foo.bar { ... }` |
 | `dut.sig.value = x` | `poke("top/sig", x)` |
 | `dut.sig.value` | `sigref("top/sig")` |
 | `await RisingEdge(dut.valid)` | `mut e = valid.[rising]; waitfor(ref e)` |
 | `await FallingEdge(dut.ready)` | `mut e = ready.[falling]; waitfor(ref e)` |
 | `await Edge(dut.sig)` | `mut e = sig.[changed]; waitfor(ref e)` |
 | `await Timer(5 cycles)` | `step 5` |
+| `while True: await ...` (driver/monitor) | `tick { ... step/waitfor ... }` |
+| `@cocotb.test(timeout_time=N)` | `tick N { ... }` |
 | `cocotb.start_soon(coro())` | `spawn name = { ... }` |
 | `await t` | `join t` |
 | `task.cancel()` | `cancel t` |
 | `Force` / `Release` | `force(path, value)` / `release(path)` |
+| `@cocotb.parametrize(...)` / plusargs | `test foo.bar(arg:T=def)` → `lhd sim foo.prp foo.bar --arg arg=val` |
+| `Scoreboard` / golden model | `cpp("model")` methods called in a `test` |
 
 The main difference is that Pyrope keeps the verification code inside the same
 language as the DUT. There is no separate Python object model for the design.
@@ -59,7 +69,7 @@ and `comb`/`pipe`/`mod`) — the name comes right after `spawn`, followed by
 `= { body }`. It is only valid inside `test` blocks.
 
 ```pyrope
-test "producer consumer" {
+test fifo.producer_consumer {
   spawn producer = {
     for i in 0..<10 {
       mut not_full = !sigref("fifo/full")
@@ -105,11 +115,11 @@ spawn x = {
 The declared name is used later with `join` or `cancel`:
 
 ```pyrope
-test "temporary monitor" {
+test monitor.temporary {
   spawn mon = {
     const req = sigref("top/req")
     mut req_rose = req.[rising]
-    while true {
+    tick {
       waitfor(ref req_rose)
       puts("req rose")
     }
@@ -141,7 +151,7 @@ expression or `.[…]` read directly is also a compile error — bind the
 predicate to a variable first.
 
 ```pyrope
-test "wait for valid" {
+test wait.valid {
   const valid = sigref("top/core0/valid")
   mut valid_rose = valid.[rising]
 
@@ -165,7 +175,7 @@ These reads are debug-only. They compare the current value against
 `past(sig)` and work anywhere a boolean is expected, not only in `waitfor`.
 
 ```pyrope
-test "edge in assertions" {
+test edge.checks {
   const clk_en = sigref("top/clk_en")
 
   assert(!clk_en.[rising], "unexpected clock enable")
@@ -184,7 +194,7 @@ To avoid hung tests, `waitfor` accepts a `timeout` keyword argument bounding
 the wait to `N` cycles:
 
 ```pyrope
-test "bounded wait" {
+test wait.bounded {
   const done = sigref("top/done")
   mut done_rose = done.[rising]
 
@@ -216,7 +226,7 @@ persistent overrides:
 * `release(path)` removes the override and restores the normal driver.
 
 ```pyrope
-test "inject fault then release" {
+test fault.inject {
   const mem_err = sigref("top/mem/error")
 
   assert(!mem_err)
@@ -242,14 +252,14 @@ Pyrope does not need a separate callback API like `watch`. A cocotb monitor is
 just a spawned thread that waits on edges and checks state.
 
 ```pyrope
-test "req ack monitor" {
+test monitor.req_ack {
   const req = sigref("top/bus/req")
   const ack = sigref("top/bus/ack")
   reg outstanding:u8 = 0
 
   spawn req_mon = {
     mut req_rose = req.[rising]
-    while true {
+    tick {
       waitfor(ref req_rose)
       outstanding += 1
     }
@@ -257,7 +267,7 @@ test "req ack monitor" {
 
   spawn ack_mon = {
     mut ack_rose = ack.[rising]
-    while true {
+    tick {
       waitfor(ref ack_rose)
       assert(outstanding > 0, "ack without req")
       outstanding -= 1
@@ -279,6 +289,46 @@ This keeps the model small:
 * Monitors, drivers, and scoreboards all use the same thread model.
 
 
+## External C++ models
+
+A `test name { }` block generates the simulation to run (the slop/sim), so a
+golden model or scoreboard written in C++ plugs straight into it. Reach the C++
+with [`cpp`](07-typesystem.md#external-c-calls-via-cpp) and call its typed
+methods like any other lambda:
+
+```pyrope
+type GcdModel = ( call_method1: comb(a:u8, b:u3) -> (foo:u8, bar:u33) )
+const gold:GcdModel = cpp("gcd_model")
+
+test gcd.check {
+  for a in 1..=100 {
+    poke("top/a", a)
+    poke("top/b", 3)
+    step
+    const (foo, _bar) = gold.call_method1(a=a, b=3)
+    assert(sigref("top/z") == foo)        // DUT checked against the C++ reference
+  }
+}
+```
+
+The model and the DUT share one value type: a `sigref`/`peek` result, a `poke`
+argument, and a `cpp` method's `Slop<N>` argument are the same bit-accurate
+value. Because the C++ model and a Pyrope sub-block present the identical
+flattened `Slop<N>` interface, either side can be swapped for the other without
+touching the test — handy for bringing up a block against a reference and later
+replacing the reference with the real RTL.
+
+A `cpp` object is instantiated once per binding, so a stateful model (a
+scoreboard accumulating across cycles, a memory model, an open trace file) keeps
+its state in C++ for the life of the test — the same role a spawned monitor
+plays in Pyrope.
+
+Everything here is debug-only and elided from synthesis, exactly like the rest
+of this chapter; the synthesized netlist carries no C++ dependency. `cpp` is a
+simulation-only build dependency. See
+[External (C++) calls](07-typesystem.md#external-c-calls-via-cpp).
+
+
 ## Random stimulus
 
 Pyrope already has `.[rand]` and `.[crand]` from
@@ -287,11 +337,11 @@ enough. Start with ordinary random values and filter them with normal Pyrope
 control flow.
 
 ```pyrope
-test "random legal opcodes" {
+test random.opcodes {
   mut opcode:u4 = 0
 
   for i in 0..<100 {
-    while true {
+    for _retry in 0..<64 {        // bounded retry: an unrolled loop, not `while true`
       opcode = opcode.[rand]
       if opcode <= 10 { break }
     }
@@ -419,6 +469,7 @@ intentionally does not add:
 | `spawn name = { }` | `test` only | Declare a concurrent test thread |
 | `join h1, h2, ...` | `test` only | Wait for threads to complete |
 | `cancel h` | `test` only | Stop a running thread at the next yield point |
+| `tick N { }` | `test` only | Cycle-driven loop: run `N` cycles, DUT called once per cycle, no unroll (bounded form runs via `lhd sim`; unbounded `tick { }` is TBD) |
 | `sig.[rising]` | debug only | True on a 0-to-1 transition (same as `rose(sig)`) |
 | `sig.[falling]` | debug only | True on a 1-to-0 transition (same as `fell(sig)`) |
 | `sig.[changed]` | debug only | True when value differs from previous cycle (same as `changed(sig)`) |
@@ -430,6 +481,7 @@ intentionally does not add:
 | `waitfor(ref c, timeout=N)` | `waitfor` only | Bound the wait to `N` cycles |
 | `force(path, val)` | `test` only | Override a signal persistently |
 | `release(path)` | `test` only | Remove the override and restore the driver |
+| `cpp("target")` | `test` only | Bind an external C++ model (golden model, scoreboard) |
 
 Everything else in this chapter is built from existing Pyrope verification
 constructs.

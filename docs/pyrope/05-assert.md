@@ -291,7 +291,10 @@ that it can not have an impact on synthesis or a compile error is generated.
 
 ## Test
 
-Pyrope has the `test [message [,args]+] ( [stmts+] }`.
+A `test` is a debug-only block named by a dotted identifier (a selector path),
+with optional runtime parameters and no return: `test name.path [(params)] {
+stmts+ }`. See [Testing](05b-statements.md#testing-test) for naming, parameters,
+and the `tick` cycle loop.
 
 === "Many parallel tests"
     ```pyrope
@@ -299,7 +302,7 @@ Pyrope has the `test [message [,args]+] ( [stmts+] }`.
 
     for a in 0..=20 {
       for b in 0..=20 {
-        test "checking add({},{})", a, b {
+        test add.sweep {
            cassert(a + b == add(a=a, b=b))
         }
       }
@@ -310,7 +313,7 @@ Pyrope has the `test [message [,args]+] ( [stmts+] }`.
     ```pyrope
     comb add(a, b) -> (r) { r = a + b }
 
-    test "checking add" {
+    test add.batch {
       for a in 0..=20 {
         for b in 0..=20 {
            cassert(a + b == add(a=a, b=b))
@@ -320,9 +323,36 @@ Pyrope has the `test [message [,args]+] ( [stmts+] }`.
     ```
 
 
+To drive a stateful design across cycles, call it inside a `tick N` loop: each
+iteration is one cycle, the call drives that cycle's inputs and returns that
+cycle's outputs, and a `mut` declared before the loop captures the result for an
+end-of-simulation `assert`. This is the form the `lhd sim` runner executes (see
+[Running cycles](05b-statements.md#running-cycles-tick)):
+
+```pyrope
+mod counter(enable:bool) -> (value:u8@[0]) {
+  reg count:u8 = 0
+
+  value = count                     // combinational read of count.q -> @[0]
+
+  if enable { wrap count += 1 }
+}
+
+test counter.held_high {
+  mut v_final = nil
+  tick 20 {                         // 20 cycles, one clock per iteration
+    const v = counter(enable=true)  // call the DUT each cycle, capture its output
+    v_final = v
+  }
+  assert(v_final == 20)
+}
+```
+
 The `test` code block also accepts the keyword `step` that advances one clock
-cycle, and the test continues from that given point. This is useful for when a
-lambda is instantiated and we want to check/update the inputs/outputs.
+cycle, and the test continues from that given point (the lower-level,
+manual-stepping style of the concurrent-thread testbench layer; not yet run by
+`lhd sim`). This is useful for when a lambda is instantiated and we want to
+check/update the inputs/outputs.
 
 ```pyrope
 // mod: output 'value' is combinational (reads register directly)
@@ -344,7 +374,7 @@ pipe[1] counter_pipe(update:bool) -> (value:u8) {
   if update { wrap count = count + 1 }
 }
 
-test "counter_mod through several cycles" {
+test counter.cycles {
 
   mut inp = true
   wire inp_w = inp                   // single-driver net feeding the call
@@ -381,7 +411,7 @@ will continue and fail only if the `assert.[failed]` is true. The `test` code
 block also accepts to read and/or clear failed attribute.
 
 ```pyrope
-test "assert should fail" {
+test failure.expected {
 
  const n = assert.[failed]
  assert(n == false)
@@ -457,7 +487,7 @@ A `test` block can use `sigref` and `regref` with a full instance path to
 check invariants on a specific instance.
 
 ```pyrope
-test "fifo0 checks" {
+test fifo.checks {
   const push  = sigref("top/core0/fifo0/push")
   const pop   = sigref("top/core0/fifo0/pop")
   const full  = sigref("top/core0/fifo0/full")
@@ -479,7 +509,7 @@ replaces the `bind target_lambda` pattern with the same matching rules already
 used by `regref`.
 
 ```pyrope
-test "all fifo checks" {
+test fifo.all {
   const full  = sigref("full")
   const push  = sigref("push")
 
@@ -494,7 +524,7 @@ A `test` block can declare local `reg` to keep verification state across
 cycles. This state belongs to the test and is not visible to the DUT.
 
 ```pyrope
-test "req ack protocol" {
+test protocol.req_ack {
   const req = sigref("top/core0/req")
   const ack = sigref("top/core0/ack")
   reg pending = false
@@ -521,7 +551,7 @@ comb fifo_checks(push, pop, full, empty) -> () {
   cover(pop)
 }
 
-test "fifo0 monitor" {
+test fifo.monitor {
   fifo_checks(
     push  = sigref("top/core0/fifo0/push"),
     pop   = sigref("top/core0/fifo0/pop"),
@@ -557,7 +587,7 @@ Tests acting as monitors follow the same invalid/reset rules as `assert`:
 * `poke` is useful for mocking and fault injection.
 
 ```pyrope
-test "mocking taken branches" {
+test mock.branches {
   const taken = sigref("core/fetch/bpred0/taken")
 
   cover(taken)
@@ -598,7 +628,7 @@ mod fifo(clk:bool, rst:bool, push:bool, pop:bool, din:u8) -> (full:bool@[0], emp
 }
 
 // file fifo_checks.prp (verification only, does not modify fifo.prp)
-test "fifo invariants" {
+test fifo.invariants {
   const push  = sigref("fifo/push")
   const pop   = sigref("fifo/pop")
   const full  = sigref("fifo/full")

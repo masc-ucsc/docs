@@ -508,7 +508,7 @@ comb f1(a, b) -> (r) {
   }
 }
 
-test "check f1" {
+test f1.check {
   for a in -100..=100 {
     for b in -100..=100 {
       assert(f1(a, b) != nil)

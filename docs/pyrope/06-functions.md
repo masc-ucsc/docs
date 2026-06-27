@@ -699,7 +699,7 @@ const Counter = (
 mut p1:Counter = false   // init(ref p1, false)
 mut p2 = p1              // plain structural copy
 
-test "testing p1" {
+test counter.p1 {
   assert(p1.found_once == false)
   assert(p2.found_once == false)
 
