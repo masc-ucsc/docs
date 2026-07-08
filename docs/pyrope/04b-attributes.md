@@ -328,7 +328,7 @@ and `debug`), since other flows may link against the pinned name.
 ## Debug and verification attribute list
 
 The following attributes are debug-only — they are elided from synthesis and
-only valid inside `assert`, `cover`, `test`, and `waitfor` contexts:
+only valid inside `assert`, `cover`, and `test` contexts:
 
 * `rising`: true on the cycle where the signal transitions from 0/false to
   non-zero/true (same as `rose(sig)` from the temporal library)
@@ -336,9 +336,9 @@ only valid inside `assert`, `cover`, `test`, and `waitfor` contexts:
   non-zero/true to 0/false (same as `fell(sig)`)
 * `changed`: true on any cycle where the signal differs from its previous
   value (same as `changed(sig)`)
-* `timeout`: interpreted only by `waitfor`; bounds the wait to `N` cycles
-  (e.g., `waitfor(ref done_rising, timeout=1000)` after binding
-  `mut done_rising = done.[rising]`)
+
+To wait for an edge in a test, drop the read into the wait idiom: `tick N { step;
+if not sig.[rising] { continue }; break }` (the `N` bound is the timeout).
 
 See [Verification](09-verification.md) for the full temporal library and
 debug constructs.

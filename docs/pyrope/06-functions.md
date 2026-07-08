@@ -210,21 +210,25 @@ cassert(a_lambda() == 4)
 The lambda definition has the following fields:
 
 ```txt
-[GENERIC] [COMPTIME] [INPUT] [-> OUTPUT] |
+[GENERIC] [INPUT] [-> OUTPUT] |
 ```
 
-+ `GENERIC` is an optional comma separated list of names between `<` and `>` to
-  use as generic types in the lambda. The call site binds them explicitly
-  (`f<signed,string>(…)`, one type per name in declaration order) or by
-  inference from the actuals' declared types (see "Overloading/generics"
-  below).
-
-+ `COMPTIME` has the optional list of explicit comptime parameters for the
-  lambda. Each entry is a typed declaration (e.g., `n:signed`) or a typed
-  declaration with a default (e.g., `n:signed=1`). Defaults may refer to visible
-  comptime bindings from the enclosing scope. Callers can override any
-  comptime parameter at the call site using the same `[...]` slot
-  (`foo[N](args)`).
++ `GENERIC` is an optional comma separated list of names between `<` and `>`.
+  Each name binds to any **compile-time entity** — a type (`u8`, a `type`
+  alias, a struct type), a comptime constant, or a lambda — and is visible
+  throughout the signature and body. Unlike an input, a generic can
+  constrain the types of other inputs and of outputs
+  (`comb f<T>(a:T) -> (r:T)`). A name may declare a default (`<T, N=4>`); a
+  defaulted generic may be omitted at the call site. The call site binds
+  generics explicitly (`f<T=u8, N=3>(…)`) under the same naming rules as
+  arguments (see "Argument naming" below: named unless the binding is
+  unambiguous), or leaves a type-valued generic to inference from the
+  actuals' declared types (see the binding rules after the example block).
+  There is no separate comptime-parameter list — a comptime constant the
+  caller picks is just a constant-valued generic. (TBD: constant/lambda
+  generics, generic defaults, named `<T=…>` bindings, and body references
+  of a generic name are not implemented yet — see
+  [Implementation status](15-tbd.md), task `3g`.)
 
 + Lambdas do not have an explicit capture list. Visible comptime bindings from
   enclosing scopes, including imports and `comptime const` declarations, are
@@ -235,7 +239,14 @@ The lambda definition has the following fields:
   lambda unless passed as normal inputs or stored in an explicit tuple/object
   that the lambda receives.
 
-+ `INPUT` has a list of inputs allowed with optional types. `()` indicates no
++ `INPUT` has a list of inputs allowed with optional types. An input may
+  declare a **default value** (`comb f(in1:u4, in2=3) -> …`): a call that
+  omits that input takes the default. The default expression evaluates in
+  the parameter tuple's scope — it may reference earlier parameters
+  (`comb example(a:signed, b:signed=a+5)`, see the tuple-scope example in
+  [Variables](04-variables.md)), visible comptime bindings, and generic
+  names (`in2=N`). (TBD: input defaults are not implemented yet — see
+  [Implementation status](15-tbd.md), task `3g`.) `()` indicates no
   inputs. `(...args)` allow to accept a variable number of arguments. A
   `...args` var-arg is the trailing parameter; it gathers every actual not
   consumed by a fixed leading parameter into one tuple — positional leftovers
@@ -311,19 +322,47 @@ cassert(f(a=u22(33), b=u22(100)) == 133)    // X = u22 (inferred; args named per
                                             // the argument-naming rules below)
 cassert(f<u8>(a=1, b=2) == 3)               // X = u8 (explicit call-site binding)
 
+comb addk<T, K=1>(a:T) -> (r) { r = a + K } // K: constant generic with default
+cassert(addk<u8>(a=3) == 4)                 // K defaults to 1 (single unnamed
+                                            // binding is unambiguous → T)
+cassert(addk<T=u8, K=10>(a=3) == 13)        // named bindings, same rules as args
+
+comb inc(v:u8) -> (o:u9) { o = v + 1 }
+comb apply<F>(a:u8) -> (r) { r = F(v=a) }   // F: lambda-valued generic
+cassert(apply<inc>(a=3) == 4)
+
 my_log(a, false, x + 1)
 ```
 
-A generic binds **per call site** — a pure type-macro expansion, with the
-normal typing rules applying after substitution (no implicit coercion). The
-call may bind explicitly with `f<type, …>(…)` (one type per generic name, in
-declaration order, all-or-nothing), or leave the binding to inference: each
-generic unifies over the **declared** types of the actuals at its `:T`
-positions (a `u8` actual and a `u16` actual for one `T` is a compile error —
+A generic binds **per call site** — a pure comptime-macro expansion, with the
+normal typing rules applying after substitution (no implicit coercion). A
+generic name may bind any compile-time entity: a type, a comptime constant,
+or a lambda. After substitution, whatever is legal for the bound entity is
+legal for the generic, and nothing more — `T(a)` is a cast when `T` binds a
+type and a call when it binds a lambda; `a + N` needs `N` to bind a constant;
+attribute queries on a generic are exactly as legal as on the substituted
+entity.
+
+Explicit call-site bindings follow the **same naming rules as arguments**
+("Argument naming" below): each binding is named (`f<T=u8, N=8>(…)`) unless
+it is unambiguous — a single generic name, bindings whose kinds (type vs
+constant vs lambda) match only one assignment, or a bound identifier whose
+name matches the generic's name. A generic the call leaves unbound takes its
+declared default (`<T, N=4>`) if it has one; otherwise, a generic that
+appears in `:T` type positions of the parameters is inferred: it unifies
+over the **declared** types of the actuals at its `:T` positions (a `u8`
+actual and a `u16` actual for one `T` is a compile error —
 `fcall-generic-mismatch`), while bare literals contribute only their kind, so
-`f(a=1, b=2)` infers `X = signed`. On a `pipe`/`mod` boundary each distinct
-binding mints its own module, exactly like the untyped-parameter deferred
-templates above (`madd<T>` called with `u8` actuals mints `madd__u8_u8`).
+`f(a=1, b=2)` infers `X = signed`. A constant- or lambda-valued generic is
+never inferred — it must be bound explicitly or defaulted. On a `pipe`/`mod`
+boundary each distinct binding mints its own module, exactly like the
+untyped-parameter deferred templates above (`madd<T>` called with `u8`
+actuals mints `madd__u8_u8`).
+
+There is no constraint clause on the declaration (no `where`, no
+`<T does …>`). To constrain what a caller may bind, assert it in the body:
+`cassert(T does Addable)` fails at instantiation with the normal
+comptime-assert diagnostics.
 
 ## Argument naming
 

@@ -80,12 +80,15 @@ Populate the Pyrope code
     for a in 1..=100 {
       for b in 1..=100 {
         test gcd.check {
-          const z = gcd(a, b)
-
-          mut z_valid = z.[valid]
-          waitfor(ref z_valid)
-
-          assert(z == gold.gcd(v1=a, v2=b))
+          mut dut = gcd
+          dut.a = a
+          dut.b = b
+          tick 100 {
+            step
+            if not dut.valid { continue }   // wait until the result is ready
+            break
+          }
+          assert(dut.z == gold.gcd(v1=a, v2=b))
         }
       }
     }

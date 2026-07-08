@@ -1,27 +1,32 @@
 # Extended Verification
 
 !!! WARNING "TBD"
-    Most of this chapter is not yet implemented in LiveHD: the temporal
-    library (`past`/`next`/`rose`/`fell`/`stable`/`changed`/`eventually`/
-    `always`, `.[rising]`/`.[falling]`) and the cocotb-style testbench extras
-    (`peek`/`poke`, `step`, `waitfor`, `force`/`release`, `sigref`,
-    `spawn`/`join`/`cancel`, and the unbounded `tick { }` thread loop). What
-    *does* run today (`lhd sim`) is the synchronous simulation form: a
-    `test name { ... }` block that calls the DUT inside a bounded `tick N { ... }`
-    cycle loop and checks the result with `assert` — see
-    [Running cycles](05b-statements.md#running-cycles-tick). Dotted test names
-    and runtime `(...)` test parameters are the near-term `test` syntax. See
-    [Implementation status](15-tbd.md).
+    What *runs today* (`lhd sim`) is the single-clock, single-threaded
+    simulation form: a `test name { ... }` block declares the DUT as an instance
+    (`mut acc = dut`), and a bounded `tick N { ... }` loop drives it with field
+    pokes (`acc.x = v`), advances the clock with an explicit `step`, peeks
+    outputs/registers (`acc.y`), and checks with `assert` — see
+    [Running cycles](05b-statements.md#running-cycles-tick) (and `newtick.md` in
+    the LiveHD repo). Waiting and concurrency are expressed *in that one loop*
+    with ordinary `if`/`continue`/`break` (below) — there is no separate
+    coroutine layer. Still not implemented: the temporal library
+    (`past`/`next`/`rose`/`fell`/`stable`/`changed`/`eventually`/`always`,
+    `.[rising]`/`.[falling]`), the string `poke`/`sigref` arbitrary-path layer,
+    and `force`/`release`. Dotted test names and runtime `(...)` test parameters
+    are the near-term `test` syntax. See [Implementation status](15-tbd.md).
 
 This chapter extends [Verification](05-assert.md) for interactive testbench
-work. The target is the cocotb style of "drive, wait, sample, and run helper
-coroutines", but with as little new syntax as possible.
+work. The target is the cocotb style of "drive, wait, sample, score", but with
+as little new syntax as possible — and, unlike cocotb, **without coroutines**: a
+test is one `tick`/`step` loop, and stimulus, waiting, and monitors are just
+`if`-blocks inside it.
 
 The design rules are:
 
-* Reuse existing `test`, `step`, `waitfor`, `poke`, `sigref`, and `regref`.
-* Prefer attribute reads such as `sig.[rising]` over new statement families.
-* Keep monitors as ordinary Pyrope threads.
+* Reuse existing `test`, `tick`, `step`, and `assert`/`cover`; express waiting
+  and concurrency with `if`/`continue`/`break`, not new statement families.
+* Prefer attribute reads such as `sig.[rising]` over new wait primitives.
+* Keep monitors as inline checks (or a golden `mut`/`cpp` model) in the loop.
 * Keep logging, wave dumps, and solver libraries out of the core language when
   the runner can provide them.
 
@@ -37,184 +42,119 @@ language does not need a separate `Timer(..., units=...)` API.
 | cocotb | Pyrope |
 |--------|--------|
 | `@cocotb.test()` coroutine | `test foo.bar { ... }` |
-| `dut.sig.value = x` | `poke("top/sig", x)` |
-| `dut.sig.value` | `sigref("top/sig")` |
-| `await RisingEdge(dut.valid)` | `mut e = valid.[rising]; waitfor(ref e)` |
-| `await FallingEdge(dut.ready)` | `mut e = ready.[falling]; waitfor(ref e)` |
-| `await Edge(dut.sig)` | `mut e = sig.[changed]; waitfor(ref e)` |
+| `dut.sig.value = x` | `acc.sig = x` (poke an input) |
+| `dut.sig.value` | `acc.sig` (peek an output / reg) |
+| `await RisingEdge(dut.valid)` | `step; if not acc.valid.[rising] { continue }` |
+| `await FallingEdge(dut.ready)` | `step; if not acc.ready.[falling] { continue }` |
+| `await Edge(dut.sig)` | `step; if not acc.sig.[changed] { continue }` |
 | `await Timer(5 cycles)` | `step 5` |
-| `while True: await ...` (driver/monitor) | `tick { ... step/waitfor ... }` |
-| `@cocotb.test(timeout_time=N)` | `tick N { ... }` |
-| `cocotb.start_soon(coro())` | `spawn name = { ... }` |
-| `await t` | `join t` |
-| `task.cancel()` | `cancel t` |
+| `while True: await ...` (driver/monitor) | the `tick N { ... step ... }` loop itself |
+| `@cocotb.test(timeout_time=N)` | `tick N { ... }` (the bound is the timeout) |
+| `cocotb.start_soon(coro())` / `await t` / `task.cancel()` | no threads — interleave each "task" as an `if`-block in the one `tick` loop |
 | `Force` / `Release` | `force(path, value)` / `release(path)` |
 | `@cocotb.parametrize(...)` / plusargs | `test foo.bar(arg:T=def)` → `lhd sim foo.prp foo.bar --arg arg=val` |
-| `Scoreboard` / golden model | `cpp("model")` methods called in a `test` |
+| `Scoreboard` / golden model | a golden `mut` updated each cycle, or `cpp("model")` |
 
 The main difference is that Pyrope keeps the verification code inside the same
 language as the DUT. There is no separate Python object model for the design.
 
 
-## Concurrent test threads (`spawn`/`join`/`cancel`)
+## Concurrent stimulus without threads
 
-Pyrope `test` blocks are single-threaded today, with `step` as the explicit
-yield point. To run concurrent stimulus and monitors inside a test, `spawn`
-declares a new test thread and binds it to a name. `join` waits until all
-the listed threads complete, and `cancel` requests that a running thread
-stop at the next yield point.
+cocotb spins up a coroutine per driver and monitor. Pyrope does not: a test is a
+single `tick`/`step` loop, and each concurrent "task" is just an `if`-block in
+that loop. The one `step` per iteration is the shared yield point, so the tasks
+advance together every cycle — deterministically, with no scheduler, no `spawn`,
+and no capture list (the body already shares all the test's `mut`s).
 
-`spawn` is a declaration keyword (in the same slot as `const`/`mut`/`reg`
-and `comb`/`pipe`/`mod`) — the name comes right after `spawn`, followed by
-`= { body }`. It is only valid inside `test` blocks.
+A FIFO exercised by a producer and a consumer at the same time: each side is an
+`if`-block guarded by the FIFO's flow control, and a golden `mut` mirror checks
+ordering.
 
 ```pyrope
 test fifo.producer_consumer {
-  spawn producer = {
-    for i in 0..<10 {
-      mut not_full = !sigref("fifo/full")
-      waitfor(ref not_full)
-      poke("fifo/push", true)
-      poke("fifo/din",  i)
-      step
-      poke("fifo/push", false)
-    }
+  mut dut  = Fifo
+  mut sent = 0                 // next value to push
+  mut got  = 0                 // next value to expect
+
+  tick 1000 {
+    // producer task: push while there is room and data left to send
+    dut.push = not dut.full and sent < 10
+    if dut.push { dut.din = sent }
+
+    // consumer task: pop whenever data is available
+    dut.pop = not dut.empty
+    if dut.pop { assert(dut.dout == got, "FIFO out of order") }
+
+    step                       // the one shared yield: both tasks advance
+
+    if dut.push { sent = sent + 1 }
+    if dut.pop  { got  = got  + 1 }
+    if sent == 10 and got == 10 { break }
   }
+  assert(sent == 10 and got == 10, "producer/consumer did not finish in 1000 cycles")
+}
+```
 
-  spawn consumer = {
-    for i in 0..<10 {
-      mut not_empty = !sigref("fifo/empty")
-      waitfor(ref not_empty)
-      poke("fifo/pop", true)
-      step
-      assert(sigref("fifo/dout") == i)
-      poke("fifo/pop", false)
-    }
+The two "threads" are the two `if`-blocks; `step` advances them together. To stop
+one task early, gate its `if` on a flag; to cancel the whole test, `break`.
+
+
+## Waiting on a condition
+
+There is no `waitfor` primitive. Because a `tick` body runs every cycle and the
+clock only advances on `step`, "wait until X" is just: `step` each cycle and
+`continue` until the condition holds. The `tick N` bound *is* the timeout, and an
+`assert` after the loop turns a timeout into a failure.
+
+```pyrope
+test wait.threshold {
+  mut acc = accumulator
+  tick 300 {
+    acc.din = 1
+    step
+    if acc.total < 30 { continue }   // keep waiting
+    break                            // condition met
   }
-
-  join(producer, consumer)
+  assert(acc.total >= 30, "total did not reach 30 within 300 cycles")
 }
 ```
 
-Multiple test threads run cooperatively:
+The shape is always the same: `step`, `if not <cond> { continue }`, `break`, then
+a post-loop `assert` for the timeout. Drive stimulus above the `step` if the wait
+depends on it. This one idiom replaces every cocotb `await Edge/RisingEdge/...`
+and the old `waitfor(ref c, timeout=N)`; `step N` covers `await Timer(N cycles)`.
 
-* Each thread runs until it reaches `step`, `waitfor`, or completion.
-* Threads advance deterministically in spawn order within a cycle.
-* `cancel h` is observed at the next `step` or `waitfor` in thread `h`.
-* When the enclosing `test` finishes, any still-running spawned threads are
-  cancelled automatically.
+The `continue` is what makes it a *wait*: it skips the rest of this cycle's body
+and loops back to the next `step`. Without the `step`, the clock would never
+advance and the condition could never change.
 
-The goal is to keep `spawn` syntax small. There is only one task-creation form:
+### Edge-sensitive reads
 
-```pyrope
-spawn x = {
-  some_statement()
-}
-```
+The condition can be any boolean, including the debug-only edge attributes:
 
-The declared name is used later with `join` or `cancel`:
+* `sig.[rising]` — true on the cycle `sig` goes 0/false → non-zero/true.
+* `sig.[falling]` — true on the cycle `sig` goes non-zero/true → 0/false.
+* `sig.[changed]` — true on any cycle `sig` differs from the previous one.
 
-```pyrope
-test monitor.temporary {
-  spawn mon = {
-    const req = sigref("top/req")
-    mut req_rose = req.[rising]
-    tick {
-      waitfor(ref req_rose)
-      puts("req rose")
-    }
-  }
-
-  step(1000)
-  cancel(mon)
-}
-```
-
-Spawned blocks may read enclosing values and update enclosing `reg` variables.
-No separate capture-list syntax is needed.
-
-
-## `waitfor` and edge-sensitive waits
-
-`waitfor` is a regular `mod` (not special syntax). It blocks the current
-test thread until a boolean variable becomes true:
-
-```pyrope
-mod waitfor(ref cond: bool, timeout: u32 = 0) -> () {  }
-```
-
-The first argument must be passed by `ref`, and it must be a plain variable
-(no expression, no attribute read). The `ref` makes "the callee samples the
-live value each cycle" explicit at the call site, matching Pyrope's "by
-value unless explicit" rule. Missing `ref` is a compile error; passing an
-expression or `.[…]` read directly is also a compile error — bind the
-predicate to a variable first.
-
-```pyrope
-test wait.valid {
-  const valid = sigref("top/core0/valid")
-  mut valid_rose = valid.[rising]
-
-  waitfor(ref valid_rose)
-
-  assert(valid)
-  puts("valid just went high")
-}
-```
-
-The bound variable holds a debug-only attribute read. Three are supported:
-
-* `sig.[rising]` is true on the cycle where `sig` transitions from
-  0/false to non-zero/true.
-* `sig.[falling]` is true on the cycle where `sig` transitions from
-  non-zero/true to 0/false.
-* `sig.[changed]` is true on any cycle where `sig` differs from its
-  previous value.
-
-These reads are debug-only. They compare the current value against
-`past(sig)` and work anywhere a boolean is expected, not only in `waitfor`.
+These compare the current value against `past(sig)` and work anywhere a boolean
+is expected — a wait's `if`, an `assert`, or a `cover`:
 
 ```pyrope
 test edge.checks {
-  const clk_en = sigref("top/clk_en")
-
-  assert(!clk_en.[rising], "unexpected clock enable")
-  cover(clk_en.[falling])
+  mut dut = Top
+  tick 64 {
+    step
+    assert(not dut.clk_en.[rising], "unexpected clock enable")
+    cover(dut.clk_en.[falling])
+  }
 }
 ```
 
 For multi-cycle edges and windowed assertions, use the [temporal
 library](#temporal-library) below — `rose[R](sig)`, `fell[R](sig)`,
-`eventually[R](sig)`, etc. The attribute forms above are sugar for the
-single-cycle case (`rose(sig) == sig.[rising]`).
-
-### Timeout
-
-To avoid hung tests, `waitfor` accepts a `timeout` keyword argument bounding
-the wait to `N` cycles:
-
-```pyrope
-test wait.bounded {
-  const done = sigref("top/done")
-  mut done_rose = done.[rising]
-
-  waitfor(ref done_rose, timeout=1000)
-  assert(done, "done did not rise within 1000 cycles")
-}
-```
-
-If the timeout expires, `waitfor` returns even when the condition is still
-false. The following `assert` decides whether that should fail the test.
-
-```pyrope
-mut valid_rose = valid.[rising]
-waitfor(ref valid_rose)
-waitfor(ref valid_rose, timeout=500)
-
-mut done_var = done
-waitfor(ref done_var, timeout=2000)
-step(5)
-```
+`eventually[R](sig)`, etc. The attribute forms above are the single-cycle case
+(`rose(sig) == sig.[rising]`).
 
 
 ## Force and release
@@ -246,47 +186,33 @@ Forcing a register overrides the visible `q` value, not the internal `d`
 calculation.
 
 
-## Monitors as plain threads
+## Monitors as inline checks
 
-Pyrope does not need a separate callback API like `watch`. A cocotb monitor is
-just a spawned thread that waits on edges and checks state.
+A monitor is not a separate thread either — it is an `if`-block in the same loop
+that watches signals and updates a checker `mut`. The req/ack protocol (every
+`ack` must follow an outstanding `req`) is two edge checks plus a counter,
+evaluated every cycle after the `step`:
 
 ```pyrope
 test monitor.req_ack {
-  const req = sigref("top/bus/req")
-  const ack = sigref("top/bus/ack")
-  reg outstanding:u8 = 0
-
-  spawn req_mon = {
-    mut req_rose = req.[rising]
-    tick {
-      waitfor(ref req_rose)
-      outstanding += 1
-    }
-  }
-
-  spawn ack_mon = {
-    mut ack_rose = ack.[rising]
-    tick {
-      waitfor(ref ack_rose)
+  mut dut         = Top
+  mut outstanding = 0
+  tick 1000 {
+    // ... drive the bus here ...
+    step
+    if dut.req.[rising] { outstanding = outstanding + 1 }
+    if dut.ack.[rising] {
       assert(outstanding > 0, "ack without req")
-      outstanding -= 1
+      outstanding = outstanding - 1
     }
   }
-
-  step(1000)
-  cancel(req_mon)
-  cancel(ack_mon)
-  assert(outstanding == 0)
+  assert(outstanding == 0, "unmatched req at end of test")
 }
 ```
 
-This keeps the model small:
-
-* No callback registration syntax.
-* No extra scheduling rules beyond `spawn`, `join`, `cancel`, `step`, and
-  `waitfor`.
-* Monitors, drivers, and scoreboards all use the same thread model.
+The monitor, the driver, and a scoreboard are all just `if`-blocks sharing the
+loop's `mut`s — no callback API, no `spawn`/`cancel`, and no scheduling rules
+beyond `step`.
 
 
 ## External C++ models
@@ -320,8 +246,8 @@ replacing the reference with the real RTL.
 
 A `cpp` object is instantiated once per binding, so a stateful model (a
 scoreboard accumulating across cycles, a memory model, an open trace file) keeps
-its state in C++ for the life of the test — the same role a spawned monitor
-plays in Pyrope.
+its state in C++ for the life of the test — the same role an inline `if`-block
+monitor (with its checker `mut`s) plays in Pyrope.
 
 Everything here is debug-only and elided from synthesis, exactly like the rest
 of this chapter; the synthesized netlist carries no C++ dependency. `cpp` is a
@@ -434,9 +360,10 @@ if enable {
 assert(x == past[3](x)) // same value three cycles ago
 ```
 
-### Overriding comptime parameters
+### Overriding defaulted inputs
 
-User code can define small temporal helpers with comptime parameters. Defaults
+User code can define small temporal helpers with defaulted inputs (see
+[Functions](06-functions.md)). Defaults
 may refer to visible comptime bindings, and callers can override the parameter:
 
 ```pyrope
@@ -453,7 +380,11 @@ assert(ack_within(w=1..<4, req, ack)) // tighter window at this call site
 To keep verification close to Pyrope and easy to learn, this chapter
 intentionally does not add:
 
-* `watch` / `unwatch`: `spawn` plus `waitfor` already covers the same use case.
+* `spawn` / `join` / `cancel` (coroutine threads): a single `tick`/`step` loop
+  with `if`-block tasks and `if`/`continue`/`break` covers the same use cases.
+* `waitfor`: replaced by the `step` + `if not cond { continue }` idiom (the
+  `tick N` bound is the timeout).
+* `watch` / `unwatch`: an inline `if`-block monitor in the loop covers it.
 * `log.info` / `log.warn` / `log.error`: existing `puts` and `print` are enough
   for the language core.
 * `dump.start` / `dump.stop`: waveform capture fits better as a runner or tool
@@ -466,10 +397,8 @@ intentionally does not add:
 
 | Construct | Context | Purpose |
 |-----------|---------|---------|
-| `spawn name = { }` | `test` only | Declare a concurrent test thread |
-| `join h1, h2, ...` | `test` only | Wait for threads to complete |
-| `cancel h` | `test` only | Stop a running thread at the next yield point |
-| `tick N { }` | `test` only | Cycle-driven loop: run `N` cycles, DUT called once per cycle, no unroll (bounded form runs via `lhd sim`; unbounded `tick { }` is TBD) |
+| `tick N { }` | `test` only | Cycle-driven loop: run up to `N` cycles; one `step` (clock edge) per iteration. Waiting / concurrency / monitors are `if`-blocks inside it |
+| `step [N]` | `test` only | Advance the clock one cycle (or `N`); the single yield point |
 | `sig.[rising]` | debug only | True on a 0-to-1 transition (same as `rose(sig)`) |
 | `sig.[falling]` | debug only | True on a 1-to-0 transition (same as `fell(sig)`) |
 | `sig.[changed]` | debug only | True when value differs from previous cycle (same as `changed(sig)`) |
@@ -478,7 +407,6 @@ intentionally does not add:
 | `rose[w](x)`, `fell[w](x)` | debug only | Windowed edge within range `w` |
 | `stable[w](x)`, `changed[w](x)` | debug only | Windowed value-stability checks |
 | `eventually[w](x)`, `always[w](x)` | debug only | Existence / universal quantifier over cycles in `w` |
-| `waitfor(ref c, timeout=N)` | `waitfor` only | Bound the wait to `N` cycles |
 | `force(path, val)` | `test` only | Override a signal persistently |
 | `release(path)` | `test` only | Remove the override and restore the driver |
 | `cpp("target")` | `test` only | Bind an external C++ model (golden model, scoreboard) |

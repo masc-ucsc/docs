@@ -96,11 +96,13 @@ In a way, most type checks have equivalent `cassert` checks.
 `cputs(msg)` is the compile-time analog of `puts`. The compiler evaluates the
 single string argument during elaboration and emits it on the compiler's
 stderr, so the message is visible while the design is being built rather than
-during simulation. Each `cputs` output is prefixed with `prp:` on its own line
-so it can be grepped out of the surrounding compiler log:
+during simulation. Like every `puts`/`assert` message, each `cputs` output is
+prefixed with its source origin — `<file>:<line>:cputs:` — on its own line so
+it can be grepped out of the surrounding compiler log and traced back to the
+statement that produced it:
 
 ```bash
-prp:<message>
+<file>:<line>:cputs:<message>
 ```
 
 Rules:
@@ -115,8 +117,8 @@ Rules:
 
 ```pyrope
 a = 7
-cputs("a is {a}")    // prints: prp:a is 7
-cputs("plain")       // prints: prp:plain
+cputs("a is {a}")    // prints: foo.prp:2:cputs:a is 7
+cputs("plain")       // prints: foo.prp:3:cputs:plain
 
 b = some_runtime_signal
 cputs("b is {b}")    // compile error: operand not comptime-known

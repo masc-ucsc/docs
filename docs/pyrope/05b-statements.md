@@ -589,20 +589,24 @@ the runner disambiguates them by index:
 `test` code blocks are allowed to use special statements not available outside
 testing blocks:
 
-* `step [ncycles]` advances the simulation for several cycles. The local
+* `step [ncycles]` advances the simulation one cycle (or `ncycles`). The local
   variables preserve their value; the inputs may change value. `step` is the
-  explicit yield point of a test.
+  explicit yield point of a test — the clock edge.
 
-* `waitfor(ref cond [,timeout=N])` waits until a condition becomes true (see
-  [Verification](09-verification.md)).
-
+To *wait* for a condition there is no separate primitive: `step` each cycle and
+`continue` until it holds (the `tick N` bound is the timeout). See
+[Waiting on a condition](09-verification.md#waiting-on-a-condition).
 
 ```pyrope
 test wait.one {
-  const a = 1 + input
-  puts("printed every cycle input={}", a)
-  step(1)
-  puts("also every cycle a={}", a)  // printed one cycle later
+  mut dut = top
+  tick 100 {
+    dut.a = 1
+    step
+    if not dut.ready { continue }   // wait until ready, then proceed
+    break
+  }
+  assert(dut.ready, "ready did not assert within 100 cycles")
 }
 ```
 
@@ -613,16 +617,17 @@ test wait.one {
 **non-unrolling**, cycle-driven loop usable only inside `test`:
 
 ```pyrope
-tick N { stmts }   // run N simulation cycles, one clock per iteration
+tick N { stmts }   // run up to N cycles; one `step` (clock edge) per iteration
 ```
 
-Each `tick` iteration is **one cycle**. The design under test (DUT) is *called
-inside* the loop, once per iteration: the call drives this cycle's inputs,
-advances one clock, and returns this cycle's outputs. There is no separate
-`step` — the per-cycle DUT call **is** the cycle, so adding a `step` inside a
-`tick` would advance a second clock. Capture the returned output into a `mut`
-declared before the loop and check it with an `assert` at the end of simulation.
-This is the form the `lhd sim` runner executes today:
+Each `tick` iteration is **one cycle**. You declare the design under test (DUT)
+once as an *instance* before the loop and interact with it by field access:
+`acc.x = v` drives input `x` (pre-edge), `acc.y` reads an output or an internal
+register (`acc.total`). The clock edge is the explicit **`step`** in the body —
+statements above it drive this cycle's inputs, statements below sample the
+results — and there is exactly one `step` per iteration. The current cycle index
+is the first-class value `clock` (0-based), usable in `puts`, `assert`, and to
+gate inputs such as reset (`acc.reset = clock < 2`; reset is just an input):
 
 ```pyrope
 mod counter(enable:bool) -> (value:u8@[0]) {
@@ -634,10 +639,12 @@ mod counter(enable:bool) -> (value:u8@[0]) {
 }
 
 test counter.held_high {
+  mut acc     = counter             // one persistent instance, reset on declaration
   mut v_final = nil
-  tick 20 {                         // 20 cycles, one clock per iteration
-    const v = counter(enable=true)  // this cycle's input -> this cycle's output
-    v_final = v
+  tick 20 {                         // run up to 20 cycles
+    acc.enable = true               // drive this cycle's input (pre-edge)
+    step                            // the clock edge
+    v_final = acc.value             // sample this cycle's output (post-edge)
   }
   assert(v_final == 20, "after 20 enabled cycles the count must be 20")
 }
@@ -649,17 +656,35 @@ final `assert` self-checking:
 
 ```pyrope
 test counter.gated {
+  mut acc      = counter
   mut en       = false
   mut expected = 0
   mut v_final  = nil
   tick 20 {
     en = not en                       // this cycle's enable
     if en { expected = expected + 1 } // golden mirror of count
-    const v = counter(enable=en)
-    v_final = v
+    acc.enable = en
+    step
+    v_final = acc.value
   }
   assert(v_final == expected, "gated counter disagrees with golden model")
   assert(v_final == 10)               // enable was high on 10 of the 20 cycles
+}
+```
+
+Reset is an ordinary input — drive it from the cycle index rather than a magic
+window. Holding `acc.reset` for the first cycles keeps the registers at their
+reset value until you release it:
+
+```pyrope
+test counter.with_reset {
+  mut acc = counter
+  tick 8 {
+    acc.enable = true
+    acc.reset  = clock < 2     // cycles 0,1 held in reset; counting starts at cycle 2
+    step
+  }
+  assert(acc.value == 6)       // counted only on cycles 2..7
 }
 ```
 
@@ -670,10 +695,12 @@ from the runner when it is omitted:
 
 ```pyrope
 test counter.run_for(cycles:u8=20) {
+  mut acc     = counter
   mut v_final = nil
   tick cycles {                       // a runtime argument sets the loop length
-    const v = counter(enable=true)
-    v_final = v
+    acc.enable = true
+    step
+    v_final = acc.value
   }
   assert(v_final == cycles, "after {} enabled cycles the count must be {}", cycles, cycles)
 }
@@ -689,13 +716,14 @@ runtime condition holds, while `N` guarantees the test can never spin forever.
 
 ```pyrope
 test runner.until_done {
-  mut start      = true            // one-cycle start pulse
+  mut r          = runner
   mut done_final = false
   tick 100 {                       // watchdog bound: never spin forever
-    const o = runner(start=start, len=5)
-    start = false                  // deassert after the first cycle
-    done_final = o.done
-    if o.done { break }
+    r.start = clock == 0           // one-cycle start pulse on cycle 0
+    r.len   = 5
+    step
+    done_final = r.done
+    if r.done { break }
   }
   assert(done_final, "runner never reached Done within 100 cycles")
 }
@@ -706,37 +734,25 @@ identifier: it is recognized only at the start of a statement (`tick`, a cycle
 count, then a `{ ... }` block). A variable or method named `tick` (such as a
 `mod tick(ref self, ...)` clock method) is unaffected.
 
-An unbounded `tick { }` (no count: run until a `break`, `cancel`, or timeout)
-belongs to the concurrent-thread testbench layer of
-[Verification](09-verification.md), where explicit `step`/`waitfor` yields drive
-several stimulus and monitor threads. That layer, like `poke`/`sigref`, is not
-yet accepted by the simulation runner, which requires the `N` bound.
+An unbounded `tick { }` (no count: run until a `break`) is TBD; the simulation
+runner currently requires the `N` bound, which doubles as the watchdog/timeout.
+Stimulus, waiting, and monitors all live *inside* the one bounded loop as
+`if`-blocks — see [Extended Verification](09-verification.md).
 
 
-The `waitfor` command is equivalent to a `while` with a `step`.
+"Wait until a condition" is `step` plus `if`/`continue` — there is no `waitfor`
+primitive. The `tick N` bound is the timeout, and a post-loop `assert` turns a
+timeout into a failure:
 
-=== "`waitfor`"
-
-    ```pyrope
-    total = 3
-
-    waitfor(ref a_cond)  // wait until a_cond is true
-
-    assert(total == 3 and a_cond)
-    ```
-
-=== "equivalent Pyrope"
-
-    ```pyrope
-    total = 3
-
-    tick {               // runtime cycle loop, not an unrolled while
-      if a_cond { break }
-      step
-    }
-
-    assert(total == 3 and a_cond)
-    ```
+```pyrope
+total = 3
+tick 1000 {
+  step
+  if not a_cond { continue }   // wait until a_cond is true
+  break
+}
+assert(total == 3 and a_cond, "a_cond did not hold within 1000 cycles")
+```
 
 The main reason for using the `step` is that the "equivalent" `#>[1]` is a more
 structured construct. The `step` behaves more like a "yield" in that the next

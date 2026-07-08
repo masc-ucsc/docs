@@ -83,7 +83,9 @@ Named-argument passing in calls (`foo(a=3, b=4)`) is **not** a declaration
 — the names are matched against the callee's declared parameters — so no
 kind keyword is required there.
 
-The `[...]` slot after a lambda name declares explicit comptime parameters.
+The generics list after a lambda name (`<T, N=4>`) declares explicit
+compile-time parameters — types, constants, or lambdas (see
+[Functions](06-functions.md)).
 It is not a capture list. Lambdas can lexically read visible comptime bindings
 from enclosing scopes, but runtime `const`, `mut`, and `reg` declarations from
 enclosing lambda scopes are not visible in nested lambdas unless passed as
@@ -162,7 +164,7 @@ comptime dependencies of the lambda.
 * A variable is visible from definition until the end of scope in program order.
 
 
-Since lambda inputs and comptime parameters are always immutable, it is not
+Since lambda inputs and generics are always immutable, it is not
 allowed to declare them as `mut` and redundant to declare them as `const`.
 
 
@@ -274,7 +276,8 @@ const y = x + 1    // error: 'x' is a boolean, '1' is integer
 
 Functions have several options (see [Functions](06-functions.md)), but from a
 high level they provide a sequence of statements and they have a tuple for
-input and a tuple for output. Functions can have explicit comptime parameters
+input and a tuple for output. Functions can have generics (explicit
+compile-time type/constant/lambda parameters)
 and can lexically read visible comptime bindings from enclosing scopes. Like
 strings, functions are always immutable objects but they can be assigned to
 mutable variables.
