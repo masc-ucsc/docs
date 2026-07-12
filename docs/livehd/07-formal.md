@@ -178,6 +178,13 @@ invocations:
   These hints survive design edits and can never make a verdict wrong: a
   replayed pairing may lift an UNKNOWN to PROVEN and deletes itself when
   stale, nothing more.
+* One working directory holds one cache for many designs. A hierarchical run
+  records a verdict for the top *and* every module it contains, each keyed by
+  its own digest, and each run merges into the shared file rather than
+  replacing it — so checking a top and later checking one of its submodules on
+  the same working directory reuses the earlier proof with no re-solve. (The
+  merge is safe for runs one after another; it is not designed for two writers
+  hammering the same working directory at once.)
 
 Most of this machinery serves equivalence checking today; property
 verification currently reuses the per-obligation verdict cache, with hint
@@ -441,7 +448,10 @@ The verdict cache is engineered so that a cache hit is a theorem, not a hope:
   digest of each side — operators, widths, port-scoped connectivity,
   interface, recursively folded child digests — so a digest hit means "this
   exact proof problem", independent of process or build. A design containing
-  anonymous state refuses to digest at all: soundness over coverage.
+  anonymous state refuses to digest at all: soundness over coverage. The same
+  digest-keyed store serves both equivalence paths — the bottom-up per-module
+  driver and the flat, whole-design single-miter path — so a cache hit is a
+  hit however the run was decomposed.
 * Property-verification obligations are keyed by hashing the exact serialized
   solver encoding, so any change in encoder semantics invalidates cached
   results automatically.
