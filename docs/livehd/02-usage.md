@@ -25,7 +25,7 @@ To build and get started:
 ```sh
 $ bazel build //lhd:lhd
 $ ./bazel-bin/lhd/lhd help
-$ ./bazel-bin/lhd/lhd help synth
+$ ./bazel-bin/lhd/lhd help compile
 ```
 
 The design rationale is documented in the LiveHD repo under
@@ -39,12 +39,14 @@ is inferred from the file extension (`.prp` vs `.v`/`.sv`).
 
 | Command | Purpose |
 |---------|---------|
-| `lhd elaborate [verilog\|pyrope] SRCS...` | frontend: source → IR |
-| `lhd synth IR...` | transform / optimize / codegen over IR inputs |
-| `lhd compile [verilog\|pyrope] SRCS...` | fused elaborate + synth (one action, one exit code) |
-| `lhd check` | logic equivalence check (LEC) between two designs |
+| `lhd compile [verilog\|pyrope] SRCS/IR...` | the single source→IR→netlist action (frontend + synth fused; sources and/or `ln:`/`lg:` inputs) |
+| `lhd lec --impl S --ref S` | logic equivalence check between two designs (also spelled `lhd formal lec`) |
+| `lhd formal verify DESIGN [SIDECARS.prp...]` | prove the design's `assert`/`assume` obligations by BMC + induction (per-assert verdict table) |
+| `lhd sim SRCS...` | compile and run the design's `test` blocks (simulation driver) |
+| `lhd pass <sub> ...` | run one pass over IR (`abc`, `color`, `partition`, `semdiff`, `formal`, ...) |
+| `lhd tool cat\|grep\|diff\|tree ...` | unified `ln:`/`lg:` inspector |
 | `lhd scan FILES.prp...` | report each Pyrope file's `import` strings (dependency discovery) |
-| `lhd lsp` | Pyrope language server over stdio (JSON-RPC) |
+| `lhd pyrope fmt\|lsp` | Pyrope formatter / language server over stdio (JSON-RPC) |
 | `lhd list steps\|recipes\|emit-kinds\|error-classes\|options [REGEX]` | discovery (JSON when piped; `options` prints human text on a terminal) |
 | `lhd describe <command\|recipe:NAME\|emit-kind\|pass.flag>` | self-documentation (JSON output; `pass.flag` shows one option's full help) |
 | `lhd version` / `lhd help [command]` | meta |
@@ -87,11 +89,12 @@ One shot — elaborate, optimize, and emit Verilog:
 $ lhd compile foo.v --top foo --recipe O2 --emit verilog:foo.gen.v
 ```
 
-Or as separate steps with the `lg:` container in between:
+Or as separate steps with the `lg:` container in between (`compile` is the
+single action; an `lg:`-only input skips the frontend):
 
 ```sh
-$ lhd elaborate foo.v --top foo --emit-dir lg:foo_lgs/
-$ lhd synth lg:foo_lgs/ --recipe O1 --emit verilog:foo.gen.v
+$ lhd compile foo.v --top foo --emit-dir lg:foo_lgs/
+$ lhd compile lg:foo_lgs/ --recipe O1 --emit verilog:foo.gen.v
 ```
 
 The Verilog frontend has three readers, selected with
@@ -112,20 +115,20 @@ Make-syntax dependency file for build systems.
 $ lhd compile bar.prp --emit verilog:bar.gen.v
 ```
 
-A `.prp` file can define several functions; `elaborate pyrope` emits one LNAST
-unit per elaborated unit into an `ln:` directory. Files related by `import`
+A `.prp` file can define several functions; compiling with `--emit-dir ln:`
+emits one LNAST unit per elaborated unit into an `ln:` directory. Files related by `import`
 ride along as pre-elaborated `ln:` inputs. The canonical per-file → top flow:
 
 ```sh
 # per pyrope file, in parallel (no imports)
-$ lhd elaborate f1.prp --emit-dir ln:f1_lns/ --emit-dir lg:f1_lgs/
+$ lhd compile f1.prp --emit-dir ln:f1_lns/ --emit-dir lg:f1_lgs/
 
 # a file importing f1: its pre-elaborated ln: rides along
-$ lhd elaborate f2.prp ln:f1_lns/ --emit-dir ln:f2_lns/ --emit-dir lg:f2_lgs/
+$ lhd compile f2.prp ln:f1_lns/ --emit-dir ln:f2_lns/ --emit-dir lg:f2_lgs/
 
 # top target: aggregate ln: units into ONE library, then synth
-$ lhd elaborate ln:f1_lns/ ln:f2_lns/ --top foo --emit-dir lg:top_lgs/
-$ lhd synth lg:top_lgs/ --recipe O1 --emit-dir lg:top_opt_lgs/ --emit verilog:top.v
+$ lhd compile ln:f1_lns/ ln:f2_lns/ --top foo --emit-dir lg:top_lgs/
+$ lhd compile lg:top_lgs/ --recipe O1 --emit-dir lg:top_opt_lgs/ --emit verilog:top.v
 ```
 
 To discover the import relationships without elaborating (Pyrope `import`
@@ -154,8 +157,8 @@ $ lhd compile inou/prp/tests/equiv/mod_varargs_csa.prp --emit-dir verilog:tmp --
 
 A design can mix leaves from different frontends. `import("lg:NAME")` pulls a
 *compiled* LGraph (from a previous Pyrope or Verilog/yosys run) into a Pyrope
-module as a black box — instantiated by name, body resolved at link time. The
-`elaborate` command then **assembles** several `lg:`/`ln:` inputs, starting from
+module as a black box — instantiated by name, body resolved at link time.
+`compile` then **assembles** several `lg:`/`ln:` inputs, starting from
 `--top`, into one new `lg:` library you can synthesize.
 
 The lg: name is the full graph name: a Verilog module keeps its name (`inv`), a
@@ -169,20 +172,20 @@ $ bazel build //lhd:lhd
 
 # 1. a Verilog leaf -> lg: (through yosys; the default reader is now slang, so
 #    request the yosys frontend explicitly for this black-box leaf)
-$ ./bazel-bin/lhd/lhd elaborate lhd/tests/merge_demo/inv.v --top inv --reader yosys-verilog --emit-dir lg:tmp/inv_lg/
+$ ./bazel-bin/lhd/lhd compile lhd/tests/merge_demo/inv.v --top inv --reader yosys-verilog --emit-dir lg:tmp/inv_lg/
 
 # 2. a Pyrope leaf -> lg:
-$ ./bazel-bin/lhd/lhd elaborate lhd/tests/merge_demo/adder.prp --emit-dir lg:tmp/adder_lg/
+$ ./bazel-bin/lhd/lhd compile lhd/tests/merge_demo/adder.prp --emit-dir lg:tmp/adder_lg/
 
 # 3. a top Pyrope that imports BOTH (a yosys black box + a Pyrope module) -> ln:
 #    (elaborated only; the lg: imports stay unresolved until the link step)
-$ ./bazel-bin/lhd/lhd elaborate lhd/tests/merge_demo/top.prp --emit-dir ln:tmp/top_ln/
+$ ./bazel-bin/lhd/lhd compile lhd/tests/merge_demo/top.prp --emit-dir ln:tmp/top_ln/
 
 # 4. LINK: merge the two lg: libraries and lower the top against them -> a new lg:
-$ ./bazel-bin/lhd/lhd elaborate --top top lg:tmp/inv_lg/ lg:tmp/adder_lg/ ln:tmp/top_ln/ --emit-dir lg:tmp/merged_lg/
+$ ./bazel-bin/lhd/lhd compile --top top lg:tmp/inv_lg/ lg:tmp/adder_lg/ ln:tmp/top_ln/ --emit-dir lg:tmp/merged_lg/
 
 # 5. synthesize the assembled library -> Verilog
-$ ./bazel-bin/lhd/lhd synth lg:tmp/merged_lg/ --emit verilog:tmp/top.v
+$ ./bazel-bin/lhd/lhd compile lg:tmp/merged_lg/ --emit verilog:tmp/top.v
 ```
 
 `tmp/top.v` holds three modules — `inv`, `adder.adder`, and `top.top` — with
@@ -243,26 +246,74 @@ $ lhd describe config    # prints the lhd.toml schema
 
 ## Equivalence checking (LEC)
 
-`lhd check` runs a logic equivalence check (via `inou/yosys/lgcheck`) between
-an implementation and a reference; each side can be a `verilog:` file or a
-`lg:` directory:
+`lhd lec` (also spelled `lhd formal lec`) proves two designs equivalent; each
+side can be a `verilog:`/`pyrope:` file or an `ln:`/`lg:` directory (a bare
+`.v`/`.sv`/`.prp` path infers its kind):
 
 ```sh
-$ lhd check --impl verilog:foo.gen.v --ref verilog:foo.v --impl-top foo --ref-top foo
+$ lhd lec --impl foo.gen.v --ref foo.v --top foo
 ```
 
-A non-equivalent pair exits non-zero with `error.class = equiv_fail`.
+The default backend is the in-process cvc5 SMT engine (bottom-up hierarchical:
+each module def is proven leaves-first and proven children collapse into their
+parents); `--set lec.solver=lgyosys` routes through `inou/yosys/lgcheck`
+instead, and `--set lec.engine=bmc|ind` picks a single engine over the default
+ind+bmc portfolio. On a refutation with `--workdir`, the counterexample is
+also written as a self-contained Pyrope testbench (`lecfail.prp`) plus a VCD
+so the divergence can be replayed and visualized. A non-equivalent pair exits
+non-zero with `error.class = equiv_fail`; an inconclusive solve is a warning
+(exit 0) unless `--set lec.strict=true`.
+
+## Formal verification (assert / assume)
+
+`lhd formal verify` proves ONE design's `assert` / `assert_always` / `assume`
+obligations by bounded model checking from reset, on the same engine LEC uses.
+Each obligation is checked per cycle as its own solver query; every proven
+fact immediately prunes the search for the rest, and a timeout costs one
+obligation at one cycle — the run reports a per-assert verdict table, not a
+single verdict:
+
+```sh
+$ lhd formal verify cnt.prp cnt.verify.prp --top cnt --set formal.bound=10
+formal verify: 'cnt.cnt' REFUTED (...)
+  assert at cnt.prp:5: PROVEN (inductive — every cycle of every bound)
+  assert at cnt.prp:6 "counter hit 5": REFUTED at cycle 7
+    counterexample inputs: cyc0: enable=0, reset=1 | ... | cyc6: enable=1, reset=0
+  assume at cnt.verify.prp:4 [cnt.quiet]: in force (environment constraint)
+```
+
+Verdict tiers, per assert: `PROVEN (inductive)` holds at every cycle of every
+bound (the bounded proof plus an induction step); `PROVEN to cycle k
+(bounded)` means no violation within the unrolled window only; `REFUTED at
+cycle k` is a reachable violation with the per-cycle input trace that
+reproduces it from reset (the run exits non-zero, `error.class =
+equiv_fail`); `UNKNOWN` (solver gave up / contradictory assumes) is a loud
+warning that fails only under `--set formal.strict=true`. An `assume` is an
+environment constraint: it prunes the explored traces and is disclosed in the
+table.
+
+Properties can live inline in the design or in *sidecar* files as
+`formal name.dotted { ... }` blocks — declarative every-cycle claims over
+dotted signal paths, activated by listing the file and filtered with
+`--formal <glob>`; see
+[Pyrope verification](../pyrope/05-assert.md#formal-blocks) for the block
+syntax. Engine knobs are shared with LEC under `--set formal.*`
+(`formal.bound`, `formal.timeout` per query, `formal.phase`, `formal.reset`);
+the legacy `lec.*` spellings stay accepted. The same checks also run in a don't-try-hard mode inside every
+`lhd compile` (`pass.formal`): proven obligations are elided from the netlist,
+refuted ones fail the build, undecided ones stay as runtime checks with a
+deferral warning.
 
 ## Inspecting the IRs
 
 Textual LNAST dump (round-trips through `Lnast::read`):
 
 ```sh
-$ lhd elaborate bar.prp --emit-dir lnast-dump:dump_dir/
+$ lhd compile bar.prp --emit-dir lnast-dump:dump_dir/
 ```
 
-From `elaborate` the dump is post-parse; from `synth`/`compile` it is
-post-upass. The `ln:`/`lg:` directories themselves are the binary interchange
+With `--recipe O0` the dump is close to post-parse; the default recipes show
+the post-upass form. The `ln:`/`lg:` directories themselves are the binary interchange
 forms (`hhds::Forest::save` / `hhds::GraphLibrary::save`).
 
 ## Results, exit codes, and error classes

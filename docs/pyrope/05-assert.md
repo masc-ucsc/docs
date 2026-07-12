@@ -424,6 +424,75 @@ test failure.expected {
 }
 ```
 
+## Formal blocks
+
+A `formal` block is a declarative verification overlay, named by a dotted
+identifier exactly like a `test`: `formal name.path { stmts+ }`. It differs
+from a `test` in two ways: every statement is a claim that must hold at
+**every cycle** (there is no `step`/`tick` — nothing is procedural), and it
+never lowers to hardware or simulation — the design compile skips it entirely,
+and only the formal tools consume it: `lhd formal verify` proves its claims,
+and `lhd lec` accepts proven invariants and input assumes from it as helper
+facts for an equivalence proof. This lets a design
+and its properties live in one file, or the properties in a separate *sidecar*
+file that is versioned and reviewed like source code.
+
+The body binds the design with the test-block import/alias style, then states
+properties over dotted signal paths (top input/output ports, and registers
+reached through instance names):
+
+* `assert(expr [, "msg"])` — must hold at every checked cycle (after reset).
+* `assert_always(expr [, "msg"])` — must hold at every cycle, reset included.
+* `assume(expr [, "msg"])` — an environment constraint: it prunes the traces
+  the tool explores and is *disclosed* in the report (all verdicts become
+  conditional on it). A contradictory assume set is reported, never silently
+  vacuous.
+
+```pyrope
+// cnt.prp — the design
+mod cnt(enable:bool) -> (value:u8@[0]) {
+  reg count:u8 = 0
+  reg par:bool = false
+  value = count
+  if enable {
+    wrap count += 1
+    par = not par
+  }
+}
+```
+
+```pyrope
+// cnt.verify.prp — a sidecar of formal blocks (never becomes hardware)
+const top = import("cnt.cnt")
+
+formal cnt.parity {
+  mut acc = top
+  assert(u1(acc.par) == acc.count#[0], "parity tracks bit0")
+}
+
+formal cnt.bounded {
+  mut acc = top
+  assume(acc.enable == 0)            // environment: the counter never runs
+  assert(acc.count != 5, "frozen")   // provable under the assume
+}
+```
+
+```bash
+lhd formal verify cnt.prp cnt.verify.prp --top cnt --set formal.bound=10
+#   assert at cnt.verify.prp:5 [cnt.parity] "parity tracks bit0": PROVEN to cycle 11 (bounded)
+#   ...
+lhd formal verify cnt.prp cnt.verify.prp --top cnt --formal 'cnt.parity'  # run one block
+```
+
+The dotted block name is the enable/disable handle (`--formal <glob>` selects
+blocks); presence in the file list is the activation — there is no
+registration step. Property expressions are ordinary Pyrope (casts, bit
+selects, operators): the tool compiles each block through the normal compiler,
+so their semantics can never diverge from the language. The same sidecar
+format is the target for tool-mined invariants: proven helper facts are
+emitted as `formal` blocks with provenance comments, re-checked on every run,
+and speed up the remaining proofs.
+
 ## Signal reference
 
 While `regref` references registers in the instantiated hierarchy, `sigref`
