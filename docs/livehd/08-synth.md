@@ -89,12 +89,20 @@ blackbox boundaries are invisible here. Free with every mapping run.
 
 **Phase 2 — OpenTimer STA** (`timing.json`, `"kind":"sta"`): real
 arrival-time analysis of ONE tech-mapped module (`--top` a region module, or
-map uncolored for a flat whole-design module). Flops and memories are path
+a whole-design flat module — see below). Flops and memories are path
 boundaries (their outputs arrive at 0), so flop-to-flop segments are scored;
 `min period ≈ max_delay` up to setup/clock terms. Endpoints resolve to the
 pre-synthesis `file:line` through the gates' srcid, giving the agent concrete
 edit targets. Optional `.sdc` (`create_clock -period`, `set_input_delay`, …)
 and `.spef` refine it.
+
+**Whole-design timing without region boundaries**: `lhd pass color flat` +
+`lhd pass abc` flattens the instance hierarchy (`pass.abc.flatten=auto` fires
+on the flat coloring) and maps the whole design as ONE netlist module named
+after the top — a drop-in replacement for the original def, with no
+cross-module bus-packing glue. `lhd pass opentimer --top <top>` then times
+the entire design in its default single-module mode, catching every
+cross-module path the per-region ABC estimate is blind to.
 
 ## What the agent can and cannot move
 

@@ -438,15 +438,25 @@ and its properties live in one file, or the properties in a separate *sidecar*
 file that is versioned and reviewed like source code.
 
 The body binds the design with the test-block import/alias style, then states
-properties over dotted signal paths (top input/output ports, and registers
-reached through instance names):
+properties over dotted signal paths: top input/output ports, registers reached
+through instance names, and — for a block bound to a submodule — the target
+instance's own input/output ports (the block is checked once per instance,
+reported `[block@instance]`):
 
 * `assert(expr [, "msg"])` — must hold at every checked cycle (after reset).
 * `assert_always(expr [, "msg"])` — must hold at every cycle, reset included.
-* `assume(expr [, "msg"])` — an environment constraint: it prunes the traces
-  the tool explores and is *disclosed* in the report (all verdicts become
-  conditional on it). A contradictory assume set is reported, never silently
-  vacuous.
+* `assume(expr [, "msg"])` — what it means depends on what `expr` touches.
+  Over **primary inputs only**, it is an environment constraint: it prunes the
+  traces the tool explores and is *disclosed* ("under N input assume(s)" — all
+  verdicts become conditional on it). Touching **registers or outputs**, it is
+  a *proof obligation* (prove-then-use): the tool proves it before using it, a
+  proven cycle constrains the remaining properties, and a **false** claim is
+  REFUTED — it can never silently fake a proof. A contradictory assume set is
+  reported, never silently vacuous.
+* `assume_nocheck_formal(expr)` — a free constraint by explicit user fiat,
+  even over state: accepted with a per-use warning and a distinct
+  "under N UNCHECKED assume(s)" disclosure. `assume_nocheck_synth(expr)` is
+  invisible to verification (a synthesis-only don't-care).
 
 ```pyrope
 // cnt.prp — the design
@@ -478,10 +488,14 @@ formal cnt.bounded {
 ```
 
 ```bash
-lhd formal verify cnt.prp cnt.verify.prp --top cnt --set formal.bound=10
-#   assert at cnt.verify.prp:5 [cnt.parity] "parity tracks bit0": PROVEN to cycle 11 (bounded)
-#   ...
+lhd formal verify cnt.prp cnt.verify.prp --top cnt --set formal.bound=10 --workdir w
+#   assert at cnt.verify.prp:5 "'parity tracks bit0'" [cnt.parity]: PROVEN (inductive — every cycle of every bound)
+#   assume at cnt.verify.prp:10 [cnt.bounded]: in force (input environment constraint; verdicts are conditional on it)
+#   assert at cnt.verify.prp:11 "'frozen'" [cnt.bounded]: PROVEN (inductive — every cycle of every bound)
 lhd formal verify cnt.prp cnt.verify.prp --top cnt --formal 'cnt.parity'  # run one block
+jq '.obligations' w/formal_report.json   # the same table machine-readable, every PASSED
+                                         # obligation included; a REFUTED run adds
+                                         # formalfail.prp/.json + a replay VCD under w/
 ```
 
 The dotted block name is the enable/disable handle (`--formal <glob>` selects

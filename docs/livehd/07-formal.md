@@ -115,6 +115,92 @@ sweep and promotes every property that survives it to an unbounded PROVEN, so
 full proofs — not just "no bug up to cycle k" — are the routine outcome for
 well-behaved invariants.
 
+A minimal end-to-end run — design, sidecar collateral, verdicts, artifacts
+(the [Pyrope assert chapter](../pyrope/05-assert.md#formal-blocks) shows the
+two files):
+
+```bash
+lhd formal verify cnt.prp cnt.verify.prp --top cnt --set formal.bound=10 --workdir w
+#   assert at cnt.verify.prp:5 "'parity tracks bit0'" [cnt.parity]: PROVEN (inductive — every cycle of every bound)
+#   assume at cnt.verify.prp:10 [cnt.bounded]: in force (input environment constraint; verdicts are conditional on it)
+#   assert at cnt.verify.prp:11 "'frozen'" [cnt.bounded]: PROVEN (inductive — every cycle of every bound)
+
+ls w/
+#   formal_report.json   every obligation (PASSED ones included): verdict, cycles,
+#                        assume class, solve_ms, timeout core, artifact paths
+#   formal_cache.json    proven obligations, replayed free on the next run
+# and on a REFUTED run additionally:
+#   formalfail.prp       self-contained `lhd sim` testbench driving the trace
+#   formalfail.json      machine witness: root_cut {file,line,cycle} + input trace
+#   formalfail.vcd       waveform of the replay (the runtime assert re-fires)
+
+jq -r '.obligations[] | select(.verdict=="proven") | .id' w/formal_report.json  # the passed list
+```
+
+### Assume forms: what constrains, what must be proven
+
+An `assume` is classified by what its expression touches, and the class
+decides whether it is free or must earn its keep:
+
+* Over **primary inputs only** — an environment constraint by nature (inputs
+  are otherwise free; there is nothing to prove). It is in force at every
+  cycle, and every verdict discloses it: "PROVEN … under 1 input assume(s)"
+  is a conditional result, never mistaken for an unconditional one.
+* Touching **design state or outputs** — a proof obligation, prove-then-use.
+  The engine checks it per cycle like an assert; only a cycle it just proved
+  may constrain the remaining obligations, and only an inductive survivor
+  constrains the induction step. A **refuted** internal assume fails the run
+  (the claimed invariant is false — before this discipline it would silently
+  fake a PROVEN for everything it masked), and an **unproven** one is simply
+  not used, disclosed as such.
+* `assume_nocheck_formal` (formal blocks only) — a free constraint by
+  explicit user fiat: accepted, warned per encounter, and disclosed
+  distinctly ("under N UNCHECKED assume(s)"). `assume_nocheck_synth` is
+  invisible to verification — it exists solely for the synthesis don't-care
+  pool.
+
+A contradictory free-constraint set voids every proof (the vacuity check
+demotes them to UNKNOWN), so an over-constrained environment cannot pass
+silently. Lambda `requires`/`ensures` contracts are not lowered yet; using
+them warns loudly that they generate no obligation.
+
+### Driving `lhd formal verify` from an agent
+
+The stdout verdict table is the human view; the machine contract is
+`formal_report.json`, written into the workdir on **every** run — including
+UNKNOWN, which is precisely the verdict an agent must act on. Pass
+`--workdir` so reports, caches, and witnesses persist across iterations. The
+report carries the run headline (verdict, budget, assume counts), one record
+per obligation — a stable id (`kind@file:line[block]`), verdict, proven/
+refuted/unknown cycles, an `unknown_why`, the assume class, and cumulative
+`solve_ms` — plus the structured `timeout_core` (which still-open obligations
+jointly exhaust the solver, from `formal.minetimeout`) and the paths of any
+witness artifacts (`formalfail.prp`, `formalfail.json`, the replay VCD).
+
+The loop an agent runs:
+
+1. `lhd formal verify design.prp --workdir W --set formal.minetimeout=10`
+   (exit 0 = no refutation; REFUTED exits 1; UNKNOWN warns unless
+   `formal.strict=true`).
+2. Parse `W/formal_report.json`. REFUTED obligations come with a trace, a
+   ready-to-run testbench, and a source-mapped root cut — fix the design or
+   the property. UNKNOWN obligations are ranked by `solve_ms` and named by
+   the timeout core — that is where a helper invariant pays.
+3. Strengthen: add `assert`/`assume` in a sidecar `formal` block near the
+   pain. State-touching assumes are themselves proven, so a wrong helper is
+   refuted instead of corrupting the run; proven helpers prune every
+   remaining obligation and re-prove instantly from the cache on the next
+   iteration. The tool helps: with `formal.minetimeout` set, a stuck run
+   **mines** invariant candidates from its own solver work (learned
+   literals, range/equality templates over the stuck registers), keeps only
+   those that hold at every checked cycle *and* survive induction, and
+   emits them as a paste-ready block (`W/formal_mined.prp`, mirrored in the
+   report's `mined[]`) — pass it back as a sidecar or curate it into your
+   own. `formal.mine=speculative` additionally reports bounded candidates
+   the induction step dropped.
+4. Re-run. The verdict cache (`W/formal_cache.json`) makes unchanged
+   obligations free, so iteration cost tracks the edit, not the design.
+
 ### Formal checking inside every compile
 
 Every optimizing `lhd compile` runs a formal tier (`pass/formal`) in a
@@ -210,6 +296,7 @@ error, never a silent no-op. The load-bearing knobs:
 | `formal.jobs`           | bound on concurrent solver processes (default 4)           |
 | `formal.partitions` / `formal.split` | parallel input case-splitting              |
 | `formal.strict`         | make UNKNOWN a hard failure                                |
+| `formal.report`         | verify's machine-readable run report filename (default `formal_report.json`, written into the workdir on every run; `false` = off) |
 | `lec.match`             | explicit register correspondences                          |
 | `lec.state_pairing`     | automatic speculative register pairing (default on)        |
 | `lec.cache` / `lec.retry` | verdict cache control under a working directory          |
@@ -240,15 +327,18 @@ compiler bugs.
     The following are planned or under design, not usable today. Current
     plans live in the LiveHD repository's `todo/` hub.
 
-* **Invariant mining.** The tool learning helper facts from its own solver
-  work and emitting them as ready-to-paste `formal` blocks with provenance,
-  so a stuck proof teaches the user (and the next run) how to go through.
-* **The full three-form assume contract.** Both unchecked spellings already
-  work inside formal blocks — the formal-only form is consumed with a
-  per-use warning and disclosed in the verdict, and the synthesis-only form
-  is parsed and correctly invisible to the provers. Pending are the uniform
-  inline language-level contract and synthesis actually consuming the
-  synthesis-only facts.
+* **Invariant-mining refinements.** The mining loop itself works (below):
+  candidates from solver learned literals and register templates are
+  base-proven and Houdini-filtered, and inductive survivors are emitted as a
+  ready-to-paste `formal` block with provenance. Still pending are the richer
+  ranking signals (`getDifficulty` mass, `getUnsatCore` earns-its-keep
+  pruning) and more template families (one-hot, mutual exclusion,
+  count-equals-popcount).
+* **Synthesis consuming `assume_nocheck_synth`.** The three-form assume
+  contract is implemented on the verification fronts (input assumes are free
+  and disclosed, state-touching assumes are prove-then-use, both nocheck
+  spellings behave as documented above); what remains is synthesis actually
+  consuming the synthesis-only don't-care facts (the ABC EXDC network).
 * **Temporal properties.** The SVA-style temporal library documented on the
   Pyrope side ([extended verification](../pyrope/09-verification.md)) does
   not lower to proofs yet; only single-cycle invariant properties are proven.
