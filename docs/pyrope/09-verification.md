@@ -9,11 +9,13 @@
     [Running cycles](05b-statements.md#running-cycles-tick) (and `newtick.md` in
     the LiveHD repo). Waiting and concurrency are expressed *in that one loop*
     with ordinary `if`/`continue`/`break` (below) — there is no separate
-    coroutine layer. Still not implemented: the temporal library
-    (`past`/`next`/`rose`/`fell`/`stable`/`changed`/`eventually`/`always`,
-    `.[rising]`/`.[falling]`), the string `poke`/`sigref` arbitrary-path layer,
-    and `force`/`release`. Dotted test names and runtime `(...)` test parameters
-    are the near-term `test` syntax. See [Implementation status](15-tbd.md).
+    coroutine layer. Dotted test names and runtime `(...)` test parameters work
+    today. Still not implemented: the whole [temporal library](#temporal-library)
+    below (`past`/`rose`/`fell`/`stable`/`changed`/`eventually`/`always` — only
+    the pipelining form `past[N](x)` exists, and only in a design body), the
+    `sigref` arbitrary-path layer, and `force`/`release`. `for` loops, `.[rand]`
+    and `.[crand]` are rejected inside a `test` block. See
+    [Implementation status](15-tbd.md).
 
 This chapter extends [Verification](05-assert.md) for interactive testbench
 work. The target is the cocotb style of "drive, wait, sample, score", but with
@@ -23,9 +25,9 @@ test is one `tick`/`step` loop, and stimulus, waiting, and monitors are just
 
 The design rules are:
 
-* Reuse existing `test`, `tick`, `step`, and `assert`/`cover`; express waiting
+* Reuse existing `test`, `tick`, `step`, and `assert`; express waiting
   and concurrency with `if`/`continue`/`break`, not new statement families.
-* Prefer attribute reads such as `sig.[rising]` over new wait primitives.
+* Prefer temporal reads such as `rose(sig)` over new wait primitives.
 * Keep monitors as inline checks (or a golden `mut`/`cpp` model) in the loop.
 * Keep logging, wave dumps, and solver libraries out of the core language when
   the runner can provide them.
@@ -44,9 +46,9 @@ language does not need a separate `Timer(..., units=...)` API.
 | `@cocotb.test()` coroutine | `test foo.bar { ... }` |
 | `dut.sig.value = x` | `acc.sig = x` (poke an input) |
 | `dut.sig.value` | `acc.sig` (peek an output / reg) |
-| `await RisingEdge(dut.valid)` | `step; if not acc.valid.[rising] { continue }` |
-| `await FallingEdge(dut.ready)` | `step; if not acc.ready.[falling] { continue }` |
-| `await Edge(dut.sig)` | `step; if not acc.sig.[changed] { continue }` |
+| `await RisingEdge(dut.valid)` | `step; if not rose(acc.valid) { continue }` (TBD) |
+| `await FallingEdge(dut.ready)` | `step; if not fell(acc.ready) { continue }` (TBD) |
+| `await Edge(dut.sig)` | `step; if not changed(acc.sig) { continue }` (TBD) |
 | `await Timer(5 cycles)` | `step 5` |
 | `while True: await ...` (driver/monitor) | the `tick N { ... step ... }` loop itself |
 | `@cocotb.test(timeout_time=N)` | `tick N { ... }` (the bound is the timeout) |
@@ -131,33 +133,33 @@ advance and the condition could never change.
 
 ### Edge-sensitive reads
 
-The condition can be any boolean, including the debug-only edge attributes:
-
-* `sig.[rising]` — true on the cycle `sig` goes 0/false → non-zero/true.
-* `sig.[falling]` — true on the cycle `sig` goes non-zero/true → 0/false.
-* `sig.[changed]` — true on any cycle `sig` differs from the previous one.
-
-These compare the current value against `past(sig)` and work anywhere a boolean
-is expected — a wait's `if`, an `assert`, or a `cover`:
+The condition can be any boolean, including an edge read from the
+[temporal library](#temporal-library) — `rose(sig)`, `fell(sig)`,
+`changed(sig)`. These are the single-cycle case of the windowed forms and work
+anywhere a boolean is expected: a wait's `if` or an `assert`.
 
 ```pyrope
 test edge.checks {
   mut dut = Top
   tick 64 {
     step
-    assert(not dut.clk_en.[rising], "unexpected clock enable")
-    cover(dut.clk_en.[falling])
+    assert(not rose(dut.clk_en), "unexpected clock enable")   // TBD
   }
 }
 ```
 
-For multi-cycle edges and windowed assertions, use the [temporal
-library](#temporal-library) below — `rose[R](sig)`, `fell[R](sig)`,
-`eventually[R](sig)`, etc. The attribute forms above are the single-cycle case
-(`rose(sig) == sig.[rising]`).
+!!! NOTE "Not implemented"
+    There is no attribute spelling of these. `sig.[rising]`, `sig.[falling]`,
+    `sig.[changed]` and `sig.[stable]` are **not** recognized attributes — they
+    produce the same "no hardware lowering" error as any misspelled attribute.
+    The function forms above are the intended surface, and they are TBD too.
 
 
 ## Force and release
+
+!!! WARNING "Not implemented"
+    `force`, `release`, and the `sigref` string paths they use are TBD; the
+    example below does not compile today.
 
 `poke` sets a value for the current cycle only. `force` and `release` provide
 persistent overrides:
@@ -200,8 +202,8 @@ test monitor.req_ack {
   tick 1000 {
     // ... drive the bus here ...
     step
-    if dut.req.[rising] { outstanding = outstanding + 1 }
-    if dut.ack.[rising] {
+    if rose(dut.req) { outstanding = outstanding + 1 }   // TBD: rose()
+    if rose(dut.ack) {
       assert(outstanding > 0, "ack without req")
       outstanding = outstanding - 1
     }
@@ -216,6 +218,10 @@ beyond `step`.
 
 
 ## External C++ models
+
+!!! WARNING "Not implemented"
+    `cpp(...)` is TBD, and a `for` loop is not a supported statement inside a
+    `test` block, so the example below does not run today.
 
 A `test name { }` block generates the simulation to run (the slop/sim), so a
 golden model or scoreboard written in C++ plugs straight into it. Reach the C++
@@ -257,10 +263,14 @@ simulation-only build dependency. See
 
 ## Random stimulus
 
-Pyrope already has `.[rand]` and `.[crand]` from
-[Verification](05-assert.md#random). For many cocotb-style tests, that is
-enough. Start with ordinary random values and filter them with normal Pyrope
-control flow.
+!!! WARNING "Not implemented"
+    `.[rand]`/`.[crand]` and `for` loops are both rejected inside a `test`
+    block today, so the example below does not run. See
+    [Random](05-assert.md#random).
+
+The intent is that `.[rand]` and `.[crand]` cover most cocotb-style stimulus:
+start with ordinary random values and filter them with normal Pyrope control
+flow.
 
 ```pyrope
 test random.opcodes {
@@ -285,47 +295,64 @@ the core language.
 
 ## Temporal library
 
-The temporal library provides SVA-style sampling over time. Every entry is a
-plain `comb` lambda whose cycle parameters live in the `[...]` comptime
-parameter slot (see [Lambdas](06-functions.md#declaration)). Callers can
-override the comptime slot at the call site to pick a specific cycle or range:
+SVA-style sampling over time. Every cycle argument is an ordinary **positional
+argument** — Pyrope has no comptime-parameter slot on a call, so there is no
+`f[N](x)` bracket form.
+
+!!! WARNING "Not implemented"
+    Nothing in this section works today. It is the agreed target surface, kept
+    here so the syntax is settled before the implementation lands. The only
+    temporal construct that exists is the *pipelining* `past[N](x)`
+    ([Pipelining](06c-pipelining.md)), which is a different operator — it
+    shifts the landing cycle rather than sampling history, so it cannot be
+    compared against a present-cycle value. `lhd formal verify` rejects any of
+    the calls below with an explicit "not implemented" diagnostic rather than
+    attempting an unsound proof.
 
 ```pyrope
-rose(x)           // single-cycle: true when x rises this cycle
-rose[1..=4](x)    // true if x rises at any cycle in 1..=4
-past(x)           // x one cycle ago (the compiler inserts one flop)
-past[3](x)        // x three cycles ago
-next(x, 1)        // debug peek: x one cycle ahead
-eventually[1..=10](x)   // true if x is true at some cycle in 1..=10
+past(x)             // x one cycle ago
+past(x, 3)          // x three cycles ago
+rose(x)             // x became true this cycle
+fell(x)             // x became false this cycle
+stable(x)           // x is unchanged from last cycle
+changed(x)          // x differs from last cycle
 ```
-
-Because the cycle arguments are comptime, the compiler elaborates them into
-ordinary register reads and combinational logic — there is no runtime
-scheduling or new language construct.
 
 ### Builtins
 
-| Builtin | Signature | Meaning |
-|---------|-----------|---------|
-| `past[n:signed=1](x)` | past value | value of `x` `n` cycles ago; compiler inserts `n` flops |
-| `next[n:signed=1](x)` | debug future peek | value of `x` `n` cycles ahead |
-| `rose[w:range=1..=1](x)` | rising edge within window | `x` becomes true at some cycle in `w` |
-| `fell[w:range=1..=1](x)` | falling edge within window | `x` becomes false at some cycle in `w` |
-| `stable[w:range=1..=1](x)` | held constant | `x` has the same value across `w` |
-| `changed[w:range=1..=1](x)` | value change within window | `x` differs from its prior value at some cycle in `w` |
-| `eventually[w:range](x)` | existence within window | `x` is true at some cycle in `w` |
-| `always[w:range](x)` | universal within window | `x` is true at every cycle in `w` |
+| Builtin | Meaning |
+|---------|---------|
+| `past(x [, n=1])` | value of `x` `n` cycles ago |
+| `rose(x [, w])` | `x` becomes true — this cycle, or at some cycle in window `w` |
+| `fell(x [, w])` | `x` becomes false — this cycle, or at some cycle in `w` |
+| `stable(x [, w])` | `x` holds its value — since last cycle, or across `w` |
+| `changed(x [, w])` | `x` differs from its prior value — this cycle, or at some cycle in `w` |
+| `eventually(x, w)` | `x` is true at some cycle in window `w` |
+| `always(x, w)` | `x` is true at every cycle in window `w` |
 
-`past` is valid in both production and debug code — it is the canonical way
-to read a prior-cycle value, replacing the old `x@[-N]` notation. The
-compiler inserts the necessary flops; the hardware cost is explicit in the
-call (`past[3](x)` costs three flops).
+`rose`, `fell`, `stable` and `changed` are sugar over `past`:
+`rose(x)` is `x and not past(x)`, `stable(x)` is `x == past(x)`, and so on.
 
-The remaining builtins (`next`, `rose`, `fell`, `stable`, `changed`,
-`eventually`, `always`) are debug-only — they are valid inside `assert`,
-`cover`, `test`, and similar contexts, and are elided from synthesis.
-Nothing can observe a future value at runtime, so `next` and the
-window-quantified forms only make sense in assertion-style contexts.
+Two rules make these tractable:
+
+* They are **history sampling, not pipelining.** `past(x, n)` does not move the
+  expression's cycle, so `assert(past(x) == x)` is well typed. (The pipelining
+  `past[N]` does move it, which is why the two are separate operators.)
+* A window `w` is a **bounded** range such as `1..=10`. Inside a `formal` block
+  the engine resolves the whole family by indexing the bounded-model unrolling —
+  `past(x, n)` at cycle `c` is the cycle-`c−n` value, and a window expands to an
+  OR (`eventually`, `rose`) or an AND (`always`, `stable`) over its cycles. No
+  auxiliary state is created. An obligation using `past(x, n)` is simply not
+  checked before cycle `n`, where no history exists.
+
+Unbounded liveness ("eventually, with no deadline") is **out of scope**: the
+engine is a bounded ladder plus single-step induction, with no lasso detection.
+A window is always required for `eventually` and `always`.
+
+`sampled` and `next` from SVA are deliberately absent. `$sampled` describes
+event-driven clock-domain sampling, which a per-cycle model already implies;
+`next` cannot be observed by hardware and would only ever mean "look ahead
+inside the bound".
 
 ### SVA comparison
 
@@ -335,44 +362,33 @@ A standard SVA implication assertion:
 assert property (@(posedge clk) $rose(req) |-> ##[1:10] $rose(ack));
 ```
 
-translates directly:
+is intended to translate as:
 
 ```pyrope
-assert(rose(req) implies rose[1..=10](ack))
+assert(rose(req) implies rose(ack, 1..=10))
 ```
 
-More examples:
+More examples (all TBD):
 
 ```pyrope
-// x stable during a 5-cycle handshake window
-assert(req implies stable[1..=5](payload))
+// payload stable during a 5-cycle handshake window
+assert(req implies stable(payload, 1..=5))
 
-// ack must eventually rise within 32 cycles of req
-assert(rose(req) implies eventually[1..=32](ack))
+// ack must rise within 32 cycles of req
+assert(rose(req) implies eventually(ack, 1..=32))
 
-// grant is always clean-high while sel is held
-assert(sel implies always[1..=10](grant))
+// grant is clean-high while sel is held
+assert(sel implies always(grant, 1..=10))
 
 // past values
-if enable {
-  assert(counter == past(counter) + 1)
-}
-assert(x == past[3](x)) // same value three cycles ago
+assert(enable implies counter == past(counter) + 1)
+assert(x == past(x, 3))          // same value three cycles ago
 ```
 
-### Overriding defaulted inputs
-
-User code can define small temporal helpers with defaulted inputs (see
-[Functions](06-functions.md)). Defaults
-may refer to visible comptime bindings, and callers can override the parameter:
-
-```pyrope
-comptime const window = 1..=8
-comb ack_within(w:range=window, req, ack) -> (r:bool) { r = req implies eventually[w](ack) }
-
-assert(ack_within(req, ack)) // uses default w = 1..=8
-assert(ack_within(w=1..<4, req, ack)) // tighter window at this call site
-```
+These are properties over time, so they belong in a
+[`formal` block](05-assert.md#formal-blocks), which is the only context where
+they can be *proven*. A `test` block only simulates them on the traces it
+happens to drive.
 
 
 ## Deliberate non-goals
@@ -395,21 +411,20 @@ intentionally does not add:
 
 ## Summary of new constructs
 
-| Construct | Context | Purpose |
-|-----------|---------|---------|
-| `tick N { }` | `test` only | Cycle-driven loop: run up to `N` cycles; one `step` (clock edge) per iteration. Waiting / concurrency / monitors are `if`-blocks inside it |
-| `step [N]` | `test` only | Advance the clock one cycle (or `N`); the single yield point |
-| `sig.[rising]` | debug only | True on a 0-to-1 transition (same as `rose(sig)`) |
-| `sig.[falling]` | debug only | True on a 1-to-0 transition (same as `fell(sig)`) |
-| `sig.[changed]` | debug only | True when value differs from previous cycle (same as `changed(sig)`) |
-| `past[n](x)` | any context | Sample `x` at a past cycle (inserts `n` flops) |
-| `next[n](x)` | debug only | Sample `x` at a future cycle |
-| `rose[w](x)`, `fell[w](x)` | debug only | Windowed edge within range `w` |
-| `stable[w](x)`, `changed[w](x)` | debug only | Windowed value-stability checks |
-| `eventually[w](x)`, `always[w](x)` | debug only | Existence / universal quantifier over cycles in `w` |
-| `force(path, val)` | `test` only | Override a signal persistently |
-| `release(path)` | `test` only | Remove the override and restore the driver |
-| `cpp("target")` | `test` only | Bind an external C++ model (golden model, scoreboard) |
+| Construct | Context | Status | Purpose |
+|-----------|---------|--------|---------|
+| `tick N { }` | `test` only | works | Cycle-driven loop: run up to `N` cycles; one `step` (clock edge) per iteration. Waiting / concurrency / monitors are `if`-blocks inside it |
+| `step [N]` | `test` only | works | Advance the clock one cycle (or `N`); the single yield point |
+| `past(x [, n])` | `formal`, `test` | TBD | Sample `x` `n` cycles ago (history, not a pipeline stage) |
+| `rose(x [, w])`, `fell(x [, w])` | `formal`, `test` | TBD | Edge, this cycle or within window `w` |
+| `stable(x [, w])`, `changed(x [, w])` | `formal`, `test` | TBD | Value-stability, this cycle or across `w` |
+| `eventually(x, w)`, `always(x, w)` | `formal`, `test` | TBD | Existence / universal quantifier over the cycles in bounded window `w` |
+| `force(path, val)` | `test` only | TBD | Override a signal persistently |
+| `release(path)` | `test` only | TBD | Remove the override and restore the driver |
+| `cpp("target")` | `test` only | TBD | Bind an external C++ model (golden model, scoreboard) |
 
 Everything else in this chapter is built from existing Pyrope verification
-constructs.
+constructs. Note that the *pipelining* `past[N](x)`
+([Pipelining](06c-pipelining.md)) is a different operator from the verification
+`past(x, n)` above: it shifts the expression's landing cycle, so it cannot be
+compared against a present-cycle value.

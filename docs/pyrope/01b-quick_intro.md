@@ -114,7 +114,7 @@ Details: [Lambdas](06-functions.md), [Pipelining](06c-pipelining.md),
 reg counter:u8 = 0            // '= 0' is the reset value (nil ⇒ no reset)
 const q   = counter           // a bare name reads the current q value
 counter += 1                  // write with plain =/+=; lands at the cycle boundary
-const old = past[2](counter)  // value 2 cycles ago (inserts flops) (TBD)
+const old = past[2](counter)  // pipelined 2 cycles (inserts 2 flops)
 ```
 
 Clock and reset are implicit; customize at the declaration:

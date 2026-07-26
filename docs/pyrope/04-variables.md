@@ -536,10 +536,13 @@ other files by `import`. The `pub` prefix modifier (same declaration slot as
 * `pub` on a top-scope lambda, type, or constant allows other files to
   `import` it.
 * `pub mut` and `pub reg` are compile errors. Registers, including memories,
-  are not imported or exported as values. Cross-scope register access uses
-  `regref`, which resolves an instantiated register by hierarchy path or
-  name. See [Register reference](07-typesystem.md#register-reference) and
-  [Memories](08-memories.md#shared-memories-with-regref).
+  are not imported or exported as values. Cross-scope register access is
+  planned through `regref`, which would resolve an instantiated register by
+  hierarchy path or name — TBD, see
+  [Register reference](07-typesystem.md#register-reference) and
+  [Memories](08-memories.md#shared-memories-with-regref). Verification code
+  does not need it: a `formal` block reaches registers through the ordinary
+  instance hierarchy (`acc.core0.count`).
 
 ```pyrope
 pub comb get_five() -> (v) { v = 5 }  // importable by other files

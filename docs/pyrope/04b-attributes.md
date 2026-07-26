@@ -395,18 +395,16 @@ and `debug`), since other flows may link against the pinned name.
 
 ## Debug and verification attribute list
 
-The following attributes are debug-only — they are elided from synthesis and
-only valid inside `assert`, `cover`, and `test` contexts:
+There are no edge attributes. Attributes are elaboration-time reads, but an
+edge is a per-cycle runtime value, so edges are **functions**, not attributes:
+`rose(sig)`, `fell(sig)`, `changed(sig)`, `stable(sig)` from the
+[temporal library](09-verification.md#temporal-library) (all TBD).
 
-* `rising`: true on the cycle where the signal transitions from 0/false to
-  non-zero/true (same as `rose(sig)` from the temporal library)
-* `falling`: true on the cycle where the signal transitions from
-  non-zero/true to 0/false (same as `fell(sig)`)
-* `changed`: true on any cycle where the signal differs from its previous
-  value (same as `changed(sig)`)
+`sig.[rising]`, `sig.[falling]`, `sig.[changed]` and `sig.[stable]` are not
+recognized and produce the ordinary unknown-attribute error.
 
 To wait for an edge in a test, drop the read into the wait idiom: `tick N { step;
-if not sig.[rising] { continue }; break }` (the `N` bound is the timeout).
+if not rose(sig) { continue }; break }` (the `N` bound is the timeout).
 
 See [Verification](09-verification.md) for the full temporal library and
 debug constructs.

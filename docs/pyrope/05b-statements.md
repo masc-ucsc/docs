@@ -436,10 +436,12 @@ constructs:
   }
   ```
 
-* `past[n:signed=1](variable)` reads the value `n` cycles ago. The compiler
-  inserts `n` flops automatically — the hardware cost is explicit in the
-  call. `past(x)` is shorthand for `past[1](x)`. See the
-  [Temporal library](09-verification.md#temporal-library).
+* `past[N](variable)` pipelines the value over `N` cycles. `N` must be a
+  literal positive decimal; the compiler inserts `N` flops, so the hardware
+  cost is explicit in the call, and the expression's landing cycle shifts by
+  `N`. There is no bare `past(x)` in a design body. Do not confuse it with the
+  verification `past(x, n)` history sample, which does *not* shift the cycle —
+  see [Temporal library](09-verification.md#temporal-library).
 
 * To escape *program order* within a cycle — read a value that is only
   produced by a later statement, e.g. to close a ring — declare it as a
@@ -451,15 +453,17 @@ constructs:
   check, legal in both `mod` and `pipe` bodies — it asserts the inferred
   stage and never inserts flops).
 
-* For debug-only future sampling (inside `assert`, `cover`, `test`, …), use
-  the temporal library — `next(x, N)`, `eventually[R](x)`, `rose[R](x)`,
-  etc.
+* For debug-only sampling over time (inside `assert`, `test`, `formal`, …),
+  use the temporal library — `past(x, n)`, `rose(x)`, `eventually(x, 1..=N)`,
+  etc. Every cycle argument is positional; there is no bracket form, and the
+  whole library is still TBD. See
+  [Temporal library](09-verification.md#temporal-library).
 
 `foo@[N]` is a pure cycle-alignment type check, never a flop insertion, and
 is legal inside both `mod` and `pipe` bodies. `foo@[3]` checks that `foo` is
 3 pipeline stages ahead of the lambda inputs. To actually delay a value, use
-`stage[N] lhs = rhs` (a `mod`-only construct). To read past or future cycles,
-use `past[N](x)` or `next[N](x)`.
+`stage[N] lhs = rhs` (a `mod`-only construct) or `past[N](x)`. There is no
+future-cycle read in synthesizable code.
 
 To feed a register's next-state into both the register and a same-cycle
 consumer, name the value as a `wire` and read it in both places:

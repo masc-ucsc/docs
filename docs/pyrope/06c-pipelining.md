@@ -389,8 +389,8 @@ mechanisms for strong compile-time checking:
   (`... = add(a=a@[3], b=b@[3])`).
 
 `foo@[N]` never inserts flops — it is *only* an alignment assertion. To
-trigger delay flop insertion use an explicit `stage[N]` declaration. To
-read a value at a different cycle, use `past[N](x)` or `next[N](x)`.
+trigger delay flop insertion use an explicit `stage[N]` declaration or
+`past[N](x)`. There is no future-cycle read in synthesizable code.
 
 * Bare `counter` reads the current 'q' value; snapshot with a local
   (`const counter_q = counter`) if you need to capture it before later
