@@ -13,8 +13,8 @@
     today. Still not implemented: the whole [temporal library](#temporal-library)
     below (`past`/`rose`/`fell`/`stable`/`changed`/`eventually`/`always` — only
     the pipelining form `past[N](x)` exists, and only in a design body), the
-    `sigref` arbitrary-path layer, and `force`/`release`. `for` loops, `.[rand]`
-    and `.[crand]` are rejected inside a `test` block. See
+    `force`/`release`. `for` loops, `.[rand]` and `.[crand]` are rejected
+    inside a `test` block. See
     [Implementation status](15-tbd.md).
 
 This chapter extends [Verification](05-assert.md) for interactive testbench
@@ -53,7 +53,7 @@ language does not need a separate `Timer(..., units=...)` API.
 | `while True: await ...` (driver/monitor) | the `tick N { ... step ... }` loop itself |
 | `@cocotb.test(timeout_time=N)` | `tick N { ... }` (the bound is the timeout) |
 | `cocotb.start_soon(coro())` / `await t` / `task.cancel()` | no threads — interleave each "task" as an `if`-block in the one `tick` loop |
-| `Force` / `Release` | `force(path, value)` / `release(path)` |
+| `Force` / `Release` | `force(dut.block.signal, value)` / `release(dut.block.signal)` |
 | `@cocotb.parametrize(...)` / plusargs | `test foo.bar(arg:T=def)` → `lhd sim foo.prp foo.bar --arg arg=val` |
 | `Scoreboard` / golden model | a golden `mut` updated each cycle, or `cpp("model")` |
 
@@ -158,34 +158,33 @@ test edge.checks {
 ## Force and release
 
 !!! WARNING "Not implemented"
-    `force`, `release`, and the `sigref` string paths they use are TBD; the
-    example below does not compile today.
+    `force` and `release` are TBD; the example below does not compile today.
 
 `poke` sets a value for the current cycle only. `force` and `release` provide
 persistent overrides:
 
-* `force(path, value)` overrides the signal until released.
-* `release(path)` removes the override and restores the normal driver.
+* `force(signal, value)` overrides the signal until released.
+* `release(signal)` removes the override and restores the normal driver.
 
 ```pyrope
 test fault.inject {
-  const mem_err = sigref("top/mem/error")
+  mut dut = Top
 
-  assert(!mem_err)
+  assert(!dut.mem.error)
 
-  force("top/mem/error", true)
-  step(3)
-  assert(sigref("top/core/exception"))
+  force(dut.mem.error, true)
+  step 3
+  assert(dut.core.exception)
 
-  release("top/mem/error")
+  release(dut.mem.error)
   step
-  assert(!mem_err)
+  assert(!dut.mem.error)
 }
 ```
 
-`force` and `release` are debug-only. A bad path is an elaboration error.
-Forcing a register overrides the visible `q` value, not the internal `d`
-calculation.
+`force` and `release` are debug-only. Their signal operands use the same direct
+instance hierarchy as ordinary test reads and writes. Forcing a register
+overrides the visible `q` value, not the internal `d` calculation.
 
 
 ## Monitors as inline checks
@@ -233,18 +232,19 @@ type GcdModel = ( call_method1: comb(a:u8, b:u3) -> (foo:u8, bar:u33) )
 const gold:GcdModel = cpp("gcd_model")
 
 test gcd.check {
+  mut dut = Gcd
   for a in 1..=100 {
-    poke("top/a", a)
-    poke("top/b", 3)
+    dut.a = a
+    dut.b = 3
     step
     const (foo, _bar) = gold.call_method1(a=a, b=3)
-    assert(sigref("top/z") == foo)        // DUT checked against the C++ reference
+    assert(dut.z == foo)                 // DUT checked against the C++ reference
   }
 }
 ```
 
-The model and the DUT share one value type: a `sigref`/`peek` result, a `poke`
-argument, and a `cpp` method's `Slop<N>` argument are the same bit-accurate
+The model and the DUT share one value type: a value read from or written to a
+DUT field and a `cpp` method's `Slop<N>` argument are the same bit-accurate
 value. Because the C++ model and a Pyrope sub-block present the identical
 flattened `Slop<N>` interface, either side can be swapped for the other without
 touching the test — handy for bringing up a block against a reference and later
@@ -274,6 +274,7 @@ flow.
 
 ```pyrope
 test random.opcodes {
+  mut dut = Top
   mut opcode:u4 = 0
 
   for i in 0..<100 {
@@ -282,7 +283,7 @@ test random.opcodes {
       if opcode <= 10 { break }
     }
 
-    poke("top/opcode", opcode)
+    dut.opcode = opcode
     step
   }
 }
@@ -419,8 +420,8 @@ intentionally does not add:
 | `rose(x [, w])`, `fell(x [, w])` | `formal`, `test` | TBD | Edge, this cycle or within window `w` |
 | `stable(x [, w])`, `changed(x [, w])` | `formal`, `test` | TBD | Value-stability, this cycle or across `w` |
 | `eventually(x, w)`, `always(x, w)` | `formal`, `test` | TBD | Existence / universal quantifier over the cycles in bounded window `w` |
-| `force(path, val)` | `test` only | TBD | Override a signal persistently |
-| `release(path)` | `test` only | TBD | Remove the override and restore the driver |
+| `force(signal, val)` | `test` only | TBD | Override a signal persistently |
+| `release(signal)` | `test` only | TBD | Remove the override and restore the driver |
 | `cpp("target")` | `test` only | TBD | Bind an external C++ model (golden model, scoreboard) |
 
 Everything else in this chapter is built from existing Pyrope verification
