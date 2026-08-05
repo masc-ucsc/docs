@@ -342,7 +342,18 @@ are similar to registers, but unlike registers they can have multiple clocks.
 * `clock_pin`: Optional clock pin, `clock` by default. A tuple is possible to specify the clock for each address port.
 * `din`: Tuple for memory data in port. The read ports must be hardwired to `0`.
 * `enable`: Tuple for each memory port. Write or read enable (read ports can have enable too).
-* `fwd`: Forwarding guaranteed (true/false). If fwd is false, there is no guarantee, it can have fwd or not.
+* `ordering`: Same-cycle read/write ordering. `"program"` (default): accesses
+  resolve in program order — a read before a write sees the old value, a read
+  after it the new value, the last write to an address wins. `"fwd"`:
+  position-blind forwarding — every read of an address written this cycle
+  returns the new data; multi-writer collisions are undefined. `"none"`: no
+  guarantee — a same-cycle read of a written address is undefined (random in
+  simulation, `?` in formal). See
+  [Same-cycle ordering](08-memories.md#same-cycle-ordering). Replaces the
+  deprecated `fwd=true|false` attribute. At the cell level it lowers to the
+  `fwd` per-(read-port, write-port) bit matrix (bit `r*n_wr + w` forwards
+  write port `w` to read port `r`), which the RTL `__memory` vocabulary still
+  exposes verbatim as the low-level escape hatch.
 * `type`: Memory type: `0` async (combinational read of the current address), `1` sync (one-cycle read), `2` array (unclocked)
 * `wensize`: Write enable size allows to have a write mask. The default value
   is 1, a wensize of 2 means that there are 2 bits in the `enable` for each

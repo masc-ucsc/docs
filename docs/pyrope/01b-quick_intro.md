@@ -239,6 +239,7 @@ More: [Hardware design](00-hwdesign.md), [vs other languages](10b-vslang.md).
 * [Type system](07-typesystem.md) / [Struct types](07b-structtype.md)
 * [Memories](08-memories.md) — arrays, SRAMs, `__memory`, `regref`
 * [Verification](09-verification.md) — tests, temporal library
+* [Querying a simulation](09b-simquery.md) — inspect a run with `lhd sim --query`
 * [Internals](10-internals.md) / [LNAST](12-lnast.md) — compiler view
 * [Standard library](13-stdlib.md) (TBD)
 * [Implementation status](15-tbd.md) — documented features not yet

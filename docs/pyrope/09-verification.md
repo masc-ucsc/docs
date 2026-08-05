@@ -17,6 +17,11 @@
     inside a `test` block. See
     [Implementation status](15-tbd.md).
 
+To INSPECT a run after the fact — read a signal at a cycle, count transitions,
+find the cycle a condition first held — see
+[Querying a simulation](09b-simquery.md), which is landed and needs no new
+language syntax.
+
 This chapter extends [Verification](05-assert.md) for interactive testbench
 work. The target is the cocotb style of "drive, wait, sample, score", but with
 as little new syntax as possible — and, unlike cocotb, **without coroutines**: a

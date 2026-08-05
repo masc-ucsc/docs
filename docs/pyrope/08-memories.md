@@ -30,17 +30,20 @@ contents are cleared at the end of each cycle.
 
 
 In Pyrope, an async memory has one cycle to write a value and 0 cycles to read.
-The memory has forwarding by default, which behaves like a 0 cycle
-read/write. From a non-hardware programmer, the default memory looks like an array with
-persistence across cycles.
+By default, same-cycle accesses resolve in **program order**
+(`ordering="program"`, see [Same-cycle ordering](#same-cycle-ordering) below):
+a read placed before a write sees the old contents, a read placed after it
+sees the new value, and the last write to an address wins. From a non-hardware
+programmer's point of view, the default memory looks exactly like an array
+with persistence across cycles.
 
 
-Pyrope async memories behave like what a "traditional software programmer" will
-expect in an array. This means that values are initialized and there is
-forwarding enabled. This is not what a "traditional hardware programmer" will expect.
-In languages like CHISEL there is no forwarding or initialization. In Pyrope is
-possible to have different options of async memories, but those should use the
-RTL interface.
+Pyrope async memories behave like what a "traditional software programmer"
+will expect in an array. This means that values are initialized and same-cycle
+accesses follow program order. This is not what a "traditional hardware
+programmer" will expect. In languages like CHISEL there is no forwarding or
+initialization. Pyrope has cheaper/looser options (`ordering="fwd"`,
+`ordering="none"`) for those cases, and the RTL interface for full control.
 
 
 The async memories behave like tuples/arrays but there is a small difference,
@@ -80,6 +83,55 @@ mut mem3:[] = 0sb?         // array infer size and type, 0sb? initialized
 mut mem4:[13] = 0          // array 13 entries size, initialized to zero
 reg mem5:[4]s3 = (1,2,3,4) // mem 4 entries 3 bits each, initialized
 ```
+
+### Same-cycle ordering
+
+`ordering` replaces the earlier `fwd=true|false` attribute (which survives
+only as the low-level per-(read,write) matrix in the [RTL
+interface](#rtl-instantiation)).
+
+What does a read observe when the same address is also written in the same
+cycle? The `ordering` attribute on the memory declaration picks one of three
+semantics. The canonical sequence:
+
+```pyrope
+reg mem:[4]u2:[ordering="program"] = 0
+
+d1 = mem[a1]     // read BEFORE the writes
+mem[a2] = d2
+mem[a3] = d3
+d4 = mem[a4]     // read AFTER the writes
+```
+
+| same-cycle case | `"none"` | `"fwd"` | `"program"` (default) |
+|---|---|---|---|
+| `a4 == a3` (read after write) | undefined | `d3` | `d3` |
+| `a1 == a2` (read before write) | undefined | `d2` | old stored value |
+| `a2 == a3` (write-write) | undefined | undefined | `d3` commits (last write wins) |
+
+* **`"program"`** (default): reads and writes resolve in program order, the
+  software reading of the source text. This is also what `mut` arrays (no
+  cross-cycle persistence) always do.
+* **`"fwd"`**: pure transparency — every read of an address written this
+  cycle returns the new data, regardless of the read's textual position
+  (hardware forwarding has no notion of statement order). With more than one
+  same-cycle writer to one address the result is undefined.
+* **`"none"`**: no ordering hardware at all — the cheapest option. Any read
+  of an address written this cycle is undefined.
+* **undefined** means: in simulation, a random value (simulation does not
+  model `?`), so latent collisions fail loudly; in formal, a `?` — either
+  value is acceptable, so equivalence can still be PROVEN when the collision
+  value genuinely does not matter (which is precisely the situation where
+  program-order bypass hardware was never needed). *Today the lowering
+  resolves an undefined read to the committed (old) contents rather than
+  injecting a random/`?` value — a legal refinement of "undefined", and what
+  the Verilog reader relies on (it emits `ordering="none"` for a memory whose
+  reads must see committed state).*
+
+Ordering is resolved per read port, so one memory can mix positions: a read
+placed before the writes and another placed after them coexist in the same
+cell. The netlist carries this as the `fwd` matrix parameter — bit
+`read*n_writes + write` — on the generated `cgen_memory_*` wrapper.
 
 Pyrope allows slicing of tuples and hence arrays.
 
@@ -228,7 +280,10 @@ q1 = res[1]
 The previous code directly instantiates a memory and passes the configuration.
 The configuration vocabulary is the LiveHD `Memory` cell sink pins **verbatim**
 (`addr`/`bits`/`clock_pin`/`din`/`enable`/`fwd`/`posclk`/`type`/`wensize`/
-`size`/`rdport`/`init`): there is no `latency` field — `type` selects async
+`size`/`rdport`/`init`). The cell-level `fwd` pin is the legacy per-write-port
+forwarding mask; when the surface `ordering` attribute lands it generalizes to
+a per-(read-port, write-port) old/new/undefined relation plus write-port
+priority (the `$mem_v2` granularity). There is no `latency` field — `type` selects async
 (0, combinational read of the current address), sync (1, one-cycle read) or
 array (2, unclocked); the optional `clock_pin` defaults to the module clock,
 and `init` provides comptime initial contents (a tuple literal or a packed
@@ -299,18 +354,20 @@ The semantics follow from "an attached `regref` behaves like a local
 * **Sequential by construction.** Remote reads return `q`; remote writes
   drive `din`. Every cross-module connection crosses the flop boundary, so
   an attached memory can never create a combinational path between distant
-  modules. For the same reason, **forwarding never crosses a `regref`**:
-  in-cycle forwarding (`fwd=true`) applies only to accesses local to the
-  owning module; remote readers always see the last committed state.
+  modules. For the same reason, **same-cycle visibility never crosses a
+  `regref`**: in-cycle ordering (`ordering="program"` read-after-write, or
+  `ordering="fwd"`) applies only to accesses local to the owning module;
+  remote readers always see the last committed state.
 * **One functional writer.** The single-writer-multiple-reader rule is
   checked globally at elaboration across local and attached accesses.
   BIST-style logic in the owner is the one sanctioned exception: an
   owner-local write guarded by a test mode, with the obligation (assert)
   that test and functional accesses are disjoint.
-* **`fwd=false` is value-level, not timing-level.** A read of an address
-  with a write in flight returns undefined data — simulation randomizes the
-  value so latent collisions fail loudly. Where collision freedom matters,
-  assert it (`assert(!we or raddr != waddr)`).
+* **`ordering="none"` is value-level, not timing-level.** A read of an
+  address with a write in flight returns undefined data — simulation
+  randomizes the value so latent collisions fail loudly (formal treats it as
+  `?`). Where collision freedom matters, assert it
+  (`assert(!we or raddr != waddr)`).
 
 In the generated netlist, every attach lowers to punched ports threaded
 through the hierarchy: downstream tools (LEC, PD, DFT) see ordinary module
