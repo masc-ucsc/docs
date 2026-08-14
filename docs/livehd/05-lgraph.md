@@ -140,7 +140,7 @@ longer dense side tables; each one is an HHDS attribute tag declared in
 | Tag | On | Meaning |
 |-----|----|---------|
 | `hhds::attrs::name` | node | user-assigned node name |
-| `livehd::attrs::bits` | pin | driver-pin bit width (0/absent = unspecified) |
+| `livehd::attrs::bits` | pin | literal driver-pin container width for signed and unsigned values (0/absent = unspecified) |
 | `livehd::attrs::pin_name` | pin | user-assigned pin/wire name |
 | `livehd::attrs::pin_signed` | pin | presence = signed; absence = unsigned |
 | `livehd::attrs::pin_offset` | pin | offset for `Get_mask`/`Set_mask`/`Sext` positional ops |
@@ -150,8 +150,17 @@ longer dense side tables; each one is an HHDS attribute tag declared in
 | `livehd::attrs::const_value`, `livehd::attrs::pin_const_value` | node / pin | serialized constant payload |
 | `livehd::attrs::lut` | node | LUT contents |
 
-`graph/node_util.hpp` provides convenience wrappers (`bits_of`, `set_bits`,
-`is_unsign`, `set_pin_name`, `node_name_of`, `set_source`, `set_loc1`, ...).
+`graph/node_util.hpp` provides convenience wrappers (`bits_of`, `set_ubits`,
+`set_sbits`, `real_width`, `is_unsign`, `set_pin_name`, `node_name_of`,
+`set_source`, `set_loc1`, ...).
+
+The `bits` and `pin_signed` attributes form one realization hint. An unsigned
+hint `(b, unsigned)` represents `[0, 2^b-1]`; a signed hint `(b, signed)`
+represents `[-2^(b-1), 2^(b-1)-1]`. There is no hidden unsigned sign slot:
+`u1` is stored as `bits=1`, not `bits=2`, and consumers use `bits` directly.
+`bits=0` means that no finite realization hint is available. Producers may
+tighten a sound hint; structural rewriting passes may only widen it when needed
+to remain lossless.
 
 ## Cell type
 
@@ -260,7 +269,10 @@ negative (`a.sign == a.min<0`). `known` is true if the result sign is known
 a.max<0`). The cells explanation also requires the to compute the bit mask
 (`a.mask == (1<<a.bits)-1`).
 
-For any value (`a`), the number of bits required (`bits`) is `a.bits = log2(absmax(a.max,a.min))+1`.
+For a signed value (`a.min < 0`), the required width is the smallest `b` whose
+two's-complement range contains `[a.min,a.max]` (equivalently the signed
+`log2(absmax(...))+1` case). For a non-negative value, the required unsigned
+width is the smallest `b` with `a.max < 2^b`; zero still uses `u1`.
 
 ### Sum
 

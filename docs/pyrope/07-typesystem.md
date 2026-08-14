@@ -342,7 +342,8 @@ width unchanged (so `x` must be fully sized and `signed(unsigned(x)) == x`); the
 sized `sN(x)`/`uN(x)` may widen but never drop bits — a target with fewer bits
 than `x` is a compile error (use a `wrap`/`sat` prefix to drop bits on purpose),
 e.g. `u30(s22(x))` is fine but `s22(u30(x))` is a compile error. Casting a
-`boolean` interprets its single bit under the target's signedness —
+`boolean`—whose hardware realization is an unsigned `u1`—interprets its single
+bit under the target's signedness —
 `signed(true) == -1` / `s8(true) == -1` (1-bit signed), but
 `unsigned(true) == 1` / `u8(true) == 1` (unsigned magnitude bit). The reverse,
 `boolean(x)`/`bool(x)` on an integer, is `x != 0` (so `boolean(33)` is true); an

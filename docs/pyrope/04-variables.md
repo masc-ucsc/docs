@@ -242,6 +242,11 @@ expressions unless there is an explicit typecast (`signed(false)==0`,
 booleans do not support undefined value. A typecast from integer to boolean
 will raise an assertion when the integer has undefined bits (`?`) or `nil`.
 
+Hardware realizes a boolean result as one unsigned bit (`u1`): false is `0`
+and true is `1`. An explicit `signed(bool)` or `sN(bool)` cast deliberately
+reinterprets that single bit as signed, so true becomes the one-bit signed
+all-ones value `-1`; `unsigned(bool)` and `uN(bool)` preserve it as `1`.
+
 ```pyrope
 const b = true
 const c = 3

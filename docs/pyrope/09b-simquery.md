@@ -47,7 +47,7 @@ The answers land at `out.json`'s `query` member, alongside the existing `tests`
 and `debug` members:
 
 ```json
-{"name":"acc.cnt",   "kind":"flop",   "bits":5, "declared_bits":4, "signed":false}
+{"name":"acc.cnt",   "kind":"flop",   "bits":4, "declared_bits":4, "signed":false}
 {"name":"acc.push",  "kind":"input",  "bits":1, "declared_bits":1, "alias":"acc.__in.push"}
 {"name":"acc.din",   "kind":"input",  "bits":8, "declared_bits":8}
 {"name":"acc.count", "kind":"output", "bits":4, "declared_bits":4}
@@ -55,12 +55,12 @@ and `debug` members:
 {"name":"acc.mem",   "kind":"memory", "bits":8, "declared_bits":8, "size":8}
 ```
 
-Note `acc.cnt` is 5 bits wide but declared 4. Both are published because both are
-true and they answer different questions: `bits` is the internal width the value
-is stored at (an unsigned value carries one slot above its magnitude), while
-`declared_bits` is the `u4` written in the source. Everything else — `clock` and
-`reset` inputs, the sub-instance tree — is enumerated the same way, with
-hierarchical names rooted at the testbench instance variable.
+Note `acc.cnt` is both stored and declared as 4 bits. Literal-width realization
+means an unsigned value does not carry a hidden sign slot. Both fields remain in
+the schema because imported or conservatively widened internal nets can still
+differ from the source declaration. Everything else — `clock` and `reset`
+inputs, the sub-instance tree — is enumerated the same way, with hierarchical
+names rooted at the testbench instance variable.
 
 ## Reading values
 
@@ -72,8 +72,8 @@ hierarchical names rooted at the testbench instance variable.
 
 ```json
 {"id":"cnt","ok":true,"at":{"cycle":3,"phase":"post"},"signal":"acc.cnt",
- "value":{"bits":5,"declared_bits":4,"signed":false,
-          "hex":"04","dec":"4","known_mask":"1f","sampled":"settled"}}
+ "value":{"bits":4,"declared_bits":4,"signed":false,
+          "hex":"4","dec":"4","known_mask":"f","sampled":"settled"}}
 {"id":"w2","ok":true,"at":{"cycle":5,"phase":"post"},"signal":"acc.mem","index":2,
  "value":{"bits":8,"declared_bits":8,"signed":false,
           "hex":"12","dec":"18","known_mask":"ff"}}
@@ -81,8 +81,8 @@ hierarchical names rooted at the testbench instance variable.
 
 Values are full-width hardware bit vectors, never host integers: `hex` is exactly
 `ceil(bits/4)` digits, so a 97-bit signal round-trips without truncation. `dec` is
-the same value rendered as a signed decimal at the declared width, so a consumer
-never has to re-implement sign extension.
+the same value rendered according to the published signedness at the declared
+width, so a consumer never has to re-implement sign or zero extension.
 
 `acc.mem[2]` is a single **memory word** read: memories are addressable by
 explicit index. Selectors never enumerate memory contents, and there is no
