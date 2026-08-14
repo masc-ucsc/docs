@@ -4,13 +4,16 @@
     What *runs today* (`lhd sim`) is the single-clock, single-threaded
     simulation form: a `test name { ... }` block declares the DUT as an instance
     (`mut acc = dut`), and a bounded `tick N { ... }` loop drives it with field
-    pokes (`acc.x = v`), advances the clock with an explicit `step`, peeks
-    outputs/registers (`acc.y`), and checks with `assert` — see
+    writes (`acc.x = v`, or a `regref` bound once), advances the clock with an
+    explicit `step`, reads outputs/registers (`acc.y`, or a `sigref`), and checks
+    with `assert` — see
     [Running cycles](05b-statements.md#running-cycles-tick) (and `newtick.md` in
     the LiveHD repo). Waiting and concurrency are expressed *in that one loop*
     with ordinary `if`/`continue`/`break` (below) — there is no separate
-    coroutine layer. Dotted test names and runtime `(...)` test parameters work
-    today. Still not implemented: the whole [temporal library](#temporal-library)
+    coroutine layer. Dotted test names, runtime `(...)` test parameters, and the
+    dotted and string-path forms of
+    [`sigref`/`regref`](05b-statements.md#test-only-statements) all work today;
+    `peek`/`poke` are **removed** in favor of that pair. Still not implemented: the whole [temporal library](#temporal-library)
     below (`past`/`rose`/`fell`/`stable`/`changed`/`eventually`/`always` — only
     the pipelining form `past[N](x)` exists, and only in a design body), the
     `force`/`release`. `for` loops, `.[rand]` and `.[crand]` are rejected
@@ -49,8 +52,9 @@ language does not need a separate `Timer(..., units=...)` API.
 | cocotb | Pyrope |
 |--------|--------|
 | `@cocotb.test()` coroutine | `test foo.bar { ... }` |
-| `dut.sig.value = x` | `acc.sig = x` (poke an input) |
-| `dut.sig.value` | `acc.sig` (peek an output / reg) |
+| `dut.sig.value = x` | `acc.sig = x`, or `regref(acc.sig)` bound once |
+| `dut.sig.value` | `acc.sig`, or `sigref(acc.sig)` bound once |
+| `dut._id(...)` cached handle | `const h = sigref(acc.core0.count)` — bound outside the loop, valid for the run |
 | `await RisingEdge(dut.valid)` | `step; if not rose(acc.valid) { continue }` (TBD) |
 | `await FallingEdge(dut.ready)` | `step; if not fell(acc.ready) { continue }` (TBD) |
 | `await Edge(dut.sig)` | `step; if not changed(acc.sig) { continue }` (TBD) |
@@ -105,6 +109,14 @@ test fifo.producer_consumer {
 
 The two "threads" are the two `if`-blocks; `step` advances them together. To stop
 one task early, gate its `if` on a flag; to cancel the whole test, `break`.
+
+The DUT reads above the `step` (`dut.full`, `dut.empty`, `dut.dout`) are the
+values the previous `step` settled — which is exactly what flow control wants
+from a FIFO whose `full`/`empty`/`dout` are register outputs. Reading back
+`dut.push` is likewise always the value just written, since an input port is a
+single cell. But if one of those outputs were driven *combinationally* by
+`push`/`pop`, the pre-`step` read would not see this iteration's drive; move such
+a read below the `step`.
 
 
 ## Waiting on a condition
@@ -165,8 +177,13 @@ test edge.checks {
 !!! WARNING "Not implemented"
     `force` and `release` are TBD; the example below does not compile today.
 
-`poke` sets a value for the current cycle only. `force` and `release` provide
-persistent overrides:
+A `regref` write lands in the storage immediately but takes effect only at the
+next `step`, and on a register it drives `q` — which the design's own logic uses
+for that cycle before the edge replaces it with the computed `din`. So it is a
+one-shot override: re-writing it every `tick` iteration fully controls the cell,
+but it does not persist on its own. `force` and `release` are the persistent
+counterpart, and differ on both axes — they override `q` and they survive edges
+until released:
 
 * `force(signal, value)` overrides the signal until released.
 * `release(signal)` removes the override and restores the normal driver.
@@ -190,6 +207,12 @@ test fault.inject {
 `force` and `release` are debug-only. Their signal operands use the same direct
 instance hierarchy as ordinary test reads and writes. Forcing a register
 overrides the visible `q` value, not the internal `d` calculation.
+
+They are **complementary to `regref`, not redundant with it**. A `regref` write
+is consumed by one edge and the design's own `d` computation resumes
+immediately after; a `force` keeps being re-applied after every edge, which a
+plain reference into storage cannot express, and `release` restores the real
+driver with no cycle of latency.
 
 
 ## Monitors as inline checks
@@ -420,12 +443,14 @@ intentionally does not add:
 | Construct | Context | Status | Purpose |
 |-----------|---------|--------|---------|
 | `tick N { }` | `test` only | works | Cycle-driven loop: run up to `N` cycles; one `step` (clock edge) per iteration. Waiting / concurrency / monitors are `if`-blocks inside it |
-| `step [N]` | `test` only | works | Advance the clock one cycle (or `N`); the single yield point |
+| `step [N]` | `test` only | works | Advance the clock one cycle (or `N`); the single yield point. One `step` is settle → commit → settle |
+| `sigref(x)` | `test` only | works | Bind a read-only window onto a storage cell (register, memory word, module input/output); bound once outside the loop, valid for the run |
+| `regref(x)` | `test` only | works | Bind a writable window. The write takes effect at the next `step`; on a register it drives `q` for one cycle |
 | `past(x [, n])` | `formal`, `test` | TBD | Sample `x` `n` cycles ago (history, not a pipeline stage) |
 | `rose(x [, w])`, `fell(x [, w])` | `formal`, `test` | TBD | Edge, this cycle or within window `w` |
 | `stable(x [, w])`, `changed(x [, w])` | `formal`, `test` | TBD | Value-stability, this cycle or across `w` |
 | `eventually(x, w)`, `always(x, w)` | `formal`, `test` | TBD | Existence / universal quantifier over the cycles in bounded window `w` |
-| `force(signal, val)` | `test` only | TBD | Override a signal persistently |
+| `force(signal, val)` | `test` only | TBD | Override a signal persistently: overrides `q` and survives edges — see [Force and release](#force-and-release) for how it differs from a `regref` write |
 | `release(signal)` | `test` only | TBD | Remove the override and restore the driver |
 | `cpp("target")` | `test` only | TBD | Bind an external C++ model (golden model, scoreboard) |
 

@@ -169,13 +169,29 @@ is that the export may have to convert back to signed/unsigned for some
 languages like Verilog.
 
 
-Maybe even more important is that all the LGraph cell types generate the same
-result if the input is sign-extended. This has implications, for example a
-typical HDL IR type like "concat" does not exist because the result is
-dependent on the inputs size. This has the advantage of simplifying the
+Maybe even more important is that most LGraph cell types generate the same
+result if the input is sign-extended. This has the advantage of simplifying the
 decisions of when to drop bits in a value. It also makes it easier to guarantee
 no loss of precision. Any drop of precision requires explicit handling with
 operations like and-gate with masks or Shifts.
+
+`Concat` is the one deliberate exception, and the exception is instructive. A
+concatenation's result *does* depend on its inputs' sizes — widening a lane
+shifts every lane above it — so a cell whose lane widths were read off the
+input pins would silently change meaning whenever bitwidth inference narrowed
+one of them. LiveHD therefore does not read them off the pins: each lane's
+window width is an explicit comptime operand, frozen from the source's
+*declared* type when the cell is built and never re-derived. The cell's sinks
+are interleaved `(value, width)` pairs, MSB-first, and its result is the
+non-negative sum-of-windows value, so it composes with the sign-extension rule
+above like every other cell.
+
+The alternative — spelling a concatenation as an `Or` of shifted, masked chunks
+or as a chain of `Set_mask` writes — is what LiveHD did before, and it cost
+more than it saved: three subsystems each re-derived the lane structure with
+their own pattern matcher and their own bailouts, a Set_mask chain smeared
+unknowns across the whole plane rather than per lane, and the SMT encoders
+turned a native `concat` into dozens of nested store-selects.
 
 
 The document also explains corner cases in relationship to Verilog and how to

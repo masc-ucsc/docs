@@ -537,12 +537,14 @@ other files by `import`. The `pub` prefix modifier (same declaration slot as
   `import` it.
 * `pub mut` and `pub reg` are compile errors. Registers, including memories,
   are not imported or exported as values. Cross-scope register access is
-  planned through `regref`, which would resolve an instantiated register by
-  hierarchy path or name — TBD, see
+  planned through the *synthesizable, multi-match* `regref`, which would resolve
+  instantiated registers by hierarchy path or name — TBD, see
   [Register reference](07-typesystem.md#register-reference) and
-  [Memories](08-memories.md#shared-memories-with-regref). Verification code
-  does not need it: a `formal` block reaches registers through the ordinary
-  instance hierarchy (`acc.core0.count`).
+  [Memories](08-memories.md#shared-memories-with-regref). A `formal` block does
+  not need it: it reaches registers through the ordinary instance hierarchy
+  (`acc.core0.count`). A `test` block additionally has the single-cell
+  [`sigref`/`regref`](05b-statements.md#test-only-statements), which is a
+  different, already-implemented construct.
 
 ```pyrope
 pub comb get_five() -> (v) { v = 5 }  // importable by other files
@@ -558,9 +560,9 @@ artifact — `import` still uses the declared name (`my_log` above). See
 [lg: explicit lgraph name](04b-attributes.md#lg-explicit-lgraph-name).
 
 **Debug is exempt from visibility.** Debug statements (`assert`, `test`,
-`puts`, monitors) can observe any variable read-only through
-`sigref`/`regref`. Visibility restricts `import` only; nothing can be hidden
-from verification. There is no
+`puts`, monitors) can observe any storage cell read-only through `sigref`, and a
+`test` block can additionally drive one through `regref`. Visibility restricts
+`import` only; nothing can be hidden from verification. There is no
 `private` attribute.
 
 For tuple fields, a leading underscore (`_field`) marks the entry as

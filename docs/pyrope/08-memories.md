@@ -305,8 +305,13 @@ reg ram:[1024]u32:[macro="sram_32kx32"] = 0
 ## Shared memories with `regref`
 
 !!! WARNING "Not implemented"
-    `regref` is TBD — it does not exist today. This section records the
-    intended design. See [Implementation status](15-tbd.md).
+    The *synthesizable* string-path `regref` described here — the one that
+    resolves across the elaborated hierarchy and may match zero or many cells —
+    is TBD. This section records its intended design. The `test`-block
+    [`sigref`/`regref`](05b-statements.md#test-only-statements), which binds
+    exactly one cell, is a different construct and is implemented; a testbench
+    ref onto a memory word reads the **committed** contents, matching the
+    remote-reader rule below. See [Implementation status](15-tbd.md).
 
 ASIC memories want to be *physically* grouped — BIST and repair logic is too
 expensive to replicate per memory, memory compiler instances carry setup

@@ -396,8 +396,11 @@ applied recursively but no loops are supported in import dependence chains.
 The "setup" code is the statements executed once for each imported file. Those
 statements can not be "imported" by other files. Only resulting `pub` lambdas,
 types, and constants can be imported. Registers are not imported; referencing
-an instantiated register across scopes is planned through `regref` (TBD, see
-[Implementation status](15-tbd.md)).
+an instantiated register across scopes is planned through the synthesizable
+string-path `regref` (TBD, see [Implementation status](15-tbd.md)); the
+single-cell `test`-block
+[`sigref`/`regref`](05b-statements.md#test-only-statements) is a separate,
+implemented construct.
 
 
 During setup, each file can have a list of `pub` declarations. Those are

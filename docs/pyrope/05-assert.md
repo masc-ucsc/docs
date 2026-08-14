@@ -428,10 +428,20 @@ and speed up the remaining proofs.
 A verification statement reads design signals the same way any other Pyrope
 code does: through the instance hierarchy, by name. A `formal` block binds the
 design with an alias and then uses dotted paths (`acc.core0.count`); a `test`
-block pokes and peeks the instance it drives.
+block reads and drives the instance it names — by bare dotted access, or through
+an explicit [`sigref`/`regref`](05b-statements.md#test-only-statements) bound
+outside the `tick` loop.
+
+Both spellings of a ref work in a `test` block: the dotted
+`sigref(acc.core0.fifo0.full)` names exactly one cell (a path that does not
+resolve is a setup error), and the string form `sigref("fifo0/full")` reaches a
+`"unit/field"` by name. Note that `full` there is an *output*, not a register:
+`sigref` binds any storage cell — register, memory word, input or output — and
+`regref` is the same binding made writable.
 
 !!! NOTE "Not implemented"
-    `sigref("top/core0/fifo0/full")` and `regref("fifo/count")` — string-path
-    references into the elaborated hierarchy, and the `bind`-style *monitor*
-    pattern built on them — are TBD and are not needed for `assert`/`assume`
-    today. See [TBD](15-tbd.md).
+    The **multi-match** string path — one `regref` resolving to zero or many
+    cells across the elaborated hierarchy, the synthesizable form described in
+    [Register reference](07-typesystem.md#register-reference) — and the
+    `bind`-style *monitor* pattern built on it are TBD, and are not needed for
+    `assert`/`assume` today. See [TBD](15-tbd.md).

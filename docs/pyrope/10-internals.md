@@ -737,12 +737,13 @@ cassert(v#[3..=4] == 0ub11)
 cassert(v#sext[3..=4] == 0sb11 == -1)
 ```
 
-To build a value from several bit pieces, use the explicit bit-assignment
-idiom. The destination must declare its width, and every bit must be driven
-exactly once — undriven (`nil`) bits and overlapping writes are compile
-errors. This replaces what other HDLs spell as `{a,b,c}` (SystemVerilog),
-`Cat(a,b,c)` (Chisel), or `concat(a,b,c)` (Spade), and makes the layout local
-and unambiguous.
+There are two ways to build a value from several bit pieces.
+
+The explicit bit-assignment idiom names each destination range. The
+destination must declare its width, and every bit must be driven exactly once
+— undriven (`nil`) bits and overlapping writes are compile errors. It makes
+the layout local and unambiguous, and it is the right choice when the pieces
+land at addresses you want to read off the page.
 
 ```pyrope
 const a = 0ub1010   // 4 bits
@@ -755,6 +756,50 @@ r#[1..=2] = b
 r#[3..=6] = a
 cassert(r == 0ub1010_01_1)
 ```
+
+`concat` is the positional form — what other HDLs spell as `{a,b,c}`
+(SystemVerilog), `Cat(a,b,c)` (Chisel), or `concat(a,b,c)` (Spade). It is
+**MSB-first**: the first argument occupies the high bits.
+
+```pyrope
+cassert(concat(a, b, c) == 0ub1010_01_1)   // same value, no destination needed
+cassert(concat(concat(a, b), c) == 0ub1010_01_1)  // nesting is fine
+```
+
+Each lane's width comes from its **declared type** — never from its value, never
+from an inferred range, and never from a literal's spelling. Narrowing one lane
+would shift every lane above it, so the width has to be something the source
+states rather than something the compiler measures:
+
+```pyrope
+const a:u4 = 0ub101      // a FOUR-bit lane: the type says 4, not the literal's 3
+const b:u8 = 1
+const c:u12 = concat(a, b)   // 12 bits = 4 + 8
+```
+
+The destination must declare that exact width. `c:s12` is equally fine — only
+the 12-bit field width is checked, not the signedness — but a wider `c` is an
+error, not a zero-extension: a concat states a bit layout, and a destination
+that silently pads it is a layout the source never wrote.
+
+Every lane must name something declared. An untyped variable is an error even
+when its initializer looks sized, and so is a literal written directly as an
+operand — bind it to a typed name first:
+
+```pyrope
+const u = 0ub101         // u has no declared type
+// concat(u, b)          // ERROR: lane `u` has no declared bit width
+// concat(a, 0ub01)      // ERROR: a literal operand has no declared type
+// concat(a, 5)          // ERROR: same
+// concat(a, b + 1)      // ERROR: `b + 1` has no declared width
+
+const one:u8 = 1
+const d:u12 = concat(a, one)      // OK — `one` declares the 8-bit window
+```
+
+A tuple lane expands to its fields in declaration order (field 0 most
+significant), provided every field has a declared type. The result is always
+non-negative and exactly the sum of the lane widths wide.
 
 A pure bit reversal is a `for` loop with explicit indices:
 

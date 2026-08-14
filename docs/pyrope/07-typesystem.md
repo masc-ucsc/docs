@@ -764,8 +764,18 @@ allows code to reference (not copy) an existing register in the call hierarchy.
 The syntax of `regref` is similar to `import` but the semantics are very
 different. While `import` looks through Pyrope files, `regref` looks through
 the instantiation hierarchy for matching register names or paths. `regref`
-only gets a reference to a register; it can not import functions, constants,
-types, or ordinary variables.
+binds an addressable storage cell — a register, a memory word, or (in a `test`
+block) a module input or output port; it can not reference functions, constants,
+types, ordinary variables, or an internal combinational net, none of which has a
+cell to bind.
+
+!!! NOTE "Two constructs share this name"
+    The **synthesizable, string-path** `regref` described in this section
+    resolves through the elaborated hierarchy, may match **zero or many**
+    registers, and is still TBD. The **`test`-block** `regref(expr)` — see
+    [Test only statements](05b-statements.md#test-only-statements) — names
+    exactly one cell and is implemented, in both the dotted and the string form.
+    The rules below are the synthesizable ones.
 
 `regref` is independent of `pub`
 ([Visibility](04-variables.md#visibility-private-by-default-pub-to-export)):
@@ -849,15 +859,20 @@ the `import`:
   + `regref` keeps going to find all the matches, and it is possible to have a zero matches
   + `import` stops at the first match, and a compile error is generated if there is no match or multiple matches.
 
+The multi-match behavior is specific to the **string** form. The dotted
+`regref(acc.core0.cnt)` used in a `test` block names exactly one instantiated
+cell, and a path that does not resolve is an error rather than an empty set —
+which is what lets it bind to a single reference.
+
 
 ### Mocking library
 
 One possible use of the register reference is to create a "mocking" library. A
 mocking library instantiates a large design but forces some subblocks to
 produce some results for testing. The challenge is that it needs undriven
-registers. During testing, the `peek`/`poke` is more flexible and it can
-overwrite an existing value. The peek/poke use the same reference as `import`
-or register reference.
+registers. During testing, a `regref` is more flexible and it can overwrite an
+existing value. It uses the same reference form as `import` or the register
+reference, and it accepts the string path directly.
 
 ```pyrope
 const bpred = ( // complex predictor
@@ -865,7 +880,8 @@ const bpred = ( // complex predictor
 )
 
 test mock.branches {
-  poke("bpred_file/taken", true)
+  mut taken = regref("bpred_file/taken")   // bound once
+  taken = true
 
   mut l = core.fetch.predict(0xFFF)
 }

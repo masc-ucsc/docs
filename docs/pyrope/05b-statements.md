@@ -551,8 +551,9 @@ the command line as above, or from a harness that fills it in (a fuzzer, a
 constrained-random or directed-test generator, a CI matrix). The test declares
 *what* it needs; the runner decides *how* the value is produced.
 
-Runtime parameters are debug-only simulation values (they drive the DUT,
-`poke`/`step`, or feed a `cpp` model); they never reach synthesizable logic. A
+Runtime parameters are debug-only simulation values (they drive the DUT's
+inputs, size a `tick`/`step`, or feed a `cpp` model); they never reach
+synthesizable logic. A
 value that must size hardware is a `comptime` parameter and belongs in the
 `[...]` slot (planned; see [Implementation status](15-tbd.md)), not in `(...)`.
 
@@ -597,6 +598,36 @@ testing blocks:
   variables preserve their value; the inputs may change value. `step` is the
   explicit yield point of a test — the clock edge.
 
+    One `step` is **settle → commit → settle**: the combinational cone is
+    evaluated against the state and inputs as they now stand, that result is
+    committed (the edge), and the cone is evaluated once more against the state
+    just committed so every output holds a fresh value. The first settle is why
+    an input driven immediately before a `step` affects *that* edge; the second
+    is why a read placed immediately after it sees post-edge values.
+
+* `sigref(x)` binds a **read-only** window onto a storage cell — a register, a
+  memory word, or a module input or output — reachable from the test's instance;
+  `regref(x)` binds a **writable** one. `x` is either a dotted path
+  (`sigref(acc.core0.count)`) or a `"unit/field"` string
+  (`sigref("core0/count")`). A ref is bound **once**, outside the `tick` loop,
+  and stays valid for the whole run: reading it observes the cell at that
+  instant, so it costs a load rather than a re-evaluation of the design.
+
+    A bare dotted access is sugar for an anonymous ref with exactly these
+    semantics, and its binding is hoisted out of the loop too — spelling
+    `sigref`/`regref` explicitly documents the intent and names the cell, it does
+    not change what runs. A write through a `regref` has no effect until the next
+    `step`; on a register it drives `q`, which the design's own logic then uses
+    for that cycle before the edge replaces it with the computed `din` — a
+    one-shot next-state override. Use
+    [`force`/`release`](09-verification.md#force-and-release) for an override
+    that persists across edges.
+
+    A ref outlives the loop: one binding serves reads before, inside, and after
+    the `tick`. An internal combinational net has no storage behind it and
+    therefore cannot be bound; naming one is an error, not a silently
+    materialized value.
+
 To *wait* for a condition there is no separate primitive: `step` each cycle and
 `continue` until it holds (the `tick N` bound is the timeout). See
 [Waiting on a condition](09-verification.md#waiting-on-a-condition).
@@ -627,9 +658,15 @@ tick N { stmts }   // run up to N cycles; one `step` (clock edge) per iteration
 Each `tick` iteration is **one cycle**. You declare the design under test (DUT)
 once as an *instance* before the loop and interact with it by field access:
 `acc.x = v` drives input `x` (pre-edge), `acc.y` reads an output or an internal
-register (`acc.total`). The clock edge is the explicit **`step`** in the body —
-statements above it drive this cycle's inputs, statements below sample the
-results — and there is exactly one `step` per iteration. The current cycle index
+register (`acc.total`). Each such access is sugar for an anonymous
+[`sigref`/`regref`](#test-only-statements) whose binding is hoisted out of the
+loop, so it costs nothing per iteration. The clock edge is the explicit
+**`step`** in the body — statements above it drive this cycle's inputs,
+statements below sample the results — and there is exactly one `step` per
+iteration. Read the DUT *below* the `step`: a read placed above it observes what
+the previous `step` settled, not the inputs driven by the statements just above
+it, so for an output that depends combinationally on those inputs the two
+placements differ by a cycle. The current cycle index
 is the first-class value `clock` (0-based), usable in `puts`, `assert`, and to
 gate inputs such as reset (`acc.reset = clock < 2`; reset is just an input):
 
@@ -733,9 +770,10 @@ test runner.until_done {
 }
 ```
 
-Like `step` and `poke`, `tick` is a statement-level construct, not a reserved
-identifier: it is recognized only at the start of a statement (`tick`, a cycle
-count, then a `{ ... }` block). A variable or method named `tick` (such as a
+Like `step`, `tick` is a statement-level construct, not a reserved identifier: it
+is recognized only at the start of a statement (`tick`, a cycle count, then a
+`{ ... }` block). (`sigref`/`regref` are ordinary built-in *calls*, not
+statement-level constructs, so they are not part of this rule.) A variable or method named `tick` (such as a
 `mod tick(ref self, ...)` clock method) is unaffected.
 
 An unbounded `tick { }` (no count: run until a `break`) is TBD; the simulation
@@ -765,7 +803,10 @@ pipeline structure which means that it can be started each cycle. Calling a
 lambda that has called a `step` and still has not finished should result in a
 simulation assertion failure.
 
-* `peek` allows to read any flop, and lambda input or output
+* `sigref` reads any flop, memory word, or lambda input/output, through a
+  binding made once and held for the run.
 
-* `poke` is similar to `peek` but allows to set a value on any flop and lambda
-  input/output.
+* `regref` is `sigref` plus the ability to drive the cell. `peek`/`poke` were
+  the earlier spelling of this pair and are **removed**: each of their reads
+  copied a value out of a freshly recomputed snapshot of the whole design, which
+  a bound reference makes unnecessary.
