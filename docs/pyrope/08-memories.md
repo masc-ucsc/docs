@@ -156,15 +156,26 @@ cassert(b[2][7] == 13)
 assert(b[2][10]) // error: `b[2][10]` does not exist (out of bounds)
 ```
 
-It is possible to initialize the async memory with an array. The initialization
-of async memories happens whenever `reset` is set on the system: when the
-module declares (or binds) a `reset` input, the memory re-loads its per-entry
-init contents while `reset` is held (one restore write port per entry; reads
-during reset return the committed contents). Without a reset input the
-contents are power-on-only (the wrapper's `INIT` parameter). A key difference
-between arrays (no clock) and memories is that arrays initialization value must
-be `comptime` while `memories` and `reg` can have a sequence of statements to
-generate a reset value.
+It is possible to initialize the async memory with an array. A `reg` array's
+initializer means exactly what a scalar `reg`'s does: it is the **reset value**
+of every entry, and it is the power-on contents too (the wrapper's `INIT`
+parameter). Like a scalar `reg` with a reset value, an initialized `reg` array
+binds the module's `reset` input, or mints one when the module declares none.
+
+A memory has no parallel reset port, so the restore is a **sweep**: one entry
+per cycle while `reset` is held, driven by a small counter (`<mem>_rstcnt`) that
+parks at 0 whenever `reset` is low, so every reset pulse sweeps from entry 0.
+The array is therefore fully restored only after `size` cycles of `reset` held
+high — unlike a scalar `reg`, which resets in one. Program writes (and a
+whole-array update) are suppressed for the whole reset window, and the restore
+port never forwards, so a read during reset returns the committed contents.
+
+Spell `= nil` (or `= 0sb?`) for an array with no reset value at all: no reset is
+bound, no sweep is built, and the contents are undefined until written.
+
+A key difference between arrays (no clock) and memories is that arrays
+initialization value must be `comptime` while `memories` and `reg` can have a
+sequence of statements to generate a reset value.
 
 The init contents may be a tuple **literal**, a scalar broadcast, a
 `comptime`-computed initializer variable (filled by a loop), or the

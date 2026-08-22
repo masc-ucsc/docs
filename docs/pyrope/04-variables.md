@@ -19,6 +19,22 @@ the variable intentionally has no meaningful value yet; reading `nil` is invalid
 until the variable is assigned a real value. The bare `_` default value syntax
 has been removed.
 
+`const x [:type] = nil` is therefore a **forward declaration**: the variable has
+no value yet, and its one later assignment binds it. A `const` is bound exactly
+once, so that assignment defines the variable on *every* control path — writing
+it inside an `if` with no `else` means the same as writing it unconditionally
+(the same rule [`wire`](#wire-single-driver-combinational-nets) follows; an
+un-taken path is a don't-care, not an unknown). A second assignment is a rebind
+error, and — unlike a `wire` — the bind must precede every read.
+
+```pyrope
+const w:u8 = nil       // forward declaration: no value yet
+if c {
+  w = a + 1            // the ONE bind; `w` is `a + 1` whether or not `c` holds
+}
+o = w                  // read AFTER the bind
+```
+
 
 Every declaration starts with one of seven **kind keywords**:
 
@@ -496,6 +512,12 @@ the last write in *program order*, and where a read-before-write is an error),
 a `wire` may be **read before its driver appears textually**: every read
 observes the single resolved driver, independent of statement position.
 
+Removing *program order* is the whole point: it is what lets a Verilog module
+interconnect be expressed directly. When the driver already precedes every read,
+a `const x = nil` forward declaration says the same thing about the value and
+additionally checks def-before-use — prefer it, and reach for `wire` when a read
+genuinely comes first.
+
 ```pyrope
 wire x = nil           // forward declaration: an as-yet-undriven net
                        // reads of 'x' here are legal
@@ -509,10 +531,15 @@ Rules:
 
 * **Exactly one driver.** The driver may be a mux — an `if`/`match`
   *expression*, or mutually-exclusive conditional assignments. A second
-  *unconditional* assignment is a compile error.
+  *unconditional* assignment is a compile error. One `if`/`match` statement
+  counts as a single driver, however many of its arms write the net.
+* The driver may be **conditional**, and it need not cover every path. A
+  `wire` is defined by its one assignment, so wherever that assignment sits
+  the net carries its value on *every* path — writing it inside an `if` with
+  no `else` means the same as writing it unconditionally. An un-taken path is
+  a don't-care, not an unknown: there is no mux against a `nil`/`x` default.
 * `wire x = nil` forward-declares an undriven net; a `wire` still `nil` at the
-  end of elaboration (never driven), or driven on some paths but not others
-  (incompletely driven), is a compile error.
+  end of elaboration (never driven at all) is a compile error.
 * `wire` removes *textual* ordering only, not cyclic dataflow. A `wire`
   combinationally driven by a function of itself is a real combinational loop
   and is rejected (the standard combinational-cycle / SCC check). A ring is

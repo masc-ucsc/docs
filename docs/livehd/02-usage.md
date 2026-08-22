@@ -321,7 +321,7 @@ forms (`hhds::Forest::save` / `hhds::GraphLibrary::save`).
 A step's success is *only* the process exit code: `0` = pass, non-zero = fail.
 The structured result (one JSON object, to `--result-json PATH` or stdout)
 carries the detail: command, status, `run_id`, inputs, outputs, the expanded
-recipe steps, and on failure an `error` block:
+recipe steps, `phases`, and on failure an `error` block:
 
 | error.class | Meaning |
 |---------------|------------------------------------------------|
@@ -335,6 +335,16 @@ recipe steps, and on failure an `error` block:
 | `config` | missing or invalid configuration |
 | `dependency` | required external tool or prior artifact absent |
 | `unsupported` | requested feature is known but not implemented |
+
+`phases` is the per-phase wall clock: an array of `{"name", "ms"}` in completion
+order, keyed by the *bare* step name (`inou.prp`, `pass.cprop`, `pass.lec`) plus
+a few phases that are real work without a recipe line of their own
+(`lhd.run_id` for the input content hash, `inou.prp.imports` for transitive
+import parsing, `lnast.tolg`, `lg.save`, `lec.load`, `sim.hostbuild`,
+`sim.run`). A name repeats when a step runs more
+than once, so a consumer sums the array; the leftover against wall time is
+process startup and output-dir cleanup. It is never part of `run_id`. Add
+`--diag-fmt pretty -v` to see the same breakdown as text.
 
 `lhd` emits nothing on stdout except the selected protocol — no banners, no
 echoed commands, no raw pass logs. Per-step raw logs land under
