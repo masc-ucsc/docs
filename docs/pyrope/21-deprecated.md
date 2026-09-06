@@ -208,6 +208,79 @@ so that the pipeline is balanced from the list of variables and the function
 inputs.
 
 
+## concat
+
+!!! NOTE
+     `concat` was removed because `X#[..]` (the full bit vector of `X`) already
+     packs an ordered value, and it packs it in the direction that the rest of
+     the language uses. Two spellings for one operation, disagreeing about
+     which end is bit 0, is a bug generator.
+
+`concat(a, b, c)` was the positional bit-packing form, what SystemVerilog
+spells `{a, b, c}`, Chisel `Cat(a, b, c)`, and Spade `concat(a, b, c)`. It was
+**MSB-first**: the first argument occupied the high bits, and a tuple lane
+expanded with field 0 most significant.
+
+```pyrope_old
+const a:u4 = 0ub1010
+const b:u8 = 1
+
+const c:u12 = concat(a, b)   // `a` in bits 11..=8, `b` in bits 7..=0
+```
+
+The problem is that it was a false friend. It reads exactly like `{a, b}`, so
+it invites a transliteration from SystemVerilog rather than a reading, and it
+was the only bit spelling in Pyrope that ran high-to-low. Everywhere else the
+language counts up from the bottom: `#[0]` is the low bit, a bit range is
+written low-to-high (`x#[3..=6]`, never `6..=3`), and the string encoding
+assigns the lower bits to the first characters. Carrying two orders for the
+same operation on the same data shape is the kind of detail that survives code
+review and then shows up in a waveform.
+
+`X#[..]` covers what `concat` did, in the language's own direction: entry 0 of
+an ordered value sits at bit 0, and each later entry stacks above it. The
+migration is mechanical — reverse the argument order and pack a tuple:
+
+```pyrope
+const a:u4 = 0ub1010
+const b:u8 = 1
+
+const c:u12 = (b, a)#[..]    // was `concat(a, b)`: `a` still on top, `b` at bit 0
+```
+
+An argument that was itself a tuple or an array becomes a `...` splice, because
+`#[..]` packs a flat entry list. This is the case where reversing the argument
+list is **not** enough, because the reversal reaches inside the spliced entry
+too: `concat` gave field 0 the top of the lane's window, and `#[..]` gives
+entry 0 the bottom of it.
+
+```pyrope
+const stages:[3]u8 = (1, 2, 3)
+const inp:u8 = 4
+
+// `concat(stages, inp)` was {stages[0], stages[1], stages[2], inp}. The
+// faithful translation lists the entries reversed, each bound to a typed name
+// first: an entry states its window with a DECLARED type, and an element read
+// carries none of its own.
+const s0:u8 = stages[0]
+const s1:u8 = stages[1]
+const s2:u8 = stages[2]
+const same:u32 = (inp, s2, s1, s0)#[..]
+cassert(same == 0x01020304)
+
+// A `...` splice is NOT that layout -- it is {stages[2], stages[1], stages[0], inp}:
+const natural:u32 = (inp, ...stages)#[..]
+cassert(natural == 0x03020104)
+```
+
+Reach for the splice anyway in most cases. Code that packed an array with
+`concat` was usually reversing it at the same time — writing entry 0 into the
+high window of a word whose other end it indexes from zero — and `(inp,
+...stages)#[..]` is the layout it wanted. The faithful translation above is for
+the case where the old order was load-bearing, such as a port whose bit
+assignment is fixed by something outside the source.
+
+
 ## Liam constructs
 
 In most HDLs loops have to be compile time unrolled, in an earlier version of

@@ -37,7 +37,7 @@ test fifo.fill {
 
 Ask what is observable:
 
-```
+```shell
 lhd sim fifo.prp fifo.fill --workdir w --result-json out.json \
   --query '{"schema_version":1,"kind":"sim_query",
             "queries":[{"id":"all","op":"signals"}]}'
@@ -64,7 +64,7 @@ names rooted at the testbench instance variable.
 
 ## Reading values
 
-```
+```shell
 --query '{"schema_version":1,"kind":"sim_query","queries":[
   {"id":"cnt","op":"value","signal":"acc.cnt","at":{"cycle":3}},
   {"id":"w2", "op":"value","signal":"acc.mem[2]","at":{"cycle":5}}]}'
@@ -125,7 +125,7 @@ nothing observes them from outside; a `pre` phase is a planned extension.
 reported at cycle *c* means the sample at *c* differs from the sample at *c-1*,
 so *c* is the first observation of the new value — not a subcycle edge time.
 
-```
+```json
 {"id":"rows","op":"changes","signal":"acc.cnt","from":{"cycle":0},"to":{"cycle":3}}
 ```
 
@@ -156,7 +156,7 @@ point, and its anchor is strictly exclusive.
 report other signals at the moment it hits — answering "what was X when Y first
 became Z" in a single run:
 
-```
+```json
 {"id":"hit","op":"find","from":{"cycle":0},"to":{"cycle":5},
  "expr":{"sig":"acc.cnt","cmp":"==","value":"3"},
  "sample":["acc.din","acc.head"]}
@@ -181,7 +181,7 @@ anywhere on this path.
 `values`, `snapshot` and `diff` work over a set of signals chosen by `scope`,
 `glob`, `regex` or `kind` — placed directly on the query object:
 
-```
+```json
 {"id":"state","op":"values","kind":"flop","at":{"cycle":5}}
 {"id":"delta","op":"diff","scope":"acc","from":{"cycle":2},"to":{"cycle":4}}
 ```
@@ -204,7 +204,7 @@ The common case is not "what is signal X at cycle 4200" — it is "the test just
 failed, show me what was going on". A timestamp can therefore be **relative to
 the failing assert** instead of absolute:
 
-```
+```shell
 --query '{"schema_version":1,"kind":"sim_query","queries":[
   {"id":"at_fail","op":"snapshot","scope":"a","at":{"event":"fail"}},
   {"id":"before", "op":"value","signal":"a.c","at":{"event":"fail","offset":-1}}]}'

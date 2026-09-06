@@ -194,7 +194,19 @@ cassert(`for`+1 == `foo is . strange!\nidentifier`)
 ```
 
 Using the backtick, Pyrope can use any string as an identifier, even reserved
-keywords. Identifiers are case sensitive like Verilog, but the compiler issues
+keywords. The backtick is the *only* way to do so: a bare reserved word is not a
+name, so `mut if = 3` and `mod f(in:u8)` are errors that point you at the escape.
+Write `` `if` `` and `` `in` `` instead. The rule applies wherever a name is
+**bound** — a declaration or a parameter — and not where the grammar already
+expects a field or an attribute name (the memory configuration field really is
+spelled `const type = 1`).
+
+The backticks are Pyrope spelling only; they never reach the generated Verilog.
+There the bare name is emitted, and Verilog's own `\name ` escape is added only
+when Verilog itself needs it: `` `if` `` becomes `\if ` because `if` is a Verilog
+keyword, while `` `in` `` — not reserved in Verilog — is emitted as plain `in`.
+
+Identifiers are case sensitive like Verilog, but the compiler issues
 errors for non \` escaped identifiers that do not follow these conditions in
 order:
 

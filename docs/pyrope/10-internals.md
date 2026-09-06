@@ -717,14 +717,14 @@ for (idx,i) in (123,) {  // a scalar 1-tuple enumerates to a single (0, value)
 }
 ```
 
-### Bit selection and concatenation
+### Bit selection and packing
 
 The bit selection operator `#[sel]` takes a single expression: a bit index, a
 close-range like `3..=4`, an open range like `3..`, or any expression that
 evaluates to one of those (including a conditional). Multi-entry tuple indices
-like `#[3,4]` are not supported, because the ordering of a bit set is
-ambiguous and easy to misread. To pack or transpose bits, declare a destination
-of fixed width and assign each piece explicitly.
+like `#[3,4]` are not supported: a positional tuple does have a canonical bit
+order, but `#[3,4]` is a *set* of bit positions, and a set has none — `#[4,3]`
+names the same one, and nothing says which end of the result each bit lands at.
 
 ```pyrope
 const v = 0xF0
@@ -737,71 +737,225 @@ cassert(v#[3..=4] == 0ub11)
 cassert(v#sext[3..=4] == 0sb11 == -1)
 ```
 
-There are two ways to build a value from several bit pieces.
+`x#[..]` selects every bit, so it is the full bit vector of `x`, and that one
+idea is also how bits are packed and unpacked. When `x` is a tuple or an array,
+its bit vector is the packing of its entries. When `x` is an integer and the
+destination is a declared ordered value, that same bit vector is laid back into
+the destination's entries. Packing and unpacking are not two operators — they
+are one bit vector read in the two directions — and there is no separate
+concatenation operator carrying a bit order of its own.
 
-The explicit bit-assignment idiom names each destination range. The
-destination must declare its width, and every bit must be driven exactly once
-— undriven (`nil`) bits and overlapping writes are compile errors. It makes
-the layout local and unambiguous, and it is the right choice when the pieces
-land at addresses you want to read off the page.
+The first entry of a positional tuple or array occupies the **lowest** bits,
+and each later entry stacks above it. This holds in both directions, and it is
+not a convention invented for packing: it is the direction that every other bit
+spelling in the language already runs. `x#[0]` is the least significant bit, a
+bit range is written low-to-high (`x#[3..=6]`, never `6..=3`), and the string
+encoding in [Variables](04-variables.md) puts the first characters in the low
+bits, which is just this rule applied to a tuple of 8-bit characters. What
+comes first in the source sits at the bottom of the word.
 
 ```pyrope
-const a = 0ub1010   // 4 bits
-const b = 0ub01     // 2 bits
-const c = 0ub1      // 1 bit
+const stages:[4]u4 = (0ub0001, 0ub0010, 0ub0100, 0ub1000)
+const inp:u4 = 0ub1111
 
-mut r:u7 = nil
-r#[0]    = c
-r#[1..=2] = b
-r#[3..=6] = a
-cassert(r == 0ub1010_01_1)
+// stages[0] at bit 0, then stages[1], stages[2], stages[3], and inp on top
+cassert((...stages, inp)#[..] == 0ub1111_1000_0100_0010_0001)
+
+// inp at bit 0 instead, and every stage shifts up by 4
+cassert((inp, ...stages)#[..] == 0ub1000_0100_0010_0001_1111)
 ```
 
-`concat` is the positional form — what other HDLs spell as `{a,b,c}`
-(SystemVerilog), `Cat(a,b,c)` (Chisel), or `concat(a,b,c)` (Spade). It is
-**MSB-first**: the first argument occupies the high bits.
+That direction is worth reading twice when arriving from SystemVerilog or
+Chisel, because it is the reverse of `{a, b, c}` and `Cat(a, b, c)`, where the
+first argument lands in the high bits. Pyrope keeps a single direction for bits
+everywhere, so transcribing a Verilog concatenation means reversing its
+argument order.
+
+Inside a tuple being packed, an entry that is itself a tuple or an array is a
+compile error: splice it with `...`, so that `#[..]` only ever sees a flat
+entry list. A nested entry would need an inner layout that the source never
+states, and the splice makes that layout visible at the point where it is
+chosen.
 
 ```pyrope
-cassert(concat(a, b, c) == 0ub1010_01_1)   // same value, no destination needed
-cassert(concat(concat(a, b), c) == 0ub1010_01_1)  // nesting is fine
+const regw:u20 = (...stages, inp)#[..] // OK: `...` flattens the array into entries
+const bad = (stages, inp)#[..]         // error: splice the array entry -- `...stages`
+const all:u16 = stages#[..]            // OK: `stages` IS the tuple being packed
 ```
 
-Each lane's width comes from its **declared type** — never from its value, never
-from an inferred range, and never from a literal's spelling. Narrowing one lane
-would shift every lane above it, so the width has to be something the source
-states rather than something the compiler measures:
+Each entry's width comes from its **declared type** — never from its value,
+never from an inferred range, and never from a literal's spelling. Narrowing
+one entry would shift every entry above it, so the width has to be something
+the source states rather than something the compiler measures. The packed total
+is exactly the sum of the entry widths.
 
 ```pyrope
-const a:u4 = 0ub101      // a FOUR-bit lane: the type says 4, not the literal's 3
+const a:u4 = 0ub101      // a FOUR-bit entry: the type says 4, not the literal's 3
 const b:u8 = 1
-const c:u12 = concat(a, b)   // 12 bits = 4 + 8
+
+const c:u12 = (a, b)#[..]
+cassert(c == 0ub0000_0001_0101)   // `b` above `a`, because entry 0 is at bit 0
 ```
 
-The destination must declare that exact width. `c:s12` is equally fine — only
-the 12-bit field width is checked, not the signedness — but a wider `c` is an
-error, not a zero-extension: a concat states a bit layout, and a destination
-that silently pads it is a layout the source never wrote.
-
-Every lane must name something declared. An untyped variable is an error even
-when its initializer looks sized, and so is a literal written directly as an
-operand — bind it to a typed name first:
+A destination that declares a different width is an error in both directions,
+never a zero-extension and never a silent truncation:
 
 ```pyrope
-const u = 0ub101         // u has no declared type
-// concat(u, b)          // ERROR: lane `u` has no declared bit width
-// concat(a, 0ub01)      // ERROR: a literal operand has no declared type
-// concat(a, 5)          // ERROR: same
-// concat(a, b + 1)      // ERROR: `b + 1` has no declared width
+const wide:u13   = (a, b)#[..]  // error: 13 != 12; a layout is never silently padded
+const narrow:u11 = (a, b)#[..]  // error: 11 != 12; nor silently truncated
+wrap const e:u10 = (a, b)#[..]  // OK, the top 2 bits are dropped, and the line says so
+sat const f:u10  = (a, b)#[..]  // error: saturation has no meaning for a bit layout
+```
+
+`wrap` is the only escape hatch, and it is the same statement-level modifier
+that governs [every other narrowing
+assignment](04b-attributes.md#wrap-and-sat-modifier): it permits dropping the
+high bits, on the line that loses them. Widening has no such escape hatch
+because no modifier can invent bits, and `sat` is rejected exactly as
+`sat x:bool` is, since a layout has no magnitude to saturate towards.
+
+Every entry must therefore name something declared. An untyped variable is an
+error even when its initializer looks sized, and so is a literal or an
+expression written directly as an entry. Bind it to a typed name first:
+
+```pyrope
+const u = 0ub101                // u has no declared type
+const w1:u12 = (u, b)#[..]      // error: entry `u` has no declared bit width
+const w2:u12 = (a, 0ub01)#[..]  // error: a literal entry has no declared type
+const w3:u13 = (a, b + 1)#[..]  // error: `b + 1` has no declared width
 
 const one:u8 = 1
-const d:u12 = concat(a, one)      // OK — `one` declares the 8-bit window
+const d:u12 = (a, one)#[..]     // OK -- `one` declares the 8-bit window
 ```
 
-A tuple lane expands to its fields in declaration order (field 0 most
-significant), provided every field has a declared type. The result is always
-non-negative and exactly the sum of the lane widths wide.
+A tuple with **two or more named fields** has no bit vector, at any depth.
+Named-tuple equality is by key and independent of spelling order, so packing
+one would publish the compiler's canonical key order as a bit layout, a layout
+that nobody wrote and that no source line pins down. Select the fields in the
+order you want instead. A tuple with **exactly one** named field has no order
+to get wrong, and stays legal in both directions.
 
-A pure bit reversal is a `for` loop with explicit indices:
+```pyrope
+const pt = (const lo:u4 = 3, const hi:u4 = 1)
+
+const q:u8 = pt#[..]              // error: two named fields have no bit order
+const w:u8 = (pt.lo, pt.hi)#[..]  // OK: the order is in the source
+cassert(w == 0ub0001_0011)
+
+const one_named = (const only:u4 = 3)
+cassert(one_named#[..] == 3)      // a single name cannot be misordered
+```
+
+For the same reason, an unpack destination is a declared **type**, never a list
+of names on the left of an `=`. A destructuring pattern says what the pieces
+are called, not how wide they are or where they sit:
+
+```pyrope
+const b8:u8 = 0ub1010_0110
+
+const x:[2]u4 = b8#[..]         // OK: the array type states the layout
+cassert(x[0] == 0ub0110 and x[1] == 0ub1010)
+
+const (lo:u4, hi:u4) = b8#[..]  // error: names, not a layout
+```
+
+Signedness on unpack comes from the declared entry type, and each entry is
+extended from its own window rather than from the word:
+
+```pyrope
+const s:[2]s4 = b8#[..]
+cassert(s[0] == 6 and s[1] == -6)   // 0ub1010 read as a 4-bit signed entry
+```
+
+The exact-width rule holds here too, with `wrap` again the one way to lose a
+bit in the open:
+
+```pyrope
+const nine:u9 = 0ub1_1010_0110
+
+const y1:[2]u4 = nine#[..]       // error: 8 != 9; bit 8 has nowhere to land
+wrap const y2:[2]u4 = nine#[..]  // OK, bit 8 is dropped, and the line says so
+```
+
+Uniform entries are what an array destination expresses. Mixed widths have no
+packing spelling on purpose, because no type states "8 bits and then 4" for a
+destructuring, so the ranges are written out:
+
+```pyrope
+const packed:u12 = 0ub1010_0110_0011
+
+const lo_byte = packed#[0..=7]
+const hi_nib  = packed#[8..=11]
+cassert(lo_byte == 0ub0110_0011 and hi_nib == 0ub1010)
+```
+
+Because a tuple *is* its bit vector, the whole `#<mod>[range]` family applies
+to it. There is no separate list of which suffixes accept a tuple: the operand
+is a word, and the modifiers do to that word what they do to any other word.
+Packing keeps every entry inside its own declared window, so a negative entry
+contributes that window and nothing above it. The packed word is always
+non-negative, and a destination meant to be read as a signed word takes
+`#sext[..]`, so the reinterpretation is written rather than assumed.
+
+```pyrope
+const pair:[2]s4 = (1, -1)             // 0ub0001 at the bottom, 0ub1111 above it
+
+cassert(pair#[..]     == 0ub1111_0001) // the packed word, always non-negative
+cassert(pair#sext[..] == -15)          // the same bits, reinterpreted as signed
+cassert(pair#[4..=7]  == 0ub1111)      // a sub-range of the packed word
+
+cassert(pair#|[..]    == 1)            // or-reduce over the packed bits
+cassert(pair#^[..]    == 1)            // xor-reduce: an odd number of ones
+cassert(pair#+[..]    == 5)            // popcount
+cassert(pair#&[0..<8] == 0)            // and-reduce over a close range
+```
+
+The last line is the usual signed-number caution rather than anything about
+tuples: `#[..]` is non-negative, so its infinite high bits are zero and an
+and-reduce over the open range is always `0`. Close the range when the
+intention is to reduce the layout itself.
+
+A `range` is the one type that keeps its own answer for `#[..]`. Its bit vector
+is a set membership encoding — bit `i` is set when `i` belongs to the range —
+not a positional packing:
+
+```pyrope
+cassert(1..=3 == (1,2,3))          // a range compares equal to its values...
+cassert((1..=3)#[..] == 0ub1110)   // ...but its bit vector is the one-hot set
+```
+
+Those two lines are worth reading together, because the spec calls the operands
+equal and still gives them different words. That is intentional. `#[..]` asks
+the type for a bit vector: a `range` answers with the set encoding described in
+[Variables](04-variables.md), while a positional tuple answers with the packing
+of its entries. The tuple side never reaches a competing answer anyway, since
+`(1,2,3)` is a list of untyped literals that declares no entry widths and
+cannot be packed at all.
+
+Packing is not the only way to state a layout. The explicit bit-assignment
+idiom names each destination range instead. The destination must declare its
+width, and every bit must be driven exactly once, so undriven (`nil`) bits and
+overlapping writes are compile errors. It makes the layout local and
+unambiguous, it is the right choice when the pieces land at addresses you want
+to read off the page, and it doubles as an independent statement of the packing
+order:
+
+```pyrope
+const a4:u4 = 0ub1010
+const b2:u2 = 0ub01
+const c1:u1 = 0ub1
+
+mut r:u7 = nil
+r#[0]     = c1
+r#[1..=2] = b2
+r#[3..=6] = a4
+cassert(r == 0ub1010_01_1)
+
+cassert((c1, b2, a4)#[..] == r)  // the same layout, stated as a packing
+```
+
+A pure bit reversal has no layout to state — it is a permutation — so it stays
+a `for` loop with explicit indices:
 
 ```pyrope
 comb reverse(x:unsigned) -> (total:unsigned) {

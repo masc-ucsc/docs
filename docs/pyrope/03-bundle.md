@@ -282,6 +282,25 @@ const rest = (const b=2, mut c=3)
 cassert(foo(a=1, ...rest) == 6)   // same as foo(a=1, b=2, c=3)
 ```
 
+A declared array splices exactly like an unnamed tuple: `...x` on an
+`x:[N]T` inserts the `N` entries, it does not insert one array-valued entry.
+This is not just a convenience for building tuples. It is also the spelling
+that bit packing depends on: `#[..]` is the packed bit vector of a tuple (the
+bit packing rules live in [internals](10-internals.md)), and it only ever sees
+a flat entry list. An entry of a tuple literal that is itself a tuple or an
+array is a compile error, because a nested entry has no obvious place in a
+linear bit layout. `...` is how the nesting is removed, at the position where
+the reader can see it.
+
+```pyrope
+const stages:[4]u8 = (1,2,3,4)
+const inp:u8 = 5
+
+const regw:u40 = (...stages, inp)#[..]  // 5 flat entries: stages[0] at bit 0
+const bad:u40  = (stages, inp)#[..]     // error: splice the array entry -- `...stages`
+const all:u32  = stages#[..]            // OK: `stages` IS the tuple being packed
+```
+
 ## Field access
 
 Since everything is a tuple, any variable can do `variable[0][0][0]` because it
@@ -320,7 +339,9 @@ cassert(y == (const f1a=1, const f1b=3))
 
 Tuples are ordered, as such, it is possible to use them as arrays. Tuples and
 arrays share most behavior/operations, the key difference is that arrays are
-unnamed with the same type for all the entries.
+unnamed with the same type for all the entries. That same order is the bit
+order: `t#[..]` places entry 0 at bit 0 and stacks each later entry above it
+(see [internals](10-internals.md)).
 
 ```pyrope
 mut bund1 = (0,1,2,3,4) // ordered and can be used as an array
@@ -515,6 +536,31 @@ const (x, b) = (true, c)           // assign x=true, b=4
 
 cassert(x == true)
 cassert(b == 4)
+```
+
+### Destructuring is not a bit layout
+
+A destructuring pattern binds names, it does not describe a bit layout. The
+layout of a bit unpack must come from a declared *type*, never from how many
+names happen to appear on the left of an `=`. Otherwise renaming a local, or
+adding one more, would silently re-cut the bits of the right-hand side, and
+nothing on the line would say that it had happened.
+
+```pyrope
+const b:u8 = 0xA5
+
+const x:[2]u4 = b#[..]         // OK: the array type states the layout
+const (lo:u4, hi:u4) = b#[..]  // error: names, not a layout
+```
+
+A uniform-width unpack is therefore spelled with an array destination, where
+every entry width comes from the one declared entry type. Mixed widths have no
+packing spelling by design: when the pieces are not all the same size, say the
+ranges yourself.
+
+```pyrope
+const lo3 = b#[0..=2]    // 3 bits
+const hi5 = b#[3..=7]    // 5 bits
 ```
 
 ## Enumerate (`enum`)

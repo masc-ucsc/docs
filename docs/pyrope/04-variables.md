@@ -394,12 +394,32 @@ cassert(1..=3 == (1,2,3))
 cassert((1..=3)#[..] == 0ub1110)        // convert range to integer with #[..]
 ```
 
+The last line deserves attention, because the line above it says that `1..=3
+== (1,2,3)` and yet `#[..]` gives the two spellings different words. This is
+intentional. `#[..]` is the full bit vector of a value, and it asks the *type*
+for that bit vector: a positional tuple answers with the packing of its
+entries, entry 0 in the lowest bits, while a `range` is its own type and
+answers with the one-hot set encoding above. The equality compares the values a
+range enumerates, not how either type is laid out in bits.
+
+The tuple side would not have an answer here anyway. In a packing every entry's
+width comes from its declared type, never from the value or the literal's
+spelling, so `(1,2,3)#[..]` is an error rather than a different number: a tuple
+of untyped literals states no layout. See [Reduce and bit selection
+operators](#reduce-and-bit-selection-operators), and the bit packing rules in
+[internals](10-internals.md).
+
 ### String
 
-Strings are a basic type. They can be typecasted to integers using the ASCII
-sequence: the string encoding assigns the lower bits to the first characters
-in the string, and each character has 8 bits associated. Casting an integer to
-`string` produces decimal text, not an ASCII-byte decode.
+Strings are a basic type, and a string is a positional tuple of characters,
+each one 8 bits wide. This is worth saying because it explains the bit layout
+without needing a rule of its own: `#[..]` packs a string exactly as it packs
+any other positional tuple, entry 0 in the lowest bits, so the first characters
+of the string land in the low bits and the last character sits on top. There is
+no string-specific encoding to remember, only the general packing rule (see the
+bit packing rules in [internals](10-internals.md)) applied to a tuple whose
+entries happen to be characters. Casting an integer to `string` produces
+decimal text, not an ASCII-byte decode.
 
 ```pyrope
 const a = 'cad'          // c is 0x63, a is 0x61, and d is 0x64
@@ -872,18 +892,42 @@ z#[0] = 0ub11 // error: '0ub11` overflows the maximum allowed value of `z#[0]`
 
 
 
-The bit selection operator only works with ranges, boolean, and integers. It
-does not work with tuples or strings. For converting in these object a `union:`
-must be used.
+`variable#op[sel]` asks its operand for a bit vector, so it works on every type
+that has one: integers, booleans, ranges, and tuples — which includes arrays
+and strings, since those are tuples too. A tuple's bit vector is the packing of
+its entries with entry 0 in the lowest bits, and each entry's width comes from
+its declared type, so `a#[..]` on a string is not a special conversion but the
+same operation performed on a tuple of 8-bit characters. Two things have no bit
+vector: a tuple with two or more named fields, because named fields have no
+order to pack (select them in the order you want instead: `(x.lo, x.hi)#[..]`),
+and an entry with no declared width, because it states no layout. The bit
+packing rules live in [internals](10-internals.md).
 
+Every `#op[sel]` variant reads that same word, so there is no separate list of
+which operators a tuple is allowed to take: the reductions `#|`, `#&`, `#^`,
+and `#+` count bits of a packed tuple exactly as they count bits of an integer,
+`#[range]` selects a sub-range of it, and `#sext` reinterprets it as signed
+(`x#[..]` is always non-negative).
+
+```pyrope
+const p:[3]u4 = (0ub0011, 0ub0101, 0ub0000)
+cassert(p#[..]  == 0ub0000_0101_0011) // entry 0 in the lowest bits
+cassert(p#+[..] == 4)                 // pop-count over the packed 12 bits
+cassert(p#|[..] == 1)
+cassert("ab"#+[..] == 6)              // 0x62_61 has 6 bits set
+```
 
 The bit selection operator takes a single expression: a bit index, a range, or
 any expression that produces one of those (including a conditional). Picking
-non-contiguous bits in one shot is intentionally not supported, because the
-ordering of a bit set is ambiguous and easy to get wrong (e.g. is `#[1,2]` the
-same as `#[2,1]`?). To build or transpose a value from non-contiguous bits,
-declare a destination and assign bits explicitly: each line states which bit
-range receives which value, and the compiler checks widths and coverage.
+non-contiguous bits in one shot is intentionally not supported. A positional
+tuple does have a canonical bit order — entry 0 at bit 0, each later entry
+stacked above it — but `#[1,2]` is not a positional tuple, it is a *set* of bit
+positions, and a set has no order: nothing in it says whether bit 1 or bit 2
+lands at the bottom of the result, and `#[2,1]` names the same set. The order
+has to be written down somewhere, and a selector is not where Pyrope writes it.
+To build or transpose a value from non-contiguous bits, declare a destination
+and assign bits explicitly: each line states which bit range receives which
+value, and the compiler checks widths and coverage.
 
 ```pyrope
 mut v = 0ub10

@@ -532,7 +532,12 @@ mut d:dt = a   // OK, calls init to typecast at construction
 ```
 
 * To string: The `format` allows to convert any type/tuple to a string.
-* To integer: `variable#[..]` for string, range, and bool, union otherwise.
+* To integer: `variable#[..]` is the full bit vector of the variable: for a
+  positional tuple or array, the packing of its entries with entry 0 in the
+  lowest bits; for a string, range, or bool, that type's own encoding; `union`
+  otherwise. The entry widths come from the declared types, never from the
+  values, so a layout is always something the source states (see the bit
+  packing rules in [internals](10-internals.md)).
 * `union` allows to convert across types by specifying the size explicitly.
 
 ## Introspection

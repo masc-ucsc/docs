@@ -200,7 +200,7 @@ operators.
 | `always @(posedge clk)` / `@(*)` | implicit — `reg` vs `mut` |
 | `case ... endcase` | `match x { == v {...} else {...} }` |
 | `x[6:3]` | `x#[3..=6]` |
-| `{a, b}` concat | per-range LHS bit assigns into a typed destination |
+| `{a, b}` concat | `(b, a)#[..]` — entry 0 lands in the LOW bits, so the order reverses |
 | `4'b10x?` | `0ub10??` |
 | tri-state / one-hot mux | `unique if` |
 | testbench `initial` | `test name { ... step ... }` |
@@ -223,9 +223,11 @@ More: [Hardware design](00-hwdesign.md), [vs other languages](10b-vslang.md).
 9. Loop bounds must be comptime (loops unroll). No runtime loops, no
    comprehensions.
 10. `0b1010` is invalid — write `0ub1010`/`0sb1010`.
-11. Integer `[]` indexing selects positional tuple entries only; named fields
+11. A packed tuple reads left-to-right as low-to-high bits: `(a, b)#[..]` puts
+    `a` in the LOW bits, the reverse of Verilog's `{a, b}`.
+12. Integer `[]` indexing selects positional tuple entries only; named fields
     are name-access only.
-12. Enum comparisons use names (`State.Idle`), never raw integers.
+13. Enum comparisons use names (`State.Idle`), never raw integers.
 
 ## Where to go next
 
