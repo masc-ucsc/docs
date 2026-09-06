@@ -1,0 +1,2291 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../06c-pipelining/">
+      
+      
+        <link rel="next" href="../07-typesystem/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Fluid Blocks - LiveHD and Pyrope</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CFira+Code:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Fira Code"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/table.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/pyrope-highlight.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#fluid-blocks" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LiveHD and Pyrope" class="md-header__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LiveHD and Pyrope
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Fluid Blocks
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LiveHD and Pyrope" class="md-nav__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    LiveHD and Pyrope
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LiveHD and Pyrope
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Livehd
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Livehd
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/00-intro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/01-install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/02-usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/03-memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory and concurrency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/04-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    C++ API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/05-lgraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LGraph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/06-lnast/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LNAST
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/07-formal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Formal Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/08-synth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Synthesis &amp; the frequency-optimization loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10-bazel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bazel build
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10b-3rdparty/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3rd Party
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/11-pass/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Creating a Pass
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/12-github/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GitHub Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/13-style/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding Style
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Pyrope
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00-hwdesign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hardware Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-introduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01b-quick_intro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Intro to Pyrope
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-basics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basic syntax
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-bundle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tuples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Variables and types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04b-attributes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Attributes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-assert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05b-statements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Statements
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-functions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lambdas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06b-instantiation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Instantiation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06c-pipelining/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipelining
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fluid Blocks
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fluid Blocks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#motivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Motivation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fluid-lambdas-fluid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fluid Lambdas (fluid)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#calling-fluid-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calling Fluid Blocks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-fluid-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Fluid Contract
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#holding-a-transaction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Holding a Transaction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pass-through-transactions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pass-Through Transactions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#protocol-type-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Protocol Type Checks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#relation-to-optional-valid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relation to Optional Valid
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#relation-to-pipe-stagen-and-n" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relation to pipe, stage[N], and @[N]
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lowering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lowering
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-typesystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Type system
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07b-structtype/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Structural Typing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-memories/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memories
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-stdlib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope std lib
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Extended Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09b-simquery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Querying a simulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-internals/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internals
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10b-vslang/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vs Other Languages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../12-lnast/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LNAST
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../13-stdlib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope Standard Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../15-tbd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation status (TBD)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../21-deprecated/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deprecated or Future
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../22-deprecated_pipelining/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deprecated Pipelining
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#motivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Motivation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fluid-lambdas-fluid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fluid Lambdas (fluid)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#calling-fluid-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calling Fluid Blocks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-fluid-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Fluid Contract
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#holding-a-transaction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Holding a Transaction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pass-through-transactions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pass-Through Transactions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#protocol-type-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Protocol Type Checks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#relation-to-optional-valid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relation to Optional Valid
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#relation-to-pipe-stagen-and-n" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relation to pipe, stage[N], and @[N]
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lowering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lowering
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="fluid-blocks">Fluid Blocks<a class="headerlink" href="#fluid-blocks" title="Permanent link">&para;</a></h1>
+<div class="admonition warning">
+<p class="admonition-title">TBD</p>
+<p><code>fluid</code> lambdas and the valid/retry/fire elastic machinery are not yet
+implemented in LiveHD (the syntax parses, but nothing lowers). See
+<a href="../15-tbd/">Implementation status</a>.</p>
+</div>
+<h2 id="motivation">Motivation<a class="headerlink" href="#motivation" title="Permanent link">&para;</a></h2>
+<p><code>comb</code>, <code>pipe</code>, and <code>mod</code> describe static dataflow and static cycle
+relationships. A <code>pipe</code> result is available at a known latency, and <code>@[N]</code>
+checks that a value is aligned to a known cycle.</p>
+<p>A <strong>fluid</strong> block is different. It describes a transactional stream where
+each input and output has a valid/retry handshake. The latency of a
+transaction may stretch because an internal unit is busy or because a
+downstream consumer applies backpressure.</p>
+<p>A typical example is a floating-point unit in a CPU. The CPU presents an
+operation when it can issue one. The FPU may retry the request when a long
+operation such as square root is already running. Later, when a result is
+ready, the CPU or scoreboard may retry the response if writeback is blocked.</p>
+<p>This is not a <code>pipe@[1..]</code> case. <code>@[N]</code> is a static cycle-alignment type
+check; fluid availability is dynamic and protocol-driven.</p>
+<h2 id="fluid-lambdas-fluid">Fluid Lambdas (<code>fluid</code>)<a class="headerlink" href="#fluid-lambdas-fluid" title="Permanent link">&para;</a></h2>
+<p>A <code>fluid</code> lambda is a block whose inputs and outputs are transactional by
+default:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>type</span> <span class='variable'>FpuReq</span> = <span class='type'><span class='punctuation bracket'>(</span></span>
+<span class='type'>  <span class='keyword'>const</span> <span class='variable'>state</span><span class='punctuation delimiter'>:</span> <span class='type builtin'>u10</span> <span class='operator'>=</span> <span class='variable'>nil</span><span class='punctuation delimiter'>,</span></span>
+<span class='type'>  <span class='keyword'>const</span> <span class='variable'>round</span><span class='punctuation delimiter'>:</span> <span class='type builtin'>u2</span>  <span class='operator'>=</span> <span class='variable'>nil</span><span class='punctuation delimiter'>,</span></span>
+<span class='type'>  <span class='keyword'>const</span> <span class='variable'>op</span><span class='punctuation delimiter'>:</span>    <span class='type builtin'>u7</span>  <span class='operator'>=</span> <span class='variable'>nil</span><span class='punctuation delimiter'>,</span></span>
+<span class='type'>  <span class='keyword'>const</span> <span class='variable'>src1</span><span class='punctuation delimiter'>:</span>  <span class='type builtin'>u64</span> <span class='operator'>=</span> <span class='variable'>nil</span><span class='punctuation delimiter'>,</span></span>
+<span class='type'>  <span class='keyword'>const</span> <span class='variable'>src2</span><span class='punctuation delimiter'>:</span>  <span class='type builtin'>u64</span> <span class='operator'>=</span> <span class='variable'>nil</span><span class='punctuation delimiter'>,</span></span>
+<span class='type'><span class='punctuation bracket'>)</span></span>
+
+<span class='keyword'>type</span> <span class='variable'>FpuResp</span> = <span class='type'><span class='punctuation bracket'>(</span></span>
+<span class='type'>  <span class='keyword'>const</span> <span class='variable'>state</span><span class='punctuation delimiter'>:</span>  <span class='type builtin'>u10</span> <span class='operator'>=</span> <span class='variable'>nil</span><span class='punctuation delimiter'>,</span></span>
+<span class='type'>  <span class='keyword'>const</span> <span class='variable'>result</span><span class='punctuation delimiter'>:</span> <span class='type builtin'>u64</span> <span class='operator'>=</span> <span class='variable'>nil</span><span class='punctuation delimiter'>,</span></span>
+<span class='type'>  <span class='keyword'>const</span> <span class='variable'>icc</span><span class='punctuation delimiter'>:</span>    <span class='type builtin'>u3</span>  <span class='operator'>=</span> <span class='variable'>nil</span><span class='punctuation delimiter'>,</span></span>
+<span class='type'><span class='punctuation bracket'>)</span></span>
+
+<span class='function'>fluid</span> <span class='function'>fpu</span><span class='punctuation bracket'>(</span><span class='variable parameter'>req</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>FpuReq</span></span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>resp</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>FpuResp</span></span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  // req and resp have payload fields plus .[valid], .[retry], and .[fire]
+<span class='punctuation bracket'>}</span>
+</code></pre></div>
+<p>For each fluid port <code>x</code>, the compiler provides:</p>
+<ul>
+<li><code>x.[valid]</code> - producer to consumer; the payload is meaningful this cycle.</li>
+<li><code>x.[retry]</code> - consumer to producer; true means "do not consume/advance".</li>
+<li><code>x.[fire]</code> - shorthand for <code>x.[valid] and !x.[retry]</code>.</li>
+</ul>
+<p>The payload is still the declared type. For tuple payloads, fields are
+accessed normally:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>if</span> <span class='variable'>req</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>fire</span><span class='punctuation bracket'>]</span> <span class='punctuation bracket'>{</span>
+  <span class='keyword'>const</span> <span class='variable'>op</span> <span class='operator'>=</span> <span class='variable'>req</span><span class='punctuation delimiter'>.</span><span class='variable'>op</span>
+<span class='punctuation bracket'>}</span>
+</code></pre></div>
+<p>The two handshake directions are written differently:</p>
+<ul>
+<li><strong><code>valid</code> is inferred.</strong> Assigning a fluid value sets its <code>.[valid]</code> to
+  the path condition of the assignment — the same inference Pyrope already
+  performs for ordinary optional values. <code>if c { out = f(x) }</code> produces a
+  token exactly when <code>c</code> holds. An explicit <code>out.[valid] = ...</code> assignment
+  overrides the inference (allowed, never required), and an output that is
+  never assigned is never valid. An unconditional assignment means a token
+  every cycle.</li>
+<li><strong><code>retry</code> is explicit.</strong> "I can not accept this token" is a policy
+  decision (busy, hazard, arbitration loss), not a fact the compiler can
+  derive. The consumer must drive <code>.[retry]</code>, or explicitly tie it false.</li>
+</ul>
+<p>For a fluid input, the caller assigns the payload (its <code>.[valid]</code> is
+inferred from the assignment) and the callee drives <code>.[retry]</code>. For a fluid
+output, the callee assigns the payload and the caller drives <code>.[retry]</code>.</p>
+<h2 id="calling-fluid-blocks">Calling Fluid Blocks<a class="headerlink" href="#calling-fluid-blocks" title="Permanent link">&para;</a></h2>
+<p>A <code>fluid</code> call must be bound with a <code>fluid</code> declaration:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'>mod</span> <span class='function'>cpu</span><span class='punctuation bracket'>(</span>/*...*/<span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span>/*...*/<span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='keyword'>fluid</span> <span class='keyword'>mut</span> <span class='variable'>fpu_req</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>FpuReq</span></span>
+
+  <span class='keyword'>if</span> <span class='variable'>issue_fpu</span> <span class='punctuation bracket'>{</span>
+    <span class='variable'>fpu_req</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span><span class='variable'>state</span><span class='operator'>=</span><span class='variable'>rd_state</span><span class='punctuation delimiter'>,</span> <span class='variable'>round</span><span class='operator'>=</span><span class='variable'>round</span><span class='punctuation delimiter'>,</span> <span class='variable'>op</span><span class='operator'>=</span><span class='variable'>op</span><span class='punctuation delimiter'>,</span> <span class='variable'>src1</span><span class='operator'>=</span><span class='variable'>rs1</span><span class='punctuation delimiter'>,</span> <span class='variable'>src2</span><span class='operator'>=</span><span class='variable'>rs2</span><span class='punctuation bracket'>)</span>
+  <span class='punctuation bracket'>}</span>                                  // fpu_req.[valid] inferred = issue_fpu
+
+  <span class='keyword'>fluid</span> <span class='variable'>fpu_resp</span> <span class='operator'>=</span> <span class='function'>fpu</span><span class='punctuation bracket'>(</span><span class='variable'>fpu_req</span><span class='punctuation bracket'>)</span>
+
+  // The CPU must account for request retry or the operation could be lost.
+  <span class='variable'>stall</span> <span class='operator'>=</span> <span class='variable'>fpu_req</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>retry</span><span class='punctuation bracket'>]</span> <span class='keyword'>or</span> <span class='variable'>other_stall</span>
+
+  <span class='variable'>fpu_resp</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>retry</span><span class='punctuation bracket'>]</span> <span class='operator'>=</span> <span class='variable'>writeback_blocked</span>
+
+  <span class='keyword'>if</span> <span class='variable'>fpu_resp</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>fire</span><span class='punctuation bracket'>]</span> <span class='punctuation bracket'>{</span>
+    <span class='variable'>regfile</span><span class='punctuation bracket'>[</span><span class='variable'>fpu_resp</span><span class='punctuation delimiter'>.</span><span class='variable'>state</span><span class='punctuation bracket'>]</span> <span class='operator'>=</span> <span class='variable'>fpu_resp</span><span class='punctuation delimiter'>.</span><span class='variable'>result</span>
+  <span class='punctuation bracket'>}</span>
+<span class='punctuation bracket'>}</span>
+</code></pre></div>
+<p>The following is rejected:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>const</span> <span class='variable'>fpu_resp</span> <span class='operator'>=</span> <span class='function'>fpu</span><span class='punctuation bracket'>(</span><span class='variable'>fpu_req</span><span class='punctuation bracket'>)</span>  // ERROR: fluid call result must be fluid
+</code></pre></div>
+<p><code>fluid</code> calls are allowed only inside <code>mod</code> and <code>fluid</code> lambdas:</p>
+<ul>
+<li><code>comb</code> may not instantiate <code>fluid</code>.</li>
+<li><code>pipe</code> may not instantiate <code>fluid</code>.</li>
+<li><code>mod</code> may instantiate <code>fluid</code>.</li>
+<li><code>fluid</code> may instantiate <code>fluid</code>.</li>
+</ul>
+<p>The <code>fluid</code>-inside-<code>fluid</code> rule is needed for hierarchy. A large unit such as
+an FPU can contain internal retry stages, arbiters, result queues, and other
+fluid sub-blocks while exposing one fluid request/response interface.</p>
+<h2 id="the-fluid-contract">The Fluid Contract<a class="headerlink" href="#the-fluid-contract" title="Permanent link">&para;</a></h2>
+<p>A fluid port makes protocol promises, not cycle promises:</p>
+<ul>
+<li>A transaction is consumed only when <code>input.[fire]</code> is true.</li>
+<li>A transaction is produced or released only when <code>output.[fire]</code> is true.</li>
+<li>Payload remains stable while <code>valid and retry</code> is true.</li>
+<li>An input retry must be asserted when the block cannot accept the current
+  transaction.</li>
+<li>An output valid must remain asserted while a produced transaction is being
+  retried.</li>
+<li>A block that accepts a request whose result is not immediately consumed
+  must buffer enough state to preserve the transaction.</li>
+</ul>
+<p>For example:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'>fluid</span> <span class='function'>fpu</span><span class='punctuation bracket'>(</span><span class='variable parameter'>req</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>FpuReq</span></span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>resp</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>FpuResp</span></span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='keyword'>reg</span> <span class='variable'>busy</span> <span class='operator'>=</span> <span class='variable'>false</span>
+  <span class='keyword'>reg</span> <span class='variable'>pending</span><span class='punctuation delimiter'>:</span><span class='variable'><span class='type'><span class='type'>FpuResp</span></span></span> <span class='operator'>=</span> <span class='variable'>nil</span>
+  <span class='keyword'>reg</span> <span class='variable'>pending_valid</span> <span class='operator'>=</span> <span class='variable'>false</span>
+
+  <span class='variable'>req</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>retry</span><span class='punctuation bracket'>]</span> <span class='operator'>=</span> <span class='variable'>busy</span> <span class='keyword'>or</span> <span class='variable'>pending_valid</span>
+
+  <span class='keyword'>if</span> <span class='variable'>req</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>fire</span><span class='punctuation bracket'>]</span> <span class='punctuation bracket'>{</span>
+    <span class='variable'>busy</span> <span class='operator'>=</span> <span class='variable'>true</span>
+    <span class='function'>start_operation</span><span class='punctuation bracket'>(</span><span class='variable'>req</span><span class='punctuation bracket'>)</span>
+  <span class='punctuation bracket'>}</span>
+
+  <span class='keyword'>if</span> <span class='variable'>operation_done</span> <span class='punctuation bracket'>{</span>
+    <span class='variable'>pending</span> <span class='operator'>=</span> <span class='variable'>operation_result</span>
+    <span class='variable'>pending_valid</span> <span class='operator'>=</span> <span class='variable'>true</span>
+    <span class='variable'>busy</span> <span class='operator'>=</span> <span class='variable'>false</span>
+  <span class='punctuation bracket'>}</span>
+
+  <span class='keyword'>if</span> <span class='variable'>pending_valid</span> <span class='punctuation bracket'>{</span>
+    <span class='variable'>resp</span> <span class='operator'>=</span> <span class='variable'>pending</span>           // resp.[valid] inferred = pending_valid
+  <span class='punctuation bracket'>}</span>
+
+  <span class='keyword'>if</span> <span class='variable'>resp</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>fire</span><span class='punctuation bracket'>]</span> <span class='punctuation bracket'>{</span>
+    <span class='variable'>pending_valid</span> <span class='operator'>=</span> <span class='variable'>false</span>
+  <span class='punctuation bracket'>}</span>
+<span class='punctuation bracket'>}</span>
+</code></pre></div>
+<h2 id="holding-a-transaction">Holding a Transaction<a class="headerlink" href="#holding-a-transaction" title="Permanent link">&para;</a></h2>
+<p>Fluid control often needs to hold a transaction at the current block. A CPU
+decode stage, for example, may see an instruction but hold it until a RAW
+hazard clears. Holding is expressed by driving <code>.[retry]</code>:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'>fluid</span> <span class='function'>decode</span><span class='punctuation bracket'>(</span><span class='variable parameter'>tok</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>FetchTok</span></span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>out</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>DecodeTok</span></span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='variable'>tok</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>retry</span><span class='punctuation bracket'>]</span> <span class='operator'>=</span> <span class='variable'>tok</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>valid</span><span class='punctuation bracket'>]</span> <span class='keyword'>and</span> <span class='function'>raw_hazard</span><span class='punctuation bracket'>(</span><span class='variable'>tok</span><span class='punctuation delimiter'>.</span><span class='variable'>inst</span><span class='punctuation bracket'>)</span>
+
+  <span class='keyword'>if</span> <span class='variable'>tok</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>fire</span><span class='punctuation bracket'>]</span> <span class='punctuation bracket'>{</span>
+    <span class='variable'>out</span> <span class='operator'>=</span> <span class='function'>decode_inst</span><span class='punctuation bracket'>(</span><span class='variable'>tok</span><span class='punctuation bracket'>)</span>   // out.[valid] inferred from the path condition
+  <span class='punctuation bracket'>}</span>
+<span class='punctuation bracket'>}</span>
+</code></pre></div>
+<p>The idiom has two levels, matching the protocol checks:</p>
+<ul>
+<li>The retry decision <strong>reads</strong> the payload — legal under <code>.[valid]</code>, even
+  though the token may not fire this cycle.</li>
+<li>The <strong>consumption</strong> — deriving <code>out</code> from <code>tok</code> — is guarded by
+  <code>.[fire]</code>.</li>
+</ul>
+<p>A retried transaction costs no local storage: the producer must keep the
+payload stable while <code>valid and retry</code> holds, so the data simply stays
+available at the input. To use a transaction's data <strong>beyond</strong> the cycle
+where it fires, capture what is needed into a <code>reg</code> at fire time. These are
+the only two ways to extend a transaction's lifetime: retry it (the
+producer holds it) or consume it and store locally.</p>
+<h2 id="pass-through-transactions">Pass-Through Transactions<a class="headerlink" href="#pass-through-transactions" title="Permanent link">&para;</a></h2>
+<p>Pipeline-style CPU stages often carry the same token through several blocks,
+adding or changing a few fields along the way. Prefer a tuple payload and
+return an updated token:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>type</span> <span class='variable'>FetchTok</span> = <span class='type'><span class='punctuation bracket'>(</span><span class='keyword'>const</span> <span class='variable'>pc</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u64</span> <span class='operator'>=</span> <span class='variable'>nil</span><span class='punctuation delimiter'>,</span> <span class='keyword'>const</span> <span class='variable'>inst</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span> <span class='operator'>=</span> <span class='variable'>nil</span><span class='punctuation bracket'>)</span></span>
+<span class='keyword'>type</span> <span class='variable'>DecodeTok</span> = <span class='type'><span class='punctuation bracket'>(</span><span class='operator'>...</span><span class='variable'>FetchTok</span><span class='punctuation delimiter'>,</span> <span class='keyword'>const</span> <span class='variable'>src1</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u64</span> <span class='operator'>=</span> <span class='variable'>nil</span><span class='punctuation delimiter'>,</span> <span class='keyword'>const</span> <span class='variable'>src2</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u64</span> <span class='operator'>=</span> <span class='variable'>nil</span><span class='punctuation bracket'>)</span></span>
+
+<span class='function'>fluid</span> <span class='function'>decode</span><span class='punctuation bracket'>(</span><span class='variable parameter'>tok</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>FetchTok</span></span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>out</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>DecodeTok</span></span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='variable'>tok</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>retry</span><span class='punctuation bracket'>]</span> <span class='operator'>=</span> <span class='variable'>tok</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>valid</span><span class='punctuation bracket'>]</span> <span class='keyword'>and</span> <span class='function'>hazard</span><span class='punctuation bracket'>(</span><span class='variable'>tok</span><span class='punctuation delimiter'>.</span><span class='variable'>inst</span><span class='punctuation bracket'>)</span>
+
+  <span class='keyword'>if</span> <span class='variable'>tok</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>fire</span><span class='punctuation bracket'>]</span> <span class='punctuation bracket'>{</span>
+    <span class='variable'>out</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span>
+      <span class='operator'>...</span><span class='variable'>tok</span><span class='punctuation delimiter'>,</span>
+      <span class='variable'>src1</span> <span class='operator'>=</span> <span class='function'>read_src1</span><span class='punctuation bracket'>(</span><span class='variable'>tok</span><span class='punctuation delimiter'>.</span><span class='variable'>inst</span><span class='punctuation bracket'>)</span><span class='punctuation delimiter'>,</span>
+      <span class='variable'>src2</span> <span class='operator'>=</span> <span class='function'>read_src2</span><span class='punctuation bracket'>(</span><span class='variable'>tok</span><span class='punctuation delimiter'>.</span><span class='variable'>inst</span><span class='punctuation bracket'>)</span><span class='punctuation delimiter'>,</span>
+    <span class='punctuation bracket'>)</span>
+  <span class='punctuation bracket'>}</span>
+<span class='punctuation bracket'>}</span>
+</code></pre></div>
+<p>This replaces older <code>input output</code> stage ports with explicit transaction
+payloads. The handshake remains attached to the whole transaction, not to
+each individual field.</p>
+<h2 id="protocol-type-checks">Protocol Type Checks<a class="headerlink" href="#protocol-type-checks" title="Permanent link">&para;</a></h2>
+<p>The compiler should check fluid protocol use in addition to ordinary type
+compatibility:</p>
+<ul>
+<li>A fluid call argument must be a fluid value.</li>
+<li>A fluid call result must be bound with <code>fluid</code>.</li>
+<li>A fluid producer assigns the payload; <code>.[valid]</code> is the inferred path
+  condition of the assignment (an explicit <code>.[valid]</code> assignment
+  overrides). An output that is never assigned is never valid.</li>
+<li>A fluid consumer must drive <code>.[retry]</code>, or explicitly tie it to false.</li>
+<li>A payload <strong>read</strong> must be guarded by <code>.[valid]</code> (or a proof that valid
+  holds). Reading while retrying is legal and normal — hazard checks and
+  arbitration need it.</li>
+<li>A <strong>consuming effect</strong> — updating a <code>reg</code> from a transaction, or deriving
+  an output transaction from it — must be guarded by <code>.[fire]</code>.</li>
+<li><strong>Data lifetime</strong>: a payload is only meaningful in cycles where
+  <code>.[valid]</code> holds. To use it longer, either assert <code>.[retry]</code> (the
+  producer holds the payload stable under <code>valid and retry</code>) or let it
+  fire and capture the needed fields into a <code>reg</code>. Reading the payload in
+  a later cycle without one of the two is a compile error.</li>
+<li>An input's <code>.[retry]</code> must not combinationally depend on that same
+  input's <code>.[fire]</code> (checked as a handshake combinational loop).</li>
+<li>A request-side <code>.[retry]</code> must be used to stall, hold, or otherwise
+  preserve the request. Ignoring retry is a compile error unless explicitly
+  waived.</li>
+<li>Payload written under <code>valid and retry</code> must be stable across cycles.</li>
+</ul>
+<p>The retry-use rule is intentionally strict. If a CPU issues an FPU operation
+and ignores <code>fpu_req.[retry]</code>, the operation can be silently dropped. The
+language should reject that pattern.</p>
+<p>When several internal producers can finish at once, the fluid block owns the
+arbitration and retries the producers that lose:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'>fluid</span> <span class='function'>result_queue</span><span class='punctuation bracket'>(</span><span class='variable parameter'>add</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>AddResp</span></span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>mul</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>MulResp</span></span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>sqrt</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>SqrtResp</span></span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>div</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>DivResp</span></span><span class='punctuation bracket'>)</span>
+  <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>resp</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>FpuResp</span></span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+
+  // fixed priority: add &gt; mul &gt; sqrt &gt; div; losers are retried
+  <span class='variable'>add</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>retry</span><span class='punctuation bracket'>]</span>  <span class='operator'>=</span> <span class='variable'>resp</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>retry</span><span class='punctuation bracket'>]</span>
+  <span class='variable'>mul</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>retry</span><span class='punctuation bracket'>]</span>  <span class='operator'>=</span> <span class='variable'>resp</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>retry</span><span class='punctuation bracket'>]</span> <span class='keyword'>or</span> <span class='variable'>add</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>valid</span><span class='punctuation bracket'>]</span>
+  <span class='variable'>sqrt</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>retry</span><span class='punctuation bracket'>]</span> <span class='operator'>=</span> <span class='variable'>resp</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>retry</span><span class='punctuation bracket'>]</span> <span class='keyword'>or</span> <span class='variable'>add</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>valid</span><span class='punctuation bracket'>]</span> <span class='keyword'>or</span> <span class='variable'>mul</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>valid</span><span class='punctuation bracket'>]</span>
+  <span class='variable'>div</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>retry</span><span class='punctuation bracket'>]</span>  <span class='operator'>=</span> <span class='variable'>resp</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>retry</span><span class='punctuation bracket'>]</span> <span class='keyword'>or</span> <span class='variable'>add</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>valid</span><span class='punctuation bracket'>]</span> <span class='keyword'>or</span> <span class='variable'>mul</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>valid</span><span class='punctuation bracket'>]</span> <span class='keyword'>or</span> <span class='variable'>sqrt</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>valid</span><span class='punctuation bracket'>]</span>
+
+  <span class='keyword'>if</span> <span class='variable'>add</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>fire</span><span class='punctuation bracket'>]</span>    <span class='punctuation bracket'>{</span> <span class='variable'>resp</span> <span class='operator'>=</span> <span class='function'>add_to_resp</span><span class='punctuation bracket'>(</span><span class='variable'>add</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>}</span>
+  <span class='keyword'>elif</span> <span class='variable'>mul</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>fire</span><span class='punctuation bracket'>]</span>  <span class='punctuation bracket'>{</span> <span class='variable'>resp</span> <span class='operator'>=</span> <span class='function'>mul_to_resp</span><span class='punctuation bracket'>(</span><span class='variable'>mul</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>}</span>
+  <span class='keyword'>elif</span> <span class='variable'>sqrt</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>fire</span><span class='punctuation bracket'>]</span> <span class='punctuation bracket'>{</span> <span class='variable'>resp</span> <span class='operator'>=</span> <span class='function'>sqrt_to_resp</span><span class='punctuation bracket'>(</span><span class='variable'>sqrt</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>}</span>
+  <span class='keyword'>elif</span> <span class='variable'>div</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>fire</span><span class='punctuation bracket'>]</span>  <span class='punctuation bracket'>{</span> <span class='variable'>resp</span> <span class='operator'>=</span> <span class='function'>div_to_resp</span><span class='punctuation bracket'>(</span><span class='variable'>div</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>}</span>
+  // resp.[valid] inferred: the or of the four fire conditions
+<span class='punctuation bracket'>}</span>
+</code></pre></div>
+<p>The example gives add highest priority, then multiply, square root, and
+divide. A real implementation may use a different policy, but the policy
+belongs inside the fluid block that merges the streams.</p>
+<h2 id="relation-to-optional-valid">Relation to Optional Valid<a class="headerlink" href="#relation-to-optional-valid" title="Permanent link">&para;</a></h2>
+<p>Fluid validity is not a new mechanism. Pyrope already infers <code>.[valid]</code> for
+ordinary values as the path condition of their assignment. That one
+inferred bit serves three roles:</p>
+<ul>
+<li><strong>Read safety</strong> — consuming a value whose valid is false is an error.
+  This is the existing optional-valid rule.</li>
+<li><strong>Power</strong> — a flop holding a value with inferred valid <code>C</code> does not need
+  to be clocked when <code>!C</code>. Because invalid data is unreadable, payload
+  flops are don't-care on invalid cycles, which licenses automatic clock
+  gating — including the compiler-inserted <code>pipe</code> stage flops, which
+  inherit the valid of the value they transport and gate themselves as
+  bubbles travel (see <a href="../06c-pipelining/">Pipelining</a>). Simulation
+  randomizes invalid payloads so code that peeks at gated-off data fails
+  loudly instead of working in simulation and breaking on the netlist.</li>
+<li><strong>Protocol</strong> — under <code>fluid</code>, the same bit becomes the producer half of
+  the handshake, with <code>.[retry]</code> and <code>.[fire]</code> added on top.</li>
+</ul>
+<p><code>valid</code> is inferred from where you assign; <code>retry</code> is explicit because it
+is a decision, not a fact. Do not use a fluid value as if it were an
+ordinary optional value unless the handshake has fired.</p>
+<h2 id="relation-to-pipe-stagen-and-n">Relation to <code>pipe</code>, <code>stage[N]</code>, and <code>@[N]</code><a class="headerlink" href="#relation-to-pipe-stagen-and-n" title="Permanent link">&para;</a></h2>
+<p><code>pipe</code>, <code>stage[N]</code>, and <code>@[N]</code> remain the right tools for static latency:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'><span class='keyword'>stage</span><span class='punctuation bracket'>[</span><span class='number'>3</span><span class='punctuation bracket'>]</span></span> <span class='variable'>tmp</span> <span class='operator'>=</span> <span class='function'>mul</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span>=<span class='variable'>a</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span>=<span class='variable'>b</span><span class='punctuation bracket'>)</span>
+<span class='keyword'><span class='keyword'>stage</span><span class='punctuation bracket'>[</span><span class='number'>1</span><span class='punctuation bracket'>]</span></span> <span class='variable'>out</span><span class='punctuation special'>@</span><span class='punctuation bracket'>[</span><span class='number'>4</span><span class='punctuation bracket'>]</span> <span class='operator'>=</span> <span class='function'>add</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span>=<span class='variable'>tmp</span><span class='punctuation special'>@</span><span class='punctuation bracket'>[</span><span class='number'>3</span><span class='punctuation bracket'>]</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span>=<span class='variable'>c</span><span class='punctuation special'>@</span><span class='punctuation bracket'>[</span><span class='number'>3</span><span class='punctuation bracket'>]</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p>Fluid is for dynamic availability:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>fluid</span> <span class='variable'>resp</span> <span class='operator'>=</span> <span class='function'>fpu</span><span class='punctuation bracket'>(</span><span class='variable'>req</span><span class='punctuation bracket'>)</span>
+<span class='keyword'>if</span> <span class='variable'>resp</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>fire</span><span class='punctuation bracket'>]</span> <span class='punctuation bracket'>{</span>
+  <span class='function'>writeback</span><span class='punctuation bracket'>(</span><span class='variable'>resp</span><span class='punctuation bracket'>)</span>
+<span class='punctuation bracket'>}</span>
+</code></pre></div>
+<p><code>resp@[N]</code> is rejected for fluid values. Even if a fluid block has a bounded
+internal latency, downstream retry can delay the visible transaction.</p>
+<p>If latency bounds are useful for verification or scheduling, express them as
+fluid attributes:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'>fluid<span class='punctuation bracket'>[</span><span class='attribute'>lat</span>=<span class='number'>1</span><span class='operator'>..=</span><span class='number'>70</span><span class='punctuation delimiter'>,</span> <span class='attribute'>ordered</span>=<span class='variable'>true</span><span class='punctuation bracket'>]</span></span> <span class='function'>fpu</span><span class='punctuation bracket'>(</span><span class='variable parameter'>req</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>FpuReq</span></span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>resp</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>FpuResp</span></span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  // ...
+<span class='punctuation bracket'>}</span>
+</code></pre></div>
+<p>These attributes constrain protocol behavior, but they do not make the
+result cycle-addressable with <code>@[N]</code>.</p>
+<h2 id="lowering">Lowering<a class="headerlink" href="#lowering" title="Permanent link">&para;</a></h2>
+<p>A fluid port lowers to payload plus handshake signals. For a request/response
+FPU:</p>
+<div class="highlight"><pre><span></span><code>req payload        -&gt; state, round, op, src1, src2
+req.[valid]        -&gt; start
+req.[retry]        &lt;- out_retry
+
+resp payload       &lt;- fpu_result, fpu_state, fpu_icc
+resp.[valid]       &lt;- fpu_ready
+resp.[retry]       -&gt; in_retry
+</code></pre></div>
+<p>For a simple retry stage:</p>
+<div class="highlight"><pre><span></span><code>input payload      -&gt; din
+input.[valid]      -&gt; dinValid
+input.[retry]      &lt;- dinRetry
+
+output payload     &lt;- q
+output.[valid]     &lt;- qValid
+output.[retry]     -&gt; qRetry
+</code></pre></div>
+<p><code>.[fire]</code> does not need to lower to a stored signal unless it is referenced;
+it is the combinational expression <code>valid and !retry</code>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["search.suggest", "navigation.sections", "navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../javascripts/config.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>

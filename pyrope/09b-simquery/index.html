@@ -1,0 +1,2193 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../09-verification/">
+      
+      
+        <link rel="next" href="../10-internals/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Querying a simulation - LiveHD and Pyrope</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CFira+Code:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Fira Code"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/table.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/pyrope-highlight.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#querying-a-simulation" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LiveHD and Pyrope" class="md-header__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LiveHD and Pyrope
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Querying a simulation
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LiveHD and Pyrope" class="md-nav__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    LiveHD and Pyrope
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LiveHD and Pyrope
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Livehd
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Livehd
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/00-intro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/01-install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/02-usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/03-memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory and concurrency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/04-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    C++ API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/05-lgraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LGraph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/06-lnast/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LNAST
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/07-formal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Formal Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/08-synth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Synthesis &amp; the frequency-optimization loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10-bazel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bazel build
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10b-3rdparty/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3rd Party
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/11-pass/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Creating a Pass
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/12-github/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GitHub Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/13-style/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding Style
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Pyrope
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00-hwdesign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hardware Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-introduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01b-quick_intro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Intro to Pyrope
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-basics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basic syntax
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-bundle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tuples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Variables and types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04b-attributes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Attributes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-assert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05b-statements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Statements
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-functions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lambdas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06b-instantiation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Instantiation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06c-pipelining/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipelining
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06d-fluid/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fluid Blocks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-typesystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Type system
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07b-structtype/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Structural Typing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-memories/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memories
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-stdlib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope std lib
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Extended Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Querying a simulation
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Querying a simulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#a-worked-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A worked example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reading-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reading values
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#outputs-and-state-are-one-commit-apart" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Outputs and state are one commit apart
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#transitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transitions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#searching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Searching
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#selections" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Selections
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#asking-about-a-failure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Asking about a failure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Errors
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-v1-does-not-do" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What v1 does not do
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#relationship-to-the-older-flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relationship to the older flags
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-internals/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internals
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10b-vslang/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vs Other Languages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../12-lnast/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LNAST
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../13-stdlib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope Standard Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../15-tbd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation status (TBD)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../21-deprecated/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deprecated or Future
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../22-deprecated_pipelining/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deprecated Pipelining
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#a-worked-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A worked example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reading-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reading values
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#outputs-and-state-are-one-commit-apart" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Outputs and state are one commit apart
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#transitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transitions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#searching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Searching
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#selections" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Selections
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#asking-about-a-failure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Asking about a failure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Errors
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-v1-does-not-do" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What v1 does not do
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#relationship-to-the-older-flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relationship to the older flags
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="querying-a-simulation">Querying a simulation<a class="headerlink" href="#querying-a-simulation" title="Permanent link">&para;</a></h1>
+<p><code>lhd sim --query</code> lets a tool — typically a coding agent — ask questions about a
+simulation run without generating a VCD, parsing a waveform, or adding <code>puts</code>
+statements to the testbench. One stateless invocation carries a versioned JSON
+batch; the answers come back in the result envelope, in request order, each one
+independently <code>ok</code> or carrying a structured error.</p>
+<p>This is a <em>debugging</em> interface, not a language feature: nothing in this chapter
+changes the design or the <code>test</code> block. It complements
+<a href="../09-verification/">Extended Verification</a>, which is about what a testbench can
+express; this is about inspecting what a testbench did.</p>
+<h2 id="a-worked-example">A worked example<a class="headerlink" href="#a-worked-example" title="Permanent link">&para;</a></h2>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'>mod</span> <span class='function'>fifo</span><span class='punctuation bracket'>(</span><span class='variable parameter'>push</span><span class='punctuation delimiter'>:</span><span class='type builtin'>bool</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>din</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u8</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>count</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u4</span><span class='punctuation special'>@</span><span class='punctuation bracket'>[</span><span class='number'>0</span><span class='punctuation bracket'>]</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>head</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u8</span><span class='punctuation special'>@</span><span class='punctuation bracket'>[</span><span class='number'>0</span><span class='punctuation bracket'>]</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='keyword'>reg</span> <span class='variable'>cnt</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u4</span> <span class='operator'>=</span> <span class='number'>0</span>
+  <span class='keyword'>reg</span> <span class='variable'>mem</span><span class='punctuation delimiter'>:</span><span class='type'><span class='punctuation bracket'>[</span><span class='number'>8</span><span class='punctuation bracket'>]</span><span class='type builtin'>u8</span></span> <span class='operator'>=</span> <span class='variable'>nil</span>
+
+  <span class='keyword'>if</span> <span class='variable'>push</span> <span class='punctuation bracket'>{</span> <span class='variable'>mem</span><span class='punctuation bracket'>[</span><span class='variable'>cnt</span><span class='punctuation bracket'>]</span> <span class='operator'>=</span> <span class='variable'>din</span><span class='punctuation delimiter'>;</span> <span class='keyword'>wrap</span> <span class='variable'>cnt</span> <span class='operator'>+=</span> <span class='number'>1</span> <span class='punctuation bracket'>}</span>
+
+  <span class='variable'>count</span> <span class='operator'>=</span> <span class='variable'>cnt</span>
+  <span class='variable'>head</span>  <span class='operator'>=</span> <span class='variable'>mem</span><span class='punctuation bracket'>[</span><span class='number'>0</span><span class='punctuation bracket'>]</span>
+<span class='punctuation bracket'>}</span>
+
+<span class='keyword'>test</span> <span class='variable'>fifo</span><span class='punctuation delimiter'>.</span><span class='variable'>fill</span> <span class='punctuation bracket'>{</span>
+  <span class='keyword'>mut</span> <span class='variable'>acc</span> <span class='operator'>=</span> <span class='variable'>fifo</span>
+  tick <span class='number'>6</span> <span class='punctuation bracket'>{</span>
+    <span class='variable'>acc</span><span class='punctuation delimiter'>.</span><span class='variable'>push</span> <span class='operator'>=</span> <span class='variable'>clock</span> <span class='operator'>&lt;</span> <span class='number'>4</span>
+    <span class='variable'>acc</span><span class='punctuation delimiter'>.</span><span class='variable'>din</span>  <span class='operator'>=</span> <span class='number'>0x10</span> <span class='operator'>+</span> <span class='variable'>clock</span>
+    step
+  <span class='punctuation bracket'>}</span>
+  <span class='function builtin'>assert</span><span class='punctuation bracket'>(</span><span class='variable'>acc</span><span class='punctuation delimiter'>.</span><span class='variable'>cnt</span> <span class='operator'>==</span> <span class='number'>4</span><span class='punctuation delimiter'>,</span> <span class='string'>&quot;four pushes landed&quot;</span><span class='punctuation bracket'>)</span>
+<span class='punctuation bracket'>}</span>
+</code></pre></div>
+<p>Ask what is observable:</p>
+<div class="highlight"><pre><span></span><code>lhd<span class="w"> </span>sim<span class="w"> </span>fifo.prp<span class="w"> </span>fifo.fill<span class="w"> </span>--workdir<span class="w"> </span>w<span class="w"> </span>--result-json<span class="w"> </span>out.json<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--query<span class="w"> </span><span class="s1">'{"schema_version":1,"kind":"sim_query",</span>
+<span class="s1">            "queries":[{"id":"all","op":"signals"}]}'</span>
+</code></pre></div>
+<p>The answers land at <code>out.json</code>'s <code>query</code> member, alongside the existing <code>tests</code>
+and <code>debug</code> members:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"acc.cnt"</span><span class="p">,</span><span class="w">   </span><span class="nt">"kind"</span><span class="p">:</span><span class="s2">"flop"</span><span class="p">,</span><span class="w">   </span><span class="nt">"bits"</span><span class="p">:</span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="nt">"declared_bits"</span><span class="p">:</span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="nt">"signed"</span><span class="p">:</span><span class="kc">false</span><span class="p">}</span>
+<span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"acc.push"</span><span class="p">,</span><span class="w">  </span><span class="nt">"kind"</span><span class="p">:</span><span class="s2">"input"</span><span class="p">,</span><span class="w">  </span><span class="nt">"bits"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">"declared_bits"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">"alias"</span><span class="p">:</span><span class="s2">"acc.__in.push"</span><span class="p">}</span>
+<span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"acc.din"</span><span class="p">,</span><span class="w">   </span><span class="nt">"kind"</span><span class="p">:</span><span class="s2">"input"</span><span class="p">,</span><span class="w">  </span><span class="nt">"bits"</span><span class="p">:</span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="nt">"declared_bits"</span><span class="p">:</span><span class="mi">8</span><span class="p">}</span>
+<span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"acc.count"</span><span class="p">,</span><span class="w"> </span><span class="nt">"kind"</span><span class="p">:</span><span class="s2">"output"</span><span class="p">,</span><span class="w"> </span><span class="nt">"bits"</span><span class="p">:</span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="nt">"declared_bits"</span><span class="p">:</span><span class="mi">4</span><span class="p">}</span>
+<span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"acc.head"</span><span class="p">,</span><span class="w">  </span><span class="nt">"kind"</span><span class="p">:</span><span class="s2">"output"</span><span class="p">,</span><span class="w"> </span><span class="nt">"bits"</span><span class="p">:</span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="nt">"declared_bits"</span><span class="p">:</span><span class="mi">8</span><span class="p">}</span>
+<span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"acc.mem"</span><span class="p">,</span><span class="w">   </span><span class="nt">"kind"</span><span class="p">:</span><span class="s2">"memory"</span><span class="p">,</span><span class="w"> </span><span class="nt">"bits"</span><span class="p">:</span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="nt">"declared_bits"</span><span class="p">:</span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="nt">"size"</span><span class="p">:</span><span class="mi">8</span><span class="p">}</span>
+</code></pre></div>
+<p>Note <code>acc.cnt</code> is both stored and declared as 4 bits. Literal-width realization
+means an unsigned value does not carry a hidden sign slot. Both fields remain in
+the schema because imported or conservatively widened internal nets can still
+differ from the source declaration. Everything else — <code>clock</code> and <code>reset</code>
+inputs, the sub-instance tree — is enumerated the same way, with hierarchical
+names rooted at the testbench instance variable.</p>
+<h2 id="reading-values">Reading values<a class="headerlink" href="#reading-values" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>--query<span class="w"> </span><span class="s1">'{"schema_version":1,"kind":"sim_query","queries":[</span>
+<span class="s1">  {"id":"cnt","op":"value","signal":"acc.cnt","at":{"cycle":3}},</span>
+<span class="s1">  {"id":"w2", "op":"value","signal":"acc.mem[2]","at":{"cycle":5}}]}'</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="s2">"cnt"</span><span class="p">,</span><span class="nt">"ok"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="nt">"at"</span><span class="p">:{</span><span class="nt">"cycle"</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span><span class="nt">"phase"</span><span class="p">:</span><span class="s2">"post"</span><span class="p">},</span><span class="nt">"signal"</span><span class="p">:</span><span class="s2">"acc.cnt"</span><span class="p">,</span>
+<span class="w"> </span><span class="nt">"value"</span><span class="p">:{</span><span class="nt">"bits"</span><span class="p">:</span><span class="mi">4</span><span class="p">,</span><span class="nt">"declared_bits"</span><span class="p">:</span><span class="mi">4</span><span class="p">,</span><span class="nt">"signed"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">"hex"</span><span class="p">:</span><span class="s2">"4"</span><span class="p">,</span><span class="nt">"dec"</span><span class="p">:</span><span class="s2">"4"</span><span class="p">,</span><span class="nt">"known_mask"</span><span class="p">:</span><span class="s2">"f"</span><span class="p">,</span><span class="nt">"sampled"</span><span class="p">:</span><span class="s2">"settled"</span><span class="p">}}</span>
+<span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="s2">"w2"</span><span class="p">,</span><span class="nt">"ok"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="nt">"at"</span><span class="p">:{</span><span class="nt">"cycle"</span><span class="p">:</span><span class="mi">5</span><span class="p">,</span><span class="nt">"phase"</span><span class="p">:</span><span class="s2">"post"</span><span class="p">},</span><span class="nt">"signal"</span><span class="p">:</span><span class="s2">"acc.mem"</span><span class="p">,</span><span class="nt">"index"</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span>
+<span class="w"> </span><span class="nt">"value"</span><span class="p">:{</span><span class="nt">"bits"</span><span class="p">:</span><span class="mi">8</span><span class="p">,</span><span class="nt">"declared_bits"</span><span class="p">:</span><span class="mi">8</span><span class="p">,</span><span class="nt">"signed"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">"hex"</span><span class="p">:</span><span class="s2">"12"</span><span class="p">,</span><span class="nt">"dec"</span><span class="p">:</span><span class="s2">"18"</span><span class="p">,</span><span class="nt">"known_mask"</span><span class="p">:</span><span class="s2">"ff"</span><span class="p">}}</span>
+</code></pre></div>
+<p>Values are full-width hardware bit vectors, never host integers: <code>hex</code> is exactly
+<code>ceil(bits/4)</code> digits, so a 97-bit signal round-trips without truncation. <code>dec</code> is
+the same value rendered according to the published signedness at the declared
+width, so a consumer never has to re-implement sign or zero extension.</p>
+<p><code>acc.mem[2]</code> is a single <strong>memory word</strong> read: memories are addressable by
+explicit index. Selectors never enumerate memory contents, and there is no
+whole-array dump — v1 reads one word at a time, on purpose.</p>
+<h2 id="outputs-and-state-are-one-commit-apart">Outputs and state are one commit apart<a class="headerlink" href="#outputs-and-state-are-one-commit-apart" title="Permanent link">&para;</a></h2>
+<p>This is the one semantic surprise, and it is deliberate:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="s2">"cnt_at3"</span><span class="p">,</span><span class="nt">"signal"</span><span class="p">:</span><span class="s2">"acc.cnt"</span><span class="p">,</span><span class="w">  </span><span class="nt">"value"</span><span class="p">:{</span><span class="nt">"hex"</span><span class="p">:</span><span class="s2">"04"</span><span class="p">,</span><span class="nt">"dec"</span><span class="p">:</span><span class="s2">"4"</span><span class="p">}}</span>
+<span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="s2">"out_at3"</span><span class="p">,</span><span class="nt">"signal"</span><span class="p">:</span><span class="s2">"acc.count"</span><span class="p">,</span><span class="nt">"value"</span><span class="p">:{</span><span class="nt">"hex"</span><span class="p">:</span><span class="s2">"3"</span><span class="p">,</span><span class="w"> </span><span class="nt">"dec"</span><span class="p">:</span><span class="s2">"3"</span><span class="p">}}</span>
+</code></pre></div>
+<p>At the same cycle the register <code>cnt</code> reads 4 while the output <code>count = cnt</code> reads
+3. Both are correct:</p>
+<ul>
+<li><strong>State</strong> (<code>flop</code>, <code>pipe</code>, <code>memrd</code>, <code>input</code>) is the <strong>settled end-of-period</strong>
+  value — the point <code>--probe</code> has always sampled, and the value the next cycle
+  starts from.</li>
+<li><strong>An output</strong> is the value it <strong>drove during</strong> that period, computed from the
+  state entering the cycle. That is exactly what the VCD shows at that period's
+  timestamps.</li>
+</ul>
+<p>So a register and the combinational output reading it are one clock edge apart by
+construction. Reporting a post-commit output instead would mean re-evaluating the
+whole design once per sampled cycle; serving it from what the cycle already
+computed is free.</p>
+<p>You never have to remember which is which: <strong>every value says so</strong>, carrying
+<code>"sampled":"settled"</code> or <code>"sampled":"during_period"</code>.</p>
+<p>There is only one sampling point, spelled <code>"phase":"post"</code>. Latch windows,
+negedge commits and secondary-clock edges all happen <em>inside</em> one <code>step</code>, so
+nothing observes them from outside; a <code>pre</code> phase is a planned extension.</p>
+<h2 id="transitions">Transitions<a class="headerlink" href="#transitions" title="Permanent link">&para;</a></h2>
+<p><code>changes</code> returns the transitions of a signal over a closed interval; a change
+reported at cycle <em>c</em> means the sample at <em>c</em> differs from the sample at <em>c-1</em>,
+so <em>c</em> is the first observation of the new value — not a subcycle edge time.</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="s2">"rows"</span><span class="p">,</span><span class="nt">"op"</span><span class="p">:</span><span class="s2">"changes"</span><span class="p">,</span><span class="nt">"signal"</span><span class="p">:</span><span class="s2">"acc.cnt"</span><span class="p">,</span><span class="nt">"from"</span><span class="p">:{</span><span class="nt">"cycle"</span><span class="p">:</span><span class="mi">0</span><span class="p">},</span><span class="nt">"to"</span><span class="p">:{</span><span class="nt">"cycle"</span><span class="p">:</span><span class="mi">3</span><span class="p">}}</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="s2">"rows"</span><span class="p">,</span><span class="nt">"ok"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="nt">"signal"</span><span class="p">:</span><span class="s2">"acc.cnt"</span><span class="p">,</span><span class="nt">"count"</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span><span class="nt">"complete"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span>
+<span class="w"> </span><span class="nt">"changes"</span><span class="p">:[{</span><span class="nt">"cycle"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"old"</span><span class="p">:{</span><span class="nt">"dec"</span><span class="p">:</span><span class="s2">"1"</span><span class="p">},</span><span class="nt">"new"</span><span class="p">:{</span><span class="nt">"dec"</span><span class="p">:</span><span class="s2">"2"</span><span class="p">}},</span>
+<span class="w">            </span><span class="p">{</span><span class="nt">"cycle"</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span><span class="nt">"old"</span><span class="p">:{</span><span class="nt">"dec"</span><span class="p">:</span><span class="s2">"2"</span><span class="p">},</span><span class="nt">"new"</span><span class="p">:{</span><span class="nt">"dec"</span><span class="p">:</span><span class="s2">"3"</span><span class="p">}},</span>
+<span class="w">            </span><span class="p">{</span><span class="nt">"cycle"</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span><span class="nt">"old"</span><span class="p">:{</span><span class="nt">"dec"</span><span class="p">:</span><span class="s2">"3"</span><span class="p">},</span><span class="nt">"new"</span><span class="p">:{</span><span class="nt">"dec"</span><span class="p">:</span><span class="s2">"4"</span><span class="p">}}],</span>
+<span class="w"> </span><span class="nt">"searched"</span><span class="p">:{</span><span class="nt">"from"</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="nt">"to"</span><span class="p">:</span><span class="mi">3</span><span class="p">}}</span>
+</code></pre></div>
+<p>Add <code>"count_only":true</code> when only the number matters — useful when a window holds
+more transitions than you want to transport. Every result carries <code>count</code>
+regardless, so a row list capped by <code>max_results</code> still tells you how many events
+there were:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="s2">"edges"</span><span class="p">,</span><span class="nt">"ok"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="nt">"signal"</span><span class="p">:</span><span class="s2">"acc.cnt"</span><span class="p">,</span><span class="nt">"changes"</span><span class="p">:[],</span><span class="nt">"count"</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span>
+<span class="w"> </span><span class="nt">"complete"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="nt">"truncated"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span><span class="nt">"searched"</span><span class="p">:{</span><span class="nt">"from"</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="nt">"to"</span><span class="p">:</span><span class="mi">5</span><span class="p">}}</span>
+</code></pre></div>
+<p><code>next_change</code> is the same machinery bounded to the first transition after a
+point, and its anchor is strictly exclusive.</p>
+<h2 id="searching">Searching<a class="headerlink" href="#searching" title="Permanent link">&para;</a></h2>
+<p><code>find</code> scans an interval for the first cycle satisfying a predicate, and can
+report other signals at the moment it hits — answering "what was X when Y first
+became Z" in a single run:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="s2">"hit"</span><span class="p">,</span><span class="nt">"op"</span><span class="p">:</span><span class="s2">"find"</span><span class="p">,</span><span class="nt">"from"</span><span class="p">:{</span><span class="nt">"cycle"</span><span class="p">:</span><span class="mi">0</span><span class="p">},</span><span class="nt">"to"</span><span class="p">:{</span><span class="nt">"cycle"</span><span class="p">:</span><span class="mi">5</span><span class="p">},</span>
+<span class="w"> </span><span class="nt">"expr"</span><span class="p">:{</span><span class="nt">"sig"</span><span class="p">:</span><span class="s2">"acc.cnt"</span><span class="p">,</span><span class="nt">"cmp"</span><span class="p">:</span><span class="s2">"=="</span><span class="p">,</span><span class="nt">"value"</span><span class="p">:</span><span class="s2">"3"</span><span class="p">},</span>
+<span class="w"> </span><span class="nt">"sample"</span><span class="p">:[</span><span class="s2">"acc.din"</span><span class="p">,</span><span class="s2">"acc.head"</span><span class="p">]}</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="s2">"hit"</span><span class="p">,</span><span class="nt">"ok"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="nt">"found"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="nt">"at"</span><span class="p">:{</span><span class="nt">"cycle"</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span><span class="nt">"phase"</span><span class="p">:</span><span class="s2">"post"</span><span class="p">},</span>
+<span class="w"> </span><span class="nt">"sample"</span><span class="p">:[{</span><span class="nt">"signal"</span><span class="p">:</span><span class="s2">"acc.din"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:{</span><span class="nt">"hex"</span><span class="p">:</span><span class="s2">"12"</span><span class="p">,</span><span class="nt">"dec"</span><span class="p">:</span><span class="s2">"18"</span><span class="p">}},</span>
+<span class="w">           </span><span class="p">{</span><span class="nt">"signal"</span><span class="p">:</span><span class="s2">"acc.head"</span><span class="p">,</span><span class="nt">"value"</span><span class="p">:{</span><span class="nt">"hex"</span><span class="p">:</span><span class="s2">"10"</span><span class="p">,</span><span class="nt">"dec"</span><span class="p">:</span><span class="s2">"16"</span><span class="p">}}],</span>
+<span class="w"> </span><span class="nt">"complete"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="nt">"searched"</span><span class="p">:{</span><span class="nt">"from"</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="nt">"to"</span><span class="p">:</span><span class="mi">5</span><span class="p">}}</span>
+</code></pre></div>
+<p>The predicate is a JSON tree, not a string, so there is no expression parser to
+disagree with: <code>all</code>/<code>any</code>/<code>not</code> nodes over leaves that are either a comparison
+(<code>==</code>, <code>!=</code>, <code>&lt;</code>, <code>&lt;=</code>, <code>&gt;</code>, <code>&gt;=</code>) against a literal or another signal, or an
+edge test (<code>rising</code>, <code>falling</code>, <code>changed</code>). Literals are decimal or hex
+<em>strings</em>, parsed at arbitrary precision — a 64-bit host integer never appears
+anywhere on this path.</p>
+<h2 id="selections">Selections<a class="headerlink" href="#selections" title="Permanent link">&para;</a></h2>
+<p><code>values</code>, <code>snapshot</code> and <code>diff</code> work over a set of signals chosen by <code>scope</code>,
+<code>glob</code>, <code>regex</code> or <code>kind</code> — placed directly on the query object:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="s2">"state"</span><span class="p">,</span><span class="nt">"op"</span><span class="p">:</span><span class="s2">"values"</span><span class="p">,</span><span class="nt">"kind"</span><span class="p">:</span><span class="s2">"flop"</span><span class="p">,</span><span class="nt">"at"</span><span class="p">:{</span><span class="nt">"cycle"</span><span class="p">:</span><span class="mi">5</span><span class="p">}}</span>
+<span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="s2">"delta"</span><span class="p">,</span><span class="nt">"op"</span><span class="p">:</span><span class="s2">"diff"</span><span class="p">,</span><span class="nt">"scope"</span><span class="p">:</span><span class="s2">"acc"</span><span class="p">,</span><span class="nt">"from"</span><span class="p">:{</span><span class="nt">"cycle"</span><span class="p">:</span><span class="mi">2</span><span class="p">},</span><span class="nt">"to"</span><span class="p">:{</span><span class="nt">"cycle"</span><span class="p">:</span><span class="mi">4</span><span class="p">}}</span>
+</code></pre></div>
+<p><code>diff</code> lists only what actually changed:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="s2">"delta"</span><span class="p">,</span><span class="nt">"ok"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span>
+<span class="w"> </span><span class="nt">"from"</span><span class="p">:{</span><span class="nt">"cycle"</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span><span class="nt">"phase"</span><span class="p">:</span><span class="s2">"post"</span><span class="p">},</span><span class="nt">"to"</span><span class="p">:{</span><span class="nt">"cycle"</span><span class="p">:</span><span class="mi">4</span><span class="p">,</span><span class="nt">"phase"</span><span class="p">:</span><span class="s2">"post"</span><span class="p">},</span>
+<span class="w"> </span><span class="nt">"diff"</span><span class="p">:[{</span><span class="nt">"signal"</span><span class="p">:</span><span class="s2">"acc.cnt"</span><span class="p">,</span><span class="w">  </span><span class="nt">"from_value"</span><span class="p">:{</span><span class="nt">"dec"</span><span class="p">:</span><span class="s2">"3"</span><span class="p">},</span><span class="nt">"to_value"</span><span class="p">:{</span><span class="nt">"dec"</span><span class="p">:</span><span class="s2">"4"</span><span class="p">}},</span>
+<span class="w">         </span><span class="p">{</span><span class="nt">"signal"</span><span class="p">:</span><span class="s2">"acc.count"</span><span class="p">,</span><span class="nt">"from_value"</span><span class="p">:{</span><span class="nt">"dec"</span><span class="p">:</span><span class="s2">"2"</span><span class="p">},</span><span class="nt">"to_value"</span><span class="p">:{</span><span class="nt">"dec"</span><span class="p">:</span><span class="s2">"4"</span><span class="p">}}],</span>
+<span class="w"> </span><span class="nt">"complete"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="nt">"truncated"</span><span class="p">:</span><span class="kc">false</span><span class="p">}</span>
+</code></pre></div>
+<p>Expansion order is the catalog order, so results are reproducible across runs.</p>
+<h2 id="asking-about-a-failure">Asking about a failure<a class="headerlink" href="#asking-about-a-failure" title="Permanent link">&para;</a></h2>
+<p>The common case is not "what is signal X at cycle 4200" — it is "the test just
+failed, show me what was going on". A timestamp can therefore be <strong>relative to
+the failing assert</strong> instead of absolute:</p>
+<div class="highlight"><pre><span></span><code>--query<span class="w"> </span><span class="s1">'{"schema_version":1,"kind":"sim_query","queries":[</span>
+<span class="s1">  {"id":"at_fail","op":"snapshot","scope":"a","at":{"event":"fail"}},</span>
+<span class="s1">  {"id":"before", "op":"value","signal":"a.c","at":{"event":"fail","offset":-1}}]}'</span>
+</code></pre></div>
+<p>The same run that reports the failure answers both, so there is no round trip to
+learn the cycle first:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">"run"</span><span class="p">:{</span><span class="nt">"fail_cycle"</span><span class="p">:</span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="err">...</span><span class="p">}</span>
+<span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="s2">"at_fail"</span><span class="p">,</span><span class="nt">"ok"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="nt">"at"</span><span class="p">:{</span><span class="nt">"cycle"</span><span class="p">:</span><span class="mi">5</span><span class="p">,</span><span class="nt">"phase"</span><span class="p">:</span><span class="s2">"post"</span><span class="p">},</span><span class="nt">"values"</span><span class="p">:[</span><span class="err">...</span><span class="p">]}</span>
+<span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="s2">"before"</span><span class="p">,</span><span class="w"> </span><span class="nt">"ok"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="nt">"at"</span><span class="p">:{</span><span class="nt">"cycle"</span><span class="p">:</span><span class="mi">4</span><span class="p">,</span><span class="nt">"phase"</span><span class="p">:</span><span class="s2">"post"</span><span class="p">},</span><span class="nt">"signal"</span><span class="p">:</span><span class="s2">"a.c"</span><span class="p">,</span>
+<span class="w"> </span><span class="nt">"value"</span><span class="p">:{</span><span class="nt">"dec"</span><span class="p">:</span><span class="s2">"5"</span><span class="p">,</span><span class="nt">"sampled"</span><span class="p">:</span><span class="s2">"settled"</span><span class="p">}}</span>
+</code></pre></div>
+<p>The invocation still exits with the assert code — the verdict is unchanged by
+asking about it. If the test <em>passed</em>, an anchored query says so rather than
+inventing a cycle:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="s2">"n"</span><span class="p">,</span><span class="nt">"ok"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span>
+<span class="w"> </span><span class="nt">"error"</span><span class="p">:{</span><span class="nt">"class"</span><span class="p">:</span><span class="s2">"invalid_range"</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">"message"</span><span class="p">:</span><span class="s2">"this query is relative to the first failing assert, but the test did not fail"</span><span class="p">}}</span>
+</code></pre></div>
+<h2 id="errors">Errors<a class="headerlink" href="#errors" title="Permanent link">&para;</a></h2>
+<p>A bad signal name fails that one query, not the batch, and suggests neighbours:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="s2">"oops"</span><span class="p">,</span><span class="nt">"ok"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span>
+<span class="w"> </span><span class="nt">"error"</span><span class="p">:{</span><span class="nt">"class"</span><span class="p">:</span><span class="s2">"unknown_signal"</span><span class="p">,</span><span class="nt">"message"</span><span class="p">:</span><span class="s2">"no signal matches acc.nosuch"</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">"suggestions"</span><span class="p">:[</span><span class="s2">"acc.count"</span><span class="p">,</span><span class="s2">"acc.push"</span><span class="p">,</span><span class="s2">"acc.clock"</span><span class="p">,</span><span class="s2">"acc.reset"</span><span class="p">,</span><span class="s2">"acc.cnt"</span><span class="p">]}}</span>
+</code></pre></div>
+<p>The split is deliberate. A malformed <em>request</em> — unknown <code>schema_version</code>, an
+unknown op, an unknown field, a bad time range — is a usage error and exits 2,
+because it means the caller is confused about the protocol. A well-formed request
+that asks about something absent exits 0 with <code>ok:false</code> in band, because the
+answer <em>is</em> "that does not exist". Unknown fields are rejected rather than
+ignored, so a typo can never silently change what you asked.</p>
+<p>If the replayed test fails an assert, the run still exits with the assert code
+and the query answers are still emitted — the whole point is to inspect a run
+that went wrong.</p>
+<h2 id="what-v1-does-not-do">What v1 does not do<a class="headerlink" href="#what-v1-does-not-do" title="Permanent link">&para;</a></h2>
+<p>Named plainly, because each fails loudly rather than returning something
+misleading:</p>
+<ul>
+<li><strong>No <code>known_mask</code> information.</strong> The field is always all-ones. The compiled
+  simulator is two-state: <code>x</code>/<code>?</code> bits are resolved to concrete pseudo-random
+  values when a literal is parsed. The honest disclosure is <code>run.seed</code> and
+  <code>run.rng_draws</code>, which the response always carries.</li>
+<li><strong>No checkpoint acceleration.</strong> A batch always replays from cycle 0 and reports
+  <code>checkpoint_used: null</code> and <code>cycles_replayed</code>, so the cost is visible.
+  <code>--query</code> does not combine with <code>--restart-at</code> or the <code>--vcd-*</code> window flags.</li>
+<li><strong>One test per invocation</strong>, and only the first <code>tick</code> loop's timeline.
+  A <code>cycle</code> is that loop's iteration index; a body that advances several periods
+  per iteration exposes one settled sample per iteration, not per period.</li>
+<li><code>changes</code>/<code>next_change</code> take a single signal; <code>find</code> has no bit-slice leaf;
+  signed ordered comparisons are refused rather than guessed.</li>
+</ul>
+<h2 id="relationship-to-the-older-flags">Relationship to the older flags<a class="headerlink" href="#relationship-to-the-older-flags" title="Permanent link">&para;</a></h2>
+<p><code>--list-signals</code>, <code>--probe</code> and <code>--break-when</code> still work exactly as before and
+still report through the envelope's <code>debug</code> member. They remain the low-ceremony
+spelling for a quick look. The differences that matter: they truncate values to
+64 bits, they cannot see outputs or memories, and <code>--break-when</code> reports a
+missing signal as simply "never true". The query API exists because none of those
+are acceptable when a tool, rather than a person, is reading the answer.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["search.suggest", "navigation.sections", "navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../javascripts/config.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>

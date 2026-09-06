@@ -1,0 +1,2681 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../01-install/">
+      
+      
+        <link rel="next" href="../03-memory/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Usage - LiveHD and Pyrope</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CFira+Code:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Fira Code"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/table.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/pyrope-highlight.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#usage" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LiveHD and Pyrope" class="md-header__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LiveHD and Pyrope
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Usage
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LiveHD and Pyrope" class="md-nav__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    LiveHD and Pyrope
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LiveHD and Pyrope
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Livehd
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Livehd
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00-intro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-lhd-driver" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The lhd driver
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commands
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#typed-inputs-and-outputs-kinds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Typed inputs and outputs (kinds)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verilog-compilation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verilog compilation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyrope-compilation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pyrope compilation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#source-maps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Source maps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#linking-libraries-pyrope-a-verilog-black-box" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linking libraries (Pyrope + a Verilog black box)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recipes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-lhdtoml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration: lhd.toml
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#equivalence-checking-lec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Equivalence checking (LEC)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#formal-verification-assert-assume" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Formal verification (assert / assume)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inspecting-the-irs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inspecting the IRs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#results-exit-codes-and-error-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Results, exit codes, and error classes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Results, exit codes, and error classes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#diagnostics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diagnostics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyrope-language-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pyrope language server
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bazel-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bazel integration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#low-level-directed-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Low level directed build
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory and concurrency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    C++ API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-lgraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LGraph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-lnast/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LNAST
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-formal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Formal Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-synth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Synthesis &amp; the frequency-optimization loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-bazel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bazel build
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10b-3rdparty/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3rd Party
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../11-pass/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Creating a Pass
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../12-github/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GitHub Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../13-style/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding Style
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Pyrope
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/00-hwdesign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hardware Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/01-introduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/01b-quick_intro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Intro to Pyrope
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/02-basics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basic syntax
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/03-bundle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tuples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/04-variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Variables and types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/04b-attributes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Attributes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/05-assert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/05b-statements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Statements
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/06-functions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lambdas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/06b-instantiation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Instantiation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/06c-pipelining/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipelining
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/06d-fluid/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fluid Blocks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/07-typesystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Type system
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/07b-structtype/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Structural Typing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/08-memories/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memories
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/09-stdlib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope std lib
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/09-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Extended Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/09b-simquery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Querying a simulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/10-internals/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internals
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/10b-vslang/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vs Other Languages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/12-lnast/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LNAST
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/13-stdlib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope Standard Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/15-tbd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation status (TBD)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/21-deprecated/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deprecated or Future
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/22-deprecated_pipelining/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deprecated Pipelining
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-lhd-driver" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The lhd driver
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commands
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#typed-inputs-and-outputs-kinds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Typed inputs and outputs (kinds)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verilog-compilation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verilog compilation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyrope-compilation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pyrope compilation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#source-maps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Source maps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#linking-libraries-pyrope-a-verilog-black-box" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linking libraries (Pyrope + a Verilog black box)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recipes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-lhdtoml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration: lhd.toml
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#equivalence-checking-lec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Equivalence checking (LEC)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#formal-verification-assert-assume" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Formal verification (assert / assume)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inspecting-the-irs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inspecting the IRs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#results-exit-codes-and-error-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Results, exit codes, and error classes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Results, exit codes, and error classes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#diagnostics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diagnostics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyrope-language-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pyrope language server
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bazel-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bazel integration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#low-level-directed-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Low level directed build
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h1>
+<p>This is a high level description of how to use LiveHD.</p>
+<h2 id="the-lhd-driver">The lhd driver<a class="headerlink" href="#the-lhd-driver" title="Permanent link">&para;</a></h2>
+<p>LiveHD is driven by a single command line binary called <code>lhd</code>. It replaces the
+legacy interactive shell (<code>lgshell</code>) and its <code>|&gt;</code> pipeline syntax, which were
+removed from the tree. <code>lhd</code> is a <em>stateless kernel</em>: one invocation runs one
+step — <code>(declared inputs, config) -&gt; (declared outputs, exit code)</code> — which
+makes it directly callable from build systems (Make, Ninja, Bazel) and by
+coding agents.</p>
+<p>Two invariants are properties of the binary, not flags:</p>
+<ul>
+<li><strong>Deterministic</strong>: output bytes are a pure function of the inputs. The
+  reported <code>run_id</code> is a content hash of (tool version + command + resolved
+  config + input bytes), never wall-clock/random. If a timestamp must be
+  embedded it comes from the <code>SOURCE_DATE_EPOCH</code> convention.</li>
+<li><strong>Hermetic</strong>: a source file the frontend cannot find within its declared
+  inputs is a <code>missing_file</code> error, never a silent reach into the filesystem.</li>
+</ul>
+<p>To build and get started:</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>bazel<span class="w"> </span>build<span class="w"> </span>//lhd:lhd
+$<span class="w"> </span>./bazel-bin/lhd/lhd<span class="w"> </span><span class="nb">help</span>
+$<span class="w"> </span>./bazel-bin/lhd/lhd<span class="w"> </span><span class="nb">help</span><span class="w"> </span>compile
+</code></pre></div>
+<p>The design rationale is documented in the LiveHD repo under
+<code>docs/contracts/future_cli.md</code>.</p>
+<h2 id="commands">Commands<a class="headerlink" href="#commands" title="Permanent link">&para;</a></h2>
+<p>The split rule: commands that ingest source are language-qualified; commands
+that operate on IR are language-agnostic. The language word is optional — it
+is inferred from the file extension (<code>.prp</code> vs <code>.v</code>/<code>.sv</code>).</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>lhd compile [verilog\|pyrope] SRCS/IR...</code></td>
+<td>the single source→IR→netlist action (frontend + synth fused; sources and/or <code>ln:</code>/<code>lg:</code> inputs)</td>
+</tr>
+<tr>
+<td><code>lhd lec --impl S --ref S</code></td>
+<td>logic equivalence check between two designs (also spelled <code>lhd formal lec</code>)</td>
+</tr>
+<tr>
+<td><code>lhd formal verify DESIGN [SIDECARS.prp...]</code></td>
+<td>prove the design's <code>assert</code>/<code>assume</code> obligations by BMC + induction (per-assert verdict table)</td>
+</tr>
+<tr>
+<td><code>lhd sim SRCS...</code></td>
+<td>compile and run the design's <code>test</code> blocks (simulation driver)</td>
+</tr>
+<tr>
+<td><code>lhd pass &lt;sub&gt; ...</code></td>
+<td>run one pass over IR (<code>abc</code>, <code>color</code>, <code>partition</code>, <code>semdiff</code>, <code>formal</code>, ...)</td>
+</tr>
+<tr>
+<td><code>lhd tool cat\|grep\|diff\|tree ...</code></td>
+<td>unified <code>ln:</code>/<code>lg:</code> inspector</td>
+</tr>
+<tr>
+<td><code>lhd scan FILES.prp...</code></td>
+<td>report each Pyrope file's <code>import</code> strings (dependency discovery)</td>
+</tr>
+<tr>
+<td><code>lhd pyrope fmt\|lsp</code></td>
+<td>Pyrope formatter / language server over stdio (JSON-RPC)</td>
+</tr>
+<tr>
+<td><code>lhd list steps\|recipes\|emit-kinds\|error-classes\|options [REGEX]</code></td>
+<td>discovery (JSON when piped; <code>options</code> prints human text on a terminal)</td>
+</tr>
+<tr>
+<td><code>lhd describe &lt;command\|recipe:NAME\|emit-kind\|pass.flag&gt;</code></td>
+<td>self-documentation (JSON output; <code>pass.flag</code> shows one option's full help)</td>
+</tr>
+<tr>
+<td><code>lhd version</code> / <code>lhd help [command]</code></td>
+<td>meta</td>
+</tr>
+</tbody>
+</table>
+<p>Shared arguments honored by the execution commands:</p>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--emit KIND:PATH</code></td>
+<td>declared single-file typed output (<code>verilog:</code> only)</td>
+</tr>
+<tr>
+<td><code>--emit-dir KIND:DIR/</code></td>
+<td>declared directory output (<code>ln:</code>, <code>lg:</code>, <code>pyrope:</code>, <code>lnast-dump:</code>)</td>
+</tr>
+<tr>
+<td><code>--top &lt;name&gt;</code></td>
+<td>top module/function</td>
+</tr>
+<tr>
+<td><code>--config lhd.toml</code></td>
+<td>pass-flag defaults from a config file (see below)</td>
+</tr>
+<tr>
+<td><code>--result-json PATH</code></td>
+<td>structured result object (JSON) to a file (else stdout)</td>
+</tr>
+<tr>
+<td><code>--workdir DIR</code></td>
+<td>scratch + ephemeral lgdb; never a global cache</td>
+</tr>
+<tr>
+<td><code>-j</code>/<code>--jobs N</code></td>
+<td>intra-action parallelism</td>
+</tr>
+<tr>
+<td><code>-q</code>/<code>--quiet</code>, <code>--verbose</code></td>
+<td>stderr verbosity; never pollutes the stdout protocol</td>
+</tr>
+<tr>
+<td><code>--diag-fmt auto\|jsonl\|pretty</code></td>
+<td>rendering of the stdout result envelope and the stderr diagnostics; <code>auto</code> (default) = <code>pretty</code> on a terminal, <code>jsonl</code> when piped/captured (agents, CI)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="typed-inputs-and-outputs-kinds">Typed inputs and outputs (kinds)<a class="headerlink" href="#typed-inputs-and-outputs-kinds" title="Permanent link">&para;</a></h2>
+<p>Every input/output is a typed slot <code>KIND:PATH</code>. The main IR kinds:</p>
+<table>
+<thead>
+<tr>
+<th>Kind</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ln:</code></td>
+<td>the design's LNAST units — an <code>hhds::Forest</code> save directory (<code>forest.txt</code> + binary tree bodies) plus a <code>manifest.json</code> unit index. Alias: <code>lnast:</code></td>
+</tr>
+<tr>
+<td><code>lg:</code></td>
+<td>the design's LGraphs — an <code>hhds::GraphLibrary</code> save directory (<code>library.txt</code> + binary graph bodies). Aliases: <code>design:</code>, <code>lgraph:</code></td>
+</tr>
+<tr>
+<td><code>verilog:</code></td>
+<td>Verilog source. As <code>--emit</code>, a deterministic name-sorted concatenation of the per-module <code>inou.cgen.verilog</code> output</td>
+</tr>
+<tr>
+<td><code>pyrope:</code></td>
+<td>Pyrope source. As <code>--emit-dir</code>, a per-unit <code>.prp</code> re-emission via <code>pass.prp_writer</code> (needs <code>ln:</code>/pyrope inputs)</td>
+</tr>
+<tr>
+<td><code>lnast-dump:</code></td>
+<td>round-trippable textual LNAST dump (the <code>Lnast::dump</code> text form), one <code>&lt;unit&gt;.lnast</code> per unit. A debug/test observable; the binary interchange form is <code>ln:</code></td>
+</tr>
+</tbody>
+</table>
+<p>Because a design always holds <em>many</em> units/graphs, <code>ln:</code>/<code>lg:</code>/<code>pyrope:</code> are
+directory containers (<code>--emit-dir</code> only). <code>--emit verilog:PATH</code> is the one
+single-file output. <code>ln:</code>/<code>lg:</code> inputs are given positionally.</p>
+<h2 id="verilog-compilation">Verilog compilation<a class="headerlink" href="#verilog-compilation" title="Permanent link">&para;</a></h2>
+<p>One shot — elaborate, optimize, and emit Verilog:</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>lhd<span class="w"> </span>compile<span class="w"> </span>foo.v<span class="w"> </span>--top<span class="w"> </span>foo<span class="w"> </span>--recipe<span class="w"> </span>O2<span class="w"> </span>--emit<span class="w"> </span>verilog:foo.gen.v
+</code></pre></div>
+<p>Or as separate steps with the <code>lg:</code> container in between (<code>compile</code> is the
+single action; an <code>lg:</code>-only input skips the frontend):</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>lhd<span class="w"> </span>compile<span class="w"> </span>foo.v<span class="w"> </span>--top<span class="w"> </span>foo<span class="w"> </span>--emit-dir<span class="w"> </span>lg:foo_lgs/
+$<span class="w"> </span>lhd<span class="w"> </span>compile<span class="w"> </span>lg:foo_lgs/<span class="w"> </span>--recipe<span class="w"> </span>O1<span class="w"> </span>--emit<span class="w"> </span>verilog:foo.gen.v
+</code></pre></div>
+<p>The Verilog frontend has three readers, selected with
+<code>--reader slang|yosys-slang|yosys-verilog</code> (default <code>slang</code>):</p>
+<ul>
+<li><code>slang</code> — the direct <code>inou.slang</code> SV→LNAST front-end (the default); the
+  design becomes LNAST and joins the Pyrope flow.</li>
+<li><code>yosys-verilog</code> — Yosys' native Verilog frontend, into LGraphs.</li>
+<li><code>yosys-slang</code> — Yosys with the slang.so plugin (SystemVerilog), into LGraphs.</li>
+</ul>
+<p>Because Verilog <code>`include</code> + <code>+incdir</code> can read files that are not on the
+command line, the Verilog frontend supports <code>--depfile PATH</code> to write a
+Make-syntax dependency file for build systems.</p>
+<h2 id="pyrope-compilation">Pyrope compilation<a class="headerlink" href="#pyrope-compilation" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>lhd<span class="w"> </span>compile<span class="w"> </span>bar.prp<span class="w"> </span>--emit<span class="w"> </span>verilog:bar.gen.v
+</code></pre></div>
+<p>A <code>.prp</code> file can define several functions; compiling with <code>--emit-dir ln:</code>
+emits one LNAST unit per elaborated unit into an <code>ln:</code> directory. Files related by <code>import</code>
+ride along as pre-elaborated <code>ln:</code> inputs. The canonical per-file → top flow:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># per pyrope file, in parallel (no imports)</span>
+$<span class="w"> </span>lhd<span class="w"> </span>compile<span class="w"> </span>f1.prp<span class="w"> </span>--emit-dir<span class="w"> </span>ln:f1_lns/<span class="w"> </span>--emit-dir<span class="w"> </span>lg:f1_lgs/
+
+<span class="c1"># a file importing f1: its pre-elaborated ln: rides along</span>
+$<span class="w"> </span>lhd<span class="w"> </span>compile<span class="w"> </span>f2.prp<span class="w"> </span>ln:f1_lns/<span class="w"> </span>--emit-dir<span class="w"> </span>ln:f2_lns/<span class="w"> </span>--emit-dir<span class="w"> </span>lg:f2_lgs/
+
+<span class="c1"># top target: aggregate ln: units into ONE library, then synth</span>
+$<span class="w"> </span>lhd<span class="w"> </span>compile<span class="w"> </span>ln:f1_lns/<span class="w"> </span>ln:f2_lns/<span class="w"> </span>--top<span class="w"> </span>foo<span class="w"> </span>--emit-dir<span class="w"> </span>lg:top_lgs/
+$<span class="w"> </span>lhd<span class="w"> </span>compile<span class="w"> </span>lg:top_lgs/<span class="w"> </span>--recipe<span class="w"> </span>O1<span class="w"> </span>--emit-dir<span class="w"> </span>lg:top_opt_lgs/<span class="w"> </span>--emit<span class="w"> </span>verilog:top.v
+</code></pre></div>
+<p>To discover the import relationships without elaborating (Pyrope <code>import</code>
+arguments are comptime string literals, so the list is exact):</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>lhd<span class="w"> </span>scan<span class="w"> </span>f1.prp<span class="w"> </span>f2.prp<span class="w">     </span><span class="c1"># imports reported in the result's "scan" member</span>
+</code></pre></div>
+<h2 id="source-maps">Source maps<a class="headerlink" href="#source-maps" title="Permanent link">&para;</a></h2>
+<p>Verilog source maps emitted by codegen are ECMA-426 compliant. Enable them with
+<code>cgen.srcmap=1</code>; the generated <code>.v</code> and source-map sidecar can be loaded by
+standard source-map tools.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Generate Verilog with source maps.</span>
+$<span class="w"> </span>lhd<span class="w"> </span>compile<span class="w"> </span>inou/prp/tests/equiv/mod_varargs_csa.prp<span class="w"> </span>--emit-dir<span class="w"> </span>verilog:tmp<span class="w"> </span>--set<span class="w"> </span>cgen.srcmap<span class="o">=</span><span class="m">1</span>
+
+<span class="c1"># Visualize the mapping.</span>
+<span class="c1"># Open https://evanw.github.io/source-map-visualization/</span>
+<span class="c1"># Upload the tmp/mod_varargs_csa.blk_add__u8.v* files.</span>
+</code></pre></div>
+<h2 id="linking-libraries-pyrope-a-verilog-black-box">Linking libraries (Pyrope + a Verilog black box)<a class="headerlink" href="#linking-libraries-pyrope-a-verilog-black-box" title="Permanent link">&para;</a></h2>
+<p>A design can mix leaves from different frontends. <code>import("lg:NAME")</code> pulls a
+<em>compiled</em> LGraph (from a previous Pyrope or Verilog/yosys run) into a Pyrope
+module as a black box — instantiated by name, body resolved at link time.
+<code>compile</code> then <strong>assembles</strong> several <code>lg:</code>/<code>ln:</code> inputs, starting from
+<code>--top</code>, into one new <code>lg:</code> library you can synthesize.</p>
+<p>The lg: name is the full graph name: a Verilog module keeps its name (<code>inv</code>), a
+Pyrope unit is <code>file.entity</code> (<code>adder.adder</code>).</p>
+<p>Cut-and-paste from the LiveHD root (writes Verilog to <code>./tmp</code>); this is exactly
+the flow exercised by <code>lhd/tests/lhd_usage_merge_test.sh</code>:</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>bazel<span class="w"> </span>build<span class="w"> </span>//lhd:lhd
+
+<span class="c1"># 1. a Verilog leaf -&gt; lg: (through yosys; the default reader is now slang, so</span>
+<span class="c1">#    request the yosys frontend explicitly for this black-box leaf)</span>
+$<span class="w"> </span>./bazel-bin/lhd/lhd<span class="w"> </span>compile<span class="w"> </span>lhd/tests/merge_demo/inv.v<span class="w"> </span>--top<span class="w"> </span>inv<span class="w"> </span>--reader<span class="w"> </span>yosys-verilog<span class="w"> </span>--emit-dir<span class="w"> </span>lg:tmp/inv_lg/
+
+<span class="c1"># 2. a Pyrope leaf -&gt; lg:</span>
+$<span class="w"> </span>./bazel-bin/lhd/lhd<span class="w"> </span>compile<span class="w"> </span>lhd/tests/merge_demo/adder.prp<span class="w"> </span>--emit-dir<span class="w"> </span>lg:tmp/adder_lg/
+
+<span class="c1"># 3. a top Pyrope that imports BOTH (a yosys black box + a Pyrope module) -&gt; ln:</span>
+<span class="c1">#    (elaborated only; the lg: imports stay unresolved until the link step)</span>
+$<span class="w"> </span>./bazel-bin/lhd/lhd<span class="w"> </span>compile<span class="w"> </span>lhd/tests/merge_demo/top.prp<span class="w"> </span>--emit-dir<span class="w"> </span>ln:tmp/top_ln/
+
+<span class="c1"># 4. LINK: merge the two lg: libraries and lower the top against them -&gt; a new lg:</span>
+$<span class="w"> </span>./bazel-bin/lhd/lhd<span class="w"> </span>compile<span class="w"> </span>--top<span class="w"> </span>top<span class="w"> </span>lg:tmp/inv_lg/<span class="w"> </span>lg:tmp/adder_lg/<span class="w"> </span>ln:tmp/top_ln/<span class="w"> </span>--emit-dir<span class="w"> </span>lg:tmp/merged_lg/
+
+<span class="c1"># 5. synthesize the assembled library -&gt; Verilog</span>
+$<span class="w"> </span>./bazel-bin/lhd/lhd<span class="w"> </span>compile<span class="w"> </span>lg:tmp/merged_lg/<span class="w"> </span>--emit<span class="w"> </span>verilog:tmp/top.v
+</code></pre></div>
+<p><code>tmp/top.v</code> holds three modules — <code>inv</code>, <code>adder.adder</code>, and <code>top.top</code> — with
+<code>top</code> instantiating the other two (<code>y = (-x) + 1</code>). Because gids are a
+deterministic hash of the graph name, a name shared across libraries keeps the
+same gid, so the merge is conflict-free.</p>
+<h2 id="recipes">Recipes<a class="headerlink" href="#recipes" title="Permanent link">&para;</a></h2>
+<p>A recipe is the named pass chain between the frontend and the terminal
+<code>--emit</code> — defined as data, not <code>|&gt;</code> strings:</p>
+<table>
+<thead>
+<tr>
+<th>Recipe</th>
+<th>Passes</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>O0</code></td>
+<td>(frontend lowering only)</td>
+<td>no graph optimization; <code>ln:</code> inputs still run <code>pass.upass</code> + tolg</td>
+</tr>
+<tr>
+<td><code>O1</code></td>
+<td><code>pass.cprop</code></td>
+<td>constant/copy propagation (default)</td>
+</tr>
+<tr>
+<td><code>O2</code></td>
+<td><code>pass.cprop</code>, <code>pass.bitwidth</code></td>
+<td>cprop + bitwidth inference</td>
+</tr>
+</tbody>
+</table>
+<p><code>--set pass.flag=value</code> overrides one knob without forking the recipe, e.g.
+<code>--set cgen.srcmap=1</code>. A typo'd pass or flag is a usage error (never a silent
+no-op). Introspect with:</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>lhd<span class="w"> </span>list<span class="w"> </span>recipes
+$<span class="w"> </span>lhd<span class="w"> </span>describe<span class="w"> </span>recipe:O2
+$<span class="w"> </span>lhd<span class="w"> </span>list<span class="w"> </span>options<span class="w">             </span><span class="c1"># every --set/--config pass.flag, with defaults</span>
+$<span class="w"> </span>lhd<span class="w"> </span>list<span class="w"> </span>options<span class="w"> </span><span class="s1">'cgen\..*'</span><span class="w">  </span><span class="c1"># regex-filtered</span>
+$<span class="w"> </span>lhd<span class="w"> </span>describe<span class="w"> </span>upass.toln<span class="w">      </span><span class="c1"># one option, full help text</span>
+</code></pre></div>
+<p>The result records the <em>expanded</em> recipe (the passes+flags that actually ran),
+so an artifact is self-describing even if a recipe is later redefined.</p>
+<h2 id="configuration-lhdtoml">Configuration: lhd.toml<a class="headerlink" href="#configuration-lhdtoml" title="Permanent link">&para;</a></h2>
+<p><code>--config lhd.toml</code> provides pass-flag defaults as a declared input file. It
+is a strict TOML <em>subset</em>: <code>#</code> comments, pass tables (<code>[upass]</code>, <code>[cprop]</code>,
+<code>[bitwidth]</code>), and <code>key = value</code> entries with quoted strings, booleans, or
+integers. The top level takes only <code>recipe</code>. Anything else is a <code>config</code>
+error — a typo'd pass table errors rather than silently no-oping.</p>
+<div class="highlight"><pre><span></span><code><span class="n">recipe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"O2"</span>
+
+<span class="k">[upass]</span>
+<span class="n">constprop</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<span class="n">verifier</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+</code></pre></div>
+<p>File entries are defaults: explicit <code>--set</code>/<code>--recipe</code> always win, and the
+<code>recipe</code> key is ignored by commands with no recipe slot, so one <code>lhd.toml</code> can
+serve every step of a flow. The config is folded in before <code>run_id</code> hashing,
+so a config file and the equivalent explicit flags hash identically.</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>lhd<span class="w"> </span>describe<span class="w"> </span>config<span class="w">    </span><span class="c1"># prints the lhd.toml schema</span>
+</code></pre></div>
+<h2 id="equivalence-checking-lec">Equivalence checking (LEC)<a class="headerlink" href="#equivalence-checking-lec" title="Permanent link">&para;</a></h2>
+<p><code>lhd lec</code> (also spelled <code>lhd formal lec</code>) proves two designs equivalent; each
+side can be a <code>verilog:</code>/<code>pyrope:</code> file or an <code>ln:</code>/<code>lg:</code> directory (a bare
+<code>.v</code>/<code>.sv</code>/<code>.prp</code> path infers its kind):</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>lhd<span class="w"> </span>lec<span class="w"> </span>--impl<span class="w"> </span>foo.gen.v<span class="w"> </span>--ref<span class="w"> </span>foo.v<span class="w"> </span>--top<span class="w"> </span>foo
+</code></pre></div>
+<p>The default backend is the in-process cvc5 SMT engine (bottom-up hierarchical:
+each module def is proven leaves-first and proven children collapse into their
+parents); <code>--set lec.solver=lgyosys</code> routes through <code>inou/yosys/lgcheck</code>
+instead, and <code>--set lec.engine=bmc|ind</code> picks a single engine over the default
+ind+bmc portfolio. On a refutation with <code>--workdir</code>, the counterexample is
+also written as a self-contained Pyrope testbench (<code>lecfail.prp</code>) plus a VCD
+so the divergence can be replayed and visualized. A non-equivalent pair exits
+non-zero with <code>error.class = equiv_fail</code>; an inconclusive solve is a warning
+(exit 0) unless <code>--set lec.strict=true</code>.</p>
+<h2 id="formal-verification-assert-assume">Formal verification (assert / assume)<a class="headerlink" href="#formal-verification-assert-assume" title="Permanent link">&para;</a></h2>
+<p><code>lhd formal verify</code> proves ONE design's <code>assert</code> / <code>assert_always</code> / <code>assume</code>
+obligations by bounded model checking from reset, on the same engine LEC uses.
+Each obligation is checked per cycle as its own solver query; every proven
+fact immediately prunes the search for the rest, and a timeout costs one
+obligation at one cycle — the run reports a per-assert verdict table, not a
+single verdict:</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>lhd<span class="w"> </span>formal<span class="w"> </span>verify<span class="w"> </span>cnt.prp<span class="w"> </span>cnt.verify.prp<span class="w"> </span>--top<span class="w"> </span>cnt<span class="w"> </span>--set<span class="w"> </span>formal.bound<span class="o">=</span><span class="m">10</span>
+formal<span class="w"> </span>verify:<span class="w"> </span><span class="s1">'cnt.cnt'</span><span class="w"> </span>REFUTED<span class="w"> </span><span class="o">(</span>...<span class="o">)</span>
+<span class="w">  </span>assert<span class="w"> </span>at<span class="w"> </span>cnt.prp:5:<span class="w"> </span>PROVEN<span class="w"> </span><span class="o">(</span>inductive<span class="w"> </span>—<span class="w"> </span>every<span class="w"> </span>cycle<span class="w"> </span>of<span class="w"> </span>every<span class="w"> </span>bound<span class="o">)</span>
+<span class="w">  </span>assert<span class="w"> </span>at<span class="w"> </span>cnt.prp:6<span class="w"> </span><span class="s2">"counter hit 5"</span>:<span class="w"> </span>REFUTED<span class="w"> </span>at<span class="w"> </span>cycle<span class="w"> </span><span class="m">7</span>
+<span class="w">    </span>counterexample<span class="w"> </span>inputs:<span class="w"> </span>cyc0:<span class="w"> </span><span class="nv">enable</span><span class="o">=</span><span class="m">0</span>,<span class="w"> </span><span class="nv">reset</span><span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>...<span class="w"> </span><span class="p">|</span><span class="w"> </span>cyc6:<span class="w"> </span><span class="nv">enable</span><span class="o">=</span><span class="m">1</span>,<span class="w"> </span><span class="nv">reset</span><span class="o">=</span><span class="m">0</span>
+<span class="w">  </span>assume<span class="w"> </span>at<span class="w"> </span>cnt.verify.prp:4<span class="w"> </span><span class="o">[</span>cnt.quiet<span class="o">]</span>:<span class="w"> </span><span class="k">in</span><span class="w"> </span>force<span class="w"> </span><span class="o">(</span>environment<span class="w"> </span>constraint<span class="o">)</span>
+</code></pre></div>
+<p>Verdict tiers, per assert: <code>PROVEN (inductive)</code> holds at every cycle of every
+bound (the bounded proof plus an induction step); <code>PROVEN to cycle k
+(bounded)</code> means no violation within the unrolled window only; <code>REFUTED at
+cycle k</code> is a reachable violation with the per-cycle input trace that
+reproduces it from reset (the run exits non-zero, <code>error.class =
+equiv_fail</code>); <code>UNKNOWN</code> (solver gave up / contradictory assumes) is a loud
+warning that fails only under <code>--set formal.strict=true</code>. An <code>assume</code> is an
+environment constraint: it prunes the explored traces and is disclosed in the
+table.</p>
+<p>Properties can live inline in the design or in <em>sidecar</em> files as
+<code>formal name.dotted { ... }</code> blocks — declarative every-cycle claims over
+dotted signal paths, activated by listing the file and filtered with
+<code>--formal &lt;glob&gt;</code>; see
+<a href="../../pyrope/05-assert/#formal-blocks">Pyrope verification</a> for the block
+syntax. Engine knobs are shared with LEC under <code>--set formal.*</code>
+(<code>formal.bound</code>, <code>formal.timeout</code> per query, <code>formal.phase</code>, <code>formal.reset</code>);
+the legacy <code>lec.*</code> spellings stay accepted. The same checks also run in a don't-try-hard mode inside every
+<code>lhd compile</code> (<code>pass.formal</code>): proven obligations are elided from the netlist,
+refuted ones fail the build, undecided ones stay as runtime checks with a
+deferral warning.</p>
+<h2 id="inspecting-the-irs">Inspecting the IRs<a class="headerlink" href="#inspecting-the-irs" title="Permanent link">&para;</a></h2>
+<p>Textual LNAST dump (round-trips through <code>Lnast::read</code>):</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>lhd<span class="w"> </span>compile<span class="w"> </span>bar.prp<span class="w"> </span>--emit-dir<span class="w"> </span>lnast-dump:dump_dir/
+</code></pre></div>
+<p>With <code>--recipe O0</code> the dump is close to post-parse; the default recipes show
+the post-upass form. The <code>ln:</code>/<code>lg:</code> directories themselves are the binary interchange
+forms (<code>hhds::Forest::save</code> / <code>hhds::GraphLibrary::save</code>).</p>
+<h2 id="results-exit-codes-and-error-classes">Results, exit codes, and error classes<a class="headerlink" href="#results-exit-codes-and-error-classes" title="Permanent link">&para;</a></h2>
+<p>A step's success is <em>only</em> the process exit code: <code>0</code> = pass, non-zero = fail.
+The structured result (one JSON object, to <code>--result-json PATH</code> or stdout)
+carries the detail: command, status, <code>run_id</code>, inputs, outputs, the expanded
+recipe steps, <code>phases</code>, and on failure an <code>error</code> block:</p>
+<table>
+<thead>
+<tr>
+<th>error.class</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>usage</code></td>
+<td>invalid CLI usage or unsupported argument</td>
+</tr>
+<tr>
+<td><code>syntax</code></td>
+<td>input file has syntax errors</td>
+</tr>
+<tr>
+<td><code>internal</code></td>
+<td>LiveHD bug or unhandled case</td>
+</tr>
+<tr>
+<td><code>equiv_fail</code></td>
+<td>equivalence check failed</td>
+</tr>
+<tr>
+<td><code>signal</code></td>
+<td>process killed by signal (segfault, abort)</td>
+</tr>
+<tr>
+<td><code>timeout</code></td>
+<td>step exceeded time limit</td>
+</tr>
+<tr>
+<td><code>missing_file</code></td>
+<td>required file or path does not exist</td>
+</tr>
+<tr>
+<td><code>config</code></td>
+<td>missing or invalid configuration</td>
+</tr>
+<tr>
+<td><code>dependency</code></td>
+<td>required external tool or prior artifact absent</td>
+</tr>
+<tr>
+<td><code>unsupported</code></td>
+<td>requested feature is known but not implemented</td>
+</tr>
+</tbody>
+</table>
+<p><code>phases</code> is the per-phase wall clock: an array of <code>{"name", "ms"}</code> in completion
+order, keyed by the <em>bare</em> step name (<code>inou.prp</code>, <code>pass.cprop</code>, <code>pass.lec</code>) plus
+a few phases that are real work without a recipe line of their own
+(<code>lhd.run_id</code> for the input content hash, <code>inou.prp.imports</code> for transitive
+import parsing, <code>lnast.tolg</code>, <code>lg.save</code>, <code>lec.load</code>, <code>sim.hostbuild</code>,
+<code>sim.run</code>). A name repeats when a step runs more
+than once, so a consumer sums the array; the leftover against wall time is
+process startup and output-dir cleanup. It is never part of <code>run_id</code>. Add
+<code>--diag-fmt pretty -v</code> to see the same breakdown as text.</p>
+<p><code>lhd</code> emits nothing on stdout except the selected protocol — no banners, no
+echoed commands, no raw pass logs. Per-step raw logs land under
+<code>--workdir/logs/</code>.</p>
+<h3 id="diagnostics">Diagnostics<a class="headerlink" href="#diagnostics" title="Permanent link">&para;</a></h3>
+<p>Errors and warnings are also emitted as a finer JSONL stream — <strong>one line per
+diagnostic</strong> — alongside the step result. Point it at a file with
+<code>--emit diagnostics:PATH</code>. The stderr rendering follows <code>--diag-fmt</code>:
+clang-style text in <code>pretty</code> mode (the default on a terminal), the same JSONL
+records in <code>jsonl</code> mode (the default when stdout is piped/captured). The
+machine stream is the source of truth; the human text is a rendering of it.
+Diagnostics are designed to be triaged by a coding agent as much as read by a
+human, which drives the schema below.</p>
+<p>Each record is one JSON object:</p>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>severity</code></td>
+<td><code>error</code> (compilation cannot proceed), <code>warning</code> (proceeds, likely issue), or <code>note</code> (a secondary location)</td>
+</tr>
+<tr>
+<td><code>code</code></td>
+<td>stable, greppable id (kebab-case, e.g. <code>range-fit</code>) — survives message rewording, so tooling branches on it instead of the prose</td>
+</tr>
+<tr>
+<td><code>category</code></td>
+<td>what kind of fix is needed (below)</td>
+</tr>
+<tr>
+<td><code>pass</code></td>
+<td>originating stage (e.g. <code>inou.prp</code>, <code>upass.attributes</code>)</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td>one human-readable line, without the location</td>
+</tr>
+<tr>
+<td><code>span</code></td>
+<td>source location, or <code>null</code> when unknown</td>
+</tr>
+<tr>
+<td><code>hint</code></td>
+<td>one actionable suggestion (optional)</td>
+</tr>
+</tbody>
+</table>
+<p><code>category</code> says <em>who is wrong</em>:</p>
+<table>
+<thead>
+<tr>
+<th>category</th>
+<th>meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>syntax</code> / <code>name</code> / <code>type</code> / <code>bitwidth</code></td>
+<td>the source — fix the Pyrope/Verilog</td>
+</tr>
+<tr>
+<td><code>unsupported</code></td>
+<td>valid input LiveHD cannot lower yet — rewrite around it, do not "fix" the source</td>
+</tr>
+<tr>
+<td><code>internal</code></td>
+<td>a LiveHD bug — reduce to a repro, do not change the source</td>
+</tr>
+</tbody>
+</table>
+<p>A run collects every diagnostic (not just the first), so all problems surface in
+one compile; duplicates of the same diagnostic within a step are reported once.
+The step result's <code>error</code> block summarizes the fatal diagnostic and points back
+at the diagnostics file with per-severity counts. The renderer prints a
+clang/rust-style block with a caret line when a span is available and degrades to
+a single line — never a fabricated location — when it is not.</p>
+<h2 id="pyrope-language-server">Pyrope language server<a class="headerlink" href="#pyrope-language-server" title="Permanent link">&para;</a></h2>
+<p><code>lhd lsp</code> serves the Pyrope LSP (JSON-RPC over stdio) for <code>.prp</code> files:
+real-time compile diagnostics (syntax, name, type, bit-width) in any editor.
+The <code>scripts/prplsp</code> wrapper picks the right <code>lhd</code> binary (in-checkout build
+when inside a livehd checkout, <code>$PATH</code> otherwise) — point your editor at that.</p>
+<h2 id="bazel-integration">Bazel integration<a class="headerlink" href="#bazel-integration" title="Permanent link">&para;</a></h2>
+<p>A thin Starlark ruleset ships in the LiveHD repo (<code>//tools:lhd.bzl</code>) so a
+BUILD file can run LiveHD as a hermetic action:</p>
+<div class="highlight"><pre><span></span><code><span class="n">load</span><span class="p">(</span><span class="s2">"//tools:lhd.bzl"</span><span class="p">,</span> <span class="s2">"lhd_verilog"</span><span class="p">)</span>
+
+<span class="n">lhd_verilog</span><span class="p">(</span>
+    <span class="n">name</span>    <span class="o">=</span> <span class="s2">"foo_net"</span><span class="p">,</span>
+    <span class="n">top</span>     <span class="o">=</span> <span class="s2">"foo"</span><span class="p">,</span>
+    <span class="n">srcs</span>    <span class="o">=</span> <span class="p">[</span><span class="s2">"foo.v"</span><span class="p">,</span> <span class="s2">"bar.v"</span><span class="p">],</span>
+    <span class="n">incdirs</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"rtl/inc"</span><span class="p">],</span>
+    <span class="n">recipe</span>  <span class="o">=</span> <span class="s2">"O2"</span><span class="p">,</span>
+    <span class="n">out</span>     <span class="o">=</span> <span class="s2">"foo.gen.v"</span><span class="p">,</span>     <span class="c1"># also writes foo.d (depfile) + foo.result.json</span>
+<span class="p">)</span>
+</code></pre></div>
+<h2 id="low-level-directed-build">Low level directed build<a class="headerlink" href="#low-level-directed-build" title="Permanent link">&para;</a></h2>
+<p>To compile an individual pass:</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>bazel<span class="w"> </span>build<span class="w"> </span>-c<span class="w"> </span>dbg<span class="w"> </span>//pass/cprop:pass_cprop
+$<span class="w"> </span>bazel<span class="w"> </span>build<span class="w"> </span>-c<span class="w"> </span>dbg<span class="w"> </span>//inou/yosys:all
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["search.suggest", "navigation.sections", "navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../javascripts/config.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>

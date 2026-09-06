@@ -1,0 +1,109 @@
+digraph assign {
+  rankdir=LR
+  bgcolor="transparent"
+
+  node  [fontname = "helvetica", shape=record, style="rounded", penwidth = 2];
+  edge  [fontname = "helvetica", color="#142b30", arrowhead="normal", penwidth = 2];
+  graph [fontname = "helvetica"];
+
+  node0 [label = "<a> stmts | <s1> stmt1 | <s2> stmt2 | <s3> stmt3 |  <s4> stmt4 | <s5> stmt5 | <s6> stmt6" ];
+  node1 [label = "<a> func_def | <n> func_name | <cstmts> cstmts | <cond> condition | <stmts> stmts |<io1> input | <io2> input |  <io3> output "]
+  node2 [label = "<a> ref   | <l> func_xor"];
+  node3 [label = "<a> const | <l> true"];
+  node4 [label = "<a> stmts | <s1> stmt1 | <s2> stmt2"];
+  node5 [label = "<a> ref   | <l> $a"];
+  node6 [label = "<a> ref   | <l> $b"];
+  node7 [label = "<a> ref   | <l> %out"];
+
+  node2b [label = "<a> stmts"];
+  node1:cstmts -> node2b:a;
+
+  node8 [label = "<a> xor | <l> lhs | <r1> op1 | <r2> op2 "];
+  node9 [label = "<a> ref   | <l> ___b"];
+  nodea [label = "<a> ref   | <l> $a"];
+  nodeb [label = "<a> ref   | <l> $b"];
+
+  nodec [label = "<a> assign | <l> lhs  | <r> rhs"];
+  noded [label = "<a> ref   | <l> %out"];
+  nodee [label = "<a> ref   | <l> ___b"];
+
+  nodef [label = "<a> assign | <l> lhs  | <r> rhs"];
+  nodeg [label = "<a> ref   | <l> func_xor"];
+  nodeh [label = "<a> ref   | <l> \___a"];
+
+  nodei [label = "<a> tuple   | <n> tuple_name | <kv1> key-value | <kv2> key-value"]
+  nodej [label = "<a> ref   | <l> ___d"];
+
+  nodek [label = "<a> assign | <l> lhs  | <r> rhs"];
+  nodel [label = "<a> ref    | <l> a"];
+  nodem [label = "<a> ref    | <l> $foo"];
+
+  noden [label = "<a> assign | <l> lhs  | <r> rhs"];
+  nodeo [label = "<a> ref    | <l> b"];
+  nodep [label = "<a> ref    | <l> $bar"];
+
+  nodeq [label = "<a> func_call | <l> lhs | <n> func_name | <tp> arguments"];
+  noder [label = "<a> ref | <l> my_xor"];
+  nodes [label = "<a> ref | <l> func_xor"];
+  nodet [label = "<a> ref | <l> ___d"];
+
+
+  nodeu [label = "<a> dot | <l> lhs | <r1> op1 | <r2> op2 "];
+  nodev [label = "<a> ref   | <l> ___f"];
+  nodew [label = "<a> ref   | <l> my_xor"];
+  nodex [label = "<a> ref   | <l> out"];
+
+  nodey  [label = "<a> assign | <l> lhs  | <r> rhs"];
+  nodez  [label = "<a> ref   | <l> %out"];
+  nodeaa [label = "<a> ref   | <l> ___f"];
+
+
+
+  node0:s1  -> node1:a;
+  node0:s2  -> nodef:a;
+  node0:s3  -> nodei:a;
+  node0:s4  -> nodeq:a;
+  node0:s5  -> nodeu:a;
+  node0:s6  -> nodey:a;
+
+  node1:n     -> node2:a;
+  node1:cond  -> node3:a;
+  node1:stmts -> node4:a;
+  node1:io1   -> node5:a;
+  node1:io2   -> node6:a;
+  node1:io3   -> node7:a;
+
+  node4:s1 -> node8:a;
+  node4:s2 -> nodec:a;
+
+  node8:l  -> node9:a;
+  node8:r1 -> nodea:a;
+  node8:r2 -> nodeb:a;
+
+  nodec:l  -> noded:a;
+  nodec:r  -> nodee:a;
+
+  nodef:l  -> nodeg:a;
+  nodef:r  -> nodeh:a;
+  
+  nodei:n   -> nodej:a;
+  nodei:kv1 -> nodek:a;
+  nodei:kv2 -> noden:a;
+
+  nodek:l -> nodel:a;
+  nodek:r -> nodem:a;
+
+  noden:l -> nodeo:a;
+  noden:r -> nodep:a;
+
+  nodeq:l -> noder:a;
+  nodeq:n -> nodes:a;
+  nodeq:tp-> nodet:a;
+
+  nodeu:l -> nodev:a;
+  nodeu:r1 -> nodew:a;
+  nodeu:r2 -> nodex:a;
+
+  nodey:l -> nodez:a;
+  nodey:r -> nodeaa:a;
+}

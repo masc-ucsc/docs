@@ -1,0 +1,2973 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../06-lnast/">
+      
+      
+        <link rel="next" href="../08-synth/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Formal Verification - LiveHD and Pyrope</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CFira+Code:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Fira Code"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/table.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/pyrope-highlight.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#formal-verification" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LiveHD and Pyrope" class="md-header__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LiveHD and Pyrope
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Formal Verification
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LiveHD and Pyrope" class="md-nav__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    LiveHD and Pyrope
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LiveHD and Pyrope
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Livehd
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Livehd
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00-intro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory and concurrency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    C++ API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-lgraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LGraph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-lnast/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LNAST
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Formal Verification
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Formal Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#users-point-of-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User's point of view
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="User&#39;s point of view">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#one-verdict-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One verdict contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#equivalence-checking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Equivalence checking
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#property-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Property verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#assume-forms-what-constrains-what-must-be-proven" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Assume forms: what constrains, what must be proven
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#driving-lhd-formal-verify-from-an-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Driving lhd formal verify from an agent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#formal-checking-inside-every-compile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Formal checking inside every compile
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#counterexamples-are-simulation-artifacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Counterexamples are simulation artifacts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#incremental-re-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Incremental re-verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#structural-diff-as-a-standalone-tool" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Structural diff as a standalone tool
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exporting-to-theorem-provers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exporting to theorem provers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not-implemented-yet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not implemented yet
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#developers-point-of-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Developer's point of view
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Developer&#39;s point of view">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#one-relational-core-several-consumers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One relational core, several consumers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#word-level-encoding-validated-by-construction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Word-level encoding, validated by construction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#two-sequential-engines-and-a-trust-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two sequential engines and a trust policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hierarchy-prove-the-leaves-abstract-them-away" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hierarchy: prove the leaves, abstract them away
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#state-correspondence-in-two-tiers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        State correspondence in two tiers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-structural-diff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The structural diff
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#divide-and-conquer-without-weakening-verdicts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Divide and conquer without weakening verdicts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-property-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The property engine
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caching-without-lying" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Caching without lying
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-compile-tier-as-a-formal-consumer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The compile tier as a formal consumer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#translation-validation-with-theorem-provers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Translation validation with theorem provers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-synth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Synthesis &amp; the frequency-optimization loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-bazel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bazel build
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10b-3rdparty/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3rd Party
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../11-pass/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Creating a Pass
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../12-github/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GitHub Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../13-style/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding Style
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Pyrope
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/00-hwdesign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hardware Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/01-introduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/01b-quick_intro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Intro to Pyrope
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/02-basics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basic syntax
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/03-bundle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tuples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/04-variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Variables and types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/04b-attributes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Attributes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/05-assert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/05b-statements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Statements
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/06-functions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lambdas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/06b-instantiation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Instantiation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/06c-pipelining/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipelining
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/06d-fluid/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fluid Blocks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/07-typesystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Type system
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/07b-structtype/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Structural Typing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/08-memories/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memories
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/09-stdlib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope std lib
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/09-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Extended Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/09b-simquery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Querying a simulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/10-internals/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internals
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/10b-vslang/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vs Other Languages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/12-lnast/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LNAST
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/13-stdlib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope Standard Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/15-tbd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation status (TBD)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/21-deprecated/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deprecated or Future
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pyrope/22-deprecated_pipelining/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deprecated Pipelining
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#users-point-of-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User's point of view
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="User&#39;s point of view">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#one-verdict-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One verdict contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#equivalence-checking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Equivalence checking
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#property-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Property verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#assume-forms-what-constrains-what-must-be-proven" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Assume forms: what constrains, what must be proven
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#driving-lhd-formal-verify-from-an-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Driving lhd formal verify from an agent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#formal-checking-inside-every-compile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Formal checking inside every compile
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#counterexamples-are-simulation-artifacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Counterexamples are simulation artifacts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#incremental-re-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Incremental re-verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#structural-diff-as-a-standalone-tool" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Structural diff as a standalone tool
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exporting-to-theorem-provers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exporting to theorem provers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not-implemented-yet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not implemented yet
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#developers-point-of-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Developer's point of view
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Developer&#39;s point of view">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#one-relational-core-several-consumers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One relational core, several consumers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#word-level-encoding-validated-by-construction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Word-level encoding, validated by construction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#two-sequential-engines-and-a-trust-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two sequential engines and a trust policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hierarchy-prove-the-leaves-abstract-them-away" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hierarchy: prove the leaves, abstract them away
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#state-correspondence-in-two-tiers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        State correspondence in two tiers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-structural-diff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The structural diff
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#divide-and-conquer-without-weakening-verdicts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Divide and conquer without weakening verdicts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-property-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The property engine
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caching-without-lying" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Caching without lying
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-compile-tier-as-a-formal-consumer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The compile tier as a formal consumer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#translation-validation-with-theorem-provers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Translation validation with theorem provers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="formal-verification">Formal Verification<a class="headerlink" href="#formal-verification" title="Permanent link">&para;</a></h1>
+<p>LiveHD's goal is a hardware flow "that you can trust" (<a href="../00-intro/">intro</a>),
+and formal verification is how that trust is earned mechanically rather than
+by convention: equivalence proofs guard every translation the compiler
+performs, user assertions become machine-checked obligations, and every
+ordinary compile runs a small formal pass whose proofs feed back into the
+generated design.</p>
+<p>Three user-visible fronts share one formal engine:</p>
+<table>
+<thead>
+<tr>
+<th>Front</th>
+<th>Question answered</th>
+<th>Entry point</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Equivalence checking</td>
+<td>are these two designs the same?</td>
+<td><code>lhd formal lec</code></td>
+</tr>
+<tr>
+<td>Property verification</td>
+<td>do the asserts of this design hold?</td>
+<td><code>lhd formal verify</code></td>
+</tr>
+<tr>
+<td>Compile-time checking</td>
+<td>what can be proven for free in every build</td>
+<td><code>lhd compile</code></td>
+</tr>
+</tbody>
+</table>
+<p>Two more components support them: a solver-free structural diff (<code>pass/semdiff</code>)
+that tells the engine which parts of two designs already correspond, and a
+research track that exports compiled designs to the Isabelle and Lean theorem
+provers (<code>pass/isabelle</code>, <code>pass/lean</code>) for translation validation. The engine
+core lives in <code>pass/lec</code> (shared by all fronts), the compile-time tier in
+<code>pass/formal</code>.</p>
+<p>The command syntax is documented in the
+<a href="../02-usage/#equivalence-checking-lec">usage chapter</a> and the property
+language in the <a href="../../pyrope/05-assert/">Pyrope verification chapter</a>; this
+chapter explains what the system does and why.</p>
+<h2 id="users-point-of-view">User's point of view<a class="headerlink" href="#users-point-of-view" title="Permanent link">&para;</a></h2>
+<h3 id="one-verdict-contract">One verdict contract<a class="headerlink" href="#one-verdict-contract" title="Permanent link">&para;</a></h3>
+<p>Every front answers with one of three verdicts, under a single non-negotiable
+contract: <strong>PROVEN means definitively true, REFUTED means definitively false
+with a counterexample, and everything else is reported as UNKNOWN</strong> — an
+inconclusive answer is acceptable, a wrong one never is. No optimization,
+cache, hint, or shortcut inside the engine is allowed to change a verdict;
+they may only change how fast it arrives.</p>
+<p>The contract is deliberately asymmetric about what each verdict may rest on:</p>
+<ul>
+<li>A PROVEN is either an unbounded proof (holds at every cycle, forever) or a
+  transparently labeled bounded one ("PROVEN to cycle k" — no violation within
+  the explored window). The two are never conflated.</li>
+<li>A REFUTED always rests on a counterexample reachable from reset, replayable
+  cycle by cycle. Anything less trustworthy — for example a violation that
+  might start from an unreachable state — degrades to UNKNOWN instead.</li>
+<li>A conditional pass is always disclosed: a verdict proven under environment
+  assumptions reads "PROVEN under N input assume(s)", one relying on unchecked
+  user facts reads "under N unchecked assume(s)", and one relying on
+  automatically guessed register pairings says so. The three can never be
+  confused with an unconditional proof.</li>
+</ul>
+<p>By default a refutation is a hard failure (non-zero exit), while an UNKNOWN
+is a loud warning that does not fail the run; a strict mode turns UNKNOWN
+into a failure too. One escalation: an equivalence check whose incomplete
+run nonetheless surfaced a concrete divergence witness fails even without
+strict mode.</p>
+<h3 id="equivalence-checking">Equivalence checking<a class="headerlink" href="#equivalence-checking" title="Permanent link">&para;</a></h3>
+<p><code>lhd formal lec</code> proves two designs equivalent — a Pyrope compile against its
+Verilog original, two revisions of a design, a pre- and post-synthesis
+netlist. Each side may come from any front end (Verilog, Pyrope, or saved
+LiveHD graphs), and the two sides' top modules are always force-paired so the
+requested proof cannot silently become vacuous.</p>
+<p>Hierarchical checking is the default: every module under the chosen top is
+proven leaves-first, already-proven children are abstracted out of their
+parents' proofs, and each module reports a machine-parseable progress line the
+moment it settles. Combined with the on-disk cache (below), the practical
+consequence is that editing one module of a large design re-proves roughly
+that one module and its ancestors, not the world.</p>
+<p>Register naming does not have to survive between the two sides. Registers are
+matched by canonicalized name first; explicit correspondences can be supplied
+for the rest; and remaining renamed registers are paired automatically by a
+structural analysis whose guesses are applied speculatively — a wrong guess
+can cost solve time but never a wrong verdict. Registers that stay unpaired
+are reported with a reason (ambiguous twin, differing reset value, no
+structural match) so the user can iterate instead of hitting a wall.</p>
+<p>Users can also help the prover: <code>formal</code> blocks
+(<a href="../../pyrope/05-assert/#formal-blocks">Pyrope syntax</a>) supply invariants and
+environment assumptions. An internal invariant must itself be proven before it
+may constrain the equivalence proof — the tool never accepts a user fact on
+faith silently — and every admitted assumption is disclosed in the verdict.</p>
+<p>Reset behavior is explicit rather than folded away: the tool separates the
+reset-asserted and free-running regimes and by default compares the designs
+after a held reset, with modes to compare during reset, ignore reset, or
+require agreement in both regimes. Reset inputs are detected automatically or
+named explicitly with polarity.</p>
+<h3 id="property-verification">Property verification<a class="headerlink" href="#property-verification" title="Permanent link">&para;</a></h3>
+<p><code>lhd formal verify</code> takes one design plus optional sidecar property files and
+adjudicates every assert as an independent obligation, reported in a
+per-assert verdict table: PROVEN (inductive — holds at every cycle), PROVEN
+to a cycle (bounded), REFUTED at a cycle with a trace, or UNKNOWN. Because
+obligations are independent, a timeout is local — it costs one property at
+one cycle, not the whole run.</p>
+<p>Properties are written in ordinary Pyrope — inline <code>assert</code>/<code>assume</code> in the
+design, or declarative <code>formal</code> blocks kept in sidecar files and bound to
+module instances from the outside, so internals can be verified without
+editing the module. Property expressions compile through the normal compiler,
+which guarantees property semantics can never diverge from language
+semantics. A block bound to a submodule is checked once per instance, each
+reported separately.</p>
+<p>Bounded results are not the ceiling: an induction step runs after the bounded
+sweep and promotes every property that survives it to an unbounded PROVEN, so
+full proofs — not just "no bug up to cycle k" — are the routine outcome for
+well-behaved invariants.</p>
+<p>A minimal end-to-end run — design, sidecar collateral, verdicts, artifacts
+(the <a href="../../pyrope/05-assert/#formal-blocks">Pyrope assert chapter</a> shows the
+two files):</p>
+<div class="highlight"><pre><span></span><code>lhd<span class="w"> </span>formal<span class="w"> </span>verify<span class="w"> </span>cnt.prp<span class="w"> </span>cnt.verify.prp<span class="w"> </span>--top<span class="w"> </span>cnt<span class="w"> </span>--set<span class="w"> </span>formal.bound<span class="o">=</span><span class="m">10</span><span class="w"> </span>--workdir<span class="w"> </span>w
+<span class="c1">#   assert at cnt.verify.prp:5 "'parity tracks bit0'" [cnt.parity]: PROVEN (inductive — every cycle of every bound)</span>
+<span class="c1">#   assume at cnt.verify.prp:10 [cnt.bounded]: in force (input environment constraint; verdicts are conditional on it)</span>
+<span class="c1">#   assert at cnt.verify.prp:11 "'frozen'" [cnt.bounded]: PROVEN (inductive — every cycle of every bound)</span>
+
+ls<span class="w"> </span>w/
+<span class="c1">#   formal_report.json   every obligation (PASSED ones included): verdict, cycles,</span>
+<span class="c1">#                        assume class, solve_ms, timeout core, artifact paths</span>
+<span class="c1">#   formal_cache.json    proven obligations, replayed free on the next run</span>
+<span class="c1"># and on a REFUTED run additionally:</span>
+<span class="c1">#   formalfail.prp       self-contained `lhd sim` testbench driving the trace</span>
+<span class="c1">#   formalfail.json      machine witness: root_cut {file,line,cycle} + input trace</span>
+<span class="c1">#   formalfail.vcd       waveform of the replay (the runtime assert re-fires)</span>
+
+jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.obligations[] | select(.verdict=="proven") | .id'</span><span class="w"> </span>w/formal_report.json<span class="w">  </span><span class="c1"># the passed list</span>
+</code></pre></div>
+<h3 id="assume-forms-what-constrains-what-must-be-proven">Assume forms: what constrains, what must be proven<a class="headerlink" href="#assume-forms-what-constrains-what-must-be-proven" title="Permanent link">&para;</a></h3>
+<p>An <code>assume</code> is classified by what its expression touches, and the class
+decides whether it is free or must earn its keep:</p>
+<ul>
+<li>Over <strong>primary inputs only</strong> — an environment constraint by nature (inputs
+  are otherwise free; there is nothing to prove). It is in force at every
+  cycle, and every verdict discloses it: "PROVEN … under 1 input assume(s)"
+  is a conditional result, never mistaken for an unconditional one.</li>
+<li>Touching <strong>design state or outputs</strong> — a proof obligation, prove-then-use.
+  The engine checks it per cycle like an assert; only a cycle it just proved
+  may constrain the remaining obligations, and only an inductive survivor
+  constrains the induction step. A <strong>refuted</strong> internal assume fails the run
+  (the claimed invariant is false — before this discipline it would silently
+  fake a PROVEN for everything it masked), and an <strong>unproven</strong> one is simply
+  not used, disclosed as such.</li>
+<li><code>assume_nocheck_formal</code> (formal blocks only) — a free constraint by
+  explicit user fiat: accepted, warned per encounter, and disclosed
+  distinctly ("under N UNCHECKED assume(s)"). <code>assume_nocheck_synth</code> is
+  invisible to verification — it exists solely for the synthesis don't-care
+  pool.</li>
+</ul>
+<p>A contradictory free-constraint set voids every proof (the vacuity check
+demotes them to UNKNOWN), so an over-constrained environment cannot pass
+silently. Lambda <code>requires</code>/<code>ensures</code> contracts are not lowered yet; using
+them warns loudly that they generate no obligation.</p>
+<h3 id="driving-lhd-formal-verify-from-an-agent">Driving <code>lhd formal verify</code> from an agent<a class="headerlink" href="#driving-lhd-formal-verify-from-an-agent" title="Permanent link">&para;</a></h3>
+<p>The stdout verdict table is the human view; the machine contract is
+<code>formal_report.json</code>, written into the workdir on <strong>every</strong> run — including
+UNKNOWN, which is precisely the verdict an agent must act on. Pass
+<code>--workdir</code> so reports, caches, and witnesses persist across iterations. The
+report carries the run headline (verdict, budget, assume counts), one record
+per obligation — a stable id (<code>kind@file:line[block]</code>), verdict, proven/
+refuted/unknown cycles, an <code>unknown_why</code>, the assume class, and cumulative
+<code>solve_ms</code> — plus the structured <code>timeout_core</code> (which still-open obligations
+jointly exhaust the solver, from <code>formal.minetimeout</code>) and the paths of any
+witness artifacts (<code>formalfail.prp</code>, <code>formalfail.json</code>, the replay VCD).</p>
+<p>The loop an agent runs:</p>
+<ol>
+<li><code>lhd formal verify design.prp --workdir W --set formal.minetimeout=10</code>
+   (exit 0 = no refutation; REFUTED exits 1; UNKNOWN warns unless
+   <code>formal.strict=true</code>).</li>
+<li>Parse <code>W/formal_report.json</code>. REFUTED obligations come with a trace, a
+   ready-to-run testbench, and a source-mapped root cut — fix the design or
+   the property. UNKNOWN obligations are ranked by <code>solve_ms</code> and named by
+   the timeout core — that is where a helper invariant pays.</li>
+<li>Strengthen: add <code>assert</code>/<code>assume</code> in a sidecar <code>formal</code> block near the
+   pain. State-touching assumes are themselves proven, so a wrong helper is
+   refuted instead of corrupting the run; proven helpers prune every
+   remaining obligation and re-prove instantly from the cache on the next
+   iteration. The tool helps: with <code>formal.minetimeout</code> set, a stuck run
+   <strong>mines</strong> invariant candidates from its own solver work (learned
+   literals, range/equality templates over the stuck registers), keeps only
+   those that hold at every checked cycle <em>and</em> survive induction, and
+   emits them as a paste-ready block (<code>W/formal_mined.prp</code>, mirrored in the
+   report's <code>mined[]</code>) — pass it back as a sidecar or curate it into your
+   own. <code>formal.mine=speculative</code> additionally reports bounded candidates
+   the induction step dropped.</li>
+<li>Re-run. The verdict cache (<code>W/formal_cache.json</code>) makes unchanged
+   obligations free, so iteration cost tracks the edit, not the design.</li>
+</ol>
+<h3 id="formal-checking-inside-every-compile">Formal checking inside every compile<a class="headerlink" href="#formal-checking-inside-every-compile" title="Permanent link">&para;</a></h3>
+<p>Every optimizing <code>lhd compile</code> runs a formal tier (<code>pass/formal</code>) in a
+deliberately cheap, deterministic profile (the tier is off at <code>-O0</code>). It
+proves what it can quickly and never blocks a good build:</p>
+<ul>
+<li>An assert <strong>proven</strong> unbounded is elided from the generated design — the
+  proof pays for itself as a synthesis optimization.</li>
+<li>A <strong>refutation</strong> of a user assert is a compile error only when it cannot
+  be an artifact of unreachable state: in the default profile, a
+  counterexample over a state-free cone at the committed design top; in the
+  stronger opt-in profile, a counterexample confirmed reachable from a
+  pinned reset, reported with its witness cycle.</li>
+<li>Everything else — timeout, unknown, a counterexample that might start from
+  an unreachable state, a refutation inside a submodule whose real parent may
+  constrain its inputs — is <strong>deferred</strong>: the assert stays as a runtime
+  simulation check and the compile succeeds with a warning that says why.</li>
+</ul>
+<p>Timeout is never an error in this tier; that is the design guarantee, not a
+limitation. Because a proof here changes the build output, verdicts must be
+reproducible: the tier budgets the solver with a machine-independent
+resource limit rather than wall-clock time, so the same design gives the
+same verdicts on every machine and build mode. The compiler also proves its
+own generated obligations — every one-hot mux selector (from <code>unique if</code> /
+<code>match</code>) is checked for overlapping arms, and a violated selector is
+reported even when its counterexample may depend on register state, since
+the construct is the user's own exclusivity claim. (Bitwidth consistency is
+enforced by a separate static analysis of the compiler, not by the prover.)</p>
+<h3 id="counterexamples-are-simulation-artifacts">Counterexamples are simulation artifacts<a class="headerlink" href="#counterexamples-are-simulation-artifacts" title="Permanent link">&para;</a></h3>
+<p>A formal refutation is only useful if it can be debugged with familiar tools.
+When a check fails under a working directory, the tool writes a
+self-contained Pyrope testbench that instantiates the design (both designs,
+for equivalence), drives the exact per-cycle counterexample stimulus including
+the reset prologue, and replays it through the simulator to produce a single
+VCD waveform whose traces show precisely where behavior diverges. The
+testbench is an ordinary editable source file: fix the design and re-run it.</p>
+<p>The witness also localizes: it names the first register whose state diverges —
+the root the failing output merely inherits — and maps it back to the source
+line that declared it, both in the verdict and as a comment in the generated
+testbench. Alongside the testbench the tool writes a machine-readable witness
+file (the full driven trace plus that root-cut record) for CI and triage
+tooling, its input sequence guaranteed identical to the one the testbench
+drives.</p>
+<h3 id="incremental-re-verification">Incremental re-verification<a class="headerlink" href="#incremental-re-verification" title="Permanent link">&para;</a></h3>
+<p>With a persistent working directory, verification is incremental across
+invocations:</p>
+<ul>
+<li>Unchanged modules settle from a verdict cache with no solver call at all.</li>
+<li>Structurally identical module pairs are recognized and skipped without
+  solving, independent of the cache.</li>
+<li>Work that previously ended UNKNOWN at a given budget is not re-ground on an
+  unchanged design — it is skipped and reported inconclusive again until the
+  design, options, budget, or prover changes, or a retry is forced.</li>
+<li>The cache remembers what worked — the winning proof strategy, the case-split
+  choice, validated register pairings — and replays it first on the next run.
+  These hints survive design edits and can never make a verdict wrong: a
+  replayed pairing may lift an UNKNOWN to PROVEN and deletes itself when
+  stale, nothing more.</li>
+<li>One working directory holds one cache for many designs. A hierarchical run
+  records a verdict for the top <em>and</em> every module it contains, each keyed by
+  its own digest, and each run merges into the shared file rather than
+  replacing it — so checking a top and later checking one of its submodules on
+  the same working directory reuses the earlier proof with no re-solve. (The
+  merge is safe for runs one after another; it is not designed for two writers
+  hammering the same working directory at once.)</li>
+</ul>
+<p>Most of this machinery serves equivalence checking today; property
+verification currently reuses the per-obligation verdict cache, with hint
+replay and the UNKNOWN ledger pending on that front.</p>
+<h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">&para;</a></h3>
+<p>The equivalence and property-verification fronts share one option namespace,
+<code>formal.*</code>, with the legacy <code>lec.*</code> spellings accepted interchangeably (the
+table shows each knob in its customary spelling); the compile-time tier has
+its own small knob set under <code>compile.formal.*</code>. A mistyped flag is a hard
+error, never a silent no-op. The load-bearing knobs:</p>
+<table>
+<thead>
+<tr>
+<th>Knob</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>formal.engine</code></td>
+<td><code>auto</code> (default: race complementary strategies), <code>bmc</code>; <code>ind</code> selects the inductive miter (equivalence only)</td>
+</tr>
+<tr>
+<td><code>formal.bound</code></td>
+<td>BMC / induction depth (default 6)</td>
+</tr>
+<tr>
+<td><code>formal.timeout</code></td>
+<td>soft total budget for <strong>solver</strong> (BMC/cvc5) time across the equivalence command — a target, not a hard wall-clock deadline; semdiff and encoding do not draw from it. A lone or compile-tier query treats it as its per-query cap; hard problems degrade to UNKNOWN</td>
+</tr>
+<tr>
+<td><code>formal.budget_mode</code></td>
+<td><code>wall</code> (spend <code>formal.timeout</code> as a soft solver-time total, default) or <code>rlimit</code> (no wall-clock budget — the deterministic CI path)</td>
+</tr>
+<tr>
+<td><code>formal.minetimeout</code></td>
+<td>a <strong>separate</strong> budget for the diagnosis/mining phase (which also iterates the solver), so it never steals from <code>formal.timeout</code>; 0 = off</td>
+</tr>
+<tr>
+<td><code>formal.rlimit</code></td>
+<td>deterministic solver budget for reproducible CI verdicts</td>
+</tr>
+<tr>
+<td><code>formal.phase</code> / <code>formal.reset</code></td>
+<td>reset regime selection and explicit reset naming</td>
+</tr>
+<tr>
+<td><code>formal.jobs</code></td>
+<td>bound on concurrent solver processes (default 4)</td>
+</tr>
+<tr>
+<td><code>formal.partitions</code> / <code>formal.split</code></td>
+<td>parallel input case-splitting</td>
+</tr>
+<tr>
+<td><code>formal.strict</code></td>
+<td>make UNKNOWN a hard failure</td>
+</tr>
+<tr>
+<td><code>formal.report</code></td>
+<td>verify's machine-readable run report filename (default <code>formal_report.json</code>, written into the workdir on every run; <code>false</code> = off)</td>
+</tr>
+<tr>
+<td><code>lec.match</code></td>
+<td>explicit register correspondences</td>
+</tr>
+<tr>
+<td><code>lec.state_pairing</code></td>
+<td>automatic speculative register pairing (default on)</td>
+</tr>
+<tr>
+<td><code>lec.cache</code> / <code>lec.retry</code></td>
+<td>verdict cache control under a working directory</td>
+</tr>
+</tbody>
+</table>
+<h3 id="structural-diff-as-a-standalone-tool">Structural diff as a standalone tool<a class="headerlink" href="#structural-diff-as-a-standalone-tool" title="Permanent link">&para;</a></h3>
+<p>The structural matcher is also a user-facing command: <code>lhd pass semdiff</code>
+compares two compiled designs and stamps corresponding nodes with a shared
+match id, so "what actually changed" is directly greppable and viewable —
+matched regions collapse away and only genuinely differing logic remains. A
+hierarchical mode sweeps all module pairs and reports state-correspondence
+statistics, including exactly which registers could not be paired and why.</p>
+<h3 id="exporting-to-theorem-provers">Exporting to theorem provers<a class="headerlink" href="#exporting-to-theorem-provers" title="Permanent link">&para;</a></h3>
+<p>As an additional emission target of the standard compile, a design can be
+exported as an executable model for the Isabelle or Lean theorem provers:
+typed input/output/state records, a next-state and output function, and a
+step function modeling one clock edge, plus a data-level certificate of the
+design for machine-checked well-formedness proofs. This is a research-grade
+translation-validation flow (see the developer section) rather than a routine
+signoff tool, but it is exercised on real cores and has repeatedly caught
+compiler bugs.</p>
+<h3 id="not-implemented-yet">Not implemented yet<a class="headerlink" href="#not-implemented-yet" title="Permanent link">&para;</a></h3>
+<div class="admonition warning">
+<p class="admonition-title">TBD</p>
+<p>The following are planned or under design, not usable today. Current
+plans live in the LiveHD repository's <code>todo/</code> hub.</p>
+</div>
+<ul>
+<li><strong>Invariant-mining refinements.</strong> The mining loop itself works (below):
+  candidates from solver learned literals and register templates are
+  base-proven and Houdini-filtered, and inductive survivors are emitted as a
+  ready-to-paste <code>formal</code> block with provenance. Still pending are the richer
+  ranking signals (<code>getDifficulty</code> mass, <code>getUnsatCore</code> earns-its-keep
+  pruning) and more template families (one-hot, mutual exclusion,
+  count-equals-popcount).</li>
+<li><strong>Synthesis consuming <code>assume_nocheck_synth</code>.</strong> The three-form assume
+  contract is implemented on the verification fronts (input assumes are free
+  and disclosed, state-touching assumes are prove-then-use, both nocheck
+  spellings behave as documented above); what remains is synthesis actually
+  consuming the synthesis-only don't-care facts (the ABC EXDC network).</li>
+<li><strong>Temporal properties.</strong> The SVA-style temporal library documented on the
+  Pyrope side (<a href="../../pyrope/09-verification/">extended verification</a>) does
+  not lower to proofs yet; only single-cycle invariant properties are proven.</li>
+<li><strong>In-language <code>lec()</code>.</strong> Calling equivalence checking from Pyrope source is
+  documented as TBD in the <a href="../../pyrope/05-assert/#lec">Pyrope chapter</a>;
+  the implemented form is the <code>lhd formal lec</code> command.</li>
+<li><strong>Alternative solver backends and IC3.</strong> The <code>bitwuzla</code> solver value and
+  the <code>ic3</code> engine value are accepted but have nothing behind them; the
+  trust-path backend is cvc5, and the working engines are BMC, induction,
+  and their portfolio. (A yosys-based cross-check backend exists for
+  bring-up and gate-level netlists, never as a production verdict source.)</li>
+<li><strong>Transaction-level ("fluid") equivalence.</strong> Proving designs equivalent
+  across latency changes (retiming, elastic buffering) by comparing accepted
+  transaction streams instead of cycle-accurate outputs — an early research
+  direction, not started.</li>
+</ul>
+<h2 id="developers-point-of-view">Developer's point of view<a class="headerlink" href="#developers-point-of-view" title="Permanent link">&para;</a></h2>
+<h3 id="one-relational-core-several-consumers">One relational core, several consumers<a class="headerlink" href="#one-relational-core-several-consumers" title="Permanent link">&para;</a></h3>
+<p>Internally the engine is framed not as an equivalence checker but as a
+relational query engine over compiled designs: the primitive question is
+"what is the relation between these cones of logic?". Equivalence checking,
+property verification, and the compile-time tier are thin consumers of one
+core (in <code>pass/lec</code>) that owns encoding, sequential reasoning, parallel
+orchestration, and caching. This unification is deliberate policy: every
+soundness rule is implemented once, and the compile-time tier's thorough
+mode is just a restricted option profile of that core. (Its default cheap
+mode keeps a dedicated single-frame prover — the one deliberate exception.)</p>
+<h3 id="word-level-encoding-validated-by-construction">Word-level encoding, validated by construction<a class="headerlink" href="#word-level-encoding-validated-by-construction" title="Permanent link">&para;</a></h3>
+<p>Designs encode directly into a word-level SMT theory (quantifier-free
+bit-vectors plus arrays) discharged by an in-process solver — no intermediate
+model checker, no bit-blasted netlist format. A combinational equivalence
+proof is a classic miter: assert that some output differs and ask for
+satisfiability; UNSAT is a proof, SAT is a witness.</p>
+<p>The encoder is deliberately structured as a sibling of the Verilog code
+generator — the same traversal, the same per-operator semantics — which
+enables the strongest available validation: emit both the SMT model and the
+Verilog from the same design and cross-check them with an independent
+external checker. An encoder bug is thereby caught before it can mask a real
+design difference; a cross-check disagreement is treated as an internal error,
+never shipped as a verdict.</p>
+<p>Memories map onto the theory of arrays: corresponding memories collapse to a
+shared array symbol, reads are selects, writes are stores in port order, and
+synchronous read ports become registered state. Don't-care semantics follow
+industry practice: unknown bits in the reference design propagate as a
+parallel bit-plane and are excluded from comparison, so any implementation of
+a specification don't-care is accepted.</p>
+<h3 id="two-sequential-engines-and-a-trust-policy">Two sequential engines and a trust policy<a class="headerlink" href="#two-sequential-engines-and-a-trust-policy" title="Permanent link">&para;</a></h3>
+<p>Sequential equivalence uses two complementary engines whose failure modes are
+opposite, and a policy that only trusts each engine where it is strong:</p>
+<ul>
+<li><strong>Induction with cut state</strong> cuts every register into a free symbolic
+  variable, assumes corresponding states equal, and proves next states and
+  outputs agree. Its proofs are unbounded and definitive; its refutations may
+  rest on unreachable states, so they are only hints.</li>
+<li><strong>Bounded model checking from reset</strong> unrolls each design's own transition
+  function from the initial state. Its refutations are real, replayable bugs;
+  its proofs are only as deep as the bound.</li>
+</ul>
+<p>The default mode races both in parallel and takes the first trustworthy
+answer: inductive PROVEN and BMC REFUTED are final, an inductive refutation
+never fails a build, and a bounded pass is reported as exactly that. When
+both designs are stateless the induction miter <em>is</em> the combinational miter,
+so the race is skipped entirely. Property verification applies the same
+asymmetry per obligation.</p>
+<p>All parallelism is process-based — solver instances are raced as forked
+children — because it yields hard-kill cancellation for free and avoids
+relying on unverified solver thread-safety. One global pool bounds total
+concurrent solvers no matter how hierarchy, racing, and case-splits nest.</p>
+<h3 id="hierarchy-prove-the-leaves-abstract-them-away">Hierarchy: prove the leaves, abstract them away<a class="headerlink" href="#hierarchy-prove-the-leaves-abstract-them-away" title="Permanent link">&para;</a></h3>
+<p>Hierarchical equivalence walks the module-definition DAG bottom-up as a
+parallel task graph: all ready leaves solve concurrently, and a parent
+unlocks when its children settle. A proven child is then <em>collapsed</em> in its
+parent's proof — a stateless child becomes an uninterpreted function shared
+by both sides and all instances (congruence pairs interchangeable instances
+for free), a stateful child becomes a state-aware opaque box whose outputs
+depend only on its state. Collapse is an over-approximation, so the discipline
+is one-sided: a proof under collapse stands, but a refutation under collapse
+is re-confirmed on the flattened problem before it may be reported — a FAIL
+only ever comes from a counterexample free of abstraction. A submodule
+correspondence present on only one side gates the verdict to UNKNOWN rather
+than guessing.</p>
+<p>Before any solving, a structural pre-pass settles for free every module pair
+that is structurally identical (guarded by all-children-proven, so a child's
+internal difference is never masked). Cross-front-end pairs rarely match
+structurally; same-source rebuilds almost always do — which is what makes
+warm re-verification of a large design nearly proportional to the edit.</p>
+<h3 id="state-correspondence-in-two-tiers">State correspondence in two tiers<a class="headerlink" href="#state-correspondence-in-two-tiers" title="Permanent link">&para;</a></h3>
+<p>The inductive engine needs to know which register on one side corresponds to
+which on the other. Correspondence is tiered by confidence:</p>
+<ul>
+<li><strong>Tier 1 — certain.</strong> Names are canonicalized (front-end decoration and SSA
+  suffixes stripped) so different toolchains' spellings of the same register
+  converge; explicit user pairs layer on top. Memories are never paired by
+  name at all — shape and occurrence order are the key — because renamed
+  memories are common and nominal aliasing is a soundness trap.</li>
+<li><strong>Tier 2 — speculative.</strong> Remaining unmatched registers are paired by the
+  structural-signature analysis of the semantic diff (below) and injected as
+  <em>uncertain</em> hypotheses under a strict discipline: an unbounded inductive
+  proof under uncertain pairs is self-certifying (the pairing hypothesis is
+  part of what was proven, given the enforced equal-reset-value
+  precondition) and is accepted with disclosure; a refutation under pairs is
+  never final — all pairs are dropped and the problem re-solved once, and
+  only a pair-free refutation becomes a FAIL; a merely bounded pass under
+  pairs is suppressed to UNKNOWN, since a wrong pairing could manufacture
+  bounded agreement through the shared initial state.</li>
+</ul>
+<p>The net effect is that speculation can move a verdict only between UNKNOWN
+and PROVEN — never to a wrong answer. Pairings validated by a passing proof
+persist (keyed by module name, so they survive edits), are re-validated on
+every replay, and self-delete when stale.</p>
+<h3 id="the-structural-diff">The structural diff<a class="headerlink" href="#the-structural-diff" title="Permanent link">&para;</a></h3>
+<p>The semantic-diff engine (<code>pass/semdiff</code>) is an anchored, meet-in-the-middle
+structural matcher: forward signatures grow from named inputs and constants,
+backward signatures grow from named outputs, and nodes whose signatures agree
+on both sides join a shared match class. The forward direction is
+authoritative — once a node's input cone has no counterpart it is genuinely
+different, and the backward pass may not rescue it. Commutative operands are
+normalized only within one operand class of an operator (an adder's added and
+subtracted operands never mix), and operator width stays in every key.</p>
+<p>State cells are cut points, matched by the tiered scheme above; the tier-2
+pass is a deliberately simplified variant of a companion signature-based
+alignment scheme (a paper currently under submission), kept <em>full-match
+only</em>: ambiguous candidate buckets are never force-picked, trading recall
+for precision, because the consumer re-verifies every pair anyway. Signature
+items are annotated with anchor distance so linear chains of identical
+elements (shift registers) still resolve. Measured on an 18k-register
+open-source core, name-based pairing is exact when names survive; with
+names entirely destroyed the structural tier still recovers a quarter of
+the pairs, and in a controlled experiment destroying 10% of the names it
+recovers about half of them — with zero wrong pairs in every measured run,
+precision being the property that matters.</p>
+<div class="admonition note">
+<p class="admonition-title">TBD</p>
+<p>The planned second algorithm matches the <em>unmatched gaps</em> n:m by proving
+per-gap boundary equivalence with small bounded miters, so equivalence
+checking can assume matched regions equal and hand the solver only the
+genuinely differing logic — shrinking the miter to the size of the edit.</p>
+</div>
+<h3 id="divide-and-conquer-without-weakening-verdicts">Divide and conquer without weakening verdicts<a class="headerlink" href="#divide-and-conquer-without-weakening-verdicts" title="Permanent link">&para;</a></h3>
+<p>Two orthogonal accelerators split hard problems, both with sound fallbacks:</p>
+<ul>
+<li><strong>Per-cut decomposition</strong> splits the output-difference disjunction into one
+  small UNSAT query per output or state cut — a disjunction is unsatisfiable
+  iff every disjunct is — so easy cuts discharge instantly and only the hard
+  cone remains, with automatic fallback to the monolithic solve.</li>
+<li><strong>Input case-splitting</strong> picks a small control input (scored by a
+  linear-time sweep of the forward cone: how much wide mux/shift logic the
+  candidate feeds), pins it to each constant value, and proves the disjoint
+  cubes in parallel. Every satisfiable cube is a genuine counterexample; all
+  cubes UNSAT is a proof; anything else falls back to the monolithic solve.
+  Pinning a selector lets the solver fold control-dependent wide operators,
+  which is why a proof that ran for tens of seconds can drop under a second.</li>
+</ul>
+<h3 id="the-property-engine">The property engine<a class="headerlink" href="#the-property-engine" title="Permanent link">&para;</a></h3>
+<p>Property verification restructures the same substrate around one persistent
+incremental solver. Each obligation is checked cycle by cycle as a retractable
+assumption query, and every proven fact is immediately re-asserted as a
+constraint that prunes the search for everything checked after it — under
+adversarially reviewed soundness rules: a fact proven to cycle k may be
+assumed only at cycles ≤ k and only as the exact proven term; sibling
+properties may be assumed only at strictly earlier cycles than the cycle
+being checked (the circular-reasoning rule); and bounded facts are never
+injected into an induction step frame, whose states may be unreachable.</p>
+<p>After the bounded sweep, a simultaneous 1-induction pass with a
+Houdini-style drop loop runs over the surviving properties: assume all
+candidates, drop those that fail their step check, iterate to a fixed point —
+the survivors' conjunction is inductive with the bounded run as its base
+case, promoting them to unbounded verdicts. The default mode races two
+whole-run strategies (deep-bound BMC first vs. shallow-bound induction
+first) and merges per obligation, keeping the strongest verdict for each.</p>
+<h3 id="caching-without-lying">Caching without lying<a class="headerlink" href="#caching-without-lying" title="Permanent link">&para;</a></h3>
+<p>The verdict cache is engineered so that a cache hit is a theorem, not a hope:</p>
+<ul>
+<li>Equivalence verdicts are keyed by a hierarchical, Merkle-style canonical
+  digest of each side — operators, widths, port-scoped connectivity,
+  interface, recursively folded child digests — so a digest hit means "this
+  exact proof problem", independent of process or build. A design containing
+  anonymous state refuses to digest at all: soundness over coverage. The same
+  digest-keyed store serves both equivalence paths — the bottom-up per-module
+  driver and the flat, whole-design single-miter path — so a cache hit is a
+  hit however the run was decomposed.</li>
+<li>Property-verification obligations are keyed by hashing the exact serialized
+  solver encoding, so any change in encoder semantics invalidates cached
+  results automatically.</li>
+<li>Everything verdict-relevant enters the key — engine, bounds, reset regime,
+  assumption sets, certain and uncertain pairings as <em>distinct</em> segments — so
+  a conditional proof can never replay as an unconditional one. Pure
+  effort/strategy knobs deliberately stay out of the key.</li>
+<li>The whole verdict store is salted with a build-time content hash of the
+  prover's own sources and solver version: any prover change silently
+  invalidates every cached verdict with no human in the loop.</li>
+<li>Only proofs are cached today — a refutation is cheap to reconfirm, and
+  caching it soundly would require re-validating its witness — and UNKNOWN
+  is never cached as a verdict. A separate ledger records "already came back
+  UNKNOWN at this budget" purely to skip re-grinding unchanged hopeless work.</li>
+</ul>
+<p>Distinct from verdicts, <em>hints</em> are keyed by canonical module name so they
+survive edits. Strategy hints — the winning engine, the case-split selector —
+only reorder what is tried first and need no soundness machinery at all.
+Validated register pairings are stronger medicine: they alter the proof
+obligations, enter the verdict-cache key as their own segment, and are
+re-validated on every replay under the full speculative discipline — which
+is why they too survive prover changes: a stale pairing can waste time,
+never mislead. Hints versus verdicts is the load-bearing soundness
+distinction of the whole persistence layer.</p>
+<h3 id="the-compile-tier-as-a-formal-consumer">The compile tier as a formal consumer<a class="headerlink" href="#the-compile-tier-as-a-formal-consumer" title="Permanent link">&para;</a></h3>
+<p>The compile-time pass runs one of two asymmetric-soundness profiles, both
+in-process, unraced, and budgeted by deterministic solver resources rather
+than wall-clock. The default profile is single-frame induction: each
+property's fan-in cone is encoded on demand with every register cut to a
+free symbol, so a proof — unsatisfiability even over arbitrary state — is
+sound for all reachable states, while a refutation is trusted only when the
+cone crossed no state at all; a stateful counterexample may be unreachable
+and defers. The stronger profile routes properties through the shared engine
+as a tiny bounded check from reset plus one induction step, resolving the
+single-frame dilemma by requiring the strong form on each side: only an
+unbounded induction proof elides a runtime check, and only a reset-pinned,
+reachable counterexample at the committed design top fails the build. In
+both profiles, assumes are proven before they may be used as hypotheses (no
+circular self-support), and refuted or undecided properties are never
+exploited by optimization.</p>
+<div class="admonition note">
+<p class="admonition-title">TBD</p>
+<p>A planned extension hands formally established impossibilities — proven
+asserts and assumes, plus explicit user-owned synthesis-only don't-care
+facts — to logic synthesis as an external don't-care network, letting
+resynthesis exploit input combinations proven never to occur.</p>
+</div>
+<h3 id="translation-validation-with-theorem-provers">Translation validation with theorem provers<a class="headerlink" href="#translation-validation-with-theorem-provers" title="Permanent link">&para;</a></h3>
+<p>The theorem-prover track addresses a different question: not "is this design
+correct?" but "did the compiler translate it faithfully?" — per design, as
+translation validation, rather than verifying the compiler once and for all.
+Each compiled design is exported twice: as a fast executable model in the
+prover (fixed-width words, one function per clock step) and as a <em>certificate</em>
+— the design graph reified as plain data. Correctness decomposes into a chain
+of links designed to be machine-checked (generated model = evaluated
+certificate = mathematical graph semantics): the certificate-to-semantics
+link is a generic, once-proven theorem, while the per-design
+model-to-certificate bridge theorems are still being brought up. The
+remaining link — source RTL = compiled graph — is discharged by bounded
+equivalence checking: the in-house SMT engine, or an independent external
+checker for the largest memory-heavy designs. The prover only ever trusts a
+small hand-written semantics library of total, width-explicit operator
+primitives, not the compiler.</p>
+<p>Certificate well-formedness proofs are made scalable by chunking the
+certificate into fixed-size pieces with local lemmas composed by a generic
+combination rule, instead of one monolithic whole-graph proof (implemented
+on the Isabelle target, still being ported to Lean). Memories stay
+function-valued state in the final model — scalarizing realistic SRAMs into
+per-bit registers is intractable in a prover and allowed only as a
+diagnostic mode.</p>
+<p>The pipeline ordering encodes a hard-won epistemological lesson: the fast
+model and the certificate come from the same emitter, so a shared emission
+bug leaves every internal theorem provable while the model is wrong. The
+independent RTL-versus-graph equivalence gate therefore runs <em>first</em>,
+mandatorily; it has caught real compiler bugs (alias ordering, undriven
+nets, X-reintroduction) before any prover time was spent. The flow has been
+exercised at scale — a full open-source cache subsystem proven
+bounded-equivalent to its original RTL, and complete RISC-V cores
+type-checking as prover models — and remains a research track: strict by
+construction
+(anything it cannot model faithfully aborts export), not yet a push-button
+signoff.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["search.suggest", "navigation.sections", "navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../javascripts/config.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>

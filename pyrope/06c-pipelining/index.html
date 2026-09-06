@@ -1,0 +1,2537 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../06b-instantiation/">
+      
+      
+        <link rel="next" href="../06d-fluid/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Pipelining - LiveHD and Pyrope</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CFira+Code:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Fira Code"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/table.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/pyrope-highlight.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#pipelining" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LiveHD and Pyrope" class="md-header__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LiveHD and Pyrope
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Pipelining
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LiveHD and Pyrope" class="md-nav__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    LiveHD and Pyrope
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LiveHD and Pyrope
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Livehd
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Livehd
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/00-intro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/01-install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/02-usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/03-memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory and concurrency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/04-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    C++ API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/05-lgraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LGraph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/06-lnast/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LNAST
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/07-formal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Formal Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/08-synth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Synthesis &amp; the frequency-optimization loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10-bazel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bazel build
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10b-3rdparty/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3rd Party
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/11-pass/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Creating a Pass
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/12-github/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GitHub Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/13-style/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding Style
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Pyrope
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00-hwdesign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hardware Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-introduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01b-quick_intro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Intro to Pyrope
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-basics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basic syntax
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-bundle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tuples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Variables and types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04b-attributes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Attributes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-assert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05b-statements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Statements
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-functions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lambdas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06b-instantiation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Instantiation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipelining
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipelining
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#registers-and-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registers and State
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#retiming" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retiming
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipelined-lambdas-pipe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipelined Lambdas (pipe)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pipelined Lambdas (pipe)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-pipe-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The pipe contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#registers-inside-a-pipe-state-vs-stage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registers inside a pipe: state vs stage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#accepting-and-rejecting-pipe-bodies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accepting and rejecting pipe bodies
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Accepting and rejecting pipe bodies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#accepted-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accepted examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rejected-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rejected examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multiply-add-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multiply-Add Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#analogy-pipe-and-stage-vs-software-asyncawait" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Analogy: pipe and stage vs. software async/await
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06d-fluid/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fluid Blocks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-typesystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Type system
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07b-structtype/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Structural Typing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-memories/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memories
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-stdlib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope std lib
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Extended Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09b-simquery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Querying a simulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-internals/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internals
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10b-vslang/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vs Other Languages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../12-lnast/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LNAST
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../13-stdlib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope Standard Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../15-tbd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation status (TBD)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../21-deprecated/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deprecated or Future
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../22-deprecated_pipelining/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deprecated Pipelining
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#registers-and-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registers and State
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#retiming" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retiming
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipelined-lambdas-pipe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipelined Lambdas (pipe)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pipelined Lambdas (pipe)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-pipe-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The pipe contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#registers-inside-a-pipe-state-vs-stage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registers inside a pipe: state vs stage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#accepting-and-rejecting-pipe-bodies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accepting and rejecting pipe bodies
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Accepting and rejecting pipe bodies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#accepted-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accepted examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rejected-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rejected examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multiply-add-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multiply-Add Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#analogy-pipe-and-stage-vs-software-asyncawait" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Analogy: pipe and stage vs. software async/await
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="pipelining">Pipelining<a class="headerlink" href="#pipelining" title="Permanent link">&para;</a></h1>
+<h2 id="registers-and-state">Registers and State<a class="headerlink" href="#registers-and-state" title="Permanent link">&para;</a></h2>
+<p>In hardware, registers (built from flip-flops) are essential for storing information and creating pipeline stages. Our language provides a clear and safe syntax for managing these stateful elements.</p>
+<p>While it's possible to instantiate low-level flops, the recommended, programmer-friendly method is to declare a <strong>register</strong> using the <code>reg</code> keyword. This makes statefulness explicit and prevents common bugs. The compiler guarantees that a <code>reg</code> is a state-holding element.</p>
+<p>A register's value at the start of a cycle is its <strong>current state</strong>. New
+values are assigned with plain <code>=</code> (e.g., <code>counter = counter + 1</code>). To use a
+register's next-state value in the same cycle (e.g. to feed a consumer or
+close a loop), name that value as a <code>wire</code> (single-driver combinational net)
+and read the wire in both places — see
+<a href="../04-variables/#wire-single-driver-combinational-nets">Wire</a>.</p>
+<p>In our syntax, a bare reference to <code>total</code> reads the register's current
+state. If you need to snapshot the current value before later code modifies
+the register within the cycle, copy it into a local:
+<code>const counter_q = counter</code>.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Structural flop style</label><label for="__tabbed_1_2">Pyrope style</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>wire</span> <span class='variable'>counter_next</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u8</span> <span class='operator'>=</span> <span class='variable'>nil</span>
+
+<span class='keyword'>const</span> <span class='variable'>counter_q</span> <span class='operator'>=</span> <span class='function'>__flop</span><span class='punctuation bracket'>(</span><span class='variable parameter'>din</span>=<span class='variable'>counter_next</span>         // single-driver net, driven below
+                   <span class='punctuation delimiter'>,</span><span class='variable parameter'>reset_pin</span>=<span class='keyword'>ref</span> <span class='variable'>my_rst</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>clock_pin</span>=<span class='keyword'>ref</span> <span class='variable'>my_clk</span>
+                   <span class='punctuation delimiter'>,</span><span class='variable parameter'>enable</span>=<span class='variable'>my_enable</span>            // enable control
+                   <span class='punctuation delimiter'>,</span><span class='variable parameter'>posclk</span>=<span class='variable'>true</span>
+                   <span class='punctuation delimiter'>,</span><span class='variable parameter'>initial</span>=<span class='number'>3</span>                   // reset value
+                   <span class='punctuation delimiter'>,</span><span class='variable parameter'>sync</span>=<span class='variable'>true</span><span class='punctuation bracket'>)</span>
+
+<span class='keyword'>wrap</span> <span class='variable'>counter_next</span> <span class='operator'>=</span> <span class='variable'>counter_q</span> <span class='operator'>+</span> <span class='number'>1</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>reg</span> <span class='variable'>counter</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u8</span><span class='punctuation delimiter'>:</span><span class='punctuation bracket'>[</span><span class='attribute'>reset_pin</span>=<span class='keyword'>ref</span> <span class='variable'>my_rst</span><span class='punctuation delimiter'>,</span> <span class='attribute'>clock_pin</span>=<span class='keyword'>ref</span> <span class='variable'>my_clk</span><span class='punctuation delimiter'>,</span> <span class='attribute'>posclk</span>=<span class='variable'>true</span><span class='punctuation bracket'>]</span> <span class='operator'>=</span> <span class='number'>3</span>
+<span class='keyword'>const</span> <span class='variable'>tmp1</span> <span class='operator'>=</span> <span class='variable'>counter</span>             // snapshot q before any updates this cycle
+
+<span class='keyword'>wire</span> <span class='variable'>counter_next</span> <span class='operator'>=</span> <span class='variable'>nil</span>
+<span class='keyword'>if</span> <span class='variable'>my_enable</span> <span class='punctuation bracket'>{</span>
+  <span class='keyword'>wrap</span> <span class='variable'>counter_next</span> <span class='operator'>=</span> <span class='variable'>counter</span> <span class='operator'>+</span> <span class='number'>1</span>
+  <span class='variable'>counter</span> <span class='operator'>=</span> <span class='variable'>counter_next</span>
+  <span class='function builtin'>assert</span><span class='punctuation bracket'>(</span><span class='variable'>tmp1</span> <span class='operator'>!=</span> <span class='variable'>counter_next</span><span class='punctuation bracket'>)</span>    // compare against the next-state net
+<span class='punctuation bracket'>}</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Attributes ending in <code>_pin</code> (like <code>clock_pin</code>, <code>reset_pin</code>) connect wires,
+not values. Use <code>ref</code> to indicate a wire connection (e.g., <code>clock_pin=ref my_clk</code>).
+The compiler warns if a <code>_pin</code> attribute is used without <code>ref</code> and without
+a <code>comptime</code> value. Passing a <code>comptime</code> value like <code>0</code> or <code>false</code> is valid
+without <code>ref</code> (it ties the pin to a constant).</p>
+</div>
+<h2 id="retiming">Retiming<a class="headerlink" href="#retiming" title="Permanent link">&para;</a></h2>
+<p>Registers declared with <code>reg</code> are preserved by default, meaning synthesis tools cannot move or optimize them away. This ensures that intentional state is maintained.</p>
+<p>If a register is intended to be a flexible pipeline stage rather than a fixed state-holding element, it can be marked with the <code>retime</code> attribute. This allows synthesis tools to perform optimizations like moving logic across the register, duplication, or elimination to improve performance.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>reg</span> <span class='variable'>my_reg</span><span class='punctuation delimiter'>:</span><span class='punctuation delimiter'>:</span><span class='punctuation bracket'>[</span><span class='attribute'>retime</span>=<span class='variable'>true</span><span class='punctuation delimiter'>,</span> <span class='attribute'>clock_pin</span>=<span class='keyword'>ref</span> <span class='variable'>my_clk</span><span class='punctuation delimiter'>,</span> <span class='attribute'>initial</span>=<span class='number'>0</span><span class='punctuation bracket'>]</span>
+</code></pre></div>
+<h2 id="pipelined-lambdas-pipe">Pipelined Lambdas (<code>pipe</code>)<a class="headerlink" href="#pipelined-lambdas-pipe" title="Permanent link">&para;</a></h2>
+<p>A <code>pipe</code> lambda is a fixed-latency pipeline with at least one stage. The
+number of pipeline stages is written as an argument to the <code>pipe</code> keyword, in
+the same <code>[N]</code> position used by <code>stage[N]</code>; <code>N</code> must be positive. A zero-cycle
+block is <code>comb</code>, not <code>pipe[0]</code>.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'><span class='keyword'>pipe</span></span> <span class='function'>mul</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u16</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u16</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>c</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span>         <span class='punctuation bracket'>{</span> <span class='variable'>c</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>*</span> <span class='variable'>b</span> <span class='punctuation bracket'>}</span> // bare: caller picks at call site
+<span class='function'><span class='keyword'>pipe</span><span class='punctuation bracket'>[</span><span class='number'>5</span><span class='punctuation bracket'>]</span></span>     <span class='function'>mul</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u16</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u16</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>c</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span>  <span class='punctuation bracket'>{</span> <span class='variable'>c</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>*</span> <span class='variable'>b</span> <span class='punctuation bracket'>}</span> // fixed 5-cycle latency
+<span class='function'><span class='keyword'>pipe</span><span class='punctuation bracket'>[</span><span class='number'>1</span><span class='operator'>..&lt;</span><span class='number'>4</span><span class='punctuation bracket'>]</span></span> <span class='function'>mul</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u16</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u16</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>c</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span>  <span class='punctuation bracket'>{</span> <span class='variable'>c</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>*</span> <span class='variable'>b</span> <span class='punctuation bracket'>}</span> // flexible range; caller/compiler picks
+</code></pre></div>
+<p>The three forms behave as follows:</p>
+<ul>
+<li><strong>Bare <code>pipe foo(...)</code></strong> — latency is unspecified at declaration. The caller
+  must pick a concrete positive number of cycles at the call site using
+  <code>stage[N]</code>.</li>
+<li><strong><code>pipe[N] foo(...)</code></strong> — fixed latency. Every call produces its result
+  exactly <code>N</code> cycles later (<code>N &gt; 0</code>), and the caller's <code>stage[M]</code> must satisfy
+  <code>M == N</code>.</li>
+<li><strong><code>pipe[A..&lt;B] foo(...)</code></strong> — flexible range. The caller picks a <code>stage[M]</code>
+  with <code>A &lt;= M &lt; B</code> and <code>M &gt; 0</code>, and the compiler/synthesizer places stages
+  accordingly. Any range spelling is accepted (<code>pipe[A..=B]</code>, <code>pipe[A..+N]</code>);
+  the <code>[...]</code> argument is just a range.</li>
+</ul>
+<h3 id="the-pipe-contract">The <code>pipe</code> contract<a class="headerlink" href="#the-pipe-contract" title="Permanent link">&para;</a></h3>
+<p>A <code>pipe</code> makes two promises — one behavioral, one structural:</p>
+<ul>
+<li>
+<p><strong>Latency (behavioral):</strong> every output at cycle <code>t</code> is a function of the
+  inputs at cycle <code>t-N</code>, plus register state that summarizes strictly older
+  cycles: <code>out[t] = f(in[t-N], state)</code>. All outputs land at the same
+  latency <code>N &gt;= 1</code>.</p>
+</li>
+<li>
+<p><strong>No feedthrough (structural):</strong> there is never a combinational path from
+  an input to an output — every input-to-output path crosses at least one
+  flop.</p>
+</li>
+</ul>
+<p>The <em>reference model</em> for simulation, verification, and logic equivalence
+checking (LEC) is the body evaluated as combinational dataflow at input
+time, with <code>N</code> flops appended at each output. This is a statement about
+behavior, <strong>not</strong> about flop placement: the synthesis tool may place the
+actual flops anywhere that preserves the contract — distributed through the
+logic by retiming, at the inputs (an SRAM macro with registered inputs is a
+valid <code>pipe[1]</code>), or at the outputs. Pipeline flops inserted by the
+compiler are <code>retime=true</code>; state registers (next section) are preserved.
+Compiler-inserted flops also inherit the <code>.[valid]</code> of the value they
+transport: on cycles where the value is invalid the flop need not be
+clocked, enabling automatic clock gating as bubbles travel through the
+pipeline (see <a href="../06d-fluid/#relation-to-optional-valid">Fluid blocks</a>).</p>
+<div class="admonition observation">
+<p class="admonition-title">Observation</p>
+<p>Because no input-to-output combinational path exists, any feedback loop
+closed through a <code>pipe</code> is sequential by construction. A <code>mod</code> can
+instantiate <code>pipe</code>s in feedback topologies without creating
+combinational loops, and loop checking stays modular.</p>
+</div>
+<h3 id="registers-inside-a-pipe-state-vs-stage">Registers inside a <code>pipe</code>: state vs stage<a class="headerlink" href="#registers-inside-a-pipe-state-vs-stage" title="Permanent link">&para;</a></h3>
+<p>A <code>pipe</code> body may declare <code>reg</code> variables. The compiler classifies every
+register into one of two roles from the dataflow graph alone — the role is
+never annotated:</p>
+<ul>
+<li>
+<p><strong>State register</strong> — participates in feedback: its next value depends,
+  directly or transitively, on its own current value. Accumulators,
+  counters, valid bits, FSM state. A state register is <em>pinned</em> to a home
+  stage and adds no pipeline latency. Reading it returns the current state
+  (<code>q</code>), exactly like <code>reg</code> everywhere else in Pyrope.</p>
+</li>
+<li>
+<p><strong>Stage register</strong> — pure feedforward transport: its next value is a
+  function of inputs and earlier stages only. It is an explicit pipeline
+  stage and counts toward the declared latency <code>N</code>.</p>
+</li>
+</ul>
+<p>Two rules fall out of the classification:</p>
+<ul>
+<li>
+<p><strong>An incomplete write is feedback.</strong> <code>if en { tmp = a }</code> means <code>tmp</code>
+  holds its value when <code>en</code> is false — an implicit <code>tmp = tmp</code> on the
+  untaken path. Holding is self-dependence, so an incompletely written
+  register is always a state register. A conditional assignment that writes
+  every control path can still be feedforward. Equivalently: a stage
+  register must be written on every path.</p>
+</li>
+<li>
+<p><strong>A <code>reg</code> output must be state.</strong> <code>pipe[1] counter(en) -&gt; (reg count)</code> is
+  the counter idiom: the state register itself is the output (its home
+  stage must be <code>N-1</code>, which is stage 0 in a <code>pipe[1]</code>). A <em>feedforward</em>
+  <code>reg</code> in the output list is rejected: outputs are already registered by
+  the contract, so it would either duplicate the output flop or silently
+  add one extra cycle to a single output.</p>
+</li>
+</ul>
+<h3 id="accepting-and-rejecting-pipe-bodies">Accepting and rejecting <code>pipe</code> bodies<a class="headerlink" href="#accepting-and-rejecting-pipe-bodies" title="Permanent link">&para;</a></h3>
+<p>Legality of a <code>pipe</code> body is decided by one compiler pass, <strong>stage
+inference</strong>. Every value is tagged with a stage number <code>σ</code>: a value with
+stage <code>σ</code> computed at cycle <code>t</code> derives from the inputs of cycle <code>t-σ</code>.</p>
+<ol>
+<li>
+<p><strong>Build the dataflow graph.</strong> One node per operation. Each register <code>r</code>
+   contributes a sequential edge from its write side <code>r.d</code> (next value) to
+   its read side <code>r.q</code> (current value). Incomplete writes are completed
+   first with the implicit hold (<code>r.d = r.q</code> on untaken paths).</p>
+</li>
+<li>
+<p><strong>Classify registers (strongly connected components).</strong> Run an SCC pass
+   (Tarjan) over the graph, sequential edges included:</p>
+<ul>
+<li>an SCC containing only combinational edges is a combinational loop —
+   rejected, as everywhere in Pyrope;</li>
+<li>a register whose <code>d -&gt; q</code> edge lies inside an SCC is a <strong>state</strong>
+   register;</li>
+<li>every other register is a <strong>stage</strong> register.</li>
+</ul>
+</li>
+<li>
+<p><strong>Solve the stage constraints.</strong> Propagate <code>σ</code> over the graph:</p>
+<ul>
+<li>input: <code>σ = 0</code>; constants and <code>comptime</code> values carry no stage
+   (they unify with any stage)</li>
+<li>combinational op: all operands must have <strong>equal</strong> <code>σ</code>; the result
+   inherits it</li>
+<li>stage register: <code>σ(q) = σ(d) + 1</code></li>
+<li>state register: <code>σ(q) = σ(d)</code> — pinned at its home stage</li>
+<li><code>past[n](x)</code>: <code>σ = σ(x) + n</code></li>
+<li><code>wire</code> net: a combinational net carries the stage of its driver —
+   never a stage shift</li>
+<li>plain output: <code>σ &lt;= N</code>; the compiler appends the missing <code>N - σ</code>
+   flops at that output</li>
+<li><code>reg</code> (state) output: home stage must equal <code>N - 1</code>; the register
+   <code>q</code> itself is the output, with no appended flop</li>
+</ul>
+</li>
+</ol>
+<p>The rules in step 3 form a system of difference constraints solved with an
+offset (weighted) union-find in near-linear time; a conflict is reported at
+the operation that introduced it, naming both stages.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The compiler pads <strong>only at outputs</strong>, never internally. Output padding
+is always safe — outputs feed nothing else inside the pipe, so adding
+flops there cannot change relative alignment. An internal stage
+mismatch, in contrast, has two plausible meanings (delay the early
+operand, or the writer made an off-by-one mistake), and silently
+picking one is precisely the bug class <code>pipe</code> exists to eliminate. Use
+<code>past[n](x)</code> or an explicit stage register to state which alignment was
+intended.</p>
+</div>
+<p>For <code>pipe[A..=B]</code>, the body must support the <strong>entire</strong> declared range:
+its intrinsic depth <code>max σ(output)</code> must be <code>&lt;= A</code>, or the declaration
+is rejected — the declaration is an interface, and a caller may rely on
+any latency in <code>[A, B]</code> without knowing the body. For bare <code>pipe</code>, the
+body fixes a <em>minimum</em> latency <code>max σ(output)</code>: the caller's <code>stage[M]</code>
+(or the latency the tool picks) must be at least that minimum. In both
+cases output padding fills the difference.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For a range (<code>pipe[A..=B]</code>) or a bare <code>pipe</code>, the <strong>tool</strong> owns the
+depth choice within the legal range. Synthesis may pick any value to
+meet timing, and simulation may re-roll the choice per seed: a caller
+that bakes in an unwarranted latency assumption then fails fast under
+randomized legal latencies instead of working by accident at one
+depth. Code that respects the <code>stage[N]</code>/<code>@[N]</code> checks is unaffected
+by the choice.</p>
+</div>
+<p>A body accepted by stage inference is retiming-equivalent to the canonical
+spelling of the same function — a combinational body with <code>N</code> appended
+output flops. Different legal spellings of the same <code>pipe</code> therefore pass
+LEC against each other by construction.</p>
+<p>The diagnostics name the offending nodes and stages:</p>
+<ul>
+<li><code>stage mismatch: 'tmp' is at stage 1, 'a' at stage 0</code> — cross-stage
+  operand mix</li>
+<li><code>output 'x' lands at stage 2, pipe declares 1</code> — latency exceeded</li>
+<li><code>feedforward register 'x' in output list</code> — stage register as output</li>
+<li><code>combinational loop through 'v'</code></li>
+</ul>
+<h4 id="accepted-examples">Accepted examples<a class="headerlink" href="#accepted-examples" title="Permanent link">&para;</a></h4>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:5"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><input id="__tabbed_2_3" name="__tabbed_2" type="radio" /><input id="__tabbed_2_4" name="__tabbed_2" type="radio" /><input id="__tabbed_2_5" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Comb body (canonical)</label><label for="__tabbed_2_2">State register</label><label for="__tabbed_2_3">Explicit stage register</label><label for="__tabbed_2_4">State output (counter idiom)</label><label for="__tabbed_2_5">State at an internal stage</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'><span class='keyword'>pipe</span><span class='punctuation bracket'>[</span><span class='number'>3</span><span class='punctuation bracket'>]</span></span> <span class='function'>mul</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u16</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u16</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>c</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='variable'>c</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>*</span> <span class='variable'>b</span>           // σ=0; the compiler appends the 3 stage flops
+<span class='punctuation bracket'>}</span>
+// c[t] == a[t-3] * b[t-3]
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'><span class='keyword'>pipe</span><span class='punctuation bracket'>[</span><span class='number'>1</span><span class='punctuation bracket'>]</span></span> <span class='function'>acc_mix</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>x</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='keyword'>reg</span> <span class='variable'>tmp</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span> <span class='operator'>=</span> <span class='number'>0</span>
+  <span class='keyword'>wrap</span> <span class='variable'>tmp</span> <span class='operator'>+=</span> <span class='variable'>a</span> <span class='operator'>+</span> <span class='variable'>b</span>   // reads its own q → state register, home stage 0
+  // Equivalent: wrap tmp = tmp + a + b
+  <span class='keyword'>wrap</span> <span class='variable'>x</span> <span class='operator'>=</span> <span class='variable'>tmp</span> <span class='operator'>+</span> <span class='variable'>a</span>    // state q ⊕ input: both σ=0 — legal
+<span class='punctuation bracket'>}</span>
+// x[t] == tmp[t-1] + a[t-1]
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'><span class='keyword'>pipe</span><span class='punctuation bracket'>[</span><span class='number'>1</span><span class='punctuation bracket'>]</span></span> <span class='function'>split</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>x</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>y</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='keyword'>reg</span> <span class='variable'>tmp</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span> <span class='operator'>=</span> <span class='number'>0</span>
+  <span class='keyword'>wrap</span> <span class='variable'>tmp</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>+</span> <span class='variable'>b</span>    // unconditional, feedforward → stage register
+  <span class='variable'>x</span> <span class='operator'>=</span> <span class='variable'>tmp</span>             // σ=1 == N: the explicit reg is the pipeline flop
+  <span class='keyword'>wrap</span> <span class='variable'>y</span> <span class='operator'>=</span> <span class='variable'>tmp</span> <span class='operator'>+</span> <span class='number'>1</span>    // σ=1 == N
+<span class='punctuation bracket'>}</span>
+// LEC-equivalent to:
+// pipe[1] split(a:u32, b:u32) -&gt; (x:u32, y:u32) {
+//   wrap x = a + b ; wrap y = x + 1
+// }
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'><span class='keyword'>pipe</span><span class='punctuation bracket'>[</span><span class='number'>1</span><span class='punctuation bracket'>]</span></span> <span class='function'>counter</span><span class='punctuation bracket'>(</span><span class='variable parameter'>enable</span><span class='punctuation delimiter'>:</span><span class='type builtin'>bool</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='keyword'>reg</span> <span class='variable parameter'>count</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u8</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='keyword'>if</span> <span class='variable'>enable</span> <span class='punctuation bracket'>{</span> <span class='keyword'>wrap</span> <span class='variable'>count</span> <span class='operator'>+=</span> <span class='number'>1</span> <span class='punctuation bracket'>}</span>  // incomplete conditional write → state; q is the output
+<span class='punctuation bracket'>}</span>
+// count[t] == count[t-1] + enable[t-1]
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'><span class='keyword'>pipe</span><span class='punctuation bracket'>[</span><span class='number'>2</span><span class='punctuation bracket'>]</span></span> <span class='function'>mac</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u16</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u16</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>acc</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='keyword'>reg</span> <span class='variable'>prod</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span> <span class='operator'>=</span> <span class='number'>0</span>
+  <span class='keyword'>wrap</span> <span class='variable'>prod</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>*</span> <span class='variable'>b</span>   // stage register: prod.q at σ=1
+  <span class='keyword'>reg</span> <span class='variable'>sum</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span> <span class='operator'>=</span> <span class='number'>0</span>
+  <span class='keyword'>wrap</span> <span class='variable'>sum</span> <span class='operator'>+=</span> <span class='variable'>prod</span>    // state register, home stage 1 (anchored by prod.q)
+  <span class='variable'>acc</span> <span class='operator'>=</span> <span class='variable'>sum</span>           // σ=1; the compiler pads 1 flop → lands at N=2
+<span class='punctuation bracket'>}</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<h4 id="rejected-examples">Rejected examples<a class="headerlink" href="#rejected-examples" title="Permanent link">&para;</a></h4>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:3"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><input id="__tabbed_3_3" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Cross-stage mix</label><label for="__tabbed_3_2">Feedforward reg output</label><label for="__tabbed_3_3">Latency exceeded</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'><span class='keyword'>pipe</span><span class='punctuation bracket'>[</span><span class='number'>1</span><span class='punctuation bracket'>]</span></span> <span class='function'>bad_mix</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>x</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='keyword'>reg</span> <span class='variable'>tmp</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span> <span class='operator'>=</span> <span class='number'>0</span>
+  <span class='keyword'>wrap</span> <span class='variable'>tmp</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>+</span> <span class='variable'>b</span>    // feedforward → stage register: tmp.q at σ=1
+  <span class='keyword'>wrap</span> <span class='variable'>x</span> <span class='operator'>=</span> <span class='variable'>tmp</span> <span class='operator'>+</span> <span class='variable'>a</span>    // ERROR: &#39;tmp&#39; is at stage 1, &#39;a&#39; at stage 0
+<span class='punctuation bracket'>}</span>
+</code></pre></div>
+<p>The important distinction is not compound assignment versus plain
+assignment; it is whether the register's next value reads its own <code>q</code>.
+<code>tmp += a + b</code> and <code>tmp = tmp + a + b</code> are both feedback and therefore
+both make <code>tmp</code> state. The rejected version above is different because
+<code>tmp = a + b</code> is pure feedforward: <code>tmp</code> becomes a one-stage delay, and
+<code>tmp + a</code> adds yesterday's <code>a + b</code> to today's <code>a</code> — almost always an
+off-by-one bug. If the mix is intended, align it explicitly:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code>  <span class='keyword'>wrap</span> <span class='variable'>x</span> <span class='operator'>=</span> <span class='variable'>tmp</span> <span class='operator'>+</span> <span class='variable'>past</span><span class='punctuation bracket'>[</span><span class='number'>1</span><span class='punctuation bracket'>]</span><span class='punctuation bracket'>(</span><span class='variable'>a</span><span class='punctuation bracket'>)</span>   // both at stage 1 — accepted
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'><span class='keyword'>pipe</span></span> <span class='function'>bad_out</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='keyword'>reg</span> <span class='variable parameter'>x</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation delimiter'>,</span> <span class='keyword'>reg</span> <span class='variable parameter'>y</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='keyword'>wrap</span> <span class='variable'>y</span> <span class='operator'>=</span> <span class='variable'>x</span> <span class='operator'>+</span> <span class='number'>1</span>      // reads x.q at σ=1 → y would land at σ=2, x at σ=1
+  <span class='keyword'>wrap</span> <span class='variable'>x</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>+</span> <span class='variable'>b</span>      // ERROR: feedforward register &#39;x&#39; in output list
+<span class='punctuation bracket'>}</span>
+</code></pre></div>
+<p>The outputs are already registered by the <code>pipe</code> contract. The intended
+function is spelled without output registers:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'><span class='keyword'>pipe</span><span class='punctuation bracket'>[</span><span class='number'>1</span><span class='punctuation bracket'>]</span></span> <span class='function'>good</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>x</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>y</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='keyword'>wrap</span> <span class='variable'>x</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>+</span> <span class='variable'>b</span>
+  <span class='keyword'>wrap</span> <span class='variable'>y</span> <span class='operator'>=</span> <span class='variable'>x</span> <span class='operator'>+</span> <span class='number'>1</span>      // x is the stage-0 comb value; both land at cycle 1
+<span class='punctuation bracket'>}</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'><span class='keyword'>pipe</span><span class='punctuation bracket'>[</span><span class='number'>1</span><span class='punctuation bracket'>]</span></span> <span class='function'>too_deep</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>x</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='keyword'>reg</span> <span class='variable'>s1</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span> <span class='operator'>=</span> <span class='number'>0</span>
+  <span class='keyword'>reg</span> <span class='variable'>s2</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span> <span class='operator'>=</span> <span class='number'>0</span>
+  <span class='keyword'>wrap</span> <span class='variable'>s1</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>+</span> <span class='number'>1</span>     // stage register: σ=1
+  <span class='keyword'>wrap</span> <span class='variable'>s2</span> <span class='operator'>=</span> <span class='variable'>s1</span> <span class='operator'>+</span> <span class='number'>1</span>    // stage register: σ=2
+  <span class='variable'>x</span> <span class='operator'>=</span> <span class='variable'>s2</span>              // ERROR: output &#39;x&#39; lands at stage 2, pipe declares 1
+<span class='punctuation bracket'>}</span>
+// legal as pipe[2] (or as bare pipe called with stage[M], M &gt;= 2)
+</code></pre></div>
+</div>
+</div>
+</div>
+<h4 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h4>
+<p>The stage-inference pass combines three standard algorithms:</p>
+<ul>
+<li>R. E. Tarjan, <em>Depth-First Search and Linear Graph Algorithms</em>, SIAM
+  Journal on Computing 1(2), 1972 — the SCC pass used to classify state vs
+  stage registers (step 2).</li>
+<li>T. H. Cormen, C. E. Leiserson, R. L. Rivest, C. Stein, <em>Introduction to
+  Algorithms</em> — systems of difference constraints (single-source shortest
+  paths chapter); the <code>σ</code> constraint solving in step 3.</li>
+<li>C. E. Leiserson, J. B. Saxe, <em>Retiming Synchronous Circuitry</em>,
+  Algorithmica 6(1), 1991 — stage inference accepts exactly the bodies that
+  are retiming-equivalent to the canonical comb-plus-output-flops form, and
+  the same framework licenses the tool-side freedom in flop placement.</li>
+</ul>
+<h2 id="multiply-add-example">Multiply-Add Example<a class="headerlink" href="#multiply-add-example" title="Permanent link">&para;</a></h2>
+<p>Let's re-examine the example of integrating a 3-cycle multiplier with a 1-cycle adder. The main challenge in most HDLs is that the syntax is not aware of timing, forcing the programmer to manually track and align signals from different pipeline stages. This is error-prone.</p>
+<p>Our syntax solves this with <strong>explicit timing annotations</strong>, making such errors impossible to ignore.</p>
+<p><code>mod</code> blocks allow arbitrary mixing of variable clock cycles. Where <code>pipe</code>
+declares one uniform latency for all outputs (<code>N &gt;= 1</code>, no feedthrough),
+a <code>mod</code> declares a <strong>landing cycle per output</strong> at its interface, and any
+cycle from 0 up is legal — <code>mod f(a:u8) -&gt; (x:u8@[2], y:u8@[0])</code> has one
+output two cycles after the inputs and one combinational feedthrough.
+Registered outputs declare the cycle their q lands at
+(<code>reg count:u8@[0]</code>). The opt-out <code>@[]</code> keeps the timing slot but sets min
+and/or max to <code>nil</code> (unconstrained) — the form foreign Verilog modules,
+which carry no markings, ingest as. Omitting <code>@[...]</code> on a <code>mod</code> output
+entirely is a compile error: the interface is the timing contract callers
+rely on. Inside the body, <code>mod</code> blocks have two complementary timing
+mechanisms for strong compile-time checking:</p>
+<ul>
+<li>
+<p><strong><code>stage[N]</code></strong> on a declaration: a declaration modifier (in the same slot as
+  <code>const</code>, <code>mut</code>, <code>reg</code>) that pipelines the whole RHS over <code>N</code> cycles. It is
+  the <em>action</em> that inserts or chooses pipeline stages.
+  <code>stage[N] lhs = rhs</code> reads as "<code>lhs</code> is <code>rhs</code> delivered <code>N</code> cycles later".
+  <code>N</code> must be positive; use a plain assignment for same-cycle delivery.</p>
+</li>
+<li>
+<p><strong><code>foo@[N]</code></strong> on a variable use: a pure <strong>type check</strong> asserting that <code>foo</code>
+  lands at cycle <code>N</code>. It never inserts flops; a mismatch is a compile error.
+  Works identically on LHS declarations (<code>lhs@[N] = ...</code>) and on RHS uses
+  (<code>... = add(a=a@[3], b=b@[3])</code>).</p>
+</li>
+</ul>
+<p><code>foo@[N]</code> never inserts flops — it is <em>only</em> an alignment assertion. To
+trigger delay flop insertion use an explicit <code>stage[N]</code> declaration or
+<code>past[N](x)</code>. There is no future-cycle read in synthesizable code.</p>
+<ul>
+<li>Bare <code>counter</code> reads the current 'q' value; snapshot with a local
+  (<code>const counter_q = counter</code>) if you need to capture it before later
+  in-cycle updates.</li>
+<li><code>past[n](counter)</code> reads the value <code>n</code> cycles ago. The compiler inserts
+  the flops (see <a href="../09-verification/#temporal-library">Temporal library</a>).</li>
+<li>To read a register's next-state value in the same cycle, name it as a
+  <code>wire</code> and read that net (see
+  <a href="../04-variables/#wire-single-driver-combinational-nets">Wire</a>).</li>
+<li><code>stage[N]</code> picks how many pipeline stages the RHS <code>pipe</code> call inserts
+  (<code>mod</code> only). A <code>pipe</code> may accept a single fixed count or a range; the
+  caller picks within it with <code>stage[N]</code>. <code>N</code> must be positive; <code>stage[0]</code> is
+  a compile error and should be written as a plain assignment. <code>stage[A..=B]</code>
+  accepts any positive count in the range, and <code>stage[]</code> lets the toolchain
+  pick a default.</li>
+<li><code>@[N]</code> is a pure cycle-count typecheck — it asserts that the value is
+  produced at (LHS) or read at (RHS) absolute cycle <code>N</code>, counted from the
+  enclosing <code>mod</code>/<code>pipe</code> inputs. <code>@[]</code> opts out of that check.</li>
+<li><code>next</code>, <code>eventually</code>, <code>rose</code>, … (debug only) cover future-peek and
+  window-quantified sampling.</li>
+</ul>
+<p><code>stage[N]</code> is only valid inside <code>mod</code> blocks. It is not allowed in <code>comb</code>
+(pure combinational) or <code>pipe</code> (fixed-latency pipeline). <code>@[N]</code>, being a
+pure check that never changes the hardware, is legal inside both <code>mod</code>
+and <code>pipe</code> bodies (in a <code>pipe</code> it asserts the value's inferred stage σ);
+it is rejected in <code>comb</code>, where every value is by definition at cycle 0.
+Inside a <code>mod</code>, register state is read via bare variable references
+(current value); the next-state value is exposed by naming it as a <code>wire</code>,
+and prior-cycle values via <code>past[n](x)</code>.</p>
+<p><code>mod</code> blocks naturally use <code>reg</code> for persistent state across cycles. A
+single <code>mod</code> can both orchestrate pipeline stages with explicit timing and
+maintain stateful elements like accumulators or counters.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code>// Define primitive components with &#39;pipe&#39;.
+<span class='function'><span class='keyword'>pipe</span></span> <span class='function'>mul</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u16</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u16</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>c</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>c</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>*</span> <span class='variable'>b</span> <span class='punctuation bracket'>}</span>   // bare; caller picks latency via stage
+<span class='function'><span class='keyword'>pipe</span></span> <span class='function'>add</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>c</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='keyword'>wrap</span> <span class='variable'>c</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>+</span> <span class='variable'>b</span> <span class='punctuation bracket'>}</span> // bare; caller picks latency via stage
+
+// Define the composite mod that orchestrates the primitives.
+<span class='function'>mod</span> <span class='function'>multiply_add</span><span class='punctuation bracket'>(</span><span class='variable parameter'>in1</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u16</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>in2</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u16</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>out</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation special'>@</span><span class='punctuation bracket'>[</span><span class='number'>4</span><span class='punctuation bracket'>]</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+    // Stage 1: run mul over 3 cycles. tmp lands at cycle 3.
+    <span class='keyword'><span class='keyword'>stage</span><span class='punctuation bracket'>[</span><span class='number'>3</span><span class='punctuation bracket'>]</span></span> <span class='variable'>tmp</span> <span class='operator'>=</span> <span class='function'>mul</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span>=<span class='variable'>in1</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span>=<span class='variable'>in2</span><span class='punctuation bracket'>)</span>
+
+    // Stage 2: to add &#39;in1&#39; to the result we must align it with &#39;tmp&#39;.
+    // Insert 3 flops of pure delay.
+    <span class='keyword'><span class='keyword'>stage</span><span class='punctuation bracket'>[</span><span class='number'>3</span><span class='punctuation bracket'>]</span></span> <span class='variable'>in1_d</span> <span class='operator'>=</span> <span class='variable'>in1</span>
+
+    // Stage 3: both inputs to &#39;add&#39; are aligned at cycle 3.
+    // The adder takes 1 cycle, so the final output is at cycle 4.
+    <span class='keyword'><span class='keyword'>stage</span><span class='punctuation bracket'>[</span><span class='number'>1</span><span class='punctuation bracket'>]</span></span> <span class='variable'>out</span><span class='punctuation special'>@</span><span class='punctuation bracket'>[</span><span class='number'>4</span><span class='punctuation bracket'>]</span> <span class='operator'>=</span> <span class='function'>add</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span>=<span class='variable'>tmp</span><span class='punctuation special'>@</span><span class='punctuation bracket'>[</span><span class='number'>3</span><span class='punctuation bracket'>]</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span>=<span class='variable'>in1_d</span><span class='punctuation special'>@</span><span class='punctuation bracket'>[</span><span class='number'>3</span><span class='punctuation bracket'>]</span><span class='punctuation bracket'>)</span>
+<span class='punctuation bracket'>}</span>
+</code></pre></div>
+<p>The two mechanisms catch different classes of bugs:</p>
+<ul>
+<li><code>stage[N]</code> makes the pipelining contract explicit at every declaration
+  site. The number <code>N</code> is the <strong>latency of the RHS call</strong>, not an absolute
+  cycle.</li>
+<li><code>@[N]</code> on uses and on declarations catches alignment mismatches at compile
+  time — both "the input I'm using isn't at the cycle I expected" and "the
+  output doesn't land at the cycle I promised". The number <code>N</code> is the
+  <strong>absolute cycle</strong> counted from the enclosing module/pipe inputs.</li>
+</ul>
+<p>Use the empty forms (<code>stage[]</code>, <code>x@[]</code>) when you deliberately want to skip
+one of those checks — for instance during exploration, or when the cycle
+budget is determined elsewhere and you don't want the local check to
+constrain it. On a <code>mod</code> output declaration, <code>@[]</code> keeps the timing slot
+with min and/or max set to <code>nil</code> — the contract exists but is
+unconstrained, which is also how imported Verilog modules (no markings)
+present their outputs.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'>mod</span> <span class='function'>example</span><span class='punctuation bracket'>(</span><span class='variable parameter'>in1</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u16</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>in2</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u16</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>in3</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>out</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u33</span><span class='punctuation special'>@</span><span class='punctuation bracket'>[</span><span class='number'>5</span><span class='punctuation bracket'>]</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+    <span class='keyword'><span class='keyword'>stage</span><span class='punctuation bracket'>[</span><span class='number'>3</span><span class='punctuation bracket'>]</span></span> <span class='variable'>res1</span> <span class='operator'>=</span> <span class='function'>mul</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span>=<span class='variable'>in1</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span>=<span class='variable'>in2</span><span class='punctuation bracket'>)</span>
+
+    // in3 arrives at cycle 0; we need it at cycle 3 to mix with res1.
+    // Introduce an explicit stage binding — no implicit alignment.
+    <span class='keyword'><span class='keyword'>stage</span><span class='punctuation bracket'>[</span><span class='number'>3</span><span class='punctuation bracket'>]</span></span> <span class='variable'>in3_d</span> <span class='operator'>=</span> <span class='variable'>in3</span>
+
+    <span class='keyword'><span class='keyword'>stage</span><span class='punctuation bracket'>[</span><span class='number'>2</span><span class='punctuation bracket'>]</span></span> <span class='variable'>res2a</span><span class='punctuation special'>@</span><span class='punctuation bracket'>[</span><span class='number'>5</span><span class='punctuation bracket'>]</span> <span class='operator'>=</span> <span class='variable'>res1</span><span class='punctuation special'>@</span><span class='punctuation bracket'>[</span><span class='number'>3</span><span class='punctuation bracket'>]</span> <span class='operator'>+</span> <span class='variable'>in3_d</span><span class='punctuation special'>@</span><span class='punctuation bracket'>[</span><span class='number'>3</span><span class='punctuation bracket'>]</span>
+
+    <span class='variable'>out</span> <span class='operator'>=</span> <span class='variable'>res2a</span>          // res2a is at cycle 5; out lands at the declared @[5]
+
+    // error: res1 is at cycle 3, not 2
+    // stage[2] bad@[5] = res1@[2] + in3_d@[3]
+
+    // error: computed cycle is 5, not 4
+    // stage[2] bad2@[4] = res1@[3] + in3_d@[3]
+<span class='punctuation bracket'>}</span>
+</code></pre></div>
+<p>This syntax makes the required pipelining obvious and enforces it at compile
+time, preventing bugs caused by mixing values from different cycles.</p>
+<h2 id="analogy-pipe-and-stage-vs-software-asyncawait">Analogy: <code>pipe</code> and <code>stage</code> vs. software <code>async</code>/<code>await</code><a class="headerlink" href="#analogy-pipe-and-stage-vs-software-asyncawait" title="Permanent link">&para;</a></h2>
+<p>Readers familiar with software <code>async</code>/<code>await</code> will find the model similar:
+<code>pipe</code> declares a lambda whose result arrives later (like an <code>async fn</code>
+returning a future), and <code>stage[N]</code> at the call site consumes that future
+after a specified number of cycles. The key difference is that Pyrope's
+<code>stage[N]</code> is a <strong>static, structural</strong> specification — <code>N</code> is part of the
+hardware contract and must be known at elaboration time — whereas software
+<code>await</code> is dynamic suspension with runtime-determined latency. Also, <code>@[N]</code>
+has no software counterpart; it is a hardware-specific type check for
+multi-input cycle alignment.</p>
+<div  class="mermaid">graph TD
+    subgraph "Cycle 0"
+        in1_0[in1]
+        in2_0[in2]
+    end
+    subgraph "Cycle 1"
+        m1(mul)
+        in1_1(flop)
+    end
+    subgraph "Cycle 2"
+        m2(mul)
+        in1_2(flop)
+    end
+    subgraph "Cycle 3"
+        m3(mul) --> a0[add]
+        in1_3(flop) --> a0
+    end
+    subgraph "Cycle 4"
+        a0 --> out[out]
+    end
+
+    in1_0 --> m1
+    in2_0 --> m1
+    in1_0 --> in1_1
+
+    m1 --> m2
+    in1_1 --> in1_2
+
+    m2 --> m3
+    in1_2 --> in1_3
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["search.suggest", "navigation.sections", "navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../javascripts/config.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>

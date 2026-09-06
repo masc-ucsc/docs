@@ -1,0 +1,70 @@
+digraph assign {
+  rankdir=LR
+  bgcolor="transparent"
+
+  node  [fontname = "helvetica", shape=record, style="rounded", penwidth = 2];
+  edge  [fontname = "helvetica", color="#142b30", arrowhead="normal", penwidth = 2];
+  graph [fontname = "helvetica"];
+
+
+
+  node_0 [label = "<a> stmts | <s1> stmt1 | <s2> stmt2 | <s3> stmt3 | <s4> stmt4 | <s5> stmt5 | <s6> stmt6"];
+
+  node_2 [label = "<a> dot | <l> lhs | <r1> op1 | <r2> op2 "];
+  node_3 [label = "<a> ref   | <l> ___a"];
+  node_4 [label = "<a> ref   | <l> foo"];
+  node_5 [label = "<a> ref   | <l> __bits"];
+
+  node_6 [label = "<a> assign | <l> lhs  | <r> rhs"];
+  node_7 [label = "<a> ref   | <l> ___a"];
+  node_8 [label = "<a> const | <l> 0d3"];
+
+  node_9 [label = "<a> assign | <l> lhs  | <r> rhs"];
+  node_a [label = "<a> ref   | <l> foo"];
+  node_b [label = "<a> const | <l> 0d7"];
+
+  node_c [label = "<a> tuple   | <n> tuple_name | <kv1> key-value"]
+  node_d [label = "<a> ref   | <l> ___b"];
+
+  node_e [label = "<a> assign | <l> lhs  | <r> rhs"];
+  node_f [label = "<a> ref   | <l> __bits"];
+  node_g [label = "<a> const | <l> 0d10"];
+
+  node_h [label = "<a> as     | <l> lhs  | <r> rhs"];
+  node_i [label = "<a> ref    | <l> bar"];
+  node_j [label = "<a> ref    | <l> ___b"];
+
+
+  node_k [label = "<a> assign | <l> lhs  | <r> rhs"];
+  node_l [label = "<a> ref   | <l> bar"];
+  node_m [label = "<a> const   | <l> 0d123"];
+
+  node_0:s1  -> node_2:a
+  node_0:s2  -> node_6:a;
+  node_0:s3  -> node_9:a;
+  node_0:s4  -> node_c:a;
+  node_0:s5  -> node_h:a;
+  node_0:s6  -> node_k:a;
+
+  node_2:l   -> node_3:a;
+  node_2:r1  -> node_4:a;
+  node_2:r2  -> node_5:a;
+
+  node_6:l   -> node_7:a;
+  node_6:r   -> node_8:a;
+
+  node_9:l   -> node_a:a;
+  node_9:r   -> node_b:a;
+
+  node_c:n   -> node_d:a;
+  node_c:kv1 -> node_e:a;
+
+  node_e:l   -> node_f:a;
+  node_e:r   -> node_g:a;
+
+  node_h:l   -> node_i:a;
+  node_h:r   -> node_j:a;
+
+  node_k:l   -> node_l:a;
+  node_k:r   -> node_m:a;
+  }

@@ -1,0 +1,2843 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../05b-statements/">
+      
+      
+        <link rel="next" href="../06b-instantiation/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Lambdas - LiveHD and Pyrope</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CFira+Code:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Fira Code"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/table.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/pyrope-highlight.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#lambdas" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LiveHD and Pyrope" class="md-header__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LiveHD and Pyrope
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Lambdas
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LiveHD and Pyrope" class="md-nav__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    LiveHD and Pyrope
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LiveHD and Pyrope
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Livehd
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Livehd
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/00-intro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/01-install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/02-usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/03-memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory and concurrency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/04-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    C++ API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/05-lgraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LGraph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/06-lnast/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LNAST
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/07-formal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Formal Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/08-synth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Synthesis &amp; the frequency-optimization loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10-bazel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bazel build
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10b-3rdparty/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3rd Party
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/11-pass/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Creating a Pass
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/12-github/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GitHub Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/13-style/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding Style
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Pyrope
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00-hwdesign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hardware Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-introduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01b-quick_intro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Intro to Pyrope
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-basics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basic syntax
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-bundle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tuples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Variables and types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04b-attributes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Attributes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-assert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05b-statements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Statements
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lambdas
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lambdas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#declaration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Declaration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#argument-naming" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Argument naming
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Argument naming">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#binding-return-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Binding return values
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#uniform-function-call-syntax-ufcs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Uniform Function Call Syntax (UFCS)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pass-by-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pass by reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output-tuple" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output tuple
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Output tuple">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lambda-body" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lambda body
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#init-constructor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Init (constructor)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Methods
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Methods">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#constraining-arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Constraining arguments
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06b-instantiation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Instantiation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06c-pipelining/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipelining
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06d-fluid/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fluid Blocks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-typesystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Type system
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07b-structtype/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Structural Typing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-memories/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memories
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-stdlib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope std lib
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Extended Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09b-simquery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Querying a simulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-internals/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internals
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10b-vslang/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vs Other Languages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../12-lnast/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LNAST
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../13-stdlib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope Standard Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../15-tbd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation status (TBD)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../21-deprecated/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deprecated or Future
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../22-deprecated_pipelining/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deprecated Pipelining
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#declaration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Declaration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#argument-naming" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Argument naming
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Argument naming">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#binding-return-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Binding return values
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#uniform-function-call-syntax-ufcs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Uniform Function Call Syntax (UFCS)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pass-by-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pass by reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output-tuple" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output tuple
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Output tuple">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lambda-body" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lambda body
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#init-constructor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Init (constructor)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Methods
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Methods">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#constraining-arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Constraining arguments
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="lambdas">Lambdas<a class="headerlink" href="#lambdas" title="Permanent link">&para;</a></h1>
+<p>A <code>lambda</code> consists of a sequence of statements that can be bound to a variable.
+The variable can be copied and called as needed. Unlike most languages, Pyrope
+only supports anonymous lambdas. The reason is that without it lambdas would be
+assigned to a namespace. Supporting namespaces would avoid aliases across
+libraries, but Pyrope allows different versions of the same library at
+different parts of the project. This will effectively create a namespace alias.
+The solution is to not have namespaces but relies upon variable scope to decide
+which lambda to call.</p>
+<div class="admonition observation">
+<p class="admonition-title">Observation</p>
+<p>Allowing multiple version of the same library/code is supported by Pyrope.
+It looks like a strange feature from a software point of view, but it is
+common in hardware to have different blocks designed/verified at different
+times. The team may not want to open and modernize a block. In hardware, it
+is also common to have different blocks to be compiled with different
+compiler versions. These are features that Pyrope enables.</p>
+</div>
+<p>Pyrope divides lambdas into four categories: <code>comb</code>, <code>pipe</code>, <code>mod</code>, and
+<code>fluid</code>.</p>
+<ul>
+<li>
+<p><code>comb</code> is pure combinational logic. The outputs are purely a function of
+  the inputs — no registers, no state, no cycle-level side effects. A
+  <code>comb</code> may not declare a <code>reg</code> and may not call a <code>pipe</code>, <code>mod</code>, or
+  <code>fluid</code>. The only state it can hold is debug state marked <code>::[debug]</code>,
+  which is forbidden from influencing non-debug outputs (the compiler
+  enforces this). Any external call inside a <code>comb</code> can only affect debug
+  statements (e.g., <code>puts</code>), not synthesizable code. <code>comb</code> can use <code>ref</code>
+  arguments to modify tuples; <code>ref</code> is equivalent to having the argument
+  as both input and output, which is still purely combinational. <code>comb</code>
+  resembles <code>pure functions</code> in normal programming languages.</p>
+</li>
+<li>
+<p><code>pipe</code> is a fixed-latency pipeline: every output lands exactly <code>N</code> cycles
+  after the inputs it derives from (<code>out[t] = f(in[t-N], state)</code>), and there
+  is never a combinational path from an input to an output. The latency is
+  written as an argument to the keyword: <code>pipe[3] foo(...)</code> is fixed
+  3-cycle, <code>pipe[1..=3] foo(...)</code> lets the caller pick within a range, and
+  bare <code>pipe foo(...)</code> leaves the latency fully flexible for the caller to
+  specify via <code>stage[N]</code> at the call site. The reference behavior is a
+  <code>comb</code> with N flops appended at the outputs, but flop placement is free
+  (retiming, SRAM macros with registered inputs, ...) as long as the
+  contract holds. <code>pipe</code> can use <code>reg</code> for feedback state (accumulators,
+  counters); a pure feedforward <code>reg</code> is an explicit pipeline stage and
+  counts toward <code>N</code>. See <a href="../06c-pipelining/">Pipelining</a> for the
+  accept/reject rules (stage inference).</p>
+</li>
+<li>
+<p><code>mod</code> has no constraints on registers or output structure. It can be
+  combinational, Mealy, Moore, or a pipeline orchestrator. Unlike <code>pipe</code>,
+  where every output lands at the same declared latency, <strong>each <code>mod</code>
+  output declares its own landing cycle at the interface</strong> with <code>@[N]</code>
+  (<code>N &gt;= 0</code>): <code>mod f(a:u8) -&gt; (x:u8@[2], y:u8@[0])</code>. A cycle-0 output is a
+  combinational feedthrough — legal in <code>mod</code>, forbidden in <code>pipe</code>. A
+  registered output is declared <code>reg name:T@[H]</code>: the register's q value
+  is the output (no appended flop), and <code>H</code> declares the cycle it lands
+  at — the home stage for a state register, <code>σ(din)+1</code> for a feedforward
+  stage register. The empty form <code>@[]</code> is an explicit opt-out: the output
+  still carries a timing slot, but with min and/or max set to <code>nil</code>
+  (unconstrained) — this is also how foreign Verilog modules, which carry
+  no markings, ingest. A <code>mod</code> output with no <code>@[...]</code> declaration at all
+  is a compile error. When a <code>mod</code> calls <code>pipe</code> lambdas and needs to align
+  their outputs with other signals, it uses the <code>stage[N]</code> declaration
+  modifier and the <code>@[N]</code> cycle type check (these constructs used to
+  belong to the separate <code>flow</code> category, which has been merged into
+  <code>mod</code>).</p>
+</li>
+<li>
+<p><code>fluid</code> (TBD: not yet implemented) is a transactional block with valid/retry handshakes on its
+  inputs and outputs. Fluid availability is dynamic: a transaction advances
+  only when <code>.[fire]</code> is true (<code>.[valid] and !.[retry]</code>). A <code>fluid</code> call
+  must be bound with a <code>fluid</code> declaration, and fluid calls are allowed only
+  inside <code>mod</code> and <code>fluid</code> lambdas. See <a href="../06d-fluid/">Fluid Blocks</a>.</p>
+</li>
+</ul>
+<p>Generating an LGraph module (for Verilog or simulation) requires a concrete
+fully typed interface and a fixed, fully named/ordered port list. A declaration
+can provide that directly, or it can be <strong>not fully typed</strong> — an untyped
+non-<code>self</code> input, a <code>(...args)</code> var-arg, or an unbound generic <code>&lt;T&gt;</code> — and defer
+module generation until a call site binds the missing shape. <code>self</code>/<code>ref self</code>
+methods derive <code>self</code>'s type from the enclosing tuple.</p>
+<p><code>pipe</code> and <code>mod</code> lambdas are module boundaries, and a concrete <code>pipe</code>/<code>mod</code>
+call lowers to a module instance. A fully typed <code>pipe</code>/<code>mod</code> lowers to one
+module directly. A not-fully-typed <code>pipe</code>/<code>mod</code> is a <strong>deferred template</strong>: it
+produces no module at definition time and is <strong>specialized per call site</strong> into
+a concrete module named by the actual types (<code>mod foo(a)</code> called with a <code>u8</code>
+actual mints <code>foo__u8</code>; a <code>u16</code> actual mints <code>foo__u16</code>; identical signatures
+share one module, each call still its own instance). Specialization keys on
+each actual's <strong>declared</strong> type, so an <strong>untyped actual</strong> feeding such a
+boundary is a compile error at the call site (annotate it, e.g. <code>x:u8</code>) — a
+hardware port needs an explicit width.</p>
+<p>A <code>comb</code> may stay not fully typed, in which case it is always <strong>inlined</strong> and no
+separate LGraph is generated. If a <code>comb</code> is fully typed, the compiler may
+inline it or keep it as its own module instance. Var-args gather into the param
+and <code>args[i]</code>/<code>args.NAME</code> resolve at the call site; for a generated module, the
+specialized call must provide the final fixed port order and names. A template
+that is exported (<code>pub</code>) or selected as a synthesis top but never specialized in
+its own unit simply yields no module — it is not an error.</p>
+<p>Methods are <code>comb</code>/<code>pipe</code>/<code>mod</code>/<code>fluid</code> lambdas that have <code>self</code> as the first
+argument, which allows operating on tuples.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:5"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><input id="__tabbed_1_4" name="__tabbed_1" type="radio" /><input id="__tabbed_1_5" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Combinational (comb)</label><label for="__tabbed_1_2">Pipeline (pipe)</label><label for="__tabbed_1_3">Module with pipeline orchestration (mod)</label><label for="__tabbed_1_4">Module with registered outputs (mod)</label><label for="__tabbed_1_5">Fluid block</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'>comb</span> <span class='function'>add</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>result</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>  // Same as const add = comb(a, b) -&gt; (result)
+  <span class='variable'>result</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>+</span> <span class='variable'>b</span>
+<span class='punctuation bracket'>}</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'><span class='keyword'>pipe</span><span class='punctuation bracket'>[</span><span class='number'>3</span><span class='punctuation bracket'>]</span></span> <span class='function'>multiply</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u16</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u16</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>result</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> // fixed 3-cycle latency
+  <span class='variable'>result</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>*</span> <span class='variable'>b</span>
+<span class='punctuation bracket'>}</span>
+
+<span class='function'><span class='keyword'>pipe</span><span class='punctuation bracket'>[</span><span class='number'>1</span><span class='operator'>..=</span><span class='number'>3</span><span class='punctuation bracket'>]</span></span> <span class='function'>add_pipe</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>result</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> // caller picks 1-3 cycles
+  <span class='keyword'>wrap</span> <span class='variable'>result</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>+</span> <span class='variable'>b</span>
+<span class='punctuation bracket'>}</span>
+
+<span class='function'><span class='keyword'>pipe</span></span> <span class='function'>flexible_mul</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u16</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u16</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>result</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> // bare: caller picks via stage[N]
+  <span class='variable'>result</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>*</span> <span class='variable'>b</span>
+<span class='punctuation bracket'>}</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'><span class='keyword'>pipe</span></span> <span class='function'>mul</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u16</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u16</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>c</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>c</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>*</span> <span class='variable'>b</span> <span class='punctuation bracket'>}</span>
+<span class='function'><span class='keyword'>pipe</span></span> <span class='function'>add</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>c</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='keyword'>wrap</span> <span class='variable'>c</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>+</span> <span class='variable'>b</span> <span class='punctuation bracket'>}</span>
+
+<span class='function'>mod</span> <span class='function'>multiply_add</span><span class='punctuation bracket'>(</span><span class='variable parameter'>in1</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u16</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>in2</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u16</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>out</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation special'>@</span><span class='punctuation bracket'>[</span><span class='number'>4</span><span class='punctuation bracket'>]</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='keyword'><span class='keyword'>stage</span><span class='punctuation bracket'>[</span><span class='number'>3</span><span class='punctuation bracket'>]</span></span> <span class='variable'>tmp</span>     <span class='operator'>=</span> <span class='function'>mul</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span>=<span class='variable'>in1</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span>=<span class='variable'>in2</span><span class='punctuation bracket'>)</span>     // mul picks 3 stages
+  <span class='keyword'><span class='keyword'>stage</span><span class='punctuation bracket'>[</span><span class='number'>3</span><span class='punctuation bracket'>]</span></span> <span class='variable'>in1_d</span>   <span class='operator'>=</span> <span class='variable'>in1</span>                   // delay in1 by 3
+  <span class='keyword'><span class='keyword'>stage</span><span class='punctuation bracket'>[</span><span class='number'>1</span><span class='punctuation bracket'>]</span></span> <span class='variable'>out</span><span class='punctuation special'>@</span><span class='punctuation bracket'>[</span><span class='number'>4</span><span class='punctuation bracket'>]</span> <span class='operator'>=</span> <span class='function'>add</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span>=<span class='variable'>tmp</span><span class='punctuation special'>@</span><span class='punctuation bracket'>[</span><span class='number'>3</span><span class='punctuation bracket'>]</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span>=<span class='variable'>in1_d</span><span class='punctuation special'>@</span><span class='punctuation bracket'>[</span><span class='number'>3</span><span class='punctuation bracket'>]</span><span class='punctuation bracket'>)</span> // adder takes 1 stage; out@[4] typechecks
+<span class='punctuation bracket'>}</span>
+
+<span class='function'>mod</span> <span class='function'>accum</span><span class='punctuation bracket'>(</span><span class='variable parameter'>in1</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u16</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>in2</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u16</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>out</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation special'>@</span><span class='punctuation bracket'>[</span><span class='number'>3</span><span class='punctuation bracket'>]</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='keyword'>reg</span> <span class='variable'>total</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span> <span class='operator'>=</span> <span class='number'>0</span>                  // mod can use reg (state, home stage 3)
+  <span class='keyword'><span class='keyword'>stage</span><span class='punctuation bracket'>[</span><span class='number'>3</span><span class='punctuation bracket'>]</span></span> <span class='variable'>tmp</span> <span class='operator'>=</span> <span class='function'>mul</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span>=<span class='variable'>in1</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span>=<span class='variable'>in2</span><span class='punctuation bracket'>)</span>
+  <span class='keyword'>wrap</span> <span class='variable'>total</span> <span class='operator'>=</span> <span class='variable'>total</span> <span class='operator'>+</span> <span class='variable'>tmp</span><span class='punctuation special'>@</span><span class='punctuation bracket'>[</span><span class='number'>3</span><span class='punctuation bracket'>]</span>       // state q + stage-3 value: coherent
+  <span class='variable'>out</span> <span class='operator'>=</span> <span class='variable'>total</span>                        // q read; out lands at cycle 3
+<span class='punctuation bracket'>}</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'>mod</span> <span class='function'>counter</span><span class='punctuation bracket'>(</span><span class='variable parameter'>enable</span><span class='punctuation delimiter'>:</span><span class='type builtin'>bool</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='keyword'>reg</span> <span class='variable parameter'>count</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u8</span><span class='punctuation special'>@</span><span class='punctuation bracket'>[</span><span class='number'>0</span><span class='punctuation bracket'>]</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='keyword'>if</span> <span class='variable'>enable</span> <span class='punctuation bracket'>{</span> <span class='keyword'>wrap</span> <span class='variable'>count</span> <span class='operator'>+=</span> <span class='number'>1</span> <span class='punctuation bracket'>}</span>      // conditional write -&gt; state reg, home 0
+<span class='punctuation bracket'>}</span>
+
+<span class='function'>mod</span> <span class='function'>add_reg</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u8</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u8</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='keyword'>reg</span> <span class='variable parameter'>result</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u9</span><span class='punctuation special'>@</span><span class='punctuation bracket'>[</span><span class='number'>1</span><span class='punctuation bracket'>]</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='variable'>result</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>+</span> <span class='variable'>b</span>                     // unconditional write -&gt; stage reg; q at 1
+<span class='punctuation bracket'>}</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'>fluid</span> <span class='function'>fpu</span><span class='punctuation bracket'>(</span><span class='variable parameter'>req</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>FpuReq</span></span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>resp</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>FpuResp</span></span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='variable'>req</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>retry</span><span class='punctuation bracket'>]</span> <span class='operator'>=</span> <span class='variable'>busy</span>
+
+  <span class='keyword'>if</span> <span class='variable'>req</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>fire</span><span class='punctuation bracket'>]</span> <span class='punctuation bracket'>{</span>
+    <span class='function'>start_operation</span><span class='punctuation bracket'>(</span><span class='variable'>req</span><span class='punctuation bracket'>)</span>
+  <span class='punctuation bracket'>}</span>
+
+  <span class='variable'>resp</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>valid</span><span class='punctuation bracket'>]</span> <span class='operator'>=</span> <span class='variable'>result_pending</span>
+  <span class='keyword'>if</span> <span class='variable'>resp</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>fire</span><span class='punctuation bracket'>]</span> <span class='punctuation bracket'>{</span>
+    <span class='variable'>result_pending</span> <span class='operator'>=</span> <span class='variable'>false</span>
+  <span class='punctuation bracket'>}</span>
+<span class='punctuation bracket'>}</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<h2 id="declaration">Declaration<a class="headerlink" href="#declaration" title="Permanent link">&para;</a></h2>
+<p>There are two interchangeable forms for declaring a lambda. The <strong>kind-first
+declaration form</strong> is preferred — it matches the rest of Pyrope's grammar,
+where every declaration starts with a kind keyword (<code>const</code>/<code>mut</code>/<code>reg</code> for
+data, <code>comb</code>/<code>pipe</code>/<code>mod</code>/<code>fluid</code> for lambdas):</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'>comb</span> <span class='function'>get_five</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>v</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>v</span> <span class='operator'>=</span> <span class='number'>5</span> <span class='punctuation bracket'>}</span>              // kind-first form
+</code></pre></div>
+<p>Both forms are legal at top level, inside tuple literals, and inside code
+blocks. The kind-first form is shorter, reads like a method declaration in
+most languages, and lets an agent scan for all lambda declarations with a
+single pattern. Lambdas are always immutable.</p>
+<p>Only anonymous lambdas are supported — there is no global scope for
+functions, procedures, or modules. The only way for a file to access a
+lambda is to have access to a local binding with a definition or to
+<code>import</code> a <code>pub</code> lambda from another file.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>const</span> <span class='variable'>a_3</span> <span class='operator'>=</span> <span class='punctuation bracket'>{</span> <span class='number'>3</span> <span class='punctuation bracket'>}</span>             // just scope, not a lambda. Scope is evaluated now
+<span class='function'>comb</span> <span class='function'>a_lambda</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>v</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>v</span> <span class='operator'>=</span> <span class='number'>4</span> <span class='punctuation bracket'>}</span>   // kind-first form
+
+<span class='keyword'>pub</span> <span class='function'>comb</span> <span class='function'>get_five</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>v</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>v</span> <span class='operator'>=</span> <span class='number'>5</span> <span class='punctuation bracket'>}</span>   // pub: can be imported by other files
+
+<span class='keyword'>const</span> <span class='variable'>x</span> <span class='operator'>=</span> <span class='function'>a_3</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>             // error: explicit call not possible in scope
+<span class='keyword'>const</span> <span class='variable'>x</span> <span class='operator'>=</span> <span class='function'>a_lambda</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>        // OK, explicit call needed when no arguments
+
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>a_3</span> <span class='operator'>==</span> <span class='number'>3</span><span class='punctuation bracket'>)</span>
+<span class='keyword'>type</span> <span class='variable'>a_lambda_type</span> = <span class='function'>comb</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span><span class='punctuation delimiter'>-&gt;</span><span class='punctuation bracket'>(</span><span class='variable parameter'>v</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>a_lambda</span> <span class='keyword'>equals</span> <span class='variable'>a_lambda_type</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='function'>a_lambda</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='operator'>==</span> <span class='number'>4</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p>The lambda definition has the following fields:</p>
+<div class="highlight"><pre><span></span><code>[GENERIC] [INPUT] [-&gt; OUTPUT] |
+</code></pre></div>
+<ul>
+<li>
+<p><code>GENERIC</code> is an optional comma separated list of names between <code>&lt;</code> and <code>&gt;</code>.
+  Each name binds to any <strong>compile-time entity</strong> — a type (<code>u8</code>, a <code>type</code>
+  alias, a struct type), a comptime constant, or a lambda — and is visible
+  throughout the signature and body. Unlike an input, a generic can
+  constrain the types of other inputs and of outputs
+  (<code>comb f&lt;T&gt;(a:T) -&gt; (r:T)</code>). A name may declare a default (<code>&lt;T, N=4&gt;</code>); a
+  defaulted generic may be omitted at the call site. The call site binds
+  generics explicitly (<code>f&lt;T=u8, N=3&gt;(…)</code>) under the same naming rules as
+  arguments (see "Argument naming" below: named unless the binding is
+  unambiguous), or leaves a type-valued generic to inference from the
+  actuals' declared types (see the binding rules after the example block).
+  There is no separate comptime-parameter list — a comptime constant the
+  caller picks is just a constant-valued generic. (TBD: constant/lambda
+  generics, generic defaults, named <code>&lt;T=…&gt;</code> bindings, and body references
+  of a generic name are not implemented yet — see
+  <a href="../15-tbd/">Implementation status</a>, task <code>3g</code>.)</p>
+</li>
+<li>
+<p>Lambdas do not have an explicit capture list. Visible comptime bindings from
+  enclosing scopes, including imports and <code>comptime const</code> declarations, are
+  available lexically inside the lambda body and signature. The compiler records
+  those references as explicit comptime dependencies of the lambda; no capture
+  syntax is written by the programmer. Runtime <code>const</code>, <code>mut</code>, and <code>reg</code>
+  declarations from enclosing lambda scopes are not visible inside a nested
+  lambda unless passed as normal inputs or stored in an explicit tuple/object
+  that the lambda receives.</p>
+</li>
+<li>
+<p><code>INPUT</code> has a list of inputs allowed with optional types. An input may
+  declare a <strong>default value</strong> (<code>comb f(in1:u4, in2=3) -&gt; …</code>): a call that
+  omits that input takes the default. The default expression evaluates in
+  the parameter tuple's scope — it may reference earlier parameters
+  (<code>comb example(a:signed, b:signed=a+5)</code>, see the tuple-scope example in
+  <a href="../04-variables/">Variables</a>), visible comptime bindings, and generic
+  names (<code>in2=N</code>). (TBD: input defaults are not implemented yet — see
+  <a href="../15-tbd/">Implementation status</a>, task <code>3g</code>.) <code>()</code> indicates no
+  inputs. <code>(...args)</code> allow to accept a variable number of arguments. A
+  <code>...args</code> var-arg is the trailing parameter; it gathers every actual not
+  consumed by a fixed leading parameter into one tuple — positional leftovers
+  become positional entries (read as <code>args[i]</code>), named leftovers become named
+  fields (read as <code>args.NAME</code>). Var-args are supported on a <code>comb</code> (which can
+  inline without generating a module). A <code>pipe</code>/<code>mod</code>/<code>fluid</code> hardware boundary
+  can be written with varargs as a deferred template, but each generated module
+  instance needs a concrete call that resolves them into a fixed port list.</p>
+</li>
+<li>
+<p><code>OUTPUT</code> has a list of outputs allowed with optional types. <code>-&gt; ()</code>
+  indicates no outputs. The <code>-&gt; (...)</code> clause is <strong>mandatory</strong>; omitting it
+  is a compile error. The only exemption is a <code>self</code> method (first input
+  parameter named <code>self</code>, with or without <code>ref</code>): it acts through the
+  receiver — setters, constructors, or debug-only prints/asserts — and may
+  omit the clause. Outputs are <strong>always declared by
+  name</strong> — there are no anonymous/positional return lists. The body assigns
+  to those names. An output may have the same Pyrope name as an input:
+  <code>comb f(x) -&gt; (x) { x = x + 1 }</code> is legal. In the lambda body, reads before
+  the output assignment use the input value and the assignment binds the output
+  field. This is a source-level name match, not a bidirectional hardware port:
+  LNAST can represent the shared source name, but LGraph/Verilog generation
+  emits distinct input and output signal names.</p>
+</li>
+</ul>
+<p>Dispatch between alternative lambdas is always explicit at the call site
+using <code>if</code>/<code>elif</code> chains. Pyrope does not have a <code>where</code> clause on lambda
+declarations (an earlier design did); this keeps the call flow visible and
+locally readable.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'>comb</span> <span class='function'>add1</span><span class='punctuation bracket'>(</span><span class='operator'>...</span><span class='variable parameter'>x</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>r</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>r</span> <span class='operator'>=</span> <span class='variable'>x</span><span class='punctuation bracket'>[</span><span class='number'>0</span><span class='punctuation bracket'>]</span> <span class='operator'>+</span> <span class='variable'>x</span><span class='punctuation bracket'>[</span><span class='number'>1</span><span class='punctuation bracket'>]</span> <span class='operator'>+</span> <span class='variable'>x</span><span class='punctuation bracket'>[</span><span class='number'>2</span><span class='punctuation bracket'>]</span> <span class='punctuation bracket'>}</span>   // var-args, single output
+<span class='function'>comb</span> <span class='function'>add2</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>c</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>r</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>r</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>+</span> <span class='variable'>b</span> <span class='operator'>+</span> <span class='variable'>c</span> <span class='punctuation bracket'>}</span>         // constrain inputs to a,b,c
+<span class='function'>comb</span> <span class='function'>add3</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>c</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>r</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>r</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>+</span> <span class='variable'>b</span> <span class='operator'>+</span> <span class='variable'>c</span> <span class='punctuation bracket'>}</span>     // constrain result to u32
+<span class='function'>comb</span> <span class='function'>add4</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation delimiter'>:</span><span class='type builtin'>s3</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>c</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>r</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>r</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>+</span> <span class='variable'>b</span> <span class='operator'>+</span> <span class='variable'>c</span> <span class='punctuation bracket'>}</span>  // constrain some input types
+<span class='function'>comb</span> <span class='function'>add5</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>a</span></span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>c</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>a</span></span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>r</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>r</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>+</span> <span class='variable'>b</span> <span class='operator'>+</span> <span class='variable'>c</span> <span class='punctuation bracket'>}</span>     // constrain inputs to same type
+<span class='function'>comb</span> <span class='function'>add6</span><span class='operator'>&lt;</span><span class='variable'>T</span><span class='operator'>&gt;</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>T</span></span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>T</span></span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>c</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>T</span></span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>r</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>r</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>+</span> <span class='variable'>b</span> <span class='operator'>+</span> <span class='variable'>c</span><span class='punctuation bracket'>}</span> // generic, single output
+
+// To overload, declare each lambda separately and gather them:
+<span class='keyword'>const</span> <span class='variable'>add</span> <span class='operator'>=</span> <span class='punctuation bracket'>[</span><span class='variable'>add1</span><span class='punctuation delimiter'>,</span> <span class='variable'>add2</span><span class='punctuation delimiter'>,</span> <span class='variable'>add3</span><span class='punctuation delimiter'>,</span> <span class='variable'>add4</span><span class='punctuation delimiter'>,</span> <span class='variable'>add5</span><span class='punctuation delimiter'>,</span> <span class='variable'>add6</span><span class='punctuation bracket'>]</span>
+// A call through the set dispatches to the FIRST gathered lambda whose
+// signature can accept the call (tuple order is the tie-break — no ambiguity
+// error). &quot;Can accept&quot; uses the SAME argument rules as a direct call (so
+// same-kind positional args must still be named); if no candidate matches it
+// is a compile error. Dispatch is resolved at compile time, so the selected
+// lambda&#39;s body is what lowers — there is no runtime mux of the alternatives.
+<span class='keyword'>const</span> <span class='variable'>s</span> <span class='operator'>=</span> <span class='function'>add</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span>=<span class='number'>1</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span>=<span class='number'>2</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>c</span>=<span class='number'>3</span><span class='punctuation bracket'>)</span>   // a 3-arg call → the first 3-arg-compatible add
+
+<span class='keyword'>const</span> <span class='variable'>x</span> <span class='operator'>=</span> <span class='number'>2</span>
+<span class='function'>comb</span> <span class='function'>addx1</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>r</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>r</span> <span class='operator'>=</span> <span class='variable'>x</span> <span class='operator'>+</span> <span class='variable'>a</span> <span class='punctuation bracket'>}</span>    // error: x is runtime, not visible in lambda
+
+/// Visible comptime bindings are available lexically:
+<span class='keyword'>comptime</span> <span class='keyword'>const</span> <span class='variable'>Scale</span> <span class='operator'>=</span> <span class='number'>2</span>
+<span class='function'>comb</span> <span class='function'>addx2</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>r</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>r</span> <span class='operator'>=</span> <span class='variable'>Scale</span> <span class='operator'>+</span> <span class='variable'>a</span> <span class='punctuation bracket'>}</span>       // OK: Scale is comptime
+
+/// Imports are comptime aliases:
+<span class='keyword'>const</span> <span class='variable'>lib</span> <span class='operator'>=</span> <span class='function'>import</span><span class='punctuation bracket'>(</span><span class='string'>&quot;lib.math&quot;</span><span class='punctuation bracket'>)</span>
+<span class='function'>comb</span> <span class='function'>is_add</span><span class='punctuation bracket'>(</span><span class='variable parameter'>op</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'><span class='type'><span class='type'>lib</span></span><span class='punctuation delimiter'>.</span><span class='type'><span class='type'>OpType</span></span></span></span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>r</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>r</span> <span class='operator'>=</span> <span class='variable'>op</span> <span class='operator'>==</span> <span class='variable'>lib</span><span class='punctuation delimiter'>.</span><span class='variable'>AddOp</span> <span class='punctuation bracket'>}</span>
+
+<span class='keyword'>mut</span> <span class='variable'>y</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span>
+  <span class='keyword'>mut</span> <span class='variable'>val</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span> <span class='operator'>=</span> <span class='number'>1</span><span class='punctuation delimiter'>,</span>
+  <span class='function'>comb</span> <span class='function'>inc1</span><span class='punctuation bracket'>(</span><span class='keyword'>ref</span> <span class='variable parameter'>self</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>self</span><span class='punctuation delimiter'>.</span><span class='variable'>val</span> <span class='operator'>=</span> <span class='function'>u32</span><span class='punctuation bracket'>(</span><span class='variable'>self</span><span class='punctuation delimiter'>.</span><span class='variable'>val</span> <span class='operator'>+</span> <span class='number'>1</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>}</span> // no outputs; mutates via ref
+<span class='punctuation bracket'>)</span>
+
+<span class='function'>comb</span> <span class='function'>my_log</span><span class='punctuation delimiter'>::</span><span class='punctuation bracket'>[</span><span class='variable'>debug</span><span class='punctuation bracket'>]</span><span class='punctuation bracket'>(</span><span class='operator'>...</span><span class='variable parameter'>inp</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> // no outputs; side-effecting print
+  <span class='function builtin'>print</span><span class='punctuation bracket'>(</span><span class='string'>&quot;logging:&quot;</span><span class='punctuation bracket'>)</span>
+  <span class='keyword'>for</span> <span class='variable'>i</span> <span class='keyword'>in</span> <span class='variable'>inp</span> <span class='punctuation bracket'>{</span>
+    <span class='function builtin'>print</span><span class='punctuation bracket'>(</span><span class='string'>&quot; <span class='punctuation bracket'>{</span><span class='punctuation bracket'>}</span>&quot;</span><span class='punctuation delimiter'>,</span> <span class='variable'>i</span><span class='punctuation bracket'>)</span>
+  <span class='punctuation bracket'>}</span>
+  <span class='function builtin'>puts</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>
+<span class='punctuation bracket'>}</span>
+
+<span class='function'>comb</span> <span class='function'>f</span><span class='operator'>&lt;</span><span class='variable'>X</span><span class='operator'>&gt;</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>X</span></span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>X</span></span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>r</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>r</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>+</span> <span class='variable'>b</span> <span class='punctuation bracket'>}</span>    // enforces a and b with same type
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='function'>f</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span>=<span class='function'>u22</span><span class='punctuation bracket'>(</span><span class='number'>33</span><span class='punctuation bracket'>)</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span>=<span class='function'>u22</span><span class='punctuation bracket'>(</span><span class='number'>100</span><span class='punctuation bracket'>)</span><span class='punctuation bracket'>)</span> <span class='operator'>==</span> <span class='number'>133</span><span class='punctuation bracket'>)</span>    // X = u22 (inferred; args named per
+                                            // the argument-naming rules below)
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='function'>f</span><span class='operator'>&lt;</span><span class='type builtin'>u8</span><span class='operator'>&gt;</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span>=<span class='number'>1</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span>=<span class='number'>2</span><span class='punctuation bracket'>)</span> <span class='operator'>==</span> <span class='number'>3</span><span class='punctuation bracket'>)</span>               // X = u8 (explicit call-site binding)
+
+<span class='function'>comb</span> <span class='function'>addk</span><span class='operator'>&lt;</span><span class='variable'>T</span><span class='punctuation delimiter'>,</span> <span class='variable'>K</span>=<span class='type'><span class='number'>1</span></span><span class='operator'>&gt;</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>T</span></span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>r</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>r</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>+</span> <span class='variable'>K</span> <span class='punctuation bracket'>}</span> // K: constant generic with default
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='function'>addk</span><span class='operator'>&lt;</span><span class='type builtin'>u8</span><span class='operator'>&gt;</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span>=<span class='number'>3</span><span class='punctuation bracket'>)</span> <span class='operator'>==</span> <span class='number'>4</span><span class='punctuation bracket'>)</span>                 // K defaults to 1 (single unnamed
+                                            // binding is unambiguous → T)
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='function'>addk</span><span class='operator'>&lt;</span><span class='variable parameter'>T</span>=<span class='type builtin'>u8</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>K</span>=<span class='type'><span class='number'>10</span></span><span class='operator'>&gt;</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span>=<span class='number'>3</span><span class='punctuation bracket'>)</span> <span class='operator'>==</span> <span class='number'>13</span><span class='punctuation bracket'>)</span>        // named bindings, same rules as args
+
+<span class='function'>comb</span> <span class='function'>inc</span><span class='punctuation bracket'>(</span><span class='variable parameter'>v</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u8</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>o</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u9</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>o</span> <span class='operator'>=</span> <span class='variable'>v</span> <span class='operator'>+</span> <span class='number'>1</span> <span class='punctuation bracket'>}</span>
+<span class='function'>comb</span> <span class='function'>apply</span><span class='operator'>&lt;</span><span class='variable'>F</span><span class='operator'>&gt;</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u8</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>r</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>r</span> <span class='operator'>=</span> <span class='function'>F</span><span class='punctuation bracket'>(</span><span class='variable parameter'>v</span>=<span class='variable'>a</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>}</span>   // F: lambda-valued generic
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='function'>apply</span><span class='operator'>&lt;</span><span class='type'><span class='type'>inc</span></span><span class='operator'>&gt;</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span>=<span class='number'>3</span><span class='punctuation bracket'>)</span> <span class='operator'>==</span> <span class='number'>4</span><span class='punctuation bracket'>)</span>
+
+<span class='function'>my_log</span><span class='punctuation bracket'>(</span><span class='variable'>a</span><span class='punctuation delimiter'>,</span> <span class='variable'>false</span><span class='punctuation delimiter'>,</span> <span class='variable'>x</span> <span class='operator'>+</span> <span class='number'>1</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p>A generic binds <strong>per call site</strong> — a pure comptime-macro expansion, with the
+normal typing rules applying after substitution (no implicit coercion). A
+generic name may bind any compile-time entity: a type, a comptime constant,
+or a lambda. After substitution, whatever is legal for the bound entity is
+legal for the generic, and nothing more — <code>T(a)</code> is a cast when <code>T</code> binds a
+type and a call when it binds a lambda; <code>a + N</code> needs <code>N</code> to bind a constant;
+attribute queries on a generic are exactly as legal as on the substituted
+entity.</p>
+<p>Explicit call-site bindings follow the <strong>same naming rules as arguments</strong>
+("Argument naming" below): each binding is named (<code>f&lt;T=u8, N=8&gt;(…)</code>) unless
+it is unambiguous — a single generic name, bindings whose kinds (type vs
+constant vs lambda) match only one assignment, or a bound identifier whose
+name matches the generic's name. A generic the call leaves unbound takes its
+declared default (<code>&lt;T, N=4&gt;</code>) if it has one; otherwise, a generic that
+appears in <code>:T</code> type positions of the parameters is inferred: it unifies
+over the <strong>declared</strong> types of the actuals at its <code>:T</code> positions (a <code>u8</code>
+actual and a <code>u16</code> actual for one <code>T</code> is a compile error —
+<code>fcall-generic-mismatch</code>), while bare literals contribute only their kind, so
+<code>f(a=1, b=2)</code> infers <code>X = signed</code>. A constant- or lambda-valued generic is
+never inferred — it must be bound explicitly or defaulted. On a <code>pipe</code>/<code>mod</code>
+boundary each distinct binding mints its own module, exactly like the
+untyped-parameter deferred templates above (<code>madd&lt;T&gt;</code> called with <code>u8</code>
+actuals mints <code>madd__u8_u8</code>).</p>
+<p>There is no constraint clause on the declaration (no <code>where</code>, no
+<code>&lt;T does …&gt;</code>). To constrain what a caller may bind, assert it in the body:
+<code>cassert(T does Addable)</code> fails at instantiation with the normal
+comptime-assert diagnostics.</p>
+<h2 id="argument-naming">Argument naming<a class="headerlink" href="#argument-naming" title="Permanent link">&para;</a></h2>
+<p>Every input argument must be named at the call site (<code>fcall(a=2, b=3)</code>),
+whether the call is direct or UFCS. There are a few narrow exceptions that
+let an argument be passed unnamed:</p>
+<ul>
+<li>
+<p>The lambda has exactly one argument (and <code>self</code> does not count, see
+  below). With nothing to disambiguate, position is unambiguous.</p>
+</li>
+<li>
+<p>The calling expression is a variable whose name matches a parameter name
+  (<code>fcall(a)</code> matches a parameter named <code>a</code>).</p>
+</li>
+<li>
+<p>The argument types make the mapping unambiguous with no implicit
+  conversion required. This applies when each unnamed call-site value
+  matches exactly one parameter by type; if two parameters have the same
+  type, or an untyped parameter could accept the value, the call must name
+  the argument.</p>
+</li>
+<li>
+<p><code>self</code> is always bound positionally — by the value before the dot in a
+  UFCS call, or by the first positional actual in a direct call — and is
+  never named at the call site.</p>
+</li>
+</ul>
+<p>Structured tuple parameters can be supplied either as one tuple value or as
+expanded dotted fields. The expanded form is legal but usually noisier; it is
+useful when mapping to generated LGraph/Verilog ports, because those interfaces
+are flattened into separate signals. This uses the same path expansion as
+<a href="../03-bundle/#dotted-field-expansion">tuple literals</a>.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'>comb</span> <span class='function'>pick</span><span class='punctuation bracket'>(</span><span class='variable parameter'>ar</span><span class='punctuation delimiter'>:</span><span class='type'><span class='punctuation bracket'>(</span><span class='variable'>x</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u3</span><span class='punctuation delimiter'>,</span> <span class='variable'>y</span><span class='punctuation delimiter'>:</span><span class='type builtin'>s4</span><span class='punctuation bracket'>)</span></span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>cond</span><span class='punctuation delimiter'>:</span><span class='type builtin'>bool</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>res</span><span class='punctuation delimiter'>:</span><span class='type builtin'>s5</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='variable'>res</span> <span class='operator'>=</span> <span class='keyword'>if</span> <span class='variable'>cond</span> <span class='punctuation bracket'>{</span> <span class='variable'>ar</span><span class='punctuation delimiter'>.</span><span class='variable'>x</span> <span class='operator'>+</span> <span class='number'>1</span> <span class='punctuation bracket'>}</span> <span class='keyword'>else</span> <span class='punctuation bracket'>{</span> <span class='variable'>ar</span><span class='punctuation delimiter'>.</span><span class='variable'>y</span> <span class='operator'>-</span> <span class='number'>1</span> <span class='punctuation bracket'>}</span>
+<span class='punctuation bracket'>}</span>
+
+<span class='keyword'>const</span> <span class='variable'>a</span> <span class='operator'>=</span> <span class='function'>pick</span><span class='punctuation bracket'>(</span><span class='variable parameter'>ar</span>=<span class='punctuation bracket'>(</span><span class='variable'>x</span><span class='operator'>=</span><span class='number'>1</span><span class='punctuation delimiter'>,</span> <span class='variable'>y</span><span class='operator'>=</span><span class='number'>10</span><span class='punctuation bracket'>)</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>cond</span>=<span class='variable'>true</span><span class='punctuation bracket'>)</span>  // compact tuple argument
+<span class='keyword'>const</span> <span class='variable'>b</span> <span class='operator'>=</span> <span class='function'>pick</span><span class='punctuation bracket'>(</span><span class='variable'>ar</span><span class='punctuation delimiter'>.</span><span class='variable'>x</span>=<span class='number'>1</span><span class='punctuation delimiter'>,</span> <span class='variable'>ar</span><span class='punctuation delimiter'>.</span><span class='variable'>y</span>=<span class='number'>10</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>cond</span>=<span class='variable'>true</span><span class='punctuation bracket'>)</span> // expanded fields, same binding
+</code></pre></div>
+<h3 id="binding-return-values">Binding return values<a class="headerlink" href="#binding-return-values" title="Permanent link">&para;</a></h3>
+<p>Outputs are always named, and <strong>binding the result of a call mirrors the
+argument-naming rules above</strong> — the same name-match / non-ambiguous / type
+exceptions, just in the other direction. There is no positional return list and
+no binding by order.</p>
+<ul>
+<li><strong>One output.</strong> The output name is dropped and the result binds directly to
+  the destination. If that single output is a tuple, the destination <em>is</em> that
+  tuple:</li>
+</ul>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'>comb</span> <span class='function'>pair</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>signed</span></span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>signed</span></span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>p</span><span class='punctuation delimiter'>:</span><span class='type'><span class='punctuation bracket'>(</span><span class='variable'>first</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>signed</span></span><span class='punctuation delimiter'>,</span> <span class='variable'>second</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>signed</span></span><span class='punctuation bracket'>)</span></span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>p</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span><span class='variable'>first</span><span class='operator'>=</span><span class='variable'>a</span><span class='punctuation delimiter'>,</span> <span class='variable'>second</span><span class='operator'>=</span><span class='variable'>b</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>}</span>
+
+<span class='keyword'>const</span> <span class='variable'>inner</span> <span class='operator'>=</span> <span class='function'>pair</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span>=<span class='number'>100</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span>=<span class='number'>50</span><span class='punctuation bracket'>)</span>   // single output `p` maps to `inner`
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>inner</span><span class='punctuation delimiter'>.</span><span class='variable'>first</span> <span class='operator'>==</span> <span class='number'>100</span><span class='punctuation bracket'>)</span>       // `inner` IS the tuple (no `inner.p` level)
+</code></pre></div>
+<ul>
+<li><strong>Several outputs.</strong> Destructure into names that <strong>match the output names</strong>
+  (the same exceptions apply: a lone output is unambiguous, a matching variable
+  name binds, or a unique type decides). Binding several outputs to one
+  variable is a compile error, and there is <strong>no mapping by position</strong>:</li>
+</ul>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'>comb</span> <span class='function'>two</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>signed</span></span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>signed</span></span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>p1</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>signed</span></span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>p2</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>signed</span></span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>p1</span> <span class='operator'>=</span> <span class='variable'>a</span><span class='punctuation delimiter'>;</span> <span class='variable'>p2</span> <span class='operator'>=</span> <span class='variable'>b</span> <span class='punctuation bracket'>}</span>
+
+<span class='keyword'>const</span> <span class='punctuation bracket'>(</span><span class='variable'>p1</span><span class='punctuation delimiter'>,</span> <span class='variable'>p2</span><span class='punctuation bracket'>)</span> <span class='operator'>=</span> <span class='function'>two</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span>=<span class='number'>100</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span>=<span class='number'>50</span><span class='punctuation bracket'>)</span>        // OK: names match the outputs
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>p1</span><span class='operator'>==</span><span class='number'>100</span> <span class='keyword'>and</span> <span class='variable'>p2</span><span class='operator'>==</span><span class='number'>50</span><span class='punctuation bracket'>)</span>
+
+<span class='keyword'>const</span> <span class='variable'>inner</span>   <span class='operator'>=</span> <span class='function'>two</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span>=<span class='number'>100</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span>=<span class='number'>50</span><span class='punctuation bracket'>)</span>         // ERROR: two outputs, one variable
+<span class='keyword'>const</span> <span class='punctuation bracket'>(</span><span class='variable'>x</span><span class='punctuation delimiter'>,</span> <span class='variable'>y</span><span class='punctuation bracket'>)</span>  <span class='operator'>=</span> <span class='function'>two</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span>=<span class='number'>100</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span>=<span class='number'>50</span><span class='punctuation bracket'>)</span>         // ERROR: x/y do not match p1/p2 (no by-order)
+<span class='keyword'>const</span> <span class='punctuation bracket'>(</span><span class='variable'>x</span>=<span class='variable'>two</span><span class='punctuation delimiter'>.</span><span class='variable'>p1</span><span class='punctuation delimiter'>,</span> <span class='variable'>y</span>=<span class='variable'>two</span><span class='punctuation delimiter'>.</span><span class='variable'>p2</span><span class='punctuation bracket'>)</span> <span class='operator'>=</span> <span class='function'>two</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span>=<span class='number'>100</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span>=<span class='number'>50</span><span class='punctuation bracket'>)</span>  // OK: explicit remap `var = callee.output`
+</code></pre></div>
+<p>There are several rules on how to handle arguments.</p>
+<ul>
+<li>
+<p><strong>Every lambda call requires parentheses.</strong> <code>foo()</code>, <code>foo(a=1,b=2)</code>, and
+  <code>x.bar(y=y)</code> are the only forms. There is no "drop parens after newline"
+  or "drop parens after a pipeline operator" sugar. This keeps every call
+  site unambiguously identifiable.</p>
+</li>
+<li>
+<p><strong>Calls use Uniform Function Call Syntax (UFCS).</strong> <code>x.f(args)</code> is
+  rewritten to <code>f(x, args)</code> with <code>x</code> bound positionally to <code>self</code>. The
+  UFCS form is valid ONLY when the lambda declares <code>self</code>: calling a
+  self-less lambda as <code>x.f(args)</code> is a compile error (use the direct
+  form).</p>
+</li>
+<li>
+<p><strong>If a lambda declares <code>self</code>, BOTH call forms are valid:</strong> the UFCS
+  form <code>value.method(args)</code> and the direct form <code>method(value, args)</code>
+  — the receiver is simply the first positional actual. <code>self</code> binds
+  only positionally; the named spelling <code>method(self=...)</code> is rejected.</p>
+</li>
+</ul>
+<h3 id="uniform-function-call-syntax-ufcs">Uniform Function Call Syntax (UFCS)<a class="headerlink" href="#uniform-function-call-syntax-ufcs" title="Permanent link">&para;</a></h3>
+<p>Pyrope's UFCS resembles Nim or D, but the naming rules above apply at the
+call site. Every argument inside the parentheses must follow the naming
+rules — UFCS is not a shortcut for skipping argument names.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'>comb</span> <span class='function'>div</span><span class='punctuation bracket'>(</span><span class='variable parameter'>self</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>r</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>r</span> <span class='operator'>=</span> <span class='variable'>self</span> <span class='operator'>/</span> <span class='variable'>b</span> <span class='punctuation bracket'>}</span>     // method: declares self
+<span class='function'>comb</span> <span class='function'>div2</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation bracket'>)</span>   <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>r</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>r</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>/</span> <span class='variable'>b</span> <span class='punctuation bracket'>}</span>        // free function: no self
+<span class='function'>comb</span> <span class='function'>noarg</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>      <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>r</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>r</span> <span class='operator'>=</span> <span class='number'>33</span> <span class='punctuation bracket'>}</span>           // explicit no args
+
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='number'>33</span> <span class='operator'>==</span> <span class='function'>noarg</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span><span class='punctuation bracket'>)</span>               // () always required, even for no-arg calls
+
+<span class='keyword'>const</span> <span class='variable'>b1</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span><span class='number'>8</span><span class='punctuation bracket'>)</span><span class='punctuation delimiter'>.</span><span class='variable'>div</span><span class='punctuation bracket'>(</span><span class='variable parameter'>b</span>=<span class='number'>2</span><span class='punctuation bracket'>)</span>              // OK: 8 → self, b named (4)
+<span class='keyword'>const</span> <span class='variable'>b2</span> <span class='operator'>=</span> <span class='function'>div</span><span class='punctuation bracket'>(</span><span class='number'>8</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span>=<span class='number'>2</span><span class='punctuation bracket'>)</span>               // OK: direct form, 8 → self (4)
+<span class='keyword'>const</span> <span class='variable'>d1</span> <span class='operator'>=</span> <span class='function'>div2</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span>=<span class='number'>8</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span>=<span class='number'>2</span><span class='punctuation bracket'>)</span>            // OK: direct call, all named (4)
+
+<span class='keyword'>const</span> <span class='variable'>c1</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span><span class='keyword'>const</span> <span class='variable'>a</span><span class='operator'>=</span><span class='number'>8</span><span class='punctuation delimiter'>,</span> <span class='keyword'>const</span> <span class='variable'>b</span><span class='operator'>=</span><span class='number'>2</span><span class='punctuation bracket'>)</span><span class='punctuation delimiter'>.</span><span class='variable'>div2</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> // error: div2 has no self → no UFCS
+<span class='keyword'>const</span> <span class='variable'>t1</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span><span class='number'>8</span><span class='punctuation bracket'>)</span><span class='punctuation delimiter'>.</span><span class='variable'>div2</span><span class='punctuation bracket'>(</span><span class='variable parameter'>b</span>=<span class='number'>2</span><span class='punctuation bracket'>)</span>             // error: div2 has no self → no UFCS
+<span class='keyword'>const</span> <span class='variable'>t2</span> <span class='operator'>=</span> <span class='number'>8</span><span class='punctuation delimiter'>.</span><span class='variable'>div</span><span class='punctuation bracket'>(</span><span class='number'>2</span><span class='punctuation bracket'>)</span>                  // error: `2` is not named
+<span class='keyword'>const</span> <span class='variable'>t3</span> <span class='operator'>=</span> <span class='function'>div</span><span class='punctuation bracket'>(</span><span class='variable parameter'>self</span>=<span class='number'>8</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span>=<span class='number'>2</span><span class='punctuation bracket'>)</span>          // error: `self` cannot be named
+
+<span class='function builtin'>assert</span><span class='punctuation bracket'>(</span><span class='variable'>noarg</span><span class='punctuation bracket'>)</span>                        // error: `noarg()` needed for calls
+</code></pre></div>
+<p>When the lambda declares <code>self</code>, the leading dotted value may be any value
+(scalar, array, or tuple) — it is bound positionally to <code>self</code>. The
+remaining arguments still follow the naming rules.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'>comb</span> <span class='function'>some_op</span><span class='punctuation bracket'>(</span><span class='variable parameter'>self</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>d</span>=<span class='number'>3</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>r</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> /* ... */ <span class='punctuation bracket'>}</span>
+
+<span class='punctuation bracket'>(</span><span class='number'>8</span><span class='punctuation bracket'>)</span><span class='punctuation delimiter'>.</span><span class='variable'>some_op</span><span class='punctuation bracket'>(</span><span class='variable parameter'>d</span>=<span class='number'>3</span><span class='punctuation bracket'>)</span>        // scalar bound to self
+<span class='punctuation bracket'>[</span><span class='number'>8</span><span class='punctuation delimiter'>,</span> <span class='number'>2</span><span class='punctuation delimiter'>,</span> <span class='variable'>a</span><span class='punctuation bracket'>]</span><span class='punctuation delimiter'>.</span><span class='variable'>some_op</span><span class='punctuation bracket'>(</span><span class='variable parameter'>d</span>=<span class='number'>3</span><span class='punctuation bracket'>)</span>  // array bound to self
+<span class='punctuation bracket'>(</span><span class='number'>8</span><span class='punctuation delimiter'>,</span> <span class='number'>2</span><span class='punctuation bracket'>)</span><span class='punctuation delimiter'>.</span><span class='variable'>some_op</span><span class='punctuation bracket'>(</span><span class='variable parameter'>d</span>=<span class='number'>2</span><span class='punctuation bracket'>)</span>     // unnamed tuple bound to self
+<span class='function'>some_op</span><span class='punctuation bracket'>(</span><span class='number'>8</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>d</span>=<span class='number'>3</span><span class='punctuation bracket'>)</span>         // direct form: 8 bound to self
+
+<span class='function'>some_op</span><span class='punctuation bracket'>(</span><span class='variable parameter'>self</span>=<span class='number'>8</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>d</span>=<span class='number'>3</span><span class='punctuation bracket'>)</span>    // error: `self` cannot be passed by name
+</code></pre></div>
+<p>The UFCS allows <code>lambdas</code> to call any tuple, but if the called tuple has a
+lambda defined with the same name a compile error is generated. Like with
+variables, Pyrope does not allow <code>lambda</code> call shadowing. Polymorphism is
+allowed but only explicit one as explained later.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>mut</span> <span class='variable'>tup</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span>
+  <span class='function'>comb</span> <span class='function'>f1</span><span class='punctuation bracket'>(</span><span class='variable parameter'>self</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>r</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>r</span> <span class='operator'>=</span> <span class='number'>1</span> <span class='punctuation bracket'>}</span>
+<span class='punctuation bracket'>)</span>
+
+<span class='function'>comb</span> <span class='function'>f1</span><span class='punctuation bracket'>(</span><span class='variable parameter'>self</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>r</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>r</span> <span class='operator'>=</span> <span class='number'>2</span> <span class='punctuation bracket'>}</span> // error: f1 shadows tup.f1
+<span class='function'>comb</span> <span class='function'>f1</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>r</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>r</span> <span class='operator'>=</span> <span class='number'>3</span> <span class='punctuation bracket'>}</span>     // OK, no self
+
+<span class='function builtin'>assert</span><span class='punctuation bracket'>(</span><span class='function'>f1</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='operator'>!=</span> <span class='number'>0</span><span class='punctuation bracket'>)</span>        // error: missing argument
+<span class='function builtin'>assert</span><span class='punctuation bracket'>(</span><span class='function'>f1</span><span class='punctuation bracket'>(</span><span class='variable'>tup</span><span class='punctuation bracket'>)</span> <span class='operator'>!=</span> <span class='number'>0</span><span class='punctuation bracket'>)</span>     // error: free `f1` takes no arguments
+<span class='function builtin'>assert</span><span class='punctuation bracket'>(</span><span class='number'>4</span><span class='punctuation delimiter'>.</span><span class='variable'>f1</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='operator'>!=</span> <span class='number'>0</span><span class='punctuation bracket'>)</span>      // error: f1 can be called for tup, so shadowed
+<span class='function builtin'>assert</span><span class='punctuation bracket'>(</span><span class='variable'>tup</span><span class='punctuation delimiter'>.</span><span class='variable'>f1</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='operator'>!=</span> <span class='number'>0</span><span class='punctuation bracket'>)</span>    // error: f1 is shadowing
+
+<span class='function'>comb</span> <span class='function'>xx</span><span class='punctuation bracket'>(</span><span class='variable parameter'>self</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>tup</span></span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>r</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>r</span> <span class='operator'>=</span> <span class='variable'>self</span><span class='punctuation delimiter'>.</span><span class='variable'>f1</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>}</span> // OK, explicit input restricts scope for f1
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>(</span><span class='variable'>tup</span><span class='punctuation bracket'>)</span><span class='punctuation delimiter'>.</span><span class='variable'>xx</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='operator'>==</span> <span class='number'>1</span><span class='punctuation bracket'>)</span>                   // xx declares self → UFCS OK (xx(tup) works too)
+
+<span class='keyword'>const</span> <span class='variable'>t4</span><span class='punctuation delimiter'>:</span><span class='variable'><span class='type'><span class='type'>tup</span></span></span> <span class='operator'>=</span> <span class='number'>4</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>t4</span><span class='punctuation delimiter'>.</span><span class='variable'>f1</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='operator'>==</span> <span class='number'>1</span><span class='punctuation bracket'>)</span>     // typed as tup → tup.f1 is called
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>(</span><span class='number'>4</span><span class='punctuation bracket'>)</span><span class='punctuation delimiter'>.</span><span class='variable'>f1</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='operator'>==</span> <span class='number'>3</span><span class='punctuation bracket'>)</span>    // UFCS call, scalar bound to self
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>tup</span><span class='punctuation delimiter'>.</span><span class='variable'>f1</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='operator'>==</span> <span class='number'>1</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p>The keyword <code>self</code> is used to indicate that the function is accessing a tuple.
+<code>self</code> is required to be the first argument. If the method modifies the tuple
+contents, a <code>ref self</code> must be passed as input. Since <code>ref</code> is equivalent to
+having the argument as both input and output, <code>comb</code> can use <code>ref</code> and still
+be purely combinational. <code>ref self</code> is a special receiver form: <code>foo.f1(...)</code>
+expands locally against <code>foo</code>, so the receiver is not a Verilog module port.
+For non-<code>self</code> parameters, <code>ref</code> is legal only on <code>comb</code>; a <code>mod</code> or <code>pipe</code>
+boundary is a real hardware boundary and cannot expose ordinary pass-by-ref
+ports.</p>
+<p>A typed <code>self</code> (<code>self:T</code> / <code>ref self:T</code>) constrains the receiver
+STRUCTURALLY: the call is valid when <code>receiver does T</code> — per-field name
+presence, matching scalar kinds, and integer ranges within the declared
+bounds; extra receiver fields are fine (see
+<a href="../07b-structtype/">Structural typing</a>). Only NAMED self types are
+supported; an inline tuple type on
+<code>self</code> is a compile error. The <code>does</code>-check applies to <code>self</code> only — the
+other arguments keep the normal argument rules above.</p>
+<p><code>ref self</code> additionally requires a <code>mut</code> value receiver: calling a
+ref-self method on a <code>const</code> or on a <code>type</code> binding is a compile error
+(same as passing a const to any <code>ref</code> parameter). A non-ref <code>self</code> method IS
+callable on a <code>type</code> binding — it reads the field defaults.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>mut</span> <span class='variable'>tup2</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span>
+  <span class='keyword'>mut</span> <span class='variable'>val</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u8</span> <span class='operator'>=</span> <span class='number'>0sb?</span><span class='punctuation delimiter'>,</span>
+  <span class='function'>comb</span> <span class='function'>upd</span><span class='punctuation bracket'>(</span><span class='keyword'>ref</span> <span class='variable parameter'>self</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='keyword'>sat</span> <span class='variable'>self</span><span class='punctuation delimiter'>.</span><span class='variable'>val</span> <span class='operator'>+=</span> <span class='number'>1</span> <span class='punctuation bracket'>}</span><span class='punctuation delimiter'>,</span>
+  <span class='function'>comb</span> <span class='function'>calc</span><span class='punctuation bracket'>(</span><span class='variable parameter'>self</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>r</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>r</span> <span class='operator'>=</span> <span class='variable'>self</span><span class='punctuation delimiter'>.</span><span class='variable'>val</span> <span class='punctuation bracket'>}</span>
+<span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p>A lambda call always uses parentheses (<code>foo()</code> or <code>foo(a=1, b=2)</code>). There is no
+exception: reading a variable or field never invokes a method implicitly.</p>
+<p>The <code>init</code> method is an implicit construction hook, so it must be <code>comb</code>. If
+an operation needs registers, pipeline latency, or cycle-level side effects,
+use an explicit <code>mod</code> or <code>pipe</code> method call instead.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'>no_arg_fun</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>     // parentheses always required
+<span class='function'>arg_fun</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span>=<span class='number'>1</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span>=<span class='number'>2</span><span class='punctuation bracket'>)</span> // parenthesis required; multi-argument calls name arguments
+
+<span class='keyword'>mut</span> <span class='variable'>constructed</span><span class='punctuation delimiter'>:</span><span class='type'><span class='punctuation bracket'>(</span></span>
+<span class='type'>  <span class='keyword'>mut</span> <span class='variable'>field</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation delimiter'>,</span></span>
+<span class='type'>  <span class='function'>comb</span> <span class='function'>init</span><span class='punctuation bracket'>(</span><span class='keyword'>ref</span> <span class='variable parameter'>self</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>v</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>self</span><span class='punctuation delimiter'>.</span><span class='variable'>field</span> <span class='operator'>=</span> <span class='variable'>v</span> <span class='operator'>+</span> <span class='number'>1</span> <span class='punctuation bracket'>}</span></span>
+<span class='type'><span class='punctuation bracket'>)</span></span> <span class='operator'>=</span> <span class='number'>0</span>            // construction calls init(ref constructed, 0)
+
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>constructed</span><span class='punctuation delimiter'>.</span><span class='variable'>field</span> <span class='operator'>==</span> <span class='number'>1</span><span class='punctuation bracket'>)</span>
+<span class='variable'>constructed</span><span class='punctuation delimiter'>.</span><span class='variable'>field</span> <span class='operator'>=</span> <span class='number'>7</span>     // plain write, no hook
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>constructed</span><span class='punctuation delimiter'>.</span><span class='variable'>field</span> <span class='operator'>==</span> <span class='number'>7</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<h2 id="pass-by-reference">Pass by reference<a class="headerlink" href="#pass-by-reference" title="Permanent link">&para;</a></h2>
+<p>Pyrope is an HDL, and as such, there are not memory allocation issues. This
+means that all the arguments are pass by value and the language has value
+semantics. In other words, there is not need to worry about ownership or
+move/forward semantics like in C++/Rust. All the arguments are always by value.
+Nevertheless, sometimes is useful to pass a reference to an array/register so
+that it can be updated/accessed on different lambdas.</p>
+<p>Pyrope arguments are by value, unless the <code>ref</code> keyword is used. Pass by
+reference is needed to avoid the copy by value of the function call. Unlike
+non-hardware languages, there is no performance overhead in passing by value.
+The reason for passing as reference is to allow the lambda to operate over the
+passed argument. If modified, it behaves like if it were an implicit output.
+This is quite useful for large objects like memories to avoid the copy.</p>
+<p>The pass by reference behaves like if the calling lambda were inlined in the
+caller lambda while still respecting the lambda scope. The <code>ref</code> keyword must
+be explicit in the lambda input definition but also in the lambda call. The
+lambda outputs can not have a <code>ref</code> modifier.</p>
+<p>No logical or arithmetic operation can be done with a <code>ref</code>. As a result, it is
+only useful for lambda input arguments.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'>comb</span> <span class='function'>inc1</span><span class='punctuation bracket'>(</span><span class='keyword'>ref</span> <span class='variable parameter'>a</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>a</span> <span class='operator'>+=</span> <span class='number'>1</span> <span class='punctuation bracket'>}</span>
+
+<span class='keyword'>const</span> <span class='variable'>x</span> <span class='operator'>=</span> <span class='number'>3</span>
+<span class='function'>inc1</span><span class='punctuation bracket'>(</span><span class='keyword'>ref</span> <span class='variable'>x</span><span class='punctuation bracket'>)</span>       // error: `x` is immutable but modified inside inc1
+
+<span class='keyword'>mut</span> <span class='variable'>y</span> <span class='operator'>=</span> <span class='number'>3</span>
+<span class='function'>inc1</span><span class='punctuation bracket'>(</span><span class='keyword'>ref</span> <span class='variable'>y</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>y</span> <span class='operator'>==</span> <span class='number'>4</span><span class='punctuation bracket'>)</span>
+
+<span class='function'>comb</span> <span class='function'>banner</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='function builtin'>puts</span><span class='punctuation bracket'>(</span><span class='string'>&quot;hello&quot;</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>}</span>
+<span class='keyword'>type</span> <span class='variable'>T_noarg</span> = <span class='function'>comb</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>
+<span class='function'>comb</span> <span class='function'>execute_method</span><span class='punctuation bracket'>(</span><span class='variable parameter'>fn</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>T_noarg</span></span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>  // explicit type for fn (declared ahead)
+  <span class='function'>fn</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> // prints hello when banner passed as argument
+<span class='punctuation bracket'>}</span>
+
+<span class='function'>execute_method</span><span class='punctuation bracket'>(</span><span class='variable'>banner</span><span class='punctuation bracket'>)</span>     // OK
+</code></pre></div>
+<p>In Pyrope, every method call uses parentheses, including no-argument calls.
+A bare lambda name is a value reference used for higher-order functions, not
+a call. This keeps no-argument calls visually distinct from passing the lambda
+itself.</p>
+<h2 id="output-tuple">Output tuple<a class="headerlink" href="#output-tuple" title="Permanent link">&para;</a></h2>
+<p>Everything in Pyrope is a tuple, including the result of a lambda call. There
+are three rules that work together:</p>
+<ol>
+<li>
+<p><strong>Outputs are always declared by name in <code>-&gt; ( ... )</code>.</strong> There is no
+   anonymous/positional output list. A lambda with no outputs writes <code>-&gt; ()</code>;
+   omitting the clause is a compile error, except in a <code>self</code> method (first
+   input parameter named <code>self</code>, with or without <code>ref</code>), which acts through
+   the receiver and may omit it.</p>
+</li>
+<li>
+<p><strong>The body assigns to the declared output names.</strong> A bare expression at
+   the end of a lambda body does not assign an output and has no special
+   return meaning. Binding the call result of a <code>-&gt; ()</code> lambda
+   (<code>const a = top()</code>) is a compile error — there is no value to bind.</p>
+</li>
+<li>
+<p><strong><code>return</code> is a terminator only.</strong> The keyword ends the current lambda
+   and never carries a value (<code>return X</code> is a syntax error). Whatever has
+   been assigned to the declared output names so far is what the caller
+   sees. Use <code>if cond { return }</code> for conditional early exits.</p>
+</li>
+</ol>
+<p>Callers always see a named tuple. They can read fields by name
+(<code>r.a</code>, <code>r.b</code>) or destructure on the LHS. Destructuring follows the
+<a href="../03-bundle/#named-tuple-destructuring">named-tuple destructuring</a> rules:
+bare LHS names bind by output field name, not by position. Use that section
+for rename and nested-field examples.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'>comb</span> <span class='function'>parts</span><span class='punctuation bracket'>(</span><span class='variable parameter'>x</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>next</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>doubled</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='variable'>next</span> <span class='operator'>=</span> <span class='variable'>x</span> <span class='operator'>+</span> <span class='number'>1</span>
+  <span class='variable'>doubled</span> <span class='operator'>=</span> <span class='variable'>x</span> <span class='operator'>+</span> <span class='variable'>x</span>
+<span class='punctuation bracket'>}</span>
+
+<span class='keyword'>const</span> <span class='variable'>r</span> <span class='operator'>=</span> <span class='function'>parts</span><span class='punctuation bracket'>(</span><span class='variable parameter'>x</span>=<span class='number'>3</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>r</span><span class='punctuation delimiter'>.</span><span class='variable'>next</span> <span class='operator'>==</span> <span class='number'>4</span> <span class='keyword'>and</span> <span class='variable'>r</span><span class='punctuation delimiter'>.</span><span class='variable'>doubled</span> <span class='operator'>==</span> <span class='number'>6</span><span class='punctuation bracket'>)</span>
+
+<span class='keyword'>const</span> <span class='punctuation bracket'>(</span><span class='variable'>doubled</span><span class='punctuation delimiter'>,</span> <span class='variable'>next</span><span class='punctuation bracket'>)</span> <span class='operator'>=</span> <span class='function'>parts</span><span class='punctuation bracket'>(</span><span class='variable parameter'>x</span>=<span class='number'>3</span><span class='punctuation bracket'>)</span> // OK: output names bind regardless of order
+</code></pre></div>
+<p>A single-field output tuple auto-unwraps when used in scalar context.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'>comb</span> <span class='function'>ret1</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>signed</span></span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='variable'>a</span> <span class='operator'>=</span> <span class='number'>1</span>
+<span class='punctuation bracket'>}</span>
+
+<span class='function'>comb</span> <span class='function'>ret3</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='variable'>a</span> <span class='operator'>=</span> <span class='number'>3</span>
+  <span class='variable'>b</span> <span class='operator'>=</span> <span class='number'>4</span>
+<span class='punctuation bracket'>}</span>
+
+<span class='function'>comb</span> <span class='function'>early</span><span class='punctuation bracket'>(</span><span class='variable parameter'>x</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>r</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='variable'>r</span> <span class='operator'>=</span> <span class='number'>0</span>
+  <span class='keyword'>if</span> <span class='variable'>x</span> <span class='operator'>==</span> <span class='number'>0</span> <span class='punctuation bracket'>{</span> <span class='keyword'>return</span> <span class='punctuation bracket'>}</span>     // bail out; r already assigned
+  <span class='variable'>r</span> <span class='operator'>=</span> <span class='number'>100</span> <span class='operator'>/</span> <span class='variable'>x</span>
+<span class='punctuation bracket'>}</span>
+
+<span class='function'>comb</span> <span class='function'>next_value</span><span class='punctuation bracket'>(</span><span class='variable parameter'>x</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>x</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='variable'>x</span> <span class='operator'>=</span> <span class='variable'>x</span> <span class='operator'>+</span> <span class='number'>1</span>                // same source name; generated input/output nets differ
+<span class='punctuation bracket'>}</span>
+
+<span class='keyword'>const</span> <span class='variable'>a1</span> <span class='operator'>=</span> <span class='function'>ret1</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>a1</span><span class='punctuation delimiter'>.</span><span class='variable'>a</span> <span class='operator'>==</span> <span class='number'>1</span> <span class='keyword'>and</span> <span class='variable'>a1</span> <span class='operator'>==</span> <span class='number'>1</span><span class='punctuation bracket'>)</span> // single-field tuple auto-unwraps
+
+<span class='keyword'>const</span> <span class='variable'>a3</span> <span class='operator'>=</span> <span class='function'>ret3</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>a3</span><span class='punctuation delimiter'>.</span><span class='variable'>a</span> <span class='operator'>==</span> <span class='number'>3</span> <span class='keyword'>and</span> <span class='variable'>a3</span><span class='punctuation delimiter'>.</span><span class='variable'>b</span> <span class='operator'>==</span> <span class='number'>4</span><span class='punctuation bracket'>)</span>
+
+<span class='keyword'>const</span> <span class='punctuation bracket'>(</span><span class='variable'>x1</span><span class='punctuation delimiter'>,</span> <span class='variable'>x2</span><span class='punctuation bracket'>)</span> <span class='operator'>=</span> <span class='function'>ret3</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>x1</span> <span class='operator'>==</span> <span class='number'>3</span> <span class='keyword'>and</span> <span class='variable'>x2</span> <span class='operator'>==</span> <span class='number'>4</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<h3 id="lambda-body">Lambda body<a class="headerlink" href="#lambda-body" title="Permanent link">&para;</a></h3>
+<p>Every lambda body uses the explicit form: name your output(s) in <code>-&gt; (...)</code>,
+assign to them by name in the body, and terminate normally or with a bare
+<code>return</code>. There is <strong>no placeholder lambda sugar</strong> — <code>_</code>, <code>_0</code>, <code>_1</code>, etc.
+are not positional-argument shorthands. Higher-order calls take a fully
+explicit lambda:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'>comb</span> <span class='function'>add</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>r</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>r</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>+</span> <span class='variable'>b</span> <span class='punctuation bracket'>}</span>
+<span class='function'>comb</span> <span class='function'>inc</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation bracket'>)</span>    <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>r</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>r</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>+</span> <span class='number'>1</span> <span class='punctuation bracket'>}</span>
+
+<span class='variable'>mymap</span><span class='punctuation delimiter'>.</span><span class='variable'>each</span><span class='punctuation bracket'>(</span><span class='variable'>inc</span><span class='punctuation bracket'>)</span>   // OK: `each` has one non-self argument
+</code></pre></div>
+<h2 id="init-constructor">Init (constructor)<a class="headerlink" href="#init-constructor" title="Permanent link">&para;</a></h2>
+<p>Object-like behavior is modeled as a tuple with fields and methods. Methods can
+mutate the tuple through <code>ref self</code>, which expands locally at a UFCS call such
+as <code>foo.f1(...)</code>. The only implicit hook is <code>init</code>, the constructor: it runs
+once when a variable of the type is constructed, and it must be <code>comb</code>. After
+construction, reads and writes are always structural; stateful or pipelined
+behavior is exposed as an explicit <code>mod</code> or <code>pipe</code> method. Ordinary non-<code>self</code>
+<code>ref</code> parameters remain <code>comb</code>-only.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>const</span> <span class='variable'>Counter</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span>
+  <span class='keyword'>mut</span> <span class='variable'>found_once</span><span class='punctuation delimiter'>:</span><span class='type builtin'>bool</span> <span class='operator'>=</span> <span class='variable'>false</span><span class='punctuation delimiter'>,</span>
+  <span class='function'>comb</span> <span class='function'>init</span><span class='punctuation bracket'>(</span><span class='keyword'>ref</span> <span class='variable parameter'>self</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>start</span><span class='punctuation delimiter'>:</span><span class='type builtin'>bool</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>   // constructor
+    <span class='variable'>self</span><span class='punctuation delimiter'>.</span><span class='variable'>found_once</span> <span class='operator'>=</span> <span class='variable'>start</span>
+  <span class='punctuation bracket'>}</span><span class='punctuation delimiter'>,</span>
+  <span class='function'>mod</span> <span class='function'>call</span><span class='punctuation bracket'>(</span><span class='keyword'>ref</span> <span class='variable parameter'>self</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u8</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>result</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u9</span><span class='punctuation special'>@</span><span class='punctuation bracket'>[</span><span class='number'>0</span><span class='punctuation bracket'>]</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> // receiver is locally expanded
+    <span class='variable'>self</span><span class='punctuation delimiter'>.</span><span class='variable'>found_once</span> <span class='operator'>or=</span> <span class='punctuation bracket'>(</span><span class='variable'>a</span> <span class='operator'>==</span> <span class='number'>0</span><span class='punctuation bracket'>)</span>
+    <span class='variable'>result</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>+</span> <span class='number'>1</span>
+  <span class='punctuation bracket'>}</span>
+<span class='punctuation bracket'>)</span>
+
+<span class='keyword'>mut</span> <span class='variable'>p1</span><span class='punctuation delimiter'>:</span><span class='variable'><span class='type'><span class='type'>Counter</span></span></span> <span class='operator'>=</span> <span class='variable'>false</span>   // init(ref p1, false)
+<span class='keyword'>mut</span> <span class='variable'>p2</span> <span class='operator'>=</span> <span class='variable'>p1</span>              // plain structural copy
+
+<span class='keyword'>test</span> <span class='variable'>counter</span><span class='punctuation delimiter'>.</span><span class='variable'>p1</span> <span class='punctuation bracket'>{</span>
+  <span class='function builtin'>assert</span><span class='punctuation bracket'>(</span><span class='variable'>p1</span><span class='punctuation delimiter'>.</span><span class='variable'>found_once</span> <span class='operator'>==</span> <span class='variable'>false</span><span class='punctuation bracket'>)</span>
+  <span class='function builtin'>assert</span><span class='punctuation bracket'>(</span><span class='variable'>p2</span><span class='punctuation delimiter'>.</span><span class='variable'>found_once</span> <span class='operator'>==</span> <span class='variable'>false</span><span class='punctuation bracket'>)</span>
+
+  <span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>p1</span><span class='punctuation delimiter'>.</span><span class='variable'>call</span><span class='punctuation bracket'>(</span><span class='number'>3</span><span class='punctuation bracket'>)</span> <span class='operator'>==</span> <span class='number'>4</span><span class='punctuation bracket'>)</span>   // typed argument: `a:u8` is unambiguous
+  <span class='function builtin'>assert</span><span class='punctuation bracket'>(</span><span class='variable'>p1</span><span class='punctuation delimiter'>.</span><span class='variable'>found_once</span> <span class='operator'>==</span> <span class='variable'>false</span><span class='punctuation bracket'>)</span>
+
+  <span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>p1</span><span class='punctuation delimiter'>.</span><span class='variable'>call</span><span class='punctuation bracket'>(</span><span class='number'>0</span><span class='punctuation bracket'>)</span> <span class='operator'>==</span> <span class='number'>1</span><span class='punctuation bracket'>)</span>
+  <span class='function builtin'>assert</span><span class='punctuation bracket'>(</span><span class='variable'>p1</span><span class='punctuation delimiter'>.</span><span class='variable'>found_once</span> <span class='operator'>==</span> <span class='variable'>true</span><span class='punctuation bracket'>)</span>
+
+  <span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>p1</span><span class='punctuation delimiter'>.</span><span class='variable'>call</span><span class='punctuation bracket'>(</span><span class='number'>50</span><span class='punctuation bracket'>)</span> <span class='operator'>==</span> <span class='number'>51</span><span class='punctuation bracket'>)</span>
+  <span class='function builtin'>assert</span><span class='punctuation bracket'>(</span><span class='variable'>p1</span><span class='punctuation delimiter'>.</span><span class='variable'>found_once</span> <span class='operator'>==</span> <span class='variable'>true</span><span class='punctuation bracket'>)</span>
+  <span class='function builtin'>assert</span><span class='punctuation bracket'>(</span><span class='variable'>p2</span><span class='punctuation delimiter'>.</span><span class='variable'>found_once</span> <span class='operator'>==</span> <span class='variable'>false</span><span class='punctuation bracket'>)</span>
+<span class='punctuation bracket'>}</span>
+</code></pre></div>
+<h2 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h2>
+<p>Pyrope arguments are by value, unless the <code>ref</code> keyword is used. <code>ref</code> is
+needed when a method intends to update the tuple contents. In this case, <code>ref
+self</code> argument behaves like a pass by reference in non-hardware languages. This
+means that the tuple fields are updated as the method executes, it does not
+wait until the method finishes execution. A method without the <code>ref</code> keyword is
+a pass by value call. Since all the inputs are immutable by default (<code>const</code>),
+any <code>self</code> updates should generate a compile error. Ordinary non-<code>self</code> <code>ref</code>
+parameters are legal only on <code>comb</code>; <code>ref self</code> is the method receiver
+exception and expands locally at the call site.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>const</span> <span class='variable'>Nested_call</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span>
+  <span class='keyword'>mut</span> <span class='variable'>x</span> <span class='operator'>=</span> <span class='number'>1</span><span class='punctuation delimiter'>,</span>
+  <span class='function'>comb</span> <span class='function'>outter</span><span class='punctuation bracket'>(</span><span class='keyword'>ref</span> <span class='variable parameter'>self</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>self</span><span class='punctuation delimiter'>.</span><span class='variable'>x</span> <span class='operator'>=</span> <span class='number'>100</span><span class='punctuation delimiter'>;</span> <span class='variable'>self</span><span class='punctuation delimiter'>.</span><span class='variable'>inner</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span><span class='punctuation delimiter'>;</span> <span class='variable'>self</span><span class='punctuation delimiter'>.</span><span class='variable'>x</span> <span class='operator'>=</span> <span class='number'>5</span> <span class='punctuation bracket'>}</span><span class='punctuation delimiter'>,</span>
+  <span class='function'>comb</span> <span class='function'>inner</span><span class='punctuation bracket'>(</span><span class='variable parameter'>self</span><span class='punctuation bracket'>)</span>      <span class='punctuation bracket'>{</span> <span class='function builtin'>assert</span><span class='punctuation bracket'>(</span><span class='variable'>self</span><span class='punctuation delimiter'>.</span><span class='variable'>x</span> <span class='operator'>==</span> <span class='number'>100</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>}</span><span class='punctuation delimiter'>,</span>
+  <span class='function'>comb</span> <span class='function'>faulty</span><span class='punctuation bracket'>(</span><span class='variable parameter'>self</span><span class='punctuation bracket'>)</span>     <span class='punctuation bracket'>{</span> <span class='variable'>self</span><span class='punctuation delimiter'>.</span><span class='variable'>x</span> <span class='operator'>=</span> <span class='number'>55</span> <span class='punctuation bracket'>}</span><span class='punctuation delimiter'>,</span> // error: immutable self
+  <span class='function'>comb</span> <span class='function'>okcall</span><span class='punctuation bracket'>(</span><span class='keyword'>ref</span> <span class='variable parameter'>self</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>self</span><span class='punctuation delimiter'>.</span><span class='variable'>x</span> <span class='operator'>=</span> <span class='number'>55</span> <span class='punctuation bracket'>}</span>
+<span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p><code>self</code> can also be returned but this behaves like a normal copy by value
+variable return.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>mut</span> <span class='variable'>a_1</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span>
+  <span class='keyword'>mut</span> <span class='variable'>x</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u10</span><span class='punctuation delimiter'>,</span>
+  <span class='function'>comb</span> <span class='function'>f1</span><span class='punctuation bracket'>(</span><span class='keyword'>ref</span> <span class='variable parameter'>self</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>x</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>self</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> // output named `self` mirrors the ref input
+    <span class='variable'>self</span><span class='punctuation delimiter'>.</span><span class='variable'>x</span> <span class='operator'>=</span> <span class='variable'>x</span>                     // mutates the ref; output `self` reflects the new value
+  <span class='punctuation bracket'>}</span>
+<span class='punctuation bracket'>)</span>
+
+<span class='variable'>a_1</span><span class='punctuation delimiter'>.</span><span class='variable'>f1</span><span class='punctuation bracket'>(</span><span class='variable parameter'>x</span>=<span class='number'>3</span><span class='punctuation bracket'>)</span>
+<span class='keyword'>mut</span> <span class='variable'>a_2</span> <span class='operator'>=</span> <span class='variable'>a_1</span><span class='punctuation delimiter'>.</span><span class='variable'>f1</span><span class='punctuation bracket'>(</span><span class='variable parameter'>x</span>=<span class='number'>4</span><span class='punctuation bracket'>)</span>  // a_2 is updated, not a_1
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>a_1</span><span class='punctuation delimiter'>.</span><span class='variable'>x</span> <span class='operator'>==</span> <span class='number'>3</span> <span class='keyword'>and</span> <span class='variable'>a_2</span><span class='punctuation delimiter'>.</span><span class='variable'>x</span> <span class='operator'>==</span> <span class='number'>4</span><span class='punctuation bracket'>)</span>
+
+// Same behavior as in a function with UFCS
+<span class='function'>comb</span> <span class='function'>set_x</span><span class='punctuation bracket'>(</span><span class='keyword'>ref</span> <span class='variable parameter'>self</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>x</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>self</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>self</span><span class='punctuation delimiter'>.</span><span class='variable'>x</span> <span class='operator'>=</span> <span class='variable'>x</span> <span class='punctuation bracket'>}</span>
+
+<span class='variable'>a_1</span><span class='punctuation delimiter'>.</span><span class='variable'>set_x</span><span class='punctuation bracket'>(</span><span class='variable parameter'>x</span>=<span class='number'>10</span><span class='punctuation bracket'>)</span>
+<span class='keyword'>mut</span> <span class='variable'>a_3</span> <span class='operator'>=</span> <span class='variable'>a_1</span><span class='punctuation delimiter'>.</span><span class='variable'>set_x</span><span class='punctuation bracket'>(</span><span class='variable parameter'>x</span>=<span class='number'>20</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>a_1</span><span class='punctuation delimiter'>.</span><span class='variable'>x</span> <span class='operator'>==</span> <span class='number'>10</span> <span class='keyword'>and</span> <span class='variable'>a_3</span><span class='punctuation delimiter'>.</span><span class='variable'>x</span> <span class='operator'>==</span> <span class='number'>20</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p>Since UFCS does not allow shadowing, a wrapper must be built or a compile error is generated.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>mut</span> <span class='variable'>counter</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span>
+  <span class='punctuation delimiter'>,</span><span class='keyword'>mut</span> <span class='variable'>val</span><span class='punctuation delimiter'>:</span><span class='type builtin'>s32</span> <span class='operator'>=</span> <span class='number'>0</span>
+  <span class='punctuation delimiter'>,</span><span class='function'>comb</span> <span class='function'>inc</span><span class='punctuation bracket'>(</span><span class='keyword'>ref</span> <span class='variable parameter'>self</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>v</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>self</span><span class='punctuation delimiter'>.</span><span class='variable'>val</span> <span class='operator'>+=</span> <span class='variable'>v</span> <span class='punctuation bracket'>}</span>
+<span class='punctuation bracket'>)</span>
+
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>counter</span><span class='punctuation delimiter'>.</span><span class='variable'>val</span> <span class='operator'>==</span> <span class='number'>0</span><span class='punctuation bracket'>)</span>
+<span class='variable'>counter</span><span class='punctuation delimiter'>.</span><span class='variable'>inc</span><span class='punctuation bracket'>(</span><span class='variable parameter'>v</span>=<span class='number'>3</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>counter</span><span class='punctuation delimiter'>.</span><span class='variable'>val</span> <span class='operator'>==</span> <span class='number'>3</span><span class='punctuation bracket'>)</span>
+
+<span class='function'>comb</span> <span class='function'>inc</span><span class='punctuation bracket'>(</span><span class='keyword'>ref</span> <span class='variable parameter'>self</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>v</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>self</span><span class='punctuation delimiter'>.</span><span class='variable'>val</span> <span class='operator'>*=</span> <span class='variable'>v</span> <span class='punctuation bracket'>}</span> // NOT INC but multiply
+<span class='variable'>counter</span><span class='punctuation delimiter'>.</span><span class='variable'>inc</span><span class='punctuation bracket'>(</span><span class='variable parameter'>v</span>=<span class='number'>2</span><span class='punctuation bracket'>)</span>           // error: multiple inc options
+
+<span class='keyword'>mut</span> <span class='variable'>n</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span><span class='keyword'>mut</span> <span class='variable'>val</span><span class='punctuation delimiter'>:</span><span class='type builtin'>s32</span> <span class='operator'>=</span> <span class='number'>4</span><span class='punctuation bracket'>)</span>
+<span class='variable'>n</span><span class='punctuation delimiter'>.</span><span class='variable'>inc</span><span class='punctuation bracket'>(</span><span class='variable parameter'>v</span>=<span class='number'>2</span><span class='punctuation bracket'>)</span>                 // unambiguous: only the global inc matches
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>n</span><span class='punctuation delimiter'>.</span><span class='variable'>val</span> <span class='operator'>==</span> <span class='number'>8</span><span class='punctuation bracket'>)</span>
+
+<span class='variable'>counter</span><span class='punctuation delimiter'>.</span><span class='variable'>val</span> <span class='operator'>=</span> <span class='number'>5</span>
+<span class='keyword'>const</span> <span class='variable'>mul</span> <span class='operator'>=</span> <span class='variable'>inc</span>
+<span class='variable'>counter</span><span class='punctuation delimiter'>.</span><span class='variable'>mul</span><span class='punctuation bracket'>(</span><span class='variable parameter'>v</span>=<span class='number'>2</span><span class='punctuation bracket'>)</span>           // call the new mul method with UFCS
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>counter</span><span class='punctuation delimiter'>.</span><span class='variable'>val</span> <span class='operator'>==</span> <span class='number'>10</span><span class='punctuation bracket'>)</span>
+
+<span class='function'>mul</span><span class='punctuation bracket'>(</span><span class='variable'>counter</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>v</span>=<span class='number'>2</span><span class='punctuation bracket'>)</span>          // OK: direct form, counter bound to self (val == 20)
+</code></pre></div>
+<p>It is possible to add new methods after the type declaration. In some
+languages, this is called extension functions.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>const</span> <span class='variable'>t1</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span><span class='keyword'>mut</span> <span class='variable'>a</span><span class='punctuation delimiter'>:</span><span class='type builtin'>u32</span><span class='punctuation bracket'>)</span>
+
+<span class='keyword'>mut</span> <span class='variable'>x</span><span class='punctuation delimiter'>:</span><span class='variable'><span class='type'><span class='type'>t1</span></span></span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span><span class='variable'>a</span><span class='operator'>=</span><span class='number'>3</span><span class='punctuation bracket'>)</span>
+
+<span class='function'>comb</span> <span class='function'>t1_do_double</span><span class='punctuation bracket'>(</span><span class='keyword'>ref</span> <span class='variable parameter'>self</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>self</span><span class='punctuation delimiter'>.</span><span class='variable'>a</span> <span class='operator'>*=</span> <span class='number'>2</span> <span class='punctuation bracket'>}</span>
+<span class='variable'>t1</span><span class='punctuation delimiter'>.</span><span class='variable'>double</span> <span class='operator'>=</span> <span class='variable'>t1_do_double</span>
+
+<span class='keyword'>mut</span> <span class='variable'>y</span><span class='punctuation delimiter'>:</span><span class='variable'><span class='type'><span class='type'>t1</span></span></span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span><span class='variable'>a</span><span class='operator'>=</span><span class='number'>3</span><span class='punctuation bracket'>)</span>
+<span class='variable'>x</span><span class='punctuation delimiter'>.</span><span class='variable'>double</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>           // error: double method does not exist
+<span class='variable'>y</span><span class='punctuation delimiter'>.</span><span class='variable'>double</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>           // OK
+<span class='function builtin'>assert</span><span class='punctuation bracket'>(</span><span class='variable'>y</span><span class='punctuation delimiter'>.</span><span class='variable'>a</span> <span class='operator'>==</span> <span class='number'>6</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<h3 id="constraining-arguments">Constraining arguments<a class="headerlink" href="#constraining-arguments" title="Permanent link">&para;</a></h3>
+<p>Arguments can constrain the inputs and input types. Unconstrained input types
+allow for more freedom and a potentially variable number of arguments generics, but
+it can be error-prone.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">unconstrained declaration</label><label for="__tabbed_2_2">constrained declaration</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'>comb</span> <span class='function'>foo</span><span class='punctuation bracket'>(</span><span class='variable parameter'>self</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='function builtin'>puts</span><span class='punctuation bracket'>(</span><span class='string'>&quot;comb.foo&quot;</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>}</span>
+<span class='keyword'>const</span> <span class='variable'>a</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span>
+  <span class='punctuation delimiter'>,</span><span class='function'>comb</span> <span class='function'>foo</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>r</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+     <span class='function'>comb</span> <span class='function'>bar</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='function builtin'>puts</span><span class='punctuation bracket'>(</span><span class='string'>&quot;bar&quot;</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>}</span>
+     <span class='function builtin'>puts</span><span class='punctuation bracket'>(</span><span class='string'>&quot;mem.foo&quot;</span><span class='punctuation bracket'>)</span>
+     <span class='variable'>r</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span><span class='keyword'>const</span> <span class='variable'>bar</span><span class='operator'>=</span><span class='variable'>bar</span><span class='punctuation bracket'>)</span>
+  <span class='punctuation bracket'>}</span>
+<span class='punctuation bracket'>)</span>
+<span class='keyword'>const</span> <span class='variable'>b</span> <span class='operator'>=</span> <span class='number'>3</span>
+<span class='keyword'>const</span> <span class='variable'>c</span> <span class='operator'>=</span> <span class='string'>&quot;string&quot;</span>
+
+<span class='variable'>b</span><span class='punctuation delimiter'>.</span><span class='variable'>foo</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>       // prints &quot;comb.foo&quot;
+<span class='variable'>y</span> <span class='operator'>=</span> <span class='variable'>a</span><span class='punctuation delimiter'>.</span><span class='variable'>foo</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>   // prints &quot;mem.foo&quot;
+<span class='variable'>y</span><span class='punctuation delimiter'>.</span><span class='variable'>bar</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>       // prints &quot;bar&quot;
+
+<span class='variable'>a</span><span class='punctuation delimiter'>.</span><span class='variable'>foo</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span><span class='punctuation delimiter'>.</span><span class='variable'>bar</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> // prints &quot;mem.foo&quot; and then &quot;bar&quot;
+
+<span class='variable'>c</span><span class='punctuation delimiter'>.</span><span class='variable'>foo</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>       // prints &quot;comb.foo&quot;
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'>comb</span> <span class='function'>foo</span><span class='punctuation bracket'>(</span><span class='variable parameter'>self</span><span class='punctuation delimiter'>:</span><span class='type'><span class='type'>signed</span></span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='function builtin'>puts</span><span class='punctuation bracket'>(</span><span class='string'>&quot;comb.foo&quot;</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>}</span>
+<span class='keyword'>const</span> <span class='variable'>a</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span>
+  <span class='punctuation delimiter'>,</span><span class='function'>comb</span> <span class='function'>foo</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>r</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+     <span class='function'>comb</span> <span class='function'>bar</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='function builtin'>puts</span><span class='punctuation bracket'>(</span><span class='string'>&quot;bar&quot;</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>}</span>
+     <span class='function builtin'>puts</span><span class='punctuation bracket'>(</span><span class='string'>&quot;mem.foo&quot;</span><span class='punctuation bracket'>)</span>
+     <span class='variable'>r</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span><span class='keyword'>const</span> <span class='variable'>bar</span><span class='operator'>=</span><span class='variable'>bar</span><span class='punctuation bracket'>)</span>
+  <span class='punctuation bracket'>}</span>
+<span class='punctuation bracket'>)</span>
+<span class='keyword'>const</span> <span class='variable'>b</span> <span class='operator'>=</span> <span class='number'>3</span>
+<span class='keyword'>const</span> <span class='variable'>c</span> <span class='operator'>=</span> <span class='string'>&quot;string&quot;</span>
+
+<span class='variable'>b</span><span class='punctuation delimiter'>.</span><span class='variable'>foo</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>       // prints &quot;comb.foo&quot;
+<span class='keyword'>const</span> <span class='variable'>y</span> <span class='operator'>=</span> <span class='variable'>a</span><span class='punctuation delimiter'>.</span><span class='variable'>foo</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>   // prints &quot;mem.foo&quot;
+<span class='variable'>y</span><span class='punctuation delimiter'>.</span><span class='variable'>bar</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>       // prints &quot;bar&quot;
+
+<span class='variable'>a</span><span class='punctuation delimiter'>.</span><span class='variable'>foo</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span><span class='punctuation delimiter'>.</span><span class='variable'>bar</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> // prints &quot;mem.foo&quot; and then &quot;bar&quot;
+
+<span class='variable'>c</span><span class='punctuation delimiter'>.</span><span class='variable'>foo</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>       // error: undefined &#39;foo&#39; field/call
+</code></pre></div>
+</div>
+</div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["search.suggest", "navigation.sections", "navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../javascripts/config.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>
