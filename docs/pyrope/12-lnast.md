@@ -11,7 +11,7 @@ LNAST does not rename variables to be SSA, it relies in a symbol table to track
 past entries. Nevertheless, to reduce amount of tracking information when a
 variable starts with underscores (`___foo` or `_._foo`), the variable can not
 be updated, BUT it is still legal to update tuple fields inside `___foo` like
-`___foo.bar = 3`. Program variables names that do not need SSA (`let`) can use
+`___foo.bar = 3`. Program variables names that do not need SSA (`const`) can use
 `_._foo` to reduce tracking. Special variable names like the ones needing an
 underscore use double tick in the name `_foo here`. Those are special variables
 names that do not allow to use compact tuple representation like `foo here.field`.
@@ -29,18 +29,22 @@ names that do not allow to use compact tuple representation like `foo here.field
       ref ___1
       const 3
       const 1
-    let
+    declare
       ref  x
+      prim_type_none
+      const "const"
       ref  ___1
-    var
+    declare
       ref z
+      prim_type_none
+      const "mut"
       const 4
     plus
       ref ___2
       ref x
       ref z
       const 2
-    assign
+    store
       ref `foo x`
       ref ___2
     ```
@@ -51,11 +55,15 @@ names that do not allow to use compact tuple representation like `foo here.field
       ref ___1
       const 3
       const 1
-    let
+    declare
       ref  x
+      prim_type_none
+      const "const"
       ref  ___1
-    var
+    declare
       ref z
+      prim_type_none
+      const "mut"
       const 4
     plus
       ref `foo x`
@@ -64,9 +72,12 @@ names that do not allow to use compact tuple representation like `foo here.field
       const 2
     ```
 
-The three LNAST nodes to set values in variables are `let`/`var`/`assign`. Each can
-carry type information on its `ref` sub-nodes. Attributes are never sub-nodes of
-`ref`; they are set with separate `attr_set` statements.
+The two LNAST nodes to declare and to set values in variables are `declare` and
+`store`. A `declare` carries the type and the storage qualifier (`"const"`,
+`"mut"`, `"reg"`, ...) plus an optional initial value; a `store` writes a value
+into an already declared variable. A type on a plain `store` write is a separate
+`type_spec` statement. Attributes are never sub-nodes of `ref`; they are set
+with separate `attr_set` statements.
 
 === "Pyrope"
     ```pyrope
@@ -77,21 +88,26 @@ carry type information on its `ref` sub-nodes. Attributes are never sub-nodes of
 
 === "LNAST"
     ```lnast
-    let
+    declare
       ref a
-        prim_type_uint
-          const 2
+      prim_type_int
+        const 3
+        const 0
+      const "const"
       ref b
     attr_set
       ref a
       const foo
       const true
 
-    assign
+    store
       ref x
-        prim_type_uint
-          const 2
       ref y
+    type_spec
+      ref x
+      prim_type_int
+        const 3
+        const 0
     attr_set
       ref x
       const foo
@@ -104,15 +120,17 @@ Tuples are sequences of fields that can be named. Unnamed (positional)
 fields are ordered; named fields are unordered and accessed by name only
 (tools may canonicalize named fields alphabetically, but that is a
 convention, not a requirement). There are LNAST tuple
-specific nodes (`tup_add`, `tup_set`, `tup_get`, `tup_concat`) but in many
+specific nodes (`tuple_add`, `tuple_get`, `tuple_concat`) but in many
 cases the direct LNAST operations can handle tuples directly.
 
-* `tup_add` creates a new tuple with entries
-* `tup_set` adds/updates a field to an existing tuple.
-* `tup_get` gets the contents of a tuple entry
-* `tup_concat` concatenates two or more tuples
+* `tuple_add` creates a new tuple with entries
+* `store` adds/updates a field to an existing tuple. A `store` with 3 or more
+  children is a field write (the tuple, one or more field levels, and the
+  value); with 2 children it is a plain scalar write.
+* `tuple_get` gets the contents of a tuple entry
+* `tuple_concat` concatenates two or more tuples
 
-Direct access in operations like `plus` behave like a `tup_set` or `tup_get`.
+Direct access in operations like `plus` behave like a `store` or `tuple_get`.
 
 
 === "Tuple in Pyrope"
@@ -123,10 +141,10 @@ Direct access in operations like `plus` behave like a `tup_set` or `tup_get`.
 
 === "LNAST direct"
     ```lnast
-    assign
+    store
       ref      x
       const    3
-    assign
+    store
       ref      ___t1
       const    2
     plus
@@ -137,22 +155,22 @@ Direct access in operations like `plus` behave like a `tup_set` or `tup_get`.
       ref      ___t3
       ref      ___t1
       const    1
-    tup_add
+    tuple_add
       ref      a
-      var
+      store
         ref      b
         ref      ___t1
-      var
+      store
         ref      x
         ref      ___t2
-      var
+      store
         ref      y
         ref      ___t3
     ```
 
 === "LNAST optimized"
     ```lnast
-    assign
+    store
       ref      x
       const    3
     plus
@@ -163,47 +181,53 @@ Direct access in operations like `plus` behave like a `tup_set` or `tup_get`.
       ref      ___t3
       const    2
       const    1
-    tup_add
+    tuple_add
       ref      a
-      var
+      store
         ref      b
         const   2
-      var
+      store
         ref      x
         ref      ___t2
-      var
+      store
         ref      y
         ref      ___t3
     ```
 
 === "LNAST Alternative"
     ```lnast
-    assign
+    store
       ref      x
       const    3
-    var
+    declare
       ref      a
+      prim_type_none
+      const    "mut"
       ref      2
     plus
       ref      ___t1
       ref      x
       const    1
-    var
+    declare
       ref      a.1x
+      prim_type_none
+      const    "mut"
       ref      ___t1
     plus
       ref      ___t2
       const    a
       const    1
-    var
+    declare
       ref     a.2y
+      prim_type_none
+      const    "mut"
       ref     ___t2
     ```
 
-`tup_set` and `tup_get` can access through several levels in one command.
-`tup_add` does not allow recursive entrances, it requires intermediate tuple
+`store` and `tuple_get` can access through several levels in one command.
+`tuple_add` does not allow recursive entrances, it requires intermediate tuple
 construction. `attr_get` and `attr_set` follow the same syntax as
-`tup_get`/`tup_set`.
+`tuple_get`/`store`.
 
 === "Pyrope"
     ```pyrope
@@ -215,29 +239,29 @@ construction. `attr_get` and `attr_set` follow the same syntax as
 
 === "LNAST"
     ```lnast
-    tup_get
+    tuple_get
       ref x
       ref tup
       const 1
       const foo
       ref xx
 
-    tup_set
+    store
       ref tup
       const 4
       const foo
       ref yy
       ref y
 
-    tup_add
+    tuple_add
       ref ___1
-      var
+      store
         ref bar
         const 1
 
-    tup_add
+    tuple_add
       ref z
-      var
+      store
         ref foo
         ref ___1
     ```
@@ -253,24 +277,36 @@ immutable.
 
 === "LNAST direct"
     ```lnast
-    assign
+    store
       ref    ___t1
       const  2
     plus
       ref    ___t2
       const  1
       const  1
-    tup_add:
+    tuple_add:
       ref     a
-      var
+      store
         ref     b
         ref     __t1
-      let
+      store
         ref     x
         ref     ___t2
+    tuple_get
+      ref     ___m1
+      ref     a
+      const   b
+    declare
+      ref     ___m1
+      prim_type_none
+      const   "mut"
     ```
 
-Tuple concatenation does not use `plus` but the `tup_concat` operator.
+The field payloads are plain `store` entries; a `mut` field is marked by a
+`tuple_get` of the field followed by a `declare` with a `"mut"` qualifier. A
+field with no such `declare` is immutable.
+
+Tuple concatenation does not use `plus` but the `tuple_concat` operator.
 
 === "Tuple in Pyrope"
     ```pyrope
@@ -280,38 +316,42 @@ Tuple concatenation does not use `plus` but the `tup_concat` operator.
 
 === "LNAST direct"
     ```lnast
-    assign
+    store
       ref    ___1
       const  2
     plus
       ref    ___2
       const  1
       const  1
-    tup_add:
+    tuple_add:
       ref    ___33
       ref    ___1
       ref    ___2
-    var
+    declare
       ref    a
+      prim_type_none
+      const  "mut"
       ref    ___33
-    tup_add
+    tuple_add
       ref    ___3
       const  c
       const  3
-    tup_concat
+    tuple_concat
       ref    ___4
       ref    a
       ref    ___3
       const  1
-    let
+    declare
       ref    x
+      prim_type_none
+      const  "const"
       ref    ___4
     ```
 
 ## Attributes
 
 There are 2 LNAST nodes for attributes: `attr_set` and `attr_get`. They operate
-at statement level and follow the same syntax as `tup_set`/`tup_get`, where the
+at statement level and follow the same syntax as `store`/`tuple_get`, where the
 last entry is the attribute name. Attributes never appear as sub-nodes of
 `ref`; an attribute set or check is always its own statement.
 
@@ -330,7 +370,7 @@ entries.
 
 === "LNAST"
     ```lnast
-    assign
+    store
       ref a
       const 1
     attr_set
@@ -342,9 +382,9 @@ entries.
       const b
       const true
 
-    tup_add
+    tuple_add
       ref ___1
-      var
+      store
         ref y
         const 2
       const 4
@@ -353,7 +393,7 @@ entries.
       const y
       const z
       const 7
-    assign
+    store
       ref x
       ref ___1
     ```
@@ -376,8 +416,10 @@ comparison node, and then `cassert`.
       ref ___1
       ref q
       const y
-    let
+    declare
       ref z
+      prim_type_none
+      const "const"
       ref ___1
 
     attr_get
@@ -388,8 +430,10 @@ comparison node, and then `cassert`.
       ref ___3
       ref ___2
       const 1
-    let
+    declare
       ref y
+      prim_type_none
+      const "const"
       ref ___3
     ```
 
@@ -418,8 +462,10 @@ remove these attributes.
 
 === "LNAST"
     ```lnast
-    let
+    declare
       ref d
+      prim_type_none
+      const "const"
       const 3
     attr_set
       ref d
@@ -431,8 +477,10 @@ remove these attributes.
       ref d
       const 100
 
-    var
+    declare
       ref a
+      prim_type_none
+      const "mut"
       ref ___tmp
 
     attr_get
@@ -458,7 +506,7 @@ mut foo2 = foo
 cassert(foo2.[attr1] == 2)
 
 const foo3 = foo#[..]
-cassert(foo3.[attr1] != nil) // existence check via nil
+cassert(foo3.[attr1] == nil) // bit selection drops attributes
 
 mut xx::[attr2=5] = 1                 // sets attr2 at declaration
 
@@ -527,7 +575,7 @@ non-contiguous bits, emit one assignment per range — each lowers to its own
       ref xx
       ref ___4
 
-    add
+    plus
       ref yy
       ref ___4
       ref ___5
@@ -563,7 +611,7 @@ non-contiguous bits, emit one assignment per range — each lowers to its own
       ref xx
       ref ___4
 
-    add
+    plus
       ref yy
       ref ___4
       ref ___5
@@ -603,36 +651,46 @@ operations.
       ref ___t1
       ref ___t
       const 4
-    let
+    declare
       ref t1
+      prim_type_none
+      const "const"
       ref ___t1
 
-    reduce_or
+    red_or
       ref ___t2
       ref ___t
-    let
+    declare
       ref t2
+      prim_type_none
+      const "const"
       ref ___t2
 
-    reduce_and       // reduce_and(x) returns unsigned 0 or 1
+    red_and       // red_and(x) returns unsigned 0 or 1
       ref ___t3
       ref ___t
-    let
+    declare
       ref t3
+      prim_type_none
+      const "const"
       ref ___t3
 
-    reduce_xor
+    red_xor
       ref ___t4
       ref ___t
-    let
+    declare
       ref t4
+      prim_type_none
+      const "const"
       ref ___t4
 
     popcount
       ref ___t5
       ref ___t
-    let
+    declare
       ref t5
+      prim_type_none
+      const "const"
       ref ___t5
     ```
 
@@ -652,13 +710,17 @@ like `plus`, `LUT`, `memory`. In LNAST this is translated like a lambda call.
 
 === "LNAST"
     ```lnast
-    let
+    declare
       ref foo
+      prim_type_none
+      const "const"
       const 3
-    let
+    declare
       ref bar
+      prim_type_none
+      const "const"
       const 300
-    tup_add
+    tuple_add
       ref ___0
       const 1
       const 2
@@ -692,8 +754,8 @@ translation to LNAST nodes.
 
 ### Unary
 
-* `!a` or `not a` translates to `lnot`
-* `~a` translates to `not`
+* `!a` or `not a` translates to `log_not`
+* `~a` translates to `bit_not`
 * `-a` translates to `minus(0,a)`
 
 ### Binary integer
@@ -702,9 +764,9 @@ translation to LNAST nodes.
 * `a - b` translates to `minus`
 * `a * b` translates to `mult`
 * `a / b` translates to `div`
-* `a & b` translates to `and`
-* `a | b` translates to `or`
-* `a ^ b` translates to `xor`
+* `a & b` translates to `bit_and`
+* `a | b` translates to `bit_or`
+* `a ^ b` translates to `bit_xor`
 * `a >> b` translates to `sra`
 * `a << b` translates to `shl`
 
@@ -714,8 +776,8 @@ have a direct Pyrope syntax, but it can be called directly `__mod(a,b)`.
 
 ### Binary boolean
 
-* `a and b` translated to `land`
-* `a or b` translates to `lor`
+* `a and b` translated to `log_and`
+* `a or b` translates to `log_or`
 
 
 ## Complex operators
@@ -727,33 +789,33 @@ LNAST statement.
 
 Binary nand (`x=a ~& b`):
 ```lnast
-and
+bit_and
   ref ___0
   ref a
   ref b
-not
+bit_not
   ref x
   ref ___0
 ```
 
 Binary nor (`x=a ~| b`):
 ```lnast
-or
+bit_or
   ref ___0
   ref a
   ref b
-not
+bit_not
   ref x
   ref ___0
 ```
 
 Binary xor (`x=a ~^ b`):
 ```lnast
-xor
+bit_xor
   ref ___0
   ref a
   ref b
-not
+bit_not
   ref x
   ref ___0
 ```
@@ -774,10 +836,10 @@ sra
 
 Logical implication (`x = a implies b`):
 ```lnast
-not
+log_not
   ref ___0
   ref a
-lor
+log_or
   ref x
   ref ___0
   ref b
@@ -785,32 +847,32 @@ lor
 
 Logical nand (`x = not (a and b)`):
 ```lnast
-land
+log_and
   ref ___0
   ref a
   ref b
-not
+log_not
   ref x
   ref ___0
 ```
 
 Logical nor (`x = not (a or b)`):
 ```lnast
-lor
+log_or
   ref ___0
   ref a
   ref b
-not
+log_not
   ref x
   ref ___0
 ```
 
 Logical not implication (`x = not (a implies b)`):
 ```lnast
-not
+log_not
   ref ___0
   ref b
-land
+log_and
   ref x
   ref a
   ref ___0
@@ -849,7 +911,7 @@ dependent on the input type.
       ref c
       ref a
       ref b
-    not
+    log_not
       ref d
       ref c
     ```
@@ -858,7 +920,7 @@ The tuple concatenate operator is the `...` splice. `x = (...a, ...b)`
 translates to:
 
 ```lnast
-tup_concat
+tuple_concat
   ref x
   ref a
   ref b
@@ -871,7 +933,7 @@ error.
 
 `x = (a, ...b)` translates to:
 ```lnast
-tup_concat
+tuple_concat
   ref x
   ref a
   ref b
@@ -883,7 +945,7 @@ in
   ref ___2
   ref b
   ref x
-land
+log_and
   ref ___3
   ref ___1
   ref ___2
@@ -941,7 +1003,7 @@ range
 
 `x = a..<b` translates to:
 ```lnast
-sub
+minus
   ref tmp
   ref b
   ref 1
@@ -984,7 +1046,7 @@ does
   ref ___1
   ref b
   ref a
-land
+log_and
   ref x
   ref ___0
   ref ___1
@@ -1003,7 +1065,7 @@ in
   ref ___1
   ref b
   ref a
-land
+log_and
   ref x
   ref ___0
   ref ___1
@@ -1077,8 +1139,10 @@ that the condition is a one-hot encoding.
 === "LNAST"
     ```lnast
     stmts
-      var
+      declare
         ref x
+        prim_type_none
+        const "mut"
         ref a
       lt
         ref ___1
@@ -1087,17 +1151,19 @@ that the condition is a one-hot encoding.
       if
         ref ___1
         stmts
-          add
+          plus
             ref t
             const 100
             ref x
         stmts
-          add
+          plus
             ref ___2
             ref x
             ref c
-          var
+          declare
             ref z
+            prim_type_none
+            const "mut"
             ref ___2
           gt
             ref ___3
@@ -1106,7 +1172,7 @@ that the condition is a one-hot encoding.
           if
             ref ___3
             stmts
-              add
+              plus
                 ref t
                 const 200
                 ref z
@@ -1177,15 +1243,15 @@ the `elif` conditions.
       ref nil
       ref assume
       ref ___5
-    if
+    uif
       ref ___1
       stmts
-        assign
+        store
           ref y
           const 10
       ref ___2
       stmts
-        add
+        plus
           ref y
           const 20
           ref x
@@ -1216,8 +1282,10 @@ false }` is created.
 
 === "LNAST"
     ```lnast
-    var
+    declare
       ref z
+      prim_type_none
+      const "mut"
       const 0
 
     eq
@@ -1250,15 +1318,15 @@ false }` is created.
       ref assume
       ref ___5
 
-    if
+    uif
       ref ___1
       stmts
-        assign
+        store
           ref z
           const 1
       ref ___2
       stmts
-        assign
+        store
           ref z
           const 2
       stmts
@@ -1287,14 +1355,14 @@ false }` is created.
       ref nil
       ref assume
       ref ___9
-    if
+    uif
       ref ___6
       stmts
-        assign
+        store
           ref z
           const 1
       stmts
-        assign
+        store
           ref z
           const 3
     ```
@@ -1315,7 +1383,7 @@ statements.
     if mut x=3; x<4 {
       cassert(x==3)
     }
-    while mut z=1; x {
+    while mut z=1; x != 0 {
       x -= z
     }
     mut z=0
@@ -1329,8 +1397,10 @@ statements.
 === "LNAST"
     ```lnast
     stmts
-      var
+      declare
         ref x
+        prim_type_none
+        const "mut"
         const 3
       lt
         ref ___1
@@ -1349,27 +1419,33 @@ statements.
             ref ___2
 
     stmts
-      var
+      declare
         ref z
+        prim_type_none
+        const "mut"
         const 1
-      loop
+      while
         if
           ref x
           stmts
             break
-        sub
+        minus
           ref x
           ref x
           ref z
 
-    var
+    declare
       ref z
+      prim_type_none
+      const "mut"
       const 0
     stmts
-      var
+      declare
         ref x
+        prim_type_none
+        const "mut"
         const 2
-      add
+      plus
         ref ___3
         ref z
         ref x
@@ -1397,7 +1473,7 @@ statements.
         ref nil
         ref assume
         ref ___z
-      if
+      uif
         ref ___t1
         stmts
           fcall
@@ -1422,7 +1498,7 @@ statements.
 
 Pyrope has `loop`, `while`, and `for` constructs to handle different types of loops.
 In all the cases, the loops must be expanded at LNAST compile time. In LNAST, there
-is only `loop` construct.
+is only a `while` construct.
 
 === "Pyrope loop"
     ```pyrope
@@ -1434,8 +1510,8 @@ is only `loop` construct.
 
 === "LNAST"
     ```lnast
-    loop
-      add
+    while
+      plus
         ref i
         ref i
         const 1
@@ -1449,7 +1525,7 @@ is only `loop` construct.
           break
     ```
 
-The `while` translates to a `loop` with a `break` statement.
+The Pyrope `while` translates to a `while` node with a `break` statement.
 
 === "Pyrope while"
     ```pyrope
@@ -1461,15 +1537,17 @@ The `while` translates to a `loop` with a `break` statement.
 === "LNAST"
     ```lnast
     stmts
-      var
+      declare
         ref i
+        prim_type_none
+        const "mut"
         const 0
-      loop
-        neq
+      while
+        ne
           ref ___1
           ref i
           const 3
-        not
+        log_not
           ref ___2
           ref ___1
         if
@@ -1506,26 +1584,32 @@ The `for` construct is also a loop, but it can have element, index, and key in t
     if
       ref ___2
       stmts
-        var
+        declare
           ref value
+          prim_type_none
+          const "mut"
           ref _
-        var
+        declare
           ref index
+          prim_type_none
+          const "mut"
           const 0
-        var
+        declare
           ref key
+          prim_type_none
+          const "mut"
           const ""
-        loop
+        while
           attr_get
             ref key
             ref tup
             ref index
             const "key"
-          tup_get
+          tuple_get
             ref value
             ref tup
             ref index
-          tup_add
+          tuple_add
             ref ___6
             ref index
             ref key
@@ -1534,7 +1618,7 @@ The `for` construct is also a loop, but it can have element, index, and key in t
             ref ___empty
             ref mycall
             ref ___6
-          add
+          plus
             ref index
             ref index
             const 1
@@ -1560,26 +1644,32 @@ The `for` construct is also a loop, but it can have element, index, and key in t
     if
       ref ___2
       stmts
-        var
+        declare
           ref value
+          prim_type_none
+          const "mut"
           ref _
-        var
+        declare
           ref index
+          prim_type_none
+          const "mut"
           const 0
-        var
+        declare
           ref key
+          prim_type_none
+          const "mut"
           const ""
-        loop
+        while
           attr_get
             ref key
             ref tup
             ref index
             const "key"
-          tup_get
+          tuple_get
             ref tup
             ref index
             ref value
-          tup_add
+          tuple_add
             ref ___6
             ref index
             ref key
@@ -1588,11 +1678,11 @@ The `for` construct is also a loop, but it can have element, index, and key in t
             ref ___empty
             ref mycall
             ref ___6
-          tup_set
+          store
             ref tup
             ref index
             ref value
-          add
+          plus
             ref index
             ref index
             const 1
@@ -1608,7 +1698,7 @@ The `for` construct is also a loop, but it can have element, index, and key in t
 
 
 The `for` comprehensions behave similarly, but the `cont`/`brk` statements have
-the value that must be concatenated (`tup_concat`) to the result. If the last
+the value that must be concatenated (`tuple_concat`) to the result. If the last
 statement is an expression, the value is contatenated.
 
 ## puts/print/format
@@ -1629,51 +1719,16 @@ needed. The `puts`/`print` should generate simulation calls but not synthesis
 code.
 
 
-=== "Pyrope"
-    ```pyrope
-    const num = 1
-    const color = "blue"
-    const extension = "s"
+```pyrope
+const num = 1
+const color = "blue"
+const extension = "s"
+const text = "I have {num} {color} potato{extension}"
+```
 
-    const txt1 = "I have {num} {color} potato{extension}"  // interpolation
-    const txt2 = format('I have {:d} {} potato{}', num, color, extension)
-    ```
-=== "LNAST"
-    ```lnast
-    let
-      ref num
-      const 1
-    let
-      ref color
-      const blue
-    let
-      ref extension
-      const s
-
-    tup_add
-      ref ___tmp
-      const "I have {} {} potato{}"
-      ref num
-      ref color
-      ref extension
-
-    fcall
-      ref txt1
-      ref format
-      ref ___tmp
-
-    tup_add
-      ref ___tmp2
-      const 'I have {:d} {} potato{}'
-      ref num
-      ref color
-      ref extension
-
-    fcall
-      ref txt2
-      ref format
-      ref ___tmp2
-    ```
+String interpolation lowers to string conversions and concatenation. When all
+embedded values are known at compile time, the result folds to one string.
+There is no `format(...)` built-in.
 
 ## Lambda call
 
@@ -1689,20 +1744,20 @@ unless an argument is an expression.
     ```
 === "LNAST"
     ```lnast
-    add
+    plus
       ref ___t
       const 1
       const 2
 
-    tup_add
+    tuple_add
       ref ___args
-      let
+      store
         ref a
         ref a
-      let
+      store
         ref b
         const 3
-      let
+      store
         ref foo
         ref foo
       ref ___t

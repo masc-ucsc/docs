@@ -419,10 +419,10 @@ no binding by order.
   cassert(inner.first == 100)       // `inner` IS the tuple (no `inner.p` level)
   ```
 
-* **Several outputs.** Destructure into names that **match the output names**
-  (the same exceptions apply: a lone output is unambiguous, a matching variable
-  name binds, or a unique type decides). Binding several outputs to one
-  variable is a compile error, and there is **no mapping by position**:
+* **Several outputs.** Binding to one variable produces a tuple whose fields
+  have the output names. Alternatively, destructure into names that **match the
+  output names** (the same name and unique-type exceptions apply). There is
+  **no mapping by position**:
 
   ```pyrope
   comb two(a:signed, b:signed) -> (p1:signed, p2:signed) { p1 = a; p2 = b }
@@ -430,7 +430,7 @@ no binding by order.
   const (p1, p2) = two(a=100, b=50)        // OK: names match the outputs
   cassert(p1==100 and p2==50)
 
-  const inner   = two(a=100, b=50)         // ERROR: two outputs, one variable
+  const inner   = two(a=100, b=50)         // named tuple: inner.p1=100, inner.p2=50
   const (x, y)  = two(a=100, b=50)         // ERROR: x/y do not match p1/p2 (no by-order)
   const (x=two.p1, y=two.p2) = two(a=100, b=50)  // OK: explicit remap `var = callee.output`
   ```

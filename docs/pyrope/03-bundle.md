@@ -733,23 +733,5 @@ cassert(x1a.str == "hello" and x1a == "hello")
 const err = x1a.num              // error: active case is `str`
 ```
 
-Payloads can be tuples, including references to the enum itself, which allows
-algebraic data types. A `match` with `does` arms selects on the active case:
-
-```pyrope
-enum Expr = (
-  ,number:signed = nil
-  ,add:(Expr, Expr) = nil
-)
-
-comb eval(e:Expr) -> (r:signed) {
-  r = match e {
-    does Expr.number { e.number }
-    does Expr.add    { eval(e.add[0]) + eval(e.add[1]) }
-    else             { 0 }
-  }
-}
-
-const expr = Expr.add(Expr.number(2), Expr.number(3))
-cassert(eval(expr) == 5)
-```
+Recursive enum payloads and recursive-enum algebraic data types are not part
+of the language. Nested enums remain supported as described above.

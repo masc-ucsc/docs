@@ -87,11 +87,11 @@ reg mem5:[4]s3 = (1,2,3,4) // mem 4 entries 3 bits each, initialized
 ### Same-cycle ordering
 
 `ordering` replaces the earlier `fwd=true|false` attribute (which survives
-only as the low-level per-(read,write) matrix in the [RTL
-interface](#rtl-instantiation)).
+only as the low-level per-(read,write) matrix pair — `fwd` and `undef` — in
+the [RTL interface](#rtl-instantiation)).
 
 What does a read observe when the same address is also written in the same
-cycle? The `ordering` attribute on the memory declaration picks one of three
+cycle? The `ordering` attribute on the memory declaration picks one of four
 semantics. The canonical sequence:
 
 ```pyrope
@@ -103,11 +103,11 @@ mem[a3] = d3
 d4 = mem[a4]     // read AFTER the writes
 ```
 
-| same-cycle case | `"none"` | `"fwd"` | `"program"` (default) |
-|---|---|---|---|
-| `a4 == a3` (read after write) | undefined | `d3` | `d3` |
-| `a1 == a2` (read before write) | undefined | `d2` | old stored value |
-| `a2 == a3` (write-write) | undefined | undefined | `d3` commits (last write wins) |
+| same-cycle case | `"none"` | `"old"` | `"fwd"` | `"program"` (default) |
+|---|---|---|---|---|
+| `a4 == a3` (read after write) | undefined | old stored value | `d3` | `d3` |
+| `a1 == a2` (read before write) | undefined | old stored value | `d2` | old stored value |
+| `a2 == a3` (write-write) | undefined | `d3` commits (last write wins) | undefined | `d3` commits (last write wins) |
 
 * **`"program"`** (default): reads and writes resolve in program order, the
   software reading of the source text. This is also what `mut` arrays (no
@@ -116,22 +116,29 @@ d4 = mem[a4]     // read AFTER the writes
   cycle returns the new data, regardless of the read's textual position
   (hardware forwarding has no notion of statement order). With more than one
   same-cycle writer to one address the result is undefined.
+* **`"old"`**: nothing forwards, and the read is still defined — every read
+  of an address written this cycle returns the committed (pre-write)
+  contents, whatever its textual position. This is what the Verilog reader
+  emits, because a nonblocking write is invisible to a same-timestep read.
 * **`"none"`**: no ordering hardware at all — the cheapest option. Any read
   of an address written this cycle is undefined.
 * **undefined** means: in simulation, a random value (simulation does not
   model `?`), so latent collisions fail loudly; in formal, a `?` — either
   value is acceptable, so equivalence can still be PROVEN when the collision
   value genuinely does not matter (which is precisely the situation where
-  program-order bypass hardware was never needed). *Today the lowering
-  resolves an undefined read to the committed (old) contents rather than
-  injecting a random/`?` value — a legal refinement of "undefined", and what
-  the Verilog reader relies on (it emits `ordering="none"` for a memory whose
-  reads must see committed state).*
+  program-order bypass hardware was never needed). *The undefined window is
+  carried explicitly down to the netlist (the `undef` matrix below, `x` on
+  the generated wrapper), so any bit-blasting consumer (`pass.abc`,
+  `cgen_sim`) may refine it to a concrete value. A memory whose reads must
+  see committed state is `ordering="old"`, not `"none"`.*
 
 Ordering is resolved per read port, so one memory can mix positions: a read
 placed before the writes and another placed after them coexist in the same
-cell. The netlist carries this as the `fwd` matrix parameter — bit
-`read*n_writes + write` — on the generated `cgen_memory_*` wrapper.
+cell. The netlist carries this as a PAIR of matrix parameters with the same
+layout — bit `read*n_writes + write` — on the generated `cgen_memory_*`
+wrapper: `fwd` (the read sees the new data) and `undef` (the read sees `x`).
+They are mutually exclusive per (read, write), and both bits clear means the
+read sees the committed data, which is how `"old"` differs from `"none"`.
 
 Pyrope allows slicing of tuples and hence arrays.
 
@@ -289,15 +296,18 @@ q1 = res[1]
 ```
 
 The previous code directly instantiates a memory and passes the configuration.
-The configuration vocabulary is the LiveHD `Memory` cell sink pins **verbatim**
-(`addr`/`bits`/`clock_pin`/`din`/`enable`/`fwd`/`posclk`/`type`/`wensize`/
-`size`/`rdport`/`init`). The cell-level `fwd` pin is the legacy per-write-port
-forwarding mask; when the surface `ordering` attribute lands it generalizes to
-a per-(read-port, write-port) old/new/undefined relation plus write-port
-priority (the `$mem_v2` granularity). There is no `latency` field — `type` selects async
+The configuration vocabulary is the per-port/config subset of the LiveHD
+`Memory` cell sink pins, spelled **verbatim** as the cell names them
+(`addr`/`bits`/`clock_pin`/`din`/`enable`/`fwd`/`undef`/`posclk`/`type`/
+`wensize`/`size`/`rdport`/`initial`). The cell-level `fwd` pin is the
+per-(read-port, write-port) forwarding matrix — bit `r*n_wr + w` — that the
+surface `ordering` attribute lowers to, and `undef` is its twin for
+`ordering="none"`: same layout, mutually exclusive per (r,w), with `fwd` set
+meaning the read sees the NEW data, `undef` set meaning `x`, and both clear
+meaning the COMMITTED data. There is no `latency` field — `type` selects async
 (0, combinational read of the current address), sync (1, one-cycle read) or
 array (2, unclocked); the optional `clock_pin` defaults to the module clock,
-and `init` provides comptime initial contents (a tuple literal or a packed
+and `initial` provides comptime initial contents (a tuple literal or a packed
 constant, entry 0 in the low `bits`). The config must be built as a single
 tuple literal, and `res[N]` returns the data of the N-th read port (in
 `rdport` order). From a timing point of view a memory is treated like a
@@ -319,7 +329,7 @@ reg ram:[1024]u32:[macro="sram_32kx32"] = 0
     The *synthesizable* string-path `regref` described here — the one that
     resolves across the elaborated hierarchy and may match zero or many cells —
     is TBD. This section records its intended design. The `test`-block
-    [`sigref`/`regref`](05b-statements.md#test-only-statements), which binds
+    [`regref`](05b-statements.md#test-only-statements), which binds
     exactly one cell, is a different construct and is implemented; a testbench
     ref onto a memory word reads the **committed** contents, matching the
     remote-reader rule below. See [Implementation status](15-tbd.md).

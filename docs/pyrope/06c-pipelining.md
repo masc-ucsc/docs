@@ -20,6 +20,12 @@ the register within the cycle, copy it into a local:
 `const counter_q = counter`.
 
 === "Structural flop style"
+    !!! WARNING "TBD"
+        `__flop(...)` is not currently implemented: `lhd compile` rejects it
+        with `call to undefined function '__flop'`. The block below is
+        illustrative only; use the Pyrope style. See
+        [Implementation status](15-tbd.md).
+
     ```pyrope
     wire counter_next:u8 = nil
 
@@ -56,6 +62,11 @@ the register within the cycle, copy it into a local:
     without `ref` (it ties the pin to a constant).
 
 ## Retiming
+
+!!! WARNING "TBD"
+    The `retime` attribute is not yet implemented in LiveHD (it parses, but
+    nothing lowers it — the compiler reports `reg-attr-not-lowered`). See
+    [Implementation status](15-tbd.md).
 
 Registers declared with `reg` are preserved by default, meaning synthesis tools cannot move or optimize them away. This ensures that intentional state is maintained.
 
@@ -112,7 +123,8 @@ behavior, **not** about flop placement: the synthesis tool may place the
 actual flops anywhere that preserves the contract — distributed through the
 logic by retiming, at the inputs (an SRAM macro with registered inputs is a
 valid `pipe[1]`), or at the outputs. Pipeline flops inserted by the
-compiler are `retime=true`; state registers (next section) are preserved.
+compiler are intended to be freely movable by synthesis; state registers
+(next section) are preserved.
 Compiler-inserted flops also inherit the `.[valid]` of the value they
 transport: on cycles where the value is invalid the flop need not be
 clocked, enabling automatic clock gating as bubbles travel through the

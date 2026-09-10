@@ -47,8 +47,8 @@ is inferred from the file extension (`.prp` vs `.v`/`.sv`).
 | `lhd tool cat\|grep\|diff\|tree ...` | unified `ln:`/`lg:` inspector |
 | `lhd scan FILES.prp...` | report each Pyrope file's `import` strings (dependency discovery) |
 | `lhd pyrope fmt\|lsp` | Pyrope formatter / language server over stdio (JSON-RPC) |
-| `lhd list steps\|recipes\|emit-kinds\|error-classes\|options [REGEX]` | discovery (JSON when piped; `options` prints human text on a terminal) |
-| `lhd describe <command\|recipe:NAME\|emit-kind\|pass.flag>` | self-documentation (JSON output; `pass.flag` shows one option's full help) |
+| `lhd list steps\|emit-kinds\|error-classes\|options\|log-channels [REGEX]` | discovery (JSON when piped; `options` prints human text on a terminal) |
+| `lhd describe <command\|emit-kind\|pass.flag\|dump\|config>` | self-documentation (JSON output; `pass.flag` shows one option's full help) |
 | `lhd version` / `lhd help [command]` | meta |
 
 Shared arguments honored by the execution commands:
@@ -61,9 +61,14 @@ Shared arguments honored by the execution commands:
 | `--config lhd.toml` | pass-flag defaults from a config file (see below) |
 | `--result-json PATH` | structured result object (JSON) to a file (else stdout) |
 | `--workdir DIR` | scratch + ephemeral lgdb; never a global cache |
-| `-j`/`--jobs N` | intra-action parallelism |
 | `-q`/`--quiet`, `--verbose` | stderr verbosity; never pollutes the stdout protocol |
 | `--diag-fmt auto\|jsonl\|pretty` | rendering of the stdout result envelope and the stderr diagnostics; `auto` (default) = `pretty` on a terminal, `jsonl` when piped/captured (agents, CI) |
+
+There is no `-j`/`--jobs`: parallelism is a per-pass knob — `--set formal.jobs=N`
+(solver worker pool, default 4), `--set pass.abc.threads=N` (`lhd pass abc`,
+default 1; 0 = all CPUs), `--set synth.threads=N` (`lhd synth`, default 0 =
+all CPUs) and `--set sim.jobs=N` (host C++ compiles, default 0 = one per
+hardware thread).
 
 ## Typed inputs and outputs (kinds)
 
@@ -86,7 +91,7 @@ single-file output. `ln:`/`lg:` inputs are given positionally.
 One shot — elaborate, optimize, and emit Verilog:
 
 ```sh
-$ lhd compile foo.v --top foo --recipe O2 --emit verilog:foo.gen.v
+$ lhd compile foo.v --top foo --emit verilog:foo.gen.v
 ```
 
 Or as separate steps with the `lg:` container in between (`compile` is the
@@ -94,7 +99,7 @@ single action; an `lg:`-only input skips the frontend):
 
 ```sh
 $ lhd compile foo.v --top foo --emit-dir lg:foo_lgs/
-$ lhd compile lg:foo_lgs/ --recipe O1 --emit verilog:foo.gen.v
+$ lhd compile lg:foo_lgs/ --emit verilog:foo.gen.v
 ```
 
 The Verilog frontend has three readers, selected with
@@ -128,7 +133,7 @@ $ lhd compile f2.prp ln:f1_lns/ --emit-dir ln:f2_lns/ --emit-dir lg:f2_lgs/
 
 # top target: aggregate ln: units into ONE library, then synth
 $ lhd compile ln:f1_lns/ ln:f2_lns/ --top foo --emit-dir lg:top_lgs/
-$ lhd compile lg:top_lgs/ --recipe O1 --emit-dir lg:top_opt_lgs/ --emit verilog:top.v
+$ lhd compile lg:top_lgs/ --emit-dir lg:top_opt_lgs/ --emit verilog:top.v
 ```
 
 To discover the import relationships without elaborating (Pyrope `import`
@@ -193,50 +198,33 @@ $ ./bazel-bin/lhd/lhd compile lg:tmp/merged_lg/ --emit verilog:tmp/top.v
 deterministic hash of the graph name, a name shared across libraries keeps the
 same gid, so the merge is conflict-free.
 
-## Recipes
+## Configuration: lhd.toml
 
-A recipe is the named pass chain between the frontend and the terminal
-`--emit` — defined as data, not `|>` strings:
-
-| Recipe | Passes | Description |
-|--------|--------|-------------|
-| `O0` | (frontend lowering only) | no graph optimization; `ln:` inputs still run `pass.upass` + tolg |
-| `O1` | `pass.cprop` | constant/copy propagation (default) |
-| `O2` | `pass.cprop`, `pass.bitwidth` | cprop + bitwidth inference |
-
-`--set pass.flag=value` overrides one knob without forking the recipe, e.g.
+Graph compilation always runs constant propagation (`pass.cprop`) followed by
+bitwidth inference (`pass.bitwidth`); there is no optimization level or
+`--recipe` selection. `--set pass.flag=value` overrides one knob, e.g.
 `--set cgen.srcmap=1`. A typo'd pass or flag is a usage error (never a silent
 no-op). Introspect with:
 
 ```sh
-$ lhd list recipes
-$ lhd describe recipe:O2
 $ lhd list options             # every --set/--config pass.flag, with defaults
 $ lhd list options 'cgen\..*'  # regex-filtered
 $ lhd describe upass.toln      # one option, full help text
 ```
 
-The result records the *expanded* recipe (the passes+flags that actually ran),
-so an artifact is self-describing even if a recipe is later redefined.
-
-## Configuration: lhd.toml
-
 `--config lhd.toml` provides pass-flag defaults as a declared input file. It
 is a strict TOML *subset*: `#` comments, pass tables (`[upass]`, `[cprop]`,
-`[bitwidth]`), and `key = value` entries with quoted strings, booleans, or
-integers. The top level takes only `recipe`. Anything else is a `config`
-error — a typo'd pass table errors rather than silently no-oping.
+`[bitwidth]`, `[cgen]`), and `key = value` entries with quoted strings, booleans, or
+integers. Every entry must live under a pass table: any top-level key is a
+`config` error, and so is a typo'd pass table (never a silent no-op).
 
 ```toml
-recipe = "O2"
-
 [upass]
 constprop = true
 verifier  = false
 ```
 
-File entries are defaults: explicit `--set`/`--recipe` always win, and the
-`recipe` key is ignored by commands with no recipe slot, so one `lhd.toml` can
+File entries are defaults: explicit `--set` always wins, so one `lhd.toml` can
 serve every step of a flow. The config is folded in before `run_id` hashing,
 so a config file and the equivalent explicit flags hash identically.
 
@@ -256,13 +244,13 @@ $ lhd lec --impl foo.gen.v --ref foo.v --top foo
 
 The default backend is the in-process cvc5 SMT engine (bottom-up hierarchical:
 each module def is proven leaves-first and proven children collapse into their
-parents); `--set lec.solver=lgyosys` routes through `inou/yosys/lgcheck`
-instead, and `--set lec.engine=bmc|ind` picks a single engine over the default
+parents); `--set formal.solver=lgyosys` routes through `inou/yosys/lgcheck`
+instead, and `--set formal.engine=bmc|ind` picks a single engine over the default
 ind+bmc portfolio. On a refutation with `--workdir`, the counterexample is
 also written as a self-contained Pyrope testbench (`lecfail.prp`) plus a VCD
 so the divergence can be replayed and visualized. A non-equivalent pair exits
 non-zero with `error.class = equiv_fail`; an inconclusive solve is a warning
-(exit 0) unless `--set lec.strict=true`.
+(exit 0) unless `--set formal.strict=true`.
 
 ## Formal verification (assert / assume)
 
@@ -299,7 +287,7 @@ dotted signal paths, activated by listing the file and filtered with
 [Pyrope verification](../pyrope/05-assert.md#formal-blocks) for the block
 syntax. Engine knobs are shared with LEC under `--set formal.*`
 (`formal.bound`, `formal.timeout` per query, `formal.phase`, `formal.reset`);
-the legacy `lec.*` spellings stay accepted. The same checks also run in a don't-try-hard mode inside every
+LEC-only knobs live under `formal.lec.*`. The same checks also run in a don't-try-hard mode inside every
 `lhd compile` (`pass.formal`): proven obligations are elided from the netlist,
 refuted ones fail the build, undecided ones stay as runtime checks with a
 deferral warning.
@@ -312,8 +300,9 @@ Textual LNAST dump (round-trips through `Lnast::read`):
 $ lhd compile bar.prp --emit-dir lnast-dump:dump_dir/
 ```
 
-With `--recipe O0` the dump is close to post-parse; the default recipes show
-the post-upass form. The `ln:`/`lg:` directories themselves are the binary interchange
+The dump is the post-upass form; `--dump parse` prints the LNAST right after
+the front-end parse instead (`lhd describe dump` lists the observables). The
+`ln:`/`lg:` directories themselves are the binary interchange
 forms (`hhds::Forest::save` / `hhds::GraphLibrary::save`).
 
 ## Results, exit codes, and error classes
@@ -321,7 +310,8 @@ forms (`hhds::Forest::save` / `hhds::GraphLibrary::save`).
 A step's success is *only* the process exit code: `0` = pass, non-zero = fail.
 The structured result (one JSON object, to `--result-json PATH` or stdout)
 carries the detail: command, status, `run_id`, inputs, outputs, the expanded
-recipe steps, `phases`, and on failure an `error` block:
+pass steps (`recipe`: the passes+flags that actually ran, so an artifact is
+self-describing), `phases`, and on failure an `error` block:
 
 | error.class | Meaning |
 |---------------|------------------------------------------------|
@@ -344,7 +334,7 @@ import parsing, `lnast.tolg`, `lg.save`, `lec.load`, `sim.hostbuild`,
 `sim.run`). A name repeats when a step runs more
 than once, so a consumer sums the array; the leftover against wall time is
 process startup and output-dir cleanup. It is never part of `run_id`. Add
-`--diag-fmt pretty -v` to see the same breakdown as text.
+`--diag-fmt pretty --verbose` to see the same breakdown as text.
 
 `lhd` emits nothing on stdout except the selected protocol — no banners, no
 echoed commands, no raw pass logs. Per-step raw logs land under
@@ -390,7 +380,7 @@ a single line — never a fabricated location — when it is not.
 
 ## Pyrope language server
 
-`lhd lsp` serves the Pyrope LSP (JSON-RPC over stdio) for `.prp` files:
+`lhd pyrope lsp` serves the Pyrope LSP (JSON-RPC over stdio) for `.prp` files:
 real-time compile diagnostics (syntax, name, type, bit-width) in any editor.
 The `scripts/prplsp` wrapper picks the right `lhd` binary (in-checkout build
 when inside a livehd checkout, `$PATH` otherwise) — point your editor at that.
@@ -404,12 +394,10 @@ BUILD file can run LiveHD as a hermetic action:
 load("//tools:lhd.bzl", "lhd_verilog")
 
 lhd_verilog(
-    name    = "foo_net",
-    top     = "foo",
-    srcs    = ["foo.v", "bar.v"],
-    incdirs = ["rtl/inc"],
-    recipe  = "O2",
-    out     = "foo.gen.v",     # also writes foo.d (depfile) + foo.result.json
+    name = "foo_net",
+    top  = "foo",
+    srcs = ["foo.v", "bar.v"],
+    out  = "foo.gen.v",   # also writes foo.gen.v.result.json
 )
 ```
 

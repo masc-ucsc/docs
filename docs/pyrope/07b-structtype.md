@@ -166,7 +166,7 @@ cassert(a == a.age == a[0] == 3)
 
 mut w:Weight = 100
 
-const err = a == w // error: not (a equals w) or overload
+const err = a == w // error: not (a equals w)
 ```
 
 
@@ -519,14 +519,16 @@ test f1.check {
 
 ### Parametric polymorphism
 
-Add-hoc polymorphism overloads a function, and parametric polymorphism allows to
-parametrize types based on arguments.
+Ad-hoc polymorphism overloads a function. Parametric polymorphism uses
+explicit generic parameters to bind types at compile time.
 
 ```pyrope
-comb Param_type(a) -> (r) { r = (mut xx:a = nil) }
+comb make<T>(value:T) -> (r) { r = (mut xx:T = value) }
 
-const x:Param_type(string) = (xx="hello")
-const x:Param_type(signed)    = (xx=130)
+const text = make<string>(value="hello")
+const number = make<signed>(value=130)
+cassert(text.xx == "hello")
+cassert(number.xx == 130)
 ```
 
 ### Summary polymorphism

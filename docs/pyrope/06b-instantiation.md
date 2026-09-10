@@ -87,12 +87,8 @@ unique if cond1 {
   res = c
 } // no res in else
 
-// RTL equivalent — build the one-hot select bit-by-bit
-mut sel:u3 = nil
-sel#[0] = cond2
-sel#[1] = cond1
-sel#[2] = !cond1 and !cond2
-mut res2 = __hotmux(sel, a, b, c)
+// RTL equivalent — one (control, value) pair per arm, `a` as the trailing default
+mut res2 = __hotmux(p0=cond1, p1=b, p2=cond2, p3=c, p4=a)
 assume(!(cond1 and cond2)) // one hot check
 
 lec(res, res2)
@@ -116,12 +112,8 @@ match x {
 const cond1 = x == c1
 const cond2 = x == c2
 const cond3 = x == c3
-// one hot encode (no cond3) — built bit-by-bit
-mut sel:u3 = nil
-sel#[0] = cond1
-sel#[1] = cond2
-sel#[2] = !cond1 and !cond2
-mut res2 = __hotmux(sel, b, c, d)
+// one (control, value) pair per arm
+mut res2 = __hotmux(p0=cond1, p1=b, p2=cond2, p3=c, p4=cond3, p5=d)
 assume ( cond1 and !cond2 and !cond3)
     or (!cond1 and  cond2 and !cond3)
     or (!cond1 and !cond2 and  cond3)    // one hot check (no else allowed)
@@ -156,7 +148,7 @@ or short-circuit (`and`/`or`) expressions.
     mut lhs = v1 + v2
 
     // RTL equivalent
-    const lhs2   = __sum(A=(v1, v2))
+    const lhs2   = __sum(as=(v1, v2))
     const lhs2_v = __and(v1.[valid], v2.[valid])
 
     lec(lhs , lhs2)
@@ -224,7 +216,7 @@ the instance is a `mut`, the variable name can be the SSA name.
     mod sub(a:u32, b:u32) -> (x:u32@[0]) {
       const tmp = sum(a, b)      // instance tmp,sum
 
-      x = sum(tmp, 3)          // instance x,sum
+      x = sum(a=tmp, b=3)          // instance x,sum
     }
 
     mod top(a:u32, b:u32, c:bool) -> (x:u32@[0]) {
@@ -244,7 +236,7 @@ the instance is a `mut`, the variable name can be the SSA name.
     mod sub(a:u32, b:u32) -> (x:u32@[0]) {
       const tmp = sum(a, b)      // instance tmp
 
-      x = sum(tmp, 3)          // instance x
+      x = sum(a=tmp, b=3)          // instance x
     }
 
     mod top(a:u32, b:u32, c:bool) -> (x:u32@[0]) {
@@ -399,7 +391,7 @@ types, and constants can be imported. Registers are not imported; referencing
 an instantiated register across scopes is planned through the synthesizable
 string-path `regref` (TBD, see [Implementation status](15-tbd.md)); the
 single-cell `test`-block
-[`sigref`/`regref`](05b-statements.md#test-only-statements) is a separate,
+[`regref`](05b-statements.md#test-only-statements) is a separate,
 implemented construct.
 
 
@@ -462,7 +454,7 @@ without reset signal.
 
 ```pyrope
 mod my_flop_reset(ref self) {
-  reg reset_counter:u3:[sync=false] = 0sb? // asynchronous reset is posedge only
+  reg reset_counter:u3:[async=true] = 0sb? // asynchronous reset is posedge only
 
   self[reset_counter] = reset_counter
   wrap reset_counter += 1
@@ -522,7 +514,7 @@ A sample of asynchronous reset with different reset and clock signal
 
 ```pyrope
 reg my_asyn_other_reg:u8:[
-  sync = false,
+  async = true,
   clock_pin = ref clk2,    // ref to connect, not read clk2 value
   reset_pin = ref reset33  // ref to connect, not read current reset33 value
 ] = 33 // initialized to 33 at reset
@@ -536,6 +528,11 @@ assert(my_async_other_reg in (4, 33))
 ```
 
 ### retime
+
+!!! WARNING "TBD"
+    The `retime` attribute is not yet implemented in LiveHD (it parses, but
+    nothing lowers it — the compiler reports `reg-attr-not-lowered`). See
+    [Implementation status](15-tbd.md).
 
 Values stored in registers (flop or latches) and memories (synchronous or
 asynchronous) can not be used in compiler optimization passes. The reason is that
@@ -646,6 +643,12 @@ be the same.
 
 ## Registers
 
+!!! WARNING "TBD"
+    The `// RTL equivalent` half of the block below is illustrative
+    pseudo-code: `__flop(...)` is not currently implemented — `lhd compile`
+    rejects it with `call to undefined function '__flop'`. See
+    [Implementation status](15-tbd.md).
+
 ```pyrope
 reg a:u4 = 3
 sat a = a + 1
@@ -661,7 +664,7 @@ if cond {
 wire a_next = nil                                  // final in-cycle value of 'a'
 // a_next = ...                                       // (driver elaborated from the writes to 'a')
 a_qpin = __flop(reset_pin=ref reset, clock_pin=ref clk, initial=3, din=a_next)
-tmp    = __sum(A=(a_qpin, 1))
+tmp    = __sum(as=(a_qpin, 1))
 a      = __mux(tmp[4], tmp#[0..=3], 0xF)    // saturate, not wrap
 
 wire b_next = nil
@@ -672,5 +675,5 @@ b      = __mux(cond, b_qpin, 5)
 wire c_cond_next = nil
 // c_cond_next = ...
 c_cond_qpin = __flop(reset_pin=ref reset, clock_pin=ref clk, initial=0, din=c_cond_next)
-c_cond      = __sum(A=(b, 1))
+c_cond      = __sum(as=(b, 1))
 ```

@@ -76,10 +76,10 @@ Const v    = hydrate_const(cpin);        // decode it back
   for the authoritative list):
 
 ```cpp
-auto spin = setup_sink_by_name(node, "a");      // create-if-missing
-auto spin = find_sink_pin(node, "din");         // invalid pin when not connected
-auto dpin = get_driver_of_sink_name(node, "a"); // the (single) driver feeding it
-auto dpins = inp_drivers_of(node, "b");         // all drivers (multi-driver sinks)
+auto spin = setup_sink_by_name(node, "as");      // create-if-missing
+auto spin = find_sink_pin(node, "din");          // invalid pin when not connected
+auto dpin = get_driver_of_sink_name(node, "as"); // the (single) driver feeding it
+auto dpins = inp_drivers_of(node, "bs");         // all drivers (multi-driver sinks)
 ```
 
 - driver pins are created/fetched by port id. In general nodes have a single
@@ -221,21 +221,21 @@ The full list of cell types:
 
 | Ntype_op | Sinks | Functionality |
 |----------|-------|---------------|
-| `Sum` | `a` (added, multi), `b` (subtracted, multi) | `Y = Σa − Σb` |
-| `Mult` | `a` (multi) | n-ary product |
+| `Sum` | `as` (added, multi), `bs` (subtracted, multi) | `Y = Σa − Σb` |
+| `Mult` | `as` (multi) | n-ary product |
 | `Div` | `a`, `b` | `Y = a / b` |
-| `And`, `Or`, `Xor` | `a` (multi) | n-ary bitwise op |
-| `Ror` | `a` (multi) | reduce OR (`Y = (a != 0)`) |
+| `And`, `Or`, `Xor` | `as` (multi) | n-ary bitwise op |
+| `Ror` | `as` (multi) | reduce OR (`Y = (a != 0)`) |
 | `Not` | `a` | bitwise not |
 | `Get_mask` | `a`, `mask` | extract the bits selected by mask |
 | `Set_mask` | `a`, `mask`, `value` | replace the bits selected by mask |
 | `Sext` | `a`, `b` | sign-extend from bit position `b` |
-| `LT`, `GT`, `EQ` | `a` (multi), `b` (multi; EQ has only `a`) | comparators |
-| `SHL` | `a`, `b` (multi) | shift left; multiple amounts OR (one-hot builder) |
+| `LT`, `GT`, `EQ` | `as` (multi), `bs` (multi; EQ has only `as`) | comparators |
+| `SHL` | `a`, `b` | shift left |
 | `SRA` | `a`, `b` | arithmetic shift right |
 | `LUT` | `p0`...`pN` | look-up table (`livehd::attrs::lut`) |
 | `Mux` | `s`, `p1`...`pN` | multiplexer (`s==0 → p1`, `s==1 → p2`, ...) |
-| `Hotmux` | `s`, `p1`...`pN` | one-hot select mux |
+| `Hotmux` | `p0`, `p1`, ... | control/value pairs, optional trailing default |
 | `IO` | `p0`...`pN` | graph input or output |
 | `Memory` | see below | SRAM-like structures and arrays |
 | `Flop` | see below | flop with sync or async reset |
@@ -257,9 +257,11 @@ This is useful for debugging not for general use as it can result in less
 efficient LNAST code.
 
 An example of a multi-driver sink pin is the `Sum` cell which can do
-`Y=3+20+a0+a3` with four drivers connected to sink `a`. An example of single
+`Y=3+20+a0+a3` with four drivers connected to sink `as`. An example of single
 driver sink pins is the `SRA` cell which can do `Y=20>>3` with one driver on
-`a` and one on `b`.
+`a` and one on `b`. A trailing `s` in the sink name marks a multi-driver sink;
+`Ntype::is_sink_single_driver` (`graph/cell.hpp`) is the authority, kept in
+sync with `get_sink_name_slow` (`graph/cell.cpp`).
 
 The section includes description on how to compute the maximum (`max`) and
 minimum (`min`) allowed result range. This is used by the bitwidth inference
@@ -278,14 +280,14 @@ width is the smallest `b` with `a.max < 2^b`; zero still uses `u1`.
 
 Addition and substraction node is a single cell Ntype that performs
 2-complement additions and substractions with unlimited precision. Every
-driver connected to sink `a` is added; every driver connected to sink `b` is
+driver connected to sink `as` is added; every driver connected to sink `bs` is
 subtracted.
 
 ``` mermaid
 graph LR
     cell  --Y--> c(fa:fa-spinner)
-    a(fa:fa-spinner) --a--> cell[Sum]:::cell
-    b(fa:fa-spinner) --b--> cell
+    a(fa:fa-spinner) --as--> cell[Sum]:::cell
+    b(fa:fa-spinner) --bs--> cell
     classDef cell stroke-width:3px
 ```
 
@@ -388,7 +390,7 @@ following examples only the 'g' and 'h' variables needed.
 
 ### Mult
 
-Multiply operator. All the drivers connect to the single sink `a` (input order
+Multiply operator. All the drivers connect to the single sink `as` (input order
 does not matter). There is no cell type that combines multiplication and
 division. The reason is that with integers the order of
 multiplication/division changes the result even with unlimited precision
@@ -397,7 +399,7 @@ integers (`a*(b/c) != (a*b)/c`).
 ``` mermaid
 graph LR
     cell  --Y--> c(fa:fa-spinner)
-    a(fa:fa-spinner) --a--> cell[Mult]:::cell
+    a(fa:fa-spinner) --as--> cell[Mult]:::cell
     classDef cell stroke-width:3px
 ```
 
@@ -594,7 +596,7 @@ can optimize when combined with `Not`.
 ### And, Or, Xor
 
 `And` is a typical AND gate with multiple inputs. All the inputs connect to
-the single sink `a` because input order does not matter. The result is always
+the single sink `as` because input order does not matter. The result is always
 a signed number. `Or` and `Xor` follow the same n-ary single-sink structure.
 
 #### Forward Propagation
@@ -615,7 +617,7 @@ propagation to indicate that those bits are useless.
 
 ### Ror
 
-Reduce OR: `Y = (a != 0) ? 1 : 0` over all the drivers connected to sink `a`.
+Reduce OR: `Y = (a != 0) ? 1 : 0` over all the drivers connected to sink `as`.
 This is a bit different from the LNAST `red_or` (LNAST uses masks). There are
 no reduce-AND/reduce-XOR cells; they are built from other cells (e.g., reduce
 AND is an equality against `-1`, reduce XOR is a XOR chain or popcount
@@ -629,7 +631,7 @@ There are only 3 comparators. Other typically found like LE, GE, and NE can be
 created by simply negating one of the LGraph comparators. `GT = ~LE`, `LT = ~GE`, and `NE = ~EQ`.
 
 `LT`/`GT` allow multiple drivers on both `a` and `b`; the result is the AND of
-all the pairwise comparisons. `EQ` has a single multi-driver sink `a` and
+all the pairwise comparisons. `EQ` has a single multi-driver sink `as` and
 checks that all the drivers are equal.
 
 #### Forward Propagation
@@ -660,10 +662,8 @@ treats all the inputs as signed all the time. The unsigned inputs need a
 
 ### SHL
 
-Shift Left performs the typical shift left when there is a single amount
-(`a<<b`). The cell supports multiple drivers on the `b` (amount) sink; in this
-case the results are OR-ed together, which is useful to build one hot encoding
-masks (`a<<(1,2) == (a<<1)|(a<<2)`).
+Shift Left performs the typical shift left (`a<<b`). Both `a` and `b` are
+single-driver sinks and the shift amount `b` must be non-negative.
 
 ### SRA
 
@@ -685,22 +685,35 @@ inputs the code generation emits a `case` statement over `s`.
 
 ### Hotmux
 
-One-hot select multiplexer. Sink `s` is a one-hot encoded selector and
-`p1`...`pN` are the data inputs; bit `i` of `s` selects `p(i+1)`. A
-non-one-hot selector at runtime is an error. `Hotmux` avoids the
-binary-encode/decode pair that a `Mux` would need when the surrounding logic
-already produces one-hot signals.
+A parallel multiplexer with interleaved `(control, value)` pairs. Arm `i`
+connects its one-bit control to `p(2*i)` and its data value to `p(2*i+1)`.
+The controls must be mutually exclusive: at most one may be set at a time.
+
+An optional trailing even port carries a default **value**, selected when all
+controls are zero. Without a default, the zero-control result is zero. For
+example, `hotmux(c0, a, c1, b, d)` selects `a` for `c0`, `b` for `c1`, and
+`d` when neither control is active. The default is excluded from the
+exclusivity check.
 
 A Pyrope `unique if` (and `match`, which is a unique-if chain by definition)
-lowers to one `Hotmux` per merged variable: the selector packs one bit per
-arm condition plus a top "none of the conditions" bit for the else /
-fall-through slot, so it is one-hot by construction exactly when the
-uniqueness assume holds. The code generation emits a `case` over the one-hot
-constants (`1`, `2`, `4`, ...) with an `'hx` default modelling the
-non-one-hot runtime error. `pass.cprop` folds a constant one-hot selector to
-the selected arm (and collapses all-identical arms); `pass.bitwidth` gives
-the selector the unsigned N-bit envelope and unions the data arms into the
-output like `Mux`.
+lowers to one `Hotmux` per merged variable. Predicates connect directly to the
+cell; the explicit else or pre-if value supplies the default. Unreachable
+fallbacks carry a width-matched don't-care. This needs no selector concat or
+separate "none of the conditions" logic in the graph.
+
+`pass.formal` checks that the controls cannot overlap. Constant propagation
+folds known controls to the selected value or default, while preserving an
+unresolved exclusivity obligation even when the result is unused or the data
+arms are identical. Bitwidth inference unions the value arms independently
+of the one-bit controls. Verilog generation emits `unique case (1'b1)` over
+the predicates; the Slop and LLVM simulators check for overlapping controls.
+ABC maps the direct predicates and generates a default predicate only when
+needed.
+
+Regenerate persisted graphs created with the earlier packed-selector encoding.
+The source-level `__hotmux(p0=c0, p1=v0, p2=c1, p3=v1, ... [, pN=default])`
+builtin takes the same interleaved pin list as the cell (`Dlop::hotmux_op`);
+the packed-selector form is removed.
 
 ### LUT
 
@@ -777,33 +790,51 @@ The sink pins (per `graph/cell.cpp`):
 | `clock_pin` | runtime, 1 or per port | clock |
 | `din` | runtime, per port | write data |
 | `enable` | runtime, per port | read/write enable |
-| `fwd` | comptime, 1 | write forwarding (0/1) |
+| `fwd` | comptime, 1 | per-(read port, write port) forwarding matrix: bit `r*n_wr + w` set means read port `r` sees write port `w`'s new data on a same-cycle same-address collision |
 | `posclk` | comptime, 1 | clock polarity |
 | `type` | comptime, 1 | 0: async, 1: sync, 2: array |
 | `wensize` | comptime, 1 | number of write-enable bits |
 | `size` | comptime, 1 | number of entries |
 | `rdport` | comptime, per port | 1: read port, 0: write port |
-| `init` | comptime, 1 | contents (entry 0 in the low `bits`, row-major); NOT restored by reset |
+| `initial` | comptime, 1 (runtime when `update` is driven) | contents (entry 0 in the low `bits`, row-major); not self-restoring (see below) |
+| `update` | runtime, 1 | whole-array next-state bus (`size*bits`, entry 0 low) |
+| `update_enable` | runtime, 1 | optional bulk-update enable; absent means always on |
+| `reset` | runtime, 1 | 1-bit reset condition, active high (tolg pre-inverts `negreset`) |
+| `undef` | comptime, 1 | per-(read port, write port) UNDEFINED matrix, same bit layout as `fwd`, mutually exclusive with it per (r,w) |
 
-Multi-ported memories use port-id wrapping: the per-port pins repeat every 12
-port ids (`pid % 12` selects the field, `pid / 12` the port). E.g., sink name
-`"12addr"` is the `addr` of port 1. If a single driver is connected for a
-shared field (like `clock_pin`), the same value is used across all the ports.
+Multi-ported memories use port-id wrapping: the per-port pins repeat every
+`Ntype::Memory_port_stride` (16) port ids (`pid % 16` selects the field, `pid /
+16` the port). E.g., sink name `"16addr"` is the `addr` of port 1. If a single
+driver is connected for a shared field (like `clock_pin`), the same value is
+used across all the ports. The first block (pids 0-15) also holds the
+cell-global pins, including the whole-array `update` (12), `update_enable`
+(13), `reset` (14), and `undef` (15); that block is full, so a new singleton
+pin needs a wider stride.
 
-The read data for read port N comes out on driver pin `n_wr_ports + N`.
+The read data for read port N comes out on driver pin `n_wr_ports + N`. The
+whole-array read bus (width `size*bits`) uses the reserved driver pin
+`Ntype::Memory_readall_pid`.
 
-- `fwd` (forwarding) means writes forward their value to same-cycle reads —
-  effectively zero cycles read latency when enabled. This is more than just a
-  latency setting: with `fwd` enabled the write latency does not matter to
-  observe the results, which requires costly forwarding logic.
+- `fwd` (forwarding) is a per-(read port, write port) bit matrix indexed
+  `r*n_wr + w`: a set bit means that read port forwards the write port's value
+  on a same-cycle same-address collision — effectively zero cycles read
+  latency for that pair. This is more than just a latency setting: with `fwd`
+  set the write latency does not matter to observe the results, which requires
+  costly forwarding logic. The paired `undef` matrix supplies the third state:
+  `fwd` set means the new data, `undef` set means undefined (`x`), and both
+  clear means the committed data. They are mutually exclusive per (r,w).
 - `type == 2` (array) generates an unclocked register array with forwarding
   semantics (writes visible to subsequent reads in the same cycle); `type` 0/1
   instantiate the `cgen_memory_*` wrapper modules. `type == 0` (async) reads
   are combinational on the CURRENT address.
-- `init` is the per-cycle default for a `type == 2` array (a `mut`/`const`
-  array's initializer / a ROM's contents) and the power-on contents otherwise;
-  it is never restored by reset. Code generation currently rejects `init` on
-  the clocked types 0/1 (no $readmemh-style seam into the wrappers yet).
+- `initial` is the per-cycle default for a `type == 2` array (a `mut`/`const`
+  array's initializer / a ROM's contents) and the power-on contents otherwise.
+  The pin itself is not self-restoring: tolg synthesizes an explicit
+  one-entry-per-cycle restore sweep write port for a reg array with a bound
+  reset, and a whole-array cell restores through the `reset` pin. Code
+  generation passes the power-on contents to the clocked types 0/1 through the
+  wrapper's `INIT_EN`/`INIT` parameters; only multiclock memories are
+  rejected.
 
 The memory usually has power of two sizes. If the size is not a power of 2,
 the address is rounded up. Writes to the invalid addresses will generated

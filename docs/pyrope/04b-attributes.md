@@ -38,7 +38,7 @@ parser) can never confuse them.
   variable. If no value is given, the attribute is set to `true`. E.g:
   `reg counter::[clock_pin=ref clk1] = 0`, `const c::[debug] = 3`.
   Integer range/width attributes such as `max`, `min`, `bits`,
-  and `signed` are read-only metadata. Constrain them indirectly
+  and `sign` are read-only metadata. Constrain them indirectly
   through the declared type, e.g. `mut foo:signed(max=300, min=0) = 4` or
   `mut bar:u14 = 0`, never with `foo:signed:[max=300]`.
 
@@ -52,8 +52,8 @@ A small subset of attributes correspond to a *runtime* hardware signal
 rather than to compile-time metadata — for example `valid` (the per-cycle
 optional bit). `valid` may appear on the LHS to drive the underlying wire
 (`self.[valid] = v != 33`). Compile-time-only attributes (`max`, `bits`,
-`comptime`, `debug`, `file`, …) are read-only at use sites. Integer range
-metadata (`max`/`min`/`bits`/`signed`) comes from the declared type; the
+`comptime`, `debug`, `key`, …) are read-only at use sites. Integer range
+metadata (`max`/`min`/`bits`/`sign`) comes from the declared type; the
 others are bound with `::[…]` at the declaration.
 
 Since attributes are always compile time, the read happens at elaboration
@@ -256,9 +256,7 @@ proves the annotated and stripped sources identical.
 There are a list of reserved attribute names for debug:
 
 * `debug` and `_debug`: variable use for debug only, not synthesis allowed
-* `file`: to print the file where the variable was declared
 * `key`: variable/entry key name
-* `loc`: line of code information
 * `rand` and `crand`: simulation and compile time random number generation
 
 ### Type attribute list
@@ -278,7 +276,7 @@ Visibility is not an attribute: declarations are private by default, and the
 
 To set constraints on integer, the compiler has a set of bitwidth related
 attributes. Only `max` and `min` exist internally as attributes to control bit
-size; `bits` and `signed` are "syntax sugar" translated from `max`/`min`. There
+size; `bits` and `sign` are "syntax sugar" translated from `max`/`min`. There
 are no `ubits`/`sbits` attributes: use `bits`, and check the sign with
 `min >= 0`.
 
@@ -286,8 +284,8 @@ are no `ubits`/`sbits` attributes: use `bits`, and check the sign with
 * `min`: the declared minimum value allowed
 * `bits`: read-only; the number of bits needed to represent the declared
   `max`/`min` range (`var.[bits]` in assertions)
-* `signed`: read-only; true when the declared range includes negative values
-  (`min < 0`)
+* `sign`: read-only; 1 when the declared range includes negative values
+  (`min < 0`), 0 otherwise, and `nil` when the type pins no min
 
 Separately from the declared range, the bitwidth pass computes the *actual*
 range of each variable at each point: `mut x:u8 = 30` has `max == 255` and
@@ -307,14 +305,38 @@ statement-level prefix on the assignment — see the
 
 Registers have the following attributes:
 
-* `valid`, `retry`: for elastic pipelines
-* `sync`: true by default, when false selects an asynchronous reset (posedge only)
+* `valid`, `stop`: for elastic pipelines. `stop` is the canonical spelling —
+  it is the name in the attribute vocabulary and the `Fflop` cell pin
+  (`stop from next cycle`). `fire` is not an attribute: it is sugar for
+  `valid and !stop`. (TBD: nothing lowers either name yet.)
+* `async`: false by default, when true selects an asynchronous reset (posedge only)
 * `initial`: reset value when reset is high
 * `clock_pin`: connected to `clock` by default
 * `reset_pin`: connected to `reset` by default
 * `negreset`: active low reset signal
-* `posclk`: true by default, selects a posedge or negnedge flop
-* `retime`: allow to retime across the register
+* `posclk`: true by default, selects a posedge or negnedge flop. On a latch
+  the same pin is the enable *polarity*, not a clock edge, and `posclk=false`
+  is refused there (see `enable_high`)
+* `enable_high`: alias of `posclk`, accepted on any register. On a flop it is
+  the clock edge, exactly like `posclk`; on a latch it is the enable polarity.
+  `enable_high=false` (an active-low enable) on a latch is refused, because the
+  latch lowering derives the hold from the same condition and a bare polarity
+  flip would make it write itself instead of capturing the data — write the
+  inverted condition instead, `if !g { ... }`
+* `latch`: declares a level-sensitive latch instead of a flop
+  (`reg l:u8:[latch=true]`). The grammar has no `latch` declaration keyword, so
+  the marker is consumed at the declaration and is not readable back as
+  `.[latch]`
+* `enable`: extra write enable. The register updates only on a cycle where the
+  condition holds (on a `latch=true` register: it is transparent only then);
+  reset keeps priority over it. It is ANDed with the conditions of the `if`s
+  that guard the writes, so `reg q:[enable=(wen!=0)] ; q = d` and
+  `reg q ; if wen!=0 { q = d }` describe the same flop. It names a signal, so
+  it needs a value: the flag-only `:[enable]` is an error, and so is
+  `enable=false` (a register that can never update)
+* `retime`: allow to retime across the register (TBD: not yet implemented —
+  the name is accepted but no pass consumes it, so a register carrying it
+  warns `reg-attr-not-lowered` and is retimed no differently)
 
 Pipestage accept the same register attributes but also two more:
 
@@ -323,9 +345,9 @@ Pipestage accept the same register attributes but also two more:
 
 A register with a non-nil initializer needs a reset input. Whether that
 reset is synchronous or asynchronous is **target-dependent**, so it is an
-elaboration flag rather than a per-register default: `upass.reset_style`
+elaboration flag rather than a per-register default: `compile.upass.reset_style`
 (`sync` | `async`, default `sync` — FPGA-typical) selects how every
-implicit-reset flop wires its reset. A per-register `sync` attribute (above)
+implicit-reset flop wires its reset. A per-register `async` attribute (above)
 overrides the flag for that register. The implicit reset binds to an existing
 `reset`/`rst`/`reset_n`/`rst_n` input before minting a new `reset` input (the
 same bind-before-mint rule as the implicit clock); `reg foo = nil` declares a
@@ -346,7 +368,9 @@ are similar to registers, but unlike registers they can have multiple clocks.
   resolve in program order — a read before a write sees the old value, a read
   after it the new value, the last write to an address wins. `"fwd"`:
   position-blind forwarding — every read of an address written this cycle
-  returns the new data; multi-writer collisions are undefined. `"none"`: no
+  returns the new data; multi-writer collisions are undefined. `"old"`: every
+  same-cycle read of an address written this cycle returns the OLD value,
+  whatever the program order. `"none"`: no
   guarantee — a same-cycle read of a written address is undefined (random in
   simulation, `?` in formal). See
   [Same-cycle ordering](08-memories.md#same-cycle-ordering). Replaces the
@@ -361,14 +385,14 @@ are similar to registers, but unlike registers they can have multiple clocks.
   enable controls the lower bits of the memory entry selected.
 * `rdport`: Indicates which of the ports are read and which are written ports.
 * `posclk`: Positive edge clock memory for all the memory clocks. The default is `true` but it can be set to `false`.
-* `init`: comptime initial contents (a tuple literal or a packed constant, entry 0 in the low `bits`)
+* `initial`: comptime initial contents (a tuple literal or a packed constant, entry 0 in the low `bits`)
 
 ### Lambda attribute list
 
 Lambda attributes allow [Introspection](07-typesystem.md#Introspection) which requires some attributes.
 
-* `inputs`: returns the input tuple from the lambda
-* `outputs`: returns the output tuple from the lambda
+* `inp`: returns the input port-name tuple from the lambda
+* `out`: returns the output port-name tuple from the lambda
 * `lg`: pins the name of the generated lgraph (and hence the netlist/Verilog
   module name). Only allowed on `pub` lambdas. See
   [lg: explicit lgraph name](#lg-explicit-lgraph-name).

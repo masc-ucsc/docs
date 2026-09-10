@@ -116,7 +116,7 @@ mut hot = match x {
 
 // Equivalent
 assume(x==0sb001 or x==0sb010 or x==0sb100)
-mut hot2 = __hotmux(x, a, b, c)
+mut hot2 = __hotmux(p0=x#[0], p1=a, p2=x#[1], p3=b, p4=x#[2], p5=c)
 
 assert(hot==hot2)
 ```
@@ -289,14 +289,14 @@ to write the element back into the tuple.
 
 ```pyrope
 const b = (const a=1, const b=3, const c=5, 7, 11)
-cassert(b.keys() == ('a', 'b', 'c', '', ''))
+cassert(b.keys() == ('a', 'b', 'c'))
 
 for (index, i, key) in b {
-  cassert(i==1  implies (index==0 and key == 'a'))
-  cassert(i==3  implies (index==1 and key == 'b'))
-  cassert(i==5  implies (index==2 and key == 'c'))
-  cassert(i==7  implies (index==3 and key == '' ))
-  cassert(i==11 implies (index==4 and key == '' ))
+  cassert(i==1  implies (index==2 and key == 'a'))
+  cassert(i==3  implies (index==3 and key == 'b'))
+  cassert(i==5  implies (index==4 and key == 'c'))
+  cassert(i==7  implies (index==0 and key == '' ))
+  cassert(i==11 implies (index==1 and key == '' ))
 }
 ```
 
@@ -314,7 +314,7 @@ for i in 0..<5 {
 
 mut e:[] = nil
 for i in 0..<5 {
-  if i {
+  if i != 0 {
     e = (...e, i)
   }
 }
@@ -605,28 +605,16 @@ testing blocks:
     an input driven immediately before a `step` affects *that* edge; the second
     is why a read placed immediately after it sees post-edge values.
 
-* `sigref(x)` binds a **read-only** window onto a storage cell — a register, a
-  memory word, or a module input or output — reachable from the test's instance;
-  `regref(x)` binds a **writable** one. `x` is either a dotted path
-  (`sigref(acc.core0.count)`) or a `"unit/field"` string
-  (`sigref("core0/count")`). A ref is bound **once**, outside the `tick` loop,
-  and stays valid for the whole run: reading it observes the cell at that
-  instant, so it costs a load rather than a re-evaluation of the design.
+* `regref(x)` binds a writable reference to a register or memory word.
+  `x` is a dotted path such as `regref(acc.core0.count)` or a string path
+  such as `regref("acc/core0.count")`. Intermediate components name the
+  variables that instantiate the child modules. Bind the reference once,
+  outside a `tick` loop; it remains valid throughout the run.
 
-    A bare dotted access is sugar for an anonymous ref with exactly these
-    semantics, and its binding is hoisted out of the loop too — spelling
-    `sigref`/`regref` explicitly documents the intent and names the cell, it does
-    not change what runs. A write through a `regref` has no effect until the next
-    `step`; on a register it drives `q`, which the design's own logic then uses
-    for that cycle before the edge replaces it with the computed `din` — a
-    one-shot next-state override. Use
-    [`force`/`release`](09-verification.md#force-and-release) for an override
-    that persists across edges.
-
-    A ref outlives the loop: one binding serves reads before, inside, and after
-    the `tick`. An internal combinational net has no storage behind it and
-    therefore cannot be bound; naming one is an error, not a silently
-    materialized value.
+  Read any signal with bare dotted access (`acc.core0.count`). A write through
+  `regref` changes the stored value immediately; the next `step` evaluates the
+  design from that value and commits its computed next state. It does not
+  hold the register across later edges. Persistent `force`/`release` is TBD.
 
 To *wait* for a condition there is no separate primitive: `step` each cycle and
 `continue` until it holds (the `tick N` bound is the timeout). See
@@ -659,7 +647,7 @@ Each `tick` iteration is **one cycle**. You declare the design under test (DUT)
 once as an *instance* before the loop and interact with it by field access:
 `acc.x = v` drives input `x` (pre-edge), `acc.y` reads an output or an internal
 register (`acc.total`). Each such access is sugar for an anonymous
-[`sigref`/`regref`](#test-only-statements) whose binding is hoisted out of the
+[storage access](#test-only-statements) whose binding is hoisted out of the
 loop, so it costs nothing per iteration. The clock edge is the explicit
 **`step`** in the body — statements above it drive this cycle's inputs,
 statements below sample the results — and there is exactly one `step` per
@@ -772,7 +760,7 @@ test runner.until_done {
 
 Like `step`, `tick` is a statement-level construct, not a reserved identifier: it
 is recognized only at the start of a statement (`tick`, a cycle count, then a
-`{ ... }` block). (`sigref`/`regref` are ordinary built-in *calls*, not
+`{ ... }` block). (`regref` is an ordinary built-in *call*, not
 statement-level constructs, so they are not part of this rule.) A variable or method named `tick` (such as a
 `mod tick(ref self, ...)` clock method) is unaffected.
 
@@ -803,10 +791,6 @@ pipeline structure which means that it can be started each cycle. Calling a
 lambda that has called a `step` and still has not finished should result in a
 simulation assertion failure.
 
-* `sigref` reads any flop, memory word, or lambda input/output, through a
-  binding made once and held for the run.
-
-* `regref` is `sigref` plus the ability to drive the cell. `peek`/`poke` were
-  the earlier spelling of this pair and are **removed**: each of their reads
-  copied a value out of a freshly recomputed snapshot of the whole design, which
-  a bound reference makes unnecessary.
+* Bare dotted access reads any register, memory word, or module input/output.
+* `regref` binds a writable register or memory reference. `peek`/`poke` and
+  `sigref` are removed.

@@ -254,9 +254,17 @@ Pryope number or an assertion is raised.
 
 A boolean is either `true` or `false`. Booleans can not mix with integers in
 expressions unless there is an explicit typecast (`signed(false)==0`,
-`signed(true)==-1`, `boolean(0)==false`, and `boolean(1)==true`). Unlike integers,
-booleans do not support undefined value. A typecast from integer to boolean
-will raise an assertion when the integer has undefined bits (`?`) or `nil`.
+`signed(true)==-1`, `boolean(0)==false`, and `boolean(1)==true`). Unlike
+integers, booleans do not support undefined value. A typecast from integer to
+boolean will raise an assertion when the integer is a comptime and has
+undefined bits (`?`) or `nil`. Like with `unique if...` chains that generate a
+hotmux and the compiler does a quick formal to check that it is unique, we do
+the same for `boolean(x)` conversion to check that it is known (not `?`) but
+there is a quick timeout. Unlike `unique if` that falls the unfinished checks
+to simulation, we can not know at simulation because we do not do unknowns at
+simulation. So a raised error is a guarantee of error, but a not-raised is not
+a guarantee (just a warning is issued).
+
 
 Hardware realizes a boolean result as one unsigned bit (`u1`): false is `0`
 and true is `1`. An explicit `signed(bool)` or `sN(bool)` cast deliberately
@@ -411,32 +419,15 @@ operators](#reduce-and-bit-selection-operators), and the bit packing rules in
 
 ### String
 
-Strings are a basic type, and a string is a positional tuple of characters,
-each one 8 bits wide. This is worth saying because it explains the bit layout
-without needing a rule of its own: `#[..]` packs a string exactly as it packs
-any other positional tuple, entry 0 in the lowest bits, so the first characters
-of the string land in the low bits and the last character sits on top. There is
-no string-specific encoding to remember, only the general packing rule (see the
-bit packing rules in [internals](10-internals.md)) applied to a tuple whose
-entries happen to be characters. Casting an integer to `string` produces
-decimal text, not an ASCII-byte decode.
+Strings are an opaque basic type. They do not spread into character tuples
+and do not support bit packing, bit reductions, or numeric reinterpretation.
+Use `string(value)` to render an integer as decimal text. String methods are
+described in the [standard library](13-stdlib.md).
 
 ```pyrope
-const a = 'cad'          // c is 0x63, a is 0x61, and d is 0x64
-const b = 0x64_61_63
-cassert(signed(a) == b) // typecast string to number
-cassert(a#[..] == b) // typecast string to number
-cassert(string(b) == "6578531") // integer to string is decimal text
+const value = 123
+cassert(string(value) == "123")
 ```
-
-Like ranges, strings can also be seen as a tuple, and when tuple operations are
-performed they are converted to a tuple.
-
-```pyrope
-cassert("hello" == ('h','e','l','l','o'))
-cassert((..."h", ..."ell") == ('h','e','l','l') == "hell")
-```
-
 
 ## Type declarations
 
@@ -544,8 +535,9 @@ wire x = nil           // forward declaration: an as-yet-undriven net
 x = some_expr          // the one driver (may appear later in program order)
 
 wire y:u8 = a + b      // declare and drive in one statement
-pub wire z = a & b     // composes with prefix modifiers, like the other kinds
 ```
+
+Exports use `pub const`, `pub` lambdas, or `pub` types. A wire cannot be exported.
 
 Rules:
 
@@ -587,7 +579,7 @@ other files by `import`. The `pub` prefix modifier (same declaration slot as
 
 * `pub` on a top-scope lambda, type, or constant allows other files to
   `import` it.
-* `pub mut` and `pub reg` are compile errors. Registers, including memories,
+* `pub mut`, `pub reg`, and `pub wire` are compile errors. Registers, including memories,
   are not imported or exported as values. Cross-scope register access is
   planned through the *synthesizable, multi-match* `regref`, which would resolve
   instantiated registers by hierarchy path or name — TBD, see
@@ -595,7 +587,7 @@ other files by `import`. The `pub` prefix modifier (same declaration slot as
   [Memories](08-memories.md#shared-memories-with-regref). A `formal` block does
   not need it: it reaches registers through the ordinary instance hierarchy
   (`acc.core0.count`). A `test` block additionally has the single-cell
-  [`sigref`/`regref`](05b-statements.md#test-only-statements), which is a
+  [`regref`](05b-statements.md#test-only-statements), which is a
   different, already-implemented construct.
 
 ```pyrope
@@ -612,7 +604,7 @@ artifact — `import` still uses the declared name (`my_log` above). See
 [lg: explicit lgraph name](04b-attributes.md#lg-explicit-lgraph-name).
 
 **Debug is exempt from visibility.** Debug statements (`assert`, `test`,
-`puts`, monitors) can observe any storage cell read-only through `sigref`, and a
+`puts`, monitors) can observe any storage cell read-only through bare dotted access, and a
 `test` block can additionally drive one through `regref`. Visibility restricts
 `import` only; nothing can be hidden from verification. There is no
 `private` attribute.
@@ -678,33 +670,16 @@ dedicated `!and` / `!or` / `!implies` operators.
 
 * `a in b` is element `a` in tuple `b`. Negate compositionally with
   `not (a in b)`.
-* `tuple(a)` converts `a` to tuple, `a` can be a boolean, range, integer,
-  string, or already a tuple
 
 Most operations behave as expected when applied to signed unlimited precision
 integers.
 
-The `a in b` checks if values of `a` are in `b`. Notice that both can be
-tuples. If `a` is a named tuple, the entries in `b` match by name, and then
-contents. If `a` is unnamed, it matches only contents by position.
+The left operand of `a in b` is a scalar. Membership checks the values in
+the right operand; field names do not participate in the comparison.
 
 ```pyrope
-cassert((1,2) in (0,1,3,2,4))
-cassert((1,2) in (const a=0, const b=1, const c=3, 2, const e=4))
-cassert(not ((const a=2) in (1,2,3)))
-cassert((const a=2) in (1, const a=2, const c=3))
-cassert((const a=1, 2) in (3, 2, 4, const a=1))
-cassert(not ((const a=1, 2) in (1, 2, 4, const a=4)))
-cassert(not ((const a=1) in (const a=(1,2))))
-```
-
-The `a in b` has to deal with undefined values (`nil`, `0sb?`). The LHS with an undefined
-will be true if the RHS has the same named entry either defined or undefined.
-
-```pyrope
-cassert((const x=nil, const c=3) in (const x=3, const c=3))
-cassert((const x=nil, const c=3) in (const x=nil, const c=3, const d=4))
-cassert(not ((const c=3) in (const c=nil, const d=4)))
+cassert(2 in (0, 1, 3, 2, 4))
+cassert(not (5 in (0, 1, 3, 2, 4)))
 ```
 
 * `(...a, ...b)` concatenate two tuples (splice). A field present on only one
@@ -773,7 +748,7 @@ matched too.
 ```pyrope
 cassert((const b=100, const a=333, const e=40, 5) does (const a=1, const b=3))
 cassert((const a=100, 300, const b=333, const e=40, 5) does (const a=1, 3))
-cassert(not ((const b=100, 300, const a=333, const e=40, 5) does (const a=1, 3)))
+cassert((const b=100, 300, const a=333, const e=40, 5) does (const a=1, 3))
 cassert(u32 does u16)          // u32's range is a superset of u16's
 cassert(not (u16 does u32))    // u16's range is NOT a superset of u32's
 cassert(not (u32 does string)) // different basic type → false
@@ -892,16 +867,13 @@ z#[0] = 0ub11 // error: '0ub11` overflows the maximum allowed value of `z#[0]`
 
 
 
-`variable#op[sel]` asks its operand for a bit vector, so it works on every type
-that has one: integers, booleans, ranges, and tuples — which includes arrays
-and strings, since those are tuples too. A tuple's bit vector is the packing of
-its entries with entry 0 in the lowest bits, and each entry's width comes from
-its declared type, so `a#[..]` on a string is not a special conversion but the
-same operation performed on a tuple of 8-bit characters. Two things have no bit
-vector: a tuple with two or more named fields, because named fields have no
-order to pack (select them in the order you want instead: `(x.lo, x.hi)#[..]`),
-and an entry with no declared width, because it states no layout. The bit
-packing rules live in [internals](10-internals.md).
+`variable#op[sel]` operates on a bit vector: an integer, boolean, range,
+or a packed positional tuple or array. Strings are opaque and have no bit
+vector. A tuple packs entry 0 into the lowest bits, with each entry's width
+specified by its declared type. A tuple with multiple named fields has no
+packing order; select its fields explicitly, as in `(x.lo, x.hi)#[..]`.
+An entry without a declared width specifies no layout. See the bit packing
+rules in [internals](10-internals.md).
 
 Every `#op[sel]` variant reads that same word, so there is no separate list of
 which operators a tuple is allowed to take: the reductions `#|`, `#&`, `#^`,
@@ -914,7 +886,6 @@ const p:[3]u4 = (0ub0011, 0ub0101, 0ub0000)
 cassert(p#[..]  == 0ub0000_0101_0011) // entry 0 in the lowest bits
 cassert(p#+[..] == 4)                 // pop-count over the packed 12 bits
 cassert(p#|[..] == 1)
-cassert("ab"#+[..] == 6)              // 0x62_61 has 6 bits set
 ```
 
 The bit selection operator takes a single expression: a bit index, a range, or

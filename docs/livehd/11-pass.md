@@ -20,9 +20,9 @@ There is no interactive shell: passes register themselves statically through
 `Pass_plugin` (see `pass/common/pass.hpp`), which adds an
 [EPRP](https://github.com/masc-ucsc/livehd/tree/main/core) method with its
 labels (arguments). The `lhd` driver initializes the registry at startup and
-drives the registered methods programmatically — a [recipe](02-usage.md)
-(`O0`/`O1`/`O2`) names the ordered pass chain, and `--set pass.flag=value` /
-`--config lhd.toml` provide the per-pass flags.
+drives the registered methods programmatically — the pass chain is fixed
+(constant propagation, then bitwidth inference; see [usage](02-usage.md)), and
+`--set pass.flag=value` / `--config lhd.toml` provide the per-pass flags.
 
 ## Create a pass
 

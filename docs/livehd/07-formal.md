@@ -174,12 +174,12 @@ report carries the run headline (verdict, budget, assume counts), one record
 per obligation — a stable id (`kind@file:line[block]`), verdict, proven/
 refuted/unknown cycles, an `unknown_why`, the assume class, and cumulative
 `solve_ms` — plus the structured `timeout_core` (which still-open obligations
-jointly exhaust the solver, from `formal.minetimeout`) and the paths of any
+jointly exhaust the solver, from `formal.spec_mining_timeout`) and the paths of any
 witness artifacts (`formalfail.prp`, `formalfail.json`, the replay VCD).
 
 The loop an agent runs:
 
-1. `lhd formal verify design.prp --workdir W --set formal.minetimeout=10`
+1. `lhd formal verify design.prp --workdir W --set formal.spec_mining_timeout=10`
    (exit 0 = no refutation; REFUTED exits 1; UNKNOWN warns unless
    `formal.strict=true`).
 2. Parse `W/formal_report.json`. REFUTED obligations come with a trace, a
@@ -190,7 +190,7 @@ The loop an agent runs:
    pain. State-touching assumes are themselves proven, so a wrong helper is
    refuted instead of corrupting the run; proven helpers prune every
    remaining obligation and re-prove instantly from the cache on the next
-   iteration. The tool helps: with `formal.minetimeout` set, a stuck run
+   iteration. The tool helps: with `formal.spec_mining_timeout` set, a stuck run
    **mines** invariant candidates from its own solver work (learned
    literals, range/equality templates over the stuck registers), keeps only
    those that hold at every checked cycle *and* survive induction, and
@@ -203,9 +203,10 @@ The loop an agent runs:
 
 ### Formal checking inside every compile
 
-Every optimizing `lhd compile` runs a formal tier (`pass/formal`) in a
-deliberately cheap, deterministic profile (the tier is off at `-O0`). It
-proves what it can quickly and never blocks a good build:
+Every `lhd compile` runs a formal tier (`pass/formal`) in a deliberately
+cheap, deterministic profile (`compile.formal.mode=fast` by default;
+`--set compile.formal.mode=none` disables it). It proves what it can
+quickly and never blocks a good build:
 
 * An assert **proven** unbounded is elided from the generated design — the
   proof pays for itself as a synthesis optimization.
@@ -279,8 +280,8 @@ replay and the UNKNOWN ledger pending on that front.
 ### Options
 
 The equivalence and property-verification fronts share one option namespace,
-`formal.*`, with the legacy `lec.*` spellings accepted interchangeably (the
-table shows each knob in its customary spelling); the compile-time tier has
+`formal.*`; the knobs that only mean something for equivalence live under
+`formal.lec.*` (the old `lec.*` namespace is rejected); the compile-time tier has
 its own small knob set under `compile.formal.*`. A mistyped flag is a hard
 error, never a silent no-op. The load-bearing knobs:
 
@@ -289,17 +290,17 @@ error, never a silent no-op. The load-bearing knobs:
 | `formal.engine`         | `auto` (default: race complementary strategies), `bmc`; `ind` selects the inductive miter (equivalence only) |
 | `formal.bound`          | BMC / induction depth (default 6)                          |
 | `formal.timeout`        | soft total budget for **solver** (BMC/cvc5) time across the equivalence command — a target, not a hard wall-clock deadline; semdiff and encoding do not draw from it. A lone or compile-tier query treats it as its per-query cap; hard problems degrade to UNKNOWN |
-| `formal.budget_mode`    | `wall` (spend `formal.timeout` as a soft solver-time total, default) or `rlimit` (no wall-clock budget — the deterministic CI path) |
-| `formal.minetimeout`    | a **separate** budget for the diagnosis/mining phase (which also iterates the solver), so it never steals from `formal.timeout`; 0 = off |
+| `formal.spec_mining_timeout` | a **separate** budget for the diagnosis/mining phase (which also iterates the solver), so it never steals from `formal.timeout`; 0 = off |
 | `formal.rlimit`         | deterministic solver budget for reproducible CI verdicts   |
 | `formal.phase` / `formal.reset` | reset regime selection and explicit reset naming   |
 | `formal.jobs`           | bound on concurrent solver processes (default 4)           |
 | `formal.partitions` / `formal.split` | parallel input case-splitting              |
 | `formal.strict`         | make UNKNOWN a hard failure                                |
 | `formal.report`         | verify's machine-readable run report filename (default `formal_report.json`, written into the workdir on every run; `false` = off) |
-| `lec.match`             | explicit register correspondences                          |
-| `lec.state_pairing`     | automatic speculative register pairing (default on)        |
-| `lec.cache` / `lec.retry` | verdict cache control under a working directory          |
+| `formal.lec.match`      | explicit register correspondences                          |
+| `formal.lec.state_pairing` | automatic speculative register pairing (default on)     |
+| `lhd.incremental`       | the ONE switch for every persistent reuse tier under a `--workdir` — the Pyrope compile cache, pass.abc's region cache, opentimer's STA cache and the formal/lec verdict cache; there is no per-tier switch |
+| `formal.retry`          | verdict-cache Unknown policy: `changed` (default; an unchanged def already Unknown at this budget skips the re-attempt) or `all` |
 
 ### Structural diff as a standalone tool
 

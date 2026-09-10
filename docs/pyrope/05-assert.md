@@ -100,8 +100,8 @@ Rules:
 
 * Exactly one argument is accepted.
 * The argument must resolve to a comptime-known string. String interpolation
-  (`"a is {a}"`) works because the producer lowers it to `format(...)`, which
-  the upass folds at compile time when its operands are comptime-known.
+  (`"a is {a}"`) folds at compile time when its embedded values are
+  comptime-known.
 * Any deviation — extra arguments, non-string operand, or an operand that
   cannot be folded to a known value at compile time — is a compile error, not
   a runtime print emitted at simulation.
@@ -428,16 +428,14 @@ and speed up the remaining proofs.
 A verification statement reads design signals the same way any other Pyrope
 code does: through the instance hierarchy, by name. A `formal` block binds the
 design with an alias and then uses dotted paths (`acc.core0.count`); a `test`
-block reads and drives the instance it names — by bare dotted access, or through
-an explicit [`sigref`/`regref`](05b-statements.md#test-only-statements) bound
-outside the `tick` loop.
+block reads signals with bare dotted access and drives registers through a
+[`regref`](05b-statements.md#test-only-statements) bound outside the `tick` loop.
 
-Both spellings of a ref work in a `test` block: the dotted
-`sigref(acc.core0.fifo0.full)` names exactly one cell (a path that does not
-resolve is a setup error), and the string form `sigref("fifo0/full")` reaches a
-`"unit/field"` by name. Note that `full` there is an *output*, not a register:
-`sigref` binds any storage cell — register, memory word, input or output — and
-`regref` is the same binding made writable.
+Both reference spellings reach nested registers: `regref(acc.core0.count)`
+and `regref("acc/core0.count")`. Every intermediate component names a child
+instance; the last component must resolve to a writable register or memory
+word. An output such as `acc.core0.fifo0.full` is read directly and cannot be
+written through a reference.
 
 !!! NOTE "Not implemented"
     The **multi-match** string path — one `regref` resolving to zero or many

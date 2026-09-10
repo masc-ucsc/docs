@@ -475,8 +475,8 @@ method-local names do not need to shadow tuple fields.
 comb f1() -> (r) { r = 1 }
 
 const tup = (
-  comb f1() -> (r) { r = 2 },
-  comb code(self) {
+  comb f1(self) -> (r) { r = 2 },
+  comb code(self) -> () {
      cassert(self.f1() == 2)
      cassert(f1() == 1)
   }
@@ -503,7 +503,7 @@ capture list.
 comptime const W = 32
 const math = import("lib.math")// imports are comptime aliases
 
-comb add(a:u(W), b:u(W)) -> (result:u(W + 1)) {
+comb add<N=W>(a:uN, b:uN) -> (result) {
   result = a + b
 }
 
@@ -624,24 +624,16 @@ everything is initialized and unknowns (`0sb?`) can happen only when explicitly
 enabled.
 
 
-The compare respects Verilog semantics. This means that it is true if and only
-if all the possible values are true, which is quite counter-intuitive behavior
-for programmers not used to 4 value logic.
+Any comparison touching an unknown yields the unknown boolean `0ub?`. This
+includes comparing two identical unknown patterns with either `==` or `!=`.
+An unknown boolean cannot satisfy a `cassert`.
+
+At compile time, inspect the printable representation to check unknown bits:
 
 ```pyrope
-cassert(!(0sb? == 0))
-cassert(!(0sb? != 0))
-cassert(!(0sb? == 0sb?))
-cassert(!(0sb? != 0sb?))
-```
-
-There is no way to know at run-time if a value is unknown, but a compile trick
-can work. The reason is that integers can be converted to strings in a C++ API
-
-```pyrope
-mut x = 0sb10?
-const str = __to_string(x) // only works for compile time constants
-cassert(str == "0sb10?")
+const x = 0sb10?
+cassert("{x:b}" == "10?")
+cassert(string(x == x) == "0ub?")
 ```
 
 ### for loop
@@ -733,8 +725,8 @@ cassert(v#[0] == 0)
 cassert(v#[4] == 1)       // unsigned output
 cassert(v#sext[4] == -1)  // signed output
 
-cassert(v#[3..=4] == 0ub11)
-cassert(v#sext[3..=4] == 0sb11 == -1)
+cassert(v#[3..=4] == 0ub10)
+cassert(v#sext[3..=4] == 0sb10 == -2)
 ```
 
 `x#[..]` selects every bit, so it is the full bit vector of `x`, and that one
@@ -749,10 +741,9 @@ The first entry of a positional tuple or array occupies the **lowest** bits,
 and each later entry stacks above it. This holds in both directions, and it is
 not a convention invented for packing: it is the direction that every other bit
 spelling in the language already runs. `x#[0]` is the least significant bit, a
-bit range is written low-to-high (`x#[3..=6]`, never `6..=3`), and the string
-encoding in [Variables](04-variables.md) puts the first characters in the low
-bits, which is just this rule applied to a tuple of 8-bit characters. What
-comes first in the source sits at the bottom of the word.
+bit range is written low-to-high (`x#[3..=6]`, never `6..=3`). What comes
+first in the positional tuple sits at the bottom of the word. Strings are
+opaque and cannot be packed.
 
 ```pyrope
 const stages:[4]u4 = (0ub0001, 0ub0010, 0ub0100, 0ub1000)

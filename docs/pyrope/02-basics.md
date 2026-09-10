@@ -102,8 +102,8 @@ Pyrope accepts single line strings with a single quote (`'`) or double quote
 sequences.
 
 ```pyrope
-a = "hello \n newline"
-b = 'simpler here'
+const a = "hello \n newline"
+const b = 'simpler here'
 ```
 
 * `\n`: newline
@@ -132,17 +132,16 @@ comptime const text4 = "I have {num+1} x"
 cassert(text4 == "I have 3 x")
 ```
 
-Integers and strings can be converted back and forth:
+`string(value)` converts an integer to decimal text:
 
 ```pyrope
-mut a:string = "127"
-mut b:signed = a        // same as mut b = signed(a)
-mut c:string = b     // same as mut c = string(b)
-cassert(a == c)
-cassert(b == 0x7F)
-assert(a == b) // error: 'a' and 'b' have different types
+const value = 127
+const text = string(value)
+cassert(text == "127")
 ```
 
+Strings are opaque; they do not implicitly convert to numeric values or bit
+vectors.
 
 ## Newlines and spaces
 
@@ -188,8 +187,8 @@ Verilog automatic translation, any sequence of characters between backticks
 as strings.
 
 ```pyrope
-`foo is . strange!\nidentifier` = 4
-`for` = 3
+const `foo is . strange!\nidentifier` = 4
+const `for` = 3
 cassert(`for`+1 == `foo is . strange!\nidentifier`)
 ```
 
@@ -235,7 +234,7 @@ semicolons to separate statements. Since newlines affect the meaning of the
 program, a semicolon can do too.
 
 ```pyrope
-a = 1 ; b = 2
+const a = 1 ; const b = 2
 ```
 
 ## Printing and debugging
@@ -250,23 +249,6 @@ const msg = "Hello a is {a}"
 puts(msg)
 cassert(msg == "Hello a is 1")
 ```
-
-Pyrope does string interpolation, and it has attributes to access line of code
-and file name. Since tracing or debugging variables is quite common, the `dbg`
-statement behaves like `puts` and also prints the line of code and file name
-for easier tracing.
-
-
-```pyrope
-a = 1
-
-puts("{}:{} a:{} tracing a", a.[file], a.[loc], a)
-puts("{a.[file]}:{a.[loc]} a:{a} tracing a")          // Same
-```
-
-The previous statements print "foo:3 a:1 tracing a" in the 3 cases. The line of
-code corresponds to the latest update of variable, not the `dbg` statement.
-
 
 Since many modules can print at the same cycle, it is possible to put a
 relative priority between `puts` calls (`priority`). If no relative priority is
@@ -297,8 +279,7 @@ The available puts/print arguments:
 * `file`: file to send the message. E.g: `stdout`, `stderr`, `my_large.log`,...
 
 
-A related command to `puts` is `format` — it behaves like `print` but
-returns a string.
+Use string interpolation to build a string without printing it.
 
 `puts/print` are a bit special. In most languages, IO operations like `puts` are
 considered to have side-effects. In Pyrope, the `puts` can not modify the

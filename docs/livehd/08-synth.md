@@ -12,7 +12,7 @@ optimized. Only LEC-passing edits survive.
 
 ```bash
 # 1. compile the edited source (must pass)
-lhd compile dut.prp --top top.m --recipe O1 --emit-dir lg:G --workdir W
+lhd compile dut.prp --top top.m --emit-dir lg:G --workdir W
 
 # 2. the gate: edited vs the PREVIOUSLY ACCEPTED source (cycle-accurate)
 lhd lec --impl dut.prp --ref accepted/dut.prp --top top.m --workdir W

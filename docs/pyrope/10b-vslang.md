@@ -208,7 +208,7 @@ A Rust style Pyrope equivalent:
 
 ```pyrope
 const AnObject = (
-  v:s32 = nil
+  mut v:s32 = nil
 )
 
 comb f1(ref self:AnObject) -> (result:s32) { // named output tuple
@@ -283,7 +283,7 @@ func larger(a, b []string) []string {
 
 In Pyrope:
 ```pyrope
-import std as std
+const std = import("std")
 
 comb larger(a:string, b:string) -> (result:string) {
   const strlen = std.strlen(a)

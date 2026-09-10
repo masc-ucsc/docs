@@ -5,18 +5,18 @@
     simulation form: a `test name { ... }` block declares the DUT as an instance
     (`mut acc = dut`), and a bounded `tick N { ... }` loop drives it with field
     writes (`acc.x = v`, or a `regref` bound once), advances the clock with an
-    explicit `step`, reads outputs/registers (`acc.y`, or a `sigref`), and checks
+    explicit `step`, reads outputs/registers (`acc.y`), and checks
     with `assert` — see
     [Running cycles](05b-statements.md#running-cycles-tick) (and `newtick.md` in
     the LiveHD repo). Waiting and concurrency are expressed *in that one loop*
     with ordinary `if`/`continue`/`break` (below) — there is no separate
     coroutine layer. Dotted test names, runtime `(...)` test parameters, and the
     dotted and string-path forms of
-    [`sigref`/`regref`](05b-statements.md#test-only-statements) all work today;
-    `peek`/`poke` are **removed** in favor of that pair. Still not implemented: the whole [temporal library](#temporal-library)
+    [`regref`](05b-statements.md#test-only-statements) all work today;
+    `peek`/`poke` are **removed** in favor of bare reads and `regref` writes. Still not implemented: the whole [temporal library](#temporal-library)
     below (`past`/`rose`/`fell`/`stable`/`changed`/`eventually`/`always` — only
     the pipelining form `past[N](x)` exists, and only in a design body), the
-    `force`/`release`. `for` loops, `.[rand]` and `.[crand]` are rejected
+    `force`/`release`. `for` loops work; `.[rand]` and `.[crand]` are rejected
     inside a `test` block. See
     [Implementation status](15-tbd.md).
 
@@ -53,8 +53,8 @@ language does not need a separate `Timer(..., units=...)` API.
 |--------|--------|
 | `@cocotb.test()` coroutine | `test foo.bar { ... }` |
 | `dut.sig.value = x` | `acc.sig = x`, or `regref(acc.sig)` bound once |
-| `dut.sig.value` | `acc.sig`, or `sigref(acc.sig)` bound once |
-| `dut._id(...)` cached handle | `const h = sigref(acc.core0.count)` — bound outside the loop, valid for the run |
+| `dut.sig.value` | `acc.sig` |
+| `dut._id(...)` cached handle | `mut h = regref(acc.core0.count)` — register reference bound outside the loop |
 | `await RisingEdge(dut.valid)` | `step; if not rose(acc.valid) { continue }` (TBD) |
 | `await FallingEdge(dut.ready)` | `step; if not fell(acc.ready) { continue }` (TBD) |
 | `await Edge(dut.sig)` | `step; if not changed(acc.sig) { continue }` (TBD) |
@@ -444,7 +444,6 @@ intentionally does not add:
 |-----------|---------|--------|---------|
 | `tick N { }` | `test` only | works | Cycle-driven loop: run up to `N` cycles; one `step` (clock edge) per iteration. Waiting / concurrency / monitors are `if`-blocks inside it |
 | `step [N]` | `test` only | works | Advance the clock one cycle (or `N`); the single yield point. One `step` is settle → commit → settle |
-| `sigref(x)` | `test` only | works | Bind a read-only window onto a storage cell (register, memory word, module input/output); bound once outside the loop, valid for the run |
 | `regref(x)` | `test` only | works | Bind a writable window. The write takes effect at the next `step`; on a register it drives `q` for one cycle |
 | `past(x [, n])` | `formal`, `test` | TBD | Sample `x` `n` cycles ago (history, not a pipeline stage) |
 | `rose(x [, w])`, `fell(x [, w])` | `formal`, `test` | TBD | Edge, this cycle or within window `w` |

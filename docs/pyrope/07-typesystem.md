@@ -235,7 +235,7 @@ The previous explanation of `a does b` and `a case b` ignored types. When types
 are present, both need to match type.
 
 ```pyrope
-cassert((const a:u32=0, const b:bool=false) does (const a:u32=0, const c:string="hello", const b=false))
+cassert(not ((const a:u32=0, const b:bool=false) does (const a:u32=0, const c:string="hello", const b=false)))
 cassert((const a:u32=0, const c:string="hello", const b=false) case (a = 0, b:bool=nil)) // b is nil
 
 cassert(not ((const a:u32=0, const c:string="hello", const b=false) case (a:u32 = 1, b:bool=nil)))
@@ -296,7 +296,7 @@ declared type, not through an attribute write.
 * `bits`: the number of bits needed to represent the declared `max`/`min`
   range (sugar over `max`/`min` — see [Attributes](04b-attributes.md)).
   There are no `ubits`/`sbits` attributes: use `bits`, and check the sign
-  with `signed` (true when `min < 0`).
+  with `sign` (1 when `min < 0`, else 0).
 * `bw_max`/`bw_min`: the *actual* range computed by the bitwidth pass —
   readable only inside debug statements (`cassert`/`assert`)
 
@@ -531,10 +531,10 @@ mut c:ct = a   // OK even different order because all names match
 mut d:dt = a   // OK, calls init to typecast at construction
 ```
 
-* To string: The `format` allows to convert any type/tuple to a string.
+* To string: `string(value)` renders an integer as decimal text; string interpolation embeds values in text.
 * To integer: `variable#[..]` is the full bit vector of the variable: for a
   positional tuple or array, the packing of its entries with entry 0 in the
-  lowest bits; for a string, range, or bool, that type's own encoding; `union`
+  lowest bits; for a range or bool, that type's own encoding; `union`
   otherwise. The entry widths come from the declared types, never from the
   values, so a layout is always something the source states (see the bit
   packing rules in [internals](10-internals.md)).
@@ -550,7 +550,6 @@ mut b = a
 b.c = 100
 
 cassert(a equals b)
-cassert(a.size == 2)
 cassert(a['b'] == 1)
 cassert(a['c'] equals u32)
 
@@ -566,31 +565,18 @@ cassert(a.[fields] == ('b','c'))
 ```
 
 Function definitions allocate a tuple, which allows to introspect the
-function but not to change the functionality. Functions have two fields:
-`inputs` and `outputs`.
+function but not to change the functionality. The `.[inp]` and `.[out]`
+attributes list the input and output names in declaration order.
 
 ```pyrope
 comb fu(a, b=2) -> (c) { c = a + b }
-cassert(fu.[inp] equals ('a', 'b'))
-cassert(fu.[out] equals ('c'))
+cassert(fu.[inp] == ('a', 'b'))
+cassert(fu.[out] == ('c',))
 ```
 
-This means that when ignoring named vs unnamed calls, overloading behaves like
-this:
-
-```pyrope
-const x:u32 = fn(a1, a2)
-
-comb model_poly_call(fn, ...args) -> (out) {
-  for f in fn {
-     if not (f.[inp] does args) { continue }
-     if not (f.[out] does out) { continue }
-     out = f(args)
-     return
-  }
-}
-const x:u32 = model_poly_call(fn, a1, a2)
-```
+These name lists describe the interface; they are not type descriptors.
+Overload selection also considers the declared input types and how the caller
+consumes the outputs, as described in [Functions](06-functions.md).
 
 Any runtime precondition is expressed by the caller (e.g., with an
 `if`/`elif` chain that picks which named lambda to invoke); there is no
@@ -598,6 +584,14 @@ Any runtime precondition is expressed by the caller (e.g., with an
 
 There are several uses for introspection, but for example, it is possible to build a
 function that returns a randomly mutated tuple.
+
+!!! NOTE "Not implemented"
+    The next example does not compile today. It uses three constructs that are
+    TBD: the standard library (`import("prp/rnd")`, see
+    [Standard Library](13-stdlib.md)); a `ref self` method used in a
+    right-hand-side expression (`const y = x.randomize()` — the statement form
+    and UFCS both work); and the random generation it calls. See
+    [TBD](15-tbd.md).
 
 ```pyrope
 comb randomize::[debug](ref self) {
@@ -616,8 +610,8 @@ const x = (const a=1, const b=true, const c="hello")
 const y = x.randomize()
 
 assert(x.a == 1 and x.b == true and x.c == "hello")
-cover(y.a != 1)
-cover(y.b != true)
+cassert(y.a != 1)
+cassert(y.b != true)
 assert(y.c == "hello") // string is not supposed to mutate in randomize()
 ```
 
@@ -662,7 +656,7 @@ pub const mytup = (
 
 ```pyrope
 // file: src/user.prp
-a = import("my_fun")    // all the pub entries of the file
+const a = import("my_fun")    // all the pub entries of the file
 a.fun1(a=1, b=2)        // OK
 a.another(a=1, 2)       // error: 'another' is not pub, not imported
 a.fun2.inside()         // error: `inside` is not in top scope variable
@@ -670,7 +664,7 @@ a.fun2.inside()         // error: `inside` is not in top scope variable
 const fun1 = import("my_fun.fun1")  // a single pub entry
 lec(fun1, a.fun1)
 
-x = import("my_fun.mytup")
+const x = import("my_fun.mytup")
 
 x.call3()               // prints call called
 ```
@@ -1151,102 +1145,22 @@ cassert(p.get('x') == 1 and p.get('y') == 2)
 cassert(p._x == 1) // error: _x is private outside the tuple
 ```
 
-## Compare method
+## Comparisons
 
-
-The comparator operations (`==`, `!=`, `<=`,...) need to be overloaded for most
-objects. Pyrope has the `lt` and `eq` methods to build all the other
-comparators. When non-provided the `lt` (Less Than) is a compile error, and the
-`eq` (Equal) compares that all the tuple fields are equal.
-
+`==` and `!=` compare tuple structure and field values. Named-field order
+does not affect equality. The ordered comparisons (`<`, `<=`, `>`, `>=`)
+require integer operands; compare an object's integer fields explicitly.
 
 ```pyrope
-const t=(
-  ,mut v:signed = 0
-  ,comb init(ref self, a:signed) { self.v = a }
-  ,comb lt(self,other)->(r:bool){ r = self.v  < other.v }
-  ,comb eq(self,other)->(r:bool){ r = self.v == other.v }
-)
-
-mut m1:t = 4
-mut m2:t = 10
-assert(m1 < m2 and !(m1==m2))
-assert(m1 <= m2 and m1 != m2 and m2 > m1 and m2 >= m1)
+const t1 = (const long_name:string = "foo", const b = 33)
+const t2 = (const b = 33, const long_name:string = "foo")
+cassert(t1 == t2)
+cassert(t1.b < 40)
 ```
 
-
-The default tuple comparator (`a == b`) compares values, not types like `a does
-b`, but a compile error is created unless `a equals b` returns true. This means
-that a comparison by tuple position suffices even for named tuples.
-
-```pyrope
-const t1=(
-  ,long_name:string = "foo"
-  ,b=33
-)
-const t2=(
-  ,b=33
-  ,long_name:string = "foo"
-)
-const t3=(
-  ,33
-  ,long_name:string = "foo"
-)
-
-cassert(t1==t2)
-cassert(not (t1 equals t3))
-const x = t1==t3           // error: t1 !equals t3
-```
-
-The comparator `a == b` when `a` or `b` are tuples is equivalent to:
-```pyrope
-cassert((a==b) == ((a in b) and (b in a)))
-cassert(a equals b)
-```
-
-With the `eq` overload, it is possible to compare named and unnamed tuples.
-
-```pyrope
-const t1 = (
-  ,mut long_name:string = "foo"
-  ,mut b = 33
-)
-
-comb t2_eq_t1(self, o:t1) -> (r:bool) {
-  r = self.xx_a == o.b and self.xx_y == o.long_name
-}
-comb t2_eq_t2(self, o:t2) -> (r:bool) {
-  r = self.xx_a == o.xx_a and self.xx_y == o.xx_y
-}
-const t2 = (
-  ,mut xx_a = 33
-  ,mut yy_b = "foo"
-  ,const eq = [t2_eq_t1, t2_eq_t2]
-)
-
-cassert(t1==t2 and t2==t1)
-```
-
-Since `a == b` can compare two different objects, it is not clear if `a.eq` or `b.eq` method
-is called. Pyrope has the following rule:
-
-* If only one of the two has a defined method, that method is called.
-* If both have defined methods, they should have the same set of `eq` methods or a compile error is created.
-
-
-It is also possible to provide a custom `ge` (Greater Than). The `ge` is redundant
-with the `lt` and `eq` (`(a >= b) == (a==b or b<a)`) but it allows to have more
-efficient implemetations:
-
-For integer operations, the Pyrope should result to the following equivalent Lgraph:
-
-* `a == b` is `__eq(a,b)`
-* `a != b` is `__not(__eq(a,b))`
-* `a  < b` is `__lt(a,b)`
-* `a  < b` is `__lt(b,a)`
-* `a <= b` is `__lt(a,b) | __eq(a,b)` (without `ge`) or `__ge(b,a)`
-* `a >= b` is `__lt(b,a) | __eq(a,b)` (without `ge`) or `__ge(a,b)`
-
+Methods named `eq`, `lt`, `to_string`, or `to_bool` are ordinary explicit
+methods. Operators and conversions do not dispatch to them. The `init`
+constructor and its overload lists remain supported.
 
 ## External (C++) calls via `cpp`
 
