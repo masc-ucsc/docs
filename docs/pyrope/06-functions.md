@@ -358,6 +358,17 @@ never inferred — it must be bound explicitly or defaulted. On a `pipe`/`mod`
 boundary each distinct binding mints its own module, exactly like the
 untyped-parameter deferred templates above (`madd<T>` called with `u8`
 actuals mints `madd__u8_u8`).
+A declared default may be a type (`<T=u8>`), a comptime constant (`<N=3>`,
+`<MODE="add">`, `<F=false>`), or a visible comptime name (`<N=SIZE>`).
+Inside `<…>` a binding is parsed as a type first, so a **negative** constant
+must be parenthesized — `<N=(-3)>`, at the declaration and at the call site
+alike; the bare `<N=-3>` is a syntax error (`expected-type`). A generic
+lambda may also be the design entry point (the compile top): it elaborates
+with its declared defaults and keeps its own name, so `mod m<N=3>(…)`
+selected as the top is the same hardware as a parameter-free `mod m` with
+`N` written `3`. A generic with no default cannot be a top
+(`top-generic-default`) — either give it a default, or select a concrete
+caller as the top.
 
 There is no constraint clause on the declaration (no `where`, no
 `<T does …>`). To constrain what a caller may bind, assert it in the body:
@@ -652,6 +663,15 @@ Callers always see a named tuple. They can read fields by name
 [named-tuple destructuring](03-bundle.md#named-tuple-destructuring) rules:
 bare LHS names bind by output field name, not by position. Use that section
 for rename and nested-field examples.
+
+Each field also keeps the type declared for that output. A `mod` call is no
+exception: it lowers to an instance, but the handle exposes the declared port
+types, not just their bit widths. Given
+`mod leaf(a:u4) -> (flag:bool@[0], val:u8@[0])` and `const child = leaf(a=a)`,
+`child.flag` is a `boolean` and `child.val` is a `u8`. Because the port is fully
+typed, an unsized `unsigned(child.flag)` is accepted -- the unsized form needs a
+known width, which the declared port supplies.
+
 
 ```pyrope
 comb parts(x) -> (next, doubled) {

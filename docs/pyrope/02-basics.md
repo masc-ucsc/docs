@@ -170,6 +170,23 @@ cassert(a == 4 and b == 1 and c == 3)
 d = 1 +         // OK, but not formatted to style
     3
 ```
+Operators spelled as words work like the symbol ones. A line that starts with
+`and`, `or`, `implies`, `in`, `has`, `does`, or `equals` continues the previous
+statement. The match is whole-word, so a line that starts with an identifier
+like `order` or `index` is a new statement. Keep `case` on the line with its
+left operand; it is also the `match` clause keyword.
+
+```pyrope
+const r = false
+        or true          // same statement
+
+cassert(r)
+
+const ok = (const x=1, const y=2)
+         has "x"         // same statement
+
+cassert(ok)
+```
 
 This functionality allows parallelizing the parsing and elaboration in Pyrope.
 More important, it makes the code more readable, by looking at the beginning of
@@ -343,6 +360,20 @@ if `a` is false; in `a or b`, `b` is not evaluated if `a` is true. Since
 Pyrope expressions have no side effects, short-circuit produces the same
 hardware as evaluating both sides — the compiler is free to optimize either
 way.
+
+Short-circuit is still observable at compile time. Since the skipped operand is
+never evaluated, an [illegal operation](05-assert.md#illegal-operations) inside
+it is not reported, which makes `and`/`or` the way to guard a compile-time
+computation:
+
+```pyrope
+const N = 0
+// `64 % N` is skipped, so the modulo by zero is never evaluated
+cassert(N == 0 or (N > 0 and (64 % N == 0)))
+```
+
+The untaken arm of an `if` behaves the same way, and there it is the only way to
+guard a computation whose operands are not booleans.
 
 The programmer can also set evaluation order with control expressions
 (`if/else`, `match`, `for`). An expression can have many `comb` calls because

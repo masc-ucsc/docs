@@ -176,6 +176,34 @@ if not DEBUG {
 }
 ```
 
+A comptime condition is not just folded: the arms it rules out are **not
+elaborated at all**. Nothing inside a comptime-false arm is type checked, no
+`cassert` in it is evaluated, and a lambda called only from it is never
+instantiated, so it contributes no gates and no module. The same holds for every
+arm of an `if`/`elif` chain: only the first comptime-true arm — or the `else`,
+when every condition is comptime-false — is elaborated. The untaken arm is still
+parsed and its names must resolve (an unknown lambda or variable there is a
+compile error), but everything after name resolution is skipped.
+
+```pyrope
+comb narrow_only(v) -> (r) {
+  cassert(v.[bits] <= 4)
+  r = v
+}
+
+comb widen<NARROW>(a:u8) -> (o:u8) {
+  if NARROW {
+    o = narrow_only(v=a)   // never instantiated: the `cassert` does not run
+  }else{
+    o = a + 1
+  }
+}
+```
+
+This is what makes a generic parameter or an imported `comptime const` usable as
+a configuration switch: the code under a disabled option may call lambdas or use
+widths that are only legal when the option is enabled.
+
 ```pyrope
 mut x = c                      // always declared
 if cond { x = other }          // runtime-gated assignment

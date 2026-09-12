@@ -256,6 +256,44 @@ the instance is a `mut`, the variable name can be the SSA name.
     }
     ```
 
+### name: explicit instance name
+
+The default instance name is the assigned variable, which a generator or a
+Verilog translation often cannot choose. An attribute block between the callee
+and the argument list pins it:
+
+```pyrope
+mod counter(en:bool) -> (v:u8@[0]) {
+  reg c:u8 = 0
+  if en { c = c + 1 }
+  v = c
+}
+
+pub mod top(en:bool) -> (r:u8@[0]) {
+  mut inst = counter::[name=u_cnt](en=en)  // instance u_cnt, not inst
+  r = inst.v
+}
+```
+
+* `name` is the only attribute allowed at a call site. Any other key
+  (`f::[color=2](…)`) or a bare flag (`f::[donttouch](…)`) is a compile error.
+* The value is a bare identifier or a comptime string. Like
+  [`lg`](04b-attributes.md#lg-explicit-lgraph-name) it may be any string
+  accepted as a name, even one that is not a legal Pyrope identifier
+  (`name="u.add[0]"`).
+* It renames the instance, not the variable and not the module: the outputs are
+  still read through the assigned variable (`inst.v`), the generated module
+  name is `lg`'s business, and the instance hierarchy uses the new name — a
+  `formal` or `test` block reaches the register as `top.u_cnt.c`, and
+  `top.inst.c` no longer resolves.
+* On a `comb` call that the compiler inlines there is no instance to name; the
+  attribute is accepted and changes nothing in the generated hardware.
+
+A call site is a different position from a declaration. `mut
+inst::[name=u_cnt] = counter(…)` sets an attribute on the *variable* `inst`
+(and reads `u_cnt` as an ordinary expression), so it does **not** name the
+instance — the attribute block must sit before the `(`.
+
 ## Optional lambdas
 
 HDLs use typical software constructs that look like function calls to represent

@@ -180,6 +180,13 @@ port never forwards, so a read during reset returns the committed contents.
 Spell `= nil` (or `= 0sb?`) for an array with no reset value at all: no reset is
 bound, no sweep is built, and the contents are undefined until written.
 
+Comptime conditions fold before the memory is built, so a conditional
+initializer that picks `nil` is exactly `= nil`:
+`reg m:[4]u8 = if RST { 0 } else { nil }` with a false `RST` (a `const`, or a
+generic bound at the call site) binds no reset and builds no sweep, while a
+true `RST` gives the fully reset memory. A parameterized memory opts out of
+reset that way, with no second declaration.
+
 A key difference between arrays (no clock) and memories is that arrays
 initialization value must be `comptime` while `memories` and `reg` can have a
 sequence of statements to generate a reset value.

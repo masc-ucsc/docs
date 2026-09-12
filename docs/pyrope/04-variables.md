@@ -515,6 +515,39 @@ In `reg`, the right-hand side of the initialization (`10` in the
 counterexample) is called only during reset. In non-register variables, the
 right-hand side is called every cycle. Most of the cases `reg` is mutable but
 it can be declared as immutable.
+
+### Tuple registers
+
+A `reg` of tuple type is not a single wide flop: **each field is its own
+register**, with its own reset value. A field that is never written holds its
+value, and a field written on some paths only holds on the others (the same
+implicit hold a scalar `reg` has).
+
+Field reads and writes then obey the same two rules a scalar `reg` obeys:
+
+* A read of a register field is the field's **current state**, no matter where
+  the read sits relative to the writes of the same cycle. Program order decides
+  what is written, never what is read.
+* The **last write in program order wins**, so an unconditional write is the
+  default for the cycle and a later conditional write overrides it.
+
+```pyrope
+reg flags:(active:bool, delayed:bool) = (false, false)
+
+flags.active  = false         // the default for this cycle
+flags.delayed = flags.active  // the PREVIOUS cycle's flags.active
+if request {
+  flags.active = true         // overrides the default
+}
+```
+
+`flags.delayed` samples last cycle's `flags.active` even though the statement
+just above assigns `flags.active`: a write only picks what the flop captures at
+the next clock edge. To read a next-state value in the same cycle, name it as a
+[`wire`](#wire-single-driver-combinational-nets) and read the wire.
+
+A `reg` of array type is different: it is a memory, not a bank of per-entry
+flops. See [Memories](08-memories.md).
 ## Wire: single-driver combinational nets
 
 A `wire` declares one **combinational** net with exactly **one driver**,

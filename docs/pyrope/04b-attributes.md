@@ -498,6 +498,21 @@ of the final RHS into the LHS. To narrow individual sub-expressions
 independently, factor them into intermediate variables with their own
 `wrap`/`sat` assignment.
 
+The left-hand side can be a tuple field. The narrowing is against the
+**field's** declared range, exactly as for a scalar variable:
+
+```pyrope
+reg decoded:(imm:u4, valid:bool) = nil
+
+wrap decoded.imm = a  // OK, same as decoded.imm = a#[0..<4] ('imm' is u4)
+sat  decoded.imm = a  // OK, clamps at 15, the maximum of 'imm'
+```
+
+The prefix attaches to a plain name or to a dotted field. An entry picked
+with an index cannot carry it (`wrap t[i] = a`, `wrap t[i].imm = a`):
+narrow into an intermediate variable with its own `wrap`/`sat` assignment,
+then store that variable into the entry.
+
 ## comptime modifier
 
 Pyrope borrows the `comptime` functionality from Zig. `comptime` is a prefix
