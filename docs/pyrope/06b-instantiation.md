@@ -467,9 +467,12 @@ reg array:[] = conf.get("some.conf.hex.dump") // dynamic size from config
 ```
 
 
-The assignment during declaration to a register is always the reset value. If
-the assignment is a method (a lambda referenced by name, **not** called —
-i.e., no parentheses), the method is invoked every cycle during reset.
+The assignment during declaration to a register is always the reset value. A
+constant or tuple initializer on a register array is restored to every entry in
+**one** cycle of `reset`, exactly like a scalar `reg`; only a reset *lambda*
+(below) runs once per reset cycle. If the assignment is a method (a lambda
+referenced by name, **not** called — i.e., no parentheses), the method is
+invoked every cycle during reset.
 
 ```pyrope
 mod array_reset(ref self) {

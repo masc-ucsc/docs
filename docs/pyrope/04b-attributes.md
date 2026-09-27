@@ -385,7 +385,14 @@ are similar to registers, but unlike registers they can have multiple clocks.
   enable controls the lower bits of the memory entry selected.
 * `rdport`: Indicates which of the ports are read and which are written ports.
 * `posclk`: Positive edge clock memory for all the memory clocks. The default is `true` but it can be set to `false`.
-* `initial`: comptime initial contents (a tuple literal or a packed constant, entry 0 in the low `bits`)
+* `initial`: comptime initial contents (a tuple literal or a packed constant,
+  entry 0 in the low `bits`). A `reg` array's initializer (`= 0`, `= (1,2,3)`)
+  is its reset value AND lands on this same pin, so `initial=` next to an
+  initializer must spell the same packed value (a compile error otherwise);
+  next to `= nil` it is power-on-only contents and no reset is wired
+  (see [Memories](08-memories.md))
+* `reset_pin`, `negreset`, `async`: as on a register — the reset that restores
+  the initializer to every entry in one cycle
 
 ### Lambda attribute list
 

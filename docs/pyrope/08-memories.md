@@ -165,27 +165,31 @@ assert(b[2][10]) // error: `b[2][10]` does not exist (out of bounds)
 
 It is possible to initialize the async memory with an array. A `reg` array's
 initializer means exactly what a scalar `reg`'s does: it is the **reset value**
-of every entry, and it is the power-on contents too (the wrapper's `INIT`
-parameter). Like a scalar `reg` with a reset value, an initialized `reg` array
-binds the module's `reset` input, or mints one when the module declares none.
+of every entry, and it is the power-on contents too (the `initial` contents —
+the wrapper's `INIT` parameter / a Verilog `initial` block). Like a scalar `reg`
+with a reset value, an initialized `reg` array binds the module's `reset` input
+(or the one named by `reset_pin=`), or mints one when the module declares none.
 
-A memory has no parallel reset port, so the restore is a **sweep**: one entry
-per cycle while `reset` is held, driven by a small counter (`<mem>_rstcnt`) that
-parks at 0 whenever `reset` is low, so every reset pulse sweeps from entry 0.
-The array is therefore fully restored only after `size` cycles of `reset` held
-high — unlike a scalar `reg`, which resets in one. Program writes (and a
-whole-array update) are suppressed for the whole reset window, and the restore
-port never forwards, so a read during reset returns the committed contents.
+The reset is **parallel**: while `reset` is asserted every entry is restored to
+its initializer in one cycle, exactly like a scalar `reg`, through the memory's
+whole-array reset (`async=true` makes it asynchronous, `negreset=true` inverts
+the polarity). Reset has priority over program writes and over a whole-array
+update, which are suppressed for as long as `reset` is held, and a suppressed
+write is not forwarded to a same-cycle read: a read during reset returns the
+committed contents.
 
-Spell `= nil` (or `= 0sb?`) for an array with no reset value at all: no reset is
-bound, no sweep is built, and the contents are undefined until written.
+`initial=<contents>` (the packed contents, entry 0 in the low `bits`) is the
+same pin: next to an initializer it must spell the same value, and it is a
+compile error otherwise. Spell `= nil` (or `= 0sb?`) for an array with no reset
+value at all: no reset is bound and the contents are undefined until written —
+or given by `initial=` alone, which is then power-on contents only.
 
 Comptime conditions fold before the memory is built, so a conditional
 initializer that picks `nil` is exactly `= nil`:
 `reg m:[4]u8 = if RST { 0 } else { nil }` with a false `RST` (a `const`, or a
-generic bound at the call site) binds no reset and builds no sweep, while a
-true `RST` gives the fully reset memory. A parameterized memory opts out of
-reset that way, with no second declaration.
+generic bound at the call site) binds no reset, while a true `RST` gives the
+fully reset memory. A parameterized memory opts out of reset that way, with no
+second declaration.
 
 A key difference between arrays (no clock) and memories is that arrays
 initialization value must be `comptime` while `memories` and `reg` can have a
