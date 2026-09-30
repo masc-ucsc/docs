@@ -21,14 +21,14 @@ and `Greyhound does Dog`, but `not (Animal does Dog)`.
 
 Dealing with tuple assignments `y = x`, a compile error is generated unless the
 type system satisfies `y does x` or an explicit type conversion is provided.
-The basic behavior of `does` is explained in (Type
-equivalance)[07-typesystem.md#Type_equivalence].
+The basic behavior of `does` is explained in [Type
+equivalence](07-typesystem.md#type-equivalence).
 
 ```pyrope
 const Animal = (
-  mut legs:signed = nil,
+  mut legs:Signed = nil,
   mut name = "unnamed",
-  comb say_name(self) -> () { puts(name) }
+  comb say_name(self) -> () { puts(self.name) }
 )
 
 const Dog = (...Animal,
@@ -37,10 +37,10 @@ const Dog = (...Animal,
 )
 
 comb bird_init_default(ref self)           { self.legs = 2 }
-comb bird_init_animal(ref self, a:Animal)  { self.legs = 2; name = "bird animal" }
+comb bird_init_animal(ref self, a:Animal)  { self.legs = 2; self.name = "bird animal" }
 
 const Bird = (...Animal,
-  mut seeds_eaten:signed = nil,
+  mut seeds_eaten:Signed = nil,
   const init = [bird_init_default, bird_init_animal],
   comb eat_seeds(ref self, n) { self.seeds_eaten += n }
 )
@@ -66,10 +66,10 @@ a = b // OK, 'Bird does Animal' is true
 
 When the `x` in `x = y` is an integer basic type, there is an additional
 check to guarantee that no precision is lost. There is a single integer type
-(`signed`, of unlimited precision); widths such as `u16` and `u32` are just
+(`Signed`, of unlimited precision); widths such as `U16` and `U32` are just
 range constraints on that one type. The `does` operator uses
 the range-superset rule (`a does b` ⇔ `a.max >= b.max and a.min <= b.min`), so
-`u32 does u16` is true but `u16 does u32` is false. The `x = y` assignment is a
+`U32 does U16` is true but `U16 does U32` is false. The `x = y` assignment is a
 separate check: it may still fail if the right-hand side can not be proven to
 fit in the left-hand side. Otherwise, an explicit `wrap` or `sat`
 statement-level prefix must be used.
@@ -83,25 +83,25 @@ strict equivalence:
 
 * every field of `T` must exist on the receiver with the same name
   (recursively for tuple fields), and the scalar kinds
-  (integer/bool/string/tuple) must match;
+  (integer/`Bool`/`String`/tuple) must match;
 * an integer field's declared range on the receiver must be a SUBSET of
-  the range declared in `T` (`u8` receiver field satisfies a `u32`
+  the range declared in `T` (`U8` receiver field satisfies a `U32`
   declared field, not the other way around — no precision can be lost
   through the method's view of the receiver);
 * extra receiver fields are fine (a superset receiver passes).
 
 ```pyrope
-type t1 = (mut a:u32=nil, mut b:string="")
-type t2 = (mut b:string="")
-type t3 = (mut a:u32=nil, mut b:string="", mut c:bool=false)
+type T1 = (mut a:U32=nil, mut b:String="")
+type T2 = (mut b:String="")
+type T3 = (mut a:U32=nil, mut b:String="", mut c:Bool=false)
 
-comb set(ref self:t1) { self.b = "set" }
+comb set(ref self:T1) { self.b = "set" }
 
-mut x2:t2 = nil
-mut x3:t3 = nil
+mut x2:T2 = nil
+mut x3:T3 = nil
 
-x3.set()  // OK:    t3 does t1 (extra field c is fine)
-x2.set()  // error: t2 lacks field `a` → `x2 does t1` is false
+x3.set()  // OK:    T3 does T1 (extra field c is fine)
+x2.set()  // error: T2 lacks field `a` → `x2 does T1` is false
 ```
 
 The error names the first failing field (e.g. ``missing field `a` `` or
@@ -153,16 +153,17 @@ of one does not need the field, and hence it allows to create different types:
 
 ```pyrope
 const Age = (
-  age:signed = nil
+  mut age:Signed = nil
 )
 const Weight = (
-  weight:signed = nil
+  mut weight:Signed = nil
 )
 
 cassert(not (Age does Weight))
 
 mut a:Age = 3
-cassert(a == a.age == a[0] == 3)
+cassert(a == a.age == 3)
+const a0 = a[0]  // error: a named tuple has no positions
 
 mut w:Weight = 100
 
@@ -183,7 +184,7 @@ The following `f` method has no constraints on the input arguments. It can pass
 anything, but constraints the return value to be an integer.
 
 ```pyrope
-comb f(a,b) -> (r:signed) { r = xx(a) + xx(b) }
+comb f(a,b) -> (r:Signed) { r = xx(a) + xx(b) }
 ```
 
 The type can be inferred for arguments and return values. If the lambda
@@ -192,12 +193,17 @@ for each combination of inferred types. It behaves like if the the lambda were
 inlined in the caller.
 
 
-The constraints can be different per type, or use a more familiar generic syntax.
-The `f1` example constraints `a` and `b` arguments to have a type that
-satisfies `(a does Some_type_class) and (b does Some_type_class)`.
+The constraints can be different per type, or share one generic type. There is
+no constraint clause in the generic list, so the `f1` example binds `a` and `b`
+to one generic `T` and asserts in the body that `T does Some_type_class`
+(TBD: that body check does not fold yet, see
+[Implementation status](15-tbd.md)).
 
 ```pyrope
-comb f1<T:Some_type_class>(a:T,b:T) -> (r:signed) { r = xx(a) + xx(b) }
+comb f1<T>(a:T,b:T) -> (r:Signed) {
+  cassert(T does Some_type_class)
+  r = xx(a) + xx(b)
+}
 ```
 
 
@@ -207,14 +213,14 @@ the lambda calls, but the check is performed when a lambda is passed as
 an argument.
 
 
-For each lambda call (`ret_val = f(a1,a2)`), the type system check against the
-defined lambda (`f = comb(ad1:ad1_t, ad2)->(rd1:rd1_t, rd2)`). In this case, the
-check for the calling arguments (`(a1,a2) does (:ad1_t, :())`) should be
-satisfied. Notice that some of the inputs (`ad2`) have no defined type, so those
-unspecified arguments always satisfies by the type check.
+For each lambda call (`ret_val = f(ad1=a1, ad2=a2)`), the type system checks
+against the defined lambda (`f = comb(ad1:ad1_t, ad2)->(rd1:rd1_t, rd2)`). In
+this case, each argument must satisfy its parameter type (`a1 does ad1_t`).
+Notice that some of the inputs (`ad2`) have no defined type, so those
+unspecified arguments always satisfy the type check.
 
-The return tuple is also used in the type system (`ret_val does (:rd1_t,
-:())`), the check is the same as in an assignment (`lhs does rhs`). In
+The output tuple is also used in the type system (`ret_val.rd1 does rd1_t`),
+the check is the same as in an assignment (`lhs does rhs`). In
 overloading cases explained later, the return type could also be part of the
 overloading check.
 
@@ -251,50 +257,35 @@ f_d(call_dog)    // OK
 ```
 
 
-In tuple comparisons, `does` and `==`, the tuple field position is not used
-when both tuples are fully named. If tuple field is unnamed, both existing
-names and positions should match in the comparison.  For fully named tuples,
-when all the fields have names,
-`(const a=1, const b=2) does (const b=2, const a=1)` is true.
+In tuple comparisons, `does` and `==`, a tuple is either all named or all
+unnamed (see [Tuples](03-bundle.md)). Named tuples compare by name and the
+field position is not used, so `(const a=1, const b=2) does (const b=2, const
+a=1)` is true. Unnamed tuples compare by position.
 
 
-The same rule also applies to lambda calls. If all the arguments are named, the
-relative call argument position is independent. If an argument is an expression
-or unnamed, the position is important.
+Lambda calls follow the same idea: the arguments form a named tuple, so they
+bind by name and their relative position does not matter. An argument may
+omit its name only under the [argument naming](06-functions.md#argument-naming)
+exceptions.
 
 
-A special case is the in-place operator (`...`) during lambda definition.  Even
-for fully named tuples, the position is used.  One one in-place operator is
-allowed per lambda definition `(a,b,...x,c)`, the `does` operator uses name and
-position like in unnamed tuples even if all the fields are named. First, it
-matches the position and names provided, and then checks the rest to the
-in-place with the relative order left.
-
+A trailing `...x` captures the arguments left over after binding the fixed
+parameters. For named calls, it holds a named tuple: access each captured
+field by its call-site name. The fixed parameters remain required and keep
+their declared type constraints.
 
 ```pyrope
-comb m(a:signed, ...x:(s:string, c:signed, d), y:signed) {
-  assert(a == 1)
-  assert(x[0] == "here")
-  assert(x[1] == 2 == x.c)
-  assert(y == 3)
-  if d does signed { // inferred type
-    assert(d == 33)
-  }else{
-    assert(d == "x")
-  }
+comb m(a:Signed, y:Signed, ...x) -> (r) {
+  r = a + y + x.extra
 }
 
-m(1,"here",2,"x",3)         // OK
-m(a=1,"here",2,"x",3)       // OK
-m(a=1,"here",c=2,"x",3)     // OK
-m(a=1,"here",c=2,33,y=3)    // OK
-
-m("1","here",2,33,3)       // error: a:signed
-m("1","here",2,3)          // error: x has 3 fields
+cassert(m(a=1, y=3, extra=2) == 6)
+// m(a=1, extra=2)              // error: required y is missing
+// m(a="1", y=3, extra=2)      // error: a must be Signed
 ```
 
 
-For all the checks that are not function reference or in-place, the `x does y`
+For all the checks that are not function references, the `x does y`
 check could be summarized as `x` is a superset of `y`. `x` has all the
 functionality of `y` and maybe more. In a more formal compiler nomenclature `x does
 y` applied to tuples is called a covariant relationship. It is covariant
@@ -355,6 +346,11 @@ a new call capability.
 There is a priority of overloading in the tuple order. If the intention is to
 intercept, the lambda must be added at the head of the tuple entry.
 
+A named splice never redefines a field: `(...base, const fun1 = f)` is an
+overlap error when `base` already has `fun1` (see
+[splice](03-bundle.md#tuple-mutability)). An extension therefore lists each field it
+changes and builds that field's lambda set from the base entry.
+
 ```pyrope
 comb base_fun1() -> (r) { r = 1 }             // catch all
 comb base_fun2() -> (r) { r = 2 }             // catch all
@@ -371,33 +367,36 @@ comb ext_fun2_noarg()  -> (r) { r = 6 }
 comb ext_fun3_ab(a, b) -> (r) { r = 7 }
 comb ext_fun3_noarg()  -> (r) { r = 8 }
 
-const ext = (...base,
-  const fun1 = ext_fun1,                                        // overwrite
-  const fun2 = [ext_fun2_ab, ext_fun2_noarg, base_fun2],        // append
-  const fun3 = [ext_fun3_ab, ext_fun3_noarg, base_fun3]         // prepend
+const Ext = (
+  const fun1 = ext_fun1,                                        // replace
+  const fun2 = [base.fun2, ext_fun2_ab, ext_fun2_noarg],        // append
+  const fun3 = [ext_fun3_ab, ext_fun3_noarg, base.fun3]         // prepend
 )
+const Bad = (...base, const fun1 = ext_fun1)  // error: 'fun1' already exists
 
-mut t:ext = nil
+mut t:Ext = nil
 
-// t.fun1 only has ext.fun1
+// t.fun1 only has Ext.fun1
 assert(t.fun1(a=1,b=2) == 4)
 t.fun1()                 // error: no option without arguments
 
-// t.fun2 has base.fun2 and then ext.fun2
-assert(t.fun2(1,2) == 5) // EXACT match of arguments has higher priority
-assert(t.fun2() == 2)    // base.fun2 catches all ahead of ext.fun2
+// t.fun2 has base.fun2 and then Ext.fun2
+assert(t.fun2(a=1,b=2) == 5) // EXACT match of arguments has higher priority
+assert(t.fun2() == 2)    // base.fun2 catches all ahead of Ext.fun2
 
-// t.fun3 has ext.fun3 and then base.fun3
-assert(t.fun3(1,2) == 7) // EXACT match of arguments has higher priority
-assert(t.fun3() == 8)    // ext.fun3 catches all ahead of ext.fun3
+// t.fun3 has Ext.fun3 and then base.fun3
+assert(t.fun3(a=1,b=2) == 7) // EXACT match of arguments has higher priority
+assert(t.fun3() == 8)    // Ext.fun3 catches all ahead of base.fun3
 ```
 
 A more traditional "overload" calling the is possible by calling the lambda directly:
 
 ```pyrope
 comb x_fun1() -> (r) { r = base.fun1() + 100 }
-const x = (...base,
-  const fun1 = x_fun1
+const x = (
+  const fun1 = x_fun1,     // replaces base.fun1
+  const fun2 = base.fun2,
+  const fun3 = base.fun3
 )
 ```
 
@@ -468,19 +467,19 @@ const bad = f1(1, 2) // error: untyped positional arguments are ambiguous
 For typed calls:
 
 ```pyrope
-comb fo_is(a:signed, b:string) -> (result:bool)   { result = true }
-comb fo_ii_b(a:signed, b:signed)  -> (result:bool)   { result = false }
-comb fo_ii_s(a:signed, b:signed)  -> (result:string) { result = "hello" }
+comb fo_is(a:Signed, b:String) -> (result:Bool)   { result = true }
+comb fo_ii_b(a:Signed, b:Signed)  -> (result:Bool)   { result = false }
+comb fo_ii_s(a:Signed, b:Signed)  -> (result:String) { result = "hello" }
 const fo = [fo_is, fo_ii_b, fo_ii_s]
 
 const a = fo(3, "hello")        // type of each argument is unambiguous
 cassert(a == true)
 
-const b:bool = fo(3, 300)   // return context selects bool overload
+const b:Bool = fo(a=3, b=300) // return context selects the `Bool` overload
 cassert(b == false)
 
-const c:signed = fo(3, 300)    // error: no lambda fulfills constrains
-const c:string = fo(3, 300)
+const c:Signed = fo(a=3, b=300) // error: no lambda fulfills constrains
+const c:String = fo(a=3, b=300)
 cassert(c == "hello")
 ```
 
@@ -525,8 +524,8 @@ explicit generic parameters to bind types at compile time.
 ```pyrope
 comb make<T>(value:T) -> (r) { r = (mut xx:T = value) }
 
-const text = make<string>(value="hello")
-const number = make<signed>(value=130)
+const text = make<String>(value="hello")
+const number = make<Signed>(value=130)
 cassert(text.xx == "hello")
 cassert(number.xx == 130)
 ```
@@ -569,7 +568,7 @@ const speak = [speak_bird, speak_cat]
 Coercion polymorphism: Capacity to cast a type to another
 ```pyrope
 const Type1 = (
-  comb init(ref self, a:signed) { }
+  comb init(ref self, a:Signed) { }
 )
 const a:Type1 = 33
 ```
@@ -586,17 +585,17 @@ immutable, new methods can be added like in mixin.
 
 ```pyrope
 const Say_mixin = (
-  comb say(s) -> () { puts(s) }
+  comb say(self, txt:String) -> () { puts(txt) }
 )
 
 const Say_hi_mixin = (
-  comb say_hi() -> () { self.say("hi {}", self.name) },
-  comb say_bye() -> () { self.say("bye {}", self.name) }
+  comb say_hi(self) -> () { self.say("hi {self.name}") },
+  comb say_bye(self) -> () { self.say("bye {self.name}") }
 )
 
 const User = (
-  mut name:string = "",
-  comb init(ref self, n:string) { self.name = n }
+  mut name:String = "",
+  comb init(ref self, n:String) { self.name = n }
 )
 
 const Mixing_all = (...Say_mixin, ...Say_hi_mixin, ...User)
@@ -630,22 +629,22 @@ underscore) are privatized and hence do not trigger an overload failure.
 
 ```pyrope
 const Int1 = (
-  mut _counter:signed = 0,
+  mut _counter:Signed = 0,
   comb add(ref self, v) { self._counter += v },
-  comb get(self) -> (result:signed) { result = self._counter },
-  comb api_pending(ref self, x:signed) -> (o:string) { }
+  comb get(self) -> (result:Signed) { result = self._counter },
+  comb api_pending(ref self, x:Signed) -> (o:String) { }
 )
 
 const Int2 = (
-  mut _counter:signed = 0,
+  mut _counter:Signed = 0,
   comb accumulate(ref self, v) { self._counter += v; self._counter },
-  comb api_pending(ref self, x:string) -> (o:string) { }
+  comb api_pending(ref self, x:String) -> (o:String) { }
 )
 
 const Combined = (...Int1, ...Int2,
-  comb api_pending(ref self, x:signed) -> (o:string) {
+  comb api_pending(ref self, x:Signed) -> (o:String) {
     self.add(x)
-    o = string(self.accumulate(self.get()))
+    o = String(self.accumulate(self.get()))
   }
 )
 ```
@@ -663,19 +662,19 @@ const Interface = (
 Interface.add(3)                // error: undefined method
 
 const My_obj = (
-  mut val1:u8 = 0,
-  comb add(ref self, x) { self.val += x },
+  mut val1:U8 = 0,
+  comb add(ref self, x) { self.val1 += x },
   ...Interface                  // splice can come last
 )
 
 const My_obj2 = (
   ...Interface,                 // ... or first
-  mut val1:u8 = 0,
-  comb add(ref self, x) { self.val += x }
+  mut val1:U8 = 0,
+  comb add(ref self, x) { self.val1 += x }
 )
 cassert(My_obj equals My_obj2)  // same behavior, no defined overlap fields
 
-const xx:My_obj = nil           // default initialization
+mut xx:My_obj = nil             // default initialization
 
 cassert(xx.val1 == 0)
 xx.add(3)
@@ -706,36 +705,36 @@ new methods with some support method.
 
 
 ```pyrope
-comb exclude(o,...a) -> (new_tup) {
+comb exclude(o, ...names) -> (new_tup) {
   new_tup = ()
   for (idx, e, key) in o {  // (index, value, key) — key is the field name
-    // create single tupe and append to preserve key and position order
-    const sing_tup = ()
+    // single-field tuple, merged by name into new_tup
+    mut sing_tup = ()
     sing_tup[key] = e
-    if not (key in o) {
+    if not (key in names) {
       new_tup = (...new_tup, ...sing_tup)
     }
   }
 }
 
 const Shape = (
-  mut name:string = "",
-  comb area(self) -> (result:s32) { },           // undefined
-  comb increase_size(ref self, x:s12) { },       // undefined
+  mut name:String = "",
+  comb area(self) -> (result:S32) { },           // undefined
+  comb increase_size(ref self, x:S12) { },       // undefined
 
   comb init(ref self, name) { self.name = name }, // implemented
-  comb say_name(self) { puts("name:{}", name) }
+  comb say_name(self) { puts("name:{self.name}") }
 )
 
 const Circle = (
-  ...exclude(Shape, 'init'),
+  ...exclude(o=Shape, names='init'),
 
   comb init(ref self) { Shape.init(ref self, "circle") },
-  comb increase_size(ref self, x:s12) { self.rad *= x },
-  mut rad:s32 = 0,
-  comb area(self) -> (result:s32) {
+  comb increase_size(ref self, x:S12) { wrap self.rad *= x },
+  mut rad:S32 = 0,
+  comb area(self) -> (result:S32) {
      const pi = import("math").pi
-     result = pi * self.rad * self.rad
+     wrap result = pi * self.rad * self.rad
   }
 )
 cassert(Circle does Shape) // extra check that the exclude did not remove too many fields

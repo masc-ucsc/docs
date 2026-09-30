@@ -1,1769 +1,1291 @@
-
 # LNAST
 
-This document is to showcase some of the Pyrope to LNAST translation. This is
-useful to have a more "formal" description of the language semantics.
+This chapter shows current Pyrope-to-LNAST translation using small programs
+compiled with `lhd`. Each Pyrope block is a standalone input; its first comment
+names the file to save. The excerpts below come from actual dumps, not proposed
+optimizations. They were checked against the local LiveHD checkout on
+2026-09-30.
 
+LNAST is an intermediate representation. Its node shapes, temporary names and
+rewrites can change without changing Pyrope semantics. See the language chapters
+for the source-language rules.
+
+## Reproducing the dumps
+
+Set `LHD` to the LiveHD binary you want to inspect, save a Pyrope example, and
+run it in a fresh work directory:
+
+```bash
+LHD=/path/to/livehd/bazel-bin/lhd/lhd
+"$LHD" compile values.prp \
+  --dump parse,lnast \
+  --emit-dir lnast-dump:values-dump \
+  --workdir values-work \
+  > values.result.json 2> values.trace.txt
+```
+
+`--dump parse` prints the LNAST immediately after the front end; despite the
+name, this is LNAST, not the parser's concrete syntax tree. `--dump lnast`
+prints the post-upass tree. Both go to stderr with stage labels. The
+`lnast-dump:` directory contains post-upass textual `.lnast` files; `ln:` is
+the binary interchange form. Check the command's exit status and diagnostics:
+a parse dump alone does not establish that elaboration succeeded.
+
+An invocation requesting only LNAST outputs need not lower to hardware. To
+check graph lowering too, add `--emit-dir lg:values-lg`, or use ordinary
+`lhd compile` without the LNAST-only output selection. The runtime examples
+below were also checked with an `lg:` output.
+
+For readability, excerpts omit tree-drawing glyphs, source-span annotations,
+the dump's outer display quotes, and enclosing `top`/`stmts` containers.
+Indentation still shows parent/child relationships. Each excerpt states its
+stage; any additional omissions are stated locally. `const` with no payload
+is printed that way by the dumper; it is not a missing line in the example.
 
 ## Variable names
 
-LNAST does not rename variables to be SSA, it relies in a symbol table to track
-past entries. Nevertheless, to reduce amount of tracking information when a
-variable starts with underscores (`___foo` or `_._foo`), the variable can not
-be updated, BUT it is still legal to update tuple fields inside `___foo` like
-`___foo.bar = 3`. Program variables names that do not need SSA (`const`) can use
-`_._foo` to reduce tracking. Special variable names like the ones needing an
-underscore use double tick in the name `_foo here`. Those are special variables
-names that do not allow to use compact tuple representation like `foo here.field`.
+The front end uses user names and generated references such as `%x_0`. Later
+passes can introduce inlining prefixes and SSA suffixes such as
+`work___ssa_1`. The spelling of generated names is not a user-facing contract;
+LNAST is not guaranteed to keep every user assignment under one unchanged name.
+Backticked source identifiers remain distinguishable in the dump.
 
-=== "Pyrope"
-    ```pyrope
-    const x = 3 + 1
-    mut z = 4
-    `foo x` = x + z + 2
-    ```
+The following program checks declarations, updates, and a backticked name:
 
-=== "LNAST direct"
-    ```lnast
+```pyrope
+// values.prp
+const x = 3 + 1
+mut z:U8 = 4
+z = z + 2
+const `foo x` = x + z
+cassert(`foo x` == 10)
+```
+
+**post-parse excerpt.**
+
+```lnast
+plus
+  ref %x_0
+  const 3
+  const 1
+declare
+  ref x
+  prim_type_none
+  const
+store
+  ref x
+  ref %x_0
+declare
+  ref z
+  prim_type_int
+    const 0xff
+    const 0
+  const mut
+store
+  ref z
+  const 4
+plus
+  ref %z_0
+  ref z
+  const 2
+store
+  ref z
+  ref %z_0
+```
+
+`declare` records the name, type, and qualifier. In this post-parse dump the
+immutable qualifier has an empty `const` payload, while the mutable qualifier
+is `const mut`. Initialization is a separate `store`. `prim_type_int` stores
+maximum then minimum, so `U8` is represented by `0xff` and `0`.
+
+The final `cassert` succeeds. Constant propagation removes the arithmetic and
+known assertion; the remaining post-upass statements are:
+
+**post-upass excerpt.**
+
+```lnast
+declare
+  ref x
+  prim_type_none
+  const
+declare
+  ref z
+  prim_type_int
+    const 0xff
+    const 0
+  const mut
+declare
+  ref `foo x`
+  prim_type_none
+  const
+store
+  ref z
+  const 6
+```
+
+This illustrates why a post-upass dump is not a transcript of all source
+operations: known values can live in the compiler's value tables, and folded
+expressions need not remain as statements.
+
+### Registers
+
+Registers carry a different declaration qualifier and retain their reset
+value. This small module also shows a typed output and wrapping update:
+
+```pyrope
+// register.prp
+mod counter(enable:Bool) -> (reg count:U4@[0] = 0) {
+  if enable { wrap count += 1 }
+}
+```
+
+**post-upass excerpt — body of register.counter; io omitted.**
+
+```lnast
+declare
+  ref count
+  prim_type_int
+    const 15
+    const 0
+  const reg
+  const 0
+if
+  ref enable
+  stmts
     plus
-      ref ___1
-      const 3
+      ref %count_0
+      ref count
       const 1
-    declare
-      ref  x
-      prim_type_none
-      const "const"
-      ref  ___1
-    declare
-      ref z
-      prim_type_none
-      const "mut"
-      const 4
-    plus
-      ref ___2
-      ref x
-      ref z
-      const 2
+    get_mask
+      ref %count_1
+      ref %count_0
+      const 15
     store
-      ref `foo x`
-      ref ___2
-    ```
+      ref count
+      ref %count_1
+```
 
-=== "LNAST optimized"
-    ```lnast
-    plus
-      ref ___1
-      const 3
-      const 1
-    declare
-      ref  x
-      prim_type_none
-      const "const"
-      ref  ___1
-    declare
-      ref z
-      prim_type_none
-      const "mut"
-      const 4
-    plus
-      ref `foo x`
-      ref x
-      ref z
-      const 2
-    ```
-
-The two LNAST nodes to declare and to set values in variables are `declare` and
-`store`. A `declare` carries the type and the storage qualifier (`"const"`,
-`"mut"`, `"reg"`, ...) plus an optional initial value; a `store` writes a value
-into an already declared variable. A type on a plain `store` write is a separate
-`type_spec` statement. Attributes are never sub-nodes of `ref`; they are set
-with separate `attr_set` statements.
-
-=== "Pyrope"
-    ```pyrope
-    const a:u2:[foo] = b
-
-    x:u2:[foo] = y
-    ```
-
-=== "LNAST"
-    ```lnast
-    declare
-      ref a
-      prim_type_int
-        const 3
-        const 0
-      const "const"
-      ref b
-    attr_set
-      ref a
-      const foo
-      const true
-
-    store
-      ref x
-      ref y
-    type_spec
-      ref x
-      prim_type_int
-        const 3
-        const 0
-    attr_set
-      ref x
-      const foo
-      const true
-    ```
+Here the declaration includes `const reg` and reset value `0`. The `wrap`
+update has become arithmetic followed by a mask of `15` before the store.
+A dump of the whole unit also includes `io` metadata; this is separate from
+the body statements.
 
 ## Tuples
 
-Tuples are sequences of fields that can be named. Unnamed (positional)
-fields are ordered; named fields are unordered and accessed by name only
-(tools may canonicalize named fields alphabetically, but that is a
-convention, not a requirement). There are LNAST tuple
-specific nodes (`tuple_add`, `tuple_get`, `tuple_concat`) but in many
-cases the direct LNAST operations can handle tuples directly.
+A tuple is all named or all positional. In the parsed tree, named entries
+are `store` children of `tuple_add`; positional entries are value children.
+`tuple_get` reads fields or positions, and a field write is a `store` with a
+field path between the base and the new value.
 
-* `tuple_add` creates a new tuple with entries
-* `store` adds/updates a field to an existing tuple. A `store` with 3 or more
-  children is a field write (the tuple, one or more field levels, and the
-  value); with 2 children it is a plain scalar write.
-* `tuple_get` gets the contents of a tuple entry
-* `tuple_concat` concatenates two or more tuples
+```pyrope
+// tuples.prp
+mut pair = (mut left:U4=2, const right:U4=3)
+pair.left = 4
+const selected = pair.left
+const positional = (1, 2)
+const joined = (...positional, 3)
+const nested = (const inner=(const value=7))
+cassert(selected == 4)
+cassert(joined == (1, 2, 3))
+cassert(nested.inner.value == 7)
+```
 
-Direct access in operations like `plus` behave like a `store` or `tuple_get`.
+**post-parse excerpt.**
 
+```lnast
+tuple_add
+  ref %pair_0
+  store
+    ref left
+    const 2
+  store
+    ref right
+    const 3
+tuple_get
+  ref %pair_1
+  ref %pair_0
+  const left
+declare
+  ref %pair_1
+  prim_type_none
+  const mut
+type_spec
+  ref %pair_1
+  prim_type_int
+    const 15
+    const 0
+tuple_get
+  ref %pair_2
+  ref %pair_0
+  const right
+type_spec
+  ref %pair_2
+  prim_type_int
+    const 15
+    const 0
+declare
+  ref pair
+  prim_type_none
+  const mut
+store
+  ref pair
+  ref %pair_0
+store
+  ref pair
+  const left
+  const 4
+```
 
-=== "Tuple in Pyrope"
-    ```pyrope
-    x = 3
-    a = (mut b=2, mut x=x+1, mut y=b+1)
-    ```
+The `mut left` field is represented by a field reference followed by its
+mutable declaration; its width and the immutable `right` field's width are
+recorded by `type_spec`. The outer binding's `declare` and `store` follow
+construction of the tuple.
 
-=== "LNAST direct"
-    ```lnast
-    store
-      ref      x
-      const    3
-    store
-      ref      ___t1
-      const    2
-    plus
-      ref      ___t2
-      ref      x
-      const    1
-    plus
-      ref      ___t3
-      ref      ___t1
-      const    1
-    tuple_add
-      ref      a
-      store
-        ref      b
-        ref      ___t1
-      store
-        ref      x
-        ref      ___t2
-      store
-        ref      y
-        ref      ___t3
-    ```
+The same input gives these read, splice, and nested-read nodes (intervening
+bindings and assertions omitted):
 
-=== "LNAST optimized"
-    ```lnast
-    store
-      ref      x
-      const    3
-    plus
-      ref      ___t2
-      ref      x
-      const    1
-    plus
-      ref      ___t3
-      const    2
-      const    1
-    tuple_add
-      ref      a
-      store
-        ref      b
-        const   2
-      store
-        ref      x
-        ref      ___t2
-      store
-        ref      y
-        ref      ___t3
-    ```
+**post-parse excerpt.**
 
-=== "LNAST Alternative"
-    ```lnast
-    store
-      ref      x
-      const    3
-    declare
-      ref      a
-      prim_type_none
-      const    "mut"
-      ref      2
-    plus
-      ref      ___t1
-      ref      x
-      const    1
-    declare
-      ref      a.1x
-      prim_type_none
-      const    "mut"
-      ref      ___t1
-    plus
-      ref      ___t2
-      const    a
-      const    1
-    declare
-      ref     a.2y
-      prim_type_none
-      const    "mut"
-      ref     ___t2
-    ```
+```lnast
+tuple_get
+  ref %selected_0
+  ref pair
+  const left
+fcall
+  ref %joined_0
+  ref __fkind__tuple_spread
+  ref positional
+tuple_concat
+  ref %joined_2
+  ref %joined_0
+  ref %joined_1
+tuple_get
+  ref %167467691_0
+  ref nested
+  const inner
+  const value
+```
 
-`store` and `tuple_get` can access through several levels in one command.
-`tuple_add` does not allow recursive entrances, it requires intermediate tuple
-construction. `attr_get` and `attr_set` follow the same syntax as
-`tuple_get`/`store`.
+The splice is initially marked by a call to `__fkind__tuple_spread`, then
+combined with the following positional entry by `tuple_concat`. After
+elaboration the marker can become a plain copy. A nested field path can be
+carried by one `tuple_get`; nested tuple construction itself uses intermediate
+`tuple_add` results. The compiler may flatten field paths in later dumps.
 
-=== "Pyrope"
-    ```pyrope
-    x = tup[1].foo[xx]
-    tup[4].foo[yy] = y
-
-    z = (mut foo=(mut bar=1))
-    ```
-
-=== "LNAST"
-    ```lnast
-    tuple_get
-      ref x
-      ref tup
-      const 1
-      const foo
-      ref xx
-
-    store
-      ref tup
-      const 4
-      const foo
-      ref yy
-      ref y
-
-    tuple_add
-      ref ___1
-      store
-        ref bar
-        const 1
-
-    tuple_add
-      ref z
-      store
-        ref foo
-        ref ___1
-    ```
-
-
-Tuples can use `const` in a field declaration to indicate that the field is
-immutable.
-
-=== "Tuple in Pyrope"
-    ```pyrope
-    mut a = (mut b=2, const x=1+1)
-    ```
-
-=== "LNAST direct"
-    ```lnast
-    store
-      ref    ___t1
-      const  2
-    plus
-      ref    ___t2
-      const  1
-      const  1
-    tuple_add:
-      ref     a
-      store
-        ref     b
-        ref     __t1
-      store
-        ref     x
-        ref     ___t2
-    tuple_get
-      ref     ___m1
-      ref     a
-      const   b
-    declare
-      ref     ___m1
-      prim_type_none
-      const   "mut"
-    ```
-
-The field payloads are plain `store` entries; a `mut` field is marked by a
-`tuple_get` of the field followed by a `declare` with a `"mut"` qualifier. A
-field with no such `declare` is immutable.
-
-Tuple concatenation does not use `plus` but the `tuple_concat` operator.
-
-=== "Tuple in Pyrope"
-    ```pyrope
-    mut a = (2, 1+1)
-    const x = (...a, const c=3, 1)
-    ```
-
-=== "LNAST direct"
-    ```lnast
-    store
-      ref    ___1
-      const  2
-    plus
-      ref    ___2
-      const  1
-      const  1
-    tuple_add:
-      ref    ___33
-      ref    ___1
-      ref    ___2
-    declare
-      ref    a
-      prim_type_none
-      const  "mut"
-      ref    ___33
-    tuple_add
-      ref    ___3
-      const  c
-      const  3
-    tuple_concat
-      ref    ___4
-      ref    a
-      ref    ___3
-      const  1
-    declare
-      ref    x
-      prim_type_none
-      const  "const"
-      ref    ___4
-    ```
+Named-field merge and positional append rules are described in
+[Tuples](03-bundle.md). They are not additional `in`/`cassert` statements
+inserted after every splice.
 
 ## Attributes
 
-There are 2 LNAST nodes for attributes: `attr_set` and `attr_get`. They operate
-at statement level and follow the same syntax as `store`/`tuple_get`, where the
-last entry is the attribute name. Attributes never appear as sub-nodes of
-`ref`; an attribute set or check is always its own statement.
+Attribute syntax produces separate `attr_set` and `attr_get` statements,
+not children attached to a `ref`. For `attr_set`, the base comes first and
+the value last, with the attribute path between them. For `attr_get`, the
+destination precedes the base and path.
 
-Attribute checks lower through `attr_get` followed by a `cassert` (or
-`attr_get` followed by a comparison and `cassert` for more complex checks).
+Attributes are compile-time metadata. The unfinished fluid design uses
+`valid` and `retry` for runtime handshake signals and derives `fire` from
+them; see [Attributes](04b-attributes.md) and [Fluid](06d-fluid.md).
 
-Attribute set declarations like `a::[f=3,b]` lower to the assignment plus one
-`attr_set` per attribute. The same pattern applies to attributes set on tuple
-entries.
+```pyrope
+// attributes.prp
+const a::[tag=3, marked] = 1
+const tag = a.[tag]
+const k = 2
+cassert(tag == 3)
+cassert(a.[marked])
+cassert(k.[`comptime`])
+const d::[debug] = 3
+const result = d + 100
+cassert(result.[debug])
+```
 
-=== "Pyrope"
-    ```pyrope
-    a::[f=3,b] = 1
-    x = (y::[z=7]=2, 4)
-    ```
+**post-parse excerpt.**
 
-=== "LNAST"
-    ```lnast
-    store
-      ref a
-      const 1
-    attr_set
-      ref a
-      const f
-      const 3
-    attr_set
-      ref a
-      const b
-      const true
+```lnast
+declare
+  ref a
+  prim_type_none
+  const
+attr_set
+  ref a
+  const tag
+  const 3
+attr_set
+  ref a
+  const marked
+  const true
+store
+  ref a
+  const 1
+attr_get
+  ref %tag_0
+  ref a
+  const tag
+```
 
-    tuple_add
-      ref ___1
-      store
-        ref y
-        const 2
-      const 4
-    attr_set
-      ref ___1
-      const y
-      const z
-      const 7
-    store
-      ref x
-      ref ___1
-    ```
+An attribute with no explicit value is set to `true`. ``k.[`comptime`]`` tests
+whether the current value is known at compile time, not whether `k` was
+declared with the `comptime` modifier.
 
-Attribute reads (`var.[attr]`) appear anywhere a normal expression is
-allowed and lower to `attr_get`. To turn a read into a check, wrap it in
-`cassert`/`assert`; that lowers to `attr_get` followed by an `fcall` to
-`cassert`. More complex attribute comparisons go through `attr_get`, a
-comparison node, and then `cassert`.
-
-=== "Pyrope"
-    ```pyrope
-    const z = q.[y]
-    const y = a.[b] + 1
-    ```
-
-=== "LNAST"
-    ```lnast
-    attr_get
-      ref ___1
-      ref q
-      const y
-    declare
-      ref z
-      prim_type_none
-      const "const"
-      ref ___1
-
-    attr_get
-      ref ___2
-      ref a
-      const b
-    plus
-      ref ___3
-      ref ___2
-      const 1
-    declare
-      ref y
-      prim_type_none
-      const "const"
-      ref ___3
-    ```
-
+The `debug` propagation assertion in this program also passes. Attribute
+propagation is attribute-specific: do not generalize it into a claim that
+all attributes are sticky, or that arithmetic removes every attribute.
 
 ### Sticky attributes
 
-
-Attributes can be sticky or not. A sticky attribute "polutes" or keeps
-the attribute to the left-hand-side expression. Non-sticky attributes
-do not affect or propagate.
-
-
-Attributes are not sticky by default, but some like `debug` are sticky.
-This means that if any of the elements in any operation has a `debug`
-attribute, the result also has a `debug` attribute. There is no way to
-remove these attributes.
-
-=== "Pyrope"
-    ```pyrope
-    const d::[debug] = 3
-
-    mut a = d + 100
-
-    cassert(a.[debug]) // debug is sticky
-    ```
-
-=== "LNAST"
-    ```lnast
-    declare
-      ref d
-      prim_type_none
-      const "const"
-      const 3
-    attr_set
-      ref d
-      const debug
-      const true
-
-    plus
-      ref ___tmp
-      ref d
-      const 100
-
-    declare
-      ref a
-      prim_type_none
-      const "mut"
-      ref ___tmp
-
-    attr_get
-      ref ___get
-      ref a
-      const debug
-
-    fcall
-      ref ___unused
-      ref cassert
-      ref ___get
-    ```
-
-Once a variable gets assigned an attribute, the attribute stays with the
-variable and any variables that got a direct copy. The only way to remove it is
-with arithmetic operations and/or bit selection.
-
+This separate test checks a user attribute copied directly, then removed by
+arithmetic and bit selection. It complements the sticky `debug` test above:
 
 ```pyrope
-const foo::[attr1=2] = 3
-
-mut foo2 = foo
-cassert(foo2.[attr1] == 2)
-
-const foo3 = foo#[..]
-cassert(foo3.[attr1] == nil) // bit selection drops attributes
-
-mut xx::[attr2=5] = 1                 // sets attr2 at declaration
-
-const xx2 = xx
-cassert(xx2.[attr2] == 5)
-cassert(xx2.[attr2] != nil)
-
-const xx3 = xx + 0
-cassert(xx3.[attr2] == nil) // dropped after arithmetic
+// attribute_copy.prp
+const a::[tag=3] = 4
+const copy = a
+const arithmetic = a + 0
+const bits = a#[..]
+cassert(copy.[tag] == 3)
+cassert(arithmetic.[tag] == nil)
+cassert(bits.[tag] == nil)
 ```
 
+All three assertions pass. These are examples of current propagation
+behavior; the attribute's own rules determine whether it survives a
+particular operation.
 
 ## Bit selection
 
+The following runtime function preserves the selected values in the
+post-upass tree. Its assertions independently check the sum and the patched
+word for a concrete input:
 
-Pyrope has several bit selection operations. The default maps `get_mask` and
-`set_mask` LNAST nodes. One important thing is that both `get_mask` and
-`set_mask` operate over a MASK. This means that it is a one-hot encoding if a
-single bit is operated. The one-hot encoding can be created with a `range` or
-with a `shl` operator.
+```pyrope
+// bits.prp
+comb bits(foo:U8, xx:U4) -> (yy:U4, patched:U8) {
+  mut work:U8 = foo
+  work#[1..=2] = xx#[0..<2]
+  yy = foo#[5] + xx#[1..<4]
+  patched = work
+}
+cassert(bits(foo=32, xx=10).yy == 6)
+cassert(bits(foo=32, xx=10).patched == 36)
+```
 
+**post-upass excerpt — body of bits.bits; io and type_spec nodes omitted.**
 
-The selector takes a single expression (bit index or range). To write
-non-contiguous bits, emit one assignment per range — each lowers to its own
-`set_mask`.
+```lnast
+declare
+  ref work
+  prim_type_int
+    const 0xff
+    const 0
+  const mut
+store
+  ref work
+  ref foo
+get_mask
+  ref %work_0
+  ref xx
+  const 3
+set_mask
+  ref %work_1
+  ref work
+  const 6
+  ref %work_0
+store
+  ref work___ssa_1
+  ref %work_1
+get_mask
+  ref %yy_0
+  ref foo
+  const 32
+get_mask
+  ref %yy_1
+  ref xx
+  const 14
+plus
+  ref %yy_2
+  ref %yy_0
+  ref %yy_1
+store
+  ref yy
+  ref %yy_2
+store
+  ref patched
+  ref work___ssa_1
+```
 
-=== "Pyrope"
-    ```pyrope
-    foo#[1..=2] = xx
-    yy = foo#[5] + xx#[1..<4]
-    ```
+The mask operand in these LNAST nodes is a bit mask, not a bit index:
 
-=== "LNAST direct"
-    ```lnast
-    range
-      ref ___r
-      const 1
-      const 2
-      const 1
+| Source selection | Mask in this dump |
+|---|---|
+| `xx#[0..<2]` | `3` (`0ub11`) |
+| `work#[1..=2]` | `6` (`0ub110`) |
+| `foo#[5]` | `32` (`0ub100000`) |
+| `xx#[1..<4]` | `14` (`0ub1110`) |
 
-    set_mask
-      ref foo
-      ref foo
-      ref ___r
-      ref xx
+`get_mask(dst, value, mask)` extracts and right-justifies the selected bits.
+`set_mask(dst, old_value, mask, replacement)` creates the patched value;
+the following `store` binds it. In this dump SSA renames the updated `work`
+to `work___ssa_1`.
 
-    range
-      ref ___c5
-      const 5
-      const 5
-      const 1
+The `plus` consumes `%yy_0` and `%yy_1`, the two extracted values. It does
+not add a range object or the mask itself. A single-bit read at index 5
+therefore cannot be rewritten as `get_mask(..., 5)`.
 
-    get_mask
-      ref ___3
-      ref foo
-      ref ___c5
+This LNAST representation should not be confused with a lower-level helper's
+API: a helper can receive interval bounds even when the LNAST node carries
+a mask. Pyrope selectors accept an index or a range; a list of disjoint
+indices is not an alternate bit-order notation.
 
-    range
-      ref ___4
-      const 1
-      const 3
-      const 1
+### Sign extension and reductions
 
-    get_mask
-      ref ___5
-      ref xx
-      ref ___4
+These operations first select the requested bit vector:
 
-    plus
-      ref yy
-      ref ___4
-      ref ___5
-    ```
+```pyrope
+// reductions.prp
+comb reductions(v:U8) -> (s:S5, any:U1, all:U1, parity:U1, count:U3) {
+  s = v#sext[..=4]
+  any = v#|[..=4]
+  all = v#&[..=4]
+  parity = v#^[..=4]
+  count = v#+[..=4]
+}
+cassert(reductions(31).s == -1)
+cassert(reductions(31).all == 1)
+cassert(reductions(31).count == 5)
+```
 
-=== "LNAST optimized"
-    ```lnast
-    range
-      ref ___r
-      const 1
-      const 2
-      const 1
+**post-upass excerpt — signed selection; type_spec omitted.**
 
-    set_mask
-      ref foo
-      ref foo
-      ref ___r
-      ref xx
+```lnast
+get_mask
+  ref %s_1
+  ref v
+  const 31
+sext
+  ref %s_4
+  ref %s_1
+  const 4
+store
+  ref s
+  ref %s_4
+```
 
-    get_mask
-      ref ___3
-      ref foo
-      const 5
+The selected five-bit vector uses mask `31`. `sext` takes the sign-bit
+position in that selected vector, here `4`. The other outputs use the
+following nodes after their own `get_mask`:
 
-    range
-      ref ___4
-      const 1
-      const 3
-      const 1
+| Pyrope | LNAST operation |
+|---|---|
+| `v#\|[..=4]` | `red_or` |
+| `v#&[..=4]` | `red_and` |
+| `v#^[..=4]` | `red_xor` |
+| `v#+[..=4]` | `popcount` |
 
-    get_mask
-      ref ___5
-      ref xx
-      ref ___4
-
-    plus
-      ref yy
-      ref ___4
-      ref ___5
-    ```
-
-It is possible to use a `foo#sext[range]` to perform a bit selection with sign
-extension. The `sext` LNAST node is equivalent to the Lgraph `sext` that has 2
-inputs. The variable and from what bit to perform sign-extension. This means
-that the LNAST translation needs a `get_mask` and a `sext` node. The `sext`,
-`+`, `|`, `^` bit selection modifiers can only be applied to right-hand-side
-operations.
-
-
-=== "Pyrope"
-    ```pyrope
-    const t1 = foo#sext[..=4]
-    const t2 = foo#|[..=4]
-    const t3 = foo#&[..=4]
-    const t4 = foo#^[..=4]
-    const t5 = foo#+[..=4]
-    ```
-
-=== "LNAST"
-    ```lnast
-    range
-      ref ___r
-      const 0
-      const 4
-      const 1
-
-    get_mask
-      ref ___t
-      ref foo
-      ref ___r
-
-    sext
-      ref ___t1
-      ref ___t
-      const 4
-    declare
-      ref t1
-      prim_type_none
-      const "const"
-      ref ___t1
-
-    red_or
-      ref ___t2
-      ref ___t
-    declare
-      ref t2
-      prim_type_none
-      const "const"
-      ref ___t2
-
-    red_and       // red_and(x) returns unsigned 0 or 1
-      ref ___t3
-      ref ___t
-    declare
-      ref t3
-      prim_type_none
-      const "const"
-      ref ___t3
-
-    red_xor
-      ref ___t4
-      ref ___t
-    declare
-      ref t4
-      prim_type_none
-      const "const"
-      ref ___t4
-
-    popcount
-      ref ___t5
-      ref ___t
-    declare
-      ref t5
-      prim_type_none
-      const "const"
-      ref ___t5
-    ```
+The dump contains separate selections for these outputs; it does not promise
+that the front end has already shared one selection among all five.
 
 ## Direct LNAST/Lgraph call
 
+Cell calls such as `__sum` are normal Pyrope calls with the cell's pin names
+as arguments. They appear as `fcall` before folding or lowering. See the
+[call example below](#lambda-call) for the actual argument layout.
 
-A direct Lgraph call can be done with `__cell` where `cell` is the Lgraph cell
-like `plus`, `LUT`, `memory`. In LNAST this is translated like a lambda call.
-
-
-=== "Pyrope"
-    ```pyrope
-    const foo = 3
-    const bar = 300
-    const b = __plus(1,2,foo,bar)
-    ```
-
-=== "LNAST"
-    ```lnast
-    declare
-      ref foo
-      prim_type_none
-      const "const"
-      const 3
-    declare
-      ref bar
-      prim_type_none
-      const "const"
-      const 300
-    tuple_add
-      ref ___0
-      const 1
-      const 2
-      ref foo
-      ref bar
-    fcall
-      ref b
-      ref __plus
-      ref ___0
-    ```
-
-A direct LNAST call can be done calling an LNAST method, where the first entry
-is the root LNAST node, and rest follow a tree syntax with strings.
-
-=== "Pyrope"
-    ```pyrope
-    LNAST("let", ("ref", "x"), ("const", "5"))
-    ```
-
-=== "LNAST"
-    ```lnast
-    let
-      ref x
-      const 5
-    ```
+The old `LNAST(a=("let", ...))` injection example is not supported by the
+current front end. A direct compile reports `undefined-call` for `LNAST`;
+it does not inject a `let` node. To inspect compiler IR, use the dump commands
+above.
 
 ## Basic operators
 
-Basic operators are binary or unary operators in Pyrope that have a one-to-one
-translation to LNAST nodes.
+This program exercises the arithmetic, bitwise, comparison, and Boolean
+operators before they fold:
+
+```pyrope
+// operators.prp
+const a = 12
+const b = 3
+const sum = a + b
+const difference = a - b
+const product = a * b
+const quotient = a / b
+const remainder = a % b
+const band = a & b
+const bor = a | b
+const bxor = a ^ b
+const left = a << 1
+const right = a >> 1
+const neg = -b
+const inv = ~a
+const p = true
+const q = false
+const both = p and q
+const either = p or q
+const implication = p implies q
+const not_implication = not (p implies q)
+const nand = ~(a & b)
+const eq = a == b
+const ne = a != b
+const lt = a < b
+const le = a <= b
+const gt = a > b
+const ge = a >= b
+cassert(sum == 15 and difference == 9 and product == 36)
+cassert(quotient == 4 and remainder == 0)
+cassert(left == 24 and right == 6 and neg == -3 and inv == -13)
+cassert(not both and either and not implication and not_implication)
+```
+
+The post-parse nodes use a destination followed by their operands:
+
+| Pyrope expression | Node or node sequence |
+|---|---|
+| `a + b`, `a - b`, `a * b`, `a / b`, `a % b` | `plus`, `minus`, `mult`, `div`, `mod` |
+| `a & b`, `a \| b`, `a ^ b` | `bit_and`, `bit_or`, `bit_xor` |
+| `a << b`, `a >> b` | `shl`, `sra` |
+| `-a` | `minus` with operands `0`, `a` |
+| `~a` | `bit_not` |
+| `a == b`, `a != b` | `eq`, `ne` |
+| `a < b`, `a <= b`, `a > b`, `a >= b` | `lt`, `le`, `gt`, `ge` |
+| `p and q`, `p or q`, `not p` | `log_and`, `log_or`, `log_not` |
+
+These are translation shapes, not a guarantee that every operand/type
+combination lowers to hardware. In particular, hardware modulo has the
+restrictions described in [Basic syntax](02-basics.md).
 
 ### Unary
 
-* `!a` or `not a` translates to `log_not`
-* `~a` translates to `bit_not`
-* `-a` translates to `minus(0,a)`
+Elaboration can add type-dependent operands. An unsigned four-bit complement
+has an explicit flip width in its post-upass `bit_not`:
 
-### Binary integer
+```pyrope
+// bit_not.prp
+comb invert(a:U4) -> (y:U4) { y = ~a }
+cassert(invert(3) == 12)
+```
 
-* `a + b` translates to `plus`
-* `a - b` translates to `minus`
-* `a * b` translates to `mult`
-* `a / b` translates to `div`
-* `a & b` translates to `bit_and`
-* `a | b` translates to `bit_or`
-* `a ^ b` translates to `bit_xor`
-* `a >> b` translates to `sra`
-* `a << b` translates to `shl`
+**post-upass excerpt — body of bit_not.invert.**
 
-
-There is a `mod` LNAST operator that performs module operations. It does not
-have a direct Pyrope syntax, but it can be called directly `__mod(a,b)`.
-
-### Binary boolean
-
-* `a and b` translated to `log_and`
-* `a or b` translates to `log_or`
-
+```lnast
+bit_not
+  ref %y_0
+  ref a
+  const 4
+store
+  ref y
+  ref %y_0
+```
 
 ## Complex operators
 
-Complex operators are binary operators in Pyrope that require more than one
-LNAST statement.
+Logical implication is emitted as `log_not` followed by `log_or`.
+Negating an implication adds a further `log_not`; the post-parse tree does
+not substitute the hand-simplified expression `p and not q`. These are the
+nodes from the operator test, with the intervening result bindings omitted:
 
-### Binary integer
+**post-parse excerpt.**
 
-Binary nand (`x=a ~& b`):
-```lnast
-bit_and
-  ref ___0
-  ref a
-  ref b
-bit_not
-  ref x
-  ref ___0
-```
-
-Binary nor (`x=a ~| b`):
-```lnast
-bit_or
-  ref ___0
-  ref a
-  ref b
-bit_not
-  ref x
-  ref ___0
-```
-
-Binary xor (`x=a ~^ b`):
-```lnast
-bit_xor
-  ref ___0
-  ref a
-  ref b
-bit_not
-  ref x
-  ref ___0
-```
-
-Logical shift right (`x = a#[..] >> b`):
-```lnast
-get_mask
-  ref ___0
-  ref a
-sra
-  ref x
-  ref ___0
-  ref b
-```
-
-### Binary logical
-
-
-Logical implication (`x = a implies b`):
 ```lnast
 log_not
-  ref ___0
-  ref a
+  ref %implication_0
+  ref p
 log_or
-  ref x
-  ref ___0
-  ref b
-```
-
-Logical nand (`x = not (a and b)`):
-```lnast
-log_and
-  ref ___0
-  ref a
-  ref b
+  ref %implication_1
+  ref %implication_0
+  ref q
 log_not
-  ref x
-  ref ___0
-```
-
-Logical nor (`x = not (a or b)`):
-```lnast
+  ref %not_implication_0
+  ref p
 log_or
-  ref ___0
-  ref a
-  ref b
+  ref %not_implication_1
+  ref %not_implication_0
+  ref q
 log_not
-  ref x
-  ref ___0
+  ref %not_implication_2
+  ref %not_implication_1
 ```
 
-Logical not implication (`x = not (a implies b)`):
-```lnast
-log_not
-  ref ___0
-  ref b
-log_and
-  ref x
-  ref a
-  ref ___0
-```
+Similarly, `~(a & b)` produces `bit_and` followed by `bit_not`; the
+corresponding negated OR and XOR use their own bitwise nodes. Later passes
+may fold or rewrite these expressions.
 
 ### Tuple/Set operators
 
-The `in` operator does not have a Lgraph equivalent becuase it is type
-dependent: tuple, range, or enumerate. The range and enumerate can get
-translated to an AND gate over the bitcode translation, but the tuple check
-requires a tuple check.
-
-```pyrope
-const tup=(1,2,3)
-const ran=1..<5
-const enu = enum(a,b=(x,y),c)
-
-cassert(2 in tup)
-cassert(3 in ran)
-cassert(enu.b.x in enu.b)
-```
-
-The resul is a common `in` LNAST operation that gets different functionality
-dependent on the input type.
-
-
-=== "Pyrope"
-    ```pyrope
-    c = a in b
-    d = not (a in b)
-    ```
-
-=== "LNAST"
-    ```lnast
-    in
-      ref c
-      ref a
-      ref b
-    log_not
-      ref d
-      ref c
-    ```
-
-The tuple concatenate operator is the `...` splice. `x = (...a, ...b)`
-translates to:
-
-```lnast
-tuple_concat
-  ref x
-  ref a
-  ref b
-```
-
-Tuple concat recursively merges matching tuple-valued fields. A duplicate final
-field is accepted when one side is `nil` or constant propagation proves both
-sides have the same value; otherwise it is an overlap and triggers a compile
-error.
-
-`x = (a, ...b)` translates to:
-```lnast
-tuple_concat
-  ref x
-  ref a
-  ref b
-in
-  ref ___1
-  ref a
-  ref x
-in
-  ref ___2
-  ref b
-  ref x
-log_and
-  ref ___3
-  ref ___1
-  ref ___2
-fcall
-  ref ___0
-  ref cassert
-  ref ___3
-```
-
-### Tuple to operator
-
-The `to` is an iterator but instead of a range, it creates a tuple.
-
-
-`tmp = a to b by c` translates to:
-```lnast
-to
-  ref tmp
-  ref a
-  ref b
-  ref c
-```
-
-`tmp = 3 to b` translates to:
-```lnast
-to
-  ref tmp
-  const 3
-  ref b
-  const 1
-```
+Membership produces an `in` node. The operand types determine its meaning;
+a tuple/range membership test is not universally interchangeable with a
+bitwise AND. Tuple splicing uses the spread marker and `tuple_concat`
+shown in [Tuples](#tuples).
 
 ### Range operator
 
-Ranges can be open or closed. The closed ranges have the start/end/step
-defined.
+Ranges use inclusive endpoints in LNAST. The front end subtracts one from
+an exclusive end, or computes `start + count - 1` for a counted range.
+An explicit positive `step` is a separate call rather than a fourth child
+of the `range` node. Ranges compare directly with unnamed tuples:
 
-`x = a..<=b by 2` translates to:
-```lnast
-range
-  ref x
-  ref a
-  ref b
-  const 2
+```pyrope
+// ranges.prp
+const r = 1..=3
+const exclusive = 1..<4
+const counted = 1..+3
+const stepped = 0..=6 step 2
+const joined = (...r, 4)
+cassert(r == (1, 2, 3))
+cassert(r == exclusive and r == counted)
+cassert(stepped == (0, 2, 4, 6))
+cassert(2 in r)
+cassert(joined == (1, 2, 3, 4))
 ```
 
-`x = a..<=b by 2` translates to:
+**post-parse excerpt.**
+
 ```lnast
 range
-  ref x
-  ref a
-  ref b
-  const 2
-```
-
-`x = a..<b` translates to:
-```lnast
-minus
-  ref tmp
-  ref b
-  ref 1
-
-range
-  ref x
-  ref a
-  ref tmp
+  ref %r_0
   const 1
+  const 3
+minus
+  ref %exclusive_0
+  const 4
+  const 1
+range
+  ref %exclusive_1
+  const 1
+  ref %exclusive_0
+plus
+  ref %counted_0
+  const 1
+  const 3
+minus
+  ref %counted_1
+  ref %counted_0
+  const 1
+range
+  ref %counted_2
+  const 1
+  ref %counted_1
+range
+  ref %stepped_0
+  const 0
+  const 6
+fcall
+  ref %stepped_1
+  const step
+  ref %stepped_0
+  const 2
 ```
+
+The assertions confirm `(1, 2, 3)` for all three unstepped spellings and
+`(0, 2, 4, 6)` for the stepped one. The old `a..<=b by 2` and `a to b`
+spellings are not current syntax.
 
 ### Type operators
 
-To check if a field name or position exists in a tuple, `x = a has b` translates:
+Structural operations have dedicated nodes. In particular, the front end
+emits `equals` and `case` directly; it does not expand them into the
+`does`/`in`/`log_and` diagrams from older versions of this chapter.
+
+```pyrope
+// types.prp
+const a = (const x=1, const y=2)
+const b = (const x=1)
+const has_x = a has 'x'
+const covers = a does b
+const same_type = a equals a
+const matches = a case a
+cassert(has_x and covers and same_type and matches)
+```
+
+**post-parse excerpt.**
+
 ```lnast
 has
-  ref x
+  ref %has_x_0
+  ref a
+  const 'x'
+does
+  ref %covers_0
   ref a
   ref b
+equals
+  ref %same_type_0
+  ref a
+  ref a
+case
+  ref %matches_0
+  ref a
+  ref a
 ```
 
-To check the tuple structure, Pyrope has `a does b`. It returns true if `a`
-provides all the tuple structure required by `b`; in other words, `a` may have
-extra fields, but it must contain the required fields from `b`. `x = a does b`
-translates to:
-```lnast
-does
-  ref x
-  ref a
-  ref b
-```
-
-To check equality of tuples `x = a equals b` same as `x = (a does b) and (b does a)`. Translates to:
-```lnast
-does
-  ref ___0
-  ref a
-  ref b
-does
-  ref ___1
-  ref b
-  ref a
-log_and
-  ref x
-  ref ___0
-  ref ___1
-```
-
-The `a case b` does match operation. `a case b` first checks `a does b`, then
-checks that every defined value in `b` has the same value in `a`. Undefined
-values in `b` (`nil`, `0sb?`) act as wildcards and do not participate in the
-value check. `x = a case b` translates to:
-```lnast
-does
-  ref ___0
-  ref a
-  ref b
-in
-  ref ___1
-  ref b
-  ref a
-log_and
-  ref x
-  ref ___0
-  ref ___1
-```
+`has` tests field existence, `does` checks structural coverage, `equals`
+checks type equivalence, and `case` performs the structural/value match.
+Their language rules are in [Type system](07-typesystem.md); the dedicated
+node names do not make them ordinary integer comparison operations.
 
 ## if/unique if
 
+Branch nodes contain condition/body pairs, followed by an optional final
+`stmts` for `else`. An ordinary chain uses `if`; a unique chain uses `uif`.
+This runtime example keeps all three forms visible after elaboration:
 
-Like many modern languages, `if` accepts not only a boolean expression but a
-sequence of statements. Like C++17, before a condition, there can be a sequence
-of statements that can include variable declarations. Pyrope variables initial
-statement declarations are visiable in the `if` and `else` statements like
-C++17 does.
+```pyrope
+// control.prp
+comb choose(a:U4) -> (priority:U5, parallel:U5, matched:U5) {
+  priority = 0
+  if a < 3 { priority = a + 1 }
+  elif a > 12 { priority = 20 }
+  parallel = 0
+  unique if a == 1 { parallel = 10 }
+  elif a == 2 { parallel = 20 }
+  matched = match a {
+    == 1 { 10 }
+    == 2 { 20 }
+    else { 0 }
+  }
+}
+cassert(choose(1).priority == 2)
+cassert(choose(2).parallel == 20)
+cassert(choose(3).matched == 0)
+```
 
+**post-upass excerpt — priority and unique chains from control.choose; io omitted.**
 
-A special constraint from Pyrope is that the initial statements and condition
-check can not have side-effects. Hence, they can not have `procedure` calls,
-only `function` calls.
-
-=== "Pyrope"
-    ```pyrope
-    mut total=3
-    if mut x=3; x<3 {
-      total+=x
-    }elif mut z=3; z<4 {
-      total+=x+z
-    }
-    ```
-
-=== "Pyrope Equivalent"
-    ```pyrope
-    mut total=3
-    {
-      mut x=3
-      if x<3 {
-        total+=x
-      }else{
-        mut z=3
-        if z<4 {
-          total+=x+z
-        }
-      }
-    }
-    ```
-
-=== "C++17 equivalent"
-    ```c++
-    int total=3;
-    if (int x=3; x<3) {
-      total+=x;
-    }else if (int z=3; z<4) {
-      total+=x+z;
-    }
-    ```
-
-Pyrope has `if` and `unique if`. The difference is that `unique if` guarantees
-that only one of the branch conditions is taken. It is possible to have all the
-conditions not taken. This allows synthesis optimizations because it implies
-that the condition is a one-hot encoding.
-
-
-=== "Pyrope"
-    ```pyrope
-    if mut x=a ; x<3 {
-      t = 100+x               // z not in scope
-    }elif mut z = x+c ; z>5 {
-      t = 200+z+x             // z and x in scope
-    }
-    ```
-
-=== "LNAST"
-    ```lnast
-    stmts
-      declare
-        ref x
-        prim_type_none
-        const "mut"
-        ref a
-      lt
-        ref ___1
-        ref x
-        const 3
-      if
-        ref ___1
-        stmts
-          plus
-            ref t
-            const 100
-            ref x
-        stmts
-          plus
-            ref ___2
-            ref x
-            ref c
-          declare
-            ref z
-            prim_type_none
-            const "mut"
-            ref ___2
-          gt
-            ref ___3
-            ref z
-            const 5
-          if
-            ref ___3
-            stmts
-              plus
-                ref t
-                const 200
-                ref z
-                ref x
-    ```
-
-The `unique if` is similar, but all the conditions include an `assume`
-directive to be checked. This means that the conditions must be checked even if
-the `else` is not reached. This is fine because neither the statements nor the
-condition checks are allowed to have side-effects.
-
-
-An important limitation of `unique if` is that only the first condition can
-have initial statement. It is not allowed to have initialization statements in
-the `elif` conditions.
-
-=== "Pyrope"
-    ```pyrope
-
-
-
-
-
-    unique if a<3 {
-      y = 10
-    }elif a>40 {  // not allowed to do 'elif mut z=40; a>z'
-      y = 20+x
-    }
-    ```
-
-=== "Pyrope Equivalent"
-    ```pyrope
-    const tmp1 = a<3
-    const tmp2 = a>40
-    const tmp3 = 1<<(tmp1,tmp2)
-    assume(tmp3#+[..]<=1) // at most one bit set
-
-    if tmp1 {
-      y = 10
-    }elif tmp2 {
-      y = 20+x
-    }
-    ```
-
-=== "LNAST"
-    ```lnast
-    lt
-      ref ___1
-      ref z
-      const 3
-    gt
-      ref ___2
+```lnast
+store
+  ref priority
+  const 0
+gt
+  ref %2188985937_0
+  ref a
+  const 12
+lt
+  ref %3010617009_0
+  ref a
+  const 3
+if
+  ref %3010617009_0
+  stmts
+    plus
+      ref %priority_0
       ref a
-      const 40
-    shl           // create one-hot encoding
-      ref ___3
       const 1
-      ref ___1
-      ref ___2
-    popcount
-      ref ___4
-      ref ___3
-    le
-      ref ___5
-      ref ___4
-      const 1
-    fcall
-      ref nil
-      ref assume
-      ref ___5
-    uif
-      ref ___1
-      stmts
-        store
-          ref y
-          const 10
-      ref ___2
-      stmts
-        plus
-          ref y
-          const 20
-          ref x
-    ```
+    store
+      ref priority
+      ref %priority_0
+  ref %2188985937_0
+  stmts
+    store
+      ref priority
+      const 20
+store
+  ref parallel
+  const 0
+eq
+  ref %3385895541_0
+  ref a
+  const 2
+eq
+  ref %3375548154_0
+  ref a
+  const 1
+uif
+  ref %3375548154_0
+  stmts
+    store
+      ref parallel
+      const 10
+  ref %3385895541_0
+  stmts
+    store
+      ref parallel
+      const 20
+```
+
+The printed order of pure condition calculations can differ from source
+order; the condition/body order within `if` determines priority. `uif`
+records the unique-branch construct. This dump does not contain a synthetic
+`shl`/`popcount`/`assume` sequence before it. Do not treat that old explanatory
+sequence as emitted LNAST.
 
 ## match
 
-The match statement behaves like a `unique if` but it also checks that at least
-one of the paths is taken. This means that if the `else` exists in the match,
-it behaves like a `unique if`. If the else does not exist, an `else { assert
-false }` is created.
+The `match` in the same program also becomes `uif`. An expression-valued
+match writes a common temporary in each arm and then assigns the result:
 
+**post-upass excerpt — match from control.choose.**
 
-=== "Pyrope"
-    ```pyrope
-    mut z = 0
-    match x {
-     == 3 { z = 1 }
-     in 4..<6 { z = 2 }
-     else { }
-    }
-
-    match x {
-     <  5 { z = 1 }
-     else { z = 3 }
-    }
-    ```
-
-=== "LNAST"
-    ```lnast
-    declare
-      ref z
-      prim_type_none
-      const "mut"
+```lnast
+eq
+  ref %matched_2
+  ref a
+  const 2
+eq
+  ref %matched_1
+  ref a
+  const 1
+uif
+  ref %matched_1
+  stmts
+    store
+      ref %matched_0
+      const 10
+  ref %matched_2
+  stmts
+    store
+      ref %matched_0
+      const 20
+  stmts
+    store
+      ref %matched_0
       const 0
+store
+  ref matched
+  ref %matched_0
+```
 
-    eq
-      ref ___0
-      ref x
-      const 3
-    range
-      ref ___2
-      const 4
-      const 5
-    in
-      ref ___1
-      ref x
-      ref ___2
-
-    shl
-      ref ___3
-      const 1
-      ref ___1
-      ref ___2
-    popcount
-      ref ___4
-      ref ___3
-    le
-      ref ___5
-      ref ___4
-      const 1
-    fcall
-      ref nil
-      ref assume
-      ref ___5
-
-    uif
-      ref ___1
-      stmts
-        store
-          ref z
-          const 1
-      ref ___2
-      stmts
-        store
-          ref z
-          const 2
-      stmts
-        fcall
-          ref ___6
-          ref assert
-          const false
-
-    // 2nd match
-    lt
-      ref ___6
-      ref x
-      const 5
-    shl
-      ref ___7
-      const 1
-      ref ___6
-    popcount
-      ref ___8
-      ref ___7
-    le
-      ref ___9
-      ref ___8
-      const 1
-    fcall
-      ref nil
-      ref assume
-      ref ___9
-    uif
-      ref ___6
-      stmts
-        store
-          ref z
-          const 1
-      stmts
-        store
-          ref z
-          const 3
-    ```
-
-
+The explicit `else { 0 }` is preserved as the final `stmts` arm. The
+compiler does not replace an explicit catch-all with `assert(false)`.
+Exhaustiveness and uniqueness rules belong to the source construct; see
+[match](05b-statements.md#unique-parallel-conditional-match).
 
 ## Scope
 
-Like most languages Pyrope has variable scope, but it does not allow variable
-shadowing. This section showcases some cases on how the scope is generated.
+An initializer is evaluated before its condition. Its declarations are visible
+from their declaration through the remaining `if`/`elif`/`else` chain, `match`,
+or `while`, and are out of scope after that construct. Reading or assigning them
+afterward is a compile error.
+Lowering an `elif` initializer before the arm bodies does not make its variables
+visible to an earlier arm: reading one there is a read-before-declaration error.
+See [Variable scope](04-variables.md#variable-scope) for the language rules.
 
+```pyrope
+// scope.prp
+mut total = 0
+if const limit=3; limit > 2 {
+  total = limit
+}
+cassert(total == 3)
+```
 
-New variables can have a statement scope for `if`, `while`, and `match`
-statements.
+**post-parse excerpt.**
 
-=== "Pyrope"
-    ```pyrope
-    if mut x=3; x<4 {
-      cassert(x==3)
-    }
-    while mut z=1; x != 0 {
-      x -= z
-    }
-    mut z=0
-    match mut x=2 ; z+x {
-      == 2 { cassert(true)  }
-      != 7 { cassert(true)  }
-      else { cassert(false) }
-    }
-    ```
-
-=== "LNAST"
-    ```lnast
-    stmts
-      declare
-        ref x
-        prim_type_none
-        const "mut"
-        const 3
-      lt
-        ref ___1
-        ref x
-        const 4
-      if
-        ref ___1
-        stmts
-          eq
-            ref ___2
-            ref x
-            const 3
-          fcall
-            ref ___0
-            ref cassert
-            ref ___2
-
-    stmts
-      declare
-        ref z
-        prim_type_none
-        const "mut"
-        const 1
-      while
-        if
-          ref x
-          stmts
-            break
-        minus
-          ref x
-          ref x
-          ref z
-
+```lnast
+if
+  const true
+  stmts
     declare
-      ref z
+      ref limit
       prim_type_none
-      const "mut"
-      const 0
-    stmts
-      declare
-        ref x
-        prim_type_none
-        const "mut"
-        const 2
-      plus
-        ref ___3
-        ref z
-        ref x
-      eq
-        ref ___t1
-        ref ___3
-        const 2
-      ne
-        ref ___t2
-        ref ___3
-        const 7
-      shl           // create one-hot encoding
-        ref ___x
-        const 1
-        ref ___t1
-        ref ___t2
-      popcount
-        ref ___y
-        ref ___x
-      le
-        ref ___z
-        ref ___y
-        const 1
-      fcall
-        ref nil
-        ref assume
-        ref ___z
-      uif
-        ref ___t1
-        stmts
-          fcall
-            ref ___4
-            ref cassert
-            const true
-        ref ___t2
-        stmts
-          fcall
-            ref ___5
-            ref cassert
-            const true
-        stmts
-          fcall
-            ref ___6
-            ref cassert
-            const false
-    ```
+      const
+    store
+      ref limit
+      const 3
+    gt
+      ref %2940350924_0
+      ref limit
+      const 2
+    if
+      ref %2940350924_0
+      stmts
+        store
+          ref total
+          ref limit
+```
+
+The outer `if true` creates the initializer scope. It uses the normal branch
+merge to preserve writes to enclosing variables such as `total`; elaboration
+folds away this always-taken condition. The assertion checks `total == 3`.
+Adding `cassert(limit == 3)` after the `if` is an undefined-variable error,
+even though the initializer and branch condition are known at compile time.
 
 ## while/loop/for
 
-
-Pyrope has `loop`, `while`, and `for` constructs to handle different types of loops.
-In all the cases, the loops must be expanded at LNAST compile time. In LNAST, there
-is only a `while` construct.
-
-=== "Pyrope loop"
-    ```pyrope
-    loop {
-      i += 1
-      if i==3 { break }
-    }
-    ```
-
-=== "LNAST"
-    ```lnast
-    while
-      plus
-        ref i
-        ref i
-        const 1
-      eq
-        ref ___1
-        ref i
-        const 3
-      if
-        ref ___1
-        stmts
-          break
-    ```
-
-The Pyrope `while` translates to a `while` node with a `break` statement.
-
-=== "Pyrope while"
-    ```pyrope
-    while mut i=0 ; i!=3 {
-      i += 1
-    }
-    ```
-
-=== "LNAST"
-    ```lnast
-    stmts
-      declare
-        ref i
-        prim_type_none
-        const "mut"
-        const 0
-      while
-        ne
-          ref ___1
-          ref i
-          const 3
-        log_not
-          ref ___2
-          ref ___1
-        if
-          ref ___2
-          stmts
-            break
-    ```
-
-The `for` construct is also a loop, but it can have element, index, and key in the iterator. Also, it can allow a `ref` to mutate the contents.
-
-=== "Pyrope for"
-    ```pyrope
-    for (index,value,key) in tup {
-      mycall(value,index,key)
-    }
-    ```
-=== "Pyrope ref for"
-    ```pyrope
-    for value in ref tup {
-      mycall(value)
-      value = 0
-    }
-    ```
-=== "LNAST for"
-    ```lnast
-    attr_get
-      ref ___tup_size
-      ref tup
-      const size
-    gt
-      ref ___2
-      ref ___tup_size
-      const 0
-    if
-      ref ___2
-      stmts
-        declare
-          ref value
-          prim_type_none
-          const "mut"
-          ref _
-        declare
-          ref index
-          prim_type_none
-          const "mut"
-          const 0
-        declare
-          ref key
-          prim_type_none
-          const "mut"
-          const ""
-        while
-          attr_get
-            ref key
-            ref tup
-            ref index
-            const "key"
-          tuple_get
-            ref value
-            ref tup
-            ref index
-          tuple_add
-            ref ___6
-            ref index
-            ref key
-            ref value
-          fcall
-            ref ___empty
-            ref mycall
-            ref ___6
-          plus
-            ref index
-            ref index
-            const 1
-          eq
-            ref ___3
-            ref ___tup_size
-            ref index
-          if
-            ref ___3
-            stmts
-              break
-    ```
-=== "LNAST ref for"
-    ```lnast
-    attr_get
-      ref ___tup_size
-      ref tup
-      const size
-    gt
-      ref ___2
-      ref ___tup_size
-      const 0
-    if
-      ref ___2
-      stmts
-        declare
-          ref value
-          prim_type_none
-          const "mut"
-          ref _
-        declare
-          ref index
-          prim_type_none
-          const "mut"
-          const 0
-        declare
-          ref key
-          prim_type_none
-          const "mut"
-          const ""
-        while
-          attr_get
-            ref key
-            ref tup
-            ref index
-            const "key"
-          tuple_get
-            ref tup
-            ref index
-            ref value
-          tuple_add
-            ref ___6
-            ref index
-            ref key
-            ref value
-          fcall
-            ref ___empty
-            ref mycall
-            ref ___6
-          store
-            ref tup
-            ref index
-            ref value
-          plus
-            ref index
-            ref index
-            const 1
-          eq
-            ref ___3
-            ref ___tup_size
-            ref index
-          if
-            ref ___3
-            stmts
-              break
-    ```
-
-
-The `for` comprehensions behave similarly, but the `cont`/`brk` statements have
-the value that must be concatenated (`tuple_concat`) to the result. If the last
-statement is an expression, the value is contatenated.
-
-## puts/print/format
-
-All the string variables must be known at compile time, but it is still OK to
-pass strings as arguments to simulation functions that have no side-effects in
-the running simulation like `puts` and `print`.
-
-`format` uses C++ fmt::format syntax and returns a string, so it must be solved
-at compile time. This means that the LNAST passes should have a `format`
-implementation to allow copy propagation to proceed. When format is used, a
-single  quote should be used to avoid string interpolation.
-
-
-The LNAST translation for all these instructions is just a normal function
-call. The `format` must be executed at compile time and propagate/copy as
-needed. The `puts`/`print` should generate simulation calls but not synthesis
-code.
-
+LNAST has both `while` and `for` nodes. It is not limited to `while`, and
+elaboration does not always expand every hardware loop into repeated source
+statements. The following comptime examples do expand and fold:
 
 ```pyrope
-const num = 1
-const color = "blue"
-const extension = "s"
-const text = "I have {num} {color} potato{extension}"
+// loops.prp
+mut i = 0
+loop {
+  i += 1
+  if i == 3 { break }
+}
+cassert(i == 3)
+mut sum = 0
+while mut j=0; j < 3 {
+  sum += j
+  j += 1
+}
+cassert(sum == 3)
+mut enumerated = 0
+for (index, value) in (2, 4, 6) {
+  enumerated += index + value
+}
+cassert(enumerated == 15)
+mut stepped_sum = 0
+for value in 0..=6 step 2 { stepped_sum += value }
+cassert(stepped_sum == 12)
 ```
 
-String interpolation lowers to string conversions and concatenation. When all
-embedded values are known at compile time, the result folds to one string.
-There is no `format(...)` built-in.
+**post-parse excerpt — while loop; initializer scope and initialization omitted.**
+
+```lnast
+while
+  ref %1721491827_0
+  stmts
+    lt
+      ref %1721491827_1
+      ref j
+      const 3
+    if
+      ref %1721491827_1
+      stmts
+        plus
+          ref %sum_0
+          ref sum
+          ref j
+        store
+          ref sum
+          ref %sum_0
+        plus
+          ref %j_0
+          ref j
+          const 1
+        store
+          ref j
+          ref %j_0
+      stmts
+        break
+          ref %1826580722_2
+```
+
+The condition is calculated before the `while` and again inside it. The
+inner `if` executes the body or breaks. An unconditional `loop` uses the
+same machinery with an always-true condition. `break` carries an internal
+reference in the dump; it is not a returned Pyrope value.
+
+The enumeration loop is represented directly as:
+
+**post-parse excerpt — enumeration; tuple construction omitted.**
+
+```lnast
+for
+  ref value
+  ref %3800684521_0
+  stmts
+    plus
+      ref %enumerated_0
+      ref index
+      ref value
+    plus
+      ref %enumerated_1
+      ref enumerated
+      ref %enumerated_0
+    store
+      ref enumerated
+      ref %enumerated_1
+  const val
+  ref index
+```
+
+The child order is value binding, iterable, body, iteration mode, and
+optional index/key bindings. The source `(index, value)` binding therefore
+is not the same order as the first two children of the `for` node.
+
+```pyrope
+// for_key.prp
+const tup = (const left=2, const right=4)
+mut sum = 0
+for (index, value, key) in tup { sum += value }
+cassert(sum == 6)
+```
+
+For this three-name binding, the parsed node ends with `const val`,
+`ref index`, and `ref key`. The sum assertion passes; named-tuple ordering
+should not be inferred from this order-independent sum.
+
+```pyrope
+// for_ref.prp
+mut tup = (1, 2, 3)
+for value in ref tup { value += 1 }
+cassert(tup == (2, 3, 4))
+```
+
+**post-parse excerpt.**
+
+```lnast
+for
+  ref value
+  ref tup
+  stmts
+    plus
+      ref %value_0
+      ref value
+      const 1
+    store
+      ref value
+      ref %value_0
+  const ref
+```
+
+The `const ref` mode requests write-back to the original tuple. Its
+post-upass body contains stores to tuple positions 0, 1, and 2, and the
+assertion confirms `(2, 3, 4)`.
+
+### Compact hardware loops
+
+A typed accumulator can keep a hardware loop compact under the default
+`compile.unroll=false` policy:
+
+```pyrope
+// compact_loop.prp
+comb sum_lanes(a:[4]U4) -> (y:U8) {
+  mut total:U8 = 0
+  for i in 0..<4 { wrap total += a[i] }
+  y = total
+}
+cassert(sum_lanes((1, 2, 3, 4)) == 10)
+```
+
+**post-upass excerpt — rolled_for from compact_loop.sum_lanes.**
+
+```lnast
+rolled_for
+  ref i
+  const 0
+  const 1
+  const 4
+  const
+  const
+  tuple_add
+    store
+      ref total__carry_in
+      const total__carry_out
+  stmts
+    tuple_get
+      ref %total_0
+      ref a
+      ref i
+    plus
+      ref %total_1
+      ref total
+      ref %total_0
+    fcall
+      ref %total_2
+      ref wrap
+      store
+        ref v
+        ref %total_1
+      store
+        ref type
+        ref total
+    store
+      ref total
+      ref %total_2
+  stmts
+    fcall
+      ref %u_loop_0_r
+      ref compact_loop.sum_lanes.__loop0
+      store
+        ref __inst_name
+        const u_loop_0
+      store
+        ref a
+        ref a
+      store
+        ref total__carry_in
+        ref total
+      store
+        ref __valid
+        const true
+    store
+      ref total
+      ref %u_loop_0_r
+```
+
+This dump also contains the generated unit
+`compact_loop.sum_lanes.__loop0`. The retained loop records the iteration
+bounds and the accumulator's carry connection. `compile.unroll=true`
+requests source expansion; loops that are not eligible for compact lifting
+can expand under either setting. A finite hardware loop is not necessarily
+an eagerly unrolled LNAST tree.
+
+To build a tuple with a loop, use an explicit mutable accumulator and splice
+entries into it, as described in [for](05b-statements.md#loop-for). The old
+claim that `cont`/`brk` carry comprehension values is not an emitted-node
+contract.
+
+## puts/print
+
+Interpolation is built before the printing call. In the parsed tree below,
+a `String` call receives literal fragments and interpolated operands:
+
+```pyrope
+// strings.prp
+const num = 2
+const color = "blue"
+const text = "I have {num} {color} potatoes"
+cassert(text == "I have 2 blue potatoes")
+cputs(text)
+puts(text)
+print("count={num}")
+```
+
+**post-parse excerpt.**
+
+```lnast
+fcall
+  ref %text_0
+  ref String
+  const 'I have '
+  ref num
+  const ' '
+  ref color
+  const ' potatoes'
+fcall
+  ref %2917045464_0
+  ref cputs
+  ref text
+fcall
+  ref %318168145_0
+  ref puts
+  ref text
+fcall
+  ref %3932631745_0
+  ref String
+  const 'count='
+  ref num
+fcall
+  ref %1055615812_0
+  ref print
+  ref %3932631745_0
+```
+
+The text assertion passes, and `cputs` reports `I have 2 blue potatoes`
+during compilation. A post-upass tree can fold the string construction and
+consume compile-time calls; absence of an `fcall` there is not by itself a
+simulation trace. The snippet checks translation and constant evaluation,
+not the execution of runtime `puts`/`print`. There is no separate
+`format(...)` built-in in this example.
 
 ## Lambda call
 
-A lambda call arguments requires do not always require to be named like when a
-variable used matches a calling argument. To support the matching while
-processing the LNAST, the arguments tuple must be named for all the arguments
-unless an argument is an expression.
+Named arguments are `store` children of the `fcall` itself. A bare argument
+can remain a bare `ref` in the parsed tree; argument binding is resolved by
+the compiler, not by wrapping every source call in one prebuilt named tuple.
 
+```pyrope
+// calls.prp
+comb add(a:U4, b:U4) -> (sum:U5) { sum = a + b }
+const a:U4 = 2
+const result = add(a, b=3)
+const cell = __sum(`as`=(1, 2, 3))
+cassert(result == 5)
+cassert(cell == 6)
+```
 
-=== "Pyrope"
-    ```pyrope
-    x = fcall(a,b=3,foo,1+2)
-    ```
-=== "LNAST"
-    ```lnast
-    plus
-      ref ___t
-      const 1
-      const 2
+**post-parse excerpt.**
 
-    tuple_add
-      ref ___args
-      store
-        ref a
-        ref a
-      store
-        ref b
-        const 3
-      store
-        ref foo
-        ref foo
-      ref ___t
+```lnast
+fcall
+  ref %result_0
+  ref add
+  ref a
+  store
+    ref b
+    const 3
+tuple_add
+  ref %cell_0
+  const 1
+  const 2
+  const 3
+fcall
+  ref %cell_1
+  ref __sum
+  store
+    ref as
+    ref %cell_0
+```
 
-    fcall
-      ref x
-      ref fcall
-      ref ___args
-    ```
+The `add` call contains the bare `ref a` and a named `store b`; the cell
+call contains a named `store as` referring to the positional operand tuple.
+Both assertions pass.
+
+A post-parse file can contain an `fdef` marker with `__streamed_comb` or
+`__streamed_mod` and an opaque body identifier. The lambda body is materialized
+later as its own unit. For example, the post-upass dump includes `calls.add`,
+whose body is:
+
+**post-upass excerpt — body of calls.add; io omitted.**
+
+```lnast
+plus
+  ref %sum_0
+  ref a
+  ref b
+store
+  ref sum
+  ref %sum_0
+```
+
+The surrounding unit can instead contain an inlined call with folded
+operands. Do not confuse the streamed marker, the specialized/inlined call,
+and the materialized lambda unit: they are different views of the same
+source at different stages.
+
+## Assertions in the dump
+
+Assertions are not ordinary `fcall` nodes in the current parsed tree. The
+node name is `cassert`, with a marker distinguishing the source operation:
+
+```pyrope
+// assertions.prp
+const k = 2
+cassert(k == 2)
+assert(k > 0)
+assume(k < 3)
+```
+
+**post-parse excerpt.**
+
+```lnast
+eq
+  ref %3023404487_0
+  ref k
+  const 2
+cassert
+  ref %3023404487_0
+  const __fkind__cassert
+gt
+  ref %1078686553_0
+  ref k
+  const 0
+cassert
+  ref %1078686553_0
+lt
+  ref %3061419811_0
+  ref k
+  const 3
+cassert
+  ref %3061419811_0
+  const __fkind__assume
+```
+
+`__fkind__cassert` identifies the compile-time assertion;
+`__fkind__assume` identifies the assumption; plain `assert` has no such
+marker here. Sharing an IR node does not give them identical semantics.
+All conditions in this input are known and disappear after verification.
+See [Assertions](05-assert.md) for formal obligations and the TBD runtime
+fallback for design-body assertions in `lhd sim`.
+
+## Validation scope
+
+The examples above were compiled individually with fresh work directories,
+and both parse and post-upass dumps were inspected. All their `cassert`
+checks passed. The bit-selection, reduction, conditional, register, call,
+unsigned-complement, and compact-loop examples also completed graph lowering.
+These checks establish the shown translations and concrete results; they do
+not establish that every feature or operand combination has a hardware
+implementation. In particular, this chapter supplies no lowering claim for
+unfinished fluid support.

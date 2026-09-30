@@ -16,8 +16,9 @@
     `peek`/`poke` are **removed** in favor of bare reads and `regref` writes. Still not implemented: the whole [temporal library](#temporal-library)
     below (`past`/`rose`/`fell`/`stable`/`changed`/`eventually`/`always` — only
     the pipelining form `past[N](x)` exists, and only in a design body), the
-    `force`/`release`. `for` loops work; `.[rand]` and `.[crand]` are rejected
-    inside a `test` block. See
+    `force`/`release`. `for`/`while`/`loop` statements, `.[rand]` and
+    `.[crand]` are rejected inside a `test` block (write a cycle loop as
+    `tick N { … }`), and a `test` nested in a top-scope `for` is not found. See
     [Implementation status](15-tbd.md).
 
 To INSPECT a run after the fact — read a signal at a cycle, count transitions,
@@ -35,7 +36,7 @@ The design rules are:
 
 * Reuse existing `test`, `tick`, `step`, and `assert`; express waiting
   and concurrency with `if`/`continue`/`break`, not new statement families.
-* Prefer temporal reads such as `rose(sig)` over new wait primitives.
+* Prefer temporal reads such as `rose(x=sig)` over new wait primitives.
 * Keep monitors as inline checks (or a golden `mut`/`cpp` model) in the loop.
 * Keep logging, wave dumps, and solver libraries out of the core language when
   the runner can provide them.
@@ -55,15 +56,15 @@ language does not need a separate `Timer(..., units=...)` API.
 | `dut.sig.value = x` | `acc.sig = x`, or `regref(acc.sig)` bound once |
 | `dut.sig.value` | `acc.sig` |
 | `dut._id(...)` cached handle | `mut h = regref(acc.core0.count)` — register reference bound outside the loop |
-| `await RisingEdge(dut.valid)` | `step; if not rose(acc.valid) { continue }` (TBD) |
-| `await FallingEdge(dut.ready)` | `step; if not fell(acc.ready) { continue }` (TBD) |
-| `await Edge(dut.sig)` | `step; if not changed(acc.sig) { continue }` (TBD) |
+| `await RisingEdge(dut.valid)` | `step; if not rose(x=acc.valid) { continue }` (TBD) |
+| `await FallingEdge(dut.ready)` | `step; if not fell(x=acc.ready) { continue }` (TBD) |
+| `await Edge(dut.sig)` | `step; if not changed(x=acc.sig) { continue }` (TBD) |
 | `await Timer(5 cycles)` | `step 5` |
 | `while True: await ...` (driver/monitor) | the `tick N { ... step ... }` loop itself |
 | `@cocotb.test(timeout_time=N)` | `tick N { ... }` (the bound is the timeout) |
 | `cocotb.start_soon(coro())` / `await t` / `task.cancel()` | no threads — interleave each "task" as an `if`-block in the one `tick` loop |
-| `Force` / `Release` | `force(dut.block.signal, value)` / `release(dut.block.signal)` |
-| `@cocotb.parametrize(...)` / plusargs | `test foo.bar(arg:T=def)` → `lhd sim foo.prp foo.bar --arg arg=val` |
+| `Force` / `Release` | `force(signal=dut.block.signal, value=v)` / `release(dut.block.signal)` |
+| `@cocotb.parametrize(...)` / plusargs | `test foo.bar(arg:T=def)` → `lhd sim foo.prp foo.bar +arg=val` |
 | `Scoreboard` / golden model | a golden `mut` updated each cycle, or `cpp("model")` |
 
 The main difference is that Pyrope keeps the verification code inside the same
@@ -151,8 +152,8 @@ advance and the condition could never change.
 ### Edge-sensitive reads
 
 The condition can be any boolean, including an edge read from the
-[temporal library](#temporal-library) — `rose(sig)`, `fell(sig)`,
-`changed(sig)`. These are the single-cycle case of the windowed forms and work
+[temporal library](#temporal-library) — `rose(x=sig)`, `fell(x=sig)`,
+`changed(x=sig)`. These are the single-cycle case of the windowed forms and work
 anywhere a boolean is expected: a wait's `if` or an `assert`.
 
 ```pyrope
@@ -160,7 +161,7 @@ test edge.checks {
   mut dut = Top
   tick 64 {
     step
-    assert(not rose(dut.clk_en), "unexpected clock enable")   // TBD
+    assert(not rose(x=dut.clk_en), "unexpected clock enable")   // TBD
   }
 }
 ```
@@ -185,7 +186,7 @@ but it does not persist on its own. `force` and `release` are the persistent
 counterpart, and differ on both axes — they override `q` and they survive edges
 until released:
 
-* `force(signal, value)` overrides the signal until released.
+* `force(signal=s, value=v)` overrides the signal `s` until released.
 * `release(signal)` removes the override and restores the normal driver.
 
 ```pyrope
@@ -194,7 +195,7 @@ test fault.inject {
 
   assert(!dut.mem.error)
 
-  force(dut.mem.error, true)
+  force(signal=dut.mem.error, value=true)
   step 3
   assert(dut.core.exception)
 
@@ -229,8 +230,8 @@ test monitor.req_ack {
   tick 1000 {
     // ... drive the bus here ...
     step
-    if rose(dut.req) { outstanding = outstanding + 1 }   // TBD: rose()
-    if rose(dut.ack) {
+    if rose(x=dut.req) { outstanding = outstanding + 1 }   // TBD: rose()
+    if rose(x=dut.ack) {
       assert(outstanding > 0, "ack without req")
       outstanding = outstanding - 1
     }
@@ -256,7 +257,7 @@ with [`cpp`](07-typesystem.md#external-c-calls-via-cpp) and call its typed
 methods like any other lambda:
 
 ```pyrope
-type GcdModel = ( call_method1: comb(a:u8, b:u3) -> (foo:u8, bar:u33) )
+type GcdModel = ( call_method1: comb(a:U8, b:U3) -> (foo:U8, bar:U33) )
 const gold:GcdModel = cpp("gcd_model")
 
 test gcd.check {
@@ -265,8 +266,8 @@ test gcd.check {
     dut.a = a
     dut.b = 3
     step
-    const (foo, _bar) = gold.call_method1(a=a, b=3)
-    assert(dut.z == foo)                 // DUT checked against the C++ reference
+    const r = gold.call_method1(a=a, b=3)
+    assert(dut.z == r.foo)               // DUT checked against the C++ reference
   }
 }
 ```
@@ -303,7 +304,7 @@ flow.
 ```pyrope
 test random.opcodes {
   mut dut = Top
-  mut opcode:u4 = 0
+  mut opcode:U4 = 0
 
   for i in 0..<100 {
     for _retry in 0..<64 {        // bounded retry: an unrolled loop, not `while true`
@@ -324,9 +325,12 @@ the core language.
 
 ## Temporal library
 
-SVA-style sampling over time. Every cycle argument is an ordinary **positional
-argument** — Pyrope has no comptime-parameter slot on a call, so there is no
-`f[N](x)` bracket form.
+SVA-style sampling over time. Every cycle argument is an ordinary **named
+argument** (`n=`, `w=`) — Pyrope has no comptime-parameter slot on a call, so
+there is no `f[N](x)` bracket form. The builtins follow the normal
+[argument naming](06-functions.md#argument-naming) rules: the sampled value
+binds to `x` unnamed only when it is a variable literally named `x`, so a
+signal such as `dut.req` is passed as `x=dut.req`.
 
 !!! WARNING "Not implemented"
     Nothing in this section works today. It is the agreed target surface, kept
@@ -340,7 +344,7 @@ argument** — Pyrope has no comptime-parameter slot on a call, so there is no
 
 ```pyrope
 past(x)             // x one cycle ago
-past(x, 3)          // x three cycles ago
+past(x, n=3)        // x three cycles ago
 rose(x)             // x became true this cycle
 fell(x)             // x became false this cycle
 stable(x)           // x is unchanged from last cycle
@@ -394,24 +398,24 @@ assert property (@(posedge clk) $rose(req) |-> ##[1:10] $rose(ack));
 is intended to translate as:
 
 ```pyrope
-assert(rose(req) implies rose(ack, 1..=10))
+assert(rose(x=req) implies rose(x=ack, w=1..=10))
 ```
 
 More examples (all TBD):
 
 ```pyrope
 // payload stable during a 5-cycle handshake window
-assert(req implies stable(payload, 1..=5))
+assert(req implies stable(x=payload, w=1..=5))
 
 // ack must rise within 32 cycles of req
-assert(rose(req) implies eventually(ack, 1..=32))
+assert(rose(x=req) implies eventually(x=ack, w=1..=32))
 
 // grant is clean-high while sel is held
-assert(sel implies always(grant, 1..=10))
+assert(sel implies always(x=grant, w=1..=10))
 
 // past values
-assert(enable implies counter == past(counter) + 1)
-assert(x == past(x, 3))          // same value three cycles ago
+assert(enable implies counter == past(x=counter) + 1)
+assert(x == past(x, n=3))        // same value three cycles ago
 ```
 
 These are properties over time, so they belong in a
@@ -449,7 +453,7 @@ intentionally does not add:
 | `rose(x [, w])`, `fell(x [, w])` | `formal`, `test` | TBD | Edge, this cycle or within window `w` |
 | `stable(x [, w])`, `changed(x [, w])` | `formal`, `test` | TBD | Value-stability, this cycle or across `w` |
 | `eventually(x, w)`, `always(x, w)` | `formal`, `test` | TBD | Existence / universal quantifier over the cycles in bounded window `w` |
-| `force(signal, val)` | `test` only | TBD | Override a signal persistently: overrides `q` and survives edges — see [Force and release](#force-and-release) for how it differs from a `regref` write |
+| `force(signal=s, value=v)` | `test` only | TBD | Override a signal persistently: overrides `q` and survives edges — see [Force and release](#force-and-release) for how it differs from a `regref` write |
 | `release(signal)` | `test` only | TBD | Remove the override and restore the driver |
 | `cpp("target")` | `test` only | TBD | Bind an external C++ model (golden model, scoreboard) |
 

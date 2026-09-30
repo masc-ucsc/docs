@@ -15,7 +15,9 @@ Two invariants are properties of the binary, not flags:
 
 * **Deterministic**: output bytes are a pure function of the inputs. The
   reported `run_id` is a content hash of (tool version + command + resolved
-  config + input bytes), never wall-clock/random. If a timestamp must be
+  config + input bytes), never wall-clock/random. The input bytes include
+  every file a Pyrope source's `import(...)` resolves to, transitively, so
+  editing an imported file moves the `run_id`. If a timestamp must be
   embedded it comes from the `SOURCE_DATE_EPOCH` convention.
 * **Hermetic**: a source file the frontend cannot find within its declared
   inputs is a `missing_file` error, never a silent reach into the filesystem.
@@ -77,7 +79,7 @@ Every input/output is a typed slot `KIND:PATH`. The main IR kinds:
 | Kind | Contents |
 |------|----------|
 | `ln:` | the design's LNAST units — an `hhds::Forest` save directory (`forest.txt` + binary tree bodies) plus a `manifest.json` unit index. Alias: `lnast:` |
-| `lg:` | the design's LGraphs — an `hhds::GraphLibrary` save directory (`library.txt` + binary graph bodies). Aliases: `design:`, `lgraph:` |
+| `lg:` | the design's LGraphs — an `hhds::GraphLibrary` save directory (`library.txt` + binary graph bodies; a Pyrope compile also records there which modules each design saved and its top modules, `lhd_owners.json`, so a compile sharing the directory never prunes another design's tops or anything they still instantiate). Aliases: `design:`, `lgraph:` |
 | `verilog:` | Verilog source. As `--emit`, a deterministic name-sorted concatenation of the per-module `inou.cgen.verilog` output |
 | `pyrope:` | Pyrope source. As `--emit-dir`, a per-unit `.prp` re-emission via `pass.prp_writer` (needs `ln:`/pyrope inputs) |
 | `lnast-dump:` | round-trippable textual LNAST dump (the `Lnast::dump` text form), one `<unit>.lnast` per unit. A debug/test observable; the binary interchange form is `ln:` |
@@ -267,7 +269,7 @@ formal verify: 'cnt.cnt' REFUTED (...)
   assert at cnt.prp:5: PROVEN (inductive — every cycle of every bound)
   assert at cnt.prp:6 "counter hit 5": REFUTED at cycle 7
     counterexample inputs: cyc0: enable=0, reset=1 | ... | cyc6: enable=1, reset=0
-  assume at cnt.verify.prp:4 [cnt.quiet]: in force (environment constraint)
+  assume at cnt.verify.prp:4 [cnt.quiet]: in force (UNCHECKED assume_nocheck; verdicts are conditional and unchecked)
 ```
 
 Verdict tiers, per assert: `PROVEN (inductive)` holds at every cycle of every
@@ -276,9 +278,10 @@ bound (the bounded proof plus an induction step); `PROVEN to cycle k
 cycle k` is a reachable violation with the per-cycle input trace that
 reproduces it from reset (the run exits non-zero, `error.class =
 equiv_fail`); `UNKNOWN` (solver gave up / contradictory assumes) is a loud
-warning that fails only under `--set formal.strict=true`. An `assume` is an
-environment constraint: it prunes the explored traces and is disclosed in the
-table.
+warning that fails only under `--set formal.strict=true`. A plain `assume` is
+checked like an assert and constrains the other properties only once it is
+proven; `assume_nocheck` is the environment constraint that prunes the explored
+traces without a check, and the table discloses it as UNCHECKED.
 
 Properties can live inline in the design or in *sidecar* files as
 `formal name.dotted { ... }` blocks — declarative every-cycle claims over

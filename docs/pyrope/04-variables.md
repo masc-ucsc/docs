@@ -28,15 +28,15 @@ un-taken path is a don't-care, not an unknown). A second assignment is a rebind
 error, and — unlike a `wire` — the bind must precede every read.
 
 ```pyrope
-const w:u8 = nil       // forward declaration: no value yet
+const w:U8 = nil       // forward declaration: no value yet
 if c {
-  w = a + 1            // the ONE bind; `w` is `a + 1` whether or not `c` holds
+  wrap w = a + 1       // the ONE bind; `w` is `a + 1` whether or not `c` holds
 }
 o = w                  // read AFTER the bind
 ```
 
 
-Every declaration starts with one of seven **kind keywords**:
+Implemented declarations start with one of seven **kind keywords**:
 
 | Kind    | Category | Implicit mutability |
 |---------|----------|---------------------|
@@ -48,6 +48,9 @@ Every declaration starts with one of seven **kind keywords**:
 | `pipe`  | lambda   | immutable (always)  |
 | `mod`   | lambda   | immutable (always)  |
 
+`fluid` is an additional, TBD lambda kind: its syntax parses, but LiveHD does
+not lower it yet. See [Fluid Blocks](06d-fluid.md).
+
 The four data kinds take `= expression`; the three lambda kinds take a
 parameter list and a body. Data declarations:
 
@@ -57,15 +60,21 @@ parameter list and a body. Data declarations:
 * `reg variable [:type] [:[attribute list]] = reset_expression`
 
 When the type is omitted but attributes are given, the type colon remains:
-`reg counter::[retime=true] = 0` but `reg counter:u8:[retime=true] = 0`.
+`reg counter::[retime=true] = 0` but `reg counter:U8:[retime=true] = 0`.
 Bare attributes are always `::[...]` — a single `:[...]` after the variable
-name would parse as an array type (`:[16]u8`).
+name would parse as an array type (`:[16]U8`).
 
 Lambda declarations:
 
-* `comb name[comptime_params][args] [-> outputs] { body }`
-* `pipe[N] name[comptime_params][args] [-> outputs] { body }`
-* `mod name[comptime_params][args] [-> outputs] { body }`
+* `comb name [<generics>] [::[attrs]] (inputs) -> (outputs) { body }`
+* `pipe[N] name [<generics>] [::[attrs]] (inputs) -> (outputs) { body }`
+* `mod name [<generics>] [::[attrs]] (inputs) -> (outputs) { body }`
+
+The `<generics>` list and the `::[attrs]` slot are optional
+(`mod legacy::[timecheck=false](…)`, `mod add<T>::[…](…)`); `-> (outputs)` is
+mandatory (`-> ()` for none; only a `self` method may omit it). In `pipe[N]`
+the latency `[N]` is part of the keyword, and a bare `pipe` lets the caller
+pick it (see [Functions](06-functions.md#declaration)).
 
 This rule applies uniformly, including inside **tuple literals**: any
 **named** field must start with one of these kind keywords. Bare
@@ -78,18 +87,20 @@ A **positional** (unnamed) field is just a value expression and inherits
 its mutability from the enclosing tuple. To override that mutability on a
 single positional field, prefix the value with `const` or `mut` —
 `(1, const 3)` is two positional fields, the second one immutable.
+A tuple literal is either all named or all positional: mixing the two
+(`(1, const b=2)`) is a compile error (see [Tuples](03-bundle.md)).
 Positional fields take no name slot, so `const _ = 3` is not valid (and
 bare `_` is reserved as a future placeholder, see
 [Identifiers](02-basics.md#identifiers)).
 
 ```pyrope
-const point = (mut x:u8 = 0, mut y:u8 = 0)
+const point = (mut x:U8 = 0, mut y:U8 = 0)
 
 const counter_iface = (
-  ,mut value:u8 = 0
-  ,comb read(self) -> (v:u8)      { v = self.value }
+  ,mut value:U8 = 0
+  ,comb read(self) -> (v:U8)      { v = self.value }
   ,comb inc(ref self)             { wrap self.value += 1 }
-  ,mod tick(ref self, enable:bool) { if enable { self.value += 1 } }
+  ,mod `tick`(ref self, enable:Bool) { if enable { wrap self.value += 1 } }
 )
 
 mut y = (1, const 3)              // 2nd field positional and immutable
@@ -102,10 +113,16 @@ kind keyword is required there.
 The generics list after a lambda name (`<T, N=4>`) declares explicit
 compile-time parameters — types, constants, or lambdas (see
 [Functions](06-functions.md)).
-It is not a capture list. Lambdas can lexically read visible comptime bindings
-from enclosing scopes, but runtime `const`, `mut`, and `reg` declarations from
-enclosing lambda scopes are not visible in nested lambdas unless passed as
-normal inputs. The compiler records lexical comptime references as explicit
+It is not a capture list. Name lookup is lexical: lambdas can read visible
+comptime bindings from enclosing scopes (`comptime const`, a plain `const`
+whose value is a compile-time constant such as a file-scope `const x = 2`,
+generics of the enclosing lambda, the index of an enclosing `for`, imports,
+types, and lambdas). Reading an enclosing **runtime** value — a `const`
+computed from a runtime value, a `mut`, `reg`, `wire`, input, or the element
+of a `for` over runtime values — is a compile error; pass the value as a
+normal input.
+Reading a name with no accessible declaration is a compile error at the read,
+never `nil`. The compiler records lexical comptime references as explicit
 comptime dependencies of the lambda.
 
 
@@ -117,7 +134,7 @@ comptime dependencies of the lambda.
     {
       assert(a == 3)
       a = 33             // OK. assign 33
-      a = signed(33)        // OK, explicit conversion/check on the RHS
+      a = Signed(33)        // OK, explicit conversion/check on the RHS
       const b = 4
       const a = 3333       // error: variable shadowing
       mut a = 33         // error: variable shadowing
@@ -143,8 +160,18 @@ comptime dependencies of the lambda.
     assert(b == 3) // error: undefined variable 'b'
 
     mut a = 3
+    const k = 2          // current value is known at compile time
     comb f2() -> () {
-      // assert a == 3   // error: runtime outer variable not visible
+      cassert(k == 2)    // OK: `k` is a constant
+      // assert(a == 3)  // error: runtime outer variable not visible
+    }
+    mod m(i:U8) -> (o:U9@[0]) {
+      const s = i + 1    // computed from the input `i`: a runtime value
+      comb f3() -> (r:U9) {
+        // r = s         // error: `s` is runtime; pass it as an input
+        r = k            // OK
+      }
+      o = f3()
     }
     ```
 
@@ -166,16 +193,19 @@ comptime dependencies of the lambda.
     const r3 = (a = 1)   // error: tuple field missing kind keyword
     ```
 
-* Shadowing is not allowed in lambdas or code blocks. Tuple field initializers
-  follow program order and can read earlier tuple fields by name.
+* Shadowing is not allowed in lambdas or code blocks. A visible enclosing
+  comptime binding counts: a lambda local or loop index named like a
+  file-scope `const x = 2` shadows it. Tuple field initializers follow program
+  order and can read earlier tuple fields by name.
 
 * Data tuple literals do not have a `self` binding. The `self` name is only
   available when declared as a lambda argument, such as in tuple methods.
 
 * Tuple upper scope variables are always immutable.
 
-* Lambdas lexically see only visible comptime bindings from upper scopes.
-  Runtime upper scope variables must be passed explicitly.
+* Lambdas lexically see only visible comptime bindings from upper scopes
+  (a `const` with a compile-time value included). Runtime upper scope values
+  (file-scope ones included) must be passed explicitly.
 
 * A variable is visible from definition until the end of scope in program order.
 
@@ -187,7 +217,7 @@ allowed to declare them as `mut` and redundant to declare them as `const`.
 Tuple scope is also useful for declaring function default values:
 
 ```pyrope
-comb example(a:signed, b:signed=a+5) -> (result:signed) {
+comb example(a:Signed, b:Signed=a+5) -> (result:Signed) {
   result = a + b
 }
 cassert(example(a=3) == (3+3+5))
@@ -196,53 +226,102 @@ cassert(example(a=6) == (6+6+5))
 assert(example(b=3) !=0) // error: undefined `a` argument
 ```
 
+A default does not change what kind of unit a `comb` is. Only a `comb` with
+an untyped input or with generics is a template, inlined at each call with no
+module of its own. A fully typed `comb` stays a normal unit with its own module
+(it can be the compile top) even when an input has a default:
+`comb inc(a:U8, b:U8=1) -> (r:U9)` has a real `b` port, and the default
+applies only at a call site that omits `b` (see
+[Functions](06-functions.md#declaration)).
+
 ## Basic types
 
-Pyrope has 7 basic types:
+Pyrope has 9 basic types:
 
-* `boolean`: either `true` or `false`
+* `Bool`: `true` or `false`, or an unknown comparison result (`0sb?`).
+  `Bool(x)` is the cast from an integer.
+* `Clock` / `Reset`: the clock and reset wires of registers, described in the
+  [type system](07-typesystem.md#clock-and-reset)
 * `enum`: enumerated values, optionally with a per-case payload (the equivalent of a tagged union)
 * `comb`: A function or pure combinational logic
-* `signed`: a signed integer of unlimited precision
+* `Signed`: a signed integer of unlimited precision
 * `mod`: A module with state/clock or side-effects
 * `range`: A one hot encoding of values `1..=3 == 0ub1110`
-* `string`: which is a sequence of characters
+* `String`: which is a sequence of characters
+
+All the types except functions and `Clock` can be converted back and forth to
+an integer. A `Clock` is not data: `U1(clk)` is a compile error, and its
+numeric view (a cycle counter in simulation) is readable only in debug
+contexts (tests, `puts`, `assert`/`cassert`). A `Reset` is Bool-like.
+
+Built-in type names are capitalized: `U<num>`, `S<num>`, `Unsigned`,
+`Signed`, `Bool`, `String`, `Clock`, and `Reset`. They are reserved type
+words, and the old lowercase spellings (`u8`, `s20`, `i32`, `bool`,
+`string`, ...) are **banned words**: a compile error in every position, names
+included (`s1`, `i0`, `u4`). A backticked reserved or banned word is an
+ordinary name. The full rules are in
+[Built-in types](07-typesystem.md#built-in-types) and
+[Identifiers](02-basics.md#identifiers).
+
+```pyrope
+mut s1 = 3            // error: `s1` is a banned word (the type is `S1`)
+mut st1 = 3           // OK
+mut `s1` = 3          // OK: backticked, an ordinary name
+mut U4 = 3            // error: `U4` is a reserved type word
+mut `U4` = 3          // OK: a variable named U4, not the type
+mut g:u8 = 0          // error: `u8` was renamed `U8`
+```
 
 
-All the types except functions can be converted back and forth to an
-integer.
-
-
-### Integer or `signed`
+### Integer or `Signed`
 
 Integers have unlimited precision and they are always signed. Unlike most other
 languages, there is only one type for integer (unlimited), but the type system
 allows to add constraints to be checked when assigning the variable contents.
-Notice that the type is the same (`u32` is the same type as `s3`, they just have
+Notice that the type is the same (`U32` is the same type as `S3`, they just have
 different constraints). The `does` operator compares the range envelope: `a does
 b` is true when `a`'s range is a superset of `b`'s (`a.max >= b.max and a.min <=
-b.min`). So `u32 does u16` is true (u32's range covers u16's) but `u16 does u32`
+b.min`). So `U32 does U16` is true (U32's range covers U16's) but `U16 does U32`
 is false. Assignment still performs the additional range and precision checks
 described in the attribute section:
 
-* `signed`: an unlimited precision integer number.
-* `unsigned`: the same as `signed(min=0)` — a de-facto unsigned integer. There is
+* `Signed`: an unlimited precision integer number.
+* `Unsigned`: the same as `Signed(min=0)` — a de-facto unsigned integer. There is
   nothing special beyond the constraint, but it usually allows nicer Verilog
   generation (`logic` vs `signed logic`).
-* `u<num>`: An integer basic type constrained to be a natural number with a maximum value of $2^{\texttt{num}}-1$. E.g: `u10` can go from zero to 1023.
-* `s<num>`: a signed (2s complement) number with a maximum value of $2^{\texttt{num}-1}-1$ and a minimum of $-2^{\texttt{num}-1}$.
+* `U<num>`: An integer basic type constrained to be a natural number with a maximum value of $2^{\texttt{num}}-1$. E.g: `U10` can go from zero to 1023.
+* `S<num>`: a signed (2s complement) number with a maximum value of $2^{\texttt{num}-1}-1$ and a minimum of $-2^{\texttt{num}-1}$.
+  There is no `I<num>`/`i<num>` spelling: `i32` is a compile error (write `S32`).
+* `Unsigned(bits=N)` / `Signed(bits=N)`: the same as `U<num>`/`S<num>` when the width
+  is a comptime expression, such as a generic. `num` in `U<num>` is a literal,
+  so a generic width has no `U<num>` form. It is valid wherever a type is: ports, locals,
+  tuple field types, array elements (`[N]Unsigned(bits=N)`), type aliases
+  (`type Row = Unsigned(bits=N)`), and generic arguments.
 
 ```pyrope
-mut a:signed         = nil // any value, no constrain
-mut b:unsigned    = nil // only positive values
-mut c:u13         = nil // only from 0 to (1<<13)-1
-mut d:signed(min=20, max=30) = nil // only values from 20 to 30 (both included)
-mut e:signed(min=-5, max=5) = nil // only values from -5 to 5 (both included)
-mut f:signed(min=-1, max=0) = nil // 1 bit integer: -1 or 0
+mut a:Signed         = nil // any value, no constrain
+mut b:Unsigned    = nil // only positive values
+mut c:U13         = nil // only from 0 to (1<<13)-1
+mut d:Signed(min=20, max=30) = nil // only values from 20 to 30 (both included)
+mut e:Signed(min=-5, max=5) = nil // only values from -5 to 5 (both included)
+mut f:Signed(min=-1, max=0) = nil // 1 bit integer: -1 or 0
+mut g:i8          = nil // error: `i8` was renamed `S8`
+
+comb pad<N=8>(a:Unsigned(bits=N)) -> (y:Unsigned(bits=N+1)) { y = a }
+```
+
+A type word can head a suffix chain: `U8.[max]` reads an attribute of the
+type, and `U8(x)#[0]` selects a bit of the cast result. A type has no fields,
+so `U8.x` is an error.
+
+```pyrope
+cassert(U8.[max] == 255)
+cassert(U8(6)#[1] == 1)
+const bad = U8.x      // error: a type has no fields
 ```
 
 Integers can have 3 value (`0`,`1`,`?`) expression or a `nil`. Section
-[Integers](02-basics.md#Integers) has more details, but those values can not be
+[Integers](02-basics.md#integers) has more details, but those values can not be
 part of the type requirement.
 
 
@@ -252,24 +331,33 @@ Pryope number or an assertion is raised.
 
 ### Boolean
 
-A boolean is either `true` or `false`. Booleans can not mix with integers in
-expressions unless there is an explicit typecast (`signed(false)==0`,
-`signed(true)==-1`, `boolean(0)==false`, and `boolean(1)==true`). Unlike
-integers, booleans do not support undefined value. A typecast from integer to
+A known boolean is either `true` or `false`. Comparisons involving unknown
+bits can produce an unknown boolean (`0sb?`), which may be bound to a variable:
+
+```pyrope
+const flag = 0sb? == 0       // legal: flag is 0sb?
+cassert(flag)               // error: an unknown result cannot satisfy cassert
+```
+
+Booleans can not mix with integers in
+expressions unless there is an explicit typecast (`U1(false)==0`,
+`U1(true)==1`, `Bool(0)==false`, and `Bool(1)==true`). A typecast from integer to
 boolean will raise an assertion when the integer is a comptime and has
 undefined bits (`?`) or `nil`. Like with `unique if...` chains that generate a
 hotmux and the compiler does a quick formal to check that it is unique, we do
-the same for `boolean(x)` conversion to check that it is known (not `?`) but
+the same for `Bool(x)` conversion to check that it is known (not `?`) but
 there is a quick timeout. Unlike `unique if` that falls the unfinished checks
 to simulation, we can not know at simulation because we do not do unknowns at
 simulation. So a raised error is a guarantee of error, but a not-raised is not
 a guarantee (just a warning is issued).
 
 
-Hardware realizes a boolean result as one unsigned bit (`u1`): false is `0`
-and true is `1`. An explicit `signed(bool)` or `sN(bool)` cast deliberately
-reinterprets that single bit as signed, so true becomes the one-bit signed
-all-ones value `-1`; `unsigned(bool)` and `uN(bool)` preserve it as `1`.
+Hardware realizes a boolean result as one unsigned bit (`U1`): false is `0`
+and true is `1`. The idiomatic bool->bit conversion is `U1(b)`;
+`Unsigned(b)` and `U<num>(b)` also preserve true as `1`. An explicit
+`Signed(b)` or `S<num>(b)` cast deliberately reinterprets that single bit as
+signed, so true becomes the one-bit signed all-ones value `-1`. That is a
+reinterpretation, not the way to turn a flag into a number.
 
 ```pyrope
 const b = true
@@ -282,13 +370,35 @@ mut d = b or false   // OK
 mut e = c or false   // error: 'c' is not a boolean
 
 const e = 0xfeed
-if boolean(e#[3]) {  // OK, explicit conversion from unsigned bit to boolean
+if Bool(e#[3]) {  // OK, explicit conversion from unsigned bit to boolean
   call(x)
 }
 
-cassert(0 == (signed(true)  + 1)) // explicity typecast; true is signed all-ones
-cassert(1 == (signed(false) + 1)) // explicity typecast
-cassert(boolean(33) or false) // explicity typecast
+cassert(U1(true)  == 1)           // the bool->bit idiom
+cassert(U1(false) == 0)
+cassert(0 == (Signed(true)  + 1)) // reinterpretation: true is signed all-ones
+cassert(1 == (Signed(false) + 1)) // explicity typecast
+cassert(Bool(33) or false) // explicity typecast
+```
+
+A `Bool` is a legal port on every lambda and at every level, including the
+top-level IOs, where it is a 1-bit port (true is `1`). Declare a port `U1` only
+where the value is used as a number. Booleans and integers do not mix at port
+boundaries or on instance outputs either: bind an integer bit to a `Bool` input
+with `Bool(x)` (or `x == 1`), and use a `Bool` output as a number with
+`U1(child.flag)`. A wider integer into a `Bool` port is an error.
+
+```pyrope
+mod child(go:Bool, n:U4) -> (flag:Bool@[0]) {
+  flag = go and n != 0
+}
+
+mod parent(v:U8) -> (cnt:U9@[0]) {
+  const c = child(go=Bool(v#[0]), n=v#[4..<8]) // OK: bit -> bool input
+  cnt = v + U1(c.flag)                             // OK: bool output -> bit
+  // child(go=v#[0], n=0)                          // error: a U1 into a Bool port
+  // cnt = v + c.flag                              // error: Bool used as an integer
+}
 ```
 
 String input typecase is valid, but anything different than ("0", "1", "-1",
@@ -343,17 +453,17 @@ const bad2 = b#[1..=-1] // error: decreasing/negative-end selector range
 ```
 
 
-A range is a separate tuple. As such it can not directly compare with
-tupes. It requires an explicit conversion. If the range does not contain
-negative values, it can be converted to an integer back and forth which
-corresponds to a one-hot encoding.
+A range is a valid unnamed tuple and can compare directly with an unnamed
+tuple; no explicit `tuple(...)` conversion is required. If the range does not
+contain negative values, it can be converted to an integer back and forth
+using a one-hot encoding.
 
 Range type cast from integers use the same one-hot encoding. It is not possible
 to type cast from tuple to range, but it is possible from range to tuple.
 
 ```pyrope
 const c = 1..=3
-cassert(signed(c) == 0ub1110)
+cassert(Signed(c) == 0ub1110)
 cassert(range(0ub01_1100) == 2..=4)
 
 assert(range(1,2,3)) // error: typecast not allowed
@@ -367,7 +477,7 @@ comparison. Both ranges a `step` to change the step. The `step` amount must be
 a positive integer.
 
 ```pyrope
-cassert(signed(0..=10 step  2) == 0ub101_0101_0101)
+cassert(Signed(0..=10 step  2) == 0ub101_0101_0101)
 cassert(tuple(0..=10 step  2) == ( 0,2,4,6,8,10))
 
 cassert(-1..=2 == (-1,0,1,2))
@@ -421,12 +531,13 @@ operators](#reduce-and-bit-selection-operators), and the bit packing rules in
 
 Strings are an opaque basic type. They do not spread into character tuples
 and do not support bit packing, bit reductions, or numeric reinterpretation.
-Use `string(value)` to render an integer as decimal text. String methods are
-described in the [standard library](13-stdlib.md).
+Use `String(value)` to render an integer as decimal text. String literals,
+escapes, and interpolation are described in [Strings](02-basics.md#strings);
+string methods in the [standard library](13-stdlib.md).
 
 ```pyrope
 const value = 123
-cassert(string(value) == "123")
+cassert(String(value) == "123")
 ```
 
 ## Type declarations
@@ -443,25 +554,25 @@ Uppercase. **Complicated lambda types cannot be written inline in a
 by name.**
 
 ```pyrope
-comb check_is_green(self) -> (r:bool) { r = self.color == "green" }
+comb check_is_green(self) -> (r:Bool) { r = self.color == "green" }
 
-type IsGreen = comb(self) -> (r:bool)
+type IsGreen = comb(self) -> (r:Bool)
 
-mut bund1 = (mut color:string = "", mut value:s33 = nil)
-x:bund1        = nil    // OK, declare x of type bund1 with default values
-bund1.color    = "red"  // OK
-bund1.is_green = check_is_green
+mut Bund1 = (mut color:String = "", mut value:S33 = nil)
+mut x:Bund1    = nil    // OK, declare x of type Bund1 with default values
+Bund1.color    = "red"  // OK
+Bund1.is_green = check_is_green
 x.color        = "blue" // OK
 
-type Typ = (mut color:string = "", mut value:s33 = nil, mut is_green:IsGreen = nil)
-y:Typ        = nil      // OK
+type Typ = (mut color:String = "", mut value:S33 = nil, mut is_green:IsGreen = nil)
+mut y:Typ    = nil      // OK
 Typ.color    = "red"    // error:
 
 Typ.is_green = check_is_green
 y.color      = "red"    // OK
 
-type Bund3 = (mut color:string = "", mut value:s33 = nil)
-z:Bund3        = nil                // OK
+type Bund3 = (mut color:String = "", mut value:S33 = nil)
+mut z:Bund3    = nil                // OK
 Bund3.color    = "red"              // error:
 Bund3.is_green = check_is_green     // error: (const can not add fields)
 z.color        = "blue"             // OK
@@ -480,12 +591,12 @@ for its whole existence.
 
 To check that an existing value matches a type, use the `does` operator
 inside `cassert`/`assert`. To convert a value to a type, call the
-type as a constructor — `u8(value)`.
+type as a constructor — `U8(value)`.
 
 ```pyrope
 mut a = true                // infer a is a boolean
 
-cassert(a does bool) // type check on an existing variable
+cassert(a does Bool) // type check on an existing variable
 foo = a or false            // ordinary use; no inline type annotation
 ```
 
@@ -507,8 +618,8 @@ persistence across cycles the `reg` type must be used.
 
 
 ```pyrope
-reg counter:u32   = 10
-mut not_a_reg:u32 = 20
+reg counter:U32   = 10
+mut not_a_reg:U32 = 20
 ```
 
 In `reg`, the right-hand side of the initialization (`10` in the
@@ -532,7 +643,7 @@ Field reads and writes then obey the same two rules a scalar `reg` obeys:
   default for the cycle and a later conditional write overrides it.
 
 ```pyrope
-reg flags:(active:bool, delayed:bool) = (false, false)
+reg flags:(active:Bool, delayed:Bool) = (active=false, delayed=false)
 
 flags.active  = false         // the default for this cycle
 flags.delayed = flags.active  // the PREVIOUS cycle's flags.active
@@ -567,7 +678,7 @@ wire x = nil           // forward declaration: an as-yet-undriven net
                        // reads of 'x' here are legal
 x = some_expr          // the one driver (may appear later in program order)
 
-wire y:u8 = a + b      // declare and drive in one statement
+wrap wire y:U8 = a + b // declare and drive in one statement (U8: needs `wrap`)
 ```
 
 Exports use `pub const`, `pub` lambdas, or `pub` types. A wire cannot be exported.
@@ -589,18 +700,25 @@ Rules:
   combinationally driven by a function of itself is a real combinational loop
   and is rejected (the standard combinational-cycle / SCC check). A ring is
   legal only when a `reg` breaks it.
+* A `for`/`while`/`loop` body may **read** a `wire` (the compiler then unrolls
+  that loop instead of keeping it compact), so a read needs no hoisting. It
+  may not **write** (drive) one: the body runs once per iteration, so a write
+  there would be one driver per iteration and break the single-driver rule.
+  Drive the wire outside the loop. See
+  [Loops and `wire`](05b-statements.md#loops-and-wire).
 
 Primary uses are closing module-interconnect rings without ordering
 gymnastics, and routing a computed reset/flush into a register `reset_pin`
-(`reg r:u2:[reset_pin = my_wire] = 0`).
+(`reg r:U2:[reset_pin=my_wire] = 0`; a `*_pin` takes the signal directly,
+without `ref`, and a `Reset` accepts a `Bool` net without a cast).
 
 ```pyrope
 // close a ring without reordering the calls:
 wire f4 = nil
-f1 = ring(a, f4)       // reads f4 before its driver appears
-f2 = ring(b, f1)
-f3 = ring(c, f2)
-f4 = ring(d, f3)       // the single driver of f4
+f1 = ring(x=a, prev=f4) // reads f4 before its driver appears
+f2 = ring(x=b, prev=f1)
+f3 = ring(x=c, prev=f2)
+f4 = ring(x=d, prev=f3) // the single driver of f4
 ```
 
 
@@ -626,7 +744,7 @@ other files by `import`. The `pub` prefix modifier (same declaration slot as
 ```pyrope
 pub comb get_five() -> (v) { v = 5 }  // importable by other files
 pub const default_depth = 1024         // importable constant
-reg internal:u8 = 0                   // private: this file/instance only
+reg internal:U8 = 0                   // private: this file/instance only
 
 pub comb my_log::[lg="foo_mod"](a) -> (r) { r = a } // lgraph named foo_mod
 ```
@@ -654,13 +772,59 @@ There are the typical basic operators found in most common languages except
 exponent operations. The reason is that those are very hardware intensive and a
 library code should be used instead.
 
-All the operators work over signed integers.
+All the operators work over unlimited precision signed integers. The one
+operator whose result depends on the operand's declared type is `~` (below).
 
 ### Unary operators
 
 * `!a` or `not a` logical negation
 * `~a` bitwise negation
 * `-a` arithmetic negation
+
+`!a`/`not a` needs a `Bool` operand: on an integer it is a compile error
+(write `a == 0`, or `a#[0] == 0` for one bit).
+
+A bitwise not is ambiguous unless the operand's type is known, so `~a` needs
+one:
+
+* On an **unsigned-typed** operand of known width `N` it flips exactly those
+  `N` bits: `~a == (2^N - 1) - a`, and the result is a `U<N>` (a `U1` toggles
+  between 0 and 1). An operand is unsigned-typed when its type states the
+  width: a name declared with an unsigned type (a variable, a port, a
+  register, a tuple field, an instance output; `N` is its `.[bits]`, so
+  `Unsigned(max=5)` flips 3 bits), an untyped `const` alias of one (`const t
+  = w` has `w`'s type), an element `arr[i]` of an `[M]U<N>` array, a bit slice
+  `a#[..]` (`a#[i]` is a `U1` for any position `i`), a `U<N>(...)` cast, or a
+  `~`, `&`, `|`, `^` whose operands are all unsigned-typed (the widest one
+  sets `N`). An untyped input of a template `comb` takes its argument's type
+  at each call, as its `.[bits]` does.
+* On a **signed-typed** operand (`S<N>`, a `Signed(...)`/`S<N>(...)` cast, a
+  bitwise op over typed operands one of which is signed) `~a == -a - 1`, the
+  two's complement at its width.
+* A **compile-time** integer with no type (`~5`, `const k = 5; ~k`) is a
+  signed integer: `~a == -a - 1`.
+* An **untyped runtime** value (an arithmetic result such as `~(a + 1)`, a
+  `mut` bound without a type, a bitwise op with a literal operand, an
+  `if`/`match` expression, which is not an alias of one value) is a
+  compile error: give it a type (`const t:U9 = a + 1`) or slice it
+  (`(a + 1)#[0..<8]`).
+
+```pyrope
+const x:U1 = 0
+const w:U3 = 2
+const s:S4 = 2
+const t    = w          // an alias of `w`: a U3 too
+cassert(~x == 1)        // U1: 0 <-> 1
+cassert(~w == 5)        // U3: 7 - 2
+cassert(~s == -3)       // signed: -2 - 1
+cassert(~t == 5)        // the alias flips w's 3 bits
+cassert(~2 == -3)       // compile-time integer: -2 - 1
+cassert(~w#[0..<2] == 1)  // a 2-bit slice flips 2 bits
+cassert(~U8(w) == 253)  // the cast makes it a U8
+```
+
+A wider destination does not widen the flip: `y:U8 = ~w` is 5. To flip a
+wider window, give the operand that width first (`~U8(w)`, `~w#[0..<8]`).
 
 ### Binary integer operators
 
@@ -672,12 +836,17 @@ All the operators work over signed integers.
 * `a & b` bitwise and
 * `a | b` bitwise or
 * `a ^ b` bitwise xor
-* `a ~& b` bitwise nand
-* `a ~| b` bitwise nor
-* `a ~^ b` bitwise xnor
 * `a >> b` arithmetic right shift
 * `a#[..] >> b` logical right shift
 * `a << b` left shift
+
+There are no binary nand/nor/xnor operators: negate the bitwise result,
+`~(a & b)`, `~(a | b)`, `~(a ^ b)`. The `~` rule above applies to the result:
+when both operands are unsigned-typed the widest operand's bits flip
+(`a:U3`, `b:U5`: `~(a & b)` is `31 - (a & b)`), a signed-typed operand gives
+`-(a & b) - 1`. The bit-select reductions (`x#&[..]`, `x#|[..]`, `x#^[..]`,
+`x#+[..]`) have no negated forms either: compare the reduction instead
+(`x#&[..] == 0` is a nand reduction).
 
 In the previous operations, `a` and `b` need to be integers. The exception is
 `a << b` where `b` can be a tuple. The `<<` allows having multiple values
@@ -715,51 +884,63 @@ cassert(2 in (0, 1, 3, 2, 4))
 cassert(not (5 in (0, 1, 3, 2, 4)))
 ```
 
-* `(...a, ...b)` concatenate two tuples (splice). A field present on only one
-  side is copied in. When the same field appears on both sides it is a compile
-  error, unless one side is `nil`/`0sb?` (the defined value wins) or both sides
-  hold the same value (matching tuple-valued fields merge recursively). The
-  splice inserts each tuple's fields at its position, so it can also insert in
-  the middle of a literal and add arguments to a function call
-  (`foo(a=1, ...rest)`).
+* `(...a, ...b)` concatenate two tuples (splice). A tuple is either all named
+  or all unnamed (see [Tuples](03-bundle.md)), and so is the splice result:
+  * Two **unnamed** tuples append: `b`'s entries follow `a`'s.
+  * Two **named** tuples merge: a field present on only one side is copied
+    in. When the same field appears on both sides it is a compile error,
+    unless one side is `nil` (the other side wins) or constant propagation
+    proves both sides hold the same value (matching tuple-valued fields
+    merge recursively). An unknown `0sb?` is not `nil` and does not yield.
+  * Splicing a named tuple with an unnamed one is a compile error.
+
+  The splice inserts each tuple's entries at its position, so it can also
+  insert in the middle of a literal and add arguments to a function call
+  (`foo(a=1, ...rest)` with a named `rest`).
 
 ```pyrope
 cassert((...(const a=1, const c=3), ...(const a=1, const b=2, const c=nil)) == (const a=1, const c=3, const b=2))
-cassert((...(1,2), ...(const a=2, nil, 5)) == (1, 2, const a=2, nil, 5))
-cassert((...(const x=1), ...(const a=2, nil, 5)) == (const x=1, const a=2, nil, 5))
+cassert((...(1,2), ...(nil, 5)) == (1, 2, nil, 5))
 
-cassert((...(const x=1, const b=2), ...(const x=0sb?, 3)) == (const x=1, const b=2, 3))
-
-const bad = (...(const a=1), ...(const a=2))  // error: 'a' defined with different values on both sides
+const bad  = (...(const a=1), ...(const a=2))  // error: 'a' defined with different values on both sides
+const bad2 = (...(1,2), ...(const a=2))        // error: splices an unnamed and a named tuple
+const bad3 = (1, const b=2)                    // error: a tuple mixes unnamed and named entries
+const bad4 = (...(const x=1), ...(const x=0sb?)) // error: 'x' on both sides and neither is nil
 
 // the splice can also insert in the middle of a literal:
-cassert((1, const b=2, ...(3, const c=3), 6) == (1, const b=2, 3, const c=3, 6))
-cassert((1, const b=2, ...(nil, const c=3), 0sb?, 6) == (1, const b=2, nil, const c=3, 0sb?, 6))
+cassert((1, 2, ...(3, 4), 6) == (1, 2, 3, 4, 6))
+cassert((const a=1, ...(const b=nil, const c=3), const d=6) == (const a=1, const b=nil, const c=3, const d=6))
 ```
 
 * `a ++ b` is the tuple-concat operator, a shorthand for the two-tuple splice
-  `(...a, ...b)` with the exact same semantics (field-name merge, same
-  same-field/`nil` rules). It is a priority-3 ("other binary") associative
-  operator, so `a ++ b ++ c` chains left-to-right. The `++=` compound-assign
-  form appends in place (`acc ++= b` is `acc = acc ++ b`).
+  `(...a, ...b)` with the exact same semantics (append for unnamed, field-name
+  merge for named, same same-field/`nil` rules, mixing is an error). It is a
+  priority-3 ("other binary") associative operator, so `a ++ b ++ c` chains
+  left-to-right. The `++=` compound-assign form appends in place (`acc ++= b`
+  is `acc = acc ++ b`).
 
 ```pyrope
-const a = (1, const foo=2)
-const b = (3, const bar=4)
+const a = (1, 2)
+const b = (3, 4)
 cassert((a ++ b) == (...a, ...b))
-cassert((a ++ b) == (1, 3, foo=2, bar=4))
+cassert((a ++ b) == (1, 2, 3, 4))
 cassert(((1,2) ++ (3,4) ++ (5,6)) == (1, 2, 3, 4, 5, 6))
+
+const n = (const foo=2)
+const m = (const bar=4)
+cassert((n ++ m) == (const foo=2, const bar=4))
+const bad = a ++ n   // error: an unnamed tuple ++ a named tuple
 
 mut acc = (0,)
 acc ++= a            // acc = acc ++ a
-cassert(acc == (0, 1, foo=2))
+cassert(acc == (0, 1, 2))
 ```
 
 
 ### Type operators
 
-* `a has b` checks if `a` tuple has the `b` field where `b` is a string or
-  integer (position).
+* `a has b` checks if `a` tuple has the `b` field where `b` is a string (a
+  named tuple) or integer (a position of an unnamed tuple).
 
 ```pyrope
 cassert((const a=1, const b=2) has "a")
@@ -773,24 +954,23 @@ cassert((const a=1, const b=2) has "a")
 Negate any type operator with `not (...)`, e.g. `not (a does b)`,
 `not (a equals b)`, `not (a case b)`.
 
-The `does` performs just name matching when the required tuple is fully named.
-It reverts to name and position matching when some of the required tuple entries
-are unnamed. Values are ignored by `does`; use `case` when the values should be
-matched too.
+A tuple is either all named or all unnamed. The `does` performs name
+matching when the required tuple is named, and position matching when it is
+unnamed. A named tuple has no positions and an unnamed tuple has no names, so
+one never `does` the other. Values are ignored by `does`; use `case` when the
+values should be matched too.
 
 ```pyrope
-cassert((const b=100, const a=333, const e=40, 5) does (const a=1, const b=3))
-cassert((const a=100, 300, const b=333, const e=40, 5) does (const a=1, 3))
-cassert((const b=100, 300, const a=333, const e=40, 5) does (const a=1, 3))
-cassert(u32 does u16)          // u32's range is a superset of u16's
-cassert(not (u16 does u32))    // u16's range is NOT a superset of u32's
-cassert(not (u32 does string)) // different basic type → false
+cassert((const b=100, const a=333, const e=40) does (const a=1, const b=3))
+cassert((100, 300, 5) does (1, 3))
+cassert(U32 does U16)          // U32's range is a superset of U16's
+cassert(not (U16 does U32))    // U16's range is NOT a superset of U32's
+cassert(not (U32 does String)) // different basic type → false
 cassert((100,30) does 30)
 cassert(not (30 does (30,200)))
-cassert(not ((const a=3) does (30, const a=200)))
-cassert(not ((const a=3) does (const a=30, 200)))
-cassert(not ((3) does (30, const a=200)))
-cassert(not ((3) does (const a=30, 200)))
+cassert(not ((const a=3) does (30, 200)))           // named vs unnamed
+cassert(not ((3, 30) does (const a=3)))             // unnamed vs named
+cassert(not ((const a=3) does (const a=30, const b=200)))  // 'b' missing
 ```
 
 A `a case b` first checks `a does b`, then checks that every defined value in
@@ -845,8 +1025,8 @@ The reduce operators and bit selection share a common syntax
 The or/and/xor reduce have an unsigned integer result with `min=0` and `max=1`
 (not boolean). This means that the result can be `0` or `1`. Since booleans and
 integers do not mix, compare a reduction against integer values, or cast
-explicitly when comparing with a boolean (`boolean(x#|[..]) == flag` or
-`x#|[..] == signed(flag)`). pop-count and `zext` have always positive results.
+explicitly when comparing with a boolean (`Bool(x#|[..]) == flag` or
+`x#|[..] == U1(flag)`). pop-count and `zext` have always positive results.
 `sext` is sign-extended, so it can be positive or negative.
 
 If no operator is provided, a `zext` is used by default. The bit selection without
@@ -871,14 +1051,14 @@ it is considered non-intuitive for programmers.
 
 ```pyrope
 const x = 0ub1_0110   // positive
-const y = 0s1_0110   // negative
+const y = 0sb1_0110   // negative
 cassert(x#[2]    == 1)
 cassert(x#[0..=2] == 0ub110)
 cassert(y#[100]       == 1   and x#[100]       == 0) // out-of-range follows sign
 cassert(y#sext[0..=2] == 0sb110 and x#sext[0..=2] == 0ub110)
 cassert(x#|[..] == 1)
 cassert(x#&[0..=1] == 0)
-cassert(boolean(x#|[..]) == true)
+cassert(Bool(x#|[..]) == true)
 cassert(x#+[0..=5] == x#+[0..<100] == 3)
 assert(y#+[0..=5]) // error: 'y' can be negative
 cassert(y#[..]#+[..] == 3)
@@ -915,7 +1095,7 @@ and `#+` count bits of a packed tuple exactly as they count bits of an integer,
 (`x#[..]` is always non-negative).
 
 ```pyrope
-const p:[3]u4 = (0ub0011, 0ub0101, 0ub0000)
+const p:[3]U4 = (0ub0011, 0ub0101, 0ub0000)
 cassert(p#[..]  == 0ub0000_0101_0011) // entry 0 in the lowest bits
 cassert(p#+[..] == 4)                 // pop-count over the packed 12 bits
 cassert(p#|[..] == 1)
@@ -937,7 +1117,7 @@ value, and the compiler checks widths and coverage.
 mut v = 0ub10
 cassert(v#[0..=1] == v#[..] == v#[..=1] == 0ub10)
 
-mut trans:u2 = nil
+mut trans:U2 = nil
 
 trans#[0] = v#[1]
 trans#[1] = v#[0]
@@ -950,11 +1130,29 @@ const a = 0ub1010  // 4 bits
 const b = 0ub01    // 2 bits
 const c = 0ub1     // 1 bit
 
-mut r:u7 = nil
+mut r:U7 = nil
 r#[0]    = c
 r#[1..=2] = b
 r#[3..=6] = a
 cassert(r == 0ub1010_01_1)
+```
+
+A lambda output starts as `nil`, exactly like `mut v:U8 = nil`, so an output
+can be built bit by bit without a prior whole assignment, and an array output
+lane by lane. The same coverage rule applies: every bit must be driven.
+
+```pyrope
+mod reverse(a:U4) -> (q:U4@[0]) {
+  for i in 0..<4 {
+    q#[i] = a#[3-i]    // OK: `q` starts as nil, like `mut q:U4 = nil`
+  }
+}
+
+mod split(a:U4) -> (v:[4]U1@[0]) {
+  for i in 0..<4 {
+    v[i] = a#[i]       // OK: array output lanes likewise
+  }
+}
 ```
 
 
@@ -964,7 +1162,7 @@ Pyrope has very shallow precedence, unlike most other languages the
 programmer should explicitly indicate the precedence. The exception is for
 widely expected precedence.
 
-* Unary operators (not,!,~,?) bind stronger than binary operators (+,-,*...)
+* Unary operators (not,!,~) bind stronger than binary operators (+,-,*...)
 * Comparators can be chained (a<=c<=d) same as (a<=c and c<=d)
 * mult/div precedence is only against +,- operators.
 * Parenthesis can be avoided when a expression left-to-right has the same
@@ -972,7 +1170,7 @@ widely expected precedence.
 
 | Priority | Category | Main operators in category |
 |:-----------:|:-----------:|-------------:|
-| 1          | unary       | not ! ~ ? |
+| 1          | unary       | not ! ~ |
 | 2          | mult/div    | *, /         |
 | 3          | other binary | ..,^, &, -,+, ++, <<, >>, in, does, has, case, equals, to |
 | 4          | comparators |    <, <=, ==, !=, >=, > |
@@ -1016,8 +1214,8 @@ g2= (1 + 3)
 
 h = x or y and z// error: use parenthesis for explicit precedence
 
-i = a == 3 <= b == d
-assert(i == (a==3 and 3<=b and b == d))
+i = a <= 3 < b <= d
+assert(i == (a<=3 and 3<b and b<=d))
 ```
 
 Comparators can be chained, but only when they follow the same type or the
@@ -1034,12 +1232,12 @@ assert(a <= b >  c) // error: not same direction
 
 The `?` is used by several languages to handle optional or null pointer
 references. In non-hardware languages, `?` is used to check if there is valid
-data or a null pointer. This is the same as checking the `.[valid]` attribute
-with a more friendly syntax.
+data or a null pointer. Pyrope has no `?` operator for this: the check is the
+`.[valid]` attribute.
 
 
 Pyrope does not have null pointers or memory associated management. Pyrope uses
-`?` to handle `.[valid]` data. Instead, the data is left to behave without the
+`.[valid]` to handle optional data. The data is left to behave without the
 optional, but there is a new "valid" field associated with each tuple entry.
 Notice that it is not for each tuple level but each tuple entry.
 
@@ -1110,9 +1308,9 @@ status.
 
 
 ```pyrope
-mut v1:u32 = nil                 // v1 is zero every cycle AND not valid
+mut v1:U32 = nil                 // v1 is zero every cycle AND not valid
 assert(v1.[valid] == false)
-mut v2:u32 = 0                 // v2 is zero every cycle AND     valid
+mut v2:U32 = 0                 // v2 is zero every cycle AND     valid
 assert(v2.[valid] == true)
 
 cassert(v1.[valid])
@@ -1133,29 +1331,29 @@ const res2 = v2 + 0              // valid with just unknown 0sb? data
 assert(res1.[valid])
 assert(res2.[valid])
 
-reg counter:u32 = 0
+reg counter:U32 = 0
 
-always_assert(counter.reset implies !counter.[valid])
+assert(counter.[valid])  // checked after reset: the register is valid once reset
 ```
 
 `valid` can be overwritten by the `init` constructor:
 
 ```pyrope
-const custom = (
-  ,mut data:s16 = nil
+const Custom = (
+  ,mut data:S16 = nil
   ,comb init(ref self, v) {
     self.data = v
     self.[valid] = v != 33
   }
 )
 
-mut x:custom = 33      // init runs at construction
+mut x:Custom = 33      // init runs at construction
 cassert(not x.[valid])
 
-mut y:custom = 100
+mut y:Custom = 100
 cassert(y.[valid])
 
-y = custom(33)         // explicit construction also calls init
+y = Custom(33)         // explicit construction also calls init
 cassert(not y.[valid])
 ```
 
@@ -1164,9 +1362,9 @@ data-independent. Tuples also can have an optional type, which behaves like
 adding optional to each of the tuple fields.
 
 ```pyrope
-const complex = (
-  ,reg v1:string = "foo"
-  ,mut v2:string = nil
+const Complex = (
+  ,reg v1:String = "foo"
+  ,mut v2:String = nil
 
   ,comb init(ref self, v) {
      self.v1 = v
@@ -1174,9 +1372,9 @@ const complex = (
   }
 )
 
-mut x1:complex = nil
-mut x2:complex:[valid=false] = 0  // toggle valid, and set zero
-mut x3:complex = 0
+mut x1:Complex = nil
+mut x2:Complex:[valid=false] = 0  // toggle valid, and set zero
+mut x3:Complex = 0
 x3.[valid] = false                // set invalid
 
 assert(x1.v1 == "" and x1.v2 == "")
@@ -1190,7 +1388,7 @@ x2.v2 = "hello" // direct access still OK
 
 assert(not x2.[valid] and x2.v1 == "" and x2.v2 == "hello")
 
-x2 = complex("world") // explicit construction calls init
+x2 = Complex("world") // explicit construction calls init
 
 assert(x2.[valid] and x2.v1 == "world")
 ```
@@ -1221,10 +1419,10 @@ expression — a literal (`0`, `false`, `""`, `0sb?`), `nil`, or a normal
 expression.
 
 ```pyrope
-mut a:signed = 0
+mut a:Signed = 0
 cassert(a==0 and a.[valid] and a.[valid])
 
-mut b:signed = nil
+mut b:Signed = nil
 cassert(b==nil and b.[valid] == false and not b.[valid])
 b = 0
 cassert(b==0 and b.[valid] and b.[valid])
@@ -1232,8 +1430,9 @@ cassert(b==0 and b.[valid] and b.[valid])
 mut d:[] = ()              // empty tuple literal
 cassert(d != nil and d.[valid])
 
-mut e:signed = 0sb?           // valid but with unknown bits
-cassert(e.[valid] and e != 0) // any comparison against `?` is unknown
+mut e:Signed = 0sb?           // valid but with unknown bits
+cassert(e.[valid])           // validity does not require known bits
+cassert(e != 0)              // error: comparison is unknown, so cassert fails
 ```
 
 The same rules apply when a tuple or a type is declared. Tuple fields must
@@ -1243,16 +1442,16 @@ also use explicit initial values:
 const a = "foo"
 
 mut at1 = (
-  ,const a:string = a     // copy enclosing 'a' as the initial value
+  ,const a:String = a     // copy enclosing 'a' as the initial value
 )
 cassert(at1.a == "foo")
 
 mut at2 = (
-  ,mut a:string = nil     // invalid field
+  ,mut a:String = nil     // invalid field
 )
 cassert(at2.a.[valid] == false)
 at2.a = "torrellas"
-cassert(at2.a == "torrellas" and at2[0] == "torrellas")
+cassert(at2.a == "torrellas")  // a named field: `at2[0]` is an error
 ```
 
 Conditional paths affect variable initialization and values. If all the
@@ -1261,9 +1460,9 @@ assigns a value, the valid will be set only on that path, but the data may
 always have the path.
 
 ```pyrope
-mut x:signed = nil
-mut y:signed = 2
-mut z:signed = nil
+mut x:Signed = nil
+mut y:Signed = 2
+mut z:Signed = nil
 if rand {
   x = 3
   y = 4
@@ -1287,8 +1486,9 @@ For structured bindings where one of the return values is unused, name the
 variable and treat the name as the documentation:
 
 ```pyrope
-comb weird_pick_bits(b:u32) -> (x:u1, unused:u4) {
-  (x=b#[2..<3], unused=b#[5])
+comb weird_pick_bits(b:U32) -> (x:U1, unused:U4) {
+  x = b#[2..<3]
+  unused = b#[5]
 }
 
 comb fcall_returns_2_values() -> (xx, yy) {

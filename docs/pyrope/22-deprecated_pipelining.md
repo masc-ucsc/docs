@@ -33,7 +33,7 @@ The explicit connection used constructs like `::[defer]` to connect the flop
     var counter_next:u8:[wrap] = nil
 
     let counter_q = __flop(din=counter_next::[defer] // defer to get last update
-                       ,reset_pin=my_rst, clock_pin=my_clk
+                       ,reset_pin=ref my_rst, clock_pin=ref my_clk
                        ,enable=my_enable            // enable control
                        ,posclk=true
                        ,initial=3                   // reset value
@@ -44,7 +44,7 @@ The explicit connection used constructs like `::[defer]` to connect the flop
 
 === "Pyrope style"
     ```
-    reg counter:u8:[reset_pin=my_rst, clock_pin=my_clk, posclk=true]= 3
+    reg counter:u8:[reset_pin=ref my_rst, clock_pin=ref my_clk, posclk=true]= 3
     assert counter == counter@[0]  // counter still has the q value
 
     if my_enable {

@@ -9,18 +9,24 @@ compiler internals that affects semantics.
 There are 3 basic operations/checks with tuples that affect many other
 operations: `a in b`, `a does b`, and lambda call rules.
 
-* `a in b` allows to work when `b` is a name/unnamed tuple even when `a` is named.
+A tuple is either all named or all unnamed; a tuple that mixes both is an
+error (see [Tuples](03-bundle.md)).
 
-* `a does b` requires `a` to provide the named and positional fields required
-  by `b`.
+* `a in b` checks that the scalar `a` is one of the values in `b`, named or
+  unnamed; field names do not participate.
+
+* `a does b` requires `a` to provide the fields required by `b`: by name for
+  two named tuples, by position for two unnamed tuples.
 
 * lambda call matches the arguments with the definition in a third different set of rules.
 
 
 ```pyrope
-cassert((const a=1) in (1, const a=1, 3))
-cassert(not ((const a=1) does (1, const a=1, 3)))
-cassert((1, const a=1, 3) does (const a=1))
+cassert(1 in (1, 2, 3))
+cassert(3 in (const a=1, const b=3))    // names do not participate
+cassert(not ((const a=1) does (const a=1, const b=3)))
+cassert((const a=1, const b=3) does (const a=1))
+cassert((1, 2, 3) does (1, 2))          // unnamed: by position
 
 comb f(a) -> () { puts("{a}") }
 comb g(long, short) -> () { puts("{long}") }
@@ -29,7 +35,7 @@ f(a=1)             // OK
 f(1)               // OK
 
 g(long=1, short=1) // OK
-g(1,1)             // error:
+g(1,1)             // error: untyped positional arguments, name them
 const long=1
 g(long, short=1)   // OK
 const short=1
@@ -54,7 +60,7 @@ is buffered and ordered at the end of the cycle to be deterministic.
 The only source of non-determinism is non-Pyrope (C++) calls from `procedures`
 executed at different pipeline stages. The pipeline stages could be executed in
 any order, it is just that the same order must be repeated deterministically
-during simulation. The non-Pyrope calls must be `.[comptime]` to affect
+during simulation. The non-Pyrope calls must be ``.[`comptime`]`` to affect
 synthesis. So the synthesis is deterministic, but the testing like cosimulation
 may not.
 
@@ -110,21 +116,23 @@ the register `din` pin, and all the updated register can only read the register
 ## Dealing with unknowns
 
 
-Pyrope tries to be compatible with synthesizable Verilog but not equivalent. As
-such it must handle/understand unknowns. Compatible does not mean that it will
-generate the same `?` bits as Verilog, but that it will not generate an unknown
-when Verilog has known. It is allowed to generate a `0` or a `1` when the
-Verilog logical equivalence check generates an `?`.
+Dlop handles every operation involving unknown bits on a best-effort basis.
+It may compute a precise result or leave some or all result bits unknown,
+even when a more precise result could be proved. It must never produce an
+incorrect definite answer: any known result bits must hold for every possible
+assignment of the unknown input bits. An unknown result may conservatively
+include additional possibilities; it must not exclude a possible correct
+result.
 
+This applies to arithmetic, shifts, bitwise operations, and comparisons.
+There is no guarantee that Pyrope and Verilog produce identical unknown-bit
+patterns, or that Dlop resolves every result Verilog can resolve. For example,
+`0 * 0sb?` may resolve to zero or remain unknown, but never to a nonzero
+definite value. Code must not depend on a particular amount of precision.
 
-An example of different behavior is that Verilog semantics state `0 * 0sb?` is
-`0sb?` while most programmers would expect a zero.
-
-
-The previous definition of compatibility could allow the Pyrope compiler to
-randomly replace all the unknowns by `0` or `1` when doing internal compiler
-passes. This is not done at compile time to keep determinism, but simulation
-time should randomly pick 0/1 for unknown bits.
+Compiler passes do not randomly replace unknowns with definite values.
+Simulation resolves unknown bits to random 0/1 values; that is separate from
+compile-time reasoning about all possible values.
 
 
 The issue is that the most likely source of having unknowns in operations is
@@ -163,22 +171,23 @@ In the compiler passes, we have the following semantics:
 
     - An index with unknowns does not perform value propagation.
 
-+ Shifts, additions and substractions propagate unknowns at computation. E.g:
-  `0ub11?0 + 0ub1` is `0ub11?1`, `0ub1?0 >> 1` is `0ub1?`.
++ Arithmetic, shifts, and bitwise operations follow the best-effort rule
+  above. `0ub11?0 + 0ub1` may preserve the known bits as `0ub11?1` or lose
+  precision. Likewise, `0ub1?0? * -1` must cover the possible results `-8`,
+  `-9`, `-12`, and `-13`; no exact output width or bit pattern is promised.
 
-+ Other arithmetic are more conservative. When an input is unknown, the result
-  is unknown only respecting the sign when possible. E.g: `0ub1?0? * -1` is
-  `0sb1?`.
++ Equality comparisons (`==` and `!=`) follow the same rule. For example,
+  `0ub1? != 0ub10` is unknown because the unknown bit can make the comparison
+  either true or false. The equality identity is `a == b` iff `(a ^ b) == 0`;
+  with unknowns, different evaluation paths may retain different amounts of
+  precision, but neither may produce an incorrect definite result.
 
-+ Logic operations behave like Verilog. `0ub000111??? | 0ub01?01?01?` is
-  `0ub01?111?1?`.
-
-+ Equality comparisons (`==` and `!=`) use unknowns, this means that at compile
-  time `0ub1? != 0ub10`. Comparisons is consistent with the equivalent logic
-  operations `a == b` is the same as `(a ^ b) == -1`.
-
-+ Other comparisons (`<=`, `<`, `>`, `>=`) return true if the comparison is
-  true for each possible unknown bit.
++ Ordered comparisons (`<=`, `<`, `>`, `>=`) resolve unknown bits on a
+  best-effort basis in Dlop. A definite result must hold for every possible
+  assignment of the unknown bits, but Dlop may leave the result unknown even
+  when it could be proved. For example, `0ub1? > 0ub00` may produce `true` or
+  unknown, but never `false`. Code must not rely on this comparison folding
+  to `true`.
 
 + `match` statement and `unique if` will trigger a compile error if the unknown
   semantics during compiler passes can trigger 2 options simultaneously. The
@@ -237,9 +246,9 @@ if the compiler optimized over assertions.
     ```verilog
     always_comb begin // one hot mux
       case (sel)
-        3’b001 : f=i0;
-        3’b010 : f=i1;
-        3’b100 : f=i2;
+        3’b001 : f=in0;
+        3’b010 : f=in1;
+        3’b100 : f=in2;
         default: f=2’b??;
       endcase
     end
@@ -250,9 +259,9 @@ if the compiler optimized over assertions.
     ```pyrope
     assume(sel==1 or sel==2 or sel==4) // not needed. match sets it
     match sel {
-      == 0ub001 { f = i0 }
-      == 0ub010 { f = i2 }
-      == 0ub100 { f = i3 }
+      == 0ub001 { f = in0 }
+      == 0ub010 { f = in1 }
+      == 0ub100 { f = in2 }
       else      { f = 0  }
     }
     ```
@@ -260,9 +269,9 @@ if the compiler optimized over assertions.
 === "Generated Logic 1 bit f"
 
     ```pyrope
-    f = (sel[0] & i0)
-      | (sel[1] & i1)
-      | (sel[2] & i2)
+    f = (sel#[0] & in0)
+      | (sel#[1] & in1)
+      | (sel#[2] & in2)
     ```
 
 
@@ -290,7 +299,7 @@ Assume allows more freedom, without dangerous Verilog x-optimizations:
     assume(a != 0)
 
 
-    if (1 + a) != 1 { // always false
+    if (1 + a) != 1 { // always true
       out = 1
     }else{
       out = 3
@@ -301,22 +310,29 @@ Assume allows more freedom, without dangerous Verilog x-optimizations:
     res = array[b]
     ```
 
-## Unknown no optimization
+## Unknowns and synthesis constraints
 
-In Verilog, unknowns can trigger synthesis optimizations. This is not the case
-in Pyrope. Each unknown bit (`?`) can result in random 0/1 at simulation time, but it will
-not trigger optimizations. The `assume` statement should be used for such behavior.
+Unknowns do not imply that a condition is unreachable. Use `assume` to express
+constraints that the compiler may rely on when optimizing control flow.
+An unknown value in a branch does not, by itself, allow the compiler to assume
+that the branch cannot execute.
+
+Each unknown bit (`?`) can resolve to 0 or 1 at simulation time. Synthesis may
+choose concrete values for unspecified bits to produce a smaller or faster
+circuit. This does not change Dlop's best-effort propagation rule: operations
+on unknowns may retain uncertainty, but must never produce an incorrect known
+result.
 
 
 ```pyrope
-assert(cond==3)    // Not cassert or assume, so not optimized
+assert(cond==3)    // Runtime check; does not let the compiler assume cond == 3
 mut x1 = 0sb?
 
 if cond == 3 {
   x1 = 1
 }
-assert(x1==1) // still not optimized (cassert(fails))
-assert(!x1 and x1.[comptime])
+assert(x1==1) // Runtime check; the unknown initializer does not imply cond == 3
+assert(not x1.[`comptime`])  // x1 is not a compile-time constant
 
 mut x2 = 0sb?
 assume(cond==3)
@@ -324,7 +340,7 @@ if cond == 3 {
   x2 = 1
 }
 cassert(x2==1)
-cassert(x2.[comptime])
+cassert(x2.[`comptime`])
 ```
 
 ## LNAST optimization
@@ -367,7 +383,7 @@ depending on the LNAST node:
     - trivial identity simplification for existing node, also performed as
       instruction combining proceeds. E.g: `a^a == a`, `a-a=0` ...
 
-+ If the node reads `.[comptime]` and asserts it true, trigger a compile error unless all the inputs are
++ If the node reads ``.[`comptime`]`` and asserts it true, trigger a compile error unless all the inputs are
   constant
 
     - `cassert` should satisfy the condition or a compile error is generated
@@ -439,10 +455,10 @@ No previous transformation could break the type checks. This means that the
 copy propagation, and final lgraph translation the type checks are respected.
 
 * Comparator operands share the same basic type (both `integer`, both
-  `string`, ...), but not necessarily the same `max/min`. Comparison is
+  `String`, ...), but not necessarily the same `max/min`. Comparison is
   value-based, so any two integers are comparable regardless of their ranges; a
   comparison whose ranges cannot overlap folds to a constant. `integer` vs
-  `boolean` (or any other basic-type mismatch) is still an error.
+  `Bool` (or any other basic-type mismatch) is still an error.
 
 * Left side assignments respect the assigned type (`LHS does RHS`)
 
@@ -485,29 +501,46 @@ const tup = (
 
 ### Comptime lexical scope
 
-Pyrope lambdas do not have runtime closures or explicit capture lists. Runtime
-`const`, `mut`, and `reg` declarations from an enclosing lambda scope are not
-implicitly available inside a nested lambda. Pass those values as normal inputs,
-or place them in an explicit tuple/object and pass that object.
+Pyrope lambdas do not have runtime closures or explicit capture lists. Name
+lookup is lexical, but a nested lambda cannot read a **runtime** binding of an
+enclosing scope: a `const` computed from a runtime value (`const s = a + 1`
+with `a` an input), a `mut`, `reg`, or `wire`, an input of the enclosing
+lambda, or the element of a `for` over runtime values (`for x in (a, b)`).
+Reading one is a compile error. Pass those values as normal inputs, or place
+them in an explicit tuple/object and pass that object.
 
 Comptime bindings are different: they are elaboration-time names, not hardware
 resources. Visible comptime bindings from enclosing scopes are available
-lexically inside lambda bodies and signatures. This includes imports,
-`comptime const` declarations, and `comptime mut` declarations after their
-elaboration-time value is known. The compiler records every lexical comptime
-reference as an explicit dependency of the lambda, so the dependency is still
-visible to elaboration and incremental compilation without a user-written
-capture list.
+lexically inside lambda bodies and signatures: `comptime const` declarations,
+a plain `const` whose value is a compile-time constant (`const k = 2`,
+`const w = N * 4` over a comptime `N` or a generic, a const computed from such
+consts), the generics of an enclosing lambda, the index of an enclosing `for`
+(and its element when the iterable is comptime), imports, types, and lambdas.
+A generic argument is a compile-time value too: binding a generic to a
+runtime value (`g<N=a>`) is an error at the call. The
+compiler records every lexical comptime reference as an explicit dependency of
+the lambda (it recomputes the value inside the lambda from the same
+declarations), so the dependency is still visible to elaboration and
+incremental compilation without a user-written capture list. A comptime value
+computed from a runtime binding (`comptime const K = a.[bits]` with `a` an
+input) cannot be recomputed inside the nested lambda, so reading it there is
+an error too.
+
+A name with no accessible declaration — never declared, declared later, or
+out of scope — is a compile error at the read in every context (bodies,
+signatures and port widths, generic defaults and generic arguments,
+attributes, tuple fields, test blocks). It never reads as `nil` and never
+becomes a hidden input.
 
 ```pyrope
 comptime const W = 32
 const math = import("lib.math")// imports are comptime aliases
 
-comb add<N=W>(a:uN, b:uN) -> (result) {
+comb add<N=W>(a:Unsigned(bits=N), b:Unsigned(bits=N)) -> (result) {
   result = a + b
 }
 
-pipe do_arith(op:math.OpType, a:u32, b:u32) -> (result:u32) {
+pipe do_arith(op:math.OpType, a:U32, b:U32) -> (result:U32) {
   match op {
     case math.AddOp { wrap result = a + b }
     else { result = 0 }
@@ -520,15 +553,21 @@ Because runtime closures are not implicit, the following is an error:
 ```pyrope
 mut x = 3
 
-comb f() -> (result:signed) {
+comb f() -> (result:Signed) {
   result = x       // error: runtime outer variable is not visible in lambda
+}
+mod outer(a:U8) -> (y:U8@[0]) {
+  const k = a + 2                   // computed from the input `a`: a runtime value
+  comb g() -> (r:U9) { r = k }      // error: `k` is a runtime value
+  comb inner() -> (r:U8) { r = a }  // error: `a` is an input of the enclosing lambda
+  y = inner()
 }
 ```
 
 Use an explicit input or tuple field instead:
 
 ```pyrope
-comb f(x:signed) -> (result:signed) {
+comb f(x:Signed) -> (result:Signed) {
   result = x
 }
 ```
@@ -569,42 +608,42 @@ explicit methods. After construction, reads and writes are structural.
 
 ```pyrope
 const I1_t = (
-  mut i1_field:u32 = 1,
-  mut i2_field:u32 = 2,
+  mut i1_field:U32 = 1,
+  mut i2_field:U32 = 2,
   comb init(ref self, a) {
      self.i1_field = a
   }
 )
 const I2_t = (
-  mut i1_field:s32 = 11,
+  mut i1_field:S32 = 11,
   comb init(ref self, a) {
      self.i1_field = a
   }
 )
 
 const X_t = (
-  mut i1:I1_t = nil,
-  mut i2:I2_t = nil
+  mut first:I1_t = nil,
+  mut second:I2_t = nil
 )
 
 mut top = (
   comb init(ref self) {
-    mut x:X_t = nil   // fields keep defaults; i1 then i2 in program order
-    cassert(x.i1.i1_field == 1)
-    cassert(x.i1.i2_field == 2)
-    cassert(x.i2.i1_field == 11)
+    mut x:X_t = nil   // fields keep defaults; first then second in program order
+    cassert(x.first.i1_field == 1)
+    cassert(x.first.i2_field == 2)
+    cassert(x.second.i1_field == 11)
 
-    x.i1 = I1_t(400)  // explicit construction calls init
+    x.first = I1_t(400)  // explicit construction calls init
 
-    cassert(x.i1.i1_field == 400)
-    cassert(x.i1.i2_field == 2)
-    cassert(x.i2.i1_field == 11)
+    cassert(x.first.i1_field == 400)
+    cassert(x.first.i2_field == 2)
+    cassert(x.second.i1_field == 11)
 
-    x.i2 = I2_t(1000)
+    x.second = I2_t(1000)
 
-    cassert(x.i1.i1_field == 400)
-    cassert(x.i1.i2_field == 2)
-    cassert(x.i2.i1_field == 1000)
+    cassert(x.first.i1_field == 400)
+    cassert(x.first.i2_field == 2)
+    cassert(x.second.i1_field == 1000)
   }
 )
 ```
@@ -618,45 +657,37 @@ follows tuple scope in tuple ordered assignment.
 ### Unknowns
 
 
-Pyrope respects the same semantics as Verilog with unknowns. As such, there can
-be many unexpected behaviors in these cases. The difference is that in Pyrope
-everything is initialized and unknowns (`0sb?`) can happen only when explicitly
-enabled.
+Every operation involving unknowns follows the best-effort rule in
+[Dealing with unknowns](#dealing-with-unknowns): Dlop may resolve a result or
+leave it unknown, but never produce an incorrect definite answer. In Pyrope,
+everything is initialized and unknowns (`0sb?`) arise from explicitly supplied
+unknown bits.
 
 
-Any comparison touching an unknown yields the unknown boolean `0ub?`. This
-includes comparing two identical unknown patterns with either `==` or `!=`.
-An unknown boolean cannot satisfy a `cassert`.
+Comparisons involving unknown bits can yield an unknown boolean (`0sb?`),
+including comparisons of identical unknown patterns.
+Ordered comparisons may resolve to a definite result when Dlop can prove it,
+but this is best-effort: `0ub1? > 0ub00` can be `true` or unknown, never
+`false`. An unknown boolean cannot satisfy a `cassert`, so a mathematically
+provable comparison involving unknown bits is not guaranteed to pass one.
 
 At compile time, inspect the printable representation to check unknown bits:
 
 ```pyrope
 const x = 0sb10?
 cassert("{x:b}" == "10?")
-cassert(string(x == x) == "0ub?")
+const flag = 0sb? == 0       // legal: binds the unknown result 0sb?
+cassert(flag)               // error: unknown is not true
 ```
 
 ### for loop
 
-The `for` expects a tuple, and iterates over the tuple. This can lead to some
-unexpected behaviour. The most strange is that ranges are always from smallest
-to largest. It is not legal to do a `5..<0` range, the solution is to use a
-`to` which creates a tuple not a range.
+The `for` iterates over tuple entries or range values. Ranges run from smallest
+to largest; a descending range such as `5..<0` is not legal. For reverse
+iteration, compute a reverse index as shown below.
 
 
 ```pyrope
-const s:string="hell"
-for (idx,i) in s {
-  const v = match idx {
-   == 0 { "h" }
-   == 1 { "e" }
-   == 2 { "l" }
-   == 3 { "l" }
-   else { ""  }
-  }
-  cassert(v == i)
-}
-
 const t = (1,2,3)
 for (idx,i) in t {
   const v = match idx {
@@ -746,8 +777,8 @@ first in the positional tuple sits at the bottom of the word. Strings are
 opaque and cannot be packed.
 
 ```pyrope
-const stages:[4]u4 = (0ub0001, 0ub0010, 0ub0100, 0ub1000)
-const inp:u4 = 0ub1111
+const stages:[4]U4 = (0ub0001, 0ub0010, 0ub0100, 0ub1000)
+const inp:U4 = 0ub1111
 
 // stages[0] at bit 0, then stages[1], stages[2], stages[3], and inp on top
 cassert((...stages, inp)#[..] == 0ub1111_1000_0100_0010_0001)
@@ -769,9 +800,9 @@ states, and the splice makes that layout visible at the point where it is
 chosen.
 
 ```pyrope
-const regw:u20 = (...stages, inp)#[..] // OK: `...` flattens the array into entries
+const regw:U20 = (...stages, inp)#[..] // OK: `...` flattens the array into entries
 const bad = (stages, inp)#[..]         // error: splice the array entry -- `...stages`
-const all:u16 = stages#[..]            // OK: `stages` IS the tuple being packed
+const all:U16 = stages#[..]            // OK: `stages` IS the tuple being packed
 ```
 
 Each entry's width comes from its **declared type** — never from its value,
@@ -781,10 +812,10 @@ the source states rather than something the compiler measures. The packed total
 is exactly the sum of the entry widths.
 
 ```pyrope
-const a:u4 = 0ub101      // a FOUR-bit entry: the type says 4, not the literal's 3
-const b:u8 = 1
+const a:U4 = 0ub101      // a FOUR-bit entry: the type says 4, not the literal's 3
+const b:U8 = 1
 
-const c:u12 = (a, b)#[..]
+const c:U12 = (a, b)#[..]
 cassert(c == 0ub0000_0001_0101)   // `b` above `a`, because entry 0 is at bit 0
 ```
 
@@ -792,10 +823,10 @@ A destination that declares a different width is an error in both directions,
 never a zero-extension and never a silent truncation:
 
 ```pyrope
-const wide:u13   = (a, b)#[..]  // error: 13 != 12; a layout is never silently padded
-const narrow:u11 = (a, b)#[..]  // error: 11 != 12; nor silently truncated
-wrap const e:u10 = (a, b)#[..]  // OK, the top 2 bits are dropped, and the line says so
-sat const f:u10  = (a, b)#[..]  // error: saturation has no meaning for a bit layout
+const wide:U13   = (a, b)#[..]  // error: 13 != 12; a layout is never silently padded
+const narrow:U11 = (a, b)#[..]  // error: 11 != 12; nor silently truncated
+wrap const e:U10 = (a, b)#[..]  // OK, the top 2 bits are dropped, and the line says so
+sat const f:U10  = (a, b)#[..]  // error: saturation has no meaning for a bit layout
 ```
 
 `wrap` is the only escape hatch, and it is the same statement-level modifier
@@ -803,7 +834,7 @@ that governs [every other narrowing
 assignment](04b-attributes.md#wrap-and-sat-modifier): it permits dropping the
 high bits, on the line that loses them. Widening has no such escape hatch
 because no modifier can invent bits, and `sat` is rejected exactly as
-`sat x:bool` is, since a layout has no magnitude to saturate towards.
+`sat x:Bool` is, since a layout has no magnitude to saturate towards.
 
 Every entry must therefore name something declared. An untyped variable is an
 error even when its initializer looks sized, and so is a literal or an
@@ -811,12 +842,12 @@ expression written directly as an entry. Bind it to a typed name first:
 
 ```pyrope
 const u = 0ub101                // u has no declared type
-const w1:u12 = (u, b)#[..]      // error: entry `u` has no declared bit width
-const w2:u12 = (a, 0ub01)#[..]  // error: a literal entry has no declared type
-const w3:u13 = (a, b + 1)#[..]  // error: `b + 1` has no declared width
+const w1:U12 = (u, b)#[..]      // error: entry `u` has no declared bit width
+const w2:U12 = (a, 0ub01)#[..]  // error: a literal entry has no declared type
+const w3:U13 = (a, b + 1)#[..]  // error: `b + 1` has no declared width
 
-const one:u8 = 1
-const d:u12 = (a, one)#[..]     // OK -- `one` declares the 8-bit window
+const one:U8 = 1
+const d:U12 = (a, one)#[..]     // OK -- `one` declares the 8-bit window
 ```
 
 A tuple with **two or more named fields** has no bit vector, at any depth.
@@ -827,13 +858,13 @@ order you want instead. A tuple with **exactly one** named field has no order
 to get wrong, and stays legal in both directions.
 
 ```pyrope
-const pt = (const lo:u4 = 3, const hi:u4 = 1)
+const pt = (const lo:U4 = 3, const hi:U4 = 1)
 
-const q:u8 = pt#[..]              // error: two named fields have no bit order
-const w:u8 = (pt.lo, pt.hi)#[..]  // OK: the order is in the source
+const q:U8 = pt#[..]              // error: two named fields have no bit order
+const w:U8 = (pt.lo, pt.hi)#[..]  // OK: the order is in the source
 cassert(w == 0ub0001_0011)
 
-const one_named = (const only:u4 = 3)
+const one_named = (const only:U4 = 3)
 cassert(one_named#[..] == 3)      // a single name cannot be misordered
 ```
 
@@ -842,19 +873,19 @@ of names on the left of an `=`. A destructuring pattern says what the pieces
 are called, not how wide they are or where they sit:
 
 ```pyrope
-const b8:u8 = 0ub1010_0110
+const b8:U8 = 0ub1010_0110
 
-const x:[2]u4 = b8#[..]         // OK: the array type states the layout
+const x:[2]U4 = b8#[..]         // OK: the array type states the layout
 cassert(x[0] == 0ub0110 and x[1] == 0ub1010)
 
-const (lo:u4, hi:u4) = b8#[..]  // error: names, not a layout
+const (lo:U4, hi:U4) = b8#[..]  // error: destructuring slots never carry types
 ```
 
 Signedness on unpack comes from the declared entry type, and each entry is
 extended from its own window rather than from the word:
 
 ```pyrope
-const s:[2]s4 = b8#[..]
+const s:[2]S4 = b8#[..]
 cassert(s[0] == 6 and s[1] == -6)   // 0ub1010 read as a 4-bit signed entry
 ```
 
@@ -862,10 +893,10 @@ The exact-width rule holds here too, with `wrap` again the one way to lose a
 bit in the open:
 
 ```pyrope
-const nine:u9 = 0ub1_1010_0110
+const nine:U9 = 0ub1_1010_0110
 
-const y1:[2]u4 = nine#[..]       // error: 8 != 9; bit 8 has nowhere to land
-wrap const y2:[2]u4 = nine#[..]  // OK, bit 8 is dropped, and the line says so
+const y1:[2]U4 = nine#[..]       // error: 8 != 9; bit 8 has nowhere to land
+wrap const y2:[2]U4 = nine#[..]  // OK, bit 8 is dropped, and the line says so
 ```
 
 Uniform entries are what an array destination expresses. Mixed widths have no
@@ -873,7 +904,7 @@ packing spelling on purpose, because no type states "8 bits and then 4" for a
 destructuring, so the ranges are written out:
 
 ```pyrope
-const packed:u12 = 0ub1010_0110_0011
+const packed:U12 = 0ub1010_0110_0011
 
 const lo_byte = packed#[0..=7]
 const hi_nib  = packed#[8..=11]
@@ -889,7 +920,7 @@ non-negative, and a destination meant to be read as a signed word takes
 `#sext[..]`, so the reinterpretation is written rather than assumed.
 
 ```pyrope
-const pair:[2]s4 = (1, -1)             // 0ub0001 at the bottom, 0ub1111 above it
+const pair:[2]S4 = (1, -1)             // 0ub0001 at the bottom, 0ub1111 above it
 
 cassert(pair#[..]     == 0ub1111_0001) // the packed word, always non-negative
 cassert(pair#sext[..] == -15)          // the same bits, reinterpreted as signed
@@ -932,11 +963,11 @@ to read off the page, and it doubles as an independent statement of the packing
 order:
 
 ```pyrope
-const a4:u4 = 0ub1010
-const b2:u2 = 0ub01
-const c1:u1 = 0ub1
+const a4:U4 = 0ub1010
+const b2:U2 = 0ub01
+const c1:U1 = 0ub1
 
-mut r:u7 = nil
+mut r:U7 = nil
 r#[0]     = c1
 r#[1..=2] = b2
 r#[3..=6] = a4
@@ -949,8 +980,8 @@ A pure bit reversal has no layout to state — it is a permutation — so it sta
 a `for` loop with explicit indices:
 
 ```pyrope
-comb reverse(x:unsigned) -> (total:unsigned) {
-  mut t:unsigned = nil
+comb reverse(x:Unsigned) -> (total:Unsigned) {
+  mut t:Unsigned = nil
   for i in 0..<x.[bits] {
     t#[i] = x#[x.[bits]-1-i]
   }
@@ -970,8 +1001,8 @@ reference.
 comb args(x) -> (r) { puts("args:{x}"); r = 1 }
 comb here()  -> (r) { puts("here");   r = 3 }
 
-type NullaryInt = comb() -> (r:signed)
-comb call_now(f:NullaryInt)   -> (r:signed)     { r = f() }
+type NullaryInt = comb() -> (r:Signed)
+comb call_now(f:NullaryInt)   -> (r:Signed)     { r = f() }
 comb call_defer(f:NullaryInt) -> (g:NullaryInt) { g = f }
 
 const x0 = call_now(here)          // prints "here"

@@ -324,7 +324,7 @@ be expected in a software API.
 
     ```pyrope
     mut c = mul(a,b)
-    assert(c == past(a) * past(b)) // compare against last-cycle a and b
+    assert(c == past(x=a) * past(x=b)) // compare against last-cycle a and b
     ```
 
 If actors execution resembles concurrent module instantiation execution,
@@ -545,7 +545,7 @@ There are three leading solutions categories:
 
     ```verilog
     // there is no agreement on the community, but possible solutions:
-    x = 0b? // error: (1)
+    x = 0ub? // error: (1)
     if x {  // (2): randomly pick 1 or 0
     }
     reg signed [3:0] a = -1;

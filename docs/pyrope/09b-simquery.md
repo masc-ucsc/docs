@@ -14,9 +14,9 @@ express; this is about inspecting what a testbench did.
 ## A worked example
 
 ```pyrope
-mod fifo(push:bool, din:u8) -> (count:u4@[0], head:u8@[0]) {
-  reg cnt:u4 = 0
-  reg mem:[8]u8 = nil
+mod fifo(push:Bool, din:U8) -> (count:U4@[0], head:U8@[0]) {
+  reg cnt:U4 = 0
+  reg mem:[8]U8 = nil
 
   if push { mem[cnt] = din; wrap cnt += 1 }
 
@@ -27,8 +27,8 @@ mod fifo(push:bool, din:u8) -> (count:u4@[0], head:u8@[0]) {
 test fifo.fill {
   mut acc = fifo
   tick 6 {
-    acc.push = clock < 4
-    acc.din  = 0x10 + clock
+    acc.push = `clock` < 4
+    acc.din  = 0x10 + `clock`   // the tick's clock: its cycle count is legal in a test
     step
   }
   assert(acc.cnt == 4, "four pushes landed")
@@ -58,8 +58,9 @@ and `debug` members:
 Note `acc.cnt` is both stored and declared as 4 bits. Literal-width realization
 means an unsigned value does not carry a hidden sign slot. Both fields remain in
 the schema because imported or conservatively widened internal nets can still
-differ from the source declaration. Everything else — `clock` and `reset`
-inputs, the sub-instance tree — is enumerated the same way, with hierarchical
+differ from the source declaration. Everything else — the minted `clock` and
+`reset` inputs (`fifo` has registers but declares no `Clock`/`Reset`), the
+sub-instance tree — is enumerated the same way, with hierarchical
 names rooted at the testbench instance variable.
 
 ## Reading values

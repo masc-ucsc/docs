@@ -41,7 +41,9 @@ All the program state is lost unless preserved in register variables.
 
 Those registers variables have an "initialization" step that in hardware
 corresponds to a reset phase. Each register declaration assignment has reset
-code only executed during reset.
+code only executed during reset. The clock and the reset are ordinary inputs of
+type `Clock` and `Reset`; registers bind to them by type, not by name (see
+[implicit clock and reset](04b-attributes.md#implicit-clock-and-reset)).
 
 
 ### Backward edges with `wire`
@@ -92,8 +94,8 @@ auto max_gap_count(std::vector<int> nums) {
 
 ```pyrope
 comb max_gap_count(nums) -> (r) {
-  const max  = import("std").max
-  const sort = import("std").sort
+  const max  = import("prp").max   // the import("prp") library, not the built-in `std`
+  const sort = import("prp").sort
   comb adjacent_transform(a, num, f) -> (res) {
     res = ()
     for i in 0..<a.length step num {
@@ -109,12 +111,12 @@ comb max_gap_count(nums) -> (r) {
     }
   }
 
-  comb less(a,b)  -> (r:bool) { r = a < b }
+  comb less(a,b)  -> (r:Bool) { r = a < b }
   comb dosub(a,b) -> (r)      { r = a - b }
 
-  const sorted = sort(numbers, less)
-  const diffs  = adjacent_transform(sorted, num=2, dosub)
-  r = count(diffs, diffs.max)
+  const sorted = sort(a=nums, f=less)
+  const diffs  = adjacent_transform(a=sorted, num=2, f=dosub)
+  r = count(a=diffs, b=diffs.max)
 }
 ```
 
@@ -138,8 +140,8 @@ func add<T:Numeric>(a:T, b:T) -> T { a + b }
 ```
 
 ```pyrope
-comb add(a, b)  -> (r) { r = a + b }                  // OK, no constrains
-comb add2<T:signed>(a:T, b:T) -> (r:T) { r = a + b }     // constrain both to have same type
+comb add(a, b)  -> (r) { r = a + b }              // OK, no constrains
+comb add2<T>(a:T, b:T) -> (r:T) { wrap r = a + b } // constrain both to have same type
 ```
 
 When a protocol defines an interface, in Swift:
@@ -162,9 +164,9 @@ func print_share_info<T:Shape>(_ s:T) {
 In Pyrope:
 ```pyrope
 const Shape = (
-  comb name(self) -> (result:string) { },        // undefined method
-  comb area(self) -> (result:float) { },         // NOTE: Pyrope does not have float type
-  comb perimeter(self) -> (result:float) { }
+  comb name(self) -> (result:String) { },        // undefined method
+  comb area(self) -> (result:Float) { },         // NOTE: Pyrope does not have a Float type
+  comb perimeter(self) -> (result:Float) { }
 )
 
 const Rectangle:(...Shape, ...OtherAPI) = (...some_code_here)
@@ -208,15 +210,15 @@ A Rust style Pyrope equivalent:
 
 ```pyrope
 const AnObject = (
-  mut v:s32 = nil
+  mut v:S32 = nil
 )
 
-comb f1(ref self:AnObject) -> (result:s32) { // named output tuple
+comb f1(ref self:AnObject) -> (result:S32) { // named output tuple
   const res = self.v
-  self.v += 1
+  wrap self.v += 1
   result = res
 }
-comb f2(self:AnObject) -> (result:s32) {
+comb f2(self:AnObject) -> (result:S32) {
   result = self.v
 }
 ```
@@ -225,12 +227,12 @@ A more Pyrope style equivalent:
 
 ```pyrope
 const AnObject = (
-  mut v:s32 = nil,
-  comb f1(ref self) -> (res:s32) {
+  mut v:S32 = nil,
+  comb f1(ref self) -> (res:S32) {
     res = self.v
-    self.v += 1
+    wrap self.v += 1
   },
-  comb f2(self) -> (result:s32) { result = self.v }
+  comb f2(self) -> (result:S32) { result = self.v }
 )
 ```
 
@@ -283,11 +285,11 @@ func larger(a, b []string) []string {
 
 In Pyrope:
 ```pyrope
-const std = import("std")
+const prp = import("prp")   // library calls stay behind a namespace
 
-comb larger(a:string, b:string) -> (result:string) {
-  const strlen = std.strlen(a)
-  if strlen > std.strlen(b) {
+comb larger(a:String, b:String) -> (result:String) {
+  const strlen = prp.strlen(a)
+  if strlen > prp.strlen(b) {
     result = a
   } else {
     result = b
@@ -295,7 +297,7 @@ comb larger(a:string, b:string) -> (result:string) {
 }
 
 // Using attributes (bits != strlen, but works too)
-comb larger(a:string, b:string) -> (result:string) {
+comb larger(a:String, b:String) -> (result:String) {
   result = if a.[bits] > b.[bits] { a } else { b }
 }
 ```

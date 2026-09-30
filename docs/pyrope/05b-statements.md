@@ -22,7 +22,7 @@ a = unique if x1 == 1 {
   }
 
 mut x = nil
-if a { x = 3 } else { x = 4 }
+if a > 350 { x = 3 } else { x = 4 }   // a condition is a Bool: `if a` is an error
 ```
 
 The equivalent code with an explicit `assume`, but unlike the `assume`, the
@@ -43,17 +43,20 @@ a = if x1 == 1 {
 ```
 
 Like several modern programming languages, there can be a list of expressions
-in the evaluation condition. If variables are declared, they are restricted to
-the remaining if/else statement blocks.
+in the evaluation condition. A variable declared there becomes visible at its
+declaration and remains visible through the rest of the `if`/`elif`/`else`
+chain. An earlier arm cannot read a variable declared in a later `elif`
+initializer, even if the earlier condition is constant. This also applies to
+`unique if` and to reads inside a nested block or lambda.
 
 
 ```pyrope
 mut tmp = x+1
 
 if mut x1=x+1; x1 == tmp {
-   puts("x1:{} is the same as tmp:{}", x1, tmp)
+   puts("x1:{x1} is the same as tmp:{tmp}")
 }elif mut x2=x+2; x2 == tmp {
-   puts("x1:{} != x2:{} == tmp:{}", x1, x2, tmp)
+   puts("x1:{x1} != x2:{x2} == tmp:{tmp}")
 }
 ```
 
@@ -69,7 +72,7 @@ generation than a sequence of `if/else`.
 A `match` declares its arms mutually exclusive *and* exhaustive (it behaves
 like an `assume`/unique-parallel-case), so there is always exactly one matching
 branch. The `else` arm is **optional**: when the arms already cover the whole
-key space — e.g. every value of a bounded `uN`/`sN` selector — it can be left
+key space — e.g. every value of a bounded `U<N>`/`S<N>` selector — it can be left
 out. An omitted `else` behaves like an unreachable `else { assert(false) }`:
 in hardware it lowers to a *don't-care* (the Hotmux "none-of" slot is never
 selected), and at compile time a constant selector that somehow matches no arm
@@ -78,7 +81,7 @@ no `else`. Add an explicit `else` only when you need a real catch-all value or
 a `cassert(false)`.
 
 ```pyrope
-// `sel:u2` lists all four values — no `else` needed.
+// `sel:U2` lists all four values — no `else` needed.
 res = match sel {
   == 0 { a }
   == 1 { b }
@@ -125,7 +128,7 @@ Like the `if` statement, a sequence of statements and declarations are possible 
 
 ```pyrope
 match const one=1 ; (one, 2) {
-  == (1,2) { puts("one:{}", one) }      // should always hit
+  == (1,2) { puts("one:{one}") }        // should always hit
   else     { cassert(false) }
 }
 ```
@@ -191,11 +194,11 @@ comb narrow_only(v) -> (r) {
   r = v
 }
 
-comb widen<NARROW>(a:u8) -> (o:u8) {
+comb widen<NARROW>(a:U8) -> (o:U8) {
   if NARROW {
     o = narrow_only(v=a)   // never instantiated: the `cassert` does not run
   }else{
-    o = a + 1
+    wrap o = a + 1
   }
 }
 ```
@@ -279,7 +282,7 @@ comb real_doit(a) -> (r) {
   r = 100              // never reached
 }
 
-const z3 = doit(real_doit, 33)
+const z3 = doit(f=real_doit, a=33)
 cassert(z3 == 3)
 ```
 
@@ -309,20 +312,30 @@ most languages):
 
 * `for value in t` — just the element value.
 * `for (index, value) in t` — `index` is the (const) position, `value` the element.
-* `for (index, value, key) in t` — `key` is the field name (empty `''` for a
-  positional slot).
+* `for (index, value, key) in t` — `key` is the field name (empty `''` for
+  every entry of an unnamed tuple).
+
+A tuple is either all-named or all-unnamed (see [Tuples](03-bundle.md)). The
+field order of a named tuple carries no meaning, so a `for` visits its fields
+in field-name order (sorted by name, not declaration order), and `index` is the
+iteration count in that order; it does not make the named tuple accessible by
+position (`b[0]` is still an error).
 
 The `value` is a copy; iterate over `ref t` (e.g. `for (index, value) in ref t`)
 to write the element back into the tuple.
 
 ```pyrope
-const b = (const a=1, const b=3, const c=5, 7, 11)
+const b = (const c=5, const a=1, const b=3)  // declaration order is irrelevant
 cassert(b.keys() == ('a', 'b', 'c'))
 
 for (index, i, key) in b {
-  cassert(i==1  implies (index==2 and key == 'a'))
-  cassert(i==3  implies (index==3 and key == 'b'))
-  cassert(i==5  implies (index==4 and key == 'c'))
+  cassert(i==1  implies (index==0 and key == 'a'))
+  cassert(i==3  implies (index==1 and key == 'b'))
+  cassert(i==5  implies (index==2 and key == 'c'))
+}
+
+const u = (7, 11)
+for (index, i, key) in u {
   cassert(i==7  implies (index==0 and key == '' ))
   cassert(i==11 implies (index==1 and key == '' ))
 }
@@ -436,7 +449,7 @@ variable declarations visible only inside the while statements.
 
 mut a = 0
 loop {
-  puts("a:{}",a)
+  puts("a:{a}")
 
   a += 1
 
@@ -448,6 +461,31 @@ loop {
 runtime, cycle-driven loop inside a `test` (run for `N` cycles or forever), use
 [`tick`](#running-cycles-tick).
 
+### Loops and `wire`
+
+A loop body may **read** a
+[`wire`](04-variables.md#wire-single-driver-combinational-nets) declared
+outside it; the read needs no hoisting. It may **not write** (drive) a `wire`:
+the body runs once per iteration, so a write there would add one driver per
+iteration and break the single-driver rule. Drive the wire outside the loop.
+
+```pyrope
+wire w:U4 = a ^ b
+mut ones:U3 = 0
+for i in 0..<4 {
+  ones += w#[i]        // OK: reads the wire
+}
+
+wire z:U4 = nil
+for i in 0..<4 {
+  z#[i] = a#[i]        // error: a loop body may not drive a wire
+}
+```
+
+Semantically every loop unrolls. The compiler may still keep a simple `for`
+compact (rolled) internally, which never changes behavior, but a loop whose
+body reads a `wire` or writes a memory / `reg` array is always unrolled.
+
 ## Cycle access
 
 Cycle-based access to values is expressed through a small set of
@@ -456,11 +494,11 @@ constructs:
 * The first bare `variable` reads before update hold the register's 'q' value:
 
   ```pyrope
-  reg counter:u32 = 0
+  reg counter:U32 = 0
   const counter_q = counter         // snapshot 'q' before any updates this cycle
 
   if whatever {
-    counter = counter + 1
+    wrap counter = counter + 1
   }
   ```
 
@@ -482,9 +520,9 @@ constructs:
   stage and never inserts flops).
 
 * For debug-only sampling over time (inside `assert`, `test`, `formal`, …),
-  use the temporal library — `past(x, n)`, `rose(x)`, `eventually(x, 1..=N)`,
-  etc. Every cycle argument is positional; there is no bracket form, and the
-  whole library is still TBD. See
+  use the temporal library — `past(x, n=2)`, `rose(x)`, `eventually(x, w=1..=N)`,
+  etc. Every cycle argument is an ordinary named argument; there is no bracket
+  form, and the whole library is still TBD. See
   [Temporal library](09-verification.md#temporal-library).
 
 `foo@[N]` is a pure cycle-alignment type check, never a flop insertion, and
@@ -497,9 +535,9 @@ To feed a register's next-state into both the register and a same-cycle
 consumer, name the value as a `wire` and read it in both places:
 
 ```pyrope
-wire nx = nil          // forward-declared net for the next-state value
-nx = counter + 1       // its single driver
-reg counter:u32 = 0
+reg counter:U32 = 0
+wire nx:U32 = nil      // forward-declared net for the next-state value
+wrap nx = counter + 1  // its single driver (U32: wraps like the register)
 counter = nx           // registered write
 const also = nx + 1    // same-cycle consumer reads the same net
 ```
@@ -508,10 +546,10 @@ To connect `ring` calls in a loop, forward-declare the back edge as a `wire`:
 
 ```pyrope
 wire f4 = nil
-f1 = ring(a, f4)       // reads f4 before its driver appears
-f2 = ring(b, f1)
-f3 = ring(c, f2)
-f4 = ring(d, f3)       // the single driver of f4
+f1 = ring(x=a, prev=f4) // reads f4 before its driver appears
+f2 = ring(x=b, prev=f1)
+f3 = ring(x=c, prev=f2)
+f4 = ring(x=d, prev=f3) // the single driver of f4
 ```
 
 ## Testing (`test`)
@@ -522,7 +560,7 @@ whole groups can be selected from the command line:
 
 ```pyrope
 test add.basic {
-  assert(add(2, 3) == 5)
+  assert(add(lhs=2, rhs=3) == 5)
 }
 ```
 
@@ -551,26 +589,30 @@ size a `tick` loop, or seed a `cpp` model — so a single test becomes a small
 parametrized experiment:
 
 ```pyrope
-test add.checked(lhs:i32=3, rhs:i32) {
-  assert(add(lhs, rhs) == lhs + rhs)   // lhs and rhs are the DUT inputs
+test add.checked(lhs:S32=3, rhs:S32) {
+  assert(add(lhs, rhs) == lhs + rhs)   // bare names match add's inputs `lhs` and `rhs`
 }
 ```
 
+A parameter (like a test local) may not reuse the name of a visible file-scope
+`const`: the const is visible inside the test, so that is shadowing, a compile
+error.
+
 Each parameter is either **optional** or **required**:
 
-* `lhs:i32=3` has a default, so it is optional: the runner uses `3` unless it is
+* `lhs:S32=3` has a default, so it is optional: the runner uses `3` unless it is
   overridden.
-* `rhs:i32` has **no** default, so it is required: the runner MUST supply a
-  value. `rhs:i32=nil` means exactly the same thing — an explicit `nil` default
+* `rhs:S32` has **no** default, so it is required: the runner MUST supply a
+  value. `rhs:S32=nil` means exactly the same thing — an explicit `nil` default
   and an omitted default both say "the runner must set this". A `nil` that
   reaches the body is a runner error, never a silent `0`.
 
-Values are passed with `--arg name=value` (repeatable). Supplying a required
+Values are passed with `+name=value` (repeatable). Supplying a required
 argument is mandatory; running without it is an error, not a default-to-zero:
 
 ```bash
-lhd sim add.prp add.checked --arg rhs=7               # lhs=3 (default), rhs=7
-lhd sim add.prp add.checked --arg lhs=10 --arg rhs=-4 # both overridden
+lhd sim add.prp add.checked +rhs=7               # lhs=3 (default), rhs=7
+lhd sim add.prp add.checked +lhs=10 +rhs=-4 # both overridden
 lhd sim add.prp add.checked                           # error: required `rhs` not set
 ```
 
@@ -581,13 +623,18 @@ constrained-random or directed-test generator, a CI matrix). The test declares
 
 Runtime parameters are debug-only simulation values (they drive the DUT's
 inputs, size a `tick`/`step`, or feed a `cpp` model); they never reach
-synthesizable logic. A
-value that must size hardware is a `comptime` parameter and belongs in the
-`[...]` slot (planned; see [Implementation status](15-tbd.md)), not in `(...)`.
+synthesizable logic. A value that must size hardware has to be comptime, so it
+is never a `(...)` parameter: take it from a `comptime const` or bind it as a
+generic of the lambda under test. A comptime test-parameter sweep (one test
+instance per swept value) is reserved but not yet specified (see
+[Implementation status](15-tbd.md)).
 
 Many tests can run in parallel to increase throughput. A comptime `for` loop
 multiplies the number of tests; each unrolled instance shares the leaf name and
-the runner disambiguates them by index:
+the runner disambiguates them by index. (TBD: `lhd sim` runs neither form
+below yet. It finds no `test` nested in a top-scope `for`, and it rejects a
+`for`/`while`/`loop` statement inside a `test` body; use `tick N` for a cycle
+loop. See [Implementation status](15-tbd.md).)
 
 === "Parallel tests"
     ```pyrope
@@ -682,13 +729,22 @@ statements below sample the results — and there is exactly one `step` per
 iteration. Read the DUT *below* the `step`: a read placed above it observes what
 the previous `step` settled, not the inputs driven by the statements just above
 it, so for an output that depends combinationally on those inputs the two
-placements differ by a cycle. The current cycle index
-is the first-class value `clock` (0-based), usable in `puts`, `assert`, and to
-gate inputs such as reset (`acc.reset = clock < 2`; reset is just an input):
+placements differ by a cycle.
+
+Each `tick` block gets a minted `` `clock`:Clock``. In simulation a Clock is a cycle
+counter, and this one counts the tick's cycles: it is `0` in the first
+iteration and each `step` advances it. The DUT instances stepped inside the tick
+auto-wire their unbound `Clock` input to it, like any instance whose caller has
+a single Clock. A test is a debug context, so the numeric
+view of `clock` is legal there: use it in `puts`, `assert`, and to drive inputs
+such as a reset (``acc.`reset` = `clock` < 2``; a Bool expression binds to a `Reset`
+without a cast). Outside a `tick` block, `clock` is undefined unless the test
+declares it. A harness never feeds a constant to a `Clock` input (`clk=1` is an
+error); it passes a real Clock such as the tick's `clock`.
 
 ```pyrope
-mod counter(enable:bool) -> (value:u8@[0]) {
-  reg count:u8 = 0
+mod counter(enable:Bool) -> (value:U8@[0]) {
+  reg count:U8 = 0
 
   value = count                     // combinational read of count.q -> @[0]
 
@@ -729,16 +785,20 @@ test counter.gated {
 }
 ```
 
-Reset is an ordinary input — drive it from the cycle index rather than a magic
-window. Holding `acc.reset` for the first cycles keeps the registers at their
-reset value until you release it:
+A `Reset` input is Bool-like — drive it from the cycle index rather than a magic
+window. `counter` has a register and declares no `Clock` or `Reset` input, so it
+gets the minted `` `clock`:Clock`` and `` `reset`:Reset`` inputs (see
+[Implicit clock and reset](04b-attributes.md#implicit-clock-and-reset)). The
+reset is active-high because `counter` does not set `negreset=true`.
+Holding ``acc.`reset` `` for the first cycles keeps the registers at their reset
+value until you release it:
 
 ```pyrope
 test counter.with_reset {
   mut acc = counter
   tick 8 {
     acc.enable = true
-    acc.reset  = clock < 2     // cycles 0,1 held in reset; counting starts at cycle 2
+    acc.`reset`  = `clock` < 2     // cycles 0,1 held in reset; counting starts at cycle 2
     step
   }
   assert(acc.value == 6)       // counted only on cycles 2..7
@@ -747,11 +807,11 @@ test counter.with_reset {
 
 A [runtime parameter](#runtime-parameters) can drive the simulation itself.
 Because `tick` takes a runtime count (unlike the unrolling `for`), the cycle
-bound can be a test argument set from outside — the value comes from `--arg`, or
+bound can be a test argument set from outside — the value comes from `+name=value`, or
 from the runner when it is omitted:
 
 ```pyrope
-test counter.run_for(cycles:u8=20) {
+test counter.run_for(cycles:U8=20) {
   mut acc     = counter
   mut v_final = nil
   tick cycles {                       // a runtime argument sets the loop length
@@ -759,13 +819,13 @@ test counter.run_for(cycles:u8=20) {
     step
     v_final = acc.value
   }
-  assert(v_final == cycles, "after {} enabled cycles the count must be {}", cycles, cycles)
+  assert(v_final == cycles, "after {cycles} enabled cycles the count must be {cycles}")
 }
 ```
 
 ```bash
 lhd sim counter.prp counter.run_for                 # cycles=20 (default)
-lhd sim counter.prp counter.run_for --arg cycles=50 # run 50 cycles instead
+lhd sim counter.prp counter.run_for +cycles=50 # run 50 cycles instead
 ```
 
 The `N` bound doubles as a watchdog: a `break` stops the loop early once a
@@ -776,7 +836,7 @@ test runner.until_done {
   mut r          = runner
   mut done_final = false
   tick 100 {                       // watchdog bound: never spin forever
-    r.start = clock == 0           // one-cycle start pulse on cycle 0
+    r.start = `clock` == 0           // one-cycle start pulse on cycle 0
     r.len   = 5
     step
     done_final = r.done
@@ -786,11 +846,17 @@ test runner.until_done {
 }
 ```
 
-Like `step`, `tick` is a statement-level construct, not a reserved identifier: it
-is recognized only at the start of a statement (`tick`, a cycle count, then a
-`{ ... }` block). (`regref` is an ordinary built-in *call*, not
-statement-level constructs, so they are not part of this rule.) A variable or method named `tick` (such as a
-`mod tick(ref self, ...)` clock method) is unaffected.
+`tick` and `step` follow the same name rule as every other reserved word:
+backticks are required in every name position, ignoring case. This includes
+fields and methods: ``x.`step` = 1``, ``(const `tick` = 1)``, and
+``mod `tick`(ref self, ...)``. (`regref` is an ordinary built-in call,
+not a reserved word.)
+
+```pyrope
+const tick = 1          // error: `tick` is a reserved word
+mut step = 1            // error: `step` is a reserved word
+const `tick` = 1        // OK: a backticked reserved word is an ordinary name
+```
 
 An unbounded `tick { }` (no count: run until a `break`) is TBD; the simulation
 runner currently requires the `N` bound, which doubles as the watchdog/timeout.

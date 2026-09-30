@@ -2,12 +2,24 @@
 
 ## Comments
 
-Comments begin with `//`, there are no multi-line comments
+A line comment begins with `//` and ends at the end of the line. A block
+comment starts with `/*` and ends with `*/`. Block comments nest, so
+`/* a /* b */ c */` is one comment; this makes it safe to comment out code that
+already has block comments.
 
 ```pyrope
 // comment
 a = 3 // another comment
+b = /* inline */ 4
+/* outer
+  c = 5 /* inner */
+  still in the outer comment
+*/
 ```
+
+Nothing inside a comment affects parsing: an operator inside a comment does
+not continue a statement, and quotes or braces inside it do not open a string
+or an interpolation.
 
 ## Constants
 
@@ -55,9 +67,13 @@ Like in many HDLs, Pyrope supports unknown bits for Verilog compatibility,
 but only as digits inside a binary integer literal — never as a standalone
 value. `0ub?`, `0sb?`, `0ub101?`, and `0ub??10` are valid integer
 values; bare `?` is **not** an integer and cannot be used in arithmetic
-(`? + 1` is a type error, `0sb? + 1` is `0sb??`). Bare `?` is a separate
-concept — a declaration placeholder meaning "use the type's default" (see
+(`? + 1` is a syntax error; `0sb? + 1` is a valid operation with unknown
+bits). There is no bare `?`
+placeholder either: every declaration supplies its value (see
 [Initialization](#initialization)).
+
+Outside binary literals, `?` is reserved for a future validity check such as
+`foo?` ("is foo valid?"). Both bare `?` and `foo?` are syntax errors for now.
 
 There are two distinct "no value" concepts in Pyrope — unknown-bit integer
 literals (`0sb?` / `0ub?`) and `nil`:
@@ -66,10 +82,14 @@ literals (`0sb?` / `0ub?`) and `nil`:
   more bits have not been decided by the designer, but the resulting
   circuit must be correct whether each bit turns out to be 0 or 1. During
   simulation, each `?` bit is randomly resolved to 0 or 1 to verify
-  correctness under both possibilities. Arithmetic follows Verilog
-  x-propagation semantics: `0sb? + 1` is `0sb??`, `0sb? | 1` is `1`. In
-  synthesized hardware, `?` bits give the synthesis tool freedom to
-  choose whichever value produces a smaller or faster circuit.
+  correctness under both possibilities. For every operation involving
+  unknowns, Dlop tries to resolve the result but may leave bits unknown even
+  when a precise result could be proved. It never returns an incorrect
+  definite result. For example, `0ub? | 1` may resolve to `1` or remain
+  unknown; it cannot resolve to `0`. In synthesized hardware, the synthesis
+  tool may choose concrete values for unspecified bits to produce a smaller
+  or faster circuit. Unknowns do not imply that a condition is unreachable;
+  use `assume` to express those constraints.
 
 * **`nil` (invalid)**: An invalid value that must never be used in any
   expression. Any arithmetic or decision with `nil` triggers a simulation
@@ -80,9 +100,9 @@ literals (`0sb?` / `0ub?`) and `nil`:
   simulation-time safety mechanism.
 
 ```pyrope
-cassert((0sb? | 1) == 1)   // OK: unknown OR 1 = 1
-cassert((0sb? + 1) == 0sb??)// unknown propagation
-cassert((nil | 1)==nil)     // error: nil is invalid, not unknown
+const masked = 0ub? | 1         // may resolve to 1 or remain unknown
+cassert((0sb? + 1) == 0sb??)     // error: comparison is unknown, so cassert fails
+cassert((nil | 1)==nil)          // error: nil is invalid, not unknown
 ```
 
 Notice that `nil` is a state in the integer basic type, it is not a new type by
@@ -99,23 +119,47 @@ use `nil` when converting Verilog code to Pyrope.
 
 Pyrope accepts single line strings with a single quote (`'`) or double quote
 (`"`).  Single quote does not have escape character, double quote supports escape
-sequences.
+sequences. A raw newline inside either kind of string is a syntax error (write
+`\n`); inside a `{...}` interpolation hole a newline is ordinary whitespace.
 
 ```pyrope
 const a = "hello \n newline"
 const b = 'simpler here'
 ```
 
+The escape sequences are exactly these (the Python/Rust common set):
+
 * `\n`: newline
+* `\t`: tab
+* `\r`: carriage return
 * `\\`: backslash
 * `\"`: double quote
-* `` ` ``: backtick quote
+* `\'`: single quote
+* `` \` ``: backtick quote
+* `\0`: NUL character
 * `\xNN`: hexadecimal 8 bit character (2 digits)
-* `\uNNNN`: hexadecimal 16-bit Unicode character UTF-8 encoded (4 digits)
+* `\u{N}`: Unicode character UTF-8 encoded, 1 to 6 hexadecimal digits
+  inside the braces (`\u{41}`, `\u{2287}`, `\u{1F600}`)
+
+Any other `\c` is an error. In particular `\uNNNN` without braces is an error
+(write `\u{NNNN}`), and `\{` and `\}` are not escapes: a literal brace is
+written doubled (`{{`, `}}`).
 
 
 Pyrope allows string interpolation only when double quote is used (`"bla {expression:format_style} bla"`).
-The format style is like C++23 std::format.
+The format style is like C++23 std::format, and it needs an expression: `"{:b}"`
+is a syntax error, and so is the empty hole `"{}"`. There are no positional
+placeholders filled by extra arguments, not even in `puts`/`print`: write
+`puts("a={a} b={b}")`, not `puts("a={} b={}", a, b)`. A hole holds exactly one
+expression (`"{x y}"` is an error), and a format style after the `:` is not
+empty and holds no brace and no backslash (`"{x:}"`, `"{x:{}}"`, and
+`"{x:\x41}"` are errors). In a double quoted string a doubled brace is a
+literal brace, as in Python or Rust format strings: `{{` is the text `{` and
+`}}` is the text `}`, so `"{{num}}"` is the text `{num}` (no interpolation). A
+lone `}` outside a hole is an error (write `}}`). A comment opener inside a
+string (`"//"`, `"/*"`) is text, while inside a `{...}` hole the normal code
+rules apply, comments included: a `{`, `}`, or `:` inside such a comment never
+closes the hole or starts a format style.
 
 ```pyrope
 const num       = 2
@@ -126,17 +170,29 @@ const txt1 = "I have {num:d} {color} potato{extension}"
 cassert(txt1 == "I have 2 blue potatos")
 
 const txt3 = 'I have {num}'     // single quote does not do interpolation
-cassert(txt3 == "I have \{num\}") // \{ escapes the interpolation
+cassert(txt3 == "I have {{num}}") // a doubled brace escapes the interpolation
+cassert("{{{num}}}" == '{2}')     // literal braces around an interpolation
+cassert("a // b" == 'a // b')     // a comment opener inside a string is text
+cassert("{num /* } */ + 1}" == "3") // a comment inside a hole is a comment
+cassert("\u{41}\x42" == 'AB')    // escapes: \u{...} and \xNN
+const bad = "{:b}"                // error: format style without an expression
+const bad2 = "{num:}"             // error: empty format style
+const bad3 = "{num color}"        // error: a hole holds one expression
+const bad4 = "num={}"             // error: empty hole, write "num={num}"
+const bad5 = "a } b"              // error: lone `}`, write "a }} b"
+const bad6 = "I have \{num\}"     // error: not escapes, write "I have {{num}}"
+const bad7 = "\u2287"             // error: write "\u{2287}"
+const bad8 = "{num:\x41}"         // error: backslash inside a format style
 
 comptime const text4 = "I have {num+1} x"
 cassert(text4 == "I have 3 x")
 ```
 
-`string(value)` converts an integer to decimal text:
+`String(value)` converts an integer to decimal text:
 
 ```pyrope
 const value = 127
-const text = string(value)
+const text = String(value)
 cassert(text == "127")
 ```
 
@@ -158,10 +214,14 @@ previous statement or it is a new statement.
 
 If the line starts with an alphanumeric (`[a-z0-9]` that excludes operators
 like `or`, `and`) value or an open parenthesis (`(`), the rest of the line
-belongs to a new statement.
+belongs to a new statement. A line that starts with a binary operator (`+`,
+`-`, `*`, `/`, `%`, `|`, `==`, `.`, ...), a `:` (type annotation or attribute),
+or a `#` bit selector (`#[0..=3]`, `#|[..]`, ...) continues the previous
+statement. A timing read `@[N]` is not an operator: it stays on the line of its
+name (a line starting with `@` is an error, also inside an `if` condition).
 
 ```pyrope
-mut (a,b,c,d) = nil
+mut (a,b,c,d) = (0,0,0,0)
 a = 1
   + 3           // 1st stmt
 (b,c) = (1,3)   // 2nd stmt
@@ -169,12 +229,21 @@ cassert(a == 4 and b == 1 and c == 3)
 
 d = 1 +         // OK, but not formatted to style
     3
+
+mut e
+  :U8 = 0xF5    // same statement: `mut e:U8 = 0xF5`
+const lo = e
+  #[0..=3]      // same statement: `e#[0..=3]`
+cassert(lo == 5)
+const m = 17
+  % 5           // same statement: `17 % 5`
+cassert(m == 2)
 ```
 Operators spelled as words work like the symbol ones. A line that starts with
-`and`, `or`, `implies`, `in`, `has`, `does`, or `equals` continues the previous
-statement. The match is whole-word, so a line that starts with an identifier
-like `order` or `index` is a new statement. Keep `case` on the line with its
-left operand; it is also the `match` clause keyword.
+`and`, `or`, `implies`, `in`, `has`, `does`, `equals`, or `case` continues the
+previous statement. `case` always continues, even though it is also the
+`match` arm keyword. The match is whole-word, so a line that starts with an
+identifier like `order` or `index` is a new statement.
 
 ```pyrope
 const r = false
@@ -197,11 +266,14 @@ style.
 
 ### Identifiers
 
-An identifier is any non-reserved keyword that starts with an underscore or an
-alphabetic character. Since Pyrope is designer to support any synthesizable
-Verilog automatic translation, any sequence of characters between backticks
-(\`) can form a valid identifier. The identifier uses the same escape sequence
-as strings.
+An unescaped identifier is a non-reserved name that starts with an underscore or an
+alphabetic character, followed by letters (non-ASCII letters included), digits,
+or underscores. `$` is not an identifier character, and neither is any other
+non-ASCII symbol (emoji, a no-break or zero-width space, `—`). Since Pyrope is designed to
+support any synthesizable Verilog automatic translation, any nonempty sequence of
+characters between backticks (\`) can form a valid identifier, so a Verilog
+name like `foo$bar` is written `` `foo$bar` ``. The identifier uses the same
+escape sequence as strings.
 
 ```pyrope
 const `foo is . strange!\nidentifier` = 4
@@ -209,39 +281,104 @@ const `for` = 3
 cassert(`for`+1 == `foo is . strange!\nidentifier`)
 ```
 
-Using the backtick, Pyrope can use any string as an identifier, even reserved
-keywords. The backtick is the *only* way to do so: a bare reserved word is not a
-name, so `mut if = 3` and `mod f(in:u8)` are errors that point you at the escape.
-Write `` `if` `` and `` `in` `` instead. The rule applies wherever a name is
-**bound** — a declaration or a parameter — and not where the grammar already
-expects a field or an attribute name (the memory configuration field really is
-spelled `const type = 1`).
+Backticks are required whenever an ordinary name matches a reserved keyword
+or type spelling, ignoring case, or contains characters outside the identifier
+rules above. This is one rule for every name: declarations, destructuring,
+parameters and outputs, generics, loop variables, tuple fields, methods,
+enum members, named arguments, dotted selectors, and attributes. There are no
+field-name or attribute-name exceptions. Name lookup itself remains
+case-sensitive: `` `if` `` and `` `IF` `` are distinct names.
+
+Keywords used as language syntax keep their normal spelling: `if` starts a
+conditional and `comptime` is a declaration modifier. When the same text names
+an attribute, field, or other entity, escape it: ``x.[`comptime`]``,
+``x.`if` ``, ``f(`in`=x)``, and ``f<`type`=U8>(x)``.
+
+```pyrope
+const cfg = (const `type` = 1, const `if` = 2)
+cassert(cfg.`type` == 1 and cfg.`if` == 2)
+const `in` = 3
+const `IF` = 4                  // case variants require backticks too
+// const in = 3                // error: reserved word used as a name
+// const If = 4                // error: reservation ignores case
+for `for` in 0..<2 { cassert(`for` < 2) }
+```
+
+`` `foo` `` and `foo` are the same name only when `foo` is a non-reserved word
+made of identifier characters. A reserved word keeps its meaning only
+unescaped: a backticked reserved word is an ordinary name in every position,
+so `` `else` `` is not `else`.
+
+The formatter preserves backticks around reserved keywords and type spellings
+using a case-insensitive match: `` `else` ``, `` `ELSE` ``, `` `u8` ``, and
+`` `U8` `` all keep their backticks. This formatting rule does not change the
+language's case-sensitive name lookup.
+
+The built-in type words `U<N>`, `S<N>`, `Unsigned`, `Signed`, `Bool`, `String`,
+`Clock`, and `Reset` ([type system](07-typesystem.md)) are reserved words too.
+`U<N>` and `S<N>` stand for `U` or `S` followed by any digit string (`U0`,
+`U1333`, `S99999999`). They cannot be declared or used as a variable, port,
+parameter, lambda, or field name, not even after a `.` (`foo.U33` is an error);
+a name with that spelling must be backticked, and `` `U4` `` is then a
+variable, never the type (`` foo.`U33` `` is a field).
+
+The old lowercase type spellings are banned words: `u`, `s`, or `i` followed by
+digits (`u8`, `s4`, `i32`), `bool`, `boolean`, `unsigned`, `signed`, and
+`string`. Using one anywhere (as a type, a cast, a variable, lambda, or field
+name) is an error that names the new spelling (`u8` was renamed `U8`). So `s1`,
+`i0`, and `u4` are not legal names; pick another name (`st1`, `in0`) or
+backtick it (`` `s1` ``), since a backticked banned word is an ordinary name.
+
+```pyrope
+const `U4` = 3         // a variable named U4
+mut x:U4 = `U4`        // the type U4 holding the variable U4
+const U4 = 3           // error: U4 is a reserved type word, use `U4`
+const s1 = 1           // error: s1 is a banned old spelling (now S1)
+const st1 = 1          // OK
+const `s1` = 1         // OK: a backticked banned word is an ordinary name
+const cfg2 = (const `U8` = 1, const `bool` = true)
+cassert(cfg2.`U8` == 1)
+const `foo$bar` = 2    // `$` needs backticks
+const foo$bar = 2      // error: `$` is not an identifier character
+```
 
 The backticks are Pyrope spelling only; they never reach the generated Verilog.
 There the bare name is emitted, and Verilog's own `\name ` escape is added only
 when Verilog itself needs it: `` `if` `` becomes `\if ` because `if` is a Verilog
 keyword, while `` `in` `` — not reserved in Verilog — is emitted as plain `in`.
 
-Identifiers are case sensitive like Verilog, but the compiler issues
-errors for non \` escaped identifiers that do not follow these conditions in
-order:
+Identifiers are case-sensitive like Verilog. User-defined type and variable
+names may use uppercase or lowercase letters; capitalization is not enforced
+by the compiler. The style guide recommends starting type names with an
+uppercase letter (`Pixel`, `GcdModel`) and variable names with a lowercase
+letter (`pixel`, `count`).
 
-* Identifiers with a single character followed by a number can be upper or lower case.
-* `comptime` is not inferred from casing. To make a binding compile-time,
-  prefix the declaration with `comptime` explicitly (e.g.,
-  `comptime const SIZE = 16`). An all-uppercase name without `comptime`
-  is just a runtime constant — the compiler does not treat casing as a
-  comptime signal.
-* Types should either: (1) start the first character uppercase and everything
-  else lower case; (2) be all lower case and finish with `_t`.
-* All the other identifiers that start with an alpha character `[a-z]` are
-  always lower case.
+The reserved type words and banned old spellings listed above still require
+backticks when used as ordinary names. That restriction is independent of
+the capitalization style recommendation.
 
-The bare underscore (`_`) and any name of the form `_<digits>` (e.g., `_0`,
-`_1`, `_2`, ...) are reserved and may not be used as binding names. They
-are reserved for future syntax (anonymous lambda placeholders). Using the
-backtick form (`` `_` ``, `` `_0` ``) bypasses the reservation if a Verilog
-import really needs that exact spelling.
+`comptime` is not inferred from casing. To require compile-time evaluation,
+prefix the declaration with `comptime` explicitly (e.g.,
+`comptime const size = 16`). The ``.[`comptime`]`` query checks whether the current
+value is known at compile time, regardless of the declaration's modifier.
+
+The bare underscore (`_`) and names matching `_[digit][alnum]*` (e.g., `_0`,
+`_1a`, `_23abc`) are reserved for future syntax (anonymous lambda
+placeholders). Here a digit is a Unicode decimal digit, and alphanumeric
+means a Unicode letter or decimal digit. These unescaped names are syntax
+errors in every position (a binding, a destructuring slot, a parameter, a
+value, or a field). The pattern matches the whole name: `_1_a` and `__0`
+remain legal. Using the backtick form (`` `_` ``, `` `_0` ``, `` `_1a` ``)
+bypasses the reservation if a Verilog import really needs that exact spelling.
+
+```pyrope
+const _ = 8            // error: `_` is reserved
+(_, b) = f()           // error: `_` is reserved, also as a destructuring slot
+const x = _ + 1        // error: `_` is reserved, also as a value
+const _1a = 8          // error: `_[digit][alnum]*` is reserved
+const `_` = 8          // OK: a backticked `_` is an ordinary name
+const `_1a` = 8        // OK: a backticked reserved name
+```
 
 ## Semicolons
 
@@ -285,15 +422,20 @@ different files.
 
 ```pyrope
 // src/file1.prp
-puts(priority=2, " world")
+puts(priority=2, msg=" world")
 
 // src/file2.prp
-print(priority=1, "hello")
+print(priority=1, msg="hello")
 ```
 
 The available puts/print arguments:
+* `msg`: the message string.
 * `priority`: relative order to print in a given cycle.
 * `file`: file to send the message. E.g: `stdout`, `stderr`, `my_large.log`,...
+
+Arguments follow the normal [argument naming](06-functions.md#argument-naming)
+rules. `msg` and `file` are both strings, so once `priority` or `file` is
+passed the message is named too: `puts(priority=2, " world")` is an error.
 
 
 Use string interpolation to build a string without printing it.
@@ -330,9 +472,9 @@ Pyrope naming for consistency:
 
 * Bare `pipe` leaves the latency fully flexible; the caller picks a positive latency via `stage[N]` at the call site
 
-* `mod` has no constraints on registers or output structure (can be Mealy or Moore), operates cycle by cycle, and is also the kind used to orchestrate pipelined calls — `stage[N]` and `@[N]` are the timing constructs available inside `mod`. Unlike `pipe`, each `mod` output declares its own landing cycle `@[N]` (`N` from `0` to `n`) at the interface (`mod f(a:u8) -> (x:u8@[2], y:u8@[0])`); a cycle-0 output is a combinational feedthrough, legal in `mod` but forbidden in `pipe`. To generate an LGraph module (for Verilog or simulation), the concrete `comb`/`pipe`/`mod` interface must be fully typed and have a fixed port list. This can be written directly in the declaration, or deferred until a call binds untyped parameters, generics, and varargs to concrete declared actuals. An untyped `comb` can stay inline and never generate its own LGraph.
+* `mod` has no constraints on registers or output structure (can be Mealy or Moore), operates cycle by cycle, and is also the kind used to orchestrate pipelined calls — `stage[N]` and `@[N]` are the timing constructs available inside `mod`. Unlike `pipe`, each `mod` output declares its own landing cycle `@[N]` (`N` from `0` to `n`) at the interface (`mod f(a:U8) -> (x:U8@[2], y:U8@[0])`); a cycle-0 output is a combinational feedthrough, legal in `mod` but forbidden in `pipe`. To generate an LGraph module (for Verilog or simulation), the concrete `comb`/`pipe`/`mod` interface must be fully typed and have a fixed port list. This can be written directly in the declaration, or deferred until a call binds untyped parameters, generics, and varargs to concrete declared actuals. A `comb` with an untyped input or generics is a template: it is always inlined and never generates its own LGraph. A fully typed `comb` (even one with a defaulted input) is a normal unit with its own LGraph.
 
-* `stage` is a reserved declaration modifier used inside `mod` blocks. `async`/`await` are reserved for future use.
+* `stage` is a reserved declaration modifier used inside `mod` blocks.
 
 * `comb`, `pipe`, or `mod` that declares `self` as its FIRST parameter is also called a method; methods may be called via UFCS (`obj.method(...)`) or directly (`method(obj, ...)`)
 
@@ -532,7 +674,7 @@ basic gates are also directly accesible:
 * `__set_mask` for replacing bits using a mask gate
 * `__sext` for sign-extension gate
 * `__lt` for less-than comparison gate
-* `__ge` for greater-equal comparison gate
+* `__gt` for greater-than comparison gate
 * `__eq` for equal comparison gate
 * `__shl` for shift left logical gate
 * `__sra` for shift right arithmetic gate
@@ -546,7 +688,9 @@ basic gates are also directly accesible:
 
 Each of the basic gates operate always over signed integers like Pyrope, but
 their semantics vary. A more detailed explanation is available at [LiveHD cell
-type section](/livehd/05-lgraph/#cell-type).
+type section](/livehd/05-lgraph/#cell-type). A basic gate is an ordinary call:
+its arguments are named with the LGraph pin names (``__sum(`as`=(a, b))``,
+`__mux(s=cond, p1=b, p2=a)`), see [instantiation](06b-instantiation.md).
 
 
 Pyrope has a modulo operator `a % b`, but only the cases that lower cheaply to
@@ -568,8 +712,10 @@ still folds to a constant.
 ## Initialization
 
 
-Each variable declaration (`mut` or `const`) must have an assigned value. The
-type default value is `?` (unknown/uninitialized).
+Each variable declaration (`mut` or `const`) must have an assigned value. There
+is no implicit default: write a concrete value (`0`, `false`, `""`), `nil` for
+no value yet, or `0sb?` for unknown bits (see
+[Variable initialization](04-variables.md#variable-initialization)).
 
 ```pyrope
 a  = 3        // error: no previous const or mut
@@ -579,32 +725,32 @@ b  = 5        // OK
 b += 1        // OK
 cassert(b == 6)
 
-const (a:u32,b2) = (1,"string_inferred")
+const (a,b2) = (1,"string_inferred")
 cassert(a == 1 and b2 == "string_inferred")
+const (a3:U32,b3) = (1,"x")   // error: destructuring slots never carry a type
 
 const d = "hello"  // OK
 d = "bar"        // error: 'd' is immutable
 mut d = "bar"    // error: 'd' already declared
 
-mut e:u32 = 33
+mut e:U32 = 33
 cassert(e == 33)
 
-mut Foo = 33     // error: 'const Foo = 33'
-Foo  = 33        // error: `Foo` already declared as immutable
+const Foo = 33   // immutable because of `const`; casing carries no meaning
+Foo  = 34        // error: `Foo` already declared as immutable
 ```
 
-When the variable is a tuple or a range style, the default initialization is
-`nil`. `0sb?` can not be applied to ranges or tuples value because it is
-restricted for integers. `nil` should be used in those cases.
+When the variable is a tuple or a range style, `0sb?` can not be applied
+because it is restricted for integers. `nil` should be used in those cases.
 
 ```pyrope
 mut tup = nil
 
-assert(cond.[comptime]) // Tuples are compile time, it would fail otherwise
+assert(cond.[`comptime`]) // Tuples are compile time, it would fail otherwise
 if cond == true {
   tup = (const a=1, const b=2)
 }else{
-  tup = (const a=1, const b:u4=3, const c=3)
+  tup = (const a=1, const b:U4=3, const c=3)
 }
 
 cassert(tup.a == 1)
@@ -612,11 +758,12 @@ cassert(cond implies tup.b==2)
 cassert(!cond implies tup.b==3)
 ```
 
-Casing does not affect `comptime`: a binding is compile-time only when the
-declaration is prefixed with the `comptime` keyword.
+Casing does not affect `comptime`. The declaration modifier requires
+compile-time evaluation; ``.[`comptime`]`` checks whether the current value is
+known at compile time, even when the declaration has no `comptime` modifier.
 
 ```pyrope
-assert(something.[comptime])
+assert(something.[`comptime`])
 comptime const A_xxx = something      // comptime
-assert(A_xxx.[comptime]) // also comptime
+assert(A_xxx.[`comptime`]) // also comptime
 ```

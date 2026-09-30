@@ -8,7 +8,8 @@ In hardware, registers (built from flip-flops) are essential for storing informa
 While it's possible to instantiate low-level flops, the recommended, programmer-friendly method is to declare a **register** using the `reg` keyword. This makes statefulness explicit and prevents common bugs. The compiler guarantees that a `reg` is a state-holding element.
 
 A register's value at the start of a cycle is its **current state**. New
-values are assigned with plain `=` (e.g., `counter = counter + 1`). To use a
+values are assigned with plain `=` (e.g., `counter = d`, or
+`wrap counter = counter + 1` when the new value may overflow). To use a
 register's next-state value in the same cycle (e.g. to feed a consumer or
 close a loop), name that value as a `wire` (single-driver combinational net)
 and read the wire in both places — see
@@ -27,24 +28,24 @@ the register within the cycle, copy it into a local:
         [Implementation status](15-tbd.md).
 
     ```pyrope
-    wire counter_next:u8 = nil
+    wire counter_next:U8 = nil
 
     const counter_q = __flop(din=counter_next         // single-driver net, driven below
-                       ,reset_pin=ref my_rst, clock_pin=ref my_clk
+                       ,reset_pin=my_rst, clock_pin=my_clk
                        ,enable=my_enable            // enable control
                        ,posclk=true
                        ,initial=3                   // reset value
-                       ,sync=true)
+                       ,async=false)                // synchronous reset
 
     wrap counter_next = counter_q + 1
     ```
 
 === "Pyrope style"
     ```pyrope
-    reg counter:u8:[reset_pin=ref my_rst, clock_pin=ref my_clk, posclk=true] = 3
+    reg counter:U8:[reset_pin=my_rst, clock_pin=my_clk, posclk=true] = 3
     const tmp1 = counter             // snapshot q before any updates this cycle
 
-    wire counter_next = nil
+    wire counter_next:U8 = nil
     if my_enable {
       wrap counter_next = counter + 1
       counter = counter_next
@@ -55,11 +56,19 @@ the register within the cycle, copy it into a local:
 
 
 !!! NOTE
-    Attributes ending in `_pin` (like `clock_pin`, `reset_pin`) connect wires,
-    not values. Use `ref` to indicate a wire connection (e.g., `clock_pin=ref my_clk`).
-    The compiler warns if a `_pin` attribute is used without `ref` and without
-    a `comptime` value. Passing a `comptime` value like `0` or `false` is valid
-    without `ref` (it ties the pin to a constant).
+    Attributes ending in `_pin` (like `clock_pin`, `reset_pin`) are always
+    connections, so they take the signal directly, with no `ref`
+    (`clock_pin=my_clk`, `reset_pin=my_wire`). A reset is Bool-like, so
+    `my_wire` may be a computed Bool (`rst or soft_rst`), and the constant
+    `reset_pin=false` means no reset. A `Clock` is never bound to a constant:
+    `clock_pin=0` is a compile error.
+
+Without `clock_pin`/`reset_pin`, a `reg` binds by type to the module's
+single `Clock` input and single `Reset` input, whatever their names. A
+module with two or more `Clock` (or `Reset`) inputs must name the pin on each
+register, as in `clock_pin=my_clk` above. `Clock` and `Reset` are defined in
+[Type system](07-typesystem.md); the binding rules are in
+[Implicit clock and reset](04b-attributes.md#implicit-clock-and-reset).
 
 ## Retiming
 
@@ -73,7 +82,7 @@ Registers declared with `reg` are preserved by default, meaning synthesis tools 
 If a register is intended to be a flexible pipeline stage rather than a fixed state-holding element, it can be marked with the `retime` attribute. This allows synthesis tools to perform optimizations like moving logic across the register, duplication, or elimination to improve performance.
 
 ```pyrope
-reg my_reg::[retime=true, clock_pin=ref my_clk, initial=0]
+reg my_reg::[retime=true, clock_pin=my_clk] = 0
 ```
 
 
@@ -85,9 +94,9 @@ the same `[N]` position used by `stage[N]`; `N` must be positive. A zero-cycle
 block is `comb`, not `pipe[0]`.
 
 ```pyrope
-pipe mul(a:u16, b:u16) -> (c:u32)         { c = a * b } // bare: caller picks at call site
-pipe[5]     mul(a:u16, b:u16) -> (c:u32)  { c = a * b } // fixed 5-cycle latency
-pipe[1..<4] mul(a:u16, b:u16) -> (c:u32)  { c = a * b } // flexible range; caller/compiler picks
+pipe mul(a:U16, b:U16) -> (c:U32)         { c = a * b } // bare: caller picks at call site
+pipe[5]     mul(a:U16, b:U16) -> (c:U32)  { c = a * b } // fixed 5-cycle latency
+pipe[1..<4] mul(a:U16, b:U16) -> (c:U32)  { c = a * b } // flexible range; caller/compiler picks
 ```
 
 The three forms behave as follows:
@@ -163,7 +172,8 @@ Two rules fall out of the classification:
 
 * **A `reg` output must be state.** `pipe[1] counter(en) -> (reg count)` is
   the counter idiom: the state register itself is the output (its home
-  stage must be `N-1`, which is stage 0 in a `pipe[1]`). A *feedforward*
+  stage must be `N-1`, which is stage 0 in a `pipe[1]`; TBD: LiveHD rejects
+  this idiom today, see [Implementation status](15-tbd.md)). A *feedforward*
   `reg` in the output list is rejected: outputs are already registered by
   the contract, so it would either duplicate the output flop or silently
   add one extra cycle to a single output.
@@ -250,7 +260,7 @@ The diagnostics name the offending nodes and stages:
 
 === "Comb body (canonical)"
     ```pyrope
-    pipe[3] mul(a:u16, b:u16) -> (c:u32) {
+    pipe[3] mul(a:U16, b:U16) -> (c:U32) {
       c = a * b           // σ=0; the compiler appends the 3 stage flops
     }
     // c[t] == a[t-3] * b[t-3]
@@ -258,8 +268,8 @@ The diagnostics name the offending nodes and stages:
 
 === "State register"
     ```pyrope
-    pipe[1] acc_mix(a:u32, b:u32) -> (x:u32) {
-      reg tmp:u32 = 0
+    pipe[1] acc_mix(a:U32, b:U32) -> (x:U32) {
+      reg tmp:U32 = 0
       wrap tmp += a + b   // reads its own q → state register, home stage 0
       // Equivalent: wrap tmp = tmp + a + b
       wrap x = tmp + a    // state q ⊕ input: both σ=0 — legal
@@ -269,21 +279,27 @@ The diagnostics name the offending nodes and stages:
 
 === "Explicit stage register"
     ```pyrope
-    pipe[1] split(a:u32, b:u32) -> (x:u32, y:u32) {
-      reg tmp:u32 = 0
+    pipe[1] split(a:U32, b:U32) -> (x:U32, y:U32) {
+      reg tmp:U32 = 0
       wrap tmp = a + b    // unconditional, feedforward → stage register
       x = tmp             // σ=1 == N: the explicit reg is the pipeline flop
       wrap y = tmp + 1    // σ=1 == N
     }
     // LEC-equivalent to:
-    // pipe[1] split(a:u32, b:u32) -> (x:u32, y:u32) {
+    // pipe[1] split(a:U32, b:U32) -> (x:U32, y:U32) {
     //   wrap x = a + b ; wrap y = x + 1
     // }
     ```
 
 === "State output (counter idiom)"
+    !!! WARNING "TBD"
+        LiveHD rejects this idiom today (`state register 'count' … homes at
+        stage 0 but its declared landing cycle 1 requires home 1`). Use the
+        `mod` form `mod counter(enable:Bool) -> (reg count:U8@[0] = 0)`. See
+        [Implementation status](15-tbd.md).
+
     ```pyrope
-    pipe[1] counter(enable:bool) -> (reg count:u8) {
+    pipe[1] counter(enable:Bool) -> (reg count:U8 = 0) {
       if enable { wrap count += 1 }  // incomplete conditional write → state; q is the output
     }
     // count[t] == count[t-1] + enable[t-1]
@@ -291,10 +307,10 @@ The diagnostics name the offending nodes and stages:
 
 === "State at an internal stage"
     ```pyrope
-    pipe[2] mac(a:u16, b:u16) -> (acc:u32) {
-      reg prod:u32 = 0
+    pipe[2] mac(a:U16, b:U16) -> (acc:U32) {
+      reg prod:U32 = 0
       wrap prod = a * b   // stage register: prod.q at σ=1
-      reg sum:u32 = 0
+      reg sum:U32 = 0
       wrap sum += prod    // state register, home stage 1 (anchored by prod.q)
       acc = sum           // σ=1; the compiler pads 1 flop → lands at N=2
     }
@@ -304,8 +320,8 @@ The diagnostics name the offending nodes and stages:
 
 === "Cross-stage mix"
     ```pyrope
-    pipe[1] bad_mix(a:u32, b:u32) -> (x:u32) {
-      reg tmp:u32 = 0
+    pipe[1] bad_mix(a:U32, b:U32) -> (x:U32) {
+      reg tmp:U32 = 0
       wrap tmp = a + b    // feedforward → stage register: tmp.q at σ=1
       wrap x = tmp + a    // ERROR: 'tmp' is at stage 1, 'a' at stage 0
     }
@@ -325,7 +341,7 @@ The diagnostics name the offending nodes and stages:
 
 === "Feedforward reg output"
     ```pyrope
-    pipe bad_out(a:u32, b:u32) -> (reg x:u32, reg y:u32) {
+    pipe bad_out(a:U32, b:U32) -> (reg x:U32, reg y:U32) {
       wrap y = x + 1      // reads x.q at σ=1 → y would land at σ=2, x at σ=1
       wrap x = a + b      // ERROR: feedforward register 'x' in output list
     }
@@ -335,7 +351,7 @@ The diagnostics name the offending nodes and stages:
     function is spelled without output registers:
 
     ```pyrope
-    pipe[1] good(a:u32, b:u32) -> (x:u32, y:u32) {
+    pipe[1] good(a:U32, b:U32) -> (x:U32, y:U32) {
       wrap x = a + b
       wrap y = x + 1      // x is the stage-0 comb value; both land at cycle 1
     }
@@ -343,12 +359,12 @@ The diagnostics name the offending nodes and stages:
 
 === "Latency exceeded"
     ```pyrope
-    pipe[1] too_deep(a:u32) -> (x:u32) {
-      reg s1:u32 = 0
-      reg s2:u32 = 0
-      wrap s1 = a + 1     // stage register: σ=1
-      wrap s2 = s1 + 1    // stage register: σ=2
-      x = s2              // ERROR: output 'x' lands at stage 2, pipe declares 1
+    pipe[1] too_deep(a:U32) -> (x:U32) {
+      reg st1:U32 = 0
+      reg st2:U32 = 0
+      wrap st1 = a + 1    // stage register: σ=1
+      wrap st2 = st1 + 1  // stage register: σ=2
+      x = st2             // ERROR: output 'x' lands at stage 2, pipe declares 1
     }
     // legal as pipe[2] (or as bare pipe called with stage[M], M >= 2)
     ```
@@ -379,15 +395,23 @@ Our syntax solves this with **explicit timing annotations**, making such errors 
 `mod` blocks allow arbitrary mixing of variable clock cycles. Where `pipe`
 declares one uniform latency for all outputs (`N >= 1`, no feedthrough),
 a `mod` declares a **landing cycle per output** at its interface, and any
-cycle from 0 up is legal — `mod f(a:u8) -> (x:u8@[2], y:u8@[0])` has one
+cycle from 0 up is legal — `mod f(a:U8) -> (x:U8@[2], y:U8@[0])` has one
 output two cycles after the inputs and one combinational feedthrough.
-Registered outputs declare the cycle their q lands at
-(`reg count:u8@[0]`). The opt-out `@[]` keeps the timing slot but sets min
-and/or max to `nil` (unconstrained) — the form foreign Verilog modules,
-which carry no markings, ingest as. Omitting `@[...]` on a `mod` output
-entirely is a compile error: the interface is the timing contract callers
-rely on. Inside the body, `mod` blocks have two complementary timing
-mechanisms for strong compile-time checking:
+`reg` in the output list (`-> (reg count:U8@[0])`) declares a persistent
+register whose q is the output, and `@[N]` declares the cycle that q lands
+at; `reg` on an input is a compile error (inputs are driven at each call).
+A caller sees each child output at that output's own declared cycle. The
+opt-out `@[]` keeps the timing slot but sets min and/or max to `nil`
+(unconstrained) — the form foreign Verilog modules, which carry no
+markings, ingest as. Omitting `@[...]` on a `mod` output entirely is a
+compile error: the interface is the timing contract callers rely on. The
+full set of rules is in
+[Cycle rules for `mod` outputs](06-functions.md#cycle-rules-for-mod-outputs);
+a plain `reg` declared in the *body* that drives an output lands like one in
+the output list (a hold path keeps it at its home stage, a write every cycle
+lands one cycle later; see [Implementation status](15-tbd.md) for the one
+open case). Inside the body, `mod` blocks have
+two complementary timing mechanisms for strong compile-time checking:
 
 * **`stage[N]`** on a declaration: a declaration modifier (in the same slot as
   `const`, `mut`, `reg`) that pipelines the whole RHS over `N` cycles. It is
@@ -440,11 +464,11 @@ maintain stateful elements like accumulators or counters.
 
 ```pyrope
 // Define primitive components with 'pipe'.
-pipe mul(a:u16, b:u16) -> (c:u32) { c = a * b }   // bare; caller picks latency via stage
-pipe add(a:u32, b:u32) -> (c:u32) { wrap c = a + b } // bare; caller picks latency via stage
+pipe mul(a:U16, b:U16) -> (c:U32) { c = a * b }   // bare; caller picks latency via stage
+pipe add(a:U32, b:U32) -> (c:U32) { wrap c = a + b } // bare; caller picks latency via stage
 
 // Define the composite mod that orchestrates the primitives.
-mod multiply_add(in1:u16, in2:u16) -> (out:u32@[4]) {
+mod multiply_add(in1:U16, in2:U16) -> (out:U32@[4]) {
     // Stage 1: run mul over 3 cycles. tmp lands at cycle 3.
     stage[3] tmp = mul(a=in1, b=in2)
 
@@ -474,10 +498,13 @@ budget is determined elsewhere and you don't want the local check to
 constrain it. On a `mod` output declaration, `@[]` keeps the timing slot
 with min and/or max set to `nil` — the contract exists but is
 unconstrained, which is also how imported Verilog modules (no markings)
-present their outputs.
+present their outputs. To turn off every timing check of a whole lambda,
+`::[timecheck=false]` is the escape hatch (see
+[timecheck](04b-attributes.md#timecheck-timing-check-escape-hatch)); it is
+meant for generated code, not for idiomatic Pyrope.
 
 ```pyrope
-mod example(in1:u16, in2:u16, in3:u32) -> (out:u33@[5]) {
+mod example(in1:U16, in2:U16, in3:U32) -> (out:U33@[5]) {
     stage[3] res1 = mul(a=in1, b=in2)
 
     // in3 arrives at cycle 0; we need it at cycle 3 to mix with res1.

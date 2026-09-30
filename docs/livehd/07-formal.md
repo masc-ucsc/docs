@@ -46,11 +46,12 @@ The contract is deliberately asymmetric about what each verdict may rest on:
 * A REFUTED always rests on a counterexample reachable from reset, replayable
   cycle by cycle. Anything less trustworthy — for example a violation that
   might start from an unreachable state — degrades to UNKNOWN instead.
-* A conditional pass is always disclosed: a verdict proven under environment
-  assumptions reads "PROVEN under N input assume(s)", one relying on unchecked
-  user facts reads "under N unchecked assume(s)", and one relying on
-  automatically guessed register pairings says so. The three can never be
-  confused with an unconditional proof.
+* A conditional pass is always disclosed: a verdict that relies on design
+  `assume`s reads "PROVEN under N proven assume(s)" for plain assumes, which
+  were checked and proven first, and "under N unchecked assume(s)" for
+  `assume_nocheck` contracts, which never are; one relying on automatically
+  guessed register pairings says so. None of them can be confused with an
+  unconditional proof.
 
 By default a refutation is a hard failure (non-zero exit), while an UNKNOWN
 is a loud warning that does not fail the run; a strict mode turns UNKNOWN
@@ -83,9 +84,10 @@ structural match) so the user can iterate instead of hitting a wall.
 
 Users can also help the prover: `formal` blocks
 ([Pyrope syntax](../pyrope/05-assert.md#formal-blocks)) supply invariants and
-environment assumptions. An internal invariant must itself be proven before it
-may constrain the equivalence proof — the tool never accepts a user fact on
-faith silently — and every admitted assumption is disclosed in the verdict.
+assumptions. A plain `assume` must itself be proven before it may constrain the
+equivalence proof, and only `assume_nocheck` states an environment constraint
+without a check — the tool never accepts a user fact on faith silently — and
+every admitted assumption is disclosed in the verdict.
 
 Reset behavior is explicit rather than folded away: the tool separates the
 reset-asserted and free-running regimes and by default compares the designs
@@ -122,7 +124,7 @@ two files):
 ```bash
 lhd formal verify cnt.prp cnt.verify.prp --top cnt --set formal.bound=10 --workdir w
 #   assert at cnt.verify.prp:5 "'parity tracks bit0'" [cnt.parity]: PROVEN (inductive — every cycle of every bound)
-#   assume at cnt.verify.prp:10 [cnt.bounded]: in force (input environment constraint; verdicts are conditional on it)
+#   assume at cnt.verify.prp:10 [cnt.bounded]: in force (UNCHECKED assume_nocheck; verdicts are conditional and unchecked)
 #   assert at cnt.verify.prp:11 "'frozen'" [cnt.bounded]: PROVEN (inductive — every cycle of every bound)
 
 ls w/
@@ -139,25 +141,23 @@ jq -r '.obligations[] | select(.verdict=="proven") | .id' w/formal_report.json  
 
 ### Assume forms: what constrains, what must be proven
 
-An `assume` is classified by what its expression touches, and the class
-decides whether it is free or must earn its keep:
+Every plain `assume` is a proof obligation, prove-then-use, in a design body
+and in a formal block alike; only the `assume_nocheck` spellings constrain
+without a check:
 
-* Over **primary inputs only** — an environment constraint by nature (inputs
-  are otherwise free; there is nothing to prove). It is in force at every
-  cycle, and every verdict discloses it: "PROVEN … under 1 input assume(s)"
-  is a conditional result, never mistaken for an unconditional one.
-* Touching **design state or outputs** — a proof obligation, prove-then-use.
-  The engine checks it per cycle like an assert; only a cycle it just proved
-  may constrain the remaining obligations, and only an inductive survivor
-  constrains the induction step. A **refuted** internal assume fails the run
-  (the claimed invariant is false — before this discipline it would silently
-  fake a PROVEN for everything it masked), and an **unproven** one is simply
-  not used, disclosed as such.
-* `assume_nocheck_formal` (formal blocks only) — a free constraint by
-  explicit user fiat: accepted, warned per encounter, and disclosed
-  distinctly ("under N UNCHECKED assume(s)"). `assume_nocheck_synth` is
-  invisible to verification — it exists solely for the synthesis don't-care
-  pool.
+* A plain `assume` — the engine checks it per cycle like an assert; only a
+  cycle it just proved may constrain the remaining obligations, and only an
+  inductive survivor constrains the induction step. A **refuted** assume fails
+  the run (the claimed fact is false — before this discipline it would
+  silently fake a PROVEN for everything it masked), and an **unproven** one is
+  simply not used, disclosed as such. Over **primary inputs only** (a
+  selected-top IO assume included) nothing forces it to hold, so it refutes
+  unless it is a tautology, and the refute hints at `assume_nocheck`.
+* `assume_nocheck` — the environment constraint: a free constraint by
+  explicit user fiat, in force at every cycle and disclosed distinctly
+  ("under N UNCHECKED assume(s)"). `assume_nocheck_formal` is the same
+  constraint, warned per encounter. `assume_nocheck_synth` is invisible to
+  verification — it exists solely for the synthesis don't-care pool.
 
 A contradictory free-constraint set voids every proof (the vacuity check
 demotes them to UNKNOWN), so an over-constrained environment cannot pass
@@ -336,9 +336,8 @@ compiler bugs.
   pruning) and more template families (one-hot, mutual exclusion,
   count-equals-popcount).
 * **Synthesis consuming `assume_nocheck_synth`.** The three-form assume
-  contract is implemented on the verification fronts (input assumes are free
-  and disclosed, state-touching assumes are prove-then-use, both nocheck
-  spellings behave as documented above); what remains is synthesis actually
+  contract is implemented on the verification fronts (plain assumes are
+  prove-then-use, the nocheck spellings behave as documented above); what remains is synthesis actually
   consuming the synthesis-only don't-care facts (the ABC EXDC network).
 * **Temporal properties.** The SVA-style temporal library documented on the
   Pyrope side ([extended verification](../pyrope/09-verification.md)) does

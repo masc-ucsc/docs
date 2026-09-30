@@ -23,16 +23,23 @@ discharges the obligation**:
   parameters, widths, table contents).
 
 * `assert(expr [, "msg"])` — a **design** obligation. `pass.formal` tries to
-  prove it at compile time; what it cannot prove is kept as a runtime check for
-  simulation. So an `assert` may be discharged formally *or* at run time, and
-  the compiler chooses.
+  prove it at compile time, and checks are emitted into the Verilog netlist.
+  **TBD:** the runtime fallback for design-body assertions in `lhd sim` is not
+  implemented; `lhd sim` currently checks only assertions inside `test` blocks.
 
 * `assume(expr [, "msg"])` — a constraint the tool may rely on, and therefore
-  one it must first justify. Each `assume` is proven **independently** (no
-  other assume is used as a hypothesis, so assumes can never prove each other),
-  and only a *proven* assume becomes a hypothesis for the surrounding
-  `assert`s. A refuted `assume` is a build error — it can never silently prune
-  a real counterexample.
+  one it must first justify. Every plain `assume` is **always checked** (an
+  obligation), in a design body and in a `formal` block alike, whatever it
+  touches. Each `assume` is proven **independently** (no other assume is used
+  as a hypothesis, so assumes can never prove each other), and only a *proven*
+  assume becomes a hypothesis for the surrounding `assert`s. A refuted
+  `assume` is a build error — it can never silently prune a real
+  counterexample. The compile-time check has a short budget, so an assume it
+  cannot decide stays unchecked (a runtime check) until `lhd formal verify`
+  checks it.
+* `assume_nocheck(expr)` — the only form that constrains **without** a check:
+  an environment constraint by user fiat, disclosed in every verdict (see
+  [Formal blocks](#formal-blocks)).
 
 The distinction that matters in practice: `cassert` is "the compiler must know
 this now", `assert` is "this must be true of the hardware".
@@ -62,8 +69,8 @@ next depends on where the lambda sits:
 * At the **top** module, the inputs are the design boundary, so there is
   nothing left to constrain them: the assume is reported refuted and the build
   fails (`assume-refuted`). Pass `--set compile.formal.on_refute=warn` to
-  downgrade it, or state the constraint in a `formal` block instead, where it
-  is an environment constraint rather than an obligation.
+  downgrade it, or spell an intended environment constraint
+  `assume_nocheck(expr)`, which constrains without a check.
 * In an **instantiated** module, the parent's drivers are what make it true, so
   the check is *deferred* with a warning and kept as a runtime check.
 
@@ -151,7 +158,8 @@ flop-cut inductive miter plus BMC, so registers and reset are modelled.
 [Formal blocks](#formal-blocks)) while `lec` has a single obligation, so a
 block's assumes could only ever apply globally. Prove blocks with
 `lhd formal verify`; an environment constraint meant for `lec` belongs in the
-design itself.
+design itself, spelled `assume_nocheck(expr)` (a plain `assume` constrains the
+miter only once it is proven).
 
 
 !!! NOTE
@@ -163,7 +171,7 @@ design itself.
     follows."
 
 !!! NOTE "Not implemented"
-    An in-language `lec(gold, impl)` call and a `lec_valid` variant that
+    An in-language ``lec(gold, `impl`)`` call and a `lec_valid` variant that
     compares only `.[valid]` outputs are both TBD; neither exists today. Use
     the `lhd lec` command above. See [TBD](15-tbd.md).
 
@@ -210,6 +218,13 @@ with optional runtime parameters and no return: `test name.path [(params)] {
 stmts+ }`. See [Testing](05b-statements.md#testing-test) for naming, parameters,
 and the `tick` cycle loop.
 
+!!! WARNING "TBD"
+    `lhd sim` runs neither form below yet: it finds no `test` nested in a
+    top-scope `for` (`no test blocks found`), and it rejects a `for` statement
+    inside a `test` body (`unsupported statement in test: for_statement`).
+    Write a cycle loop as `tick N { … }`. See
+    [Implementation status](15-tbd.md).
+
 === "Many parallel tests"
     ```pyrope
     comb add(a, b) -> (r) { r = a + b }
@@ -237,15 +252,18 @@ and the `tick` cycle loop.
     ```
 
 
-To drive a stateful design across cycles, call it inside a `tick N` loop: each
-iteration is one cycle, the call drives that cycle's inputs and returns that
-cycle's outputs, and a `mut` declared before the loop captures the result for an
-end-of-simulation `assert`. This is the form the `lhd sim` runner executes (see
+To drive a stateful design across cycles, declare it once as an instance and
+run a `tick N` loop: each iteration is one cycle, field writes drive that
+cycle's inputs, `step` is the clock edge (exactly one per iteration), and reads
+below the `step` sample that cycle's outputs. The instance's `Clock` input
+auto-wires to the tick's minted `clock`. A `mut` declared before the loop
+captures the result for an end-of-simulation `assert`. This is the form the
+`lhd sim` runner executes (see
 [Running cycles](05b-statements.md#running-cycles-tick)):
 
 ```pyrope
-mod counter(enable:bool) -> (value:u8@[0]) {
-  reg count:u8 = 0
+mod counter(enable:Bool) -> (value:U8@[0]) {
+  reg count:U8 = 0
 
   value = count                     // combinational read of count.q -> @[0]
 
@@ -253,25 +271,27 @@ mod counter(enable:bool) -> (value:u8@[0]) {
 }
 
 test counter.held_high {
+  mut acc     = counter             // one persistent instance
   mut v_final = nil
-  tick 20 {                         // 20 cycles, one clock per iteration
-    const v = counter(enable=true)  // call the DUT each cycle, capture its output
-    v_final = v
+  tick 20 {                         // 20 cycles, one clock edge per iteration
+    acc.enable = true               // drive this cycle's input (pre-edge)
+    step                            // the clock edge
+    v_final = acc.value             // sample this cycle's output (post-edge)
   }
   assert(v_final == 20)
 }
 ```
 
-The `test` code block also accepts the keyword `step` that advances one clock
-cycle, and the test continues from that given point (the lower-level,
+A `step` may also appear outside a `tick` loop: it advances one clock cycle,
+and the test continues from that given point (the lower-level,
 manual-stepping style of the concurrent-thread testbench layer; not yet run by
 `lhd sim`). This is useful for when a lambda is instantiated and we want to
 check/update the inputs/outputs.
 
 ```pyrope
 // mod: output 'value' is combinational (reads register directly)
-mod counter_mod(update:bool) -> (value:u8@[0]) {
-  reg count:u8 = 0
+mod counter_mod(update:Bool) -> (value:U8@[0]) {
+  reg count:U8 = 0
 
   value = count              // combinational output (no extra flop) -> @[0]
 
@@ -280,8 +300,8 @@ mod counter_mod(update:bool) -> (value:u8@[0]) {
 
 // pipe: 'value' lands 1 cycle after the inputs (no comb input-to-output path)
 // Same logic, but output is delayed by 1 cycle compared to mod version
-pipe[1] counter_pipe(update:bool) -> (value:u8) {
-  reg count:u8 = 0
+pipe[1] counter_pipe(update:Bool) -> (value:U8) {
+  reg count:U8 = 0
 
   value = count              // reads state q; the appended output flop lands it 1 cycle later
 
@@ -332,7 +352,7 @@ stop with a failure until the end.
     violated design assert reports `PASS`. Only assertions written inside the
     `test` block itself are checked at simulation time. Design-body asserts are
     checked by `pass.formal` at compile time and emitted into the Verilog
-    netlist, but the simulation runtime fallback is still pending.
+    netlist, but the simulation runtime fallback is **TBD**.
 
 ## Formal blocks
 
@@ -350,7 +370,8 @@ together: each block's `assume`s constrain only that block's own obligations, so
 two blocks may carry mutually exclusive assumes and both still prove. A block
 bound to a submodule with N instances is still *one* block with one assume set
 (all N instances in force together). `assume`s written in the design itself are
-the other tier — always in force, for every block. A block whose own assume set
+the other tier, shared by every block: an `assume_nocheck` is always in force,
+and a plain `assume` is in force once it is proven. A block whose own assume set
 is contradictory is named and fails the run; its proofs would be vacuous.
 
 The body binds the design with the test-block import/alias style, then states
@@ -361,24 +382,26 @@ reported `[block@instance]`):
 
 * `assert(expr [, "msg"])` — must hold at every checked cycle (after reset).
 * `assert_always(expr [, "msg"])` — must hold at every cycle, reset included.
-* `assume(expr [, "msg"])` — what it means depends on what `expr` touches.
-  Over **primary inputs only**, it is an environment constraint: it prunes the
-  traces the tool explores and is *disclosed* ("under N input assume(s)" — this
-  block's verdicts become conditional on it). Touching **registers or outputs**,
-  it is a *proof obligation* (prove-then-use): the tool proves it before using
-  it, a proven cycle constrains the remaining properties, and a **false** claim
-  is REFUTED — it can never silently fake a proof. A contradictory assume set is
-  reported and fails the run, never silently vacuous.
-* `assume_nocheck_formal(expr)` — a free constraint by explicit user fiat,
-  even over state: accepted with a per-use warning and a distinct
-  "under N UNCHECKED assume(s)" disclosure. `assume_nocheck_synth(expr)` is
-  invisible to verification (a synthesis-only don't-care).
+* `assume(expr [, "msg"])` — always a *proof obligation* (prove-then-use),
+  whatever `expr` touches: the tool proves it before using it, a proven cycle
+  constrains the remaining properties, and a **false** claim is REFUTED — it
+  can never silently fake a proof. Over **primary inputs only** nothing forces
+  it to hold, so it refutes unless it is a tautology, and the refute points at
+  `assume_nocheck`: an intended environment constraint is spelled
+  `assume_nocheck(expr)` (below). A contradictory assume set is reported and
+  fails the run, never silently vacuous.
+* `assume_nocheck(expr)` — the explicit environment constraint: a free
+  constraint by user fiat, even over state, assumed without a check and
+  disclosed in every verdict ("under N unchecked assume(s)"), with no
+  warning. `assume_nocheck_formal(expr)` is the same constraint with a
+  per-use warning. `assume_nocheck_synth(expr)` is invisible to verification
+  (a synthesis-only don't-care).
 
 ```pyrope
 // cnt.prp — the design
-mod cnt(enable:bool) -> (value:u8@[0]) {
-  reg count:u8 = 0
-  reg par:bool = false
+mod cnt(enable:Bool) -> (value:U8@[0]) {
+  reg count:U8 = 0
+  reg par:Bool = false
   value = count
   if enable {
     wrap count += 1
@@ -393,12 +416,12 @@ const top = import("cnt.cnt")
 
 formal cnt.parity {
   mut acc = top
-  assert(u1(acc.par) == acc.count#[0], "parity tracks bit0")
+  assert(U1(acc.par) == acc.count#[0], "parity tracks bit0")
 }
 
 formal cnt.bounded {
   mut acc = top
-  assume(acc.enable == 0)            // environment: the counter never runs
+  assume_nocheck(not acc.enable)     // environment: the counter never runs
   assert(acc.count != 5, "frozen")   // provable under the assume
 }
 ```
@@ -406,7 +429,7 @@ formal cnt.bounded {
 ```bash
 lhd formal verify cnt.prp cnt.verify.prp --top cnt --set formal.bound=10 --workdir w
 #   assert at cnt.verify.prp:5 "'parity tracks bit0'" [cnt.parity]: PROVEN (inductive — every cycle of every bound)
-#   assume at cnt.verify.prp:10 [cnt.bounded]: in force (input environment constraint; verdicts are conditional on it)
+#   assume at cnt.verify.prp:10 [cnt.bounded]: in force (UNCHECKED assume_nocheck; verdicts are conditional and unchecked)
 #   assert at cnt.verify.prp:11 "'frozen'" [cnt.bounded]: PROVEN (inductive — every cycle of every bound)
 lhd formal verify cnt.prp cnt.verify.prp --top cnt --formal 'cnt.parity'  # run one block
 jq '.obligations' w/formal_report.json   # the same table machine-readable, every PASSED

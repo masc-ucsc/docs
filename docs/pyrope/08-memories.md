@@ -65,8 +65,8 @@ array[3] = something // array no cross cycles persistence
 ```
 
 ```pyrope
-mut index:u7 = nil
-mut index2:u6 = nil
+mut index:U7 = nil
+mut index2:U6 = nil
 
 array[index] = something
 some_result  = array[index2+3]
@@ -77,11 +77,31 @@ In the previous example, the compiler infers that the tuple at most has 127 entr
 There are several constructs to declare arrays or async memories:
 
 ```pyrope
-reg mem1:[16]s8 = 3        // mem 16 entry init/reset to 3 with type s8
-reg mem2:[16]s8 = nil      // mem 16 entry, NO reset (uninitialized, type s8)
+reg mem1:[16]S8 = 3        // mem 16 entry init/reset to 3 with type S8
+reg mem2:[16]S8 = nil      // mem 16 entry, NO reset (uninitialized, type S8)
 mut mem3:[] = 0sb?         // array infer size and type, 0sb? initialized
 mut mem4:[13] = 0          // array 13 entries size, initialized to zero
-reg mem5:[4]s3 = (1,2,3,4) // mem 4 entries 3 bits each, initialized
+reg mem5:[4]U3 = (1,2,3,4) // mem 4 entries 3 bits each, initialized
+```
+
+A `for` loop whose body writes a memory or a `reg` array is always unrolled,
+one write per iteration; it is never kept as a compact (rolled) loop.
+
+An input parameter may leave its length open (`x:[]U8`). Each call infers
+the length from its argument and checks every element against `U8`; see
+[Lambda arguments](06-functions.md#argument-naming).
+
+The entry type and size may be generic, and so may array ports. The index
+width of an `N`-entry memory is `std.clog2(N)` (see
+[Attributes](04b-attributes.md)):
+
+```pyrope
+mod ram<N=16, W=8>(addr:Unsigned(bits=std.clog2(N)), din:Unsigned(bits=W), we:Bool) -> (dout:Unsigned(bits=W)@[0]) {
+  reg mem:[N]Unsigned(bits=W) = 0
+
+  dout = mem[addr]            // read before the write: old contents
+  if we { mem[addr] = din }
+}
 ```
 
 ### Same-cycle ordering
@@ -95,7 +115,7 @@ cycle? The `ordering` attribute on the memory declaration picks one of four
 semantics. The canonical sequence:
 
 ```pyrope
-reg mem:[4]u2:[ordering="program"] = 0
+reg mem:[4]U2:[ordering="program"] = 0
 
 d1 = mem[a1]     // read BEFORE the writes
 mem[a2] = d2
@@ -132,6 +152,35 @@ d4 = mem[a4]     // read AFTER the writes
   `cgen_sim`) may refine it to a concrete value. A memory whose reads must
   see committed state is `ordering="old"`, not `"none"`.*
 
+`ordering` governs what a same-cycle *user* read observes (and the write-write
+column above). Two rules hold in every ordering:
+
+* A **partial write** `mem[a]#[lo..=hi] = v` updates the entry as the earlier
+  writes of the cycle left it, so several partial writes to one entry merge
+  (a later one wins where they overlap). Its own read of the entry is not a
+  user read. Spelling the same update by hand
+  (`mut t = mem[a]; t#[..] = v; mem[a] = t`) *is* a user read and follows
+  `ordering`. A `reg` array takes a partial write as a write-MASKED port: it enables
+  only the lanes it writes (the memory's `wensize`, sized to the widest lane
+  every constant range is made of; a runtime position such as `mem[a]#[k]`
+  needs single-bit lanes), so it needs no read port of its own, and the
+  lanes of one cycle's writes merge in program order.
+* A **whole-array store** (`mem = 0`, `mem = other_bus`) is a write of every
+  entry at its place in program order, so against a per-entry write of the
+  same cycle it resolves like two per-entry writes (under `"program"` and
+  `"old"`, the later one wins).
+
+```pyrope
+reg mem:[4]U16 = nil
+if wr  { mem[a] = 0xffff }
+if clr { mem = 0 }             // both enabled: mem[a] is 0 (the clear is later)
+if we  { mem[a]#[0..<8] = x }  // lands on the cleared entry: 0x00xx
+```
+
+A user read of such a memory sees the whole-array store like any other write:
+under `"program"` when the store precedes the read, under `"fwd"` always, and
+never under `"old"` or `"none"`.
+
 Ordering is resolved per read port, so one memory can mix positions: a read
 placed before the writes and another placed after them coexist in the same
 cell. The netlist carries this as a PAIR of matrix parameters with the same
@@ -157,7 +206,7 @@ every access must supply one index per dimension.
 mut a:[][] = 0
 a[3][4] = 1
 
-mut b:[4][8]u8 = 13
+mut b:[4][8]U8 = 13
 
 cassert(b[2][7] == 13)
 assert(b[2][10]) // error: `b[2][10]` does not exist (out of bounds)
@@ -167,14 +216,25 @@ It is possible to initialize the async memory with an array. A `reg` array's
 initializer means exactly what a scalar `reg`'s does: it is the **reset value**
 of every entry, and it is the power-on contents too (the `initial` contents —
 the wrapper's `INIT` parameter / a Verilog `initial` block). Like a scalar `reg`
-with a reset value, an initialized `reg` array binds the module's `reset` input
-(or the one named by `reset_pin=`), or mints one when the module declares none.
+with a reset value, an initialized `reg` array binds the module's
+[implicit reset](04b-attributes.md#implicit-clock-and-reset) — its single
+`Reset` input, whatever its name — or the signal named by
+`reset_pin=my_rst` (no `ref`: a `_pin` is always a connection), or mints a
+`` `reset`:Reset`` input when the module declares none (a non-`Reset` input already
+named `reset` is then a compile error). An instantiating caller auto-wires its
+own single `Reset` to that input; a caller with two or more `Reset` inputs must
+bind it explicitly. With two or more `Reset` inputs in the module itself, name
+the reset with `reset_pin=`. The memory is clocked the same way: by the
+module's single `Clock` input (minted as `` `clock`:Clock`` when there is none)
+unless `clock_pin=` names another. The binding is by type (`Clock`/`Reset`,
+see [Type system](07-typesystem.md)), never by name.
 
-The reset is **parallel**: while `reset` is asserted every entry is restored to
+The reset is **parallel**: while the reset is asserted every entry is restored to
 its initializer in one cycle, exactly like a scalar `reg`, through the memory's
-whole-array reset (`async=true` makes it asynchronous, `negreset=true` inverts
-the polarity). Reset has priority over program writes and over a whole-array
-update, which are suppressed for as long as `reset` is held, and a suppressed
+whole-array reset (`async=true` makes it asynchronous; the polarity is the
+register's `negreset`, see [Attributes](04b-attributes.md)).
+Reset has priority over program writes and over a whole-array
+update, which are suppressed for as long as the reset is held, and a suppressed
 write is not forwarded to a same-cycle read: a read during reset returns the
 committed contents.
 
@@ -186,7 +246,7 @@ or given by `initial=` alone, which is then power-on contents only.
 
 Comptime conditions fold before the memory is built, so a conditional
 initializer that picks `nil` is exactly `= nil`:
-`reg m:[4]u8 = if RST { 0 } else { nil }` with a false `RST` (a `const`, or a
+`reg m:[4]U8 = if RST { 0 } else { nil }` with a false `RST` (a `const`, or a
 generic bound at the call site) binds no reset, while a true `RST` gives the
 fully reset memory. A parameterized memory opts out of reset that way, with no
 second declaration.
@@ -202,28 +262,28 @@ envelope are inferred from the initializer).
 
 === "Pyrope array syntax"
     ```pyrope
-    mut mem1:[4][8]u5 = 0
-    comptime mut reset_value:[3][8]u5 = nil // only used during reset
+    mut mem1:[4][8]U5 = 0
+    comptime mut reset_value:[3][8]U5 = nil // only used during reset
     for i in 0..<3 {
       for j in 0..<8 {
         reset_value[i][j] = j
       }
     }
-    reg mem2 = reset_value   // infer async mem u5[3][8]
+    reg mem2 = reset_value   // infer async mem [3][8]U5
     ```
 
 === "Explicit initialization"
     ```pyrope
     mut mem = (
-      (u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0)),
-      (u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0)),
-      (u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0)),
-      (u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0), u5(0))
+      (U5(0), U5(0), U5(0), U5(0), U5(0), U5(0), U5(0), U5(0)),
+      (U5(0), U5(0), U5(0), U5(0), U5(0), U5(0), U5(0), U5(0)),
+      (U5(0), U5(0), U5(0), U5(0), U5(0), U5(0), U5(0), U5(0)),
+      (U5(0), U5(0), U5(0), U5(0), U5(0), U5(0), U5(0), U5(0))
     )
     reg mem2 = (
-      (u5(0), u5(1), u5(2), u5(3), u5(4), u5(5), u5(6), u5(7)),
-      (u5(0), u5(1), u5(2), u5(3), u5(4), u5(5), u5(6), u5(7)),
-      (u5(0), u5(1), u5(2), u5(3), u5(4), u5(5), u5(6), u5(7))
+      (U5(0), U5(1), U5(2), U5(3), U5(4), U5(5), U5(6), U5(7)),
+      (U5(0), U5(1), U5(2), U5(3), U5(4), U5(5), U5(6), U5(7)),
+      (U5(0), U5(1), U5(2), U5(3), U5(4), U5(5), U5(6), U5(7))
     )
     ```
 
@@ -243,8 +303,10 @@ direct RTL instantiation.
 ### Flop the inputs or outputs
 
 When either the inputs or the output of the asynchronous memory access is
-directly connected to a flop, the flow can recognize the memory as asynchronous memory. A further constrain is that only single dimension memories.
-Multi-dimensional memories or memories with partial updates need to use the
+directly connected to a flop, the flow can recognize the memory as synchronous
+memory. Multi-dimensional memories lower to one flat row-major memory and
+partial updates become a write-masked port (see
+[Async memories or arrays](#async-memories-or-arrays)), so neither needs the
 RTL instantiation.
 
 
@@ -253,33 +315,33 @@ is a typical decode stage from an in-order CPU:
 
 === "Flop the inputs"
     ```pyrope
-    reg rf:[32]s64 = 0sb?   // random initialized
+    reg rf:[32]S64 = 0sb?   // random initialized
 
-    reg a:(addr1:u5, addr2:u5) = (0,0)
+    reg a:(addr1:U5, addr2:U5) = (addr1=0, addr2=0)
 
     data_rs1 = rf[a.addr1]
     data_rs2 = rf[a.addr2]
 
-    a = (insn[8..=11], insn[0..=4])
+    a = (addr1=insn#[8..=11], addr2=insn#[0..=4])
     ```
 
 === "Flop the outputs"
     ```pyrope
-    mut rf:[32]s64 = 0sb?
+    mut rf:[32]S64 = 0sb?
 
-    reg a:(data1:s64, data2:s64) = nil
+    reg a:(data1:S64, data2:S64) = nil
 
     data_rs1 = a.data1
     data_rs2 = a.data2
 
-    a = (rf[insn[8..=11]], rf[insn[0..=4]])
+    a = (data1=rf[insn#[8..=11]], data2=rf[insn#[0..=4]])
     ```
 
 ### RTL instantiation
 
 There are several constraints and additional options to synchronous memories
-that the async memory interface can not provide: multi-dimension, partial updates,
-negative edge clock...
+that the async memory interface can not provide, such as a negative edge
+clock...
 
 
 Pyrope allows for a direct call to LiveHD cells with the RTL instantiation, as
@@ -288,28 +350,28 @@ such that memories can be created directly.
 ```pyrope
 // A 2rd+1wr memory (RF type)
 
-mut mem = (
-  const addr      = (raddr0, raddr1, wraddr),
-  const bits      = 4,
-  const size      = 16,
-  const din       = (0, 0, din0),
-  const enable    = (1, 1, we0),
-  const fwd       = false,
-  const type      = 1,         // 0: async, 1: sync, 2: array
-  const wensize   = 1,         // we bit (no write mask)
-  const rdport    = (1, 1, 0), // 1: read port, 0: write port
+mut res = __memory(
+  addr      = (raddr0, raddr1, wraddr),
+  bits      = 4,
+  size      = 16,
+  din       = (0, 0, din0),
+  enable    = (1, 1, we0),
+  fwd       = false,
+  `type`      = 1,         // 0: async, 1: sync, 2: array
+  wensize   = 1,         // we bit (no write mask)
+  rdport    = (1, 1, 0), // 1: read port, 0: write port
 )
-
-mut res = __memory(mem)
 
 q0 = res[0]
 q1 = res[1]
 ```
 
 The previous code directly instantiates a memory and passes the configuration.
-The configuration vocabulary is the per-port/config subset of the LiveHD
-`Memory` cell sink pins, spelled **verbatim** as the cell names them
-(`addr`/`bits`/`clock_pin`/`din`/`enable`/`fwd`/`undef`/`posclk`/`type`/
+Like every `__` cell call, it binds each argument by name, and the
+configuration vocabulary is the per-port/config subset of the LiveHD
+`Memory` cell sink pins, with backticks around reserved names such as
+`` `type` ``
+(`addr`/`bits`/`clock_pin`/`din`/`enable`/`fwd`/`undef`/`posclk`/`` `type` ``/
 `wensize`/`size`/`rdport`/`initial`). The cell-level `fwd` pin is the
 per-(read-port, write-port) forwarding matrix — bit `r*n_wr + w` — that the
 surface `ordering` attribute lowers to, and `undef` is its twin for
@@ -317,10 +379,12 @@ surface `ordering` attribute lowers to, and `undef` is its twin for
 meaning the read sees the NEW data, `undef` set meaning `x`, and both clear
 meaning the COMMITTED data. There is no `latency` field — `type` selects async
 (0, combinational read of the current address), sync (1, one-cycle read) or
-array (2, unclocked); the optional `clock_pin` defaults to the module clock,
+array (2, unclocked); the optional `clock_pin` defaults to the module's
+[implicit clock](04b-attributes.md#implicit-clock-and-reset) (its single
+`Clock` input),
 and `initial` provides comptime initial contents (a tuple literal or a packed
-constant, entry 0 in the low `bits`). The config must be built as a single
-tuple literal, and `res[N]` returns the data of the N-th read port (in
+constant, entry 0 in the low `bits`). The call returns an unnamed tuple:
+`res[N]` returns the data of the N-th read port (in
 `rdport` order). From a timing point of view a memory is treated like a
 register: reads return committed state at `@[0]`; for a sync memory the extra
 cycle is the time the write takes to commit.
@@ -330,7 +394,7 @@ A memory can also be bound to a specific memory-compiler macro with the
 ports onto the macro:
 
 ```pyrope
-reg ram:[1024]u32:[macro="sram_32kx32"] = 0
+reg ram:[1024]U32:[macro="sram_32kx32"] = 0
 ```
 
 
@@ -361,9 +425,9 @@ not imported and must not be declared `pub reg`.
 
 ```pyrope
 // file: mem_pool.prp — physical owner: placement, BIST, repair
-mod mem_pool(test_mode:bool) -> () {
-  reg buf0:[1024]u8 = nil
-  reg buf1:[1024]u8 = nil
+mod mem_pool(test_mode:Bool) -> () {
+  reg buf0:[1024]U8 = nil
+  reg buf1:[1024]U8 = nil
 
   if test_mode {
     // shared BIST/repair: march patterns over buf0/buf1 written once,
@@ -372,8 +436,8 @@ mod mem_pool(test_mode:bool) -> () {
 }
 
 // file: engine.prp — logical owner: the functional reads and writes
-mod engine(addr:u10, din:u8, we:bool) -> (dout:u8@[0]) {
-  mut buf:[1024]u8 = regref("mem_pool/buf0") // type checked at elaboration
+mod engine(addr:U10, din:U8, we:Bool) -> (dout:U8@[0]) {
+  mut buf:[1024]U8 = regref("mem_pool/buf0") // type checked at elaboration
 
   dout = buf[addr]              // reads the committed 'q' state -> @[0]
   if we { buf[addr] = din }     // this is the single functional writer
@@ -432,7 +496,7 @@ does in row-major order. This allows building a simple function to flatten
 multi-dimensional arrays.
 
 ```pyrope
-comb flatten(...arr) -> (res) {
+comb flatten(arr) -> (res) {
   res = ()
   for i in arr {
     res = (...res, i)
@@ -440,7 +504,8 @@ comb flatten(...arr) -> (res) {
 }
 
 cassert(flatten(d2) == (1,2,3,4))
-cassert(flatten((((1),2),3),4) == (1,2,3,4))
+cassert(flatten(arr=((((1),2),3),4)) == (1,2,3,4))
+cassert(flatten((((1),2),3),4) == (1,2,3,4))  // one ordinary tuple parameter: outer parentheses may be omitted
 ```
 
 ## Array index
@@ -450,7 +515,7 @@ with tuples or by requiring an enumerate.
 
 
 ```pyrope
-mut x1:[2]u3 = (0,1)
+mut x1:[2]U3 = (0,1)
 cassert(x1[0] == 0 and x1[1] == 1)
 
 enum X = (
@@ -459,14 +524,14 @@ enum X = (
   t3
 )
 
-mut x2:[X]u3 = nil
+mut x2:[X]U3 = nil
 x2[X.t1] = 0
 x2[X.t2] = 1
 x2[0]              // error: only enum index
 
-mut x3:[-8..<7]u3 = nil  // accept signed values
+mut x3:[-8..<7]U3 = nil  // accept signed values
 
-mut x4:[100..<132]u3 = nil
+mut x4:[100..<132]U3 = nil
 
 cassert(x4[100] == 0)
 assert(x4[3]) // error: out of bounds index
@@ -501,21 +566,23 @@ assert(!(r_ver == 0sb?)) // it will randomly fail
 ```
 
 
-The reset for arrays may take several cycles to take effect, this can lead to
-unexpected results during the reset period. Memories and registers are randomly
-initialized before reset during simulation. There is no guarantee of zero
-initialization before reset.
+An initialized array is restored in one cycle of reset (see
+[Async memories or arrays](#async-memories-or-arrays)), but until then its
+contents are unknown, which can lead to unexpected results around the reset
+period. Memories and registers are randomly initialized before reset during
+simulation. There is no guarantee of zero initialization before reset. The
+reset is observed through the module's `Reset` input (see
+[Implicit clock and reset](04b-attributes.md#implicit-clock-and-reset)), not
+through a field of the memory.
 
 ```pyrope
-mut arr:[] = (0,1,2,3,4,5,6,7)
+mod m(rst:Reset) -> () {
+  reg mem:[] = (0,1,2,3,4,5,6,7)
 
-always_assert(arr[0] == 0 and arr[7] == 7) // may FAIL during reset
-
-reg mem:[] = (0,1,2,3,4,5,6,7)
-
-always_assert(mem[7] == 7) // may FAIL during reset
-if not mem.reset {
-  always_assert(mem[7] == 7) // OK
+  assert_always(mem[7] == 7)     // may FAIL: checked before and during reset
+  if not Bool(rst) {
+    assert_always(mem[7] == 7)   // may FAIL: random contents before the first reset
+  }
+  assert(mem[7] == 7)            // OK, not checked during reset
 }
-assert(mem[7] == 7) // OK, not checked during reset
 ```

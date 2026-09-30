@@ -7,6 +7,25 @@ passes or optimization steps. This section provides an overview of how the
 major Pyrope syntax constructs translate to gates.
 
 
+## Basic gates
+
+The `// RTL equivalent` code in this chapter uses the `__` basic gates, one per
+LGraph cell. A basic gate is an ordinary call: every argument is named with
+the cell's LGraph pin name, unless a call
+[naming exception](06-functions.md#argument-naming) applies (a single-pin gate
+may take its value unnamed); an ambiguous call is a compile error. The
+``lec(gold=…, `impl`=…)`` checks compare the two versions. The pins used here:
+
+* `__mux(s=cond, p1=f, p2=t)`: `t` when `s` is true, `f` otherwise.
+* `__hotmux(p0=c0, p1=v0, p2=c1, p3=v1, ...)`: one (control, value) pair per
+  arm, with an optional trailing default.
+* ``__sum(`as`=(...), bs=(...))``: the `as` values added, the `bs` values subtracted.
+* ``__and(`as`=(...))``, ``__or(`as`=(...))``, ``__xor(`as`=(...))``, ``__ror(`as`=x)``:
+  bitwise over the `as` values (`__ror` reduces the bits of one value).
+* `__not(a=x)`, `__shl(a=x, b=amt)`, `__get_mask(a=x, mask=m)`.
+* `__flop(din=d, initial=v, clock_pin=clk, reset_pin=rst, ...)`.
+
+
 ## Conditionals
 
 Conditional statements like `if/else` and `match` translate to multiplexers
@@ -16,7 +35,7 @@ Conditional statements like `if/else` and `match` translate to multiplexers
 A trivial `if/else` with all the options covered is a simple mux.
 
 ```pyrope
-mut res:s4 = nil
+mut res:S4 = nil
 
 if cond {
   res = a
@@ -25,9 +44,9 @@ if cond {
 }
 
 // RTL equivalent (mux of 4 bits in a,b,res2)
-mut res2:s4 = __mux(cond, b, a)
+mut res2:S4 = __mux(s=cond, p1=b, p2=a)
 
-lec(res, res2)
+lec(gold=res, `impl`=res2)
 ```
 
 An expression `if/else` is also a mux.
@@ -36,9 +55,9 @@ An expression `if/else` is also a mux.
 mut res = if cond { a } else { b }
 
 // RTL equivalent
-mut res2 = __mux(cond, b, a)
+mut res2 = __mux(s=cond, p1=b, p2=a)
 
-lec(res, res2)
+lec(gold=res, `impl`=res2)
 ```
 
 An explicit conditional assignment is also a mux.
@@ -50,9 +69,9 @@ if not cond {
 }
 
 // RTL equivalent
-mut res2 = __mux(cond, b, a)
+mut res2 = __mux(s=cond, p1=b, p2=a)
 
-lec(res, res2)
+lec(gold=res, `impl`=res2)
 ```
 
 Chaining `if`/`elif` creates a chain of muxes. If not all the inputs are
@@ -70,10 +89,10 @@ if cond1 {
 }
 
 // RTL equivalent
-mut tmp = __mux(cond2, a, c)
-mut res2 = __mux(cond1, tmp, b)
+mut tmp = __mux(s=cond2, p1=a, p2=c)
+mut res2 = __mux(s=cond1, p1=tmp, p2=b)
 
-lec(res, res2)
+lec(gold=res, `impl`=res2)
 ```
 
 `unique if`/`elif` is similar but avoids mux nesting using a one-hot encoded
@@ -91,7 +110,7 @@ unique if cond1 {
 mut res2 = __hotmux(p0=cond1, p1=b, p2=cond2, p3=c, p4=a)
 assume(!(cond1 and cond2)) // one hot check
 
-lec(res, res2)
+lec(gold=res, `impl`=res2)
 ```
 
 The `match` is similar to the `unique if` but also checks that one of the
@@ -118,7 +137,7 @@ assume ( cond1 and !cond2 and !cond3)
     or (!cond1 and  cond2 and !cond3)
     or (!cond1 and !cond2 and  cond3)    // one hot check (no else allowed)
 
-lec(res, res2)
+lec(gold=res, `impl`=res2)
 ```
 
 ## Optional expression
@@ -135,11 +154,11 @@ or short-circuit (`and`/`or`) expressions.
     mut lhs = v1 or v2
 
     // RTL equivalent
-    const lhs2  = __or(v1, v2)
-    const lhs2_v = __or(__and(v1.[valid], v1), __and(v2.[valid], v2))
+    const lhs2   = __or(`as`=(v1, v2))
+    const lhs2_v = __or(`as`=(__and(`as`=(v1.[valid], v1)), __and(`as`=(v2.[valid], v2))))
 
-    lec(lhs , lhs2)
-    lec(lhs.[valid], lhs2_v)
+    lec(gold=lhs, `impl`=lhs2)
+    lec(gold=lhs.[valid], `impl`=lhs2_v)
     ```
 
 === "Usual expression"
@@ -148,11 +167,11 @@ or short-circuit (`and`/`or`) expressions.
     mut lhs = v1 + v2
 
     // RTL equivalent
-    const lhs2   = __sum(as=(v1, v2))
-    const lhs2_v = __and(v1.[valid], v2.[valid])
+    const lhs2   = __sum(`as`=(v1, v2))
+    const lhs2_v = __and(`as`=(v1.[valid], v2.[valid]))
 
-    lec(lhs , lhs2)
-    lec(lhs.[valid], lhs2_v)
+    lec(gold=lhs, `impl`=lhs2)
+    lec(gold=lhs.[valid], `impl`=lhs2_v)
     ```
 
 === "Conditionals"
@@ -166,14 +185,14 @@ or short-circuit (`and`/`or`) expressions.
     } // no else
 
     // RTL equivalent
-    const tmp = __mux(cond2, v0, v2)
-    const lhs2= __mux(cond1, tmp, v1)
+    const tmp  = __mux(s=cond2, p1=v0, p2=v2)
+    const lhs2 = __mux(s=cond1, p1=tmp, p2=v1)
 
-    const tmp_v = __mux(cond2, v0.[valid], v2.[valid])
-    const lhs2_v= __mux(cond1, tmp_v, v1.[valid])
+    const tmp_v  = __mux(s=cond2, p1=v0.[valid], p2=v2.[valid])
+    const lhs2_v = __mux(s=cond1, p1=tmp_v, p2=v1.[valid])
 
-    lec(lhs , lhs2)
-    lec(lhs.[valid], lhs2_v)
+    lec(gold=lhs, `impl`=lhs2)
+    lec(gold=lhs.[valid], `impl`=lhs2_v)
     ```
 
 === "Lambda call (inlined)"
@@ -183,21 +202,22 @@ or short-circuit (`and`/`or`) expressions.
 
     mut lhs = c
     if cond {
-       lhs = f(a,b)
+       lhs = f(a, b)                           // a and b match the parameter names
     }
 
     // RTL equivalent
-    const a_cond = __not(__ror(a))             // a == 0
-    const tmp    = __mux(a_cond, b, 3)         // if a_cond { 3 }else{ b }
+    const a_cond = __not(a=__ror(`as`=a))              // a == 0
+    const tmp    = __mux(s=a_cond, p1=b, p2=3)       // if a_cond { 3 } else { b }
     mut lhs2   = c
-    lhs2       = __mux(cond, lhs2, tmp)
+    lhs2       = __mux(s=cond, p1=lhs2, p2=tmp)
 
-    const tmp_v  = __mux(a_cond, a.[valid], __and(a.[valid], b.[valid])) // a.[valid] or (a==0 and b.[valid])
+    // a == 0 returns 3 (needs only a); otherwise b (needs a and b)
+    const tmp_v  = __mux(s=a_cond, p1=__and(`as`=(a.[valid], b.[valid])), p2=a.[valid])
 
-    const lhs2_v = __mux(cond, c.[valid], tmp_v)
+    const lhs2_v = __mux(s=cond, p1=c.[valid], p2=tmp_v)
 
-    lec(lhs , lhs2)
-    lec(lhs.[valid], lhs2_v)
+    lec(gold=lhs, `impl`=lhs2)
+    lec(gold=lhs.[valid], `impl`=lhs2_v)
     ```
 
 ## Lambda calls
@@ -211,35 +231,35 @@ the instance is a `mut`, the variable name can be the SSA name.
 
 === "Lambda call"
     ```pyrope
-    mod sum(a:u32, b:u32) -> (x:u32@[0]) { wrap x = a + b }
+    mod sum(a:U32, b:U32) -> (x:U32@[0]) { wrap x = a + b }
 
-    mod sub(a:u32, b:u32) -> (x:u32@[0]) {
+    mod sub(a:U32, b:U32) -> (x:U32@[0]) {
       const tmp = sum(a, b)      // instance tmp,sum
 
       x = sum(a=tmp, b=3)          // instance x,sum
     }
 
-    mod top(a:u32, b:u32, c:bool) -> (x:u32@[0]) {
+    mod top(a:U32, b:U32, c:Bool) -> (x:U32@[0]) {
 
      x = sub(a, b).x
      if c {
        const tmp = 3
-       wrap x += sub(b, tmp).x
+       wrap x += sub(a=b, b=tmp).x
      }
     }
     ```
 
 === "Instance"
     ```pyrope
-    mod sum(a:u32, b:u32) -> (x:u32@[0]) { wrap x = a + b }
+    mod sum(a:U32, b:U32) -> (x:U32@[0]) { wrap x = a + b }
 
-    mod sub(a:u32, b:u32) -> (x:u32@[0]) {
+    mod sub(a:U32, b:U32) -> (x:U32@[0]) {
       const tmp = sum(a, b)      // instance tmp
 
       x = sum(a=tmp, b=3)          // instance x
     }
 
-    mod top(a:u32, b:u32, c:bool) -> (x:u32@[0]) {
+    mod top(a:U32, b:U32, c:Bool) -> (x:U32@[0]) {
 
      x = sub(a, b).x          // instance x
 
@@ -252,7 +272,7 @@ the instance is a `mut`, the variable name can be the SSA name.
        sub_arg_1 = tmp
        wrap x += x_0           // x_0 is a wire driven below; readable before its driver
      }
-     x_0 = sub(sub_arg_0, sub_arg_1).x   // instance x_0 (SSA)
+     x_0 = sub(a=sub_arg_0, b=sub_arg_1).x // instance x_0 (SSA)
     }
     ```
 
@@ -263,13 +283,13 @@ Verilog translation often cannot choose. An attribute block between the callee
 and the argument list pins it:
 
 ```pyrope
-mod counter(en:bool) -> (v:u8@[0]) {
-  reg c:u8 = 0
-  if en { c = c + 1 }
+mod counter(en:Bool) -> (v:U8@[0]) {
+  reg c:U8 = 0
+  if en { wrap c = c + 1 }
   v = c
 }
 
-pub mod top(en:bool) -> (r:u8@[0]) {
+pub mod top(en:Bool) -> (r:U8@[0]) {
   mut inst = counter::[name=u_cnt](en=en)  // instance u_cnt, not inst
   r = inst.v
 }
@@ -294,6 +314,51 @@ inst::[name=u_cnt] = counter(…)` sets an attribute on the *variable* `inst`
 (and reads `u_cnt` as an ordinary expression), so it does **not** name the
 instance — the attribute block must sit before the `(`.
 
+### Clock, reset, and output timing of an instance
+
+Clocks and resets bind by type, not by name: an input declared
+[`Clock` or `Reset`](07-typesystem.md) is the clock or reset, whatever its
+name. An instance's clock and reset follow the
+[implicit clock and reset](04b-attributes.md#implicit-clock-and-reset) rules:
+
+* An unbound `Clock` or `Reset` input of a `mod`/`pipe` child is wired to
+  the caller's single `Clock` or `Reset` input. The same happens for the
+  `` `clock`:Clock``/`` `reset`:Reset`` input minted in a child that has registers and
+  no `Clock`/`Reset` input (a non-`Clock` input already named `clock`, or a
+  non-`Reset` one named `reset`, is a compile error). When the caller has no
+  `Clock` (`Reset`) input, one is minted in the caller too.
+* A caller with two or more `Clock` inputs has no implicit clock. It names
+  the clock on every register (`clock_pin=clk_b`), and binds every child
+  `Clock` input explicitly (`counter(clk=clk_b, …)`); an unbound one is a
+  compile error. The same holds for two or more `Reset` inputs, `reset_pin`,
+  and child `Reset` inputs.
+* A `Clock` input can never be bound to a constant (`counter(clk=true, …)`
+  is a compile error). A `Reset` input is Bool-like: it takes any `Bool`
+  expression, and the constant `false` means "no reset".
+* A `comb` cannot declare a `Clock` or `Reset` input (compile error), so
+  nothing is wired into it. An input a `comb` never reads may be omitted, and
+  omitting one it reads is a missing-argument error. A read counts once the
+  body is folded at compile time: an input read only under a condition that
+  folds to `false` is not read.
+
+A caller sees each child output at that output's own declared landing cycle
+`@[N]`. See [Cycle rules for `mod` outputs](06-functions.md#cycle-rules-for-mod-outputs).
+
+```pyrope
+mod counter(clk:Clock, rst:Reset, en:Bool) -> (v:U8@[0]) {
+  reg c:U8 = 0                        // clocked by 'clk', reset by 'rst'
+  if en { wrap c = c + 1 }
+  v = c
+}
+
+pub mod top(ck:Clock, rs:Reset, en:Bool) -> (r:U8@[0], s:U8@[0]) {
+  const a = counter(en=en)            // OK: 'clk' and 'rst' wired to top's 'ck' and 'rs'
+  const b = counter(clk=true, en=en)  // error: a Clock bound to a constant
+  r = a.v
+  s = b.v
+}
+```
+
 ## Optional lambdas
 
 HDLs use typical software constructs that look like function calls to represent
@@ -317,11 +382,11 @@ the condition is false.
 === "Conditional mod call"
 
     ```pyrope
-    mod case_1_counter(runtime:u8) -> (res:u16@[0]) {
+    mod case_1_counter(runtime:U8) -> (res:U16@[0]) {
 
-      const r = (
-        reg total:u16 = 0,          // r is reg, everything is reg
-        comb increase(a) -> (r) {
+      mut r = (
+        reg total:U16 = 0,          // r is reg, everything is reg
+        comb increase(ref self, a) -> (r) {
           puts("hello")
 
           r = self.total
@@ -340,11 +405,11 @@ the condition is false.
 === "Pyrope inline equivalent"
 
     ```pyrope
-    mod case_1_counter(runtime:u8) -> (res:u16@[0]) {
+    mod case_1_counter(runtime:U8) -> (res:U16@[0]) {
 
-      const r = (
-        reg total:u16 = 0,
-        comb increase(a) -> (r) {
+      mut r = (
+        reg total:U16 = 0,
+        comb increase(ref self, a) -> (r) {
           puts("hello")
 
           r = self.total
@@ -355,15 +420,15 @@ the condition is false.
       if runtime == 2 {
         puts("hello")
 
-        const res = r.total
-        wrap r.total = res + 3
-        res = res
+        const old = r.total
+        wrap r.total = old + 3
+        res = old
       }elif runtime == 4 {
         puts("hello")
 
-        const res = r.total
-        wrap r.total = res + 9
-        res = res
+        const old = r.total
+        wrap r.total = old + 9
+        res = old
       }
     }
     ```
@@ -456,12 +521,12 @@ simulation/synthesis.
 
 
 ```pyrope
-reg r:u16 = 3 // reset sets r to 3
+reg r:U16 = 3 // reset sets r to 3
 r = 2             // non-reset assignment
 
-reg array:[4]u16 = (1, 2, 3, 4)  // reset values
+reg array:[4]U16 = (1, 2, 3, 4)  // reset values
 
-reg r2:u128 = conf.get("my_data.for.r2")
+reg r2:U128 = conf.get("my_data.for.r2")
 
 reg array:[] = conf.get("some.conf.hex.dump") // dynamic size from config
 ```
@@ -476,14 +541,14 @@ invoked every cycle during reset.
 
 ```pyrope
 mod array_reset(ref self) {
-  reg reset_iter:u10:[reset_pin=false] = 0sb? // no reset flop
+  reg reset_iter:U10 = nil // no reset flop (a `nil` initializer binds no reset)
 
   self[reset_iter].state = I
 
   wrap reset_iter = reset_iter + 1
 }
 
-reg array:[1024]tag:[clock_pin=ref my_clock] = array_reset  // no () — pass the method
+reg array:[1024]Tag:[clock_pin=my_clock] = array_reset  // no () — pass the method
 ```
 
 
@@ -495,13 +560,13 @@ without reset signal.
 
 ```pyrope
 mod my_flop_reset(ref self) {
-  reg reset_counter:u3:[async=true] = 0sb? // asynchronous reset is posedge only
+  reg reset_counter:U3:[async=true] = 0 // asynchronous reset
 
   self[reset_counter] = reset_counter
   wrap reset_counter += 1
 }
 
-reg my_flop:[8]u32 = my_flop_reset
+reg my_flop:[8]U32 = my_flop_reset
 ```
 
 A related functionality and constrains happen when a tuple have some register
@@ -513,8 +578,8 @@ cycle Similarly a tuple can have a reset when assigned to a register.
 
     ```pyrope
     const Mix_tup = (
-      reg flag:bool = false,
-      mut state:u2 = nil
+      reg flag:Bool = false,
+      mut state:U2 = nil
     )
 
     mut x:Mix_tup = (false, 1)  // false used at reset, 1 used every cycle
@@ -532,8 +597,8 @@ cycle Similarly a tuple can have a reset when assigned to a register.
 
     ```pyrope
     const Mix_tup = (
-      reg flag:bool = false,
-      mut state:u2 = nil,
+      reg flag:Bool = false,
+      mut state:U2 = nil,
       comb init(ref self) {
         mod flag_reset(ref self) { self = false }
         self.flag  = flag_reset          // reset code (pass by name, no ())
@@ -554,10 +619,10 @@ cycle Similarly a tuple can have a reset when assigned to a register.
 A sample of asynchronous reset with different reset and clock signal
 
 ```pyrope
-reg my_asyn_other_reg:u8:[
+reg my_async_other_reg:U8:[
   async = true,
-  clock_pin = ref clk2,    // ref to connect, not read clk2 value
-  reset_pin = ref reset33  // ref to connect, not read current reset33 value
+  clock_pin = clk2,        // a connection to clk2, not a read of its value
+  reset_pin = reset33      // a connection to reset33, not a read of its value
 ] = 33 // initialized to 33 at reset
 
 
@@ -606,7 +671,7 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
     ```verilog
     module inner(input z, input y, output a, output h);
       assign a =   y & z;
-      assign h = !(y & z);
+      assign h = ~(y & z);
 
     endmodule
 
@@ -623,7 +688,7 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
     ```pyrope
     comb inner(z, y) -> (a, h) {
       a = y & z
-      h = !(y & z)
+      h = ~(y & z)
     }
 
     comb top2(a, b) -> (c, d) {
@@ -639,7 +704,7 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
     const Inner_t = (
       comb init(ref self, z, y) {
         self.a = y & z
-        self.h = !(y & z)
+        self.h = ~(y & z)
       }
     )
 
@@ -661,14 +726,16 @@ The following Verilog hierarchy can be encoded with the equivalent Pyrope:
     const Inner_t = (
       comb init(ref self, z, y) {
         self.a = y & z
-        self.h = !(y & z)
+        self.h = ~(y & z)
       }
     )
 
     const Top2_t = (
       mut foo:Inner_t = nil,
       comb init(ref self, a, b) {
-        (self.c, self.d) = self.foo(y=a, z=b)
+        const r = self.foo(y=a, z=b)  // `(self.c, self.d) = ...` is an error
+        self.c = r.a
+        self.d = r.h
       }
     )
 
@@ -691,7 +758,7 @@ be the same.
     [Implementation status](15-tbd.md).
 
 ```pyrope
-reg a:u4 = 3
+reg a:U4 = 3
 sat a = a + 1
 
 reg b = 4
@@ -704,17 +771,17 @@ if cond {
 // RTL equivalent
 wire a_next = nil                                  // final in-cycle value of 'a'
 // a_next = ...                                       // (driver elaborated from the writes to 'a')
-a_qpin = __flop(reset_pin=ref reset, clock_pin=ref clk, initial=3, din=a_next)
-tmp    = __sum(as=(a_qpin, 1))
-a      = __mux(tmp[4], tmp#[0..=3], 0xF)    // saturate, not wrap
+a_qpin = __flop(reset_pin=`reset`, clock_pin=`clock`, initial=3, din=a_next)
+tmp    = __sum(`as`=(a_qpin, 1))
+a      = __mux(s=tmp#[4], p1=tmp#[0..=3], p2=0xF)   // saturate, not wrap
 
 wire b_next = nil
 // b_next = ...
-b_qpin = __flop(reset_pin=ref reset, clock_pin=ref clk, initial=4, din=b_next)
-b      = __mux(cond, b_qpin, 5)
+b_qpin = __flop(reset_pin=`reset`, clock_pin=`clock`, initial=4, din=b_next)
+b      = __mux(s=cond, p1=b_qpin, p2=5)
 
 wire c_cond_next = nil
 // c_cond_next = ...
-c_cond_qpin = __flop(reset_pin=ref reset, clock_pin=ref clk, initial=0, din=c_cond_next)
-c_cond      = __sum(as=(b, 1))
+c_cond_qpin = __flop(reset_pin=`reset`, clock_pin=`clock`, initial=0, din=c_cond_next)
+c_cond      = __sum(`as`=(b, 1))
 ```

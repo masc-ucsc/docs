@@ -54,41 +54,56 @@ elaborate the pyrope files and run all the tests in the given file.
 
 Populate the Pyrope code
 
+!!! WARNING "TBD"
+    The `gcd` module below compiles and simulates today, but its test does not
+    run yet: `lhd sim` finds no `test` nested in a top-scope `for`, and the
+    `cpp(...)` golden model is not implemented. See
+    [Implementation status](15-tbd.md).
+
 === "Pyrope"
 
     src/gcd.prp:
     ```pyrope linenums="1"
-    mod gcd(a:u32, b:u32) -> (reg result:u32@[0]) {
-      reg x = a
-      reg y = b
+    mod gcd(a:U32, b:U32, start:Bool) -> (reg result:U32@[0], reg valid:Bool@[0] = false) {
+      reg x:U32 = 0          // a reset value is a comptime constant
+      reg y:U32 = 0
 
-      if y != 0 {
-        result = nil
+      if start {
+        x     = a
+        y     = b
+        valid = false
+      } elif y != 0 {
         if x > y {
-          x -= y
+          wrap x -= y        // x > y never wraps, but range analysis may not prove x - y >= 0
         } else {
-          y -= x
+          wrap y -= x
         }
-      }else{
-        result = x // Unset nil
+      } else {
+        result = x           // no `= v`: 'result' has no reset, it holds until written
+        valid  = true
       }
     }
 
-    type GcdModel = ( gcd: comb(v1:u32, v2:u32) -> (r:u32) )
+    type GcdModel = ( gcd: comb(v1:U32, v2:U32) -> (r:U32) )
     const gold:GcdModel = cpp("my_cpp_gcd")
 
     for a in 1..=100 {
       for b in 1..=100 {
         test gcd.check {
           mut dut = gcd
-          dut.a = a
-          dut.b = b
+          tick 1 {                          // load a and b
+            dut.a = a
+            dut.b = b
+            dut.start = true
+            step
+          }
           tick 100 {
+            dut.start = false
             step
             if not dut.valid { continue }   // wait until the result is ready
             break
           }
-          assert(dut.z == gold.gcd(v1=a, v2=b))
+          assert(dut.result == gold.gcd(v1=a, v2=b))
         }
       }
     }
@@ -166,11 +181,11 @@ Populate the Pyrope code
           tester.poke("io_a", i)
           tester.poke("io_b", j)
           tester.poke("io_e", 1)
-          tester.step()
+          tester.`step`()
           tester.poke("io_e", 0)
 
           while (tester.peek("io_v") != BigInt(1)) {
-            tester.step()
+            tester.`step`()
           }
           tester.expect("io_z", BigInt(GCDCalculator.computeGcd(i, j)._1))
         }
