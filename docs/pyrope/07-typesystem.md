@@ -81,7 +81,7 @@ reset, whatever the port is called. The name carries no meaning: an input
 called `clk` or `rst` that is not typed `Clock`/`Reset` is plain data, and a
 `_n` suffix does not make a reset active-low (only `negreset=true` does).
 Registers bind to the module's single `Clock`/`Reset` input, a module with
-registers and none gets `` `clock`:Clock``/`` `reset`:Reset`` minted, two or more need
+registers and none gets `clock:Clock`/`reset:Reset` minted, two or more need
 `clock_pin=x`/`reset_pin=x` (no `ref`), instances auto-wire their unbound
 `Clock`/`Reset` inputs, and a `comb` has no `Clock`/`Reset` inputs: the
 binding rules are in
@@ -101,12 +101,12 @@ enables). A `Clock_cell` is written as a `Clock` construction with named
 arguments, `Clock(clock_pin=clk, enable=en)`: an ICG whose result is a gated
 `Clock` (the one-argument `Clock(x)` is not a cast). A test passes a real
 `Clock` to its design, never a constant (`clk=1`): each `tick` block has a
-minted `` `clock`:Clock`` that counts the tick's cycles from 0 (see
+minted `clock:Clock` that counts the tick's cycles from 0 (see
 [Running cycles](05b-statements.md#running-cycles-tick)).
 
 A `Reset` is Bool-like: it can be computed (`rst or soft_rst`, a
 synchronizer), the constant `false` means no reset, and a `Bool` expression
-is assigned or bound to a `Reset` without a cast (``acc.`reset` = `clock` < 2`` in a
+is assigned or bound to a `Reset` without a cast (`acc.reset = clock < 2` in a
 test).
 
 ```pyrope

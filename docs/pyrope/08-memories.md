@@ -220,12 +220,12 @@ with a reset value, an initialized `reg` array binds the module's
 [implicit reset](04b-attributes.md#implicit-clock-and-reset) — its single
 `Reset` input, whatever its name — or the signal named by
 `reset_pin=my_rst` (no `ref`: a `_pin` is always a connection), or mints a
-`` `reset`:Reset`` input when the module declares none (a non-`Reset` input already
+`reset:Reset` input when the module declares none (a non-`Reset` input already
 named `reset` is then a compile error). An instantiating caller auto-wires its
 own single `Reset` to that input; a caller with two or more `Reset` inputs must
 bind it explicitly. With two or more `Reset` inputs in the module itself, name
 the reset with `reset_pin=`. The memory is clocked the same way: by the
-module's single `Clock` input (minted as `` `clock`:Clock`` when there is none)
+module's single `Clock` input (minted as `clock:Clock` when there is none)
 unless `clock_pin=` names another. The binding is by type (`Clock`/`Reset`,
 see [Type system](07-typesystem.md)), never by name.
 

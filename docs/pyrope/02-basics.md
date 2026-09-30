@@ -282,12 +282,14 @@ cassert(`for`+1 == `foo is . strange!\nidentifier`)
 ```
 
 Backticks are required whenever an ordinary name matches a reserved keyword
-or type spelling, ignoring case, or contains characters outside the identifier
-rules above. This is one rule for every name: declarations, destructuring,
+or type spelling exactly, or contains characters outside the identifier
+rules above. Reserved-word matching is case-sensitive: only the exact spelling
+is reserved, so `if` is a keyword but `IF` and `If` are ordinary names. This is
+one rule for every name: declarations, destructuring,
 parameters and outputs, generics, loop variables, tuple fields, methods,
 enum members, named arguments, dotted selectors, and attributes. There are no
-field-name or attribute-name exceptions. Name lookup itself remains
-case-sensitive: `` `if` `` and `` `IF` `` are distinct names.
+field-name or attribute-name exceptions. Name lookup is case-sensitive too:
+`` `if` `` and `IF` are distinct names.
 
 Keywords used as language syntax keep their normal spelling: `if` starts a
 conditional and `comptime` is a declaration modifier. When the same text names
@@ -298,9 +300,9 @@ an attribute, field, or other entity, escape it: ``x.[`comptime`]``,
 const cfg = (const `type` = 1, const `if` = 2)
 cassert(cfg.`type` == 1 and cfg.`if` == 2)
 const `in` = 3
-const `IF` = 4                  // case variants require backticks too
+const IF = 4                    // OK: only the exact spelling `if` is reserved
+const If = 5                    // OK: also an ordinary name
 // const in = 3                // error: reserved word used as a name
-// const If = 4                // error: reservation ignores case
 for `for` in 0..<2 { cassert(`for` < 2) }
 ```
 
@@ -310,9 +312,9 @@ unescaped: a backticked reserved word is an ordinary name in every position,
 so `` `else` `` is not `else`.
 
 The formatter preserves backticks around reserved keywords and type spellings
-using a case-insensitive match: `` `else` ``, `` `ELSE` ``, `` `u8` ``, and
-`` `U8` `` all keep their backticks. This formatting rule does not change the
-language's case-sensitive name lookup.
+(and banned old spellings) by the same exact-spelling match: `` `else` ``,
+`` `u8` ``, and `` `U8` `` keep their backticks, while `` `ELSE` `` is a
+non-reserved word and formats as `ELSE`.
 
 The built-in type words `U<N>`, `S<N>`, `Unsigned`, `Signed`, `Bool`, `String`,
 `Clock`, and `Reset` ([type system](07-typesystem.md)) are reserved words too.
@@ -320,11 +322,16 @@ The built-in type words `U<N>`, `S<N>`, `Unsigned`, `Signed`, `Bool`, `String`,
 `U1333`, `S99999999`). They cannot be declared or used as a variable, port,
 parameter, lambda, or field name, not even after a `.` (`foo.U33` is an error);
 a name with that spelling must be backticked, and `` `U4` `` is then a
-variable, never the type (`` foo.`U33` `` is a field).
+variable, never the type (`` foo.`U33` `` is a field). Only these exact
+spellings are reserved: `Clock` and `Reset` need backticks as names, but the
+lowercase `clock` and `reset` are ordinary names (so the minted `clock:Clock`
+and `reset:Reset` inputs need no backticks), and so are `BOOL`, `STRING`, or
+`UNSIGNED`.
 
 The old lowercase type spellings are banned words: `u`, `s`, or `i` followed by
 digits (`u8`, `s4`, `i32`), `bool`, `boolean`, `unsigned`, `signed`, and
-`string`. Using one anywhere (as a type, a cast, a variable, lambda, or field
+`string`, in exactly that lowercase spelling (`BOOL` or `I32` are ordinary
+names). Using one anywhere (as a type, a cast, a variable, lambda, or field
 name) is an error that names the new spelling (`u8` was renamed `U8`). So `s1`,
 `i0`, and `u4` are not legal names; pick another name (`st1`, `in0`) or
 backtick it (`` `s1` ``), since a backticked banned word is an ordinary name.
@@ -335,6 +342,9 @@ mut x:U4 = `U4`        // the type U4 holding the variable U4
 const U4 = 3           // error: U4 is a reserved type word, use `U4`
 const s1 = 1           // error: s1 is a banned old spelling (now S1)
 const st1 = 1          // OK
+const clock = 1        // OK: only `Clock` is a type word, not `clock`
+const `Clock` = 1      // a variable named Clock (bare Clock is the type)
+const BOOL = 1         // OK: only the exact spellings are reserved
 const `s1` = 1         // OK: a backticked banned word is an ordinary name
 const cfg2 = (const `U8` = 1, const `bool` = true)
 cassert(cfg2.`U8` == 1)

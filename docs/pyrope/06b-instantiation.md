@@ -323,7 +323,7 @@ name. An instance's clock and reset follow the
 
 * An unbound `Clock` or `Reset` input of a `mod`/`pipe` child is wired to
   the caller's single `Clock` or `Reset` input. The same happens for the
-  `` `clock`:Clock``/`` `reset`:Reset`` input minted in a child that has registers and
+  `clock:Clock`/`reset:Reset` input minted in a child that has registers and
   no `Clock`/`Reset` input (a non-`Clock` input already named `clock`, or a
   non-`Reset` one named `reset`, is a compile error). When the caller has no
   `Clock` (`Reset`) input, one is minted in the caller too.
@@ -771,17 +771,17 @@ if cond {
 // RTL equivalent
 wire a_next = nil                                  // final in-cycle value of 'a'
 // a_next = ...                                       // (driver elaborated from the writes to 'a')
-a_qpin = __flop(reset_pin=`reset`, clock_pin=`clock`, initial=3, din=a_next)
+a_qpin = __flop(reset_pin=reset, clock_pin=clock, initial=3, din=a_next)
 tmp    = __sum(`as`=(a_qpin, 1))
 a      = __mux(s=tmp#[4], p1=tmp#[0..=3], p2=0xF)   // saturate, not wrap
 
 wire b_next = nil
 // b_next = ...
-b_qpin = __flop(reset_pin=`reset`, clock_pin=`clock`, initial=4, din=b_next)
+b_qpin = __flop(reset_pin=reset, clock_pin=clock, initial=4, din=b_next)
 b      = __mux(s=cond, p1=b_qpin, p2=5)
 
 wire c_cond_next = nil
 // c_cond_next = ...
-c_cond_qpin = __flop(reset_pin=`reset`, clock_pin=`clock`, initial=0, din=c_cond_next)
+c_cond_qpin = __flop(reset_pin=reset, clock_pin=clock, initial=0, din=c_cond_next)
 c_cond      = __sum(`as`=(b, 1))
 ```

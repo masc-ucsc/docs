@@ -27,8 +27,8 @@ mod fifo(push:Bool, din:U8) -> (count:U4@[0], head:U8@[0]) {
 test fifo.fill {
   mut acc = fifo
   tick 6 {
-    acc.push = `clock` < 4
-    acc.din  = 0x10 + `clock`   // the tick's clock: its cycle count is legal in a test
+    acc.push = clock < 4
+    acc.din  = 0x10 + clock   // the tick's clock: its cycle count is legal in a test
     step
   }
   assert(acc.cnt == 4, "four pushes landed")

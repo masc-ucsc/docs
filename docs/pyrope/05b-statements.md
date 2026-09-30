@@ -731,13 +731,13 @@ the previous `step` settled, not the inputs driven by the statements just above
 it, so for an output that depends combinationally on those inputs the two
 placements differ by a cycle.
 
-Each `tick` block gets a minted `` `clock`:Clock``. In simulation a Clock is a cycle
+Each `tick` block gets a minted `clock:Clock`. In simulation a Clock is a cycle
 counter, and this one counts the tick's cycles: it is `0` in the first
 iteration and each `step` advances it. The DUT instances stepped inside the tick
 auto-wire their unbound `Clock` input to it, like any instance whose caller has
 a single Clock. A test is a debug context, so the numeric
 view of `clock` is legal there: use it in `puts`, `assert`, and to drive inputs
-such as a reset (``acc.`reset` = `clock` < 2``; a Bool expression binds to a `Reset`
+such as a reset (`acc.reset = clock < 2`; a Bool expression binds to a `Reset`
 without a cast). Outside a `tick` block, `clock` is undefined unless the test
 declares it. A harness never feeds a constant to a `Clock` input (`clk=1` is an
 error); it passes a real Clock such as the tick's `clock`.
@@ -787,10 +787,10 @@ test counter.gated {
 
 A `Reset` input is Bool-like — drive it from the cycle index rather than a magic
 window. `counter` has a register and declares no `Clock` or `Reset` input, so it
-gets the minted `` `clock`:Clock`` and `` `reset`:Reset`` inputs (see
+gets the minted `clock:Clock` and `reset:Reset` inputs (see
 [Implicit clock and reset](04b-attributes.md#implicit-clock-and-reset)). The
 reset is active-high because `counter` does not set `negreset=true`.
-Holding ``acc.`reset` `` for the first cycles keeps the registers at their reset
+Holding `acc.reset` for the first cycles keeps the registers at their reset
 value until you release it:
 
 ```pyrope
@@ -798,7 +798,7 @@ test counter.with_reset {
   mut acc = counter
   tick 8 {
     acc.enable = true
-    acc.`reset`  = `clock` < 2     // cycles 0,1 held in reset; counting starts at cycle 2
+    acc.reset  = clock < 2     // cycles 0,1 held in reset; counting starts at cycle 2
     step
   }
   assert(acc.value == 6)       // counted only on cycles 2..7
@@ -836,7 +836,7 @@ test runner.until_done {
   mut r          = runner
   mut done_final = false
   tick 100 {                       // watchdog bound: never spin forever
-    r.start = `clock` == 0           // one-cycle start pulse on cycle 0
+    r.start = clock == 0           // one-cycle start pulse on cycle 0
     r.len   = 5
     step
     done_final = r.done
@@ -847,7 +847,8 @@ test runner.until_done {
 ```
 
 `tick` and `step` follow the same name rule as every other reserved word:
-backticks are required in every name position, ignoring case. This includes
+backticks are required in every name position, for the exact spelling only
+(`Tick` and `STEP` are ordinary names). This includes
 fields and methods: ``x.`step` = 1``, ``(const `tick` = 1)``, and
 ``mod `tick`(ref self, ...)``. (`regref` is an ordinary built-in call,
 not a reserved word.)

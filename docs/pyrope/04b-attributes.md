@@ -412,7 +412,7 @@ distinct types (`Clock does Bool` is false). A register without
   is a compile error. Two or more `Reset` inputs likewise require
   `reset_pin=x`.
 * A module with registers and no `Clock` (or `Reset`) input gets one minted:
-  `` `clock`:Clock`` (or `` `reset`:Reset``). A module also mints one when an instance
+  `clock:Clock` (or `reset:Reset`). A module also mints one when an instance
   in it needs its clock (or reset) auto-wired, see below. If a non-`Clock`
   input is already named `clock` (a non-`Reset` input named `reset`), minting
   is a compile error.
@@ -423,12 +423,16 @@ There is no name-based binding: an input named `clk`, `clock`, `rst` or
 A `Clock` is not data ([Clock and Reset](07-typesystem.md#clock-and-reset)):
 it only drives clock pins, a `Clock_cell` (clock gating), or another `Clock`
 port, `U1(clk)` is a compile error, and its simulation cycle count
-(`` `clock` < 1000``) is readable only in debug contexts (`test` blocks, `puts`,
+(`clock < 1000`) is readable only in debug contexts (`test` blocks, `puts`,
 `assert`/`cassert`). There are no derived clocks and no clock muxes; use
 enables. The one derived `Clock` is a gated one: `Clock(clock_pin=clk,
-enable=en)` (named arguments) is a `Clock_cell`, an ICG that latches `en`
-while `clk` is low, and its result is a `Clock` usable as a `clock_pin` or a
-`Clock` port. The one-argument `Clock(x)` is not a cast.
+enable=en)` (named arguments, `en` a `Bool`) is a `Clock_cell`, an ICG that
+latches `en` while `clk` is low, and its result is a `Clock` usable as a
+`clock_pin` or a `Clock` port -- and, like any `Clock`, never as data or as a
+reset. The one-argument `Clock(x)` is not a cast. A synchronous reset of a
+register on a gated clock takes effect only on the edges the gate lets through
+(while `en` is high); use `async=true` for a reset that must land while the
+gate is closed.
 
 ```pyrope
 mod gated(clk:Clock, en:Bool, d:U8) -> (q:U8@[1]) {
@@ -489,7 +493,7 @@ comb parity(clk:Bool, a:U8) -> (p:U8) {
 
 comb gate(c:Clock, a:U8) -> (p:U8) { p = a }  // error: a comb has no Clock input
 
-mod bad_mint(`clock`:U1, d:U8) -> (q:U8@[0]) {
+mod bad_mint(clock:U1, d:U8) -> (q:U8@[0]) {
   reg r:U8 = 0      // error: minting 'clock:Clock' clashes with the U1 input 'clock'
   r = d
   q = r
@@ -587,18 +591,18 @@ pub mod legacy::[timecheck=false](clk:Clock, d:U4) -> (q:U4@[0]) {
 }
 ```
 
-Without `timecheck=false`, a plain body `reg` that drives a `mod` output
-follows the rule of a `reg` in the output list (see
-[Cycle rules for `mod` outputs](06-functions.md#cycle-rules-for-mod-outputs)):
-a conditional or feedback write (a hold path: `if en { r = d }`,
-`r = r + 1`) makes it state, landing at its home stage, and a register
-written every cycle from its inputs lands one cycle after them. The rule is
-uniform: the implicit clock and an explicit `clock_pin`/`reset_pin` alike
-(the `Clock`/`Reset` signals themselves carry no cycle), a whole write and
-bit-slice writes (`r#[0..<4] = d`) alike, and a read of the whole register or
-of a bit slice alike, so `reg r:U4 = 0; r = d; q = r` needs `q:U4@[1]`. (A body
-register read only through other logic, `q = r ^ 1`, is still cycle-0 state
-today, see [Implementation status](15-tbd.md).)
+Without `timecheck=false`, a plain body `reg` written every cycle from its
+inputs and read directly or through a bit slice by a `mod` output lands one
+cycle after those inputs, so `reg r:U4 = 0; r = d; q = r` needs `q:U4@[1]`.
+That holds with the implicit clock and with an explicit `clock_pin`/`reset_pin`
+alike (the `Clock`/`Reset` signals themselves carry no cycle), and for a whole
+write and bit-slice writes (`r#[0..<4] = d`) alike. Not settled yet (see
+[Implementation status](15-tbd.md)): a body register read only through other
+logic (`q = r ^ 1`) is cycle-0 state today, and so is one with a hold path (a
+conditional or feedback write, `if en { r = d }`, `r = r + 1`), which lands at
+its home stage -- while the same register on a gated clock
+(`clock_pin=Clock(clock_pin=clk, enable=en)`, no hold path in its data) lands
+one cycle later.
 
 #### lg: explicit lgraph name
 

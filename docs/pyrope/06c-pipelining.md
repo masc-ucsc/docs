@@ -407,10 +407,9 @@ markings, ingest as. Omitting `@[...]` on a `mod` output entirely is a
 compile error: the interface is the timing contract callers rely on. The
 full set of rules is in
 [Cycle rules for `mod` outputs](06-functions.md#cycle-rules-for-mod-outputs);
-a plain `reg` declared in the *body* that drives an output lands like one in
-the output list (a hold path keeps it at its home stage, a write every cycle
-lands one cycle later; see [Implementation status](15-tbd.md) for the one
-open case). Inside the body, `mod` blocks have
+a plain `reg` declared in the *body* written every cycle and read directly by
+an output lands one cycle after its inputs (see
+[Implementation status](15-tbd.md) for the cases not settled yet). Inside the body, `mod` blocks have
 two complementary timing mechanisms for strong compile-time checking:
 
 * **`stage[N]`** on a declaration: a declaration modifier (in the same slot as

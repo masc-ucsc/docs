@@ -211,14 +211,12 @@ checks on both sides of the boundary:
   unconstrained (min and/or max `nil`).
 
 A register declared in the *body* (a plain `reg`, not in the output list)
-that drives an output follows the same rule: a conditional or feedback write
-makes it state at its home stage, and one written every cycle from its
-inputs lands one cycle after them (`reg r = 0; r = d; q = r` needs `q@[1]`),
-whatever its clock or reset pin and whether it is written or read whole or
-through bit slices. A body register read only through other logic is still
-cycle-0 state today (see [Implementation status](15-tbd.md)); when the cycle
-of a registered output matters, declare the register in the output list or
-use `stage[N]`.
+written every cycle from its inputs and read directly by an output lands one
+cycle after them (`reg r = 0; r = d; q = r` needs `q@[1]`), whatever its clock
+or reset pin and whether it is written or read whole or through bit slices.
+The other body-register cases are not settled yet (see
+[Implementation status](15-tbd.md)); when the cycle of a registered output
+matters, declare the register in the output list or use `stage[N]`.
 
 `::[timecheck=false]` (old spelling `hdl`) on a lambda
 (`mod legacy::[timecheck=false](…)`) turns off **all** the timing checks

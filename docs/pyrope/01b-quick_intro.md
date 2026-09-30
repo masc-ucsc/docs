@@ -144,7 +144,7 @@ const old = past[2](counter)  // pipelined 2 cycles (inserts 2 flops)
 Clock and reset bind by **type**, not by name. A `mod`'s clock is its single
 `Clock` input and its reset its single `Reset` input, whatever they are
 called, and registers bind to them implicitly. A module with registers and no
-`Clock` (or `Reset`) input gets one minted, `` `clock`:Clock`` (or `` `reset`:Reset``);
+`Clock` (or `Reset`) input gets one minted, `clock:Clock` (or `reset:Reset`);
 a non-`Clock` input already named `clock` (a non-`Reset` one named `reset`) is
 then a compile error. With two or more `Clock` (or `Reset`) inputs, every
 register names its own:
