@@ -1,0 +1,42 @@
+digraph assign {
+  rankdir=LR
+  bgcolor="transparent"
+
+  node  [fontname = "helvetica", shape=record, style="rounded", penwidth = 2];
+  edge  [fontname = "helvetica", color="#142b30", arrowhead="normal", penwidth = 2];
+  graph [fontname = "helvetica"];
+
+
+  nodea0 [label = "<a> minus | <l> lhs  | <r1> op1 | <r2> op2 "];
+  nodea1 [label = "<a> ref   | <l> ___a"];
+  nodea2 [label = "<a> ref   | <l> x"];
+  nodea3 [label = "<a> const | <l> 0d1"];
+
+  nodeb0 [label = "<a> plus | <l> lhs  | <r1> op1 | <r2> op2 | <r3> op3 "];
+  nodeb1 [label = "<a> ref   | <l> ___b"];
+  nodeb2 [label = "<a> ref   | <l> ___a"];
+  nodeb3 [label = "<a> const | <l> 0d3"];
+  nodeb4 [label = "<a> const | <l> 0d2"];
+
+  node5 [label = "<a> dp_assign | <l> lhs  | <r> rhs"];
+  node6 [label = "<a> ref   | <l> total"];
+  node7 [label = "<a> ref   | <l> ___b"];
+
+  node8 [label = "<a> stmts | <s1> stmt1 | <s2> stmt2 | <s3> stmt3"];
+
+  node8:s1 -> nodea0:a;
+  node8:s2 -> nodeb0:a;
+  node8:s3 -> node5:a;
+
+  nodea0:l -> nodea1:a;
+  nodea0:r1 -> nodea2:a;
+  nodea0:r2 -> nodea3:a;
+
+  nodeb0:l -> nodeb1:a;
+  nodeb0:r1 -> nodeb2:a;
+  nodeb0:r2 -> nodeb3:a;
+  nodeb0:r3 -> nodeb4:a;
+
+  node5:l -> node6:a;
+  node5:r -> node7:a;
+}

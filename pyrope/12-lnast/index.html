@@ -1,0 +1,3520 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../10b-vslang/">
+      
+      
+        <link rel="next" href="../13-stdlib/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>LNAST - LiveHD and Pyrope</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CFira+Code:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Fira Code"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/table.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/pyrope-highlight.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#lnast" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LiveHD and Pyrope" class="md-header__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LiveHD and Pyrope
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              LNAST
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LiveHD and Pyrope" class="md-nav__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    LiveHD and Pyrope
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LiveHD and Pyrope
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Livehd
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Livehd
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/00-intro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/01-install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/02-usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/03-memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory and concurrency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/04-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    C++ API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/05-lgraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LGraph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/06-lnast/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LNAST
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/07-formal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Formal Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/08-synth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Synthesis &amp; the frequency-optimization loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10-bazel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bazel build
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10b-3rdparty/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3rd Party
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/11-pass/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Creating a Pass
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/12-github/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GitHub Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/13-style/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding Style
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Pyrope
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00-hwdesign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hardware Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-introduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01b-quick_intro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Intro to Pyrope
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-basics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basic syntax
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-bundle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tuples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Variables and types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04b-attributes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Attributes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-assert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05b-statements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Statements
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-functions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lambdas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06b-instantiation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Instantiation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06c-pipelining/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipelining
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06d-fluid/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fluid Blocks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-typesystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Type system
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07b-structtype/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Structural Typing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-memories/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memories
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-stdlib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope std lib
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Extended Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09b-simquery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Querying a simulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-internals/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internals
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10b-vslang/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vs Other Languages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LNAST
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LNAST
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#reproducing-the-dumps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reproducing the dumps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variable-names" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Variable names
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Variable names">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#registers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tuples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tuples
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Attributes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Attributes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sticky-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sticky attributes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bit-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bit selection
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Bit selection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sign-extension-and-reductions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sign extension and reductions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#direct-lnastlgraph-call" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Direct LNAST/Lgraph call
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basic-operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic operators
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Basic operators">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unary
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#complex-operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complex operators
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Complex operators">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tupleset-operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tuple/Set operators
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#range-operator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Range operator
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type-operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Type operators
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ifunique-if" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        if/unique if
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#match" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        match
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scope
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#whileloopfor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        while/loop/for
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="while/loop/for">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compact-hardware-loops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compact hardware loops
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#putsprint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        puts/print
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lambda-call" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lambda call
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#assertions-in-the-dump" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Assertions in the dump
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validation-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validation scope
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../13-stdlib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope Standard Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../15-tbd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation status (TBD)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../21-deprecated/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deprecated or Future
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../22-deprecated_pipelining/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deprecated Pipelining
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#reproducing-the-dumps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reproducing the dumps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variable-names" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Variable names
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Variable names">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#registers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tuples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tuples
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Attributes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Attributes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sticky-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sticky attributes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bit-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bit selection
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Bit selection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sign-extension-and-reductions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sign extension and reductions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#direct-lnastlgraph-call" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Direct LNAST/Lgraph call
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basic-operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic operators
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Basic operators">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unary
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#complex-operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complex operators
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Complex operators">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tupleset-operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tuple/Set operators
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#range-operator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Range operator
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type-operators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Type operators
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ifunique-if" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        if/unique if
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#match" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        match
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scope
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#whileloopfor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        while/loop/for
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="while/loop/for">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compact-hardware-loops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compact hardware loops
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#putsprint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        puts/print
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lambda-call" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lambda call
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#assertions-in-the-dump" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Assertions in the dump
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validation-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validation scope
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="lnast">LNAST<a class="headerlink" href="#lnast" title="Permanent link">&para;</a></h1>
+<p>This chapter shows current Pyrope-to-LNAST translation using small programs
+compiled with <code>lhd</code>. Each Pyrope block is a standalone input; its first comment
+names the file to save. The excerpts below come from actual dumps, not proposed
+optimizations. They were checked against the local LiveHD checkout on
+2026-09-30.</p>
+<p>LNAST is an intermediate representation. Its node shapes, temporary names and
+rewrites can change without changing Pyrope semantics. See the language chapters
+for the source-language rules.</p>
+<h2 id="reproducing-the-dumps">Reproducing the dumps<a class="headerlink" href="#reproducing-the-dumps" title="Permanent link">&para;</a></h2>
+<p>Set <code>LHD</code> to the LiveHD binary you want to inspect, save a Pyrope example, and
+run it in a fresh work directory:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">LHD</span><span class="o">=</span>/path/to/livehd/bazel-bin/lhd/lhd
+<span class="s2">"</span><span class="nv">$LHD</span><span class="s2">"</span><span class="w"> </span>compile<span class="w"> </span>values.prp<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--dump<span class="w"> </span>parse,lnast<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--emit-dir<span class="w"> </span>lnast-dump:values-dump<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--workdir<span class="w"> </span>values-work<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>&gt;<span class="w"> </span>values.result.json<span class="w"> </span><span class="m">2</span>&gt;<span class="w"> </span>values.trace.txt
+</code></pre></div>
+<p><code>--dump parse</code> prints the LNAST immediately after the front end; despite the
+name, this is LNAST, not the parser's concrete syntax tree. <code>--dump lnast</code>
+prints the post-upass tree. Both go to stderr with stage labels. The
+<code>lnast-dump:</code> directory contains post-upass textual <code>.lnast</code> files; <code>ln:</code> is
+the binary interchange form. Check the command's exit status and diagnostics:
+a parse dump alone does not establish that elaboration succeeded.</p>
+<p>An invocation requesting only LNAST outputs need not lower to hardware. To
+check graph lowering too, add <code>--emit-dir lg:values-lg</code>, or use ordinary
+<code>lhd compile</code> without the LNAST-only output selection. The runtime examples
+below were also checked with an <code>lg:</code> output.</p>
+<p>For readability, excerpts omit tree-drawing glyphs, source-span annotations,
+the dump's outer display quotes, and enclosing <code>top</code>/<code>stmts</code> containers.
+Indentation still shows parent/child relationships. Each excerpt states its
+stage; any additional omissions are stated locally. <code>const</code> with no payload
+is printed that way by the dumper; it is not a missing line in the example.</p>
+<h2 id="variable-names">Variable names<a class="headerlink" href="#variable-names" title="Permanent link">&para;</a></h2>
+<p>The front end uses user names and generated references such as <code>%x_0</code>. Later
+passes can introduce inlining prefixes and SSA suffixes such as
+<code>work___ssa_1</code>. The spelling of generated names is not a user-facing contract;
+LNAST is not guaranteed to keep every user assignment under one unchanged name.
+Backticked source identifiers remain distinguishable in the dump.</p>
+<p>The following program checks declarations, updates, and a backticked name:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code>// values.prp
+<span class='keyword'>const</span> <span class='variable'>x</span> <span class='operator'>=</span> <span class='number'>3</span> <span class='operator'>+</span> <span class='number'>1</span>
+<span class='keyword'>mut</span> <span class='variable'>z</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U8</span> <span class='operator'>=</span> <span class='number'>4</span>
+<span class='variable'>z</span> <span class='operator'>=</span> <span class='variable'>z</span> <span class='operator'>+</span> <span class='number'>2</span>
+<span class='keyword'>const</span> <span class='variable'>`foo x`</span> <span class='operator'>=</span> <span class='variable'>x</span> <span class='operator'>+</span> <span class='variable'>z</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>`foo x`</span> <span class='operator'>==</span> <span class='number'>10</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p><strong>post-parse excerpt.</strong></p>
+<div class="highlight"><pre><span></span><code>plus
+  ref %x_0
+  const 3
+  const 1
+declare
+  ref x
+  prim_type_none
+  const
+store
+  ref x
+  ref %x_0
+declare
+  ref z
+  prim_type_int
+    const 0xff
+    const 0
+  const mut
+store
+  ref z
+  const 4
+plus
+  ref %z_0
+  ref z
+  const 2
+store
+  ref z
+  ref %z_0
+</code></pre></div>
+<p><code>declare</code> records the name, type, and qualifier. In this post-parse dump the
+immutable qualifier has an empty <code>const</code> payload, while the mutable qualifier
+is <code>const mut</code>. Initialization is a separate <code>store</code>. <code>prim_type_int</code> stores
+maximum then minimum, so <code>U8</code> is represented by <code>0xff</code> and <code>0</code>.</p>
+<p>The final <code>cassert</code> succeeds. Constant propagation removes the arithmetic and
+known assertion; the remaining post-upass statements are:</p>
+<p><strong>post-upass excerpt.</strong></p>
+<div class="highlight"><pre><span></span><code>declare
+  ref x
+  prim_type_none
+  const
+declare
+  ref z
+  prim_type_int
+    const 0xff
+    const 0
+  const mut
+declare
+  ref `foo x`
+  prim_type_none
+  const
+store
+  ref z
+  const 6
+</code></pre></div>
+<p>This illustrates why a post-upass dump is not a transcript of all source
+operations: known values can live in the compiler's value tables, and folded
+expressions need not remain as statements.</p>
+<h3 id="registers">Registers<a class="headerlink" href="#registers" title="Permanent link">&para;</a></h3>
+<p>Registers carry a different declaration qualifier and retain their reset
+value. This small module also shows a typed output and wrapping update:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code>// register.prp
+<span class='function'>mod</span> <span class='function'>counter</span><span class='punctuation bracket'>(</span><span class='variable parameter'>enable</span><span class='punctuation delimiter'>:</span><span class='type builtin'>Bool</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='keyword'>reg</span> <span class='variable parameter'>count</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U4</span><span class='punctuation special'>@</span><span class='punctuation bracket'>[</span><span class='number'>0</span><span class='punctuation bracket'>]</span> = <span class='number'>0</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='keyword'>if</span> <span class='variable'>enable</span> <span class='punctuation bracket'>{</span> <span class='keyword'>wrap</span> <span class='variable'>count</span> <span class='operator'>+=</span> <span class='number'>1</span> <span class='punctuation bracket'>}</span>
+<span class='punctuation bracket'>}</span>
+</code></pre></div>
+<p><strong>post-upass excerpt — body of register.counter; io omitted.</strong></p>
+<div class="highlight"><pre><span></span><code>declare
+  ref count
+  prim_type_int
+    const 15
+    const 0
+  const reg
+  const 0
+if
+  ref enable
+  stmts
+    plus
+      ref %count_0
+      ref count
+      const 1
+    get_mask
+      ref %count_1
+      ref %count_0
+      const 15
+    store
+      ref count
+      ref %count_1
+</code></pre></div>
+<p>Here the declaration includes <code>const reg</code> and reset value <code>0</code>. The <code>wrap</code>
+update has become arithmetic followed by a mask of <code>15</code> before the store.
+A dump of the whole unit also includes <code>io</code> metadata; this is separate from
+the body statements.</p>
+<h2 id="tuples">Tuples<a class="headerlink" href="#tuples" title="Permanent link">&para;</a></h2>
+<p>A tuple is all named or all positional. In the parsed tree, named entries
+are <code>store</code> children of <code>tuple_add</code>; positional entries are value children.
+<code>tuple_get</code> reads fields or positions, and a field write is a <code>store</code> with a
+field path between the base and the new value.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code>// tuples.prp
+<span class='keyword'>mut</span> <span class='variable'>pair</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span><span class='keyword'>mut</span> <span class='variable'>left</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U4</span><span class='operator'>=</span><span class='number'>2</span><span class='punctuation delimiter'>,</span> <span class='keyword'>const</span> <span class='variable'>right</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U4</span><span class='operator'>=</span><span class='number'>3</span><span class='punctuation bracket'>)</span>
+<span class='variable'>pair</span><span class='punctuation delimiter'>.</span><span class='variable'>left</span> <span class='operator'>=</span> <span class='number'>4</span>
+<span class='keyword'>const</span> <span class='variable'>selected</span> <span class='operator'>=</span> <span class='variable'>pair</span><span class='punctuation delimiter'>.</span><span class='variable'>left</span>
+<span class='keyword'>const</span> <span class='variable'>positional</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span><span class='number'>1</span><span class='punctuation delimiter'>,</span> <span class='number'>2</span><span class='punctuation bracket'>)</span>
+<span class='keyword'>const</span> <span class='variable'>joined</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span><span class='operator'>...</span><span class='variable'>positional</span><span class='punctuation delimiter'>,</span> <span class='number'>3</span><span class='punctuation bracket'>)</span>
+<span class='keyword'>const</span> <span class='variable'>nested</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span><span class='keyword'>const</span> <span class='variable'>inner</span><span class='operator'>=</span><span class='punctuation bracket'>(</span><span class='keyword'>const</span> <span class='variable'>value</span><span class='operator'>=</span><span class='number'>7</span><span class='punctuation bracket'>)</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>selected</span> <span class='operator'>==</span> <span class='number'>4</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>joined</span> <span class='operator'>==</span> <span class='punctuation bracket'>(</span><span class='number'>1</span><span class='punctuation delimiter'>,</span> <span class='number'>2</span><span class='punctuation delimiter'>,</span> <span class='number'>3</span><span class='punctuation bracket'>)</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>nested</span><span class='punctuation delimiter'>.</span><span class='variable'>inner</span><span class='punctuation delimiter'>.</span><span class='variable'>value</span> <span class='operator'>==</span> <span class='number'>7</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p><strong>post-parse excerpt.</strong></p>
+<div class="highlight"><pre><span></span><code>tuple_add
+  ref %pair_0
+  store
+    ref left
+    const 2
+  store
+    ref right
+    const 3
+tuple_get
+  ref %pair_1
+  ref %pair_0
+  const left
+declare
+  ref %pair_1
+  prim_type_none
+  const mut
+type_spec
+  ref %pair_1
+  prim_type_int
+    const 15
+    const 0
+tuple_get
+  ref %pair_2
+  ref %pair_0
+  const right
+type_spec
+  ref %pair_2
+  prim_type_int
+    const 15
+    const 0
+declare
+  ref pair
+  prim_type_none
+  const mut
+store
+  ref pair
+  ref %pair_0
+store
+  ref pair
+  const left
+  const 4
+</code></pre></div>
+<p>The <code>mut left</code> field is represented by a field reference followed by its
+mutable declaration; its width and the immutable <code>right</code> field's width are
+recorded by <code>type_spec</code>. The outer binding's <code>declare</code> and <code>store</code> follow
+construction of the tuple.</p>
+<p>The same input gives these read, splice, and nested-read nodes (intervening
+bindings and assertions omitted):</p>
+<p><strong>post-parse excerpt.</strong></p>
+<div class="highlight"><pre><span></span><code>tuple_get
+  ref %selected_0
+  ref pair
+  const left
+fcall
+  ref %joined_0
+  ref __fkind__tuple_spread
+  ref positional
+tuple_concat
+  ref %joined_2
+  ref %joined_0
+  ref %joined_1
+tuple_get
+  ref %167467691_0
+  ref nested
+  const inner
+  const value
+</code></pre></div>
+<p>The splice is initially marked by a call to <code>__fkind__tuple_spread</code>, then
+combined with the following positional entry by <code>tuple_concat</code>. After
+elaboration the marker can become a plain copy. A nested field path can be
+carried by one <code>tuple_get</code>; nested tuple construction itself uses intermediate
+<code>tuple_add</code> results. The compiler may flatten field paths in later dumps.</p>
+<p>Named-field merge and positional append rules are described in
+<a href="../03-bundle/">Tuples</a>. They are not additional <code>in</code>/<code>cassert</code> statements
+inserted after every splice.</p>
+<h2 id="attributes">Attributes<a class="headerlink" href="#attributes" title="Permanent link">&para;</a></h2>
+<p>Attribute syntax produces separate <code>attr_set</code> and <code>attr_get</code> statements,
+not children attached to a <code>ref</code>. For <code>attr_set</code>, the base comes first and
+the value last, with the attribute path between them. For <code>attr_get</code>, the
+destination precedes the base and path.</p>
+<p>Attributes are compile-time metadata. The unfinished fluid design uses
+<code>valid</code> and <code>retry</code> for runtime handshake signals and derives <code>fire</code> from
+them; see <a href="../04b-attributes/">Attributes</a> and <a href="../06d-fluid/">Fluid</a>.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code>// attributes.prp
+<span class='keyword'>const</span> <span class='variable'>a</span><span class='punctuation delimiter'>::</span><span class='punctuation bracket'>[</span><span class='attribute'>tag</span>=<span class='number'>3</span><span class='punctuation delimiter'>,</span> <span class='variable'>marked</span><span class='punctuation bracket'>]</span> <span class='operator'>=</span> <span class='number'>1</span>
+<span class='keyword'>const</span> <span class='variable'>tag</span> <span class='operator'>=</span> <span class='variable'>a</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>tag</span><span class='punctuation bracket'>]</span>
+<span class='keyword'>const</span> <span class='variable'>k</span> <span class='operator'>=</span> <span class='number'>2</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>tag</span> <span class='operator'>==</span> <span class='number'>3</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>a</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>marked</span><span class='punctuation bracket'>]</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>k</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>`comptime`</span><span class='punctuation bracket'>]</span><span class='punctuation bracket'>)</span>
+<span class='keyword'>const</span> <span class='variable'>d</span><span class='punctuation delimiter'>::</span><span class='punctuation bracket'>[</span><span class='variable'>debug</span><span class='punctuation bracket'>]</span> <span class='operator'>=</span> <span class='number'>3</span>
+<span class='keyword'>const</span> <span class='variable'>result</span> <span class='operator'>=</span> <span class='variable'>d</span> <span class='operator'>+</span> <span class='number'>100</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>result</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>debug</span><span class='punctuation bracket'>]</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p><strong>post-parse excerpt.</strong></p>
+<div class="highlight"><pre><span></span><code>declare
+  ref a
+  prim_type_none
+  const
+attr_set
+  ref a
+  const tag
+  const 3
+attr_set
+  ref a
+  const marked
+  const true
+store
+  ref a
+  const 1
+attr_get
+  ref %tag_0
+  ref a
+  const tag
+</code></pre></div>
+<p>An attribute with no explicit value is set to <code>true</code>. <code>k.[`comptime`]</code> tests
+whether the current value is known at compile time, not whether <code>k</code> was
+declared with the <code>comptime</code> modifier.</p>
+<p>The <code>debug</code> propagation assertion in this program also passes. Attribute
+propagation is attribute-specific: do not generalize it into a claim that
+all attributes are sticky, or that arithmetic removes every attribute.</p>
+<h3 id="sticky-attributes">Sticky attributes<a class="headerlink" href="#sticky-attributes" title="Permanent link">&para;</a></h3>
+<p>This separate test checks a user attribute copied directly, then removed by
+arithmetic and bit selection. It complements the sticky <code>debug</code> test above:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code>// attribute_copy.prp
+<span class='keyword'>const</span> <span class='variable'>a</span><span class='punctuation delimiter'>::</span><span class='punctuation bracket'>[</span><span class='attribute'>tag</span>=<span class='number'>3</span><span class='punctuation bracket'>]</span> <span class='operator'>=</span> <span class='number'>4</span>
+<span class='keyword'>const</span> <span class='variable'>copy</span> <span class='operator'>=</span> <span class='variable'>a</span>
+<span class='keyword'>const</span> <span class='variable'>arithmetic</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>+</span> <span class='number'>0</span>
+<span class='keyword'>const</span> <span class='variable'>bits</span> <span class='operator'>=</span> <span class='variable'>a</span><span class='punctuation special'>#</span><span class='punctuation bracket'>[</span><span class='operator'>..</span><span class='punctuation bracket'>]</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>copy</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>tag</span><span class='punctuation bracket'>]</span> <span class='operator'>==</span> <span class='number'>3</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>arithmetic</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>tag</span><span class='punctuation bracket'>]</span> <span class='operator'>==</span> <span class='variable'>nil</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>bits</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>tag</span><span class='punctuation bracket'>]</span> <span class='operator'>==</span> <span class='variable'>nil</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p>All three assertions pass. These are examples of current propagation
+behavior; the attribute's own rules determine whether it survives a
+particular operation.</p>
+<h2 id="bit-selection">Bit selection<a class="headerlink" href="#bit-selection" title="Permanent link">&para;</a></h2>
+<p>The following runtime function preserves the selected values in the
+post-upass tree. Its assertions independently check the sum and the patched
+word for a concrete input:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code>// bits.prp
+<span class='function'>comb</span> <span class='function'>bits</span><span class='punctuation bracket'>(</span><span class='variable parameter'>foo</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U8</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>xx</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U4</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>yy</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U4</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>patched</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U8</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='keyword'>mut</span> <span class='variable'>work</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U8</span> <span class='operator'>=</span> <span class='variable'>foo</span>
+  <span class='variable'>work</span><span class='punctuation special'>#</span><span class='punctuation bracket'>[</span><span class='number'>1</span><span class='operator'>..=</span><span class='number'>2</span><span class='punctuation bracket'>]</span> <span class='operator'>=</span> <span class='variable'>xx</span><span class='punctuation special'>#</span><span class='punctuation bracket'>[</span><span class='number'>0</span><span class='operator'>..&lt;</span><span class='number'>2</span><span class='punctuation bracket'>]</span>
+  <span class='variable'>yy</span> <span class='operator'>=</span> <span class='variable'>foo</span><span class='punctuation special'>#</span><span class='punctuation bracket'>[</span><span class='number'>5</span><span class='punctuation bracket'>]</span> <span class='operator'>+</span> <span class='variable'>xx</span><span class='punctuation special'>#</span><span class='punctuation bracket'>[</span><span class='number'>1</span><span class='operator'>..&lt;</span><span class='number'>4</span><span class='punctuation bracket'>]</span>
+  <span class='variable'>patched</span> <span class='operator'>=</span> <span class='variable'>work</span>
+<span class='punctuation bracket'>}</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='function'>bits</span><span class='punctuation bracket'>(</span><span class='variable parameter'>foo</span>=<span class='number'>32</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>xx</span>=<span class='number'>10</span><span class='punctuation bracket'>)</span><span class='punctuation delimiter'>.</span><span class='variable'>yy</span> <span class='operator'>==</span> <span class='number'>6</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='function'>bits</span><span class='punctuation bracket'>(</span><span class='variable parameter'>foo</span>=<span class='number'>32</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>xx</span>=<span class='number'>10</span><span class='punctuation bracket'>)</span><span class='punctuation delimiter'>.</span><span class='variable'>patched</span> <span class='operator'>==</span> <span class='number'>36</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p><strong>post-upass excerpt — body of bits.bits; io and type_spec nodes omitted.</strong></p>
+<div class="highlight"><pre><span></span><code>declare
+  ref work
+  prim_type_int
+    const 0xff
+    const 0
+  const mut
+store
+  ref work
+  ref foo
+get_mask
+  ref %work_0
+  ref xx
+  const 3
+set_mask
+  ref %work_1
+  ref work
+  const 6
+  ref %work_0
+store
+  ref work___ssa_1
+  ref %work_1
+get_mask
+  ref %yy_0
+  ref foo
+  const 32
+get_mask
+  ref %yy_1
+  ref xx
+  const 14
+plus
+  ref %yy_2
+  ref %yy_0
+  ref %yy_1
+store
+  ref yy
+  ref %yy_2
+store
+  ref patched
+  ref work___ssa_1
+</code></pre></div>
+<p>The mask operand in these LNAST nodes is a bit mask, not a bit index:</p>
+<table>
+<thead>
+<tr>
+<th>Source selection</th>
+<th>Mask in this dump</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>xx#[0..&lt;2]</code></td>
+<td><code>3</code> (<code>0ub11</code>)</td>
+</tr>
+<tr>
+<td><code>work#[1..=2]</code></td>
+<td><code>6</code> (<code>0ub110</code>)</td>
+</tr>
+<tr>
+<td><code>foo#[5]</code></td>
+<td><code>32</code> (<code>0ub100000</code>)</td>
+</tr>
+<tr>
+<td><code>xx#[1..&lt;4]</code></td>
+<td><code>14</code> (<code>0ub1110</code>)</td>
+</tr>
+</tbody>
+</table>
+<p><code>get_mask(dst, value, mask)</code> extracts and right-justifies the selected bits.
+<code>set_mask(dst, old_value, mask, replacement)</code> creates the patched value;
+the following <code>store</code> binds it. In this dump SSA renames the updated <code>work</code>
+to <code>work___ssa_1</code>.</p>
+<p>The <code>plus</code> consumes <code>%yy_0</code> and <code>%yy_1</code>, the two extracted values. It does
+not add a range object or the mask itself. A single-bit read at index 5
+therefore cannot be rewritten as <code>get_mask(..., 5)</code>.</p>
+<p>This LNAST representation should not be confused with a lower-level helper's
+API: a helper can receive interval bounds even when the LNAST node carries
+a mask. Pyrope selectors accept an index or a range; a list of disjoint
+indices is not an alternate bit-order notation.</p>
+<h3 id="sign-extension-and-reductions">Sign extension and reductions<a class="headerlink" href="#sign-extension-and-reductions" title="Permanent link">&para;</a></h3>
+<p>These operations first select the requested bit vector:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code>// reductions.prp
+<span class='function'>comb</span> <span class='function'>reductions</span><span class='punctuation bracket'>(</span><span class='variable parameter'>v</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U8</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>s</span><span class='punctuation delimiter'>:</span><span class='type builtin'>S5</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>any</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U1</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>all</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U1</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>parity</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U1</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>count</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U3</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='variable'>s</span> <span class='operator'>=</span> <span class='variable'>v</span><span class='punctuation special'>#</span><span class='keyword'>sext</span><span class='punctuation bracket'>[</span><span class='operator'>..=</span><span class='number'>4</span><span class='punctuation bracket'>]</span>
+  <span class='variable'>any</span> <span class='operator'>=</span> <span class='variable'>v</span><span class='punctuation special'>#</span><span class='operator'>|</span><span class='punctuation bracket'>[</span><span class='operator'>..=</span><span class='number'>4</span><span class='punctuation bracket'>]</span>
+  <span class='variable'>all</span> <span class='operator'>=</span> <span class='variable'>v</span><span class='punctuation special'>#</span><span class='operator'>&amp;</span><span class='punctuation bracket'>[</span><span class='operator'>..=</span><span class='number'>4</span><span class='punctuation bracket'>]</span>
+  <span class='variable'>parity</span> <span class='operator'>=</span> <span class='variable'>v</span><span class='punctuation special'>#</span><span class='operator'>^</span><span class='punctuation bracket'>[</span><span class='operator'>..=</span><span class='number'>4</span><span class='punctuation bracket'>]</span>
+  <span class='variable'>count</span> <span class='operator'>=</span> <span class='variable'>v</span><span class='punctuation special'>#</span><span class='operator'>+</span><span class='punctuation bracket'>[</span><span class='operator'>..=</span><span class='number'>4</span><span class='punctuation bracket'>]</span>
+<span class='punctuation bracket'>}</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='function'>reductions</span><span class='punctuation bracket'>(</span><span class='number'>31</span><span class='punctuation bracket'>)</span><span class='punctuation delimiter'>.</span><span class='variable'>s</span> <span class='operator'>==</span> <span class='number'>-1</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='function'>reductions</span><span class='punctuation bracket'>(</span><span class='number'>31</span><span class='punctuation bracket'>)</span><span class='punctuation delimiter'>.</span><span class='variable'>all</span> <span class='operator'>==</span> <span class='number'>1</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='function'>reductions</span><span class='punctuation bracket'>(</span><span class='number'>31</span><span class='punctuation bracket'>)</span><span class='punctuation delimiter'>.</span><span class='variable'>count</span> <span class='operator'>==</span> <span class='number'>5</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p><strong>post-upass excerpt — signed selection; type_spec omitted.</strong></p>
+<div class="highlight"><pre><span></span><code>get_mask
+  ref %s_1
+  ref v
+  const 31
+sext
+  ref %s_4
+  ref %s_1
+  const 4
+store
+  ref s
+  ref %s_4
+</code></pre></div>
+<p>The selected five-bit vector uses mask <code>31</code>. <code>sext</code> takes the sign-bit
+position in that selected vector, here <code>4</code>. The other outputs use the
+following nodes after their own <code>get_mask</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Pyrope</th>
+<th>LNAST operation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>v#\|[..=4]</code></td>
+<td><code>red_or</code></td>
+</tr>
+<tr>
+<td><code>v#&amp;[..=4]</code></td>
+<td><code>red_and</code></td>
+</tr>
+<tr>
+<td><code>v#^[..=4]</code></td>
+<td><code>red_xor</code></td>
+</tr>
+<tr>
+<td><code>v#+[..=4]</code></td>
+<td><code>popcount</code></td>
+</tr>
+</tbody>
+</table>
+<p>The dump contains separate selections for these outputs; it does not promise
+that the front end has already shared one selection among all five.</p>
+<h2 id="direct-lnastlgraph-call">Direct LNAST/Lgraph call<a class="headerlink" href="#direct-lnastlgraph-call" title="Permanent link">&para;</a></h2>
+<p>Cell calls such as <code>__sum</code> are normal Pyrope calls with the cell's pin names
+as arguments. They appear as <code>fcall</code> before folding or lowering. See the
+<a href="#lambda-call">call example below</a> for the actual argument layout.</p>
+<p>The old <code>LNAST(a=("let", ...))</code> injection example is not supported by the
+current front end. A direct compile reports <code>undefined-call</code> for <code>LNAST</code>;
+it does not inject a <code>let</code> node. To inspect compiler IR, use the dump commands
+above.</p>
+<h2 id="basic-operators">Basic operators<a class="headerlink" href="#basic-operators" title="Permanent link">&para;</a></h2>
+<p>This program exercises the arithmetic, bitwise, comparison, and Boolean
+operators before they fold:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code>// operators.prp
+<span class='keyword'>const</span> <span class='variable'>a</span> <span class='operator'>=</span> <span class='number'>12</span>
+<span class='keyword'>const</span> <span class='variable'>b</span> <span class='operator'>=</span> <span class='number'>3</span>
+<span class='keyword'>const</span> <span class='variable'>sum</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>+</span> <span class='variable'>b</span>
+<span class='keyword'>const</span> <span class='variable'>difference</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>-</span> <span class='variable'>b</span>
+<span class='keyword'>const</span> <span class='variable'>product</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>*</span> <span class='variable'>b</span>
+<span class='keyword'>const</span> <span class='variable'>quotient</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>/</span> <span class='variable'>b</span>
+<span class='keyword'>const</span> <span class='variable'>remainder</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>%</span> <span class='variable'>b</span>
+<span class='keyword'>const</span> <span class='variable'>band</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>&amp;</span> <span class='variable'>b</span>
+<span class='keyword'>const</span> <span class='variable'>bor</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>|</span> <span class='variable'>b</span>
+<span class='keyword'>const</span> <span class='variable'>bxor</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>^</span> <span class='variable'>b</span>
+<span class='keyword'>const</span> <span class='variable'>left</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>&lt;&lt;</span> <span class='number'>1</span>
+<span class='keyword'>const</span> <span class='variable'>right</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>&gt;&gt;</span> <span class='number'>1</span>
+<span class='keyword'>const</span> <span class='variable'>neg</span> <span class='operator'>=</span> <span class='operator'>-</span><span class='variable'>b</span>
+<span class='keyword'>const</span> <span class='variable'>inv</span> <span class='operator'>=</span> <span class='operator'>~</span><span class='variable'>a</span>
+<span class='keyword'>const</span> <span class='variable'>p</span> <span class='operator'>=</span> true
+<span class='keyword'>const</span> <span class='variable'>q</span> <span class='operator'>=</span> false
+<span class='keyword'>const</span> <span class='variable'>both</span> <span class='operator'>=</span> <span class='variable'>p</span> <span class='keyword'>and</span> <span class='variable'>q</span>
+<span class='keyword'>const</span> <span class='variable'>either</span> <span class='operator'>=</span> <span class='variable'>p</span> <span class='keyword'>or</span> <span class='variable'>q</span>
+<span class='keyword'>const</span> <span class='variable'>implication</span> <span class='operator'>=</span> <span class='variable'>p</span> <span class='keyword'>implies</span> <span class='variable'>q</span>
+<span class='keyword'>const</span> <span class='variable'>not_implication</span> <span class='operator'>=</span> <span class='operator'>not</span> <span class='punctuation bracket'>(</span><span class='variable'>p</span> <span class='keyword'>implies</span> <span class='variable'>q</span><span class='punctuation bracket'>)</span>
+<span class='keyword'>const</span> <span class='variable'>nand</span> <span class='operator'>=</span> <span class='operator'>~</span><span class='punctuation bracket'>(</span><span class='variable'>a</span> <span class='operator'>&amp;</span> <span class='variable'>b</span><span class='punctuation bracket'>)</span>
+<span class='keyword'>const</span> <span class='variable'>eq</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>==</span> <span class='variable'>b</span>
+<span class='keyword'>const</span> <span class='variable'>ne</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>!=</span> <span class='variable'>b</span>
+<span class='keyword'>const</span> <span class='variable'>lt</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>&lt;</span> <span class='variable'>b</span>
+<span class='keyword'>const</span> <span class='variable'>le</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>&lt;=</span> <span class='variable'>b</span>
+<span class='keyword'>const</span> <span class='variable'>gt</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>&gt;</span> <span class='variable'>b</span>
+<span class='keyword'>const</span> <span class='variable'>ge</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>&gt;=</span> <span class='variable'>b</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>sum</span> <span class='operator'>==</span> <span class='number'>15</span> <span class='keyword'>and</span> <span class='variable'>difference</span> <span class='operator'>==</span> <span class='number'>9</span> <span class='keyword'>and</span> <span class='variable'>product</span> <span class='operator'>==</span> <span class='number'>36</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>quotient</span> <span class='operator'>==</span> <span class='number'>4</span> <span class='keyword'>and</span> <span class='variable'>remainder</span> <span class='operator'>==</span> <span class='number'>0</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>left</span> <span class='operator'>==</span> <span class='number'>24</span> <span class='keyword'>and</span> <span class='variable'>right</span> <span class='operator'>==</span> <span class='number'>6</span> <span class='keyword'>and</span> <span class='variable'>neg</span> <span class='operator'>==</span> <span class='number'>-3</span> <span class='keyword'>and</span> <span class='variable'>inv</span> <span class='operator'>==</span> <span class='number'>-13</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='operator'>not</span> <span class='variable'>both</span> <span class='keyword'>and</span> <span class='variable'>either</span> <span class='keyword'>and</span> <span class='operator'>not</span> <span class='variable'>implication</span> <span class='keyword'>and</span> <span class='variable'>not_implication</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p>The post-parse nodes use a destination followed by their operands:</p>
+<table>
+<thead>
+<tr>
+<th>Pyrope expression</th>
+<th>Node or node sequence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>a + b</code>, <code>a - b</code>, <code>a * b</code>, <code>a / b</code>, <code>a % b</code></td>
+<td><code>plus</code>, <code>minus</code>, <code>mult</code>, <code>div</code>, <code>mod</code></td>
+</tr>
+<tr>
+<td><code>a &amp; b</code>, <code>a \| b</code>, <code>a ^ b</code></td>
+<td><code>bit_and</code>, <code>bit_or</code>, <code>bit_xor</code></td>
+</tr>
+<tr>
+<td><code>a &lt;&lt; b</code>, <code>a &gt;&gt; b</code></td>
+<td><code>shl</code>, <code>sra</code></td>
+</tr>
+<tr>
+<td><code>-a</code></td>
+<td><code>minus</code> with operands <code>0</code>, <code>a</code></td>
+</tr>
+<tr>
+<td><code>~a</code></td>
+<td><code>bit_not</code></td>
+</tr>
+<tr>
+<td><code>a == b</code>, <code>a != b</code></td>
+<td><code>eq</code>, <code>ne</code></td>
+</tr>
+<tr>
+<td><code>a &lt; b</code>, <code>a &lt;= b</code>, <code>a &gt; b</code>, <code>a &gt;= b</code></td>
+<td><code>lt</code>, <code>le</code>, <code>gt</code>, <code>ge</code></td>
+</tr>
+<tr>
+<td><code>p and q</code>, <code>p or q</code>, <code>not p</code></td>
+<td><code>log_and</code>, <code>log_or</code>, <code>log_not</code></td>
+</tr>
+</tbody>
+</table>
+<p>These are translation shapes, not a guarantee that every operand/type
+combination lowers to hardware. In particular, hardware modulo has the
+restrictions described in <a href="../02-basics/">Basic syntax</a>.</p>
+<h3 id="unary">Unary<a class="headerlink" href="#unary" title="Permanent link">&para;</a></h3>
+<p>Elaboration can add type-dependent operands. An unsigned four-bit complement
+has an explicit flip width in its post-upass <code>bit_not</code>:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code>// bit_not.prp
+<span class='function'>comb</span> <span class='function'>invert</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U4</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>y</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U4</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>y</span> <span class='operator'>=</span> <span class='operator'>~</span><span class='variable'>a</span> <span class='punctuation bracket'>}</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='function'>invert</span><span class='punctuation bracket'>(</span><span class='number'>3</span><span class='punctuation bracket'>)</span> <span class='operator'>==</span> <span class='number'>12</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p><strong>post-upass excerpt — body of bit_not.invert.</strong></p>
+<div class="highlight"><pre><span></span><code>bit_not
+  ref %y_0
+  ref a
+  const 4
+store
+  ref y
+  ref %y_0
+</code></pre></div>
+<h2 id="complex-operators">Complex operators<a class="headerlink" href="#complex-operators" title="Permanent link">&para;</a></h2>
+<p>Logical implication is emitted as <code>log_not</code> followed by <code>log_or</code>.
+Negating an implication adds a further <code>log_not</code>; the post-parse tree does
+not substitute the hand-simplified expression <code>p and not q</code>. These are the
+nodes from the operator test, with the intervening result bindings omitted:</p>
+<p><strong>post-parse excerpt.</strong></p>
+<div class="highlight"><pre><span></span><code>log_not
+  ref %implication_0
+  ref p
+log_or
+  ref %implication_1
+  ref %implication_0
+  ref q
+log_not
+  ref %not_implication_0
+  ref p
+log_or
+  ref %not_implication_1
+  ref %not_implication_0
+  ref q
+log_not
+  ref %not_implication_2
+  ref %not_implication_1
+</code></pre></div>
+<p>Similarly, <code>~(a &amp; b)</code> produces <code>bit_and</code> followed by <code>bit_not</code>; the
+corresponding negated OR and XOR use their own bitwise nodes. Later passes
+may fold or rewrite these expressions.</p>
+<h3 id="tupleset-operators">Tuple/Set operators<a class="headerlink" href="#tupleset-operators" title="Permanent link">&para;</a></h3>
+<p>Membership produces an <code>in</code> node. The operand types determine its meaning;
+a tuple/range membership test is not universally interchangeable with a
+bitwise AND. Tuple splicing uses the spread marker and <code>tuple_concat</code>
+shown in <a href="#tuples">Tuples</a>.</p>
+<h3 id="range-operator">Range operator<a class="headerlink" href="#range-operator" title="Permanent link">&para;</a></h3>
+<p>Ranges use inclusive endpoints in LNAST. The front end subtracts one from
+an exclusive end, or computes <code>start + count - 1</code> for a counted range.
+An explicit positive <code>step</code> is a separate call rather than a fourth child
+of the <code>range</code> node. Ranges compare directly with unnamed tuples:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code>// ranges.prp
+<span class='keyword'>const</span> <span class='variable'>r</span> <span class='operator'>=</span> <span class='number'>1</span><span class='operator'>..=</span><span class='number'>3</span>
+<span class='keyword'>const</span> <span class='variable'>exclusive</span> <span class='operator'>=</span> <span class='number'>1</span><span class='operator'>..&lt;</span><span class='number'>4</span>
+<span class='keyword'>const</span> <span class='variable'>counted</span> <span class='operator'>=</span> <span class='number'>1</span><span class='operator'>..+</span><span class='number'>3</span>
+<span class='keyword'>const</span> <span class='variable'>stepped</span> <span class='operator'>=</span> <span class='number'>0</span><span class='operator'>..=</span><span class='number'>6</span> <span class='operator'>step</span> <span class='number'>2</span>
+<span class='keyword'>const</span> <span class='variable'>joined</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span><span class='operator'>...</span><span class='variable'>r</span><span class='punctuation delimiter'>,</span> <span class='number'>4</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>r</span> <span class='operator'>==</span> <span class='punctuation bracket'>(</span><span class='number'>1</span><span class='punctuation delimiter'>,</span> <span class='number'>2</span><span class='punctuation delimiter'>,</span> <span class='number'>3</span><span class='punctuation bracket'>)</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>r</span> <span class='operator'>==</span> <span class='variable'>exclusive</span> <span class='keyword'>and</span> <span class='variable'>r</span> <span class='operator'>==</span> <span class='variable'>counted</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>stepped</span> <span class='operator'>==</span> <span class='punctuation bracket'>(</span><span class='number'>0</span><span class='punctuation delimiter'>,</span> <span class='number'>2</span><span class='punctuation delimiter'>,</span> <span class='number'>4</span><span class='punctuation delimiter'>,</span> <span class='number'>6</span><span class='punctuation bracket'>)</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='number'>2</span> <span class='keyword'>in</span> <span class='variable'>r</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>joined</span> <span class='operator'>==</span> <span class='punctuation bracket'>(</span><span class='number'>1</span><span class='punctuation delimiter'>,</span> <span class='number'>2</span><span class='punctuation delimiter'>,</span> <span class='number'>3</span><span class='punctuation delimiter'>,</span> <span class='number'>4</span><span class='punctuation bracket'>)</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p><strong>post-parse excerpt.</strong></p>
+<div class="highlight"><pre><span></span><code>range
+  ref %r_0
+  const 1
+  const 3
+minus
+  ref %exclusive_0
+  const 4
+  const 1
+range
+  ref %exclusive_1
+  const 1
+  ref %exclusive_0
+plus
+  ref %counted_0
+  const 1
+  const 3
+minus
+  ref %counted_1
+  ref %counted_0
+  const 1
+range
+  ref %counted_2
+  const 1
+  ref %counted_1
+range
+  ref %stepped_0
+  const 0
+  const 6
+fcall
+  ref %stepped_1
+  const step
+  ref %stepped_0
+  const 2
+</code></pre></div>
+<p>The assertions confirm <code>(1, 2, 3)</code> for all three unstepped spellings and
+<code>(0, 2, 4, 6)</code> for the stepped one. The old <code>a..&lt;=b by 2</code> and <code>a to b</code>
+spellings are not current syntax.</p>
+<h3 id="type-operators">Type operators<a class="headerlink" href="#type-operators" title="Permanent link">&para;</a></h3>
+<p>Structural operations have dedicated nodes. In particular, the front end
+emits <code>equals</code> and <code>case</code> directly; it does not expand them into the
+<code>does</code>/<code>in</code>/<code>log_and</code> diagrams from older versions of this chapter.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code>// types.prp
+<span class='keyword'>const</span> <span class='variable'>a</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span><span class='keyword'>const</span> <span class='variable'>x</span><span class='operator'>=</span><span class='number'>1</span><span class='punctuation delimiter'>,</span> <span class='keyword'>const</span> <span class='variable'>y</span><span class='operator'>=</span><span class='number'>2</span><span class='punctuation bracket'>)</span>
+<span class='keyword'>const</span> <span class='variable'>b</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span><span class='keyword'>const</span> <span class='variable'>x</span><span class='operator'>=</span><span class='number'>1</span><span class='punctuation bracket'>)</span>
+<span class='keyword'>const</span> <span class='variable'>has_x</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='keyword'>has</span> <span class='string'>&#39;x&#39;</span>
+<span class='keyword'>const</span> <span class='variable'>covers</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='keyword'>does</span> <span class='variable'>b</span>
+<span class='keyword'>const</span> <span class='variable'>same_type</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='keyword'>equals</span> <span class='variable'>a</span>
+<span class='keyword'>const</span> <span class='variable'>matches</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='keyword'>case</span> <span class='variable'>a</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>has_x</span> <span class='keyword'>and</span> <span class='variable'>covers</span> <span class='keyword'>and</span> <span class='variable'>same_type</span> <span class='keyword'>and</span> <span class='variable'>matches</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p><strong>post-parse excerpt.</strong></p>
+<div class="highlight"><pre><span></span><code>has
+  ref %has_x_0
+  ref a
+  const 'x'
+does
+  ref %covers_0
+  ref a
+  ref b
+equals
+  ref %same_type_0
+  ref a
+  ref a
+case
+  ref %matches_0
+  ref a
+  ref a
+</code></pre></div>
+<p><code>has</code> tests field existence, <code>does</code> checks structural coverage, <code>equals</code>
+checks type equivalence, and <code>case</code> performs the structural/value match.
+Their language rules are in <a href="../07-typesystem/">Type system</a>; the dedicated
+node names do not make them ordinary integer comparison operations.</p>
+<h2 id="ifunique-if">if/unique if<a class="headerlink" href="#ifunique-if" title="Permanent link">&para;</a></h2>
+<p>Branch nodes contain condition/body pairs, followed by an optional final
+<code>stmts</code> for <code>else</code>. An ordinary chain uses <code>if</code>; a unique chain uses <code>uif</code>.
+This runtime example keeps all three forms visible after elaboration:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code>// control.prp
+<span class='function'>comb</span> <span class='function'>choose</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U4</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>priority</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U5</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>parallel</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U5</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>matched</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U5</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='variable'>priority</span> <span class='operator'>=</span> <span class='number'>0</span>
+  <span class='keyword'>if</span> <span class='variable'>a</span> <span class='operator'>&lt;</span> <span class='number'>3</span> <span class='punctuation bracket'>{</span> <span class='variable'>priority</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>+</span> <span class='number'>1</span> <span class='punctuation bracket'>}</span>
+  <span class='keyword'>elif</span> <span class='variable'>a</span> <span class='operator'>&gt;</span> <span class='number'>12</span> <span class='punctuation bracket'>{</span> <span class='variable'>priority</span> <span class='operator'>=</span> <span class='number'>20</span> <span class='punctuation bracket'>}</span>
+  <span class='variable'>parallel</span> <span class='operator'>=</span> <span class='number'>0</span>
+  <span class='keyword'>unique</span> <span class='keyword'>if</span> <span class='variable'>a</span> <span class='operator'>==</span> <span class='number'>1</span> <span class='punctuation bracket'>{</span> <span class='variable'>parallel</span> <span class='operator'>=</span> <span class='number'>10</span> <span class='punctuation bracket'>}</span>
+  <span class='keyword'>elif</span> <span class='variable'>a</span> <span class='operator'>==</span> <span class='number'>2</span> <span class='punctuation bracket'>{</span> <span class='variable'>parallel</span> <span class='operator'>=</span> <span class='number'>20</span> <span class='punctuation bracket'>}</span>
+  <span class='variable'>matched</span> <span class='operator'>=</span> <span class='keyword'>match</span> <span class='variable'>a</span> <span class='punctuation bracket'>{</span>
+    <span class='operator'>==</span> <span class='number'>1</span> <span class='punctuation bracket'>{</span> <span class='number'>10</span> <span class='punctuation bracket'>}</span>
+    <span class='operator'>==</span> <span class='number'>2</span> <span class='punctuation bracket'>{</span> <span class='number'>20</span> <span class='punctuation bracket'>}</span>
+    <span class='keyword'>else</span> <span class='punctuation bracket'>{</span> <span class='number'>0</span> <span class='punctuation bracket'>}</span>
+  <span class='punctuation bracket'>}</span>
+<span class='punctuation bracket'>}</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='function'>choose</span><span class='punctuation bracket'>(</span><span class='number'>1</span><span class='punctuation bracket'>)</span><span class='punctuation delimiter'>.</span><span class='variable'>priority</span> <span class='operator'>==</span> <span class='number'>2</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='function'>choose</span><span class='punctuation bracket'>(</span><span class='number'>2</span><span class='punctuation bracket'>)</span><span class='punctuation delimiter'>.</span><span class='variable'>parallel</span> <span class='operator'>==</span> <span class='number'>20</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='function'>choose</span><span class='punctuation bracket'>(</span><span class='number'>3</span><span class='punctuation bracket'>)</span><span class='punctuation delimiter'>.</span><span class='variable'>matched</span> <span class='operator'>==</span> <span class='number'>0</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p><strong>post-upass excerpt — priority and unique chains from control.choose; io omitted.</strong></p>
+<div class="highlight"><pre><span></span><code>store
+  ref priority
+  const 0
+gt
+  ref %2188985937_0
+  ref a
+  const 12
+lt
+  ref %3010617009_0
+  ref a
+  const 3
+if
+  ref %3010617009_0
+  stmts
+    plus
+      ref %priority_0
+      ref a
+      const 1
+    store
+      ref priority
+      ref %priority_0
+  ref %2188985937_0
+  stmts
+    store
+      ref priority
+      const 20
+store
+  ref parallel
+  const 0
+eq
+  ref %3385895541_0
+  ref a
+  const 2
+eq
+  ref %3375548154_0
+  ref a
+  const 1
+uif
+  ref %3375548154_0
+  stmts
+    store
+      ref parallel
+      const 10
+  ref %3385895541_0
+  stmts
+    store
+      ref parallel
+      const 20
+</code></pre></div>
+<p>The printed order of pure condition calculations can differ from source
+order; the condition/body order within <code>if</code> determines priority. <code>uif</code>
+records the unique-branch construct. This dump does not contain a synthetic
+<code>shl</code>/<code>popcount</code>/<code>assume</code> sequence before it. Do not treat that old explanatory
+sequence as emitted LNAST.</p>
+<h2 id="match">match<a class="headerlink" href="#match" title="Permanent link">&para;</a></h2>
+<p>The <code>match</code> in the same program also becomes <code>uif</code>. An expression-valued
+match writes a common temporary in each arm and then assigns the result:</p>
+<p><strong>post-upass excerpt — match from control.choose.</strong></p>
+<div class="highlight"><pre><span></span><code>eq
+  ref %matched_2
+  ref a
+  const 2
+eq
+  ref %matched_1
+  ref a
+  const 1
+uif
+  ref %matched_1
+  stmts
+    store
+      ref %matched_0
+      const 10
+  ref %matched_2
+  stmts
+    store
+      ref %matched_0
+      const 20
+  stmts
+    store
+      ref %matched_0
+      const 0
+store
+  ref matched
+  ref %matched_0
+</code></pre></div>
+<p>The explicit <code>else { 0 }</code> is preserved as the final <code>stmts</code> arm. The
+compiler does not replace an explicit catch-all with <code>assert(false)</code>.
+Exhaustiveness and uniqueness rules belong to the source construct; see
+<a href="../05b-statements/#unique-parallel-conditional-match">match</a>.</p>
+<h2 id="scope">Scope<a class="headerlink" href="#scope" title="Permanent link">&para;</a></h2>
+<p>An initializer is evaluated before its condition. Its declarations are visible
+from their declaration through the remaining <code>if</code>/<code>elif</code>/<code>else</code> chain, <code>match</code>,
+or <code>while</code>, and are out of scope after that construct. Reading or assigning them
+afterward is a compile error.
+Lowering an <code>elif</code> initializer before the arm bodies does not make its variables
+visible to an earlier arm: reading one there is a read-before-declaration error.
+See <a href="../04-variables/#variable-scope">Variable scope</a> for the language rules.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code>// scope.prp
+<span class='keyword'>mut</span> <span class='variable'>total</span> <span class='operator'>=</span> <span class='number'>0</span>
+<span class='keyword'>if</span> <span class='keyword'>const</span> <span class='variable'>limit</span><span class='operator'>=</span><span class='number'>3</span><span class='punctuation delimiter'>;</span> <span class='variable'>limit</span> <span class='operator'>&gt;</span> <span class='number'>2</span> <span class='punctuation bracket'>{</span>
+  <span class='variable'>total</span> <span class='operator'>=</span> <span class='variable'>limit</span>
+<span class='punctuation bracket'>}</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>total</span> <span class='operator'>==</span> <span class='number'>3</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p><strong>post-parse excerpt.</strong></p>
+<div class="highlight"><pre><span></span><code>if
+  const true
+  stmts
+    declare
+      ref limit
+      prim_type_none
+      const
+    store
+      ref limit
+      const 3
+    gt
+      ref %2940350924_0
+      ref limit
+      const 2
+    if
+      ref %2940350924_0
+      stmts
+        store
+          ref total
+          ref limit
+</code></pre></div>
+<p>The outer <code>if true</code> creates the initializer scope. It uses the normal branch
+merge to preserve writes to enclosing variables such as <code>total</code>; elaboration
+folds away this always-taken condition. The assertion checks <code>total == 3</code>.
+Adding <code>cassert(limit == 3)</code> after the <code>if</code> is an undefined-variable error,
+even though the initializer and branch condition are known at compile time.</p>
+<h2 id="whileloopfor">while/loop/for<a class="headerlink" href="#whileloopfor" title="Permanent link">&para;</a></h2>
+<p>LNAST has both <code>while</code> and <code>for</code> nodes. It is not limited to <code>while</code>, and
+elaboration does not always expand every hardware loop into repeated source
+statements. The following comptime examples do expand and fold:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code>// loops.prp
+<span class='keyword'>mut</span> <span class='variable'>i</span> <span class='operator'>=</span> <span class='number'>0</span>
+<span class='keyword'>loop</span> <span class='punctuation bracket'>{</span>
+  <span class='variable'>i</span> <span class='operator'>+=</span> <span class='number'>1</span>
+  <span class='keyword'>if</span> <span class='variable'>i</span> <span class='operator'>==</span> <span class='number'>3</span> <span class='punctuation bracket'>{</span> <span class='keyword'>break</span> <span class='punctuation bracket'>}</span>
+<span class='punctuation bracket'>}</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>i</span> <span class='operator'>==</span> <span class='number'>3</span><span class='punctuation bracket'>)</span>
+<span class='keyword'>mut</span> <span class='variable'>sum</span> <span class='operator'>=</span> <span class='number'>0</span>
+<span class='keyword'>while</span> <span class='keyword'>mut</span> <span class='variable'>j</span><span class='operator'>=</span><span class='number'>0</span><span class='punctuation delimiter'>;</span> <span class='variable'>j</span> <span class='operator'>&lt;</span> <span class='number'>3</span> <span class='punctuation bracket'>{</span>
+  <span class='variable'>sum</span> <span class='operator'>+=</span> <span class='variable'>j</span>
+  <span class='variable'>j</span> <span class='operator'>+=</span> <span class='number'>1</span>
+<span class='punctuation bracket'>}</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>sum</span> <span class='operator'>==</span> <span class='number'>3</span><span class='punctuation bracket'>)</span>
+<span class='keyword'>mut</span> <span class='variable'>enumerated</span> <span class='operator'>=</span> <span class='number'>0</span>
+<span class='keyword'>for</span> <span class='punctuation bracket'>(</span><span class='variable'>index</span><span class='punctuation delimiter'>,</span> <span class='variable'>value</span><span class='punctuation bracket'>)</span> <span class='keyword'>in</span> <span class='punctuation bracket'>(</span><span class='number'>2</span><span class='punctuation delimiter'>,</span> <span class='number'>4</span><span class='punctuation delimiter'>,</span> <span class='number'>6</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='variable'>enumerated</span> <span class='operator'>+=</span> <span class='variable'>index</span> <span class='operator'>+</span> <span class='variable'>value</span>
+<span class='punctuation bracket'>}</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>enumerated</span> <span class='operator'>==</span> <span class='number'>15</span><span class='punctuation bracket'>)</span>
+<span class='keyword'>mut</span> <span class='variable'>stepped_sum</span> <span class='operator'>=</span> <span class='number'>0</span>
+<span class='keyword'>for</span> <span class='variable'>value</span> <span class='keyword'>in</span> <span class='number'>0</span><span class='operator'>..=</span><span class='number'>6</span> <span class='operator'>step</span> <span class='number'>2</span> <span class='punctuation bracket'>{</span> <span class='variable'>stepped_sum</span> <span class='operator'>+=</span> <span class='variable'>value</span> <span class='punctuation bracket'>}</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>stepped_sum</span> <span class='operator'>==</span> <span class='number'>12</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p><strong>post-parse excerpt — while loop; initializer scope and initialization omitted.</strong></p>
+<div class="highlight"><pre><span></span><code>while
+  ref %1721491827_0
+  stmts
+    lt
+      ref %1721491827_1
+      ref j
+      const 3
+    if
+      ref %1721491827_1
+      stmts
+        plus
+          ref %sum_0
+          ref sum
+          ref j
+        store
+          ref sum
+          ref %sum_0
+        plus
+          ref %j_0
+          ref j
+          const 1
+        store
+          ref j
+          ref %j_0
+      stmts
+        break
+          ref %1826580722_2
+</code></pre></div>
+<p>The condition is calculated before the <code>while</code> and again inside it. The
+inner <code>if</code> executes the body or breaks. An unconditional <code>loop</code> uses the
+same machinery with an always-true condition. <code>break</code> carries an internal
+reference in the dump; it is not a returned Pyrope value.</p>
+<p>The enumeration loop is represented directly as:</p>
+<p><strong>post-parse excerpt — enumeration; tuple construction omitted.</strong></p>
+<div class="highlight"><pre><span></span><code>for
+  ref value
+  ref %3800684521_0
+  stmts
+    plus
+      ref %enumerated_0
+      ref index
+      ref value
+    plus
+      ref %enumerated_1
+      ref enumerated
+      ref %enumerated_0
+    store
+      ref enumerated
+      ref %enumerated_1
+  const val
+  ref index
+</code></pre></div>
+<p>The child order is value binding, iterable, body, iteration mode, and
+optional index/key bindings. The source <code>(index, value)</code> binding therefore
+is not the same order as the first two children of the <code>for</code> node.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code>// for_key.prp
+<span class='keyword'>const</span> <span class='variable'>tup</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span><span class='keyword'>const</span> <span class='variable'>left</span><span class='operator'>=</span><span class='number'>2</span><span class='punctuation delimiter'>,</span> <span class='keyword'>const</span> <span class='variable'>right</span><span class='operator'>=</span><span class='number'>4</span><span class='punctuation bracket'>)</span>
+<span class='keyword'>mut</span> <span class='variable'>sum</span> <span class='operator'>=</span> <span class='number'>0</span>
+<span class='keyword'>for</span> <span class='punctuation bracket'>(</span><span class='variable'>index</span><span class='punctuation delimiter'>,</span> <span class='variable'>value</span><span class='punctuation delimiter'>,</span> <span class='variable'>key</span><span class='punctuation bracket'>)</span> <span class='keyword'>in</span> <span class='variable'>tup</span> <span class='punctuation bracket'>{</span> <span class='variable'>sum</span> <span class='operator'>+=</span> <span class='variable'>value</span> <span class='punctuation bracket'>}</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>sum</span> <span class='operator'>==</span> <span class='number'>6</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p>For this three-name binding, the parsed node ends with <code>const val</code>,
+<code>ref index</code>, and <code>ref key</code>. The sum assertion passes; named-tuple ordering
+should not be inferred from this order-independent sum.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code>// for_ref.prp
+<span class='keyword'>mut</span> <span class='variable'>tup</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span><span class='number'>1</span><span class='punctuation delimiter'>,</span> <span class='number'>2</span><span class='punctuation delimiter'>,</span> <span class='number'>3</span><span class='punctuation bracket'>)</span>
+<span class='keyword'>for</span> <span class='variable'>value</span> <span class='keyword'>in</span> <span class='keyword'>ref</span> <span class='variable'>tup</span> <span class='punctuation bracket'>{</span> <span class='variable'>value</span> <span class='operator'>+=</span> <span class='number'>1</span> <span class='punctuation bracket'>}</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>tup</span> <span class='operator'>==</span> <span class='punctuation bracket'>(</span><span class='number'>2</span><span class='punctuation delimiter'>,</span> <span class='number'>3</span><span class='punctuation delimiter'>,</span> <span class='number'>4</span><span class='punctuation bracket'>)</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p><strong>post-parse excerpt.</strong></p>
+<div class="highlight"><pre><span></span><code>for
+  ref value
+  ref tup
+  stmts
+    plus
+      ref %value_0
+      ref value
+      const 1
+    store
+      ref value
+      ref %value_0
+  const ref
+</code></pre></div>
+<p>The <code>const ref</code> mode requests write-back to the original tuple. Its
+post-upass body contains stores to tuple positions 0, 1, and 2, and the
+assertion confirms <code>(2, 3, 4)</code>.</p>
+<h3 id="compact-hardware-loops">Compact hardware loops<a class="headerlink" href="#compact-hardware-loops" title="Permanent link">&para;</a></h3>
+<p>A typed accumulator can keep a hardware loop compact under the default
+<code>compile.unroll=false</code> policy:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code>// compact_loop.prp
+<span class='function'>comb</span> <span class='function'>sum_lanes</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type'><span class='punctuation bracket'>[</span><span class='number'>4</span><span class='punctuation bracket'>]</span><span class='type builtin'>U4</span></span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>y</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U8</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span>
+  <span class='keyword'>mut</span> <span class='variable'>total</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U8</span> <span class='operator'>=</span> <span class='number'>0</span>
+  <span class='keyword'>for</span> <span class='variable'>i</span> <span class='keyword'>in</span> <span class='number'>0</span><span class='operator'>..&lt;</span><span class='number'>4</span> <span class='punctuation bracket'>{</span> <span class='keyword'>wrap</span> <span class='variable'>total</span> <span class='operator'>+=</span> <span class='variable'>a</span><span class='punctuation bracket'>[</span><span class='variable'>i</span><span class='punctuation bracket'>]</span> <span class='punctuation bracket'>}</span>
+  <span class='variable'>y</span> <span class='operator'>=</span> <span class='variable'>total</span>
+<span class='punctuation bracket'>}</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='function'>sum_lanes</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>(</span><span class='number'>1</span><span class='punctuation delimiter'>,</span> <span class='number'>2</span><span class='punctuation delimiter'>,</span> <span class='number'>3</span><span class='punctuation delimiter'>,</span> <span class='number'>4</span><span class='punctuation bracket'>)</span><span class='punctuation bracket'>)</span> <span class='operator'>==</span> <span class='number'>10</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p><strong>post-upass excerpt — rolled_for from compact_loop.sum_lanes.</strong></p>
+<div class="highlight"><pre><span></span><code>rolled_for
+  ref i
+  const 0
+  const 1
+  const 4
+  const
+  const
+  tuple_add
+    store
+      ref total__carry_in
+      const total__carry_out
+  stmts
+    tuple_get
+      ref %total_0
+      ref a
+      ref i
+    plus
+      ref %total_1
+      ref total
+      ref %total_0
+    fcall
+      ref %total_2
+      ref wrap
+      store
+        ref v
+        ref %total_1
+      store
+        ref type
+        ref total
+    store
+      ref total
+      ref %total_2
+  stmts
+    fcall
+      ref %u_loop_0_r
+      ref compact_loop.sum_lanes.__loop0
+      store
+        ref __inst_name
+        const u_loop_0
+      store
+        ref a
+        ref a
+      store
+        ref total__carry_in
+        ref total
+      store
+        ref __valid
+        const true
+    store
+      ref total
+      ref %u_loop_0_r
+</code></pre></div>
+<p>This dump also contains the generated unit
+<code>compact_loop.sum_lanes.__loop0</code>. The retained loop records the iteration
+bounds and the accumulator's carry connection. <code>compile.unroll=true</code>
+requests source expansion; loops that are not eligible for compact lifting
+can expand under either setting. A finite hardware loop is not necessarily
+an eagerly unrolled LNAST tree.</p>
+<p>To build a tuple with a loop, use an explicit mutable accumulator and splice
+entries into it, as described in <a href="../05b-statements/#loop-for">for</a>. The old
+claim that <code>cont</code>/<code>brk</code> carry comprehension values is not an emitted-node
+contract.</p>
+<h2 id="putsprint">puts/print<a class="headerlink" href="#putsprint" title="Permanent link">&para;</a></h2>
+<p>Interpolation is built before the printing call. In the parsed tree below,
+a <code>String</code> call receives literal fragments and interpolated operands:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code>// strings.prp
+<span class='keyword'>const</span> <span class='variable'>num</span> <span class='operator'>=</span> <span class='number'>2</span>
+<span class='keyword'>const</span> <span class='variable'>color</span> <span class='operator'>=</span> <span class='string'>&quot;blue&quot;</span>
+<span class='keyword'>const</span> <span class='variable'>text</span> <span class='operator'>=</span> <span class='string'>&quot;I have <span class='punctuation bracket'>{</span><span class='variable'>num</span><span class='punctuation bracket'>}</span> <span class='punctuation bracket'>{</span><span class='variable'>color</span><span class='punctuation bracket'>}</span> potatoes&quot;</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>text</span> <span class='operator'>==</span> <span class='string'>&quot;I have 2 blue potatoes&quot;</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cputs</span><span class='punctuation bracket'>(</span><span class='variable'>text</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>puts</span><span class='punctuation bracket'>(</span><span class='variable'>text</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>print</span><span class='punctuation bracket'>(</span><span class='string'>&quot;count=<span class='punctuation bracket'>{</span><span class='variable'>num</span><span class='punctuation bracket'>}</span>&quot;</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p><strong>post-parse excerpt.</strong></p>
+<div class="highlight"><pre><span></span><code>fcall
+  ref %text_0
+  ref String
+  const 'I have '
+  ref num
+  const ' '
+  ref color
+  const ' potatoes'
+fcall
+  ref %2917045464_0
+  ref cputs
+  ref text
+fcall
+  ref %318168145_0
+  ref puts
+  ref text
+fcall
+  ref %3932631745_0
+  ref String
+  const 'count='
+  ref num
+fcall
+  ref %1055615812_0
+  ref print
+  ref %3932631745_0
+</code></pre></div>
+<p>The text assertion passes, and <code>cputs</code> reports <code>I have 2 blue potatoes</code>
+during compilation. A post-upass tree can fold the string construction and
+consume compile-time calls; absence of an <code>fcall</code> there is not by itself a
+simulation trace. The snippet checks translation and constant evaluation,
+not the execution of runtime <code>puts</code>/<code>print</code>. There is no separate
+<code>format(...)</code> built-in in this example.</p>
+<h2 id="lambda-call">Lambda call<a class="headerlink" href="#lambda-call" title="Permanent link">&para;</a></h2>
+<p>Named arguments are <code>store</code> children of the <code>fcall</code> itself. A bare argument
+can remain a bare <code>ref</code> in the parsed tree; argument binding is resolved by
+the compiler, not by wrapping every source call in one prebuilt named tuple.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code>// calls.prp
+<span class='function'>comb</span> <span class='function'>add</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U4</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U4</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>sum</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U5</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>sum</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>+</span> <span class='variable'>b</span> <span class='punctuation bracket'>}</span>
+<span class='keyword'>const</span> <span class='variable'>a</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U4</span> <span class='operator'>=</span> <span class='number'>2</span>
+<span class='keyword'>const</span> <span class='variable'>result</span> <span class='operator'>=</span> <span class='function'>add</span><span class='punctuation bracket'>(</span><span class='variable'>a</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span>=<span class='number'>3</span><span class='punctuation bracket'>)</span>
+<span class='keyword'>const</span> <span class='variable'>cell</span> <span class='operator'>=</span> <span class='function'>__sum</span><span class='punctuation bracket'>(</span><span class='variable parameter'>`as`</span>=<span class='punctuation bracket'>(</span><span class='number'>1</span><span class='punctuation delimiter'>,</span> <span class='number'>2</span><span class='punctuation delimiter'>,</span> <span class='number'>3</span><span class='punctuation bracket'>)</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>result</span> <span class='operator'>==</span> <span class='number'>5</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>cell</span> <span class='operator'>==</span> <span class='number'>6</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p><strong>post-parse excerpt.</strong></p>
+<div class="highlight"><pre><span></span><code>fcall
+  ref %result_0
+  ref add
+  ref a
+  store
+    ref b
+    const 3
+tuple_add
+  ref %cell_0
+  const 1
+  const 2
+  const 3
+fcall
+  ref %cell_1
+  ref __sum
+  store
+    ref as
+    ref %cell_0
+</code></pre></div>
+<p>The <code>add</code> call contains the bare <code>ref a</code> and a named <code>store b</code>; the cell
+call contains a named <code>store as</code> referring to the positional operand tuple.
+Both assertions pass.</p>
+<p>A post-parse file can contain an <code>fdef</code> marker with <code>__streamed_comb</code> or
+<code>__streamed_mod</code> and an opaque body identifier. The lambda body is materialized
+later as its own unit. For example, the post-upass dump includes <code>calls.add</code>,
+whose body is:</p>
+<p><strong>post-upass excerpt — body of calls.add; io omitted.</strong></p>
+<div class="highlight"><pre><span></span><code>plus
+  ref %sum_0
+  ref a
+  ref b
+store
+  ref sum
+  ref %sum_0
+</code></pre></div>
+<p>The surrounding unit can instead contain an inlined call with folded
+operands. Do not confuse the streamed marker, the specialized/inlined call,
+and the materialized lambda unit: they are different views of the same
+source at different stages.</p>
+<h2 id="assertions-in-the-dump">Assertions in the dump<a class="headerlink" href="#assertions-in-the-dump" title="Permanent link">&para;</a></h2>
+<p>Assertions are not ordinary <code>fcall</code> nodes in the current parsed tree. The
+node name is <code>cassert</code>, with a marker distinguishing the source operation:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code>// assertions.prp
+<span class='keyword'>const</span> <span class='variable'>k</span> <span class='operator'>=</span> <span class='number'>2</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>k</span> <span class='operator'>==</span> <span class='number'>2</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>assert</span><span class='punctuation bracket'>(</span><span class='variable'>k</span> <span class='operator'>&gt;</span> <span class='number'>0</span><span class='punctuation bracket'>)</span>
+<span class='function'>assume</span><span class='punctuation bracket'>(</span><span class='variable'>k</span> <span class='operator'>&lt;</span> <span class='number'>3</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p><strong>post-parse excerpt.</strong></p>
+<div class="highlight"><pre><span></span><code>eq
+  ref %3023404487_0
+  ref k
+  const 2
+cassert
+  ref %3023404487_0
+  const __fkind__cassert
+gt
+  ref %1078686553_0
+  ref k
+  const 0
+cassert
+  ref %1078686553_0
+lt
+  ref %3061419811_0
+  ref k
+  const 3
+cassert
+  ref %3061419811_0
+  const __fkind__assume
+</code></pre></div>
+<p><code>__fkind__cassert</code> identifies the compile-time assertion;
+<code>__fkind__assume</code> identifies the assumption; plain <code>assert</code> has no such
+marker here. Sharing an IR node does not give them identical semantics.
+All conditions in this input are known and disappear after verification.
+See <a href="../05-assert/">Assertions</a> for formal obligations and the TBD runtime
+fallback for design-body assertions in <code>lhd sim</code>.</p>
+<h2 id="validation-scope">Validation scope<a class="headerlink" href="#validation-scope" title="Permanent link">&para;</a></h2>
+<p>The examples above were compiled individually with fresh work directories,
+and both parse and post-upass dumps were inspected. All their <code>cassert</code>
+checks passed. The bit-selection, reduction, conditional, register, call,
+unsigned-complement, and compact-loop examples also completed graph lowering.
+These checks establish the shown translations and concrete results; they do
+not establish that every feature or operand combination has a hardware
+implementation. In particular, this chapter supplies no lowering claim for
+unfinished fluid support.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["search.suggest", "navigation.sections", "navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../javascripts/config.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>

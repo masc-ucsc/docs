@@ -1,0 +1,2705 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../01b-quick_intro/">
+      
+      
+        <link rel="next" href="../03-bundle/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Basic syntax - LiveHD and Pyrope</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CFira+Code:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Fira Code"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/table.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/pyrope-highlight.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#basic-syntax" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LiveHD and Pyrope" class="md-header__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LiveHD and Pyrope
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Basic syntax
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LiveHD and Pyrope" class="md-nav__button md-logo" aria-label="LiveHD and Pyrope" data-md-component="logo">
+      
+  <img src="../../assets/pyrope5.png" alt="logo">
+
+    </a>
+    LiveHD and Pyrope
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/masc-ucsc/livehd" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LiveHD and Pyrope
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Livehd
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Livehd
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/00-intro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/01-install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/02-usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/03-memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory and concurrency
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/04-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    C++ API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/05-lgraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LGraph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/06-lnast/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LNAST
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/07-formal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Formal Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/08-synth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Synthesis &amp; the frequency-optimization loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10-bazel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bazel build
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/10b-3rdparty/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3rd Party
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/11-pass/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Creating a Pass
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/12-github/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GitHub Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../livehd/13-style/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding Style
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Pyrope
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00-hwdesign/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hardware Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-introduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01b-quick_intro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Intro to Pyrope
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basic syntax
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basic syntax
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#comments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Comments
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#constants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Constants
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Constants">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#integers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#strings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Strings
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#newlines-and-spaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Newlines and spaces
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Newlines and spaces">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#identifiers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identifiers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#semicolons" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Semicolons
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#printing-and-debugging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Printing and debugging
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lambda-or-routines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lambda or Routines
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#evaluation-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evaluation order
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basic-gates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic gates
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#initialization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Initialization
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-bundle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tuples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Variables and types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04b-attributes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Attributes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-assert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05b-statements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Statements
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-functions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lambdas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06b-instantiation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Instantiation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06c-pipelining/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipelining
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06d-fluid/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fluid Blocks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-typesystem/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Type system
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07b-structtype/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Structural Typing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-memories/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memories
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-stdlib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope std lib
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Extended Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09b-simquery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Querying a simulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-internals/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Internals
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10b-vslang/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    vs Other Languages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../12-lnast/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LNAST
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../13-stdlib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pyrope Standard Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../15-tbd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation status (TBD)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../21-deprecated/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deprecated or Future
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../22-deprecated_pipelining/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deprecated Pipelining
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#comments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Comments
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#constants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Constants
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Constants">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#integers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#strings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Strings
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#newlines-and-spaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Newlines and spaces
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Newlines and spaces">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#identifiers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identifiers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#semicolons" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Semicolons
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#printing-and-debugging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Printing and debugging
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lambda-or-routines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lambda or Routines
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#evaluation-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evaluation order
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basic-gates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic gates
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#initialization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Initialization
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="basic-syntax">Basic syntax<a class="headerlink" href="#basic-syntax" title="Permanent link">&para;</a></h1>
+<h2 id="comments">Comments<a class="headerlink" href="#comments" title="Permanent link">&para;</a></h2>
+<p>A line comment begins with <code>//</code> and ends at the end of the line. A block
+comment starts with <code>/*</code> and ends with <code>*/</code>. Block comments nest, so
+<code>/* a /* b */ c */</code> is one comment; this makes it safe to comment out code that
+already has block comments.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code>// comment
+<span class='variable'>a</span> <span class='operator'>=</span> <span class='number'>3</span> // another comment
+<span class='variable'>b</span> <span class='operator'>=</span> /* inline */ <span class='number'>4</span>
+/* outer
+  c = 5 /* inner */
+  still in the outer comment
+*/
+</code></pre></div>
+<p>Nothing inside a comment affects parsing: an operator inside a comment does
+not continue a statement, and quotes or braces inside it do not open a string
+or an interpolation.</p>
+<h2 id="constants">Constants<a class="headerlink" href="#constants" title="Permanent link">&para;</a></h2>
+<h3 id="integers">Integers<a class="headerlink" href="#integers" title="Permanent link">&para;</a></h3>
+<p>Pyrope has unlimited precision signed integers. Any literal starting with a
+digit is a likely integer constant.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='number'>0xF_a_0</span>  <span class='operator'>==</span> <span class='number'>4000</span><span class='punctuation bracket'>)</span> // Underscores have no meaning
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='number'>0</span><span class='variable'>b1100</span>   <span class='operator'>==</span> <span class='number'>12</span><span class='punctuation bracket'>)</span> // error: use 0ub1100 or 0sb1100
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='number'>0ub1100</span>  <span class='operator'>==</span> <span class='number'>12</span><span class='punctuation bracket'>)</span> // ub explicit unsigned binary
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='number'>0sb1110</span>  <span class='operator'>==</span> <span class='number'>-2</span><span class='punctuation bracket'>)</span> // sb signed binary
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='number'>33</span>       <span class='operator'>==</span> <span class='number'>33</span><span class='punctuation bracket'>)</span> // 33 in decimal
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='number'>0o111</span>    <span class='operator'>==</span> <span class='number'>73</span><span class='punctuation bracket'>)</span> // octal
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='number'>0111</span>     <span class='operator'>==</span> <span class='number'>111</span><span class='punctuation bracket'>)</span> // decimal (some languages use octal here)
+</code></pre></div>
+<p>Since powers of two are very common, Pyrope decimal integers can use the <code>K</code>, <code>M</code>, <code>G</code>, and <code>T</code> modifiers.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='number'>1K</span> <span class='operator'>==</span> <span class='number'>1024</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='number'>1M</span> <span class='operator'>==</span> <span class='number'>1024</span><span class='operator'>*</span><span class='number'>1024</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='number'>1G</span> <span class='operator'>==</span> <span class='number'>1024</span><span class='operator'>*</span><span class='number'>1024</span><span class='operator'>*</span><span class='number'>1024</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='number'>1T</span> <span class='operator'>==</span> <span class='number'>1024</span><span class='operator'>*</span><span class='number'>1024</span><span class='operator'>*</span><span class='number'>1024</span><span class='operator'>*</span><span class='number'>1024</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p>Several hardware languages support unknown bits (<code>?</code>) or high-impedance (<code>z</code>). Pyrope
+aims at being compatible with synthesizable Verilog, as such <code>?</code> is also supported in
+the binary encoding.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='number'>0ub?</span>            // 0 or 1 in decimal (unsigned, `0ub` explicit prefix)
+<span class='number'>0sb?</span>            // 0 or -1 in decimal (signed)
+<span class='number'>0ub?0</span>           // 0 or 2 in decimal
+<span class='number'>0ub10??1?01</span>     // mixed known and unknown bits (unsigned)
+<span class='number'>0sb0?0</span>          // 0 or 2 in decimal (signed)
+</code></pre></div>
+<p>The Verilog high impedance <code>z</code> is not supported. Tri-state behavior can be
+expressed with <code>unique if</code>, which EDA tools can optimize to tri-state buffers
+when appropriate.</p>
+<p>Like in many HDLs, Pyrope supports unknown bits for Verilog compatibility,
+but only as digits inside a binary integer literal — never as a standalone
+value. <code>0ub?</code>, <code>0sb?</code>, <code>0ub101?</code>, and <code>0ub??10</code> are valid integer
+values; bare <code>?</code> is <strong>not</strong> an integer and cannot be used in arithmetic
+(<code>? + 1</code> is a syntax error; <code>0sb? + 1</code> is a valid operation with unknown
+bits). There is no bare <code>?</code>
+placeholder either: every declaration supplies its value (see
+<a href="#initialization">Initialization</a>).</p>
+<p>Outside binary literals, <code>?</code> is reserved for a future validity check such as
+<code>foo?</code> ("is foo valid?"). Both bare <code>?</code> and <code>foo?</code> are syntax errors for now.</p>
+<p>There are two distinct "no value" concepts in Pyrope — unknown-bit integer
+literals (<code>0sb?</code> / <code>0ub?</code>) and <code>nil</code>:</p>
+<ul>
+<li>
+<p><strong><code>0sb?</code> / <code>0ub?</code> (undefined bits)</strong>: An integer value in which one or
+  more bits have not been decided by the designer, but the resulting
+  circuit must be correct whether each bit turns out to be 0 or 1. During
+  simulation, each <code>?</code> bit is randomly resolved to 0 or 1 to verify
+  correctness under both possibilities. For every operation involving
+  unknowns, Dlop tries to resolve the result but may leave bits unknown even
+  when a precise result could be proved. It never returns an incorrect
+  definite result. For example, <code>0ub? | 1</code> may resolve to <code>1</code> or remain
+  unknown; it cannot resolve to <code>0</code>. In synthesized hardware, the synthesis
+  tool may choose concrete values for unspecified bits to produce a smaller
+  or faster circuit. Unknowns do not imply that a condition is unreachable;
+  use <code>assume</code> to express those constraints.</p>
+</li>
+<li>
+<p><strong><code>nil</code> (invalid)</strong>: An invalid value that must never be used in any
+  expression. Any arithmetic or decision with <code>nil</code> triggers a simulation
+  assertion error. The only allowed operation is copying or checking for
+  validity (<code>x.[valid]</code> returns false for <code>nil</code>). The compiler must prove that all
+  <code>nil</code> uses are eliminated at compile time, or a compile error is generated.
+  <code>nil</code> never exists in synthesized hardware — it is a compile-time and
+  simulation-time safety mechanism.</p>
+</li>
+</ul>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>const</span> <span class='variable'>masked</span> <span class='operator'>=</span> <span class='number'>0ub?</span> <span class='operator'>|</span> <span class='number'>1</span>         // may resolve to 1 or remain unknown
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>(</span><span class='number'>0sb?</span> <span class='operator'>+</span> <span class='number'>1</span><span class='punctuation bracket'>)</span> <span class='operator'>==</span> <span class='number'>0sb??</span><span class='punctuation bracket'>)</span>     // error: comparison is unknown, so cassert fails
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>(</span><span class='variable'>nil</span> <span class='operator'>|</span> <span class='number'>1</span><span class='punctuation bracket'>)</span><span class='operator'>==</span><span class='variable'>nil</span><span class='punctuation bracket'>)</span>          // error: nil is invalid, not unknown
+</code></pre></div>
+<p>Notice that <code>nil</code> is a state in the integer basic type, it is not a new type by
+itself, it does not represent an invalid pointer, but rather an invalid
+integer.</p>
+<p>The advice is not to use unknown-bit literals (<code>0sb?</code>, <code>0ub?</code>, …)
+outside of <code>match</code> pattern matching. It is less error prone to use the
+concrete default value (zero or empty string), but sometimes it is easier to
+use <code>nil</code> when converting Verilog code to Pyrope.</p>
+<h3 id="strings">Strings<a class="headerlink" href="#strings" title="Permanent link">&para;</a></h3>
+<p>Pyrope accepts single line strings with a single quote (<code>'</code>) or double quote
+(<code>"</code>).  Single quote does not have escape character, double quote supports escape
+sequences. A raw newline inside either kind of string is a syntax error (write
+<code>\n</code>); inside a <code>{...}</code> interpolation hole a newline is ordinary whitespace.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>const</span> <span class='variable'>a</span> <span class='operator'>=</span> <span class='string'>&quot;hello \n newline&quot;</span>
+<span class='keyword'>const</span> <span class='variable'>b</span> <span class='operator'>=</span> <span class='string'>&#39;simpler here&#39;</span>
+</code></pre></div>
+<p>The escape sequences are exactly these (the Python/Rust common set):</p>
+<ul>
+<li><code>\n</code>: newline</li>
+<li><code>\t</code>: tab</li>
+<li><code>\r</code>: carriage return</li>
+<li><code>\\</code>: backslash</li>
+<li><code>\"</code>: double quote</li>
+<li><code>\'</code>: single quote</li>
+<li><code>\`</code>: backtick quote</li>
+<li><code>\0</code>: NUL character</li>
+<li><code>\xNN</code>: hexadecimal 8 bit character (2 digits)</li>
+<li><code>\u{N}</code>: Unicode character UTF-8 encoded, 1 to 6 hexadecimal digits
+  inside the braces (<code>\u{41}</code>, <code>\u{2287}</code>, <code>\u{1F600}</code>)</li>
+</ul>
+<p>Any other <code>\c</code> is an error. In particular <code>\uNNNN</code> without braces is an error
+(write <code>\u{NNNN}</code>), and <code>\{</code> and <code>\}</code> are not escapes: a literal brace is
+written doubled (<code>{{</code>, <code>}}</code>).</p>
+<p>Pyrope allows string interpolation only when double quote is used (<code>"bla {expression:format_style} bla"</code>).
+The format style is like C++23 std::format, and it needs an expression: <code>"{:b}"</code>
+is a syntax error, and so is the empty hole <code>"{}"</code>. There are no positional
+placeholders filled by extra arguments, not even in <code>puts</code>/<code>print</code>: write
+<code>puts("a={a} b={b}")</code>, not <code>puts("a={} b={}", a, b)</code>. A hole holds exactly one
+expression (<code>"{x y}"</code> is an error), and a format style after the <code>:</code> is not
+empty and holds no brace and no backslash (<code>"{x:}"</code>, <code>"{x:{}}"</code>, and
+<code>"{x:\x41}"</code> are errors). In a double quoted string a doubled brace is a
+literal brace, as in Python or Rust format strings: <code>{{</code> is the text <code>{</code> and
+<code>}}</code> is the text <code>}</code>, so <code>"{{num}}"</code> is the text <code>{num}</code> (no interpolation). A
+lone <code>}</code> outside a hole is an error (write <code>}}</code>). A comment opener inside a
+string (<code>"//"</code>, <code>"/*"</code>) is text, while inside a <code>{...}</code> hole the normal code
+rules apply, comments included: a <code>{</code>, <code>}</code>, or <code>:</code> inside such a comment never
+closes the hole or starts a format style.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>const</span> <span class='variable'>num</span>       <span class='operator'>=</span> <span class='number'>2</span>
+<span class='keyword'>const</span> <span class='variable'>color</span>     <span class='operator'>=</span> <span class='string'>&quot;blue&quot;</span>
+<span class='keyword'>const</span> <span class='variable'>extension</span> <span class='operator'>=</span> <span class='string'>&quot;s&quot;</span>
+
+<span class='keyword'>const</span> <span class='variable'>txt1</span> <span class='operator'>=</span> <span class='string'>&quot;I have <span class='punctuation bracket'>{</span><span class='variable'>num</span>:d<span class='punctuation bracket'>}</span> <span class='punctuation bracket'>{</span><span class='variable'>color</span><span class='punctuation bracket'>}</span> potato<span class='punctuation bracket'>{</span><span class='variable'>extension</span><span class='punctuation bracket'>}</span>&quot;</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>txt1</span> <span class='operator'>==</span> <span class='string'>&quot;I have 2 blue potatos&quot;</span><span class='punctuation bracket'>)</span>
+
+<span class='keyword'>const</span> <span class='variable'>txt3</span> <span class='operator'>=</span> <span class='string'>&#39;I have {num}&#39;</span>     // single quote does not do interpolation
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>txt3</span> <span class='operator'>==</span> <span class='string'>&quot;I have {{num}}&quot;</span><span class='punctuation bracket'>)</span> // a doubled brace escapes the interpolation
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='string'>&quot;{{<span class='punctuation bracket'>{</span><span class='variable'>num</span><span class='punctuation bracket'>}</span>}}&quot;</span> <span class='operator'>==</span> <span class='string'>&#39;{2}&#39;</span><span class='punctuation bracket'>)</span>     // literal braces around an interpolation
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='string'>&quot;a // b&quot;</span> <span class='operator'>==</span> <span class='string'>&#39;a // b&#39;</span><span class='punctuation bracket'>)</span>     // a comment opener inside a string is text
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='string'>&quot;<span class='punctuation bracket'>{</span><span class='variable'>num</span> /* } */ <span class='operator'>+</span> <span class='number'>1</span><span class='punctuation bracket'>}</span>&quot;</span> <span class='operator'>==</span> <span class='string'>&quot;3&quot;</span><span class='punctuation bracket'>)</span> // a comment inside a hole is a comment
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='string'>&quot;\u{41}\x42&quot;</span> <span class='operator'>==</span> <span class='string'>&#39;AB&#39;</span><span class='punctuation bracket'>)</span>    // escapes: \u{...} and \xNN
+<span class='keyword'>const</span> <span class='variable'>bad</span> <span class='operator'>=</span> <span class='string'>&quot;<span class='punctuation bracket'>{</span><span class='punctuation delimiter'>:</span><span class='variable'>b</span><span class='punctuation bracket'>}</span>&quot;</span>                // error: format style without an expression
+<span class='keyword'>const</span> <span class='variable'>bad2</span> <span class='operator'>=</span> <span class='string'>&quot;<span class='punctuation bracket'>{</span><span class='variable'>num</span><span class='punctuation delimiter'>:</span><span class='punctuation bracket'>}</span>&quot;</span>             // error: empty format style
+<span class='keyword'>const</span> <span class='variable'>bad3</span> <span class='operator'>=</span> <span class='string'>&quot;<span class='punctuation bracket'>{</span><span class='variable'>num</span> <span class='variable'>color</span><span class='punctuation bracket'>}</span>&quot;</span>        // error: a hole holds one expression
+<span class='keyword'>const</span> <span class='variable'>bad4</span> <span class='operator'>=</span> <span class='string'>&quot;num=<span class='punctuation bracket'>{</span><span class='variable'></span><span class='punctuation bracket'>}</span>&quot;</span>             // error: empty hole, write &quot;num={num}&quot;
+<span class='keyword'>const</span> <span class='variable'>bad5</span> <span class='operator'>=</span> <span class='string'>&quot;a <span class='punctuation bracket'>}</span> <span class='variable'>b</span>&quot;</span>              // error: lone `}`, write &quot;a }} b&quot;
+<span class='keyword'>const</span> <span class='variable'>bad6</span> <span class='operator'>=</span> <span class='string'>&quot;I have \<span class='punctuation bracket'>{</span><span class='variable'>num</span>\<span class='punctuation bracket'>}</span>&quot;</span>     // error: not escapes, write &quot;I have {{num}}&quot;
+<span class='keyword'>const</span> <span class='variable'>bad7</span> <span class='operator'>=</span> <span class='string'>&quot;\u2287&quot;</span>             // error: write &quot;\u{2287}&quot;
+<span class='keyword'>const</span> <span class='variable'>bad8</span> <span class='operator'>=</span> <span class='string'>&quot;<span class='punctuation bracket'>{</span><span class='variable'>num</span><span class='punctuation delimiter'>:</span>\x41<span class='punctuation bracket'>}</span>&quot;</span>         // error: backslash inside a format style
+
+<span class='keyword'>comptime</span> <span class='keyword'>const</span> <span class='variable'>text4</span> <span class='operator'>=</span> <span class='string'>&quot;I have <span class='punctuation bracket'>{</span><span class='variable'>num</span><span class='operator'>+</span><span class='number'>1</span><span class='punctuation bracket'>}</span> x&quot;</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>text4</span> <span class='operator'>==</span> <span class='string'>&quot;I have 3 x&quot;</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p><code>String(value)</code> converts an integer to decimal text:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>const</span> <span class='variable'>value</span> <span class='operator'>=</span> <span class='number'>127</span>
+<span class='keyword'>const</span> <span class='variable'>text</span> <span class='operator'>=</span> <span class='function'>String</span><span class='punctuation bracket'>(</span><span class='variable'>value</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>text</span> <span class='operator'>==</span> <span class='string'>&quot;127&quot;</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p>Strings are opaque; they do not implicitly convert to numeric values or bit
+vectors.</p>
+<h2 id="newlines-and-spaces">Newlines and spaces<a class="headerlink" href="#newlines-and-spaces" title="Permanent link">&para;</a></h2>
+<p>Spaces do not have meaning but new lines do. Several programming languages like
+Python use indentation level (spaces) to know the parsing meaning of
+expressions. In Pyrope, spaces do not have meaning, and newlines combined with
+the first token after newline is enough to decide the end of statement.</p>
+<p>By looking at the first character after a new line and the last one the
+previous line, it is possible to know if the rest of the line belongs to the
+previous statement or it is a new statement.</p>
+<p>If the line starts with an alphanumeric (<code>[a-z0-9]</code> that excludes operators
+like <code>or</code>, <code>and</code>) value or an open parenthesis (<code>(</code>), the rest of the line
+belongs to a new statement. A line that starts with a binary operator (<code>+</code>,
+<code>-</code>, <code>*</code>, <code>/</code>, <code>%</code>, <code>|</code>, <code>==</code>, <code>.</code>, ...), a <code>:</code> (type annotation or attribute),
+or a <code>#</code> bit selector (<code>#[0..=3]</code>, <code>#|[..]</code>, ...) continues the previous
+statement. A timing read <code>@[N]</code> is not an operator: it stays on the line of its
+name (a line starting with <code>@</code> is an error, also inside an <code>if</code> condition).</p>
+<p><div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>mut</span> <span class='punctuation bracket'>(</span><span class='variable'>a</span><span class='punctuation delimiter'>,</span><span class='variable'>b</span><span class='punctuation delimiter'>,</span><span class='variable'>c</span><span class='punctuation delimiter'>,</span><span class='variable'>d</span><span class='punctuation bracket'>)</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span><span class='number'>0</span><span class='punctuation delimiter'>,</span><span class='number'>0</span><span class='punctuation delimiter'>,</span><span class='number'>0</span><span class='punctuation delimiter'>,</span><span class='number'>0</span><span class='punctuation bracket'>)</span>
+<span class='variable'>a</span> <span class='operator'>=</span> <span class='number'>1</span>
+  <span class='operator'>+</span> <span class='number'>3</span>           // 1st stmt
+<span class='punctuation bracket'>(</span><span class='variable'>b</span><span class='punctuation delimiter'>,</span><span class='variable'>c</span><span class='punctuation bracket'>)</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span><span class='number'>1</span><span class='punctuation delimiter'>,</span><span class='number'>3</span><span class='punctuation bracket'>)</span>   // 2nd stmt
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>a</span> <span class='operator'>==</span> <span class='number'>4</span> <span class='keyword'>and</span> <span class='variable'>b</span> <span class='operator'>==</span> <span class='number'>1</span> <span class='keyword'>and</span> <span class='variable'>c</span> <span class='operator'>==</span> <span class='number'>3</span><span class='punctuation bracket'>)</span>
+
+<span class='variable'>d</span> <span class='operator'>=</span> <span class='number'>1</span> <span class='operator'>+</span>         // OK, but not formatted to style
+    <span class='number'>3</span>
+
+<span class='keyword'>mut</span> <span class='variable'>e</span>
+  <span class='punctuation delimiter'>:</span><span class='type builtin'>U8</span> <span class='operator'>=</span> <span class='number'>0xF5</span>    // same statement: `mut e:U8 = 0xF5`
+<span class='keyword'>const</span> <span class='variable'>lo</span> <span class='operator'>=</span> <span class='variable'>e</span>
+  <span class='punctuation special'>#</span><span class='punctuation bracket'>[</span><span class='number'>0</span><span class='operator'>..=</span><span class='number'>3</span><span class='punctuation bracket'>]</span>      // same statement: `e#[0..=3]`
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>lo</span> <span class='operator'>==</span> <span class='number'>5</span><span class='punctuation bracket'>)</span>
+<span class='keyword'>const</span> <span class='variable'>m</span> <span class='operator'>=</span> <span class='number'>17</span>
+  <span class='operator'>%</span> <span class='number'>5</span>           // same statement: `17 % 5`
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>m</span> <span class='operator'>==</span> <span class='number'>2</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+Operators spelled as words work like the symbol ones. A line that starts with
+<code>and</code>, <code>or</code>, <code>implies</code>, <code>in</code>, <code>has</code>, <code>does</code>, <code>equals</code>, or <code>case</code> continues the
+previous statement. <code>case</code> always continues, even though it is also the
+<code>match</code> arm keyword. The match is whole-word, so a line that starts with an
+identifier like <code>order</code> or <code>index</code> is a new statement.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>const</span> <span class='variable'>r</span> <span class='operator'>=</span> false
+        <span class='keyword'>or</span> true          // same statement
+
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>r</span><span class='punctuation bracket'>)</span>
+
+<span class='keyword'>const</span> <span class='variable'>ok</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span><span class='keyword'>const</span> <span class='variable'>x</span><span class='operator'>=</span><span class='number'>1</span><span class='punctuation delimiter'>,</span> <span class='keyword'>const</span> <span class='variable'>y</span><span class='operator'>=</span><span class='number'>2</span><span class='punctuation bracket'>)</span>
+         <span class='keyword'>has</span> <span class='string'>&quot;x&quot;</span>         // same statement
+
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>ok</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p>This functionality allows parallelizing the parsing and elaboration in Pyrope.
+More important, it makes the code more readable, by looking at the beginning of
+the line, it is possible to know if it is a new statement or a continuation of
+the last one. It also helps to standardize the code format by allowing only one
+style.</p>
+<h3 id="identifiers">Identifiers<a class="headerlink" href="#identifiers" title="Permanent link">&para;</a></h3>
+<p>An unescaped identifier is a non-reserved name that starts with an underscore or an
+alphabetic character, followed by letters (non-ASCII letters included), digits,
+or underscores. <code>$</code> is not an identifier character, and neither is any other
+non-ASCII symbol (emoji, a no-break or zero-width space, <code>—</code>). Since Pyrope is designed to
+support any synthesizable Verilog automatic translation, any nonempty sequence of
+characters between backticks (`) can form a valid identifier, so a Verilog
+name like <code>foo$bar</code> is written <code>`foo$bar`</code>. The identifier uses the same
+escape sequence as strings.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>const</span> <span class='variable'>`foo is . strange!\nidentifier`</span> <span class='operator'>=</span> <span class='number'>4</span>
+<span class='keyword'>const</span> <span class='variable'>`for`</span> <span class='operator'>=</span> <span class='number'>3</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>`for`</span><span class='operator'>+</span><span class='number'>1</span> <span class='operator'>==</span> <span class='variable'>`foo is . strange!\nidentifier`</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p>Backticks are required whenever an ordinary name matches a reserved keyword
+or type spelling exactly, or contains characters outside the identifier
+rules above. Reserved-word matching is case-sensitive: only the exact spelling
+is reserved, so <code>if</code> is a keyword but <code>IF</code> and <code>If</code> are ordinary names. This is
+one rule for every name: declarations, destructuring,
+parameters and outputs, generics, loop variables, tuple fields, methods,
+enum members, named arguments, dotted selectors, and attributes. There are no
+field-name or attribute-name exceptions. Name lookup is case-sensitive too:
+<code>`if`</code> and <code>IF</code> are distinct names.</p>
+<p>Keywords used as language syntax keep their normal spelling: <code>if</code> starts a
+conditional and <code>comptime</code> is a declaration modifier. When the same text names
+an attribute, field, or other entity, escape it: <code>x.[`comptime`]</code>,
+<code>x.`if`</code>, <code>f(`in`=x)</code>, and <code>f&lt;`type`=U8&gt;(x)</code>.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>const</span> <span class='variable'>cfg</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span><span class='keyword'>const</span> <span class='variable'>`type`</span> <span class='operator'>=</span> <span class='number'>1</span><span class='punctuation delimiter'>,</span> <span class='keyword'>const</span> <span class='variable'>`if`</span> <span class='operator'>=</span> <span class='number'>2</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>cfg</span><span class='punctuation delimiter'>.</span><span class='variable'>`type`</span> <span class='operator'>==</span> <span class='number'>1</span> <span class='keyword'>and</span> <span class='variable'>cfg</span><span class='punctuation delimiter'>.</span><span class='variable'>`if`</span> <span class='operator'>==</span> <span class='number'>2</span><span class='punctuation bracket'>)</span>
+<span class='keyword'>const</span> <span class='variable'>`in`</span> <span class='operator'>=</span> <span class='number'>3</span>
+<span class='keyword'>const</span> <span class='variable'>IF</span> <span class='operator'>=</span> <span class='number'>4</span>                    // OK: only the exact spelling `if` is reserved
+<span class='keyword'>const</span> <span class='variable'>If</span> <span class='operator'>=</span> <span class='number'>5</span>                    // OK: also an ordinary name
+// const in = 3                // error: reserved word used as a name
+<span class='keyword'>for</span> <span class='variable'>`for`</span> <span class='keyword'>in</span> <span class='number'>0</span><span class='operator'>..&lt;</span><span class='number'>2</span> <span class='punctuation bracket'>{</span> <span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>`for`</span> <span class='operator'>&lt;</span> <span class='number'>2</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>}</span>
+</code></pre></div>
+<p><code>`foo`</code> and <code>foo</code> are the same name only when <code>foo</code> is a non-reserved word
+made of identifier characters. A reserved word keeps its meaning only
+unescaped: a backticked reserved word is an ordinary name in every position,
+so <code>`else`</code> is not <code>else</code>.</p>
+<p>The formatter preserves backticks around reserved keywords and type spellings
+by the same exact-spelling match: <code>`else`</code> and <code>`U8`</code> keep their
+backticks, while <code>`ELSE`</code> and <code>`u8`</code> are non-reserved words and format
+as <code>ELSE</code> and <code>u8</code>.</p>
+<p>The built-in type words <code>U&lt;N&gt;</code>, <code>S&lt;N&gt;</code>, <code>Unsigned</code>, <code>Signed</code>, <code>Bool</code>, <code>String</code>,
+<code>Clock</code>, and <code>Reset</code> (<a href="../07-typesystem/">type system</a>) are reserved words too.
+<code>U&lt;N&gt;</code> and <code>S&lt;N&gt;</code> stand for <code>U</code> or <code>S</code> followed by any digit string (<code>U0</code>,
+<code>U1333</code>, <code>S99999999</code>). They cannot be declared or used as a variable, port,
+parameter, lambda, or field name, not even after a <code>.</code> (<code>foo.U33</code> is an error);
+a name with that spelling must be backticked, and <code>`U4`</code> is then a
+variable, never the type (<code>foo.`U33`</code> is a field). Only these exact
+spellings are reserved: <code>Clock</code> and <code>Reset</code> need backticks as names, but the
+lowercase <code>clock</code> and <code>reset</code> are ordinary names (so the minted <code>clock:Clock</code>
+and <code>reset:Reset</code> inputs need no backticks), and so are <code>BOOL</code>, <code>STRING</code>, or
+<code>UNSIGNED</code>.</p>
+<p>The old lowercase type spellings are ordinary identifiers: <code>u</code>, <code>s</code>, or <code>i</code>
+followed by digits (<code>u8</code>, <code>s4</code>, <code>i32</code>), <code>bool</code>, <code>boolean</code>, <code>unsigned</code>,
+<code>signed</code>, and <code>string</code> can be variable, port, parameter, lambda, or field names
+with no backticks (<code>s1</code>, <code>i0</code>, and <code>u4</code> are legal names), and a backticked
+<code>`u8`</code> is the same name as <code>u8</code>. The type words are the capitalized ones
+above (so <code>S2</code> and <code>U8</code> are reserved, <code>s2</code> and <code>u8</code> are not). The only
+restriction is on use: when an old lowercase spelling appears as a type
+(<code>x:u8</code>, <code>&lt;u8&gt;</code>) or as a cast callee (<code>u8(x)</code>) and is not a name you declared,
+it is a compile error that names the new spelling (<code>u8</code> was renamed <code>U8</code>). If
+you declared <code>u8</code> yourself (a variable or a lambda), it is just your name.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>const</span> <span class='variable'>`U4`</span> <span class='operator'>=</span> <span class='number'>3</span>         // a variable named U4
+<span class='keyword'>mut</span> <span class='variable'>x</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U4</span> <span class='operator'>=</span> <span class='variable'>`U4`</span>        // the type U4 holding the variable U4
+<span class='keyword'>const</span> U4 = <span class='number'>3</span>           // error: U4 is a reserved type word, use `U4`
+<span class='keyword'>const</span> <span class='variable'>s1</span> <span class='operator'>=</span> <span class='number'>1</span>           // OK: lowercase old spellings are ordinary names
+<span class='keyword'>const</span> S1 = <span class='number'>1</span>           // error: S1 is a reserved type word, use `S1`
+<span class='keyword'>const</span> <span class='variable'>st1</span> <span class='operator'>=</span> <span class='number'>1</span>          // OK
+<span class='keyword'>const</span> <span class='variable'>clock</span> <span class='operator'>=</span> <span class='number'>1</span>        // OK: only `Clock` is a type word, not `clock`
+<span class='keyword'>const</span> <span class='variable'>`Clock`</span> <span class='operator'>=</span> <span class='number'>1</span>      // a variable named Clock (bare Clock is the type)
+<span class='keyword'>const</span> <span class='variable'>BOOL</span> <span class='operator'>=</span> <span class='number'>1</span>         // OK: only the exact spellings are reserved
+<span class='keyword'>const</span> <span class='variable'>`s1`</span> <span class='operator'>=</span> <span class='number'>1</span>         // OK: the same name as s1, backticks not needed
+<span class='keyword'>const</span> <span class='variable'>u8</span> <span class='operator'>=</span> <span class='number'>5</span>           // OK: an ordinary name
+<span class='keyword'>mut</span> <span class='variable'>y</span><span class='punctuation delimiter'>:</span><span class='variable'><span class='type'><span class='type'>u8</span></span></span> <span class='operator'>=</span> <span class='number'>0</span>           // error: `u8` was renamed `U8` (when u8 is not a type you declared)
+<span class='keyword'>const</span> <span class='variable'>cfg2</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span><span class='keyword'>const</span> <span class='variable'>`U8`</span> <span class='operator'>=</span> <span class='number'>1</span><span class='punctuation delimiter'>,</span> <span class='keyword'>const</span> <span class='variable'>bool</span> <span class='operator'>=</span> true<span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>cfg2</span><span class='punctuation delimiter'>.</span><span class='variable'>`U8`</span> <span class='operator'>==</span> <span class='number'>1</span><span class='punctuation bracket'>)</span>
+<span class='keyword'>const</span> <span class='variable'>`foo$bar`</span> <span class='operator'>=</span> <span class='number'>2</span>    // `$` needs backticks
+<span class='keyword'>const</span> <span class='variable'>foo</span>$<span class='variable'>bar</span> <span class='operator'>=</span> <span class='number'>2</span>      // error: `$` is not an identifier character
+</code></pre></div>
+<p>The backticks are Pyrope spelling only; they never reach the generated Verilog.
+There the bare name is emitted, and Verilog's own <code>\name</code> escape is added only
+when Verilog itself needs it: <code>`if`</code> becomes <code>\if</code> because <code>if</code> is a Verilog
+keyword, while <code>`in`</code> — not reserved in Verilog — is emitted as plain <code>in</code>.</p>
+<p>Identifiers are case-sensitive like Verilog. User-defined type and variable
+names may use uppercase or lowercase letters; capitalization is not enforced
+by the compiler. The style guide recommends starting type names with an
+uppercase letter (<code>Pixel</code>, <code>GcdModel</code>) and variable names with a lowercase
+letter (<code>pixel</code>, <code>count</code>).</p>
+<p>The reserved type words listed above still require backticks when used as
+ordinary names (the old lowercase spellings do not). That restriction is independent of
+the capitalization style recommendation.</p>
+<p><code>comptime</code> is not inferred from casing. To require compile-time evaluation,
+prefix the declaration with <code>comptime</code> explicitly (e.g.,
+<code>comptime const size = 16</code>). The <code>.[`comptime`]</code> query checks whether the current
+value is known at compile time, regardless of the declaration's modifier.</p>
+<p>The bare underscore (<code>_</code>) and names matching <code>_[digit][alnum]*</code> (e.g., <code>_0</code>,
+<code>_1a</code>, <code>_23abc</code>) are reserved for future syntax (anonymous lambda
+placeholders). Here a digit is a Unicode decimal digit, and alphanumeric
+means a Unicode letter or decimal digit. These unescaped names are syntax
+errors in every position (a binding, a destructuring slot, a parameter, a
+value, or a field). The pattern matches the whole name: <code>_1_a</code> and <code>__0</code>
+remain legal. Using the backtick form (<code>`_`</code>, <code>`_0`</code>, <code>`_1a`</code>)
+bypasses the reservation if a Verilog import really needs that exact spelling.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>const</span> _ = <span class='number'>8</span>            // error: `_` is reserved
+<span class='punctuation bracket'>(</span>_<span class='punctuation delimiter'>,</span> <span class='variable'>b</span><span class='punctuation bracket'>)</span> <span class='operator'>=</span> <span class='function'>f</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>           // error: `_` is reserved, also as a destructuring slot
+<span class='keyword'>const</span> <span class='variable'>x</span> <span class='operator'>=</span> _ <span class='operator'>+</span> <span class='number'>1</span>        // error: `_` is reserved, also as a value
+<span class='keyword'>const</span> _1a = <span class='number'>8</span>          // error: `_[digit][alnum]*` is reserved
+<span class='keyword'>const</span> <span class='variable'>`_`</span> <span class='operator'>=</span> <span class='number'>8</span>          // OK: a backticked `_` is an ordinary name
+<span class='keyword'>const</span> <span class='variable'>`_1a`</span> <span class='operator'>=</span> <span class='number'>8</span>        // OK: a backticked reserved name
+</code></pre></div>
+<h2 id="semicolons">Semicolons<a class="headerlink" href="#semicolons" title="Permanent link">&para;</a></h2>
+<p>Semicolons are not needed to separate statements. In Pyrope, a semicolon (<code>;</code>)
+has the same meaning as a newline. Sometimes it is possible to add
+semicolons to separate statements. Since newlines affect the meaning of the
+program, a semicolon can do too.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>const</span> <span class='variable'>a</span> <span class='operator'>=</span> <span class='number'>1</span> <span class='punctuation delimiter'>;</span> <span class='keyword'>const</span> <span class='variable'>b</span> <span class='operator'>=</span> <span class='number'>2</span>
+</code></pre></div>
+<h2 id="printing-and-debugging">Printing and debugging<a class="headerlink" href="#printing-and-debugging" title="Permanent link">&para;</a></h2>
+<p>Printing messages is useful for debugging. <code>puts</code> prints a message and the string
+is formatted using the c++23 std::format. There is an implicit newline printed.
+The same without a newline can be achieved with print.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>const</span> <span class='variable'>a</span> <span class='operator'>=</span> <span class='number'>1</span>
+<span class='keyword'>const</span> <span class='variable'>msg</span> <span class='operator'>=</span> <span class='string'>&quot;Hello a is <span class='punctuation bracket'>{</span><span class='variable'>a</span><span class='punctuation bracket'>}</span>&quot;</span>
+<span class='function builtin'>puts</span><span class='punctuation bracket'>(</span><span class='variable'>msg</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>msg</span> <span class='operator'>==</span> <span class='string'>&quot;Hello a is 1&quot;</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p>Since many modules can print at the same cycle, it is possible to put a
+relative priority between <code>puts</code> calls (<code>priority</code>). If no relative priority is
+provided, a default 0 priority is provided. Messages are kept to the end of the
+cycle, and then printed in alphabetical order for a given priority. This is
+done to be deterministic. Higher priority (higher value) are printed after
+lower priority. Messages generated by assertions also get serialized like <code>puts</code>
+statements but have the highest priority.</p>
+<p>To avoid breaking down different <code>puts</code> inside the same method. All the <code>puts</code>
+in a given cycle are shown together.</p>
+<p>This example will print "hello world" even though there are 2 puts/prints in
+different files.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code>// src/file1.prp
+<span class='function builtin'>puts</span><span class='punctuation bracket'>(</span><span class='variable parameter'>priority</span>=<span class='number'>2</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>msg</span>=<span class='string'>&quot; world&quot;</span><span class='punctuation bracket'>)</span>
+
+// src/file2.prp
+<span class='function builtin'>print</span><span class='punctuation bracket'>(</span><span class='variable parameter'>priority</span>=<span class='number'>1</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>msg</span>=<span class='string'>&quot;hello&quot;</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p>The available puts/print arguments:
+* <code>msg</code>: the message string.
+* <code>priority</code>: relative order to print in a given cycle.
+* <code>file</code>: file to send the message. E.g: <code>stdout</code>, <code>stderr</code>, <code>my_large.log</code>,...</p>
+<p>Arguments follow the normal <a href="../06-functions/#argument-naming">argument naming</a>
+rules. <code>msg</code> and <code>file</code> are both strings, so once <code>priority</code> or <code>file</code> is
+passed the message is named too: <code>puts(priority=2, " world")</code> is an error.</p>
+<p>Use string interpolation to build a string without printing it.</p>
+<p><code>puts/print</code> are a bit special. In most languages, IO operations like <code>puts</code> are
+considered to have side-effects. In Pyrope, the <code>puts</code> can not modify the
+behavior of the synthesized code and it is considered a non-side-effect lambda
+call. This allows to have <code>puts</code> calls in <code>functions</code>.</p>
+<h2 id="lambda-or-routines">Lambda or Routines<a class="headerlink" href="#lambda-or-routines" title="Permanent link">&para;</a></h2>
+<p>Pyrope only supports anonymous lambdas, but the lambdas can have attributes that restrict
+the lambda functionality to combinational only (<code>comb</code>), pipeline stages
+that have all the outputs with the same delay (<code>pipe</code>), or modules that can
+do anything — including orchestrating pipelined calls with explicit timing
+(<code>mod</code>). <a href="../06-functions/">Lambda section</a> has more details on the allowed
+syntax.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function'>comb</span> <span class='function'>f</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span><span class='punctuation bracket'>)</span> <span class='punctuation delimiter'>-&gt;</span> <span class='punctuation bracket'>(</span><span class='variable parameter'>r</span><span class='punctuation bracket'>)</span> <span class='punctuation bracket'>{</span> <span class='variable'>r</span> <span class='operator'>=</span> <span class='variable'>a</span> <span class='operator'>+</span> <span class='variable'>b</span> <span class='punctuation bracket'>}</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='function'>f</span><span class='punctuation bracket'>(</span><span class='variable parameter'>a</span>=<span class='number'>2</span><span class='punctuation delimiter'>,</span> <span class='variable parameter'>b</span>=<span class='number'>3</span><span class='punctuation bracket'>)</span> <span class='operator'>==</span> <span class='number'>5</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p>Pyrope naming for consistency:</p>
+<ul>
+<li>
+<p><code>comb</code> is pure combinational logic (zero cycles). Can use <code>ref</code> to modify tuples (equivalent to implicit output).</p>
+</li>
+<li>
+<p><code>pipe[N]</code> is a fixed N-cycle pipeline with <code>N &gt; 0</code> (every output lands exactly N cycles after its inputs; no combinational input-to-output path). A zero-cycle block is <code>comb</code>, not <code>pipe[0]</code>.</p>
+</li>
+<li>
+<p><code>pipe[A..=B]</code> is a flexible A-to-B cycle pipeline, with positive cycle counts; the caller picks a concrete latency via <code>stage[N]</code></p>
+</li>
+<li>
+<p>Bare <code>pipe</code> leaves the latency fully flexible; the caller picks a positive latency via <code>stage[N]</code> at the call site</p>
+</li>
+<li>
+<p><code>mod</code> has no constraints on registers or output structure (can be Mealy or Moore), operates cycle by cycle, and is also the kind used to orchestrate pipelined calls — <code>stage[N]</code> and <code>@[N]</code> are the timing constructs available inside <code>mod</code>. Unlike <code>pipe</code>, each <code>mod</code> output declares its own landing cycle <code>@[N]</code> (<code>N</code> from <code>0</code> to <code>n</code>) at the interface (<code>mod f(a:U8) -&gt; (x:U8@[2], y:U8@[0])</code>); a cycle-0 output is a combinational feedthrough, legal in <code>mod</code> but forbidden in <code>pipe</code>. To generate an LGraph module (for Verilog or simulation), the concrete <code>comb</code>/<code>pipe</code>/<code>mod</code> interface must be fully typed and have a fixed port list. This can be written directly in the declaration, or deferred until a call binds untyped parameters, generics, and varargs to concrete declared actuals. A <code>comb</code> with an untyped input or generics is a template: it is always inlined and never generates its own LGraph. A fully typed <code>comb</code> (even one with a defaulted input) is a normal unit with its own LGraph.</p>
+</li>
+<li>
+<p><code>stage</code> is a reserved declaration modifier used inside <code>mod</code> blocks.</p>
+</li>
+<li>
+<p><code>comb</code>, <code>pipe</code>, or <code>mod</code> that declares <code>self</code> as its FIRST parameter is also called a method; methods may be called via UFCS (<code>obj.method(...)</code>) or directly (<code>method(obj, ...)</code>)</p>
+</li>
+</ul>
+<h2 id="evaluation-order">Evaluation order<a class="headerlink" href="#evaluation-order" title="Permanent link">&para;</a></h2>
+<p>Statements are evaluated one after another in program order. The main source of
+conflicts come from expressions.</p>
+<p>The expression evaluation order is important if the elements in the expression
+can have side effects. Pyrope constrains the expressions so that no matter the
+evaluation order, the synthesis result is the same.</p>
+<p>Languages like C++11 do not have a defined order of evaluation for
+all types of expressions. Calling <code>call1() + call2()</code> is not defined. Either
+<code>call1()</code> first or <code>call2()</code> first.</p>
+<p>In many languages, the evaluation order is defined for logical expressions.
+This is typically called short-circuit evaluation. Pyrope <code>and</code>/<code>or</code> always
+short-circuit like most modern languages: in <code>a and b</code>, <code>b</code> is not evaluated
+if <code>a</code> is false; in <code>a or b</code>, <code>b</code> is not evaluated if <code>a</code> is true. Since
+Pyrope expressions have no side effects, short-circuit produces the same
+hardware as evaluating both sides — the compiler is free to optimize either
+way.</p>
+<p>Short-circuit is still observable at compile time. Since the skipped operand is
+never evaluated, an <a href="../05-assert/#illegal-operations">illegal operation</a> inside
+it is not reported, which makes <code>and</code>/<code>or</code> the way to guard a compile-time
+computation:</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>const</span> <span class='variable'>N</span> <span class='operator'>=</span> <span class='number'>0</span>
+// `64 % N` is skipped, so the modulo by zero is never evaluated
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>N</span> <span class='operator'>==</span> <span class='number'>0</span> <span class='keyword'>or</span> <span class='punctuation bracket'>(</span><span class='variable'>N</span> <span class='operator'>&gt;</span> <span class='number'>0</span> <span class='keyword'>and</span> <span class='punctuation bracket'>(</span><span class='number'>64</span> <span class='operator'>%</span> <span class='variable'>N</span> <span class='operator'>==</span> <span class='number'>0</span><span class='punctuation bracket'>)</span><span class='punctuation bracket'>)</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p>The untaken arm of an <code>if</code> behaves the same way, and there it is the only way to
+guard a computation whose operands are not booleans.</p>
+<p>The programmer can also set evaluation order with control expressions
+(<code>if/else</code>, <code>match</code>, <code>for</code>). An expression can have many <code>comb</code> calls because
+those have no side-effects, and hence the evaluation order is not important.</p>
+<p>A <code>pipe</code> can update state internally and has one or more cycle delays. As
+such, <code>pipe</code> statements can do many calls to <code>comb</code> lambdas, but not to
+other <code>pipe</code> lambdas. <code>pipe</code> lambdas can only be called inside <code>mod</code>
+lambdas, where their outputs are consumed via <code>stage[N]</code> with an explicit
+latency.</p>
+<p>Expressions also can have code blocks (<code>{  }</code>) as long as there are no
+side-effects. In a way, expression code blocks can be seen as a type of
+<code>comb</code> lambda that is called immediately after definition.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>mut</span> <span class='variable'>a</span> <span class='operator'>=</span> <span class='punctuation bracket'>{</span><span class='keyword'>mut</span> <span class='variable'>d</span><span class='operator'>=</span><span class='number'>3</span> <span class='punctuation delimiter'>;</span> <span class='variable'>d</span><span class='operator'>+</span><span class='number'>1</span><span class='punctuation bracket'>}</span> <span class='operator'>+</span> <span class='number'>100</span> // OK
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>a</span> <span class='operator'>==</span> <span class='punctuation bracket'>(</span><span class='number'>3</span><span class='operator'>+</span><span class='number'>1</span><span class='operator'>+</span><span class='number'>100</span><span class='punctuation bracket'>)</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>a</span> <span class='operator'>==</span> <span class='punctuation bracket'>{</span><span class='number'>3</span><span class='operator'>+</span><span class='number'>1</span><span class='operator'>+</span><span class='number'>100</span><span class='punctuation bracket'>}</span><span class='punctuation bracket'>)</span> // same, expression block evaluates to 104
+</code></pre></div>
+<p>For most expressions, Pyrope is more restrictive than other languages because
+it wants to be a fully defined deterministic independent of implementation. To
+handle logging/messaging in <code>comb</code> calls, Pyrope treats <code>puts</code> as a special
+instruction. Pyrope runtime delays the <code>puts</code> output until the end of the cycle.
+See the Printing section above for more details.</p>
+<p>To illustrate the evaluation order, it is useful to see a Verilog example. The
+following Verilog sequence evaluates differently in VCS and Icarus Verilog.
+Pyrope treats <code>puts</code> and assertion messages in a special way. The reason why
+some methods may be called is dependent on the optimization (in this case,
+<code>testing(1)</code> got optimized away by vcs).</p>
+<div class="highlight"><pre><span></span><code><span class="k">module</span><span class="w"> </span><span class="n">test</span><span class="p">();</span>
+
+<span class="k">function</span><span class="w"> </span><span class="n">testing</span><span class="p">(</span><span class="k">input</span><span class="w"> </span><span class="p">[</span><span class="mh">0</span><span class="o">:</span><span class="mh">3</span><span class="p">]</span><span class="w"> </span><span class="n">a</span><span class="p">);</span>
+<span class="w">  </span><span class="k">begin</span>
+<span class="w">    </span><span class="nb">$display</span><span class="p">(</span><span class="s">"test called with %d"</span><span class="p">,</span><span class="n">a</span><span class="p">);</span>
+<span class="w">    </span><span class="n">testing</span><span class="o">=</span><span class="mh">1</span><span class="p">;</span>
+<span class="w">  </span><span class="k">end</span>
+<span class="k">endfunction</span>
+
+<span class="k">initial</span><span class="w"> </span><span class="k">begin</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="mh">0</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">testing</span><span class="p">(</span><span class="mh">1</span><span class="p">))</span><span class="w"> </span><span class="k">begin</span>
+<span class="w">    </span><span class="nb">$display</span><span class="p">(</span><span class="s">"test1"</span><span class="p">);</span>
+<span class="w">  </span><span class="k">end</span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="mh">1</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">testing</span><span class="p">(</span><span class="mh">2</span><span class="p">))</span><span class="w"> </span><span class="k">begin</span>
+<span class="w">    </span><span class="nb">$display</span><span class="p">(</span><span class="s">"test2"</span><span class="p">);</span>
+<span class="w">  </span><span class="k">end</span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="mh">0</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">testing</span><span class="p">(</span><span class="mh">3</span><span class="p">))</span><span class="w"> </span><span class="k">begin</span>
+<span class="w">    </span><span class="nb">$display</span><span class="p">(</span><span class="s">"test3"</span><span class="p">);</span>
+<span class="w">  </span><span class="k">end</span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="mh">1</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">testing</span><span class="p">(</span><span class="mh">4</span><span class="p">))</span><span class="w"> </span><span class="k">begin</span>
+<span class="w">    </span><span class="nb">$display</span><span class="p">(</span><span class="s">"test4"</span><span class="p">);</span>
+<span class="w">  </span><span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Icarus output</label><label for="__tabbed_1_2">VCS output</label><label for="__tabbed_1_3">C++/short-circuit output</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="nb">test</span><span class="w"> </span>called<span class="w"> </span>with<span class="w">  </span><span class="m">1</span>
+<span class="nb">test</span><span class="w"> </span>called<span class="w"> </span>with<span class="w">  </span><span class="m">2</span>
+test2
+<span class="nb">test</span><span class="w"> </span>called<span class="w"> </span>with<span class="w">  </span><span class="m">3</span>
+test3
+<span class="nb">test</span><span class="w"> </span>called<span class="w"> </span>with<span class="w">  </span><span class="m">4</span>
+test4
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="nb">test</span><span class="w"> </span>called<span class="w"> </span>with<span class="w">  </span><span class="m">2</span>
+test2
+<span class="nb">test</span><span class="w"> </span>called<span class="w"> </span>with<span class="w">  </span><span class="m">3</span>
+test3
+<span class="nb">test</span><span class="w"> </span>called<span class="w"> </span>with<span class="w">  </span><span class="m">4</span>
+test4
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="nb">test</span><span class="w"> </span>called<span class="w"> </span>with<span class="w"> </span><span class="m">2</span>
+test2
+<span class="nb">test</span><span class="w"> </span>called<span class="w"> </span>with<span class="w"> </span><span class="m">3</span>
+test3
+test4
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>If an order is needed and a function call can have <code>debug</code> side-effects or
+synthesis side-effects, the statement must be broken down into several
+statements. Since <code>and</code>/<code>or</code> short-circuit, they provide a defined left-to-right
+evaluation order for logical expressions.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:3"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><input id="__tabbed_2_3" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Incorrect code with side-effects</label><label for="__tabbed_2_2">Fix with separate statements</label><label for="__tabbed_2_3">Fix with short-circuit</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>mut</span> <span class='variable'>r3</span> <span class='operator'>=</span> <span class='function'>mcall1</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='operator'>+</span>   <span class='function'>mcall2</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>  // error:
+// error: only if mcall1/mcall2 can have side effects
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>mut</span> <span class='variable'>r1</span> <span class='operator'>=</span> <span class='function'>fcall1</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>
+<span class='keyword'>if</span> <span class='operator'>not</span> <span class='variable'>r1</span> <span class='punctuation bracket'>{</span>
+  <span class='variable'>r1</span> <span class='operator'>=</span> <span class='function'>fcall2</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>
+<span class='punctuation bracket'>}</span>
+
+<span class='keyword'>mut</span> <span class='variable'>r2</span> <span class='operator'>=</span> <span class='function'>fcall1</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>
+<span class='keyword'>if</span> <span class='variable'>r2</span> <span class='punctuation bracket'>{</span>
+  <span class='variable'>r2</span> <span class='operator'>=</span> <span class='function'>fcall2</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>
+<span class='punctuation bracket'>}</span>
+
+<span class='keyword'>mut</span> <span class='variable'>r3</span> <span class='operator'>=</span> <span class='function'>fcall1</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>
+<span class='variable'>r3</span> <span class='operator'>+=</span> <span class='function'>fcall2</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>mut</span> <span class='variable'>r1</span> <span class='operator'>=</span> <span class='function'>fcall1</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='keyword'>or</span> <span class='function'>fcall2</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>
+
+
+<span class='keyword'>mut</span> <span class='variable'>r2</span> <span class='operator'>=</span> <span class='function'>fcall1</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span> <span class='keyword'>and</span> <span class='function'>fcall2</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>
+
+
+<span class='keyword'>mut</span> <span class='variable'>r3</span> <span class='operator'>=</span> <span class='function'>fcall1</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>
+<span class='variable'>r3</span> <span class='operator'>+=</span> <span class='function'>fcall2</span><span class='punctuation bracket'>(</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<h2 id="basic-gates">Basic gates<a class="headerlink" href="#basic-gates" title="Permanent link">&para;</a></h2>
+<p>Pyrope allows a low level or structural direct basic gate instantiation. There
+are some basic gates to which to which the compiler translates Pyrope code to. These
+basic gates are also directly accesible:</p>
+<ul>
+<li><code>__sum</code> for addition and substraction gate.</li>
+<li><code>__mult</code> for multiplication gate.</li>
+<li><code>__div</code> for divisions gate.</li>
+<li><code>__and</code> for bitwise and gate</li>
+<li><code>__or</code> for bitwise or gate</li>
+<li><code>__xor</code> for bitwise xor gate</li>
+<li><code>__ror</code> for bitwise reduce-or gate</li>
+<li><code>__not</code> for bitwise not gate</li>
+<li><code>__get_mask</code> for extrating bits using a mask gate</li>
+<li><code>__set_mask</code> for replacing bits using a mask gate</li>
+<li><code>__sext</code> for sign-extension gate</li>
+<li><code>__lt</code> for less-than comparison gate</li>
+<li><code>__gt</code> for greater-than comparison gate</li>
+<li><code>__eq</code> for equal comparison gate</li>
+<li><code>__shl</code> for shift left logical gate</li>
+<li><code>__sra</code> for shift right arithmetic gate</li>
+<li><code>__lut</code> for Look-Up-Table gate</li>
+<li><code>__mux</code> for a priority multiplexer</li>
+<li><code>__hotmux</code> for a one-hot encoded multiplexer</li>
+<li><code>__memory</code> for a memory gate</li>
+<li><code>__flop</code> for a flop gate</li>
+<li><code>__latch</code> for a latch gate</li>
+</ul>
+<p>Each of the basic gates operate always over signed integers like Pyrope, but
+their semantics vary. A more detailed explanation is available at <a href="/livehd/05-lgraph/#cell-type">LiveHD cell
+type section</a>. A basic gate is an ordinary call:
+its arguments are named with the LGraph pin names (<code>__sum(`as`=(a, b))</code>,
+<code>__mux(s=cond, p1=b, p2=a)</code>), see <a href="../06b-instantiation/">instantiation</a>.</p>
+<p>Pyrope has a modulo operator <code>a % b</code>, but only the cases that lower cheaply to
+shift/mask are accepted as hardware; a general modulo is not. The semantics are
+<em>truncated</em> (the remainder's sign follows the dividend, like Verilog <code>%</code>),
+because the signed semantics for "mod" differ across languages like Python and
+C, and a full divider is expensive. The lowered cases are:</p>
+<ul>
+<li><code>b</code> a compile-time power of two, with a non-negative <code>a</code> → <code>a &amp; (b-1)</code>.</li>
+<li><code>b</code> provably larger than <code>a</code> (<code>a</code>'s value range fits in <code>[0, |b|)</code>) → <code>a</code>
+  (no remainder is possible).</li>
+<li><code>b == 3</code> (compile time), with a non-negative <code>a</code> → a base-4 digit-sum
+  reduction (since <code>4 ≡ 1 (mod 3)</code>).</li>
+</ul>
+<p>Any other <code>% b</code> (a runtime divisor, a possibly-negative dividend, or a divisor
+that is none of the above) is a compile error. A fully compile-time <code>a % b</code>
+still folds to a constant.</p>
+<h2 id="initialization">Initialization<a class="headerlink" href="#initialization" title="Permanent link">&para;</a></h2>
+<p>Each variable declaration (<code>mut</code> or <code>const</code>) must have an assigned value. There
+is no implicit default: write a concrete value (<code>0</code>, <code>false</code>, <code>""</code>), <code>nil</code> for
+no value yet, or <code>0sb?</code> for unknown bits (see
+<a href="../04-variables/#variable-initialization">Variable initialization</a>).</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='variable'>a</span>  <span class='operator'>=</span> <span class='number'>3</span>        // error: no previous const or mut
+
+<span class='keyword'>mut</span> <span class='variable'>b</span> <span class='operator'>=</span> <span class='number'>3</span>
+<span class='variable'>b</span>  <span class='operator'>=</span> <span class='number'>5</span>        // OK
+<span class='variable'>b</span> <span class='operator'>+=</span> <span class='number'>1</span>        // OK
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>b</span> <span class='operator'>==</span> <span class='number'>6</span><span class='punctuation bracket'>)</span>
+
+<span class='keyword'>const</span> <span class='punctuation bracket'>(</span><span class='variable'>a</span><span class='punctuation delimiter'>,</span><span class='variable'>b2</span><span class='punctuation bracket'>)</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span><span class='number'>1</span><span class='punctuation delimiter'>,</span><span class='string'>&quot;string_inferred&quot;</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>a</span> <span class='operator'>==</span> <span class='number'>1</span> <span class='keyword'>and</span> <span class='variable'>b2</span> <span class='operator'>==</span> <span class='string'>&quot;string_inferred&quot;</span><span class='punctuation bracket'>)</span>
+<span class='keyword'>const</span> <span class='punctuation bracket'>(</span><span class='variable'>a3</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U32</span><span class='punctuation delimiter'>,</span><span class='variable'>b3</span><span class='punctuation bracket'>)</span> = <span class='punctuation bracket'>(</span>1<span class='punctuation delimiter'>,</span>&quot;<span class='variable'>x</span>&quot;<span class='punctuation bracket'>)</span>   // error: destructuring slots never carry a type
+
+<span class='keyword'>const</span> <span class='variable'>d</span> <span class='operator'>=</span> <span class='string'>&quot;hello&quot;</span>  // OK
+<span class='variable'>d</span> <span class='operator'>=</span> <span class='string'>&quot;bar&quot;</span>        // error: &#39;d&#39; is immutable
+<span class='keyword'>mut</span> <span class='variable'>d</span> <span class='operator'>=</span> <span class='string'>&quot;bar&quot;</span>    // error: &#39;d&#39; already declared
+
+<span class='keyword'>mut</span> <span class='variable'>e</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U32</span> <span class='operator'>=</span> <span class='number'>33</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>e</span> <span class='operator'>==</span> <span class='number'>33</span><span class='punctuation bracket'>)</span>
+
+<span class='keyword'>const</span> <span class='variable'>Foo</span> <span class='operator'>=</span> <span class='number'>33</span>   // immutable because of `const`; casing carries no meaning
+<span class='variable'>Foo</span>  <span class='operator'>=</span> <span class='number'>34</span>        // error: `Foo` already declared as immutable
+</code></pre></div>
+<p>When the variable is a tuple or a range style, <code>0sb?</code> can not be applied
+because it is restricted for integers. <code>nil</code> should be used in those cases.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='keyword'>mut</span> <span class='variable'>tup</span> <span class='operator'>=</span> <span class='variable'>nil</span>
+
+<span class='function builtin'>assert</span><span class='punctuation bracket'>(</span><span class='variable'>cond</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>`comptime`</span><span class='punctuation bracket'>]</span><span class='punctuation bracket'>)</span> // Tuples are compile time, it would fail otherwise
+<span class='keyword'>if</span> <span class='variable'>cond</span> <span class='operator'>==</span> true <span class='punctuation bracket'>{</span>
+  <span class='variable'>tup</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span><span class='keyword'>const</span> <span class='variable'>a</span><span class='operator'>=</span><span class='number'>1</span><span class='punctuation delimiter'>,</span> <span class='keyword'>const</span> <span class='variable'>b</span><span class='operator'>=</span><span class='number'>2</span><span class='punctuation bracket'>)</span>
+<span class='punctuation bracket'>}</span><span class='keyword'>else</span><span class='punctuation bracket'>{</span>
+  <span class='variable'>tup</span> <span class='operator'>=</span> <span class='punctuation bracket'>(</span><span class='keyword'>const</span> <span class='variable'>a</span><span class='operator'>=</span><span class='number'>1</span><span class='punctuation delimiter'>,</span> <span class='keyword'>const</span> <span class='variable'>b</span><span class='punctuation delimiter'>:</span><span class='type builtin'>U4</span><span class='operator'>=</span><span class='number'>3</span><span class='punctuation delimiter'>,</span> <span class='keyword'>const</span> <span class='variable'>c</span><span class='operator'>=</span><span class='number'>3</span><span class='punctuation bracket'>)</span>
+<span class='punctuation bracket'>}</span>
+
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>tup</span><span class='punctuation delimiter'>.</span><span class='variable'>a</span> <span class='operator'>==</span> <span class='number'>1</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='variable'>cond</span> <span class='keyword'>implies</span> <span class='variable'>tup</span><span class='punctuation delimiter'>.</span><span class='variable'>b</span><span class='operator'>==</span><span class='number'>2</span><span class='punctuation bracket'>)</span>
+<span class='function builtin'>cassert</span><span class='punctuation bracket'>(</span><span class='operator'>!</span><span class='variable'>cond</span> <span class='keyword'>implies</span> <span class='variable'>tup</span><span class='punctuation delimiter'>.</span><span class='variable'>b</span><span class='operator'>==</span><span class='number'>3</span><span class='punctuation bracket'>)</span>
+</code></pre></div>
+<p>Casing does not affect <code>comptime</code>. The declaration modifier requires
+compile-time evaluation; <code>.[`comptime`]</code> checks whether the current value is
+known at compile time, even when the declaration has no <code>comptime</code> modifier.</p>
+<div class="highlight pyrope-highlight pyrope"><pre><code><span class='function builtin'>assert</span><span class='punctuation bracket'>(</span><span class='variable'>something</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>`comptime`</span><span class='punctuation bracket'>]</span><span class='punctuation bracket'>)</span>
+<span class='keyword'>comptime</span> <span class='keyword'>const</span> <span class='variable'>A_xxx</span> <span class='operator'>=</span> <span class='variable'>something</span>      // comptime
+<span class='function builtin'>assert</span><span class='punctuation bracket'>(</span><span class='variable'>A_xxx</span><span class='punctuation delimiter'>.</span><span class='punctuation bracket'>[</span><span class='attribute'>`comptime`</span><span class='punctuation bracket'>]</span><span class='punctuation bracket'>)</span> // also comptime
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["search.suggest", "navigation.sections", "navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../javascripts/config.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>

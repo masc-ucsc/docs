@@ -1,0 +1,56 @@
+digraph assign {
+  rankdir=LR
+  bgcolor="transparent"
+
+  node  [fontname = "helvetica", shape=record, style="rounded", penwidth = 2];
+  edge  [fontname = "helvetica", color="#142b30", arrowhead="normal", penwidth = 2];
+  graph [fontname = "helvetica"];
+
+  node0       [label = "<a> stmts | <s1> stmt1 | <s2> stmt2"];
+
+  nodea [label = "<a> for | <stmts0> stmts | <itr> it_name | <itrr> tup"];
+  nodeb [label = "<a> stmts | <s1> stmt1 | <s2> stmt2 | <s3> stmt3 | <s4> stmt4"];
+
+  nodee [label = "<a> select | <l> lhs | <r1> op1 | <r2> op2"];
+  nodef [label = "<a> ref | <l> ___d"];
+  nodeg [label = "<a> ref | <l> tup_foo"];
+  nodeh [label = "<a> ref | <l> i"];
+
+  c1_itr  [label = "<a> ref | <l> i"];
+
+  c1_itrr  [label = "<a> ref | <l> ___a"];
+
+  c1       [label = "<a> stmts | <s1> stmt1"];
+
+  c1_tup   [label = "<a> tuple | <n> tuple_name | <kv1> key-value | <kv2> key-value"]
+  c1_tup_n [label = "<a> ref   | <l> ___a"];
+
+  c1_begin   [label = "<a> assign | <l> lhs  | <r> rhs"];
+  c1_begin:l -> c1_begin_l:a;
+  c1_begin:r -> c1_begin_r:a;
+  c1_begin_l [label = "<a> ref   | <l> __range_begin"];
+  c1_begin_r [label = "<a> const | <l> 0d0"];
+
+  c2_begin   [label = "<a> assign | <l> lhs  | <r> rhs"];
+  c2_begin:l -> c2_begin_l:a;
+  c2_begin:r -> c2_begin_r:a;
+  c2_begin_l [label = "<a> ref   | <l> __range_end"];
+  c2_begin_r [label = "<a> const | <l> 0d3"];
+
+  nodea:itr -> c1_itr:a;
+  nodea:itrr -> c1_itrr:a;
+  node0:s1 -> c1:a;
+  node0:s2 -> nodea:a;
+  c1:s1 -> c1_tup:a;
+  c1_tup:n -> c1_tup_n:a;
+  c1_tup:kv1 -> c1_begin:a;
+  c1_tup:kv2 -> c2_begin:a;
+
+  nodea:stmts0 -> nodeb:a;
+
+  nodeb:s1 -> nodee:a;
+
+  nodee:l -> nodef:a;
+  nodee:r1 -> nodeg:a;
+  nodee:r2 -> nodeh:a;
+}
