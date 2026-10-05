@@ -244,6 +244,16 @@ compile error otherwise. Spell `= nil` (or `= 0sb?`) for an array with no reset
 value at all: no reset is bound and the contents are undefined until written —
 or given by `initial=` alone, which is then power-on contents only.
 
+A file preload is a separate startup contract:
+`reg code:[256]U32 = std.readmemh("program.hex")` loads the image once at
+simulation initialization, and reset does not reload it. The filename must be a
+nonempty comptime string; Pyrope-relative paths belong to the source file.
+Ordinary writes remain available, while whole-memory bulk update/reset with a
+file preload is not supported. Synthesis preserves externally loadable storage
+instead of specializing it to the file's contents. See
+[Memory image preload](13-stdlib.md#memory-image-preload) for binary files,
+initialization and formal semantics, and Verilog import behavior.
+
 Comptime conditions fold before the memory is built, so a conditional
 initializer that picks `nil` is exactly `= nil`:
 `reg m:[4]U8 = if RST { 0 } else { nil }` with a false `RST` (a `const`, or a

@@ -473,5 +473,5 @@ The LNAST node set is intentionally small: most Pyrope surface forms
 (`match`, `for`-comprehensions, compound assignments, negated operators,
 bit-selection sugar, string interpolation, ...) are expanded by the producer
 (`inou/prp`, prp2lnast) into the primitives above before any consumer sees
-them. The [Pyrope documentation](../pyrope/00-intro.md) describes the surface
+them. The [Pyrope documentation](../pyrope/01-introduction.md) describes the surface
 language; `inou/prp` is the authoritative reference for the exact lowerings.

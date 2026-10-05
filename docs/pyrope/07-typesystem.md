@@ -36,12 +36,14 @@ The type name is also the cast: `U1(flag)`, `U8(x)`, `S8(x)`, `Unsigned(x)`,
 reinterpretation rules).
 
 There are no aliases. The lowercase spellings and the `I<N>` integers (use
-`S<N>`) are gone, and the old spellings are banned words: `u`, `s`, or `i`
-followed by digits (`u8`, `s20`, `i32`), `bool`, `boolean`, `unsigned`,
-`signed`, and `string`. Using one anywhere (a type, a cast, a variable,
-lambda, parameter, or field name) is a compile error whose diagnostic names
-the new spelling (`` `u8` was renamed `U8` ``), so `s1`, `i0`, and `u4` are
-not legal names. A backticked banned word (`` `u4` ``) is an ordinary name.
+`S<N>`) are gone as types. The old spellings (`u`, `s`, or `i` followed by
+digits such as `u8`, `s20`, `i32`, plus `bool`, `boolean`, `unsigned`,
+`signed`, and `string`) are ordinary identifiers again: they may name a
+variable, lambda, parameter, or field with no backticks, so `s1`, `i0`, and
+`u4` are legal names. Using one as a type or a cast (`x:u8`, `u8(x)`) when it
+is not a name you declared is a compile error whose diagnostic names the new
+spelling (`` `u8` was renamed `U8` ``). A backticked `` `u4` `` is the same
+name as `u4`.
 
 `U<N>`, `S<N>`, `Unsigned`, `Signed`, `Bool`, `String`, `Clock`, and `Reset`
 are reserved type words, where `U<N>`/`S<N>` is `U` or `S` followed by any
@@ -65,10 +67,10 @@ cassert(U8(x)#[0] == 1)
 mut cnt4 = 3
 const `U4` = cnt4 + 1       // backticked: a name, not the type
 mut y:U4 = `U4`
-const `u4` = 2              // backticked banned word: an ordinary name
+const `u4` = 2              // an ordinary name (backticks not needed)
+mut u5 = 3                  // OK: lowercase old spellings are ordinary names
 
-mut z:u8 = 0                // error: `u8` was renamed `U8`
-mut u4 = 3                  // error: `u4` is a banned old spelling (now `U4`)
+mut z:u8 = 0                // error: `u8` was renamed `U8` (u8 not declared)
 const U4 = 3                // error: 'U4' is a reserved type word
 const f = U8.x              // error: a type has no fields
 ```
@@ -93,8 +95,10 @@ A `Clock` is not data. In synthesis and LEC it is a 1-bit signal; in
 simulation it counts cycles (its rising edges, one counter per `Clock`
 input). That numeric view is legal only in debug contexts (`test` blocks,
 `puts`, `assert`/`cassert`). In synthesizable logic a `Clock` may only drive
-a clock pin, a `Clock_cell` (clock gating with an `en` enable), or another
-`Clock` port: arithmetic on it or a conversion such as `U1(clk)` is a compile
+a clock pin, a `Clock_cell` (clock gating with an `en` enable), another
+`Clock` port, or the explicit `enable` attribute of a `latch=true` register.
+A latch enable reads the physical level, with `enable_high=false` selecting
+the low phase. Other uses as data remain illegal: arithmetic on it or a conversion such as `U1(clk)` is a compile
 error. A `Clock` is never bound to a constant and never modified except
 through a `Clock_cell`; there are no derived clocks or clock muxes (use
 enables). A `Clock_cell` is written as a `Clock` construction with named
@@ -107,7 +111,9 @@ minted `clock:Clock` that counts the tick's cycles from 0 (see
 A `Reset` is Bool-like: it can be computed (`rst or soft_rst`, a
 synchronizer), the constant `false` means no reset, and a `Bool` expression
 is assigned or bound to a `Reset` without a cast (`acc.reset = clock < 2` in a
-test).
+test). A register's `reset_pin` names its reset, so a computed one is named
+first (`const any_rst = rst or soft_rst`, then `reset_pin=any_rst`);
+`reset_pin=rst != 0` is a compile error.
 
 ```pyrope
 mod cnt8(c:Clock, r:Reset, en:Bool) -> (q:U8@[0]) {

@@ -82,6 +82,13 @@ can cost solve time but never a wrong verdict. Registers that stay unpaired
 are reported with a reason (ambiguous twin, differing reset value, no
 structural match) so the user can iterate instead of hitting a wall.
 
+Explicit correspondences use `formal.lec.match='old_inst.q=new_inst.q'`, with
+actual reference state names on the left and implementation names on the right.
+`ref.` and `impl.` have no special prefix meaning. An unresolved explicit name
+is a usage error, diagnosed before the prover runs. See the
+[LEC usage section](02-usage.md#equivalence-checking-lec) for result-JSON fields
+and independent Yosys checking.
+
 Users can also help the prover: `formal` blocks
 ([Pyrope syntax](../pyrope/05-assert.md#formal-blocks)) supply invariants and
 assumptions. A plain `assume` must itself be proven before it may constrain the

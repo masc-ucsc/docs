@@ -150,9 +150,12 @@ Attributes control fields like the default reset and clock signal. This allows
 to change the control inside procedures. A `*_pin` attribute (`clock_pin`,
 `reset_pin`, ...) is always a connection: it connects the pin to the named
 wire, not to the wire's current value, so it takes the signal directly and is
-written without `ref` (`clock_pin=ref clk` is a compile error). A `Reset` is
-Bool-like, so `reset_pin=false` means no reset. A `Clock` is never bound to a
-constant, so `clock_pin` always names a `Clock` signal.
+written without `ref` (`clock_pin=ref clk` is a compile error). A pin NAMES
+its signal: a `Clock`/`Reset`, a `U1`/`Bool` net (or a field of one), or a
+constant; an expression (`reset_pin=rst != 0`) is a compile error, so a
+computed reset is given a name first. A `Reset` is Bool-like, so
+`reset_pin=false` means no reset. A `Clock` is never bound to a constant, so
+`clock_pin` always names a `Clock` signal.
 
 ```pyrope
 reg counter:U32 = 0
@@ -162,6 +165,10 @@ reg counter3::[reset_pin=rst2]=0
 reg counter5:U32:[reset_pin=false]=nil // OK, no reset
 reg counter6::[clock_pin=true]=0       // error: a Clock is never a constant
 reg counter7::[clock_pin=ref clk1]=0   // error: a pin takes the signal, no `ref`
+reg counter8::[reset_pin=rst2 or soft]=0 // error: a pin names a signal, not an expression
+
+const any_rst = rst2 or soft           // a computed reset gets a name...
+reg counter9::[reset_pin=any_rst]=0    // ...and the pin names it
 ```
 
 In the long term, the goal is to have any synthesis directive that can affect
@@ -350,22 +357,23 @@ Registers have the following attributes:
   clock (`Clock(clock_pin=clk, enable=en)`) or a child's `Clock` output, never
   a constant, a `Reset` or data, and written without `ref`; defaults to the
   module's [implicit clock](#implicit-clock-and-reset)
-* `reset_pin`: the reset signal (`reset_pin=rst2`, a `Reset` or a `Bool`
-  expression); defaults to the module's
+* `reset_pin`: the reset signal (`reset_pin=rst2`): the name of a `Reset`
+  or of a `U1`/`Bool` net, never an expression (name a computed reset
+  first: `const any_rst = rst or soft`, then `reset_pin=any_rst`); defaults
+  to the module's
   [implicit reset](#implicit-clock-and-reset). `reset_pin=false` means no
   reset (the register must then be initialized with `nil`)
 * `negreset`: active-low reset. `false` by default: a reset is active-high
   unless the register sets `negreset=true`. The reset's name carries no
   polarity (`rst_n` is active-high without `negreset=true`)
-* `posclk`: true by default, selects a posedge or negnedge flop. On a latch
-  the same pin is the enable *polarity*, not a clock edge, and `posclk=false`
-  is refused there (see `enable_high`)
+* `posclk`: true by default, selects a posedge or negedge flop. On a latch
+  it selects the polarity of an explicit `enable`, as described below
 * `enable_high`: alias of `posclk`, accepted on any register. On a flop it is
-  the clock edge, exactly like `posclk`; on a latch it is the enable polarity.
-  `enable_high=false` (an active-low enable) on a latch is refused, because the
-  latch lowering derives the hold from the same condition and a bare polarity
-  flip would make it write itself instead of capturing the data — write the
-  inverted condition instead, `if !g { ... }`
+  the clock edge. On a latch, `enable_high=false` makes a nonconstant explicit
+  `enable` active-low: `reg q:U8:[latch=true, enable=g, enable_high=false] = nil`.
+  The polarity applies only to `g`; conditions guarding writes are ANDed with
+  the resulting enable. Without an explicit enable, a low polarity attribute
+  is refused; write the inverted condition instead, `if !g { q = d }`
 * `latch`: declares a level-sensitive latch instead of a flop
   (`reg l:U8:[latch=true] = 0`). The grammar has no `latch` declaration keyword, so
   the marker is consumed at the declaration and is not readable back as
@@ -376,7 +384,9 @@ Registers have the following attributes:
   that guard the writes, so `reg q::[enable=(wen!=0)] = 0; q = d` and
   `reg q = 0; if wen!=0 { q = d }` describe the same flop. It names a signal, so
   it needs a value: the flag-only `:[enable]` is an error, and so is
-  `enable=false` (a register that can never update)
+  `enable=false` (a register that can never update). A latch may name a
+  `Clock` as its explicit enable; this reads the physical clock level, with
+  `enable_high=false` selecting the low phase
 * `retime`: allow to retime across the register (TBD: not yet implemented —
   the name is accepted but no pass consumes it, so a register carrying it
   warns `reg-attr-not-lowered` and is retimed no differently)
@@ -445,13 +455,21 @@ mod gated(clk:Clock, en:Bool, d:U8) -> (q:U8@[1]) {
 
 A `Reset` is Bool-like. It can be computed (`rst or soft_rst`, a
 synchronizer), the constant `false` means no reset, and a `Bool` expression
-binds to a `Reset` input or to `reset_pin` without a cast.
+binds to a `Reset` input without a cast. `reset_pin` takes a NAME, so a
+computed reset is named first (`const any_rst = rst or soft_rst`, then
+`reset_pin=any_rst`).
 
 At a call site, an unbound `Clock` (or `Reset`) input of a `mod`/`pipe` child
 (its declared one, or the one minted for it) is auto-wired to the caller's
 single `Clock` (or `Reset`), which is minted in the caller if it has none. A
 caller with two or more `Clock` (or `Reset`) inputs must bind every child
 `Clock` (or `Reset`) input explicitly; leaving one unbound is a compile error.
+A data input is never that implicit signal, whatever its name: in
+`mod h(rst:U1, ...)` an unbound child `rst:Reset` follows the `reset` minted
+for `h`, not `h`'s `rst`, and stays deasserted unless the caller of `h` drives
+`reset`. LiveHD warns when an auto-wired child `Reset` (or `Clock`) meets a
+data input named like it (`reset-auto-wire-minted`, `clock-auto-wire-minted`);
+bind it explicitly (`rst=Bool(rst)`) or declare `rst:Reset`.
 
 A `comb` holds no state and can not declare a `Clock` or `Reset` input (a
 compile error), so nothing is auto-wired into it. A comb input that the body
@@ -778,11 +796,16 @@ const z = f(a=x#[0..<4])   // OK, explicit slice
 Pyrope borrows the `comptime` functionality from Zig. `comptime` is a prefix
 modifier that can be applied to `const` or `mut` to indicate that the variable
 must be resolvable at compile/elaboration time. `comptime` alone is shorthand
-for `comptime const`.
+for `comptime const`. The modifier may also follow the storage word:
+`const comptime` is the same declaration as `comptime const` (and `mut
+comptime` as `comptime mut`); `lhd pyrope fmt` prints the `comptime`-first
+spelling. A `reg`, `wire`, `stage` or `fluid` declaration is never
+compile-time, so `comptime` on one of them is a syntax error.
 
 ```pyrope
 comptime const SIZE = 16
 comptime const a = 1        // same as above
+const comptime a2 = 1       // same as `comptime const a2 = 1`
 comptime mut counter = 0    // mutable at compile time (updated during elaboration)
 comptime const b = a + 2    // OK, comptime const
 comptime c = rand           // error: 'c' is not resolvable at compile time

@@ -312,9 +312,9 @@ unescaped: a backticked reserved word is an ordinary name in every position,
 so `` `else` `` is not `else`.
 
 The formatter preserves backticks around reserved keywords and type spellings
-(and banned old spellings) by the same exact-spelling match: `` `else` ``,
-`` `u8` ``, and `` `U8` `` keep their backticks, while `` `ELSE` `` is a
-non-reserved word and formats as `ELSE`.
+by the same exact-spelling match: `` `else` `` and `` `U8` `` keep their
+backticks, while `` `ELSE` `` and `` `u8` `` are non-reserved words and format
+as `ELSE` and `u8`.
 
 The built-in type words `U<N>`, `S<N>`, `Unsigned`, `Signed`, `Bool`, `String`,
 `Clock`, and `Reset` ([type system](07-typesystem.md)) are reserved words too.
@@ -328,25 +328,31 @@ lowercase `clock` and `reset` are ordinary names (so the minted `clock:Clock`
 and `reset:Reset` inputs need no backticks), and so are `BOOL`, `STRING`, or
 `UNSIGNED`.
 
-The old lowercase type spellings are banned words: `u`, `s`, or `i` followed by
-digits (`u8`, `s4`, `i32`), `bool`, `boolean`, `unsigned`, `signed`, and
-`string`, in exactly that lowercase spelling (`BOOL` or `I32` are ordinary
-names). Using one anywhere (as a type, a cast, a variable, lambda, or field
-name) is an error that names the new spelling (`u8` was renamed `U8`). So `s1`,
-`i0`, and `u4` are not legal names; pick another name (`st1`, `in0`) or
-backtick it (`` `s1` ``), since a backticked banned word is an ordinary name.
+The old lowercase type spellings are ordinary identifiers: `u`, `s`, or `i`
+followed by digits (`u8`, `s4`, `i32`), `bool`, `boolean`, `unsigned`,
+`signed`, and `string` can be variable, port, parameter, lambda, or field names
+with no backticks (`s1`, `i0`, and `u4` are legal names), and a backticked
+`` `u8` `` is the same name as `u8`. The type words are the capitalized ones
+above (so `S2` and `U8` are reserved, `s2` and `u8` are not). The only
+restriction is on use: when an old lowercase spelling appears as a type
+(`x:u8`, `<u8>`) or as a cast callee (`u8(x)`) and is not a name you declared,
+it is a compile error that names the new spelling (`u8` was renamed `U8`). If
+you declared `u8` yourself (a variable or a lambda), it is just your name.
 
 ```pyrope
 const `U4` = 3         // a variable named U4
 mut x:U4 = `U4`        // the type U4 holding the variable U4
 const U4 = 3           // error: U4 is a reserved type word, use `U4`
-const s1 = 1           // error: s1 is a banned old spelling (now S1)
+const s1 = 1           // OK: lowercase old spellings are ordinary names
+const S1 = 1           // error: S1 is a reserved type word, use `S1`
 const st1 = 1          // OK
 const clock = 1        // OK: only `Clock` is a type word, not `clock`
 const `Clock` = 1      // a variable named Clock (bare Clock is the type)
 const BOOL = 1         // OK: only the exact spellings are reserved
-const `s1` = 1         // OK: a backticked banned word is an ordinary name
-const cfg2 = (const `U8` = 1, const `bool` = true)
+const `s1` = 1         // OK: the same name as s1, backticks not needed
+const u8 = 5           // OK: an ordinary name
+mut y:u8 = 0           // error: `u8` was renamed `U8` (when u8 is not a type you declared)
+const cfg2 = (const `U8` = 1, const bool = true)
 cassert(cfg2.`U8` == 1)
 const `foo$bar` = 2    // `$` needs backticks
 const foo$bar = 2      // error: `$` is not an identifier character
@@ -363,8 +369,8 @@ by the compiler. The style guide recommends starting type names with an
 uppercase letter (`Pixel`, `GcdModel`) and variable names with a lowercase
 letter (`pixel`, `count`).
 
-The reserved type words and banned old spellings listed above still require
-backticks when used as ordinary names. That restriction is independent of
+The reserved type words listed above still require backticks when used as
+ordinary names (the old lowercase spellings do not). That restriction is independent of
 the capitalization style recommendation.
 
 `comptime` is not inferred from casing. To require compile-time evaluation,

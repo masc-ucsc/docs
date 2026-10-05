@@ -161,6 +161,23 @@ block's assumes could only ever apply globally. Prove blocks with
 design itself, spelled `assume_nocheck(expr)` (a plain `assume` constrains the
 miter only once it is proven).
 
+A plain `assume` over a module's own registers is the way to state a state
+invariant that makes an equivalence inductive. When `lec` can only prove a pair
+up to its bound, it prints the induction step's counterexample, including the
+register values it started from (`state: last=0`). If that state is
+unreachable, for example a one-hot register that is zero, write the invariant
+next to the register:
+
+```
+reg last:U4 = 1
+assume(last#+[..] == 1)   // one-hot: proven by induction, then used by lec
+```
+
+The compile proves it by induction from the register's initial value, and `lec`
+then uses it as a hypothesis ("PROVEN under 1 proven assume(s)"), so the
+implementation does not have to copy the reference's behavior in states that
+can never occur.
+
 
 !!! NOTE
     The recommendation is to use `assume` and `assert` frequently, including

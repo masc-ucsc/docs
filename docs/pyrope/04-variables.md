@@ -256,17 +256,17 @@ contexts (tests, `puts`, `assert`/`cassert`). A `Reset` is Bool-like.
 
 Built-in type names are capitalized: `U<num>`, `S<num>`, `Unsigned`,
 `Signed`, `Bool`, `String`, `Clock`, and `Reset`. They are reserved type
-words, and the old lowercase spellings (`u8`, `s20`, `i32`, `bool`,
-`string`, ...) are **banned words**: a compile error in every position, names
-included (`s1`, `i0`, `u4`). A backticked reserved or banned word is an
-ordinary name. The full rules are in
+words. The old lowercase spellings (`u8`, `s20`, `i32`, `bool`, `string`,
+...) are ordinary identifiers: legal names (`s1`, `i0`, `u4`), and an error
+only when used as a type or cast without a user declaration (`x:u8`, `u8(x)`:
+"`u8` was renamed `U8`"). A backticked reserved word is an ordinary name. The full rules are in
 [Built-in types](07-typesystem.md#built-in-types) and
 [Identifiers](02-basics.md#identifiers).
 
 ```pyrope
-mut s1 = 3            // error: `s1` is a banned word (the type is `S1`)
-mut st1 = 3           // OK
-mut `s1` = 3          // OK: backticked, an ordinary name
+mut s1 = 3            // OK: `s1` is an ordinary name (the type is `S1`)
+mut S1 = 3            // error: `S1` is a reserved type word
+mut `S1` = 3          // OK: a variable named S1, not the type
 mut U4 = 3            // error: `U4` is a reserved type word
 mut `U4` = 3          // OK: a variable named U4, not the type
 mut g:u8 = 0          // error: `u8` was renamed `U8`
@@ -291,7 +291,7 @@ described in the attribute section:
   generation (`logic` vs `signed logic`).
 * `U<num>`: An integer basic type constrained to be a natural number with a maximum value of $2^{\texttt{num}}-1$. E.g: `U10` can go from zero to 1023.
 * `S<num>`: a signed (2s complement) number with a maximum value of $2^{\texttt{num}-1}-1$ and a minimum of $-2^{\texttt{num}-1}$.
-  There is no `I<num>`/`i<num>` spelling: `i32` is a compile error (write `S32`).
+  There is no `I<num>`/`i<num>` type: `x:i32` is a compile error (write `S32`).
 * `Unsigned(bits=N)` / `Signed(bits=N)`: the same as `U<num>`/`S<num>` when the width
   is a comptime expression, such as a generic. `num` in `U<num>` is a literal,
   so a generic width has no `U<num>` form. It is valid wherever a type is: ports, locals,

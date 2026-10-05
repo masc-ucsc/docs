@@ -75,18 +75,19 @@ Notes:
       error. User-defined types and variables accept either case; the style
       guide recommends starting type names with uppercase and variable names
       with lowercase.
-    * **Banned old spellings.** `u8`, `s20`, `i32` (any `u`/`s`/`i` followed
+    * **Old lowercase spellings.** `u8`, `s20`, `i32` (any `u`/`s`/`i` followed
       by digits), `bool`, `boolean`, `unsigned`, `signed` and `string` have no
-      alias and are errors everywhere — type, cast, and variable, field,
-      parameter or lambda name (`s1`, `i0`, `u4` are not legal names). The
-      diagnostic names the new spelling (`u8` was renamed `U8`).
+      alias as types, but they are ordinary identifiers (`s1`, `i0`, `u4` are
+      legal variable, field, parameter or lambda names, no backticks). Used as
+      a type or cast (`x:u8`, `u8(x)`) without a user declaration they are an
+      error whose diagnostic names the new spelling (`u8` was renamed `U8`).
     * **Reserved type words.** `U`/`S` followed by any digit string (`U0`,
       `U1333`), `Unsigned`, `Signed`, `Bool`, `String`, `Clock` and `Reset` can
       not be declared as names, including after `.` (fields, attributes).
     * **Identifiers** (see [Basics](02-basics.md#identifiers)). A backticked
       name equals the plain name only for non-reserved words: `` `else` `` is
-      not `else`, and a backticked reserved or banned word (`` `U4` ``,
-      `` `u8` ``, `` `_` ``) is an ordinary name. `$` is not an identifier
+      not `else`, and a backticked reserved word (`` `U4` ``, `` `_` ``) is an
+      ordinary name (a backticked `` `u8` `` is just `u8`). `$` is not an identifier
       character (write `` `foo$bar` ``). Only letters, digits and `_` form a
       name; emoji and other non-ASCII symbols are errors. A bare `_` is
       reserved and is an error.

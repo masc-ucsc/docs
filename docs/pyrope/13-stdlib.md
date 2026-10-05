@@ -67,7 +67,15 @@ ROM constant. LiveHD preserves the native memory boundary, including memories
 with no functional RTL writer; exported Verilog gives that boundary a `blackbox`
 attribute and a behavioral simulation model. A downstream implementation must
 supply the memory macro/loading mechanism. This builtin does not generate a scan
-chain. Formal reasoning uses stable symbolic contents until ordinary writes.
+chain. Native LiveHD formal reasoning uses stable symbolic contents until
+ordinary writes; it does not specialize the proof to the image values.
+
+For an independent Yosys check, `lgcheck` defines
+`LIVEHD_FORMAL_MEMORY_MODEL` while reading the sources. This exposes the emitted
+behavioral memory body through its default synthesis black-box boundary. The
+same image files must be accessible to both sides. That check elaborates the
+supplied image; it is not an image-independent proof of externally loaded
+contents. Leave the macro undefined when preserving the synthesis boundary.
 
 Whole-memory bulk update/reset is not supported with file preload.
 

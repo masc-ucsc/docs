@@ -81,12 +81,36 @@ Every input/output is a typed slot `KIND:PATH`. The main IR kinds:
 | `ln:` | the design's LNAST units — an `hhds::Forest` save directory (`forest.txt` + binary tree bodies) plus a `manifest.json` unit index. Alias: `lnast:` |
 | `lg:` | the design's LGraphs — an `hhds::GraphLibrary` save directory (`library.txt` + binary graph bodies; a Pyrope compile also records there which modules each design saved and its top modules, `lhd_owners.json`, so a compile sharing the directory never prunes another design's tops or anything they still instantiate). Aliases: `design:`, `lgraph:` |
 | `verilog:` | Verilog source. As `--emit`, a deterministic name-sorted concatenation of the per-module `inou.cgen.verilog` output |
-| `pyrope:` | Pyrope source. As `--emit-dir`, a per-unit `.prp` re-emission via `pass.prp_writer` (needs `ln:`/pyrope inputs) |
+| `pyrope:` | Pyrope source. As `--emit-dir`, a `.prp` source tree re-emitted via `pass.prp_writer` from Pyrope, native Slang Verilog, or `ln:` input; `lg:` has no source-level reverse lowering |
 | `lnast-dump:` | round-trippable textual LNAST dump (the `Lnast::dump` text form), one `<unit>.lnast` per unit. A debug/test observable; the binary interchange form is `ln:` |
 
 Because a design always holds *many* units/graphs, `ln:`/`lg:`/`pyrope:` are
 directory containers (`--emit-dir` only). `--emit verilog:PATH` is the one
 single-file output. `ln:`/`lg:` inputs are given positionally.
+
+### Re-emitting Pyrope
+
+The native Slang Verilog reader retains the source-level representation needed
+by the Pyrope writer. Use the same top, filelist, and preprocessor definitions
+as the reference build:
+
+```sh
+lhd compile verilog --top TOP --emit-dir pyrope:generated -- -F rtl/filelist.f -DSYNTHESIS
+lhd compile generated/TOP.prp --top TOP --emit verilog:generated.v
+lhd pyrope fmt -i generated/*.prp
+```
+
+Keep the generated helper files beside the emitted top. The output is compiler
+source, not an idiomatic rewrite, but it must compile untouched and remain valid
+after formatting. Generic bindings, array shapes, lexical scopes, and physical
+`Clock`/`Reset` types must survive re-emission. Pyrope input can also be re-emitted;
+a graph-only `lg:` input cannot be reconstructed as Pyrope.
+
+The writer checks its own output: after writing, it recompiles the emitted
+files (parse and type check, no graph lowering) and fails the command with
+`prp-writer-invalid-output`, naming the first error, when they do not re-read.
+A failure there is a writer defect; `--set prp_writer.selfcheck=false` keeps
+the unchecked output for inspection.
 
 ## Verilog compilation
 
@@ -254,6 +278,41 @@ so the divergence can be replayed and visualized. A non-equivalent pair exits
 non-zero with `error.class = equiv_fail`; an inconclusive solve is a warning
 (exit 0) unless `--set formal.strict=true`.
 
+Read `lec.verdict` together with `lec.bounded` and `lec.bound` in the result
+JSON. A `proven` result with `bounded=true` covers only the stated depth. A
+timeout or other inconclusive result is not a proof, even if the command exits
+zero in non-strict mode.
+
+Explicit state correspondences use actual reference and implementation names:
+
+```sh
+lhd lec --ref before.prp --impl after.prp --top TOP \
+  --set formal.lec.match='old_inst.q=new_inst.q' --set formal.timeout=180
+```
+
+The left name belongs to the reference and the right to the implementation;
+`ref.` and `impl.` are not side qualifiers. Unresolved explicit state names
+produce a usage error before proving. Regenerate mappings after changing the
+hierarchy instead of keeping stale names.
+
+For an independent check of Pyrope-to-Verilog generation, compare emitted
+Verilog against the original Verilog with Yosys-backed `inou/yosys/lgcheck`,
+using its `--gold_reader slang` and `--gate_reader slang` options when needed.
+Reading LiveHD-emitted Verilog on both sides can hide a shared lowering defect.
+`LGCHECK_EQUIV_TIMEOUT=180` sets a shared solver budget across its strategies;
+source reading occurs before that budget. Use an outer wall limit if the whole
+invocation must stop within three minutes. Early inconclusive or setup errors
+are distinct from a timeout.
+
+`lgcheck` checks clock/reset behavior using a global-clock model when ordinary
+single-edge induction is unsafe. `LGCHECK_BMC_STEPS` controls its bounded
+counterexample search; passing those steps alone is not a proof.
+`LGCHECK_INDUCT_AFTER_BMC=1` optionally tries whole-miter induction after a
+completed, non-refuting bounded check, using the remaining shared budget. It
+uses the same clock, reset, input, and initialization model without guessed
+internal correspondence cuts. A failed induction hypothesis is inconclusive,
+not a refutation.
+
 ## Formal verification (assert / assume)
 
 `lhd formal verify` proves ONE design's `assert` / `assert_always` / `assume`
@@ -328,6 +387,12 @@ self-describing), `phases`, and on failure an `error` block:
 | `config` | missing or invalid configuration |
 | `dependency` | required external tool or prior artifact absent |
 | `unsupported` | requested feature is known but not implemented |
+
+`syntax` is the class (and exit code 6) of every source-level design error,
+not only a parse error: a name, type, bitwidth or timing mistake too. When a
+diagnostic caused the failure, the `error` block also carries its
+`category` (`syntax`, `name`, `type`, `bitwidth`, `time`, ...), and the pretty
+summary line prints that category (`error[bitwidth]: ...`).
 
 `phases` is the per-phase wall clock: an array of `{"name", "ms"}` in completion
 order, keyed by the *bare* step name (`inou.prp`, `pass.cprop`, `pass.lec`) plus

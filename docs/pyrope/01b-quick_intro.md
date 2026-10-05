@@ -65,10 +65,12 @@ wrap a = a + 200       // narrowing must be annotated: wrap drops bits, sat satu
 * Built-in types are capitalized: `U<num>`/`S<num>` (`S32`; there is no
   `I32`), `Unsigned`, `Signed`, `Bool`, `String`, `Clock`, `Reset`. A width
   from a comptime value is `Unsigned(bits=N)`/`Signed(bits=N)`. The old
-  lowercase spellings (`u8`, `bool`, `signed`, ...) are banned words: a
-  compile error in every position, names included (`s1`, `i0`, `u4` are not
-  legal variable names). A variable spelled like a type word or a banned word
-  must be backticked (`` `U4` ``, `` `u4` ``).
+  lowercase spellings (`u8`, `bool`, `signed`, ...) are ordinary identifiers
+  (`s1`, `i0`, `u4` are legal variable names, no backticks). Using one as a
+  type or a cast (`x:u8`, `u8(x)`) when it is not a name you declared is a
+  compile error saying it was renamed (`u8` was renamed `U8`). A variable
+  spelled like a type word (`U4`, `S2`, `Bool`) must be backticked
+  (`` `U4` ``).
 
 Details: [Basics](02-basics.md), [Variables and types](04-variables.md),
 [Attributes](04b-attributes.md).
