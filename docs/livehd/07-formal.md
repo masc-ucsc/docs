@@ -296,11 +296,13 @@ error, never a silent no-op. The load-bearing knobs:
 | ----------------------- | ---------------------------------------------------------- |
 | `formal.engine`         | `auto` (default: race complementary strategies), `bmc`; `ind` selects the inductive miter (equivalence only) |
 | `formal.bound`          | BMC / induction depth (default 6)                          |
-| `formal.timeout`        | soft total budget for **solver** (BMC/cvc5) time across the equivalence command — a target, not a hard wall-clock deadline; semdiff and encoding do not draw from it. A lone or compile-tier query treats it as its per-query cap; hard problems degrade to UNKNOWN |
+| `formal.timeout` | LEC wall-clock deadline in seconds across queueing, solving and retries (0 disables). Concurrent arms share elapsed time. Explicit proof effort applies the same rule to property verification. |
 | `formal.spec_mining_timeout` | a **separate** budget for the diagnosis/mining phase (which also iterates the solver), so it never steals from `formal.timeout`; 0 = off |
-| `formal.rlimit`         | deterministic solver budget for reproducible CI verdicts   |
 | `formal.phase` / `formal.reset` | reset regime selection and explicit reset naming   |
-| `formal.jobs`           | bound on concurrent solver processes (default 4)           |
+| `lhd.jobs` | shared ceiling for formal solvers, LLVM compilation and native synthesis; 0 selects available CPUs, with load/memory admission |
+| `formal.effort` | LEC default `test` starts sampling immediately; `proof` never samples; `quick-check`/`long-check` select other vector targets |
+| `formal.profile` | `internal` (default), `lazy`, `eager-kissat`, `eager-cms`, `intblast`, `witness`; eager profiles require pure bit-vectors and confirm counterexamples with models |
+| `formal.portfolio` | `auto` (default) or comma-separated `bmc:profile`/`ind:profile` arms; sampled portfolios require BMC with model support |
 | `formal.partitions` / `formal.split` | parallel input case-splitting              |
 | `formal.strict`         | make UNKNOWN a hard failure                                |
 | `formal.report`         | verify's machine-readable run report filename (default `formal_report.json`, written into the workdir on every run; `false` = off) |

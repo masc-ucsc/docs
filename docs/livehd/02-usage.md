@@ -66,11 +66,13 @@ Shared arguments honored by the execution commands:
 | `-q`/`--quiet`, `--verbose` | stderr verbosity; never pollutes the stdout protocol |
 | `--diag-fmt auto\|jsonl\|pretty` | rendering of the stdout result envelope and the stderr diagnostics; `auto` (default) = `pretty` on a terminal, `jsonl` when piped/captured (agents, CI) |
 
-There is no `-j`/`--jobs`: parallelism is a per-pass knob — `--set formal.jobs=N`
-(solver worker pool, default 4), `--set pass.abc.threads=N` (`lhd pass abc`,
-default 1; 0 = all CPUs), `--set synth.threads=N` (`lhd synth`, default 0 =
-all CPUs) and `--set sim.jobs=N` (host C++ compiles, default 0 = one per
-hardware thread).
+Use `--set lhd.jobs=N` for the shared ceiling on formal solvers, LLVM
+simulation compilation and native synthesis. Zero (the default) selects the
+CPUs available to the process. CPU load and measured/predicted memory may
+reduce concurrency; one job is always allowed to make progress. Host C++
+compilation chooses a fixed limit when launched. ABC keeps the independent
+`--set abc.threads=N` limit (0 selects its automatic cap). The former
+`formal.jobs`, `sim.jobs` and `synth.threads` settings are retired.
 
 ## Typed inputs and outputs (kinds)
 
