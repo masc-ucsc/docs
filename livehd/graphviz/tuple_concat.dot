@@ -1,0 +1,74 @@
+digraph assign {
+  rankdir=LR
+  bgcolor="transparent"
+
+  node  [fontname = "helvetica", shape=record, style="rounded", penwidth = 2];
+  edge  [fontname = "helvetica", color="#142b30", arrowhead="normal", penwidth = 2];
+  graph [fontname = "helvetica"];
+
+  node_0 [label = "<a> stmts | <s1> stmt1 | <s2> stmt2 | <s4> stmt3 | <s5> stmt4 | <s6> stmt5"];
+
+  node_5 [label = "<a> plus | <l> lhs | <r1> op1 | <r2> op2 "];
+  node_6 [label = "<a> ref   | <l> ___d"];
+  node_7 [label = "<a> ref   | <l> cat"];
+  node_8 [label = "<a> const   | <l> 0d2"];
+
+  node_1 [label = "<a> tup   | <n> tup_name | <kv1> key-value | <kv2> key-value"]
+  node_1_1 [label = "<a> ref   | <l> tup"];
+
+  node_2 [label = "<a> assign | <l> lhs  | <r> rhs"];
+  node_3 [label = "<a> ref   | <l> foo"];
+  node_4 [label = "<a> const | <l> 0d1"];
+
+  node_9 [label = "<a> assign | <l> lhs  | <r> rhs"];
+  node_a [label = "<a> ref    | <l> bar"];
+  node_b [label = "<a> ref    | <l> ___d"];
+
+
+  node_j [label = "<a> tuple     | <n> tuple_name | <kv1> key-value | <kv2> key-value"]
+  node_j_1 [label = "<a> ref   | <l> ___f"];
+
+  node_k [label = "<a> const   | <l> 0d4"];
+  node_n [label = "<a> ref     | <l> dog"];
+
+  node_q [label = "<a> tuple_concat | <l> lhs | <r1> op1 | <r2> op2 "];
+  node_r [label = "<a> ref   | <l> ___e"];
+  node_s [label = "<a> ref   | <l> tup"];
+  node_t [label = "<a> ref   | <l> ___f"];
+
+  node_u [label = "<a> assign | <l> lhs  | <r> rhs"];
+  node_v [label = "<a> ref    | <l> tup"];
+  node_w [label = "<a> ref    | <l> ___e"];
+
+  node_0:s1  -> node_5:a
+  node_0:s2  -> node_1:a;
+  node_0:s4  -> node_j:a;
+  node_0:s5  -> node_q:a;
+  node_0:s6  -> node_u:a;
+
+  node_5:l  -> node_6:a;
+  node_5:r1 -> node_7:a;
+  node_5:r2 -> node_8:a;
+
+
+  node_1:n  -> node_1_1:a;
+  node_1:kv1 -> node_2:a;
+  node_1:kv2 -> node_9:a;
+
+  node_2:l -> node_3:a;
+  node_2:r -> node_4:a;
+
+  node_9:l -> node_a:a;
+  node_9:r -> node_b:a;
+
+  node_j:n -> node_j_1:a;
+  node_j:kv1 -> node_k:a;
+  node_j:kv2 -> node_n:a;
+
+  node_q:l   -> node_r:a;
+  node_q:r1  -> node_s:a;
+  node_q:r2  -> node_t:a;
+
+  node_u:l   -> node_v:a;
+  node_u:r   -> node_w:a;
+}

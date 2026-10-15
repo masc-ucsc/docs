@@ -1,0 +1,66 @@
+.pyrope-highlight pre {
+  margin: 1em 0;
+}
+
+.pyrope-highlight code {
+  display: block;
+  overflow-x: auto;
+}
+
+.pyrope-highlight .attribute {
+  color: var(--md-code-hl-special-color);
+  font-style: italic;
+}
+
+.pyrope-highlight .comment {
+  color: var(--md-code-hl-comment-color);
+  font-style: italic;
+}
+
+.pyrope-highlight .constant,
+.pyrope-highlight .number,
+.pyrope-highlight .boolean {
+  color: var(--md-code-hl-number-color);
+}
+
+.pyrope-highlight .function,
+.pyrope-highlight .function.call,
+.pyrope-highlight .function.builtin {
+  color: var(--md-code-hl-function-color);
+}
+
+.pyrope-highlight .keyword,
+.pyrope-highlight .keyword.conditional,
+.pyrope-highlight .keyword.function,
+.pyrope-highlight .keyword.import,
+.pyrope-highlight .keyword.operator,
+.pyrope-highlight .keyword.repeat,
+.pyrope-highlight .keyword.return {
+  color: var(--md-code-hl-keyword-color);
+}
+
+.pyrope-highlight .operator,
+.pyrope-highlight .punctuation,
+.pyrope-highlight .punctuation.bracket,
+.pyrope-highlight .punctuation.delimiter,
+.pyrope-highlight .punctuation.special {
+  color: var(--md-code-hl-operator-color);
+}
+
+.pyrope-highlight .string {
+  color: var(--md-code-hl-string-color);
+}
+
+.pyrope-highlight .type,
+.pyrope-highlight .type.builtin {
+  color: var(--md-code-hl-type-color);
+}
+
+.pyrope-highlight .variable.parameter {
+  color: var(--md-code-hl-variable-color);
+}
+
+.pyrope-highlight .variable.member,
+.pyrope-highlight .property {
+  color: var(--md-code-hl-name-color);
+}

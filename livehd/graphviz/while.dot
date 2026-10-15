@@ -1,0 +1,40 @@
+digraph assign {
+  rankdir=LR
+  bgcolor="transparent"
+
+  node  [fontname = "helvetica", shape=record, style="rounded", penwidth = 2];
+  edge  [fontname = "helvetica", color="#142b30", arrowhead="normal", penwidth = 2];
+  graph [fontname = "helvetica"];
+
+  node0 [label = "<a> stmts | <s1> stmt1 | <s2> stmt2 "];
+  node1 [label = "<a> while | <cond1> condition | <s1> stmt"];
+
+  node2 [label = "<a> greaterthan | <l> lhs | <r1> op1 | <r2> op2 "];
+  node3 [label = "<a> ref   | <l> ___a"];
+  node4 [label = "<a> ref   | <l> i"];
+  node5 [label = "<a> const | <l> 0d0"];
+
+  node6 [label = "<a> ref | <l> ___a"];
+
+  node7 [label = "<a> stmts | <s1> stmt1 | <s2> stmt2 | <s3> ..."];
+  node8 [label = "<a> select| <l> lhs  | <r1> op1 | <r2> op2 "];
+  node9 [label = "<a> ref   | <l> ___b"];
+  nodea [label = "<a> ref   | <l> tup_foo"];
+  nodeb [label = "<a> ref   | <l> i"];
+
+  node0:s1    -> node2:a;
+  node0:s2    -> node1:a;
+  node1:cond1 -> node6:a;
+  node1:s1    -> node7:a;
+
+  node2:l  -> node3:a;
+  node2:r1 -> node4:a;
+  node2:r2 -> node5:a;
+
+  node7:s1 -> node8:a;
+
+  node8:l  -> node9:a;
+  node8:r1 -> nodea:a;
+  node8:r2 -> nodeb:a;
+
+}

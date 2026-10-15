@@ -1,0 +1,48 @@
+digraph assign {
+  rankdir=LR
+  bgcolor="transparent"
+
+  node  [fontname = "helvetica", shape=record, style="rounded", penwidth = 2];
+  edge  [fontname = "helvetica", color="#142b30", arrowhead="normal", penwidth = 2];
+  graph [fontname = "helvetica"];
+
+  node0 [label = "<a> stmts | <s1> stmt1"];
+  node1 [label = "<a> func_def | <n> func_name | <c1> cstmts |  <cond> condition | <stmts> stmts |<io1> input | <io2> input |  <io3> output "]
+  node2 [label = "<a> ref   | <l> func_xor"];
+  node3 [label = "<a> ref   | <l> $a"];
+  node4 [label = "<a> ref   | <l> $b"];
+  node5 [label = "<a> ref   | <l> %out"];
+  node6 [label = "<a> stmts | <s1> stmt1 | <s2> stmt2"];
+
+  node2b [label = "<a> stmts"];
+  node1:c1 -> node2b:a;
+
+  node7 [label = "<a> xor | <l> lhs | <r1> op1 | <r2> op2 "];
+  node8 [label = "<a> ref   | <l> ___b"];
+  node9 [label = "<a> ref   | <l> $a"];
+  nodea [label = "<a> ref   | <l> $b"];
+
+  nodeb [label = "<a> assign | <l> lhs  | <r> rhs"];
+  nodec [label = "<a> ref   | <l> %out"];
+  noded [label = "<a> ref   | <l> ___b"];
+
+  nodee [label = "<a> const | <l> true"];
+
+  node0:s1  -> node1:a;
+  node1:n   -> node2:a;
+  node1:stmts -> node6:a;
+  node1:cond  -> nodee:a;
+  node1:io1 -> node3:a;
+  node1:io2 -> node4:a;
+  node1:io3 -> node5:a;
+
+  node6:s1 -> node7:a;
+  node6:s2 -> nodeb:a;
+
+  node7:l -> node8:a;
+  node7:r1 -> node9:a;
+  node7:r2 -> nodea:a;
+  
+  nodeb:l -> nodec:a;
+  nodeb:r -> noded:a;
+}
