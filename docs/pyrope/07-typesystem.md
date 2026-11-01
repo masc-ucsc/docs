@@ -103,7 +103,9 @@ error. A `Clock` is never bound to a constant and never modified except
 through a `Clock_cell`; there are no derived clocks or clock muxes (use
 enables). A `Clock_cell` is written as a `Clock` construction with named
 arguments, `Clock(clock_pin=clk, enable=en)`: an ICG whose result is a gated
-`Clock` (the one-argument `Clock(x)` is not a cast). A test passes a real
+`Clock` (the one-argument `Clock(x)` is not a cast). `invert=true` (a literal)
+makes it an active-low gate: it idles high, samples `en` while `clk` is high and
+gates the falling edge (clock the register with `posclk=false`). A test passes a real
 `Clock` to its design, never a constant (`clk=1`): each `tick` block has a
 minted `clock:Clock` that counts the tick's cycles from 0 (see
 [Running cycles](05b-statements.md#running-cycles-tick)).

@@ -90,6 +90,25 @@ mut t2:T2 = (1, 2)               // error: two Signed fields, name them
 mut t3:T2 = (a=1, b=2)           // OK
 ```
 
+### Tuple types
+
+A tuple *type* lists its entries as `name:T` (a named tuple) or `_:T` (an
+anonymous, positional entry). A tuple type is all-named or all-anonymous: a bare
+`T` entry has neither a name nor the `_:` marker and is an error, and so is a mix.
+
+```pyrope
+type Cmd  = (op:U4, data:U8)    // named entries: v.op, v.data
+type Pair = (_:U4, _:U8)        // anonymous entries: v[0] (U4), v[1] (U8)
+mut p:Pair = (3, 54)
+cassert(p[0] + p[1] == 57)
+// type Bad  = (U4, U8)         // error: a tuple-type entry is `name:T` or `_:T`
+// type Bad2 = (a:U4, _:U8)     // error: all-named or all-anonymous
+```
+
+`_` is the only reserved word allowed in this position
+([Identifiers](02-basics.md#identifiers)). To accept any tuple or array without
+constraining its entries, use the unsized array type `[]`.
+
 ## Selector expressions
 
 A selector `[...]` takes a single expression. The expression can be an integer,

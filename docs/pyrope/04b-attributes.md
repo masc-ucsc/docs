@@ -439,7 +439,13 @@ enables. The one derived `Clock` is a gated one: `Clock(clock_pin=clk,
 enable=en)` (named arguments, `en` a `Bool`) is a `Clock_cell`, an ICG that
 latches `en` while `clk` is low, and its result is a `Clock` usable as a
 `clock_pin` or a `Clock` port -- and, like any `Clock`, never as data or as a
-reset. The one-argument `Clock(x)` is not a cast. A synchronous reset of a
+reset. The one-argument `Clock(x)` is not a cast. An optional literal
+`invert=true` (default `false`) selects the active-low flavour of the gate: the
+output idles high, the enable latch is transparent while `clk` is high (it
+samples `en` at the falling edge), and the gated event is the fall, so a register
+on it takes `posclk=false`: `Clock(clock_pin=clk, enable=en, invert=true)`.
+`invert` is a compile-time literal (`true` or `false`), never a signal. A
+synchronous reset of a
 register on a gated clock takes effect only on the edges the gate lets through
 (while `en` is high); use `async=true` for a reset that must land while the
 gate is closed.

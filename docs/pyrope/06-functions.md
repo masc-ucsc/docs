@@ -566,6 +566,21 @@ let an argument be passed unnamed:
   for `comb f(x)`. The parameter may be untyped or have a compatible tuple
   or array type. This rule does not apply to a `...rest` capture.
 
+```pyrope
+comb vector_io(v:(_:U4, _:U8)) -> (o:U12) { o = v[0] + v[1] }  // anonymous entries
+comb vector_any(v:[]) -> (o:U12) { o = v[0] + v[1] }           // any tuple or array
+const a = vector_io(v=(3,54))
+const b = vector_io((3,54))
+const c = vector_io([3,54])
+const d = vector_io(3,54)             // a, b, c and d are all 57
+cassert(a == 57 and b == 57 and c == 57 and d == 57)
+// comb bad(v:(U4, U8))               // error: a tuple-type entry is `name:T` or `_:T`
+```
+
+  `v:(_:U4, _:U8)` is a tuple type whose entries are anonymous and positional
+  (read as `v[0]`, `v[1]`); `v:[]` is the unsized array type and accepts any
+  tuple or array. A tuple type is all-named or all-anonymous, never a mix.
+
 * The calling expression is a variable whose name matches a parameter name
   (`fcall(a)` matches a parameter named `a`).
 

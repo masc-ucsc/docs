@@ -10,3 +10,7 @@ with Hardware Description Languages (HDLs) like Verilog, CHISEL, and Pyrope.
 [Hardware Design](pyrope/00-hwdesign.md) provides an introduction to hardware design
 for software designers.
 
+
+[LiveHD algorithms](lhd/index.md) is a draft methodology reference for experts
+and agents: the current default synthesis flow, conditional physical flow,
+incremental reuse, and the boundaries of simulation and verification.

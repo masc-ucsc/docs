@@ -396,6 +396,11 @@ const `_` = 8          // OK: a backticked `_` is an ordinary name
 const `_1a` = 8        // OK: a backticked reserved name
 ```
 
+The one place a bare `_` is legal is the anonymous entry `_:T` of a tuple
+*type* or typed tuple (`(_:U4, _:U8)`, see [Tuples](03-bundle.md#tuple-types)):
+a `_` directly after `(` or `,` and directly before a single `:`. It names no
+variable; the entry is addressed by position.
+
 ## Semicolons
 
 Semicolons are not needed to separate statements. In Pyrope, a semicolon (`;`)
