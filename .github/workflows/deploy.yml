@@ -10,34 +10,33 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7.0.1
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7.0.1
         with:
           repository: masc-ucsc/tree-sitter-pyrope
           path: tree-sitter-pyrope
 
-      - uses: actions/setup-python@v2
+      - uses: astral-sh/setup-uv@v10.3.3
         with:
-          python-version: 3.x
+          version: "0.13.6"
+          enable-cache: true
+          python-version: "3.15.2"
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7.1.0
         with:
-          node-version: 20
+          node-version: "26.13.0"
 
-      - run: pip install mkdocs-material
-
-      - run: pip install mkdocs-pymdownx-material-extras mkdocs-redirects mkdocs-minify-plugin mkdocs-mermaid2-plugin
+      - run: uv sync --locked
 
       - run: npm ci
         working-directory: tree-sitter-pyrope
 
-      - run: mkdocs build
+      - run: make build
         env:
-          PYTHONPATH: ${{ github.workspace }}
           PYROPE_TREE_SITTER_GRAMMAR: ${{ github.workspace }}/tree-sitter-pyrope
-          PYROPE_TREE_SITTER_CLI: ${{ github.workspace }}/tree-sitter-pyrope/node_modules/.bin/tree-sitter
+          PYROPE_TREE_SITTER_CLI: ${{ github.workspace }}/tree-sitter-pyrope/node_modules/tree-sitter-cli/tree-sitter
 
       - run: find ./site -name "*.html" -exec sed -i -E 's#<a href="https:\/\/github.com\/masc-ucsc\/livehd\/edit\/master\/(.*)"#<a href="https://github.com/masc-ucsc/docs/edit/main/\1"#g' {} +
 
-      - run: ghp-import --no-jekyll --push --force --no-history --branch=gh-pages ./site
+      - run: uv run --locked ghp-import --no-jekyll --push --force --no-history --branch=gh-pages ./site

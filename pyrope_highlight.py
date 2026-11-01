@@ -36,6 +36,12 @@ def _tree_sitter_cli(grammar: Path) -> str:
     if env_cli:
         return env_cli
 
+    # The npm launcher only spawns this binary; avoid a Node startup per fence.
+    executable = "tree-sitter.exe" if os.name == "nt" else "tree-sitter"
+    native_cli = grammar / "node_modules" / "tree-sitter-cli" / executable
+    if native_cli.is_file():
+        return str(native_cli)
+
     local_cli = grammar / "node_modules" / ".bin" / "tree-sitter"
     if local_cli.is_file():
         return str(local_cli)
@@ -64,10 +70,13 @@ def _highlight(source: str) -> str | None:
                 "highlight",
                 "--html",
                 "--css-classes",
-                "-p",
-                str(grammar),
+                "--scope",
+                "source.pyrope",
                 str(tmp_path),
             ],
+            # --grammar-path forces a parser rebuild for every snippet. The
+            # working directory selects this grammar while preserving its cache.
+            cwd=grammar,
             check=True,
             capture_output=True,
             text=True,

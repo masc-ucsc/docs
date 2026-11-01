@@ -1,7 +1,9 @@
-.PHONY: all site build serve clean check-pyrope-tools
+.PHONY: all site build serve setup upgrade clean check-pyrope-tools
 
+UV ?= uv
+MKDOCS_ARGS ?=
 PYROPE_TREE_SITTER_GRAMMAR ?= $(abspath ../tree-sitter-pyrope)
-PYROPE_TREE_SITTER_CLI ?= $(PYROPE_TREE_SITTER_GRAMMAR)/node_modules/.bin/tree-sitter
+PYROPE_TREE_SITTER_CLI ?= $(PYROPE_TREE_SITTER_GRAMMAR)/node_modules/tree-sitter-cli/tree-sitter
 
 export PYTHONPATH := .
 export PYROPE_TREE_SITTER_GRAMMAR
@@ -9,11 +11,18 @@ export PYROPE_TREE_SITTER_CLI
 
 all: site
 
+setup:
+	$(UV) sync --locked
+
+upgrade:
+	$(UV) lock --upgrade
+	$(UV) sync --locked
+
 site build: check-pyrope-tools
-	mkdocs build
+	$(UV) run --locked mkdocs build $(MKDOCS_ARGS)
 
 serve: check-pyrope-tools
-	mkdocs serve
+	$(UV) run --locked mkdocs serve $(MKDOCS_ARGS)
 
 clean:
 	rm -rf site

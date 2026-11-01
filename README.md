@@ -1,21 +1,29 @@
+# LiveHD and Pyrope documentation
 
- The documentation for LiveHD and Pyrope are located at https://masc-ucsc.github.io/docs/
+The rendered documentation is at https://masc-ucsc.github.io/docs/.
 
-To install in macos:
+## Local build
 
-```
-brew install mkdocs
-pip3 install mkdocs-material-extensions
-pip3 install mkdocs-mermaid2-plugin
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) 0.13.6
+or newer, Node.js (current LTS), npm and a C compiler for Tree-sitter.
+On macOS, `brew install uv node` installs the package tools; use
+`brew upgrade uv node` if they are already installed.
+
+The Pyrope grammar is maintained in the sibling `../tree-sitter-pyrope`
+repository. Install its locked tools, then build:
+
+```sh
+npm ci --prefix ../tree-sitter-pyrope
+make setup
+make build
+make serve
 ```
 
-To install in arch linux:
+`uv` provisions the Python version in `.python-version` and installs the exact
+`uv.lock` dependency set into `.venv`. Local builds and CI use that same lock;
+no global Python packages are required. `make serve` previews edits at
+http://127.0.0.1:8000/. Override `PYROPE_TREE_SITTER_GRAMMAR` and
+`PYROPE_TREE_SITTER_CLI` for a different grammar checkout.
 
-```
-yay -S mkdocs-material-extensions mkdocs-mermaid2-plugin
-```
-
-To run the server locally before commit:
-```
-mkdocs serve
-```
+See [tool maintenance](mkdocs.md) for upgrades, rendering dependencies and the
+separate deployment command.
