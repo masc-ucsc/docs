@@ -1,62 +1,68 @@
-
 # Introduction
 
-LiveHD is an infrastructure designed for Live Hardware Development. By live, we
-mean that small changes in the design should have the synthesis and simulation
-results in a few seconds.
+LiveHD is a compiler and development flow for **Pyrope and Verilog/SystemVerilog**.
+It brings compilation, simulation, synthesis and formal verification together
+behind the [`lhd` command](02-usage.md).
 
-As the goal of "seconds," we do not need to perform too fine grain incremental
-work. Notice that this is a different goal from having an typical incremental
-synthesis, where many edges are added and removed in the order of thousands of
-nodes/edges.
+The goal of *live hardware development* is a short edit–check cycle: small
+source changes should reuse prior work and return useful feedback in seconds.
+This is a design goal, not a latency guarantee for every design or proof.
 
 ## Goal
 
-LiveHD: a fast and friendly hardware development flow that you can trust
+LiveHD aims to make hardware development fast, approachable and trustworthy:
 
-* To be "Fast", LiveHD aims to be parallel, scalable, and incremental/live flow.
-* To be "friendly", LiveHD aims to build new models to have good error reporting.
-* To "trust", LiveHD has CI and many random tests with logic equivalence tests (LEC).
-
-
+- **Fast feedback:** parallel work, reusable compilation artifacts and incremental
+  synthesis and verification.
+- **Useful diagnostics:** source locations carried through the intermediate
+  representations into errors, counterexamples and timing reports.
+- **Checked transformations:** regression tests, differential testing and
+  equivalence checks that distinguish proofs from bounded or sampled results.
 
 ## LiveHD Framework
 
-LiveHD is optimized for synthesis and simulation. The main components of LiveHD
-includes LGraph, LNAST, integrated 3rd-party tools, code generation, and "live"
-techniques. Both IRs are stored in HHDS (Hierarchical Hardware Data
-Structures): LNAST rides on `hhds::Tree`/`hhds::Forest` and LGraph rides on
-`hhds::Graph`. Everything is driven by a single command line binary called
-[`lhd`](02-usage.md) (the legacy `lgshell` REPL was removed).
+![LiveHD flow: Pyrope and native Slang enter LNAST; Yosys enters LGraph; writers produce Verilog, simulation models and Pyrope.](../assets/images/livehd.svg){ .flow-diagram }
 
+The diagram is copied from the LiveHD repository's
+[`docs/livehd.svg`](https://github.com/masc-ucsc/livehd/blob/master/docs/livehd.svg).
 
-A compilation goes through the following steps:
+Two intermediate representations connect the flow. [LNAST](06-lnast.md) is the
+language-neutral tree used for elaboration; [LGraph](05-lgraph.md) is the
+hierarchical graph used for hardware optimization and execution. Both use
+HHDS storage: `hhds::Tree` / `hhds::Forest` for LNAST and `hhds::Graph` /
+`hhds::GraphLibrary` for LGraph.
 
-* Source code goes through a lexer/parser to create a parse tree or language
-  specific AST. Pyrope uses the `inou/prp` front-end (prp2lnast), and
-  SystemVerilog can use the slang-based `inou/slang` front-end.
+1. **Read the source.** Pyrope enters through `inou/prp`. The default
+   Verilog/SystemVerilog reader is native Slang (`inou/slang`); it also produces
+   LNAST. The optional Yosys readers translate directly to LGraph.
+2. **Elaborate LNAST.** The `upass/` pipeline resolves names and types, evaluates
+   compile-time expressions and prepares hardware structure. `upass/tolg`
+   lowers that structure to LGraph.
+3. **Normalize the graph.** Constant propagation defaults to the acyclic
+   e-graph engine (`pass.aegraph`), with classic `pass.cprop` available through
+   `compile.cprop.engine`. Bitwidth inference and the remaining compile passes
+   prepare the graph for downstream consumers.
+4. **Run the requested flow.** `lhd synth` adds region synthesis, mapping and
+   timing; `lhd sim` executes the design; `lhd lec` and `lhd formal verify`
+   check equivalence and properties. Placement is optional, enabled with
+   `synth.place=true`.
+5. **Emit results.** Verilog is emitted from LGraph. Pyrope can be re-emitted
+   from LNAST. Simulation uses LLVM by default, with the Slop C++ backend
+   available explicitly.
 
-* The parse tree or language specific AST is translated to LNAST. LNAST is a
-  AST-like representation that it is independent of the specific language.
-  Pyrope and SystemVerilog (slang reader) translate to LNAST. Verilog can
-  also enter through Yosys (`inou/yosys`), in which case it is translated
-  directly to LGraph. CHISEL/FIRRTL was supported in the past, but the code
-  is deprecated.
+## Supported inputs
 
-* There are several passes on LNAST (called "upasses", in `upass/`) to build
-  the SSA, infer the correct types and bitsizes, and perform tree-level
-  optimizations like constant propagation.
+The direct Chisel/FIRRTL frontend has been **removed**. LiveHD does not accept
+FIRRTL as an input format. For a Chisel design, generate Verilog/SystemVerilog
+with its own toolchain, then compile that RTL through a supported LiveHD
+reader. Compatibility is determined by the generated RTL and reader support.
 
-* The LNAST is a tree-like representation which is translated to LGraph by
-  the `upass/tolg` lowering. In a way, LNAST is a HIR (High-level IR) and
-  LGraph is a LIR (Low-level IR). For each LGraph node, there is an
-  equivalent LNAST, but not the opposite.
+## Where to go next
 
-* LGraph has a hierarchical graph representation designed for fast synthesis
-  and simulation. Graph-level passes like `pass.cprop` and `pass.bitwidth`
-  optimize it, and it interfaces other tools like Yosys.
-
-* For code generation, `inou.cgen.verilog` emits Verilog from LGraph, and
-  `pass.prp_writer` can re-emit Pyrope from LNAST.
-
-![LiveHD overall flow](../assets/images/livehd.svg)
+| Task | Reference |
+| --- | --- |
+| Build and run LiveHD | [Installation](01-install.md), [usage](02-usage.md) |
+| Understand the current algorithms | [Algorithm and flow reference](../lhd/index.md) |
+| Work on an IR or pass | [C++ API](04-api.md), [creating a pass](11-pass.md) |
+| Check a design or compare revisions | [Formal verification](07-formal.md) |
+| Map a design and inspect timing | [Synthesis](08-synth.md) |

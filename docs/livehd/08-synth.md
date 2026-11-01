@@ -1,12 +1,29 @@
-# Synthesis & the frequency-optimization loop
+# Synthesis and timing
 
-LiveHD technology-maps designs with ABC (`lhd pass abc`) and scores the result
-with two timing oracles: ABC's own post-map estimate (cheap, per region) and
-OpenTimer static timing analysis (`lhd pass opentimer`, whole module). Together
-with the LEC gate they form the **2opt-freq loop**: a coding agent edits
-Pyrope/Verilog, every edit must compile and be **PROVEN equivalent to the
-previously accepted source**, and the QoR read-back is the score being
-optimized. Only LEC-passing edits survive.
+`lhd synth` is the one-shot synthesis flow: compile, form regions, map and
+analyze timing. The default mapper is ABC; `synth.mapper=usyn` selects native
+synthesis. Shared preparation and reconstruction live in `pass/synth`.
+
+```sh
+lhd synth dut.prp --top top.m --set synth.liberty=cells.lib \
+  --workdir W --stats --emit-dir verilog:mapped/
+```
+
+Reports and mapped intermediates are under `W/synth/`. The same Liberty library
+feeds mapping and static timing. `lhd.incremental` controls reuse under the
+working directory. Placement is off by default; `synth.place=true` enables the
+physical flow with the required LEF inputs. Experimental `legroute.local`
+remains opt-in and is not the default legalizer.
+
+See the [synthesis methodology](../lhd/03-synthesis.md) and
+[physical-flow chapter](../lhd/04-physical.md) for the algorithms, assumptions
+and experimental boundaries. Individual `lhd pass color|abc|opentimer` commands
+remain useful for inspecting intermediates and choosing a custom decomposition.
+
+For source optimization, use a proof gate before accepting a timing result:
+compare the edited source to the previously accepted version, then measure
+both with the same mapping, library and timing constraints. A sampled or
+bounded result is not an unbounded equivalence proof.
 
 ## The loop, one iteration
 
@@ -15,32 +32,29 @@ optimized. Only LEC-passing edits survive.
 lhd compile dut.prp --top top.m --emit-dir lg:G --workdir W
 
 # 2. the gate: edited vs the PREVIOUSLY ACCEPTED source (cycle-accurate)
-lhd lec --impl dut.prp --ref accepted/dut.prp --top top.m --workdir W
-#    exit 0 + PROVEN  -> accept; REFUTED -> reject the edit
+lhd lec --impl dut.prp --ref accepted/dut.prp --top top.m --workdir W \
+  --set formal.effort=proof
+#    require PROVEN-full; inspect the verdict, not only exit 0
 
-# 3. the score: tech-map and read the QoR
-lhd pass abc --top top.m lg:G --emit-dir lg:NET --workdir W
-#    -> W/qor.json and the --result-json envelope's "qor" member:
-#       per-region gates/area/critical delay + the critical output's file:line
-
-# 4. (accurate scorer) OpenTimer STA on one mapped module
-lhd pass opentimer --top 'top.m__c0' lg:NET cells.lib --workdir W
-#    -> W/timing.json {kind:"sta", max_delay, critical_pin, critical_src, endpoints}
+# 3. the score: map and time the compiled graph with one cell library
+lhd synth lg:G --top top.m --set synth.liberty=cells.lib \
+  --emit-dir lg:NET --workdir W --stats
+#    -> W/synth/ reports, including mapping QoR and OpenTimer timing
 ```
 
 Notes that keep the loop sound and fast:
 
-- The gate is **strictly cycle-accurate** (v1 ruling): retiming and
+- The gate is **cycle-accurate**: retiming and
   latency-changing edits are off-limits. Chained equivalence (each edit vs the
   previous accepted version) is cheap: the `--workdir` `formal_cache.json`
-  verdict cache plus semdiff structural matching mean an unchanged module
-  never re-solves.
+  verdict cache and semdiff structural matching can reuse unchanged modules
+  when their inputs, settings and build salts still match.
 - Netlist-vs-source LEC (mapped netlist against its `pass partition` twin with
   `pass liberty gensim` cell models) is an **lhd-bug catcher that runs in the
   test suite**, not in the loop — it validates the compiler, not the edit.
 - Everything is machine-readable: `--result-json` envelopes carry
-  `status`/`error.class`, the `"qor"` member carries the score, and a REFUTED
-  LEC leaves `lecfail.json` with a source-located root cut the agent can react
+  `status`/`error.class`, the `"qor"` member carries the score, and a
+  `REFUTED-cex` result leaves `lecfail.json` with a source-located root cut the agent can react
   to.
 
 ## Block-scoped synthesis attributes (Pyrope)
@@ -106,8 +120,9 @@ cross-module path the per-region ABC estimate is blind to.
 
 ## What the agent can and cannot move
 
-ABC already rebalances pure combinational cones near-optimally — source-level
-re-association of arithmetic rarely moves the score. The levers that do:
+The effect of a source change depends on the mapper, constraints and region
+boundaries. Measure it rather than assuming that a source-level rewrite will
+survive optimization. Useful candidates include:
 
 - **Strength reduction ABC cannot see**: `div`/`mod` are blackboxed (never
   mapped, invisible to timing); replacing a constant division with a
@@ -123,6 +138,7 @@ re-association of arithmetic rarely moves the score. The levers that do:
   exactly this reason (it also destroys register-name correspondence and
   din-cone attribution).
 
-See `pass/abc/README.md` and `pass/opentimer/README.md` for the option tables
-and file formats, and `todo/livehd/2opt-freq.html` for the loop's contract
-rulings.
+See the source references for [ABC](https://github.com/masc-ucsc/livehd/blob/master/pass/abc/README.md),
+[native synthesis](https://github.com/masc-ucsc/livehd/blob/master/pass/usyn/README.md)
+and [OpenTimer](https://github.com/masc-ucsc/livehd/blob/master/pass/opentimer/README.md)
+for options and report formats.

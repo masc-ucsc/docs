@@ -30,8 +30,9 @@ $ ./bazel-bin/lhd/lhd help
 $ ./bazel-bin/lhd/lhd help compile
 ```
 
-The design rationale is documented in the LiveHD repo under
-`docs/contracts/future_cli.md`.
+The [algorithm reference](../lhd/index.md) explains how the compiler and
+downstream flows fit together. `lhd describe <command>` reports the current
+argument and output contract.
 
 ## Commands
 
@@ -41,7 +42,8 @@ is inferred from the file extension (`.prp` vs `.v`/`.sv`).
 
 | Command | Purpose |
 |---------|---------|
-| `lhd compile [verilog\|pyrope] SRCS/IR...` | the single source→IR→netlist action (frontend + synth fused; sources and/or `ln:`/`lg:` inputs) |
+| `lhd compile [verilog\|pyrope] SRCS/IR...` | compile and normalize source or saved IR; emit IR or generated source |
+| `lhd synth SRCS/IR...` | compile, partition, map and time a design; placement is opt-in |
 | `lhd lec --impl S --ref S` | logic equivalence check between two designs (also spelled `lhd formal lec`) |
 | `lhd formal verify DESIGN [SIDECARS.prp...]` | prove the design's `assert`/`assume` obligations by BMC + induction (per-assert verdict table) |
 | `lhd sim SRCS...` | compile and run the design's `test` blocks (simulation driver) |
@@ -62,7 +64,7 @@ Shared arguments honored by the execution commands:
 | `--top <name>` | top module/function |
 | `--config lhd.toml` | pass-flag defaults from a config file (see below) |
 | `--result-json PATH` | structured result object (JSON) to a file (else stdout) |
-| `--workdir DIR` | scratch + ephemeral lgdb; never a global cache |
+| `--workdir DIR` | named workspace for logs, intermediates and persistent reuse; controlled by `lhd.incremental` |
 | `-q`/`--quiet`, `--verbose` | stderr verbosity; never pollutes the stdout protocol |
 | `--diag-fmt auto\|jsonl\|pretty` | rendering of the stdout result envelope and the stderr diagnostics; `auto` (default) = `pretty` on a terminal, `jsonl` when piped/captured (agents, CI) |
 
@@ -136,7 +138,7 @@ The Verilog frontend has three readers, selected with
 * `slang` — the direct `inou.slang` SV→LNAST front-end (the default); the
   design becomes LNAST and joins the Pyrope flow.
 * `yosys-verilog` — Yosys' native Verilog frontend, into LGraphs.
-* `yosys-slang` — Yosys with the slang.so plugin (SystemVerilog), into LGraphs.
+* `yosys-slang` — Yosys' integrated `read_slang` frontend (SystemVerilog), into LGraphs.
 
 Because Verilog `` `include `` + `+incdir` can read files that are not on the
 command line, the Verilog frontend supports `--depfile PATH` to write a
@@ -228,8 +230,10 @@ same gid, so the merge is conflict-free.
 
 ## Configuration: lhd.toml
 
-Graph compilation always runs constant propagation (`pass.cprop`) followed by
-bitwidth inference (`pass.bitwidth`); there is no optimization level or
+Graph compilation runs constant propagation and bitwidth inference
+(`pass.bitwidth`). The default constant-propagation engine is `pass.aegraph`;
+`--set compile.cprop.engine=classic` selects the reference `pass.cprop` engine,
+and `aegraph+classic` runs both. There is no optimization level or
 `--recipe` selection. `--set pass.flag=value` overrides one knob, e.g.
 `--set cgen.srcmap=1`. A typo'd pass or flag is a usage error (never a silent
 no-op). Introspect with:
@@ -270,20 +274,23 @@ side can be a `verilog:`/`pyrope:` file or an `ln:`/`lg:` directory (a bare
 $ lhd lec --impl foo.gen.v --ref foo.v --top foo
 ```
 
-The default backend is the in-process cvc5 SMT engine (bottom-up hierarchical:
-each module def is proven leaves-first and proven children collapse into their
-parents); `--set formal.solver=lgyosys` routes through `inou/yosys/lgcheck`
-instead, and `--set formal.engine=bmc|ind` picks a single engine over the default
-ind+bmc portfolio. On a refutation with `--workdir`, the counterexample is
-also written as a self-contained Pyrope testbench (`lecfail.prp`) plus a VCD
-so the divergence can be replayed and visualized. A non-equivalent pair exits
-non-zero with `error.class = equiv_fail`; an inconclusive solve is a warning
-(exit 0) unless `--set formal.strict=true`.
+The default backend is the in-process cvc5 engine. The default LEC effort is
+`test`, which checks sampled input vectors; use `--set formal.effort=proof`
+when a proof is required. Hierarchical proof checking works leaves-first and
+abstracts proven children in their parents. The debug option
+`formal.solver=lgyosys` cross-checks native LEC against `inou/yosys/lgcheck`;
+it does not silently replace the native check.
 
-Read `lec.verdict` together with `lec.bounded` and `lec.bound` in the result
-JSON. A `proven` result with `bounded=true` covers only the stated depth. A
-timeout or other inconclusive result is not a proof, even if the command exits
-zero in non-strict mode.
+Read the qualified verdict, not just the exit code. `PROVEN-full` is an
+unbounded proof, `PROVEN-bounded(n)` covers the stated depth, and
+`TESTED-sampled(N)` is sampled agreement. `TIMEOUT-time` and `TIMEOUT-memory`
+warn and exit zero but are not proofs. `REFUTED-cex` exits 10; other
+`REFUTED-*` causes exit 7. Machine verdicts in `lec.verdict` use lowercase.
+The removed `formal.strict` option is not needed or accepted. See the
+[verdict contract](07-formal.md#one-verdict-contract) for the full distinction.
+
+A counterexample with `--workdir` produces replay artifacts, including
+`lecfail.prp`, so the divergence can be inspected with simulation tools.
 
 Explicit state correspondences use actual reference and implementation names:
 
@@ -326,23 +333,19 @@ single verdict:
 
 ```sh
 $ lhd formal verify cnt.prp cnt.verify.prp --top cnt --set formal.bound=10
-formal verify: 'cnt.cnt' REFUTED (...)
-  assert at cnt.prp:5: PROVEN (inductive — every cycle of every bound)
-  assert at cnt.prp:6 "counter hit 5": REFUTED at cycle 7
+formal verify: 'cnt.cnt' REFUTED-cex (...)
+  assert at cnt.prp:5: PROVEN-full
+  assert at cnt.prp:6 "counter hit 5": REFUTED-cex at cycle 7
     counterexample inputs: cyc0: enable=0, reset=1 | ... | cyc6: enable=1, reset=0
   assume at cnt.verify.prp:4 [cnt.quiet]: in force (UNCHECKED assume_nocheck; verdicts are conditional and unchecked)
 ```
 
-Verdict tiers, per assert: `PROVEN (inductive)` holds at every cycle of every
-bound (the bounded proof plus an induction step); `PROVEN to cycle k
-(bounded)` means no violation within the unrolled window only; `REFUTED at
-cycle k` is a reachable violation with the per-cycle input trace that
-reproduces it from reset (the run exits non-zero, `error.class =
-equiv_fail`); `UNKNOWN` (solver gave up / contradictory assumes) is a loud
-warning that fails only under `--set formal.strict=true`. A plain `assume` is
-checked like an assert and constrains the other properties only once it is
-proven; `assume_nocheck` is the environment constraint that prunes the explored
-traces without a check, and the table discloses it as UNCHECKED.
+The same qualified verdicts apply per assertion and to the overall run.
+Bounded and sampled success must not be interpreted as unbounded proof.
+A contradictory assumption set is `REFUTED-vacuous`; a solver deadline is
+`TIMEOUT-time`. A plain `assume` is checked and may constrain other properties
+only after it is proven. `assume_nocheck` supplies an unchecked environment
+constraint, disclosed in the report.
 
 Properties can live inline in the design or in *sidecar* files as
 `formal name.dotted { ... }` blocks — declarative every-cycle claims over
@@ -350,7 +353,7 @@ dotted signal paths, activated by listing the file and filtered with
 `--formal <glob>`; see
 [Pyrope verification](../pyrope/05-assert.md#formal-blocks) for the block
 syntax. Engine knobs are shared with LEC under `--set formal.*`
-(`formal.bound`, `formal.timeout` per query, `formal.phase`, `formal.reset`);
+(`formal.bound`, `formal.timeout` for the run deadline, `formal.phase`, `formal.reset`);
 LEC-only knobs live under `formal.lec.*`. The same checks also run in a don't-try-hard mode inside every
 `lhd compile` (`pass.formal`): proven obligations are elided from the netlist,
 refuted ones fail the build, undecided ones stay as runtime checks with a

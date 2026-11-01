@@ -1,8 +1,10 @@
 
 # Coding Style
 
-These are the coding style rules for LiveHD C++. Each rule can be broken, but it
-should be VERY rare, and a small comment should be placed explaining why.
+These guidelines describe the style of LiveHD C++. Use the checked-in
+`clang-format` configuration and keep changes focused. The repository's
+`AGENTS.md` holds the enforced rules for defaults, compiler warnings, immutable
+contract tests and build/test workflows; a style comment does not override them.
 
 ## Overall
 

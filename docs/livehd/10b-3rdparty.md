@@ -1,7 +1,10 @@
 
 # 3rd Party
 
-This section is for more advanced users that want to build LiveHD with some external 3rd party tool.
+This chapter describes an advanced integration technique, not a maintained
+nextpnr backend. Prefer declared Bazel dependencies for a reproducible build;
+the link-response-file example below is a manual experiment that must be
+adapted to the exact toolchain and checkout.
 
 When integrating LiveHD with a 3rd party tool (nextpnr in this example), you can either bring the 3rd
 party tool to LiveHD and hence build it with bazel, or you can export the LiveHD code/libraries
@@ -46,7 +49,7 @@ cd nextpnr
 mkdir build
 cd build
 cmake -DARCH=ice40 ../
-make -j $(ncpus)
+cmake --build . --parallel
 ```
 
 The previous steps should compile before you attempt to integrate LiveHD to nextpnr.

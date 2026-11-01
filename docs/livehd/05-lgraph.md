@@ -1,8 +1,8 @@
 # LGraph
 
-!!! Warning
-    LiveHD is beta under active development and we keep improving the
-    API. Semantic versioning is a 0.+, significant API changes are expect.
+!!! note "API stability"
+    LiveHD is under active development. Check the headers in your checkout
+    when implementing a pass; the API can change between 0.x releases.
 
 
 
@@ -72,7 +72,7 @@ Const v    = hydrate_const(cpin);        // decode it back
 - sink pins are looked up / created by their LiveHD name. For `Sub` nodes the
   name comes from the sub-graph's `GraphIO`; for every other cell type it is
   the `Ntype` convention (see the cell tables below, and
-  [cell.cpp](https://github.com/masc-ucsc/livehd/blob/main/graph/cell.cpp)
+  [cell.cpp](https://github.com/masc-ucsc/livehd/blob/master/graph/cell.cpp)
   for the authoritative list):
 
 ```cpp

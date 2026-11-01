@@ -1,17 +1,15 @@
 
 # Bazel build
 
-Bazel is a build system open sourced by google. The main difference
-with traditional Makefiles is that it checks to make sure that dependences are not
-lost and the builds are reproducible and hermetic. This document explains how
-to use Bazel in the LiveHD project. External dependences are managed with
-bzlmod (`MODULE.bazel`).
+Bazel builds and tests LiveHD from declared dependencies. Use Bazelisk with
+the checked-in `.bazelversion`; external dependencies are pinned through
+Bzlmod in `MODULE.bazel`. This chapter covers common development commands.
 
 Build targets are referred to using the syntax `//<relative path to BUILD file>:<executable>`, where
 `//` is the path of the root livehd directory.
 
 To build the `lhd` driver and supporting libraries, the target would be `//lhd:lhd`.
-To build every target in LiveHD (helpful for checking if changes cause compilation failures), the target would be `//...`.  For more details on target syntax, see [this](https://docs.bazel.build/versions/master/guide.html#target-patterns) page.
+To build every target in LiveHD (helpful for checking if changes cause compilation failures), the target would be `//...`.  For more details on target syntax, see [this](https://bazel.build/run/build#specifying-targets-to-build) page.
 
 
 ## Release vs fastbuild (default) vs debug
@@ -71,26 +69,24 @@ bazel test --sandbox_debug -c dbg //YOUR_TEST_HERE
 
 Check the failing log, it will show you the sandbox location. You can change directory to it, and debug as usual.
 
-## To run FIXME tests
+## Test selection and runtime
 
-Many times, we have new tests that make the regression fail. We use "fixme" if
-the test is a new one and LGraph is still not patched. We want the test in the system,
-but we do not want to make fail the regressions.
-
-Those tests are marked with tags "fixme" in the BUILD. E.g:
-
-    sh_test(
-        name = "my_test.sh",
-        tags = ["fixme"],  # This is a fixme test. It fails, but we should fix it
-        srcs = ["tests/pyrope_test.sh"],
-
-To run all the fixme tests
+```sh
+bazel test -c dbg //path/to/package:target
+bazel test -c opt //...
 ```
-$ bazel test --test_tag_filters "fixme" <target>
-```
-To list all the fixme tests (the goal is to have zero)
-```
-$ bazel query 'attr(tags, fixme, tests(<target>))'
+
+Aim for tests that finish in roughly 30 seconds; the configured 300-second
+timeout is a hang safeguard. Reduce redundant work or split independent checks
+without weakening coverage. Do not exclude or mark a test manual just because
+it is slow. Tests must use repository fixtures or declared dependencies, not
+sibling benchmark checkouts.
+
+The current `.bazelrc` excludes existing `fixme` targets. To investigate one,
+override both build and test tag filters explicitly and run its target:
+
+```sh
+bazel test --build_tag_filters= --test_tag_filters= //path/to/package:target
 ```
 
 ## List bazel targets starting from top directory
@@ -117,22 +113,6 @@ This command is useful for benchmarking build time, and when system parameters c
 $ bazel clean --expunge
 ```
 
-## To run LONG tests
-
-In addition to the short tests, there are sets of long tests that are run frequently
-but not before every push to main line. The reason is that those are multi-hour
-tests.
-```
-$ bazel test --test_tag_filters "long1" <target>
-```
-There are up to 8 long tests categories (long1, long2, long3...). Each of those
-tests groups should last less than 4 hours when running in a dual core machine
-(travis or azure).
-
-To list the tests under each tag. E.g., to list all the tests with long1 tag.
-```
-$ bazel query 'attr(tags, long1, tests(<target>))'
-```
 ## Debugging with bazel
 
 First run the tests to see the failing one. Then run with debug options

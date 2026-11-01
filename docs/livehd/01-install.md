@@ -4,17 +4,19 @@ This is a high level description of how to build LiveHD.
 
 ## Requirements
 
-Although LiveHD should run on most common Linux distributions, it is heavily tested on both Arch and Kali (Debian based). It also builds on macOS (13.3+).
+LiveHD builds on Linux and macOS. The current macOS build targets macOS 26
+or newer, as selected by the repository's `.bazelrc`; the checked-in CI workflow
+also uses macOS 26.
 
 The following programs are assumed to be present when building LiveHD:
 
 - A C++23 capable compiler (GCC 16+ or Clang 20+ recommended)
-- Bazel (use bazelisk, see below)
+- Bazel (use Bazelisk to select the version in `.bazelversion`)
 - python3
 
-Most library dependences (abseil, boost, flex/bison, googletest, mimalloc,
-rapidjson, ...) are fetched and built by Bazel itself through bzlmod
-(`MODULE.bazel`), so they do not need to be installed on the system.
+Bazel fetches pinned libraries and build tools through Bzlmod (`MODULE.bazel`).
+Use those declarations as the dependency reference; installing unrelated system
+versions does not update the versions used by the build.
 
 It is also assumed that bash is used to compile LiveHD.
 
@@ -36,6 +38,7 @@ clang++ --version
 
 ```sh
 git clone https://github.com/masc-ucsc/livehd
+cd livehd
 ```
 
 **Install Bazelisk**
@@ -113,13 +116,21 @@ If you want to run a specific Clang version:
 CXX=clang++-20 CC=clang-20 bazel build //lhd:lhd -c dbg # debugging/development
 ```
 
-If you fail to build for the first time, you may need to clear the cache under your home directory before rebuilding:
+Start with the first compiler or dependency error in the build log. Check the
+compiler selection, `.bazelversion` and `.bazelrc` before clearing caches.
+`bazel clean --expunge` is a last resort for stale build state; it forces an
+expensive rebuild. Available memory limits useful build parallelism, especially
+when compiling Slang, LLVM and the solver dependencies.
+
+## Validation
 
 ```sh
-rm -rf ~/.cache/bazel
+bazel test -c opt //...
 ```
 
-Make sure to have enough memory (4+GB at least)
+The ordinary suite is self-contained. Optional comparisons with external
+simulators require those tools and an explicit `LHD_EXTERNAL_SIM=1`; see the
+repository's `AGENTS.md` for the invocation and requirements.
 
 ## Next Steps
 

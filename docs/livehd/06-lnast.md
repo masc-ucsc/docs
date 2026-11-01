@@ -7,9 +7,9 @@ Lnast_nodes and indexed by a tree structure.
 
 LiveHD has two main data structures: LNAST and LGraph. The LNAST is the higher
 level representation with a tree structure. The LGraph is the lower level
-representation with a graph structure.  Each node in LGraph has a LNAST
-equivalent node, but LNAST is more high level and several nodes in LNAST may
-not have a one-to-one mapping to LGraph.
+representation with a graph structure. Lowering elaborates source constructs
+into hardware; it does not guarantee a one-to-one mapping between LNAST nodes
+and LGraph cells or a general reverse lowering from LGraph.
 
 Since the HHDS migration, a LNAST rides on `hhds::Tree`: the node type
 (`Lnast_ntype`) is stored directly in the tree slot, names and source
@@ -20,7 +20,7 @@ is the `ln:` kind of the [lhd](02-usage.md) command line, and
 `lnast-dump:` emit kind).
 
 The authoritative list of node types is
-[`lnast/lnast_nodes.def`](https://github.com/masc-ucsc/livehd/blob/main/lnast/lnast_nodes.def)
+[`lnast/lnast_nodes.def`](https://github.com/masc-ucsc/livehd/blob/master/lnast/lnast_nodes.def)
 (an X-macro file included by `lnast/lnast_ntype.hpp`).
 
 ## Constructing nodes

@@ -1,7 +1,8 @@
 
 # Creating a Pass
 
-This document provides some minimal suggestion on how to build a new LiveHD pass.
+A pass transforms or analyzes one of LiveHD's intermediate representations.
+This guide covers registration, configuration and focused validation.
 
 
 LiveHD passes reside in three directories, by level and direction:
@@ -10,7 +11,7 @@ LiveHD passes reside in three directories, by level and direction:
   Yosys, Verilog code generation).
 * `upass/`: LNAST-level (tree) passes — SSA, type system, constant
   propagation, and the terminal LNAST→LGraph lowering (`upass/tolg`).
-* `pass/`: LGraph-level (graph) transformations — `pass/cprop`,
+* `pass/`: LGraph-level (graph) transformations — `pass/aegraph`, `pass/cprop`,
   `pass/bitwidth`, ... — plus the shared pass infrastructure in
   `pass/common`.
 
@@ -18,7 +19,7 @@ LiveHD passes reside in three directories, by level and direction:
 
 There is no interactive shell: passes register themselves statically through
 `Pass_plugin` (see `pass/common/pass.hpp`), which adds an
-[EPRP](https://github.com/masc-ucsc/livehd/tree/main/core) method with its
+[EPRP](https://github.com/masc-ucsc/livehd/tree/master/core) method with its
 labels (arguments). The `lhd` driver initializes the registry at startup and
 drives the registered methods programmatically — the pass chain is fixed
 (constant propagation, then bitwidth inference; see [usage](02-usage.md)), and
@@ -33,7 +34,9 @@ the structure. The typical is to have these files:
   pass registry (the `Pass_plugin` + EPRP method setup)
 * `pass/XXX/XXX.[cpp|hpp]`: C++ file to perform the pass over a LGraph or LNAST API
 * `pass/XXX/BUILD`: the [Bazel](10-bazel.md) build configuration file
-* `pass/XXX/tests/XXX_test.cpp`: A google test checking the pass
+* A focused test and its Bazel target. Use `foo_test.cpp` only when a matching
+  `foo.cpp` exists in the same or parent directory; otherwise use a descriptive
+  name such as `foo_smoke.cpp`.
 
 
 Finally, add the new pass to the `lhd` binary dependencies in `lhd/BUILD`
@@ -71,15 +74,16 @@ The regression system builds for both gcc and clang. To force a clang build, set
 CXX=clang++ CC=clang bazel build -c dbg //...
 ```
 
-### Perf in lgbench
+### Tracing and profiling
 
-Use lgbench to gather statistics in your code block. It also allows to run perf record
-for the code section (from lgbench construction to destruction). To enable perf record
-set LGBENCH_PERF environment variable
+Use the current Perfetto instrumentation in `core/perf_tracing.hpp`; see
+[tracing and profiling](10-bazel.md#tracing-and-profiling). The old `lgbench` /
+`LGBENCH_PERF` instructions do not describe the current tree.
 
-```sh
-export LGBENCH_PERF=1
-```
+Developer-only environment controls use the `LHD_` prefix and are read through
+`livehd::debug::env<"LHD_NAME">()` at setup, not repeatedly in hot loops.
+User-facing behavior belongs in typed `--set` options. Follow the repository's
+`AGENTS.md` for defaults, diagnostics and test rules.
 
 ### GDB/LLDB usage
 
@@ -115,42 +119,13 @@ bazel build -c dbg --config tsan //...
 
 (`--config ubsan` for undefined behavior is also available.)
 
-### Debugging a broken Docker image
+### Reproducing CI failures
 
-The travis/azure regressions run several docker images. To debug the issue, run the same as the failing
-docker image. c++ OPT with archlinux-masc image
+Use the compiler, platform and command from the failing job. The current
+workflow is checked in at
+[`.github/workflows/ubuntu.yml`](https://github.com/masc-ucsc/livehd/blob/master/.github/workflows/ubuntu.yml)
+(the filename is historical; inspect its runner settings). Do not assume the
+former Travis/Azure Docker images match today's build.
 
-1. Create some directory to share data in/out the docker run (to avoid
-   mistakes/issues, I would not share home directory unless you have done it
-   several times before)
-
-```sh
-mkdir $HOME/docker
-```
-
-2. Run the docker image (in some masc docker images you can change the user to not being root)
-
-```sh
-docker run --rm --cap-add SYS_ADMIN -it  -e LOCAL_USER_ID=$(id -u $USER) -v ${HOME}/docker:/home/user mascucsc/archlinux-masc
-
-# Once inside docker image. Create local "user" at /home/user with your userid
-/usr/local/bin/entrypoint.sh
-```
-
-3. If the docker image did not have the livehd repo, clone it
-
-```sh
-git clone https://github.com/masc-ucsc/livehd.git
-```
-
-4. Build with the failing options and debug
-
-```sh
-CXX=g++ CC=gcc bazel build -c opt //...
-```
-
-A docker distro that specially fails (address randomizing and muslc vs libc) is alpine. The command line to debug it:
-
-```sh
-docker run --rm --cap-add SYS_ADMIN -it -e LOCAL_USER_ID=$(id -u $USER) -v $HOME:/home/user -v/local/scrap:/local/scrap mascucsc/alpine-masc
-```
+Run the failing target first, then the checks appropriate to the change.
+Keep tests self-contained and preserve coverage when reducing their cost.

@@ -29,7 +29,6 @@ git config --global pull.rebase true
 # Set your name and email
 git config --global user.email "perico@lospalotes.com"
 git config --global user.name "Perico LosPalotes"
-git config --global pull.rebase true
 git config --global rebase.autoStash true
 ```
 
@@ -55,11 +54,14 @@ git push
 
 ### Typical git commands
 
-Clean the directory from any file not in git (it will remove all the files not committed)
+Preview untracked and ignored files before considering a cleanup:
 
 ```sh
-git clean -fdx
+git clean -ndx
 ```
+
+`git clean -fdx` deletes those files, including ignored build outputs and local
+work. It does not remove tracked edits. Remove only paths you intend to discard.
 
 Save and restore un-committed changes to allow a new git pull. stash is like a
 "push" and "pop" replays the changes in the current directory. This will happen
@@ -246,7 +248,7 @@ after you push.
 If you are working on LiveHD at UC Santa Cruz, contact [Jose
 Renau](http://users.soe.ucsc.edu/~renau/) to be added to the MASC organization
 on GitHub so that you have write access to the repo. The setup is similar to
-the [infrequent contributor flow](#infrequent-contributor-flow) but you have
+the [infrequent contributor flow](#infrequent-contributor-flow-advanced-users) but you have
 access to directly commit to the public repository. Even the upstream/master.
 
 [pull]: https://help.github.com/articles/creating-a-pull-request

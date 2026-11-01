@@ -1,5 +1,6 @@
 # LiveHD and Pyrope documentation
 
+The site is built with [Zensical](https://zensical.org/), using its modern theme.
 The rendered documentation is at https://masc-ucsc.github.io/docs/.
 
 ## Local build

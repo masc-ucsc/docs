@@ -31,37 +31,36 @@ chapter explains what the system does and why.
 
 ### One verdict contract
 
-Every front answers with one of three verdicts, under a single non-negotiable
-contract: **PROVEN means definitively true, REFUTED means definitively false
-with a counterexample, and everything else is reported as UNKNOWN** — an
-inconclusive answer is acceptable, a wrong one never is. No optimization,
-cache, hint, or shortcut inside the engine is allowed to change a verdict;
-they may only change how fast it arrives.
+The CLI reports qualified verdicts. A zero exit code alone is not evidence of
+an unbounded proof: bounded proofs, sampled checks and resource timeouts have
+distinct meanings.
 
-The contract is deliberately asymmetric about what each verdict may rest on:
+| Verdict | Meaning | Exit |
+| --- | --- | --- |
+| `PROVEN-full` | Unbounded inductive proof | 0 |
+| `PROVEN-bounded(n)` | No violation within the stated number of cycles | 0 |
+| `TESTED-sampled(N)` | Agreement on sampled vectors; not a proof | 0 |
+| `TIMEOUT-time` / `TIMEOUT-memory` | Resource limit prevented a decision | 0, with a warning |
+| `REFUTED-cex` | Counterexample | 10 |
+| `REFUTED-interface` | Incompatible top-level ports | 7 |
+| `REFUTED-unsupported` / `REFUTED-unchecked` | The design or chosen configuration could not be checked | 7 |
+| `REFUTED-vacuous` | No meaningful obligation, or contradictory assumptions | 7 |
+| `REFUTED-unexplained` | Unclassified failure; report it as a tool bug | 7 |
 
-* A PROVEN is either an unbounded proof (holds at every cycle, forever) or a
-  transparently labeled bounded one ("PROVEN to cycle k" — no violation within
-  the explored window). The two are never conflated.
-* A REFUTED always rests on a counterexample reachable from reset, replayable
-  cycle by cycle. Anything less trustworthy — for example a violation that
-  might start from an unreachable state — degrades to UNKNOWN instead.
-* A conditional pass is always disclosed: a verdict that relies on design
-  `assume`s reads "PROVEN under N proven assume(s)" for plain assumes, which
-  were checked and proven first, and "under N unchecked assume(s)" for
-  `assume_nocheck` contracts, which never are; one relying on automatically
-  guessed register pairings says so. None of them can be confused with an
-  unconditional proof.
+Machine-readable verdicts use lowercase in `lec.verdict`, `formal.verdict`
+and `formal_report.json`. `formal.strict` has been removed. Proof gates must
+inspect the verdict and any assumption disclosures instead of accepting every
+successful process exit. A result under unchecked assumptions is conditional
+on those assumptions.
 
-By default a refutation is a hard failure (non-zero exit), while an UNKNOWN
-is a loud warning that does not fail the run; a strict mode turns UNKNOWN
-into a failure too. One escalation: an equivalence check whose incomplete
-run nonetheless surfaced a concrete divergence witness fails even without
-strict mode.
+LEC defaults to `formal.effort=test`, which starts sampled checking. Select
+`formal.effort=proof` to require proof-only work. The source reference for the
+current verdict and exit-code mapping is
+[`lhd/README.md`](https://github.com/masc-ucsc/livehd/blob/master/lhd/README.md#formal-regression-policy).
 
 ### Equivalence checking
 
-`lhd formal lec` proves two designs equivalent — a Pyrope compile against its
+`lhd formal lec` checks two designs for equivalence — a Pyrope compile against its
 Verilog original, two revisions of a design, a pre- and post-synthesis
 netlist. Each side may come from any front end (Verilog, Pyrope, or saved
 LiveHD graphs), and the two sides' top modules are always force-paired so the
@@ -106,10 +105,9 @@ named explicitly with polarity.
 
 `lhd formal verify` takes one design plus optional sidecar property files and
 adjudicates every assert as an independent obligation, reported in a
-per-assert verdict table: PROVEN (inductive — holds at every cycle), PROVEN
-to a cycle (bounded), REFUTED at a cycle with a trace, or UNKNOWN. Because
-obligations are independent, a timeout is local — it costs one property at
-one cycle, not the whole run.
+per-assert verdict table using the qualified verdicts above. Assertions are
+separate obligations, but resource budgets can stop the overall run; inspect
+both the per-obligation results and the run headline.
 
 Properties are written in ordinary Pyrope — inline `assert`/`assume` in the
 design, or declarative `formal` blocks kept in sidecar files and bound to
@@ -130,9 +128,9 @@ two files):
 
 ```bash
 lhd formal verify cnt.prp cnt.verify.prp --top cnt --set formal.bound=10 --workdir w
-#   assert at cnt.verify.prp:5 "'parity tracks bit0'" [cnt.parity]: PROVEN (inductive — every cycle of every bound)
+#   assert at cnt.verify.prp:5 "'parity tracks bit0'" [cnt.parity]: PROVEN-full
 #   assume at cnt.verify.prp:10 [cnt.bounded]: in force (UNCHECKED assume_nocheck; verdicts are conditional and unchecked)
-#   assert at cnt.verify.prp:11 "'frozen'" [cnt.bounded]: PROVEN (inductive — every cycle of every bound)
+#   assert at cnt.verify.prp:11 "'frozen'" [cnt.bounded]: PROVEN-full
 
 ls w/
 #   formal_report.json   every obligation (PASSED ones included): verdict, cycles,
@@ -143,7 +141,7 @@ ls w/
 #   formalfail.json      machine witness: root_cut {file,line,cycle} + input trace
 #   formalfail.vcd       waveform of the replay (the runtime assert re-fires)
 
-jq -r '.obligations[] | select(.verdict=="proven") | .id' w/formal_report.json  # the passed list
+jq -r '.obligations[] | select(.verdict=="proven-full") | .id' w/formal_report.json  # the unbounded proofs
 ```
 
 ### Assume forms: what constrains, what must be proven
@@ -167,7 +165,7 @@ without a check:
   verification — it exists solely for the synthesis don't-care pool.
 
 A contradictory free-constraint set voids every proof (the vacuity check
-demotes them to UNKNOWN), so an over-constrained environment cannot pass
+reports `REFUTED-vacuous`), so an over-constrained environment cannot pass
 silently. Lambda `requires`/`ensures` contracts are not lowered yet; using
 them warns loudly that they generate no obligation.
 
@@ -175,7 +173,7 @@ them warns loudly that they generate no obligation.
 
 The stdout verdict table is the human view; the machine contract is
 `formal_report.json`, written into the workdir on **every** run — including
-UNKNOWN, which is precisely the verdict an agent must act on. Pass
+timeouts and unsuccessful checks, which need follow-up rather than acceptance. Pass
 `--workdir` so reports, caches, and witnesses persist across iterations. The
 report carries the run headline (verdict, budget, assume counts), one record
 per obligation — a stable id (`kind@file:line[block]`), verdict, proven/
@@ -187,12 +185,11 @@ witness artifacts (`formalfail.prp`, `formalfail.json`, the replay VCD).
 The loop an agent runs:
 
 1. `lhd formal verify design.prp --workdir W --set formal.spec_mining_timeout=10`
-   (exit 0 = no refutation; REFUTED exits 1; UNKNOWN warns unless
-   `formal.strict=true`).
-2. Parse `W/formal_report.json`. REFUTED obligations come with a trace, a
-   ready-to-run testbench, and a source-mapped root cut — fix the design or
-   the property. UNKNOWN obligations are ranked by `solve_ms` and named by
-   the timeout core — that is where a helper invariant pays.
+   (inspect the qualified verdict; a timeout also exits zero).
+2. Parse `W/formal_report.json`. `REFUTED-cex` obligations carry a witness;
+   fix the design or property. Other `REFUTED-*` causes need their indicated
+   setup, modeling or vacuity issue resolved. For timed-out obligations,
+   `solve_ms` and the timeout core help identify where an invariant may help.
 3. Strengthen: add `assert`/`assume` in a sidecar `formal` block near the
    pain. State-touching assumes are themselves proven, so a wrong helper is
    refuted instead of corrupting the run; proven helpers prune every
@@ -264,14 +261,14 @@ invocations:
 * Unchanged modules settle from a verdict cache with no solver call at all.
 * Structurally identical module pairs are recognized and skipped without
   solving, independent of the cache.
-* Work that previously ended UNKNOWN at a given budget is not re-ground on an
+* Work that previously ended `TIMEOUT-time` at a given budget is not re-ground on an
   unchanged design — it is skipped and reported inconclusive again until the
   design, options, budget, or prover changes, or a retry is forced.
 * The cache remembers what worked — the winning proof strategy, the case-split
   choice, validated register pairings — and replays it first on the next run.
   These hints survive design edits and can never make a verdict wrong: a
-  replayed pairing may lift an UNKNOWN to PROVEN and deletes itself when
-  stale, nothing more.
+  replayed pairing may turn an undecided result into a proof; stale hints are
+  discarded.
 * One working directory holds one cache for many designs. A hierarchical run
   records a verdict for the top *and* every module it contains, each keyed by
   its own digest, and each run merges into the shared file rather than
@@ -282,7 +279,7 @@ invocations:
 
 Most of this machinery serves equivalence checking today; property
 verification currently reuses the per-obligation verdict cache, with hint
-replay and the UNKNOWN ledger pending on that front.
+replay and the timeout ledger pending on that front.
 
 ### Options
 
@@ -304,12 +301,11 @@ error, never a silent no-op. The load-bearing knobs:
 | `formal.profile` | `internal` (default), `lazy`, `eager-kissat`, `eager-cms`, `intblast`, `witness`; eager profiles require pure bit-vectors and confirm counterexamples with models |
 | `formal.portfolio` | `auto` (default) or comma-separated `bmc:profile`/`ind:profile` arms; sampled portfolios require BMC with model support |
 | `formal.partitions` / `formal.split` | parallel input case-splitting              |
-| `formal.strict`         | make UNKNOWN a hard failure                                |
 | `formal.report`         | verify's machine-readable run report filename (default `formal_report.json`, written into the workdir on every run; `false` = off) |
 | `formal.lec.match`      | explicit register correspondences                          |
 | `formal.lec.state_pairing` | automatic speculative register pairing (default on)     |
-| `lhd.incremental`       | the ONE switch for every persistent reuse tier under a `--workdir` — the Pyrope compile cache, pass.abc's region cache, opentimer's STA cache and the formal/lec verdict cache; there is no per-tier switch |
-| `formal.retry`          | verdict-cache Unknown policy: `changed` (default; an unchanged def already Unknown at this budget skips the re-attempt) or `all` |
+| `lhd.incremental`       | the ONE switch for every persistent reuse tier under a `--workdir` — compile, ABC and USYN region reuse, OpenTimer STA and formal/LEC verdict caches; there is no per-tier switch |
+| `formal.retry`          | timeout-ledger policy: `changed` (default; an unchanged definition already timed out at this budget skips the re-attempt) or `all` |
 
 ### Structural diff as a standalone tool
 
@@ -403,6 +399,9 @@ a specification don't-care is accepted.
 
 ### Two sequential engines and a trust policy
 
+Here, *undecided* describes an intermediate solver outcome. The CLI classifies
+its final cause using the qualified verdicts above; it does not print `UNKNOWN`.
+
 Sequential equivalence uses two complementary engines whose failure modes are
 opposite, and a policy that only trusts each engine where it is strong:
 
@@ -414,7 +413,7 @@ opposite, and a policy that only trusts each engine where it is strong:
   function from the initial state. Its refutations are real, replayable bugs;
   its proofs are only as deep as the bound.
 
-The default mode races both in parallel and takes the first trustworthy
+The proof portfolio races both in parallel and takes the first trustworthy
 answer: inductive PROVEN and BMC REFUTED are final, an inductive refutation
 never fails a build, and a bounded pass is reported as exactly that. When
 both designs are stateless the induction miter *is* the combinational miter,
@@ -438,7 +437,7 @@ depend only on its state. Collapse is an over-approximation, so the discipline
 is one-sided: a proof under collapse stands, but a refutation under collapse
 is re-confirmed on the flattened problem before it may be reported — a FAIL
 only ever comes from a counterexample free of abstraction. A submodule
-correspondence present on only one side gates the verdict to UNKNOWN rather
+correspondence present on only one side gates the verdict to undecided rather
 than guessing.
 
 Before any solving, a structural pre-pass settles for free every module pair
@@ -465,10 +464,10 @@ which on the other. Correspondence is tiered by confidence:
   precondition) and is accepted with disclosure; a refutation under pairs is
   never final — all pairs are dropped and the problem re-solved once, and
   only a pair-free refutation becomes a FAIL; a merely bounded pass under
-  pairs is suppressed to UNKNOWN, since a wrong pairing could manufacture
+  pairs is suppressed to undecided, since a wrong pairing could manufacture
   bounded agreement through the shared initial state.
 
-The net effect is that speculation can move a verdict only between UNKNOWN
+The net effect is that speculation can move a verdict only between undecided
 and PROVEN — never to a wrong answer. Pairings validated by a passing proof
 persist (keyed by module name, so they survive edits), are re-validated on
 every replay, and self-delete when stale.
@@ -561,10 +560,10 @@ The verdict cache is engineered so that a cache hit is a theorem, not a hope:
 * The whole verdict store is salted with a build-time content hash of the
   prover's own sources and solver version: any prover change silently
   invalidates every cached verdict with no human in the loop.
-* Only proofs are cached today — a refutation is cheap to reconfirm, and
-  caching it soundly would require re-validating its witness — and UNKNOWN
-  is never cached as a verdict. A separate ledger records "already came back
-  UNKNOWN at this budget" purely to skip re-grinding unchanged hopeless work.
+* Proof caches retain the proof kind and bounded depth; legacy records without
+  that information are rejected. A separate ledger records `TIMEOUT-time`
+  results to avoid repeating unchanged work at the same budget. A remembered
+  timeout is not a cached proof.
 
 Distinct from verdicts, *hints* are keyed by canonical module name so they
 survive edits. Strategy hints — the winning engine, the case-split selector —

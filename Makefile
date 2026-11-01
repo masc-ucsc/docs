@@ -1,7 +1,7 @@
 .PHONY: all site build serve setup upgrade clean check-pyrope-tools
 
 UV ?= uv
-MKDOCS_ARGS ?=
+ZENSICAL_ARGS ?=
 PYROPE_TREE_SITTER_GRAMMAR ?= $(abspath ../tree-sitter-pyrope)
 PYROPE_TREE_SITTER_CLI ?= $(PYROPE_TREE_SITTER_GRAMMAR)/node_modules/tree-sitter-cli/tree-sitter
 
@@ -19,10 +19,10 @@ upgrade:
 	$(UV) sync --locked
 
 site build: check-pyrope-tools
-	$(UV) run --locked mkdocs build $(MKDOCS_ARGS)
+	$(UV) run --locked zensical build $(ZENSICAL_ARGS)
 
 serve: check-pyrope-tools
-	$(UV) run --locked mkdocs serve $(MKDOCS_ARGS)
+	$(UV) run --locked zensical serve $(ZENSICAL_ARGS)
 
 clean:
 	rm -rf site

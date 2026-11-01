@@ -3,13 +3,11 @@ site_name: LiveHD and Pyrope
 repo_url: https://github.com/masc-ucsc/livehd
   # edit_url: https://github.com/masc-ucsc/docs/edit/main/docs
 
-remote_branch: gh-pages
-
 plugins:
   - search
 
 theme:
-  name: material
+  variant: modern
   custom_dir: overrides
   font:
     code: Fira Code
@@ -19,6 +17,9 @@ theme:
     - navigation.sections
     - navigation.instant
     - navigation.indexes
+    - navigation.top
+    - toc.follow
+    - content.code.copy
       # - toc.integrate
   palette:
     - media: "(prefers-color-scheme: dark)"
@@ -58,7 +59,7 @@ markdown_extensions:
           format: !!python/name:pymdownx.superfences.fence_code_format
 
 extra_css:
-  - stylesheets/table.css
+  - stylesheets/reference.css
   - stylesheets/pyrope-highlight.css
 
 extra_javascript:
