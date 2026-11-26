@@ -1,0 +1,59 @@
+
+#define N 11
+
+typedef int coef_t;
+typedef int data_t;
+typedef int acc_t;
+
+void fir(data t ∗y, data t x) {
+  coef_t c[N] = {
+    53, 0, −91, 0, 313, 500, 313, 0, −91, 0, 53
+  };
+
+  static data_t shift_reg[N];
+
+  acc_t acc = 0;
+  for (int i = N − 1; i >= 0; i−−) {
+    if (i == 0) {
+      acc += x ∗ c[0];
+      shift_reg[0] = x;
+    } else {
+      shift_reg[i] = shift_reg[i − 1];
+      acc += shift_reg[i] ∗ c[i];
+    }
+  *y = acc;
+}
+
+// PyRTL
+def fir(x, bs):
+    rwidth = len(x)  # bitwidth of the registers
+    ntaps = len(bs) # number of coefficients
+
+    zs = [x] + [pyrtl.Register(rwidth) for _ in range(ntaps-1)]
+    for i in range(1,ntaps):
+        zs[i].next <<= zs[i-1]
+
+    return sum(z*b for z,b in zip(zs, bs))
+
+
+// Pyrope
+let fir = proc(x)->(y) {
+  let coef = ( 53, 0, −91, 0, 313, 500, 313, 0, −91, 0, 53 )
+
+  y = 0
+  for c,i in coef {
+    y += x#[i] + c
+  }
+}
+
+// Sum+Pyrope
+let sum=fun(a,...b)->(t) {
+  var t = a
+  for i in b {
+    t += i
+  }
+}
+
+let fir = proc(x, coef)->(y) {
+  y = sum(for c,i in coef { x#[i] + c })
+}

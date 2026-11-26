@@ -1,0 +1,63 @@
+
+puts "welcome to Pyrope"
+
+let code = proc(a)->(x) {
+
+  reg total_a:u8 = 0
+
+  total_a::[wrap] += 1 when a
+
+  puts "total_a:{total_a}"
+
+  x = total_a
+}
+
+let top = proc(a, c)->(led_on:bool) {
+
+  var x = _
+  led_on = false
+  if c {
+    x = code(a)
+    puts "1. x:{x}"
+    led_on = x&1
+  }
+  puts "2. x:{x}"
+
+}
+
+let top_instance = proc(a, a_clk, c)->(led_on:bool) {
+
+  var x = _
+  led_on = false
+
+  var tmp_a = a
+  tmp_a? = c
+
+  if c {
+    x = `x,code`.x.[defer]
+    puts "1. x:{x}"
+    led_on = x&1
+  }
+  puts "2. x:{x}"
+
+  let `x,code` = code(tmp_a)
+}
+
+test "simple" {
+
+  var a = true
+  var c = true
+  var t = top(a.[defer],c.[defer])
+  {
+    assert t.led_on == false and t.`x,code`.total_a == 0
+    c = false // this is the value that 1st cycle defer reads
+  }#> {
+    assert t.led_on == false and t.`x,code`.total_a == 1
+  }#> {
+    assert t.led_on == false and t.`x,code`.total_a == 2
+  }#> {
+    assert t.led_on == true  and t.`x,code`.total_a == 3
+    c = true // this is the value that 4th cycle defer reads
+  }
+
+}

@@ -1,0 +1,63 @@
+
+Ad-hoc polymorphism: Same function name, different functionality for different types. (compute area in shape)
+
+var max = fun(a:int,b:int) { ret if a<b {a} else {b} }
+       ++ fun(a:bool,b:bool) { ret if a {b}else{a} }
+       ++ fun(a:Shape,b:Shape) { ret if a.area() < b.area() {a}else{b} }
+
+Parametric polymorphism: Same function name, same functionality for different types.
+
+"A type may be parametrized on types in the same way that a function may be
+parametrized on values" (quote from "Lightweight parametric polymorphism for
+Oberon")
+
+-------
+Type constraint vs type classes
+
+Type constraints: Constraints what is allowed (if not constrained, anything allowed)
+
+c++:
+  auto add(auto a, auto b) { return a + b; }
+
+Pyrope:
+  let add = fun(a,b) { a + b }           // no constrains
+  let add = fun<T>(a:T,b:T) { a + b }    // constrain both to have same type
+
+Type classes: Specifies the only allowed (Must specify what is allowed). Give consent, not constraint.
+
+swift:
+  func add<T:Numeric>(a:T, b:T) -> T { a + b }
+  func add<T>(a:T, b:T) -> T { a + b }  // compile error
+
+
+// Feedback from: https://www.youtube.com/watch?v=E-2y1qHQvTg&t=477s
+// https://www.youtube.com/watch?v=Qh7QdG5RK9E
+
+// swift
+
+protocol Shape {
+  func name()      -> String
+  func area()      -> Float
+  func perimeter() -> Float
+}
+
+class Rectangle : Shape {  }
+class Circle    : Shape {  }
+
+func print_share_info<T:Shape>(_ s:T) {
+
+}
+
+// Pyrope
+
+let Shape = (
+  ,name:fun(self)->(:string)    = _
+  ,area:fun(self)->(:Float)     = _
+  ,perimeter:fun(self)->(:Float)= _
+)
+
+let Rectangle:(...Shape,...OtherAPI) = ( ...)
+let Circle = ( ...)          // no need to add :Shape, only if wanted to check that the shape API is implemented
+
+let print_share_info(s:Shape) { }
+

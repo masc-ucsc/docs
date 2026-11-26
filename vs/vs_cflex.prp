@@ -1,0 +1,101 @@
+
+void led_glow(uint1_t& led)
+{
+  union {
+    uint25_t counter; //counter can be accesed as raw or by bitfields
+    struct { uint25_t :16; uint25_t mid:8; uint25_t msb:1; } counter_bits;
+  };
+
+  union {
+    uint9_t PWM;
+    struct { uint8_t lsb:8; uint8_t msb:1; } PWM_bits;
+  };
+
+  uint8_t intensity;
+
+  counter = 0;
+  while(always())
+  {
+    intensity = counter_bits.msb ? counter_bits.mid : ~counter_bits.mid;
+    PWM = PWM_bits.lsb + intensity;
+
+    led = PWM_bits.msb;
+    counter = counter + 1;
+  }
+}
+
+//------------------
+// OPT1 (direct bit index)
+
+let led_glow = proc()->(led:bool) {
+
+  reg counter:u25 = 0
+  reg pwm:u9 = 0
+
+  let intensity = if counter@[-1] {counter@[16..-2] }else{ ~counter@[16..-2] }
+  pwm::[wrap] = pwm@[0] + intensity
+
+  led = pwm@[-1]
+  counter::[wrap] = counter + 1 // wrap counter, drop bits when overflow
+}
+
+//------------------
+// OPT2 (union way)
+
+
+let led_glow = proc()->(led:bool) {
+
+  let Counter_t = :union(
+    ,val:u25
+    ,bits=(:u16, mid:u8, msb:u1)
+  )
+
+  let PWM_t = :union(
+    ,val:u9
+    ,bits=(lsb:u8, msb:u1)
+  }
+
+  reg counter:Counter_t = (val=0)
+  reg pwm:PWM_t = (val=0)
+
+  let intensity = if counter.bits.msb { counter.bits.mid }else{ ~counter.bits.mid }
+  pwm.val::[wrap] = pwm.bits.lsb + intensity  // WRAP because it can drop 1 bit
+
+  led = PWM.bits.msb
+  counter.val::[wrap] = counter.val + 1
+}
+
+//------------------
+// OPT3 (crazy complex)
+
+let led_glow = proc()->(led:bool) {
+
+  let Counter_t = (
+    ,value:u25
+    ,get = fun(self) { ret (lsb = self.value@[0..=15], mid= self.value@[16..=23], msb = self.value@[24]) }
+    ,set = proc(ref self, f) {
+      self.value = f.lsb | (f.mid<<16) | (f.msb<<24)
+    }
+  )
+
+  let PWM_t = (
+    ,value:u9
+    ,get = fun(self) { ret (lsb = self.value@[0..=7], msb = self.value@[9]) }
+    ,set = proc(ref self, v:u9) {
+      self.value = v
+    } ++ proc(ref self, f) {
+      self.value = f.lsb | (f.msb<<8)
+    }
+  }
+
+  reg counter:Counter_t = (value=0)
+  reg pwd:PWM_t         = (value=0)
+
+  let intensity = if counter.msb { counter.mid } else { ~counter.mid }
+
+    pwm = pwm.lsb + intensity;
+
+    led = pwm.msb;
+    counter = counter.value + 1;
+  }
+}

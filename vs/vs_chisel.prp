@@ -1,0 +1,76 @@
+
+// CHISEL:
+
+val s1_l2lAddressNotAligned = s1_pointerChasingVAddr(2, 0).orR
+val s1_l2lFuOpTypeIsNotLd   = io.ldin.bits.uop.ctrl.fuOpType =/= LSUOpType.ld
+
+val s0_vaddr = Wire(UInt(VAddrBits.W))
+
+when(io.ldin.valid) {
+    val imm12 = io.ldin.bits.uop.ctrl.imm(11, 0)
+    s0_vaddr := io.ldin.bits.src(0) + SignExt(imm12, VAddrBits)
+    s0_mask := genWmask(s0_vaddr, io.ldin.bits.uop.ctrl.fuOpType(1,0))
+    s0_uop := io.ldin.bits.uop
+    s0_isFirstIssue := io.isFirstIssue
+    s0_rsIdx := io.rsIdx
+    s0_sqIdx := io.ldin.bits.uop.sqIdx
+}.elsewhen(io.lsqOut.valid) {
+    s0_vaddr := io.lsqOut.bits.vaddr
+    s0_mask := io.lsqOut.bits.mask
+    s0_uop := io.lsqOut.bits.uop
+    s0_isFirstIssue := io.lsqOut.bits.isFirstIssue
+    s0_rsIdx := io.lsqOut.bits.rsIdx
+    s0_sqIdx := io.lsqOut.bits.uop.sqIdx
+}.otherwise {
+    if (EnableLoadToLoadForward) {
+      tryFastpath := lfsrc_l2lForward_select
+      s0_vaddr := io.fastpath.data
+      s0_uop.ctrl.fuOpType := LSUOpType.ld
+      s0_mask := genWmask(0.U, LSUOpType.ld)
+      s0_isFirstIssue := true.B
+      s0_rsIdx := DontCare
+      s0_sqIdx := DontCare
+    }
+}
+
+// Pyrope
+
+let s1_l2lAddressNotAligned = s1_pointerChasingVAddr@|[0..=2]
+let s1_l2lFuOpTypeIsNotLd   = io.ldin.bits.uop.ctrl.fuOpType != LSUOpType.ld
+
+let s0 = if io.ldin.valid {
+    let imm12 = io.ldin.bits.uop.ctrl.imm@[0..=11]
+    (
+    ,vaddr        = io.ldin.bits.src[0] + imm12
+    ,mask         = genWmask(s0_vaddr, io.ldin.bits.uop.ctrl.fuOpType@[0..=1])
+    ,uop          = io.ldin.bits.uop
+    ,isFirstIssue = io.isFirstIssue
+    ,rsIdx        = io.rsIdx
+    ,sqIdx        = io.ldin.bits.uop.sqIdx
+    )
+} elif io.lsqOut.valid {
+    (
+    ,vaddr        = io.lsqOut.bits.vaddr
+    ,mask         = io.lsqOut.bits.mask
+    ,uop          = io.lsqOut.bits.uop
+    ,isFirstIssue = io.lsqOut.bits.isFirstIssue
+    ,rsIdx        = io.lsqOut.bits.rsIdx
+    ,sqIdx        = io.lsqOut.bits.uop.sqIdx
+    )
+} else {
+    if EnableLoadToLoadForward {
+      tryFastpath = lfsrc_l2lForward_select
+      var x = (
+      ,vaddr        = io.fastpath.data
+      ,uop:MicroOp  = _
+      ,mask         = genWmask(0, LSUOpType.ld)
+      ,isFirstIssue = true
+      ,rsIdx        = nil
+      ,sqIdx        = nil
+      )
+      x.uop.ctrl.fuOpType = LSUOpType.ld
+      x
+    }else{
+      nil
+    }
+}

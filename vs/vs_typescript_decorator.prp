@@ -1,0 +1,94 @@
+
+class Point {
+  private _x: number;
+  private _y: number;
+  constructor(x: number, y: number) {
+    this._x = x;
+    this._y = y;
+  }
+ 
+  @configurable(false)
+  get x() {
+    return this._x;
+  }
+ 
+  @configurable(false)
+  get y() {
+    return this._y;
+  }
+}
+
+// Separate configurable in another file
+function configurable(value: boolean) {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    descriptor.configurable = value;
+  };
+}
+
+//---------------
+
+
+let Point = (
+  ,_x:int = 0  // private
+  ,_y:int = 0  // private
+
+  ,setter = proc(ref self, x:int, y:int) {
+    self._x = x
+    self._y = y
+  }
+
+  ,getter = fun(self, idx:string) {
+    match idx {
+     == 'x' { self._x }
+     == 'y' { self._y }
+    }
+  }
+)
+
+let p:Point = (1,2)
+
+cassert p['x'] == 1 and p['y'] == 2
+cassert p.x == 1 and p.y == 2
+
+let Add_z = proc(opt1:bool:[comptime], t) {
+  var zp = t ++ (
+    , _z:int=0
+  )
+
+  zp.setter = proc[t](ref self, x:int, y:int, z:int) {
+    self = t(x,y) // update fields as in t
+    self._z = z
+  }
+
+  if opt1 {
+    zp.getter = fun[t](self, idx:string) {
+      ret self._z when idx == 'z'
+
+      let tc:t = (self._x, self._y)
+      ret tc[idx]
+    }
+  }else{
+    zp.getter = fun(self, idx:string) where idx == 'z' {
+      ret self._z
+    } ++ t.getter
+  }
+
+  ret zp
+}
+
+let Zpoint1 = Add_z(true,Point)
+let zp1:Zpoint1 = (1,2,3)
+
+cassert zp1.x == 1
+cassert zp1.y == 2
+cassert zp1.z == 3
+
+let Zpoint2 = Add_z(false,Point)
+let zp2:Zpoint2 = (1,2,3)
+
+cassert zp2.x == 1
+cassert zp2.y == 2
+cassert zp2.z == 3
+
+cassert zp1 == zp2  // method contents is not added to the ==
+

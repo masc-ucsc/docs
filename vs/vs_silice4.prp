@@ -1,0 +1,45 @@
+
+
+unit main(output uint5 leds) {
+
+  bram uint5 patterns[] = { // 17 patterns
+    5b00001, 5b00011, 5b00111, 5b01111, 5b11111, 5b11110, 5b11100, 5b11000,
+    5b10000, 5b11000, 5b11100, 5b11110, 5b11111, 5b01111, 5b00111, 5b00011, 5b00001,
+  };
+
+  always_before {
+    leds = patterns.rdata; // assign leds to the current BRAM value
+  }
+
+  algorithm {
+    while (1) { // forever
+      uint22 n = 0;
+      while ( ~ n[21,1] ) { n = n + 1; } // wait
+      patterns.addr = patterns.addr == 16 ? 0 : patterns.addr + 1;
+    }
+  }
+}
+
+// Pyrope
+
+let top = proc()->(leds:u5) {
+
+  let patterns:[] = (
+    ,5b00001, 5b00011, 5b00111, 5b01111 ,5b11111, 5b11110 ,5b11100, 5b11000
+    ,5b10000, 5b11000, 5b11100, 5b11110 ,5b11111, 5b01111, 5b00111, 5b00011, 5b00001
+  )
+
+  reg raddr:u5 = 0
+  leds = pattern[raddr]
+
+  { // Update raddr once every 2**22-1 cycles
+    reg delay:u22=0
+    delay::[wrap] += 1
+    return unless (~delay) != 0
+
+    delay = 0
+  }
+
+  raddr = if raddr == 16 { 0 }else{ raddr + 1 }
+}
+

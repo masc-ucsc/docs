@@ -1,0 +1,47 @@
+
+puts "welcome to Pyrope"
+
+let my_reset = fun() { ret 0 }
+
+let code = proc(a, a_clk,b, b_clk)->(x,y) {
+
+  reg total_a:u8:[clock_pin=a_clk] = 0
+  reg total_b:u8:[clock_pin=b_clk] = my_reset()
+
+  total_a::[wrap] += 1 when a
+  total_b::[wrap] += 1 when b
+
+  puts "total_a:{total_a} total_b:{total_b}"
+
+  x = total_a
+  y = total_b
+}
+
+
+let top = proc(a, a_clk, b, b_clk, c)->(led_on:bool) {
+
+  var x = _
+  var y = _
+  led_on = false
+  if c {
+    (x,y) = code(a,a_clk,b,b_clk)
+    puts "1. x:{x} y:{y}"
+    led_on = x!=y
+  }
+  puts "2. x:{x} y:{y}"
+
+}
+
+test "simple" {
+
+  var t = top
+  t.a = true
+  t.c = false
+  step // 1 clock
+  assert t.led_on == false and t.
+  step
+  assert t.led_on == false
+  let x = top(a=1,c=0)
+
+
+}

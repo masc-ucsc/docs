@@ -1,0 +1,30 @@
+
+// Pyrope does not have global variables. Importing does create a copy of the
+// lambda, but you can import a lambda that references a flop by name inside.
+//
+
+
+// file1.prp 
+
+pub reg mem:u32 = ("unique_id")
+
+// file2.prp
+
+reg x_mem = import("file1").mem
+
+assert x_mem in 0..=3
+if x_mem > 3 {
+  x_mem = 0
+}else{
+  x_mem += 1
+}
+assert x_mem in 0..=3
+
+
+// file3.prp
+
+reg y_mem = import("file1").mem
+
+assert y_mem in 0..=3
+// only one lambda can update unique_id
+

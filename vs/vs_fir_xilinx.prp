@@ -1,0 +1,66 @@
+
+void block fir(int input[256], int output[256], int taps[NUM TAPS], int delay line[NUM TAPS]) {
+  int i, j;
+  for (j = 0; j < 256; j++) {
+    int result = 0;
+    for (i = NUM TAPS − 1; i > 0; i−−) {
+#pragma HLS unroll
+      delay line[i] = delay line[i − 1];
+    }
+    delay line[0] = input[j];
+    for (i = 0; i < NUM TAPS; i++) {
+#pragma HLS pipeline
+      result += delay line[i] ∗ taps[i];
+    }
+    output[j] = result;
+  }
+}
+
+// Pyrope
+
+let block_fir = proc(input:[256]u32, taps:[4]u32)->(output:[4]u32) { // HARDCODED, just to showcase syntax
+  for j in 0..<256 {
+    var result = 0
+
+    let inp = input[i]
+
+    result  = inp#[3] * taps[3]
+    result += inp#[2] * taps[2]
+    result += inp#[1] * taps[1]
+    result += inp#[0] * taps[0]
+
+    output[i] = result
+  }
+}
+
+// Quite direct from example
+
+let block_fir = proc(input:[], taps:[])->(output:[]) {
+  for inp,index in input {
+    var result = 0
+    for _,t_index in taps {
+      result += inp#[t_index] * taps[t_index]
+    }
+    output[index] = result
+  }
+}
+
+// More generic/compact with tree hierarchy for reduce add
+
+let reduce4_add = func(inp:[]) {
+  ret match inp.::[size] {
+    == 1 { inp[0] }
+    == 2 { inp[0]+inp[1] }
+    == 3 { inp[0]+inp[1]+inp[2] }
+    else { let z = inp.::[size]/4 ; reduce(inp[..<z]) + reduce(inp[z..<(2*z)]) + reduce(inp[(2*z)..<(3*z)]) + reduce(inp[z..]) }
+  }
+}
+
+let block_fir = proc(input:[], taps:[])->(output:[]) {
+  for inp,index in input {
+    var result = for _,t_index in taps {
+      inp#[t_index] * taps[t_index]
+    }
+    output[index] = result.reduce4_add()
+  }
+}

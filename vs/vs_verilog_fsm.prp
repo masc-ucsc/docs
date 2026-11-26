@@ -1,0 +1,92 @@
+
+
+
+module edge_detector ( input in , output out , input clk );
+localparam A =0 , B =1 , C =2;
+
+reg [1:0] state , // Current state
+  nextState ; // Next state
+
+always @ ( posedge clk ) begin
+  if ( reset ) begin
+    state <= A ; // Initial state
+  end else begin
+    state <= nextState ;
+  end
+end
+
+always @ (*) begin
+  nextState = state ;
+  out = 0;
+  case ( state )
+    A : if ( in ) nextState = C ;
+    else nextState = B ;
+    B : if ( in ) begin
+      out = 1;
+      nextState = C ;
+    end
+    C : if (~ in ) begin
+      out = 1;
+      nextState = B ;
+    end
+    default : begin
+      out = 1 ’ bX ;
+      nextState = 3 ’ bX ;
+    end
+  endcase
+end
+endmodule
+
+//-----
+// Pyrope
+
+
+let edge_detector=proc(in) -> (out) {
+
+  let State = :enum(A ,B ,C)
+
+  reg state:State = A
+
+  out = 0
+
+  match state {
+   == A { state = if in {C}else{B} }
+   == B { state,out = (C, 1) when in }
+   == C { state,out = (C, 1) unless in }
+  }
+}
+
+
+// Pyrope from GPT-4
+
+let edge_detector = proc(in) -> (out) {
+
+  let State = :enum(A, B, C)
+
+  reg state: State = A
+
+  out = 0
+
+  match state {
+    == A {
+      state = if in {
+        C
+      } else {
+        B
+      }
+    }
+    == B {
+      if in {
+        state = C
+        out = 1
+      }
+    }
+    == C {
+      if !in {
+        state = C
+        out = 1
+      }
+    }
+  }
+}
+

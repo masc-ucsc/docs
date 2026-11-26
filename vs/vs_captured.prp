@@ -1,0 +1,35 @@
+
+// Setup code section
+
+// vs_captured.prp
+pub var x_s = 10
+
+pub fun1 = proc[x_s]() {
+  assert import("vs_captured").x_s == 10
+  assert x_s == 20
+}
+
+pub fun2 = proc()->(:proc()->()) {
+  assert x_s == 20
+  let x_s = 30
+  pub fun3 = proc() {
+    assert x_s == 40
+  }
+
+  ret ref fun3
+}
+
+x_s = 20
+
+fun1()
+
+assert x_s == 20
+
+let y = fun2()
+
+assert x_s == 20
+
+x_s = 40
+
+y() // assert x_s == 40 called
+

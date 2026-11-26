@@ -1,0 +1,85 @@
+
+// NOTE: outputs from function registerd by default
+
+unit eq(input uint8 i,output uint8 o) {
+  always {
+    o     = i;
+  }
+}
+
+unit main(output uint8 leds) {
+  uint32 cycle(0);
+  eq e;
+  always {
+    e.i  = cycle; // set e input
+    __display("[%d] e.o:%d",cycle,e.o); // print e output
+    cycle = cycle + 1;
+    if (cycle == 8) { __finish(); } // stop after 8 cycles
+  }
+}
+
+//--------
+// Pyrope 0.2 had step
+
+let eq = proc(i)->(reg o) {
+  o = i
+}
+// let eq = proc(x)->(reg x) { } // same too
+
+test "my main" {
+  for cycle in 0..<8 {
+    let o = eq(cycle)
+
+    puts "{} e.o:{}",cycle, o
+
+    step
+  }
+}
+
+unit main(output uint8 leds) {
+  uint32 cycle(0);
+  eq e;
+  always {
+    e.i  = cycle; // set e input
+    __display("[%d] e.o:%d",cycle,e.o); // print e output
+    cycle = cycle + 1;
+    if (cycle == 8) { __finish(); } // stop after 8 cycles
+  }
+}
+
+
+//---------------------------------------------
+// NOTE: Not registered output
+unit eq(input uint8 i,output! uint8 o) {   // HERE: add !
+  always {
+    o     = i;
+  }
+}
+
+unit main(output uint8 leds) {
+  uint32 cycle(0);
+  eq e<reginputs>;    // HERE
+  always {
+    e.i  = cycle;
+    __display("[%d] e.o:%d",cycle,e.o);
+    cycle = cycle + 1;
+    if (cycle == 8) { __finish(); }
+  }
+}
+
+//--------
+// Pyrope 0.2
+
+let eq = fun(i)->(o) {
+  o = i
+}
+
+test "my main" {
+  for cycle in 0..<8 {
+    let o = eq(cycle)
+
+    puts "{} e.o:{}",cycle, o
+
+    yield
+  }
+}

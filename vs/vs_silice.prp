@@ -1,0 +1,34 @@
+
+unit rotate(output uint8 o) {
+  uint8 bits(8b1);
+  always {
+    o    = bits;
+    bits = {bits[0,1],bits[1,7]};
+  }
+}
+
+unit main(output uint8 leds) {
+  rotate r;
+  always {
+    leds = r.o;
+    __display("leds:%b",leds);
+  }
+}
+
+//----------------
+
+let rotate proc()-> (o:u8) {
+
+  reg bits=1
+
+  o = bits
+  bits[1..] = bits
+  bits[0]   = bits[-1] // MSB
+}
+
+let top = proc() -> (leds:u8) {
+
+  leds =# rotate().o
+  puts "leds:{}", leds
+}
+

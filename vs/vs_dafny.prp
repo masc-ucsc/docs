@@ -1,0 +1,99 @@
+
+//------------------
+// requires
+
+// Dafny
+method Rot90(p: Point) returns (q: Point)
+  requires p != null
+{ q := new Point; q.x, q.y := -p.y, p.x; }
+
+// Pyrope
+let rot90 = fun(p:Point) -> (q:Point) {
+  assert p != nil
+  q.x,q.y = (-p.y,p.x)
+}
+
+
+//------------------
+// ensures
+
+// Dafny
+method max(a: nat, b: nat) returns (m: nat)
+  ensures m >= a    /* can have as many */
+  ensures m >= b    /* as you like */
+{ if a > b { m := a; } else { m := b; } }
+
+
+// Pyrope
+let max = fun(a:uint, b:uint) -> (m:uint) {
+  assert m.[defer]>=a
+  assert m.[defer]>=b
+
+  m = if a>b { a }else{ b }
+}
+
+//------------------
+// Logical
+
+// Dafny
+assume (z || !z) && x > y;
+assert j < a.Length ==> a[j]*a[j] >= 0;
+assert !(a && b) <==> !a || !b;
+
+// Pyrope (Dafny has short-circuit by default)
+assume (z or_else !z) and_then (x > y) {
+  assert (j < a.Length) implies (a[j]*a[j] >= 0)
+  assert !(a and_then b) == (!a or_else !b)
+}
+
+
+//------------------
+
+Dafny ghost statements are quite similar to the Pyrope ::[debug]. Any statement
+or variable used in debug are part of the ghost/debug statements.
+
+//------------------
+
+// Dafny
+
+decreases statement
+
+function Sum(f: int ~> real, lo: int, hi: int): real
+  requires lo <= hi
+  requires forall i :: lo <= i < hi ==> f.requires(i)
+  reads f.reads
+  decreases hi - lo
+{
+  if lo == hi then 0.0 else
+    f(lo) + Sum(f, lo + 1, hi)
+}
+
+
+// Pyrope
+
+assert some_reg <= some_reg#[-1]
+
+// Pyrope does not allow to check the "requires" for f.requires(i)
+// The recursive parameter pass of decreases does not work either
+
+//------------------
+// forall
+
+// Dafny
+assume forall n: nat :: n >= 0;
+assert forall k :: k + 1 > k;    /* inferred k:int */
+
+// Pyrope
+
+for n in 0..
+
+
+//-----------
+NOTES:
+
+a b implies  !implies  rimplies
+0 0  1         0         1
+0 1  0         1         1
+1 0  1         0         0
+1 1  1         0         1
+

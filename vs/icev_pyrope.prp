@@ -1,0 +1,163 @@
+
+if ICEV_FAST_SHIFT {
+  puts "Ice-V configured for fast shift (barrel shifter)"
+}
+
+// decode opcode
+let Opcode:enum = [
+  ,auipc
+  ,lui
+  ,jal
+  ,jalr
+  ,intimm
+  ,intreg
+  ,cycles
+  ,branch
+  ,load
+  ,store
+  ,other
+]
+
+let Insn_dec = (
+  ,setter = fun(ref self, instr:i32) {
+    self.insn = match instr@[0..=6] {
+      == 0b00101 { Opcode.auipc }
+      == 0b01101 { Opcode.lui }
+      == 0b11011 { Opcode.jal }
+      == 0b11001 { Opcode.jalr }
+      == 0b00100 { Opcode.intimm }
+      == 0b01100 { Opcode.intreg }
+      == 0b11100 { Opcode.cycles }
+      == 0b11000 { Opcode.branch }
+      == 0b00000 { Opcode.load }
+      == 0b01000 { Opcode.store }
+      else       { Opcode.other }
+    }
+    self.jump = nsn in (Opcode.jal, Opcode.jalr)
+    self.branch = self.insn==Opcode.branch
+    self.storeVal  = self.insn in (Opcode.lui, Opcode.cycle)
+    self.storeAddr = self.insn == Opcode.auipc
+
+    // decode immediates
+    self.imm_u = instr@sext[12..+20]<<12
+    self.imm_j = instr@sext[21..=30,20,12..=19,31]<<1
+    self.imm_i = instr@sext[20..=31]
+    self.imm_b = instr@sext[8..=11,25..+6,7,31]
+    self.imm_s = instr@sext[7..=11,25..=31]
+    self.imm = match self.insn {
+      == Opcode.auipc  { imm_u }
+      == Opcode.jal    { imm_j }
+      == Opcode.branch { imm_b }
+      == Opcode.jalr   { imm_i }
+      == Opcode.load   { imm_i }
+      == Opcode.store  { imm_s }
+      else             { 0 }
+    }
+
+    // rtype fields
+    self.opcode = instr@[0..=6]
+    self.rd     = instr@[7..=11]
+    self.funct3 = instr@[12..=14]
+    self.rs1    = instr@[15..=19]
+    self.rs2    = instr@[20..=24]
+    self.funct7 = instr@[25..=31]
+    self.sign   = instr@[31]
+
+    self.reg_or_imm = self.insn in (Opcode.intreg, Opcode.branch)
+    self.pc_or_reg  = self.insn in (Opcode.auipc , Opcode.jal   , Opcode.branch)
+    self.sub        = self.insn == Opcode.intreg and self.sign
+    self.alu_shift  = (self.insn in (Opcode.intimm, Opcode.intreg)) and (self.funct3@[0..=1] == 0b01)
+
+    self.no_rd = (self.insn in (Opcode.branch, Opcode.store)) or (self.rd == 0)
+    self.intop = self.insn in (Opcode.intimm, Opcode.intreg)
+  }
+)
+
+let calc_shift = proc(dec, r, trigger)->(working, shift:i32:[wrap]) {
+
+  if ICEV_FAST_SHIFT {
+    let shamt:u5 = 0          // FSM for multicycle shift
+    if working#[-1] {
+      shamt = shamt#[-1] - 1;
+      let last_r = r#[-1]  // last cycle r
+      shift = match dec.funct3 {
+        == 0x1                      { last_r<<1      } // sll
+        == 0x5  and !dec.func7@[-1] { last_r@[..]<<1 } // srl
+        == 0x5  and  dec.func7@[-1] { last_r>>1      } // sra
+        else { 0 }
+      }
+    } else {
+      shamt = if dec.insn == Opcode.alushift and trigger { b@[0..+5] }else{ 0 }
+      shift = xa;
+    }
+    working = (shamt != 0)     // are we still shifting?
+  }else{
+    let shamt = if dec.insn == Opcode.alushift { b@[0..+5] }else{ 0 }
+    shift = match dec.funct3 {
+      == 0x1                      { xa<<shamt      } // sll
+      == 0x5  and !dec.func7@[-1] { xa@[..]<<shamt } // srl
+      == 0x5  and  dec.func7@[-1] { xa>>shamt      } // sra
+      else { 0 }
+    }
+  }
+}
+
+let calc_val = proc(dec) {
+  reg cycle:u32:[wrap] = 0
+
+  cycle::[defer] = cycle + 1  // no overflow issue due to wrap
+
+  ret if dec.insn == Opcode.lui { dec.imm_u }else{ cycle }
+}
+
+let calc_r_taken_pc = fun(dec, xa, xb) -> (r,taken,npc) {
+  let b = if dec.reg_or_imm { xb }else{ dec.imm_i }
+
+  // allows to do subtraction and all comparisons with a single adder
+  // trick from femtorv32/swapforth/J1
+  let a_minus_b = xa - b
+  let a_lt_b    = if xa@[31] ^ b@[31] { xa@[31] }else{ a_minus_b@[32] }
+  let a_lt_b_u  = a_minus_b@[31]
+  let a_eq_b    = a_minus_b == 0
+
+  // all ALU operations
+  let r = match dec.funct3 {
+    == 0b000 and  sub { a_minus_b } // SUB
+    == 0b000 and !sub { xa + b    } // ADD
+    == 0b010          { a_lt_b    } // SLTI
+    == 0b011          { a_lt_b_u  } // SLTU
+    in (0b001,0b101)  { shift     } // SLLI/SRLI/SRAI
+    == 0b111          { xa & b    } // AND
+    else              { 0sb?      } // don't care  (utype and jtype)
+  }
+
+  // ====================== Comparator for branching
+  let j = match dec.funct3@[1..=2] {
+    == 0b00 { a_eq_b  } //BEQ
+    == 0b10 { a_lt_b  } //BLT
+    == 0b11 { a_lt_b_u} //BLTU
+    else    { 0sb?    }
+  }
+
+  taken = dec.jump or (dec.branch and (j@[0] ^ dec.funct3@[0]))
+
+  // ====================== Next address adder
+  npc::[wrap] = (if dec.pc_or_reg { pc<<2 }else{ xa }) + dec.imm
+}
+
+let execute = proc(instr:i32, pc:i32, xa:i32, xb:i32, trigger:bool) -> (
+    ,dec:Inst_dec
+    ,val:i32
+    ,working:bool = false
+    ,npc:i32
+    ,taken:bool
+    ,r:i32
+  ) {
+
+  dec   = Inst_dec(instr)
+
+  (working, shift) = calc_shift(dec, r#[-1], trigger)
+  val              = calc_val(dec)
+  (r,taken,npc)    = calc_r_taken_pc(dec, xa, xb)
+}
+

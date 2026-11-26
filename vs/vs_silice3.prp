@@ -1,0 +1,139 @@
+
+unit left(output uint5 v = 5b00001) {
+  algorithm {
+    while (~v[4,1]) { v   = v << 1; }
+  }
+}
+
+unit right(output uint5 v = 5b10000) {
+  algorithm {
+    while (~v[0,1]) { v   = v >> 1; }
+  }
+}
+
+unit main(output uint5 leds) {
+  left l; right r;
+
+  algorithm {
+    while (1) {
+      () <- l <- (); // call l (blocking)
+      () <- r <- (); // call r (blocking)
+    }
+  }
+
+  always_after {
+    // select leds pattern from running algorithm
+    leds = ~isdone(l) ? l.v // left is running
+         : ~isdone(r) ? r.v // right is running
+         : leds;            // none running, keep as is
+    __display("leds: %b",leds);
+  }
+
+}
+
+//-----------------
+// Pyrope
+
+let left = proc() -> (output) {
+
+  reg running = false
+
+  reg v:u5 = 1
+  if running {
+    output = v
+
+    v::[wrap] <<= 1
+
+    running = v!=0
+  }else{
+     v = 1
+  }
+}
+
+let right = proc() -> (output) {
+
+  reg running = false
+  return if running
+
+  running = true
+
+  while output=1<<5 ; output!=1 #>[1] {
+    output = output>>1
+  }
+
+  running = false
+}
+
+
+let top = proc() ->(leds:u5) {
+
+  reg going_left = true
+
+  if going_left {
+    leds = left()
+    if not leds? {
+      going_left = false
+      leds = right()
+    }
+  }else{
+    leds = right()
+
+    if not leds? {
+      going_left = true
+      leds = left()
+    }
+  }
+
+  puts "leds:{}", leds
+}
+
+
+//-----------------
+// Pyrope (nicer)
+
+let left = proc() -> (output) {
+  while output=1 ; !output@[-1] #>[1] {
+    output = output<<1
+  }
+}
+
+let right = proc() -> (output) {
+  while output=1<<5 ; output!=1 #>[1] {
+    output = output>>1
+  }
+}
+
+let top = proc() ->(leds:u5) {
+
+  puts "leds:{}", leds
+
+  reg busy_loop = false
+  return when busy_loop
+  busy_loop = true
+
+  loop #>[] {
+    leds = left()
+    break when not l?
+  }
+  loop #>[] {
+    leds = right()
+    break when not l?
+  }
+
+  busy_loop = fase
+}
+
+// Pyrope
+
+let top = proc()->(leds:u5=1) {
+  if led==1 {
+    loop #>[] {
+      leds = left()
+      break when not l?
+    }
+    loop #>[] {
+      leds = right()
+      break when not l?
+    }
+  }
+}
