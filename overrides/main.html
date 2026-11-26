@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block scripts %}
+  {# Load the pinned current Mermaid before Zensical initializes its diagrams. #}
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@12.2.0/dist/mermaid.min.js"></script>
+  {{ super() }}
+{% endblock %}

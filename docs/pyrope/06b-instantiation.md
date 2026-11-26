@@ -441,7 +441,10 @@ inlined. This can change the expected equivalent Verilog generated modules.
 When a stateful `mod` or `pipe` is called inside a conditional branch
 (`if en { child(...) }`), the instance stays in the enclosing scope and the
 compiler gates each of its `Clock` inputs on the activation guard `en` so
-state holds while `en` is false:
+state holds while `en` is false. The `if` is shorthand for clock gating
+only: reset is always active, independent of the `if`. While a domain's
+reset is asserted its clock runs ungated, so registers on that clock without
+that reset may also advance during reset:
 
 * **Synchronous resets reopen only their own clock domain.** Each gated clock
   input is enabled by `en or domain_reset`, where `domain_reset` is the
