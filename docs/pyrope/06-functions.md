@@ -462,12 +462,16 @@ tag_log(a, false, x + 1)           // error: a binds the fixed parameter; positi
 
 A generic binds **per call site** — a pure comptime-macro expansion, with the
 normal typing rules applying after substitution (no implicit coercion). A
-generic name may bind any compile-time entity: a type, a comptime constant,
-or a lambda. After substitution, whatever is legal for the bound entity is
-legal for the generic, and nothing more — `T(a)` is a cast when `T` binds a
-type and a call when it binds a lambda; `a + N` needs `N` to bind a constant;
-attribute queries on a generic are exactly as legal as on the substituted
-entity.
+generic name may bind any compile-time entity: a type, a comptime constant
+(including a nested `comptime const` configuration record, an enum value, or a
+record derived at compile time by a `comb` helper), or a lambda. After
+substitution, whatever is legal for the bound entity is legal for the generic,
+and nothing more — `T(a)` is a cast when `T` binds a type and a call when it
+binds a lambda; `a + N` needs `N` to bind a constant; `C.queue.depth`,
+`C.queues[I].depth`, or `C.op(a=a, b=b)` work when `C` binds a comptime config
+record; attribute queries on a generic are exactly as legal as on the
+substituted entity. Passing a record containing a runtime field as a generic
+argument is a compile error (`fcall-generic-runtime`).
 
 Explicit call-site bindings follow the **same naming rules as arguments**
 ("Argument naming" below): each binding is named (`f<T=U8, N=8>(…)`) unless
@@ -475,18 +479,21 @@ it is unambiguous — a single generic name, bindings whose kinds (type vs
 constant vs lambda) match only one assignment, or a bound identifier whose
 name matches the generic's name. The callee may be a dotted path
 (`prp.queue.make<T=Signed>(depth=16)`). A generic the call leaves unbound
-takes its declared default (`<T, N=4>`) if it has one; otherwise, a generic that
-appears in `:T` type positions of the parameters is inferred: it unifies
-over the **declared** types of the actuals at its `:T` positions (a `U8`
-actual and a `U16` actual for one `T` is a compile error —
+takes its declared default (`<T, N=4>`, `<C=small>`) if it has one; otherwise,
+a generic that appears in `:T` type positions of the parameters is inferred: it
+unifies over the **declared** types of the actuals at its `:T` positions (a
+`U8` actual and a `U16` actual for one `T` is a compile error —
 `fcall-generic-mismatch`), while bare literals contribute only their kind, so
-`f(a=1, b=2)` infers `X = Signed`. A constant- or lambda-valued generic is
-never inferred — it must be bound explicitly or defaulted. On a `pipe`/`mod`
-boundary each distinct binding mints its own module, exactly like the
-untyped-parameter deferred templates above (`madd<T>` called with `U8`
-actuals mints `madd__U8_U8`).
+`f(a=1, b=2)` infers `X = Signed`. A constant-, record-, or lambda-valued
+generic is never inferred — it must be bound explicitly or defaulted. On a
+`pipe`/`mod` boundary each structurally distinct binding mints its own module,
+exactly like the untyped-parameter deferred templates above (`madd<T>` called
+with `U8` actuals mints `madd__U8_U8`; two calls with structurally equal
+comptime records share one specialized module definition while each call site
+keeps its own instance state).
 A declared default may be a type (`<T=U8>`), a comptime constant (`<N=3>`,
-`<MODE="add">`, `<F=false>`), or a visible comptime name (`<N=SIZE>`).
+`<MODE="add">`, `<F=false>`), or a visible comptime name (`<N=SIZE>`,
+`<C=small>`, or an imported record such as `import("cfg.small")`).
 Inside `<…>`, at the declaration and at the call site alike, a binding may be
 a type, a literal, a name, or a **postfix** value written bare — a dotted
 field or an attribute read: `f<N=x.[bits]>(…)`, `<N=cfg.width>`. Any other
@@ -516,7 +523,24 @@ type is: ports, locals, tuple field types, array elements (`[N]Unsigned(bits=W)`
 aliases (`type Row = Unsigned(bits=W)`), and generic arguments
 (`<T=Unsigned(bits=W)>`).
 
+A port width bound (`Unsigned(bits=…)`, `Signed(bits=…)`) or array port
+dimension (`[…]T`) may use any expression that folds to a compile-time integer
+once the lambda's generics are bound: literals, generic parameters, nested
+comptime config record fields (`C.queues[I].depth + 2`), `comptime const`s,
+`std.clog2(…)`, inline `if`/`else` expressions, and `comb` helper calls
+(including helpers with `for` loops or imported `comb`s). A bound that depends
+on a runtime signal is a compile error (`type-bound-not-comptime` or
+`array-port-dim-not-comptime`).
+
 ```pyrope
+comptime const small = (const queues=((const depth=2), (const depth=3)), const wide=false)
+
+comb calc_w(c) -> (w) {
+  mut total = 0
+  for q in c.queues { total += q.depth }
+  w = if c.wide { total } else { c.queues[0].depth + 2 }
+}
+
 mod pass_t<T>(a:T) -> (y:T@[0]) { y = a }
 
 mod pick_row<N=4, W=8>(v:[N]Unsigned(bits=W), req:(sel:Unsigned(bits=std.clog2(N)), en:Bool))
@@ -527,9 +551,14 @@ mod pick_row<N=4, W=8>(v:[N]Unsigned(bits=W), req:(sel:Unsigned(bits=std.clog2(N
   y = p.y
 }
 
-pub mod pick4(v:[4]U8, sel:U2, en:Bool) -> (y:U8@[0]) {
+mod sized<C=small>(a:U8) -> (y:Unsigned(bits=calc_w(C))@[0]) {
+  y = a#[0..<calc_w(C)]
+}
+
+pub mod pick4(v:[4]U8, sel:U2, en:Bool) -> (y:U8@[0], s:U8@[0]) {
   const i = pick_row<N=4, W=8>(v=v, req=(sel=sel, en=en))  // req.sel is 2 bits
   y = i.y
+  s = sized<small>(a=i.y)                                  // y is 4 bits
 }
 
 mod bad<W=8>(a:U<W>) -> (y:U<W>@[0]) { y = a }  // error: write Unsigned(bits=W)

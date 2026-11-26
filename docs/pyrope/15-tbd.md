@@ -37,9 +37,6 @@ Notes:
   Verilog netlist, but is **not executed by `lhd sim`** — the simulation
   runtime fallback is **TBD**. Only assertions written inside a `test` block
   are checked at simulation time.
-* A verification statement does not inherit an enclosing `if` guard:
-  `if c { assert(x) }` is lowered as an unconditional `assert(x)`. Use
-  `assert(c implies x)`.
 * A refutable `assume` over free inputs is a hard build error at the **top**
   module and a deferred runtime check in an **instantiated** one.
 * Runtime `wrap`/`sat` lowering and enum-typed register resets are

@@ -74,16 +74,19 @@ next depends on where the lambda sits:
 * In an **instantiated** module, the parent's drivers are what make it true, so
   the check is *deferred* with a warning and kept as a runtime check.
 
-!!! WARNING
-    A guarded verification statement does **not** inherit its guard today —
-    `if cond { assert(x) }` is lowered as an unconditional `assert(x)`. Write
-    the guard into the condition instead:
+### Guarded verification statements
 
-    ```pyrope
-    assert(cond implies x == 3, "only claimed when cond holds")
-    ```
+A design-body `assert` or `assume` inside an `if`/`elif`/`else` branch, a
+`match` arm, or a conditionally called module (`if en { child(...) }`) inherits
+its enclosing path guard — `if cond { assert(x) }` checks `cond implies x`, and
+`if en { child(...) }` checks `child`'s obligations only while `en` holds.
+`cassert` remains an unconditional elaboration-time check.
 
-    The `if`-wrapped form is a known compiler bug, not a style choice.
+```pyrope
+if cond {
+  assert(x == 3, "only claimed when cond holds")
+}
+```
 
 The recommendation is to write as many `assert` and `assume` as possible.
 `assume` is the stronger statement: it tells the tool a case cannot happen, and

@@ -436,6 +436,32 @@ the condition is false.
 The result of conditionally calling lambdas is that most of the code may be
 inlined. This can change the expected equivalent Verilog generated modules.
 
+### Conditional stateful calls and clock/reset domains
+
+When a stateful `mod` or `pipe` is called inside a conditional branch
+(`if en { child(...) }`), the instance stays in the enclosing scope and the
+compiler gates each of its `Clock` inputs on the activation guard `en` so
+state holds while `en` is false:
+
+* **Synchronous resets reopen only their own clock domain.** Each gated clock
+  input is enabled by `en or domain_reset`, where `domain_reset` is the
+  normalized active-high reset condition of the synchronous registers and
+  memories driven by that clock (including `negreset=true` polarity and
+  boolean combinations over the callee's inputs such as `!rst_n or flush`,
+  tracked across nested sub-instances). A reset that folds to constant
+  inactive (e.g. `rst and false`) never reopens the gate.
+* **Multiple clock domains stay independent.** A conditional callee with two
+  separate clocks (`clk_a` with `rst_a`, `clk_b` with `rst_b`) reopens only
+  `clk_a` on `rst_a` and only `clk_b` on `rst_b`.
+* **Async resets do not reopen the clock gate.** A register with `async=true`
+  resets regardless of the clock gate, so synchronous-reset and
+  asynchronous-reset registers may share a conditionally gated clock without
+  conflict.
+* **Distinct synchronous resets on one shared clock are rejected.** If two
+  synchronous registers inside a conditional call share the *same* `Clock`
+  input but use genuinely independent synchronous reset expressions, reopening
+  that clock for one reset would also advance the other register; the compiler
+  rejects this as an ambiguous reset domain (`activation-reset-ambiguous`).
 
 Calling a lambda with the inputs set invalid has a different behavior. For
 once C++ calls will still happen, and updates to registers with not valid data

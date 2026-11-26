@@ -445,10 +445,13 @@ output idles high, the enable latch is transparent while `clk` is high (it
 samples `en` at the falling edge), and the gated event is the fall, so a register
 on it takes `posclk=false`: `Clock(clock_pin=clk, enable=en, invert=true)`.
 `invert` is a compile-time literal (`true` or `false`), never a signal. A
-synchronous reset of a
-register on a gated clock takes effect only on the edges the gate lets through
-(while `en` is high); use `async=true` for a reset that must land while the
-gate is closed.
+synchronous reset of a register on an explicit `Clock(clock_pin=clk, enable=en)`
+gate takes effect only on the edges the gate lets through (while `en` is high);
+use `async=true` for a reset that must land while an explicit gate is closed.
+(By contrast, when the compiler synthesizes clock gating for a conditionally
+called module `if en { child(...) }`, it automatically reopens each clock domain
+on that domain's synchronous reset — see
+[Conditional stateful calls and clock/reset domains](06b-instantiation.md#conditional-stateful-calls-and-clockreset-domains).)
 
 ```pyrope
 mod gated(clk:Clock, en:Bool, d:U8) -> (q:U8@[1]) {
